@@ -32,11 +32,13 @@
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
+  padding-bottom: 1.5rem;
 }
 
+/* ── Summary strip ── */
 .mh-summary {
   background: #fff;
-  margin: 1rem 1rem 0.5rem;
+  margin: 1rem 1rem 0;
   border-radius: 1rem;
   padding: 1.25rem;
   display: flex;
@@ -57,6 +59,9 @@
   font-size: 1.6rem;
   font-weight: 700;
   color: #111;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .mh-stat-label {
@@ -73,6 +78,7 @@
   background: #e5e7eb;
 }
 
+/* ── Empty state ── */
 .mh-empty {
   margin: 1rem;
   color: #bbb;
@@ -82,46 +88,74 @@
   letter-spacing: normal;
 }
 
-.mh-table-wrap {
-  margin: 0.5rem 1rem 1rem;
+/* ── Season card ── */
+.mh-season-card {
+  margin: 1rem 1rem 0;
   background: #fff;
   border-radius: 1rem;
   overflow: hidden;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
-.mh-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.mh-th {
+.mh-season-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 0.7rem 1rem;
-  text-align: left;
-  font-size: 0.7rem;
-  font-weight: 600;
+  background: #fafafa;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.mh-season-name {
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #999;
-  border-bottom: 1px solid #f1f5f9;
+  letter-spacing: 0.07em;
+  color: #555;
+  opacity: 1;
 }
 
-.mh-th-right { text-align: right; }
-
-.mh-row:not(:last-child) .mh-td {
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.mh-td {
-  padding: 0.75rem 1rem;
-  font-size: 0.9rem;
-  color: #333;
-}
-
-.mh-td-right { text-align: right; }
-
-.mh-hours {
+.mh-season-total {
+  font-size: 1rem;
   font-weight: 700;
   color: #111;
   font-variant-numeric: tabular-nums;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ── Type breakdown ── */
+.mh-breakdown {
+  display: flex;
+  flex-direction: column;
+}
+
+.mh-breakdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+}
+
+.mh-breakdown-row:not(:last-child) {
+  border-bottom: 1px solid #f8fafc;
+}
+
+.mh-breakdown-label {
+  font-size: 0.875rem;
+  color: #666;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.mh-breakdown-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111;
+  font-variant-numeric: tabular-nums;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
 }

@@ -1,0 +1,95 @@
+// Shared bucketing logic for MyHoursPage and HoursBoard.
+
+export function fmtHours(h) {
+  if (!h || h < 0.01) return '—'
+  const totalMins = Math.round(h * 60)
+  const hrs  = Math.floor(totalMins / 60)
+  const mins = totalMins % 60
+  if (hrs  === 0) return `${mins}m`
+  if (mins === 0) return `${hrs}h`
+  return `${hrs}h ${mins}m`
+}
+
+export function isCheckedIn(events) {
+  if (!events?.length) return false
+  return [...events]
+    .sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
+    .at(-1)?.type === 'in'
+}
+
+function sidFor(dateStr, seasons) {
+  return seasons.find(s => dateStr >= s.start_date && dateStr <= s.end_date)?.id ?? 'other'
+}
+
+/**
+ * Build a per-season breakdown map for one member.
+ *
+ * @param {object[]} seasons         - rows from the seasons table
+ * @param {object[]} attendanceEvents - { type, event_time } for this member, any order
+ * @param {object[]} loggedHoursRows  - { type, hours, date } verified entries for this member
+ * @returns {{ [seasonId|'other']: { regular, volunteering, outreach, competition, total } }}
+ */
+export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows) {
+  const raw = {} // sid → { regularMs, volunteering, outreach, competition }
+
+  // --- Attendance: group events by calendar date, compute closed session ms ---
+  const byDate = {}
+  for (const e of attendanceEvents) {
+    ;(byDate[e.event_time.slice(0, 10)] ??= []).push(e)
+  }
+  for (const [date, evts] of Object.entries(byDate)) {
+    evts.sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
+    let inTime = null, ms = 0
+    for (const e of evts) {
+      if (e.type === 'in') inTime = new Date(e.event_time)
+      else if (e.type === 'out' && inTime) { ms += new Date(e.event_time) - inTime; inTime = null }
+    }
+    if (ms > 0) {
+      const sid = sidFor(date, seasons)
+      ;(raw[sid] ??= {}).regularMs = (raw[sid].regularMs ?? 0) + ms
+    }
+  }
+
+  // Open session: find the last unmatched 'in' (member is currently checked in)
+  const sorted = [...attendanceEvents].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
+  let openIn = null, openDate = null
+  for (const e of sorted) {
+    if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10) }
+    else if (e.type === 'out' && openIn) { openIn = null; openDate = null }
+  }
+  if (openIn) {
+    const sid = sidFor(openDate, seasons)
+    ;(raw[sid] ??= {}).regularMs = (raw[sid].regularMs ?? 0) + (Date.now() - openIn)
+  }
+
+  // --- Logged hours (verified only, already filtered by caller) ---
+  for (const row of loggedHoursRows) {
+    const sid = sidFor(row.date, seasons)
+    const b   = (raw[sid] ??= {})
+    b[row.type] = (b[row.type] ?? 0) + parseFloat(row.hours)
+  }
+
+  // --- Convert ms → decimal hours and compute totals ---
+  const result = {}
+  for (const [sid, b] of Object.entries(raw)) {
+    const regular      = (b.regularMs ?? 0) / 3600000
+    const volunteering = b.volunteering ?? 0
+    const outreach     = b.outreach     ?? 0
+    const competition  = b.competition  ?? 0
+    result[sid] = { regular, volunteering, outreach, competition, total: regular + volunteering + outreach + competition }
+  }
+  return result
+}
+
+/** Sum a breakdown map across all season buckets. */
+export function sumBreakdown(map) {
+  const r = { regular: 0, volunteering: 0, outreach: 0, competition: 0, total: 0 }
+  for (const b of Object.values(map)) {
+    r.regular      += b.regular
+    r.volunteering += b.volunteering
+    r.outreach     += b.outreach
+    r.competition  += b.competition
+    r.total        += b.total
+  }
+  return r
+}
