@@ -17,6 +17,7 @@ const CheckinPage    = lazy(() => import('./CheckinPage'))
 const CertifyPage      = lazy(() => import('./CertifyPage'))
 const CoverageMatrix   = lazy(() => import('./CoverageMatrix'))
 const LogHoursPage     = lazy(() => import('./LogHoursPage'))
+const VerifyHoursPage  = lazy(() => import('./VerifyHoursPage'))
 
 const Splash = () => (
   <div className="splash">
@@ -84,6 +85,7 @@ export default function App() {
           <Route path="/profile"     element={<ProfilePage session={session} />} />
           <Route path="/certify"     element={<CertifyPage session={session} hasRole={hasRole} />} />
           <Route path="/coverage"    element={<CoverageMatrix hasRole={hasRole} />} />
+          <Route path="/verify-hours" element={<VerifyHoursPage session={session} hasRole={hasRole} />} />
         </Route>
 
         {/* ── Minimal: no NavBar, bundle stays small ── */}

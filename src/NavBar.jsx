@@ -41,6 +41,11 @@ export default function NavBar({ hasRole = () => false, session = null }) {
               Coverage
             </NavLink>
           )}
+          {isStaff && (
+            <NavLink to="/verify-hours" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+              Verify Hours
+            </NavLink>
+          )}
           <NavLink to="/profile" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             My Profile
           </NavLink>
