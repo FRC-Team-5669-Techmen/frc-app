@@ -37,7 +37,11 @@ export default function HoursBoard() {
       setProfiles(p ?? [])
       setAllEvents(ae ?? [])
       setAllLogged(lh ?? [])
-      setSelSeason(seas.length > 0 ? seas[0].id : 'all')
+      const today   = new Date().toISOString().slice(0, 10)
+      const current = seas.find(s =>
+        s.start_date <= today && (s.end_date == null || s.end_date >= today)
+      )
+      setSelSeason(current?.id ?? seas[0]?.id ?? 'all')
     })
   }, [])
 
