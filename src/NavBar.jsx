@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { supabase } from './supabase'
 import './NavBar.css'
 
-export default function NavBar() {
+export default function NavBar({ hasRole = () => false }) {
   return (
     <nav className="navbar">
       <div className="navbar-shell">
@@ -18,6 +18,11 @@ export default function NavBar() {
           <NavLink to="/hours" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             Team Hours
           </NavLink>
+          {hasRole('admin') && (
+            <NavLink to="/roster" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+              Roster
+            </NavLink>
+          )}
         </div>
 
         <button className="navbar-signout" onClick={() => supabase.auth.signOut()}>

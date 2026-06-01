@@ -9,6 +9,7 @@ const LoginPage   = lazy(() => import('./LoginPage'))
 const HomePage    = lazy(() => import('./HomePage'))
 const MyHoursPage = lazy(() => import('./MyHoursPage'))
 const HoursBoard  = lazy(() => import('./HoursBoard'))
+const RosterPage  = lazy(() => import('./RosterPage'))
 const CheckinPage = lazy(() => import('./CheckinPage'))
 
 const Splash = () => (
@@ -17,10 +18,10 @@ const Splash = () => (
   </div>
 )
 
-function ProtectedLayout() {
+function ProtectedLayout({ hasRole }) {
   return (
     <div className="app-layout">
-      <NavBar />
+      <NavBar hasRole={hasRole} />
       <Outlet />
     </div>
   )
@@ -66,10 +67,11 @@ export default function App() {
         <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
 
         {/* ── Protected: shared NavBar via ProtectedLayout ── */}
-        <Route element={session ? <ProtectedLayout /> : <Navigate to="/login" replace />}>
+        <Route element={session ? <ProtectedLayout hasRole={hasRole} /> : <Navigate to="/login" replace />}>
           <Route path="/dashboard" element={<HomePage    session={session} hasRole={hasRole} />} />
           <Route path="/my-hours"  element={<MyHoursPage session={session} />} />
           <Route path="/hours"     element={<HoursBoard />} />
+          <Route path="/roster"    element={<RosterPage />} />
         </Route>
 
         {/* ── Minimal: no NavBar, bundle stays small ── */}
