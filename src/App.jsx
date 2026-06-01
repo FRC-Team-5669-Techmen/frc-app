@@ -1,11 +1,13 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { supabase } from './supabase'
+import NavBar from './NavBar'
 import './App.css'
 
 const LandingPage = lazy(() => import('./LandingPage'))
 const LoginPage   = lazy(() => import('./LoginPage'))
 const HomePage    = lazy(() => import('./HomePage'))
+const MyHoursPage = lazy(() => import('./MyHoursPage'))
 const HoursBoard  = lazy(() => import('./HoursBoard'))
 const CheckinPage = lazy(() => import('./CheckinPage'))
 
@@ -14,6 +16,15 @@ const Splash = () => (
     <div className="logo">5669</div>
   </div>
 )
+
+function ProtectedLayout() {
+  return (
+    <div className="app-layout">
+      <NavBar />
+      <Outlet />
+    </div>
+  )
+}
 
 export default function App() {
   const [session, setSession] = useState(undefined)
@@ -43,7 +54,6 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Hold until auth is resolved so we never flash the wrong route
   if (session === undefined) return <Splash />
 
   const hasRole = (r) => roles.includes(r)
@@ -51,34 +61,21 @@ export default function App() {
   return (
     <Suspense fallback={<Splash />}>
       <Routes>
-        {/* ── Public ─────────────────────────────────────────── */}
-        <Route
-          path="/"
-          element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />}
-        />
-        <Route
-          path="/login"
-          element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />}
-        />
+        {/* ── Public ── */}
+        <Route path="/"      element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
+        <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
 
-        {/* ── Protected ──────────────────────────────────────── */}
-        <Route
-          path="/dashboard"
-          element={session
-            ? <HomePage session={session} hasRole={hasRole} />
-            : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/hours"
-          element={session
-            ? <HoursBoard />
-            : <Navigate to="/login" replace />}
-        />
+        {/* ── Protected: shared NavBar via ProtectedLayout ── */}
+        <Route element={session ? <ProtectedLayout /> : <Navigate to="/login" replace />}>
+          <Route path="/dashboard" element={<HomePage    session={session} hasRole={hasRole} />} />
+          <Route path="/my-hours"  element={<MyHoursPage session={session} />} />
+          <Route path="/hours"     element={<HoursBoard />} />
+        </Route>
+
+        {/* ── Minimal: no NavBar, bundle stays small ── */}
         <Route
           path="/checkin"
-          element={session
-            ? <CheckinPage session={session} />
-            : <Navigate to="/" replace />}
+          element={session ? <CheckinPage session={session} /> : <Navigate to="/" replace />}
         />
 
         <Route path="*" element={<Navigate to="/" replace />} />

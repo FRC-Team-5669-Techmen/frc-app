@@ -97,15 +97,6 @@ export default function HoursBoard() {
 
   return (
     <div className="board-wrap">
-      <header className="board-header">
-        <div className="board-header-inner">
-          <span className="board-title">Team Hours</span>
-          <button className="board-signout" onClick={() => supabase.auth.signOut()}>
-            Sign out
-          </button>
-        </div>
-      </header>
-
       <div className="board-body">
         <div className="board-table-wrap">
           <table className="board-table">

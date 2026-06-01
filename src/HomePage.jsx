@@ -79,15 +79,6 @@ export default function HomePage({ session, hasRole }) {
 
   return (
     <div className="home-wrap">
-      <header className="home-header">
-        <div className="home-header-inner">
-          <span className="home-title">5669 Attendance</span>
-          <button className="signout-btn" onClick={() => supabase.auth.signOut()}>
-            Sign out
-          </button>
-        </div>
-      </header>
-
       <div className="home-body">
         <div className="status-card">
           <div className={`status-badge ${isIn ? 'status-in' : 'status-out'}`}>

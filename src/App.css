@@ -20,6 +20,12 @@ body {
   color: #ffffff;
 }
 
+.app-layout {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
 .logo {
   font-size: 3.5rem;
   font-weight: 900;
