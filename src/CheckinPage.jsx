@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import './CheckinPage.css'
 
@@ -73,6 +73,7 @@ export default function CheckinPage({ session }) {
       <div className="checkin-icon">✓</div>
       <h1>Checked {eventType}</h1>
       <p className="checkin-detail">{timeStr} · {locDisplay}</p>
+      <Link to="/" className="checkin-home-link">View status →</Link>
     </div>
   )
 }
