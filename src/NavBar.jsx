@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 import './NavBar.css'
 
 export default function NavBar({ hasRole = () => false, session = null }) {
+  const isStaff    = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const avatarUrl  = session?.user?.user_metadata?.avatar_url
   const name       = session?.user?.user_metadata?.full_name || session?.user?.email || ''
   const initials   = (name[0] || '?').toUpperCase()
@@ -22,6 +23,11 @@ export default function NavBar({ hasRole = () => false, session = null }) {
           <NavLink to="/hours" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             Team Hours
           </NavLink>
+          {isStaff && (
+            <NavLink to="/skills" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+              Skills
+            </NavLink>
+          )}
           <NavLink to="/profile" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             My Profile
           </NavLink>
