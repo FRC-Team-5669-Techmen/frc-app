@@ -1,7 +1,12 @@
 -- Admin-only RPC: returns every member with their email, status, roles, and subteams.
 -- auth.users is only reachable from a SECURITY DEFINER function.
 -- The function enforces the admin check itself before returning any data.
-create or replace function public.admin_get_members()
+--
+-- DROP required because the return type changed (subteams column added).
+-- CREATE OR REPLACE cannot change a function's return type.
+drop function if exists public.admin_get_members();
+
+create function public.admin_get_members()
 returns table (
   id       uuid,
   full_name text,
