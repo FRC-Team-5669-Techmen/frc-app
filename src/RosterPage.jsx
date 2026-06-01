@@ -80,6 +80,7 @@ export default function RosterPage() {
               <tr>
                 <th className="roster-th">Member</th>
                 <th className="roster-th">Email</th>
+                <th className="roster-th">Subteams</th>
                 <th className="roster-th">Roles</th>
                 <th className="roster-th">Status</th>
                 <th className="roster-th"></th>
@@ -90,6 +91,13 @@ export default function RosterPage() {
                 <tr key={m.id} className="roster-row">
                   <td className="roster-td roster-name">{m.full_name || '—'}</td>
                   <td className="roster-td roster-email">{m.email}</td>
+                  <td className="roster-td">
+                    <div className="subteam-chips">
+                      {(m.subteams ?? []).map(st => (
+                        <span key={st} className="subteam-chip">{st}</span>
+                      ))}
+                    </div>
+                  </td>
                   <td className="roster-td">
                     <div className="role-checks">
                       {ALL_ROLES.map(role => {

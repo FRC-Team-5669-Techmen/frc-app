@@ -81,8 +81,18 @@
   letter-spacing: normal;
 }
 
+.mp-subteams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
 .mp-subteam {
-  font-size: 0.8rem;
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 99px;
+  background: #f1f5f9;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #555;
   opacity: 1;

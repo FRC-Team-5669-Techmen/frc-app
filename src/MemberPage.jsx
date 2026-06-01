@@ -12,10 +12,10 @@ export default function MemberPage({ session, hasRole }) {
   useEffect(() => {
     supabase
       .from('profiles')
-      .select('full_name, avatar_url, subteam')
+      .select('full_name, avatar_url, subteams')
       .eq('id', id)
       .single()
-      .then(({ data }) => setMember(data ?? { full_name: 'Unknown member', avatar_url: null, subteam: null }))
+      .then(({ data }) => setMember(data ?? { full_name: 'Unknown member', avatar_url: null, subteams: [] }))
   }, [id])
 
   if (!member) {
@@ -35,7 +35,13 @@ export default function MemberPage({ session, hasRole }) {
           }
           <div className="mp-id-text">
             <span className="mp-name">{member.full_name || '—'}</span>
-            {member.subteam && <span className="mp-subteam">{member.subteam}</span>}
+            {(member.subteams ?? []).length > 0 && (
+              <div className="mp-subteams">
+                {member.subteams.map(st => (
+                  <span key={st} className="mp-subteam">{st}</span>
+                ))}
+              </div>
+            )}
             <span className="mp-subtitle">
               {isStaff ? 'Staff view — certify skills from the in-progress or not-started rows' : 'Skills progress (read-only)'}
             </span>

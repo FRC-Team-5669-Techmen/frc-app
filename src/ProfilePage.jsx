@@ -12,7 +12,7 @@ const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 export default function ProfilePage({ session }) {
   const [profile, setProfile] = useState(null)
   const [form, setForm]       = useState({
-    nickname: '', bio: '', shirt_size: '', subteam: '', grad_year: '',
+    nickname: '', bio: '', shirt_size: '', subteams: [], grad_year: '',
   })
   const [saving,    setSaving]    = useState(false)
   const [saved,     setSaved]     = useState(false)
@@ -23,13 +23,12 @@ export default function ProfilePage({ session }) {
     async function load() {
       const { data, error: qErr } = await supabase
         .from('profiles')
-        .select('full_name, avatar_url, nickname, bio, shirt_size, subteam, grad_year')
+        .select('full_name, avatar_url, nickname, bio, shirt_size, subteams, grad_year')
         .eq('id', session.user.id)
         .single()
       if (qErr) { setLoadError(qErr.message); return }
       if (!data) { setLoadError('Profile row not found.'); return }
 
-      // Sync Google avatar into profiles if the DB row doesn't have it yet
       let { avatar_url } = data
       const metaAvatar = session.user.user_metadata?.avatar_url
       if (!avatar_url && metaAvatar) {
@@ -43,7 +42,7 @@ export default function ProfilePage({ session }) {
         nickname:   p.nickname   ?? '',
         bio:        p.bio        ?? '',
         shirt_size: p.shirt_size ?? '',
-        subteam:    p.subteam    ?? '',
+        subteams:   p.subteams   ?? [],
         grad_year:  p.grad_year  ?? '',
       })
     }
@@ -51,6 +50,15 @@ export default function ProfilePage({ session }) {
   }, [session.user.id])
 
   const field = key => e => setForm(f => ({ ...f, [key]: e.target.value }))
+
+  function toggleSubteam(st) {
+    setForm(f => ({
+      ...f,
+      subteams: f.subteams.includes(st)
+        ? f.subteams.filter(s => s !== st)
+        : [...f.subteams, st],
+    }))
+  }
 
   async function handleSave(e) {
     e.preventDefault()
@@ -63,7 +71,7 @@ export default function ProfilePage({ session }) {
         nickname:   form.nickname   || null,
         bio:        form.bio        || null,
         shirt_size: form.shirt_size || null,
-        subteam:    form.subteam    || null,
+        subteams:   form.subteams,
         grad_year:  form.grad_year !== '' ? Number(form.grad_year) : null,
       })
       .eq('id', session.user.id)
@@ -94,7 +102,6 @@ export default function ProfilePage({ session }) {
       <div className="profile-body">
         <div className="profile-card">
 
-          {/* ── Identity header (read-only) ── */}
           <div className="profile-identity">
             {profile.avatar_url
               ? <img src={profile.avatar_url} className="profile-avatar" alt={profile.full_name} />
@@ -106,7 +113,6 @@ export default function ProfilePage({ session }) {
             </div>
           </div>
 
-          {/* ── Editable fields ── */}
           <form onSubmit={handleSave} className="profile-form">
 
             <div className="profile-field">
@@ -122,20 +128,23 @@ export default function ProfilePage({ session }) {
               />
             </div>
 
-            <div className="profile-form-row">
-              <div className="profile-field">
-                <label className="profile-label" htmlFor="subteam">Subteam</label>
-                <select
-                  id="subteam"
-                  value={form.subteam}
-                  onChange={field('subteam')}
-                  className="profile-select"
-                >
-                  <option value="">— Select —</option>
-                  {SUBTEAMS.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+            <div className="profile-field">
+              <label className="profile-label">Subteams</label>
+              <div className="profile-subteam-chips">
+                {SUBTEAMS.map(st => (
+                  <button
+                    key={st}
+                    type="button"
+                    className={`profile-subteam-chip${form.subteams.includes(st) ? ' chip-on' : ''}`}
+                    onClick={() => toggleSubteam(st)}
+                  >
+                    {st}
+                  </button>
+                ))}
               </div>
+            </div>
 
+            <div className="profile-form-row">
               <div className="profile-field">
                 <label className="profile-label" htmlFor="shirt-size">Shirt size</label>
                 <select
@@ -180,13 +189,12 @@ export default function ProfilePage({ session }) {
             {error && <p className="profile-error">{error}</p>}
 
             <button type="submit" className="profile-save" disabled={saving}>
-              {saving ? 'Saving…' : saved ? 'Saved' : 'Save changes'}
+              {saving ? 'Saving…' : saved ? 'Saved ✓' : 'Save changes'}
             </button>
           </form>
 
         </div>
 
-        {/* ── Skills ladder ── */}
         <p className="profile-section-heading">Skills</p>
         <MemberSkillsPanel
           memberId={session.user.id}

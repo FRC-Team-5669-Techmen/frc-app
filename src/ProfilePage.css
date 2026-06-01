@@ -172,17 +172,37 @@
   border-color: #111;
 }
 
-/* Three short fields side by side on wider screens */
-.profile-form-row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.125rem;
+/* Subteam chip toggles */
+.profile-subteam-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-@media (min-width: 480px) {
-  .profile-form-row {
-    grid-template-columns: 2fr 1fr 1fr;
-  }
+.profile-subteam-chip {
+  padding: 0.35rem 0.875rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #999;
+  background: #fafafa;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.profile-subteam-chip.chip-on {
+  background: #111;
+  color: #FFE629;
+  border-color: #111;
+}
+
+/* Shirt size + grad year side by side */
+.profile-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.125rem;
 }
 
 .profile-error {

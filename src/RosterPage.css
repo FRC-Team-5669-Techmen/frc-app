@@ -104,6 +104,25 @@
   font-size: 0.85rem;
 }
 
+/* ── Subteam chips (read-only display) ── */
+.subteam-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  min-width: 6rem;
+}
+
+.subteam-chip {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 99px;
+  background: #f1f5f9;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+
 /* ── Role chips ── */
 .role-checks {
   display: flex;
