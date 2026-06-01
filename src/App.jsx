@@ -16,6 +16,7 @@ const MemberPage     = lazy(() => import('./MemberPage'))
 const CheckinPage    = lazy(() => import('./CheckinPage'))
 const CertifyPage      = lazy(() => import('./CertifyPage'))
 const CoverageMatrix   = lazy(() => import('./CoverageMatrix'))
+const LogHoursPage     = lazy(() => import('./LogHoursPage'))
 
 const Splash = () => (
   <div className="splash">
@@ -75,6 +76,7 @@ export default function App() {
         <Route element={session ? <ProtectedLayout hasRole={hasRole} session={session} /> : <Navigate to="/login" replace />}>
           <Route path="/dashboard" element={<HomePage    session={session} hasRole={hasRole} />} />
           <Route path="/my-hours"  element={<MyHoursPage session={session} />} />
+          <Route path="/log-hours" element={<LogHoursPage session={session} />} />
           <Route path="/hours"     element={<HoursBoard />} />
           <Route path="/roster"    element={<RosterPage />} />
           <Route path="/skills"      element={<SkillsCatalog hasRole={hasRole} />} />

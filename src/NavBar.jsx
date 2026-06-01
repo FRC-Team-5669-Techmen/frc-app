@@ -20,6 +20,9 @@ export default function NavBar({ hasRole = () => false, session = null }) {
           <NavLink to="/my-hours" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             My Hours
           </NavLink>
+          <NavLink to="/log-hours" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            Log Hours
+          </NavLink>
           <NavLink to="/hours" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             Team Hours
           </NavLink>
