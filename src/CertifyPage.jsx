@@ -15,9 +15,27 @@ export default function CertifyPage({ session, hasRole }) {
   const [busy,         setBusy]         = useState({})
 
   useEffect(() => {
-    supabase.from('profiles').select('id, full_name, email').order('full_name')
-      .then(({ data }) => setMembers(data ?? []))
-  }, [])
+    async function loadMembers() {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .order('full_name')
+      const list = data ?? []
+      // Ensure the current staff member appears so they can certify their own skills.
+      // The member_skills staff write policy has no restriction on certified_by = member_id,
+      // so this is safe — only staff reach this page at all.
+      if (!list.find(p => p.id === session.user.id)) {
+        const { data: own } = await supabase
+          .from('profiles')
+          .select('id, full_name')
+          .eq('id', session.user.id)
+          .single()
+        if (own) list.unshift(own)
+      }
+      setMembers(list)
+    }
+    loadMembers()
+  }, [session.user.id])
 
   useEffect(() => {
     if (!selectedId) { setCatalog(null); setMemberSkills([]); return }
@@ -101,7 +119,8 @@ export default function CertifyPage({ session, hasRole }) {
             <option value="">— Select a member —</option>
             {(members ?? []).map(m => (
               <option key={m.id} value={m.id}>
-                {m.full_name || m.email}
+                {m.full_name || '(no name)'}
+                {m.id === session.user.id ? ' (you)' : ''}
               </option>
             ))}
           </select>
