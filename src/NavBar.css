@@ -3,7 +3,7 @@
   flex-shrink: 0;
 }
 
-/* Mobile: mark+signout on row 1, links wrap to row 2 */
+/* Mobile: mark + account on row 1, links wrap to row 2 */
 .navbar-shell {
   display: flex;
   flex-wrap: wrap;
@@ -22,8 +22,33 @@
   display: block;
 }
 
-.navbar-signout {
+.navbar-account {
   order: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.navbar-avatar {
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+}
+
+.navbar-avatar-init {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.navbar-signout {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: rgba(255, 255, 255, 0.75);
@@ -87,7 +112,7 @@
     gap: 0.125rem;
   }
 
-  .navbar-signout {
+  .navbar-account {
     order: 3;
     margin-left: auto;
   }

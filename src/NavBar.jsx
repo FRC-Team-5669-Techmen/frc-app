@@ -2,7 +2,11 @@ import { NavLink } from 'react-router-dom'
 import { supabase } from './supabase'
 import './NavBar.css'
 
-export default function NavBar({ hasRole = () => false }) {
+export default function NavBar({ hasRole = () => false, session = null }) {
+  const avatarUrl  = session?.user?.user_metadata?.avatar_url
+  const name       = session?.user?.user_metadata?.full_name || session?.user?.email || ''
+  const initials   = (name[0] || '?').toUpperCase()
+
   return (
     <nav className="navbar">
       <div className="navbar-shell">
@@ -28,9 +32,15 @@ export default function NavBar({ hasRole = () => false }) {
           )}
         </div>
 
-        <button className="navbar-signout" onClick={() => supabase.auth.signOut()}>
-          Sign out
-        </button>
+        <div className="navbar-account">
+          {avatarUrl
+            ? <img src={avatarUrl} className="navbar-avatar" alt={name} />
+            : <div className="navbar-avatar navbar-avatar-init">{initials}</div>
+          }
+          <button className="navbar-signout" onClick={() => supabase.auth.signOut()}>
+            Sign out
+          </button>
+        </div>
       </div>
     </nav>
   )

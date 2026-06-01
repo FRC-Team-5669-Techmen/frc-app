@@ -19,10 +19,10 @@ const Splash = () => (
   </div>
 )
 
-function ProtectedLayout({ hasRole }) {
+function ProtectedLayout({ hasRole, session }) {
   return (
     <div className="app-layout">
-      <NavBar hasRole={hasRole} />
+      <NavBar hasRole={hasRole} session={session} />
       <Outlet />
     </div>
   )
@@ -68,7 +68,7 @@ export default function App() {
         <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
 
         {/* ── Protected: shared NavBar via ProtectedLayout ── */}
-        <Route element={session ? <ProtectedLayout hasRole={hasRole} /> : <Navigate to="/login" replace />}>
+        <Route element={session ? <ProtectedLayout hasRole={hasRole} session={session} /> : <Navigate to="/login" replace />}>
           <Route path="/dashboard" element={<HomePage    session={session} hasRole={hasRole} />} />
           <Route path="/my-hours"  element={<MyHoursPage session={session} />} />
           <Route path="/hours"     element={<HoursBoard />} />
