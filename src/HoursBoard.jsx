@@ -3,7 +3,19 @@ import { supabase } from './supabase'
 import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn } from './hoursUtils'
 import './HoursBoard.css'
 
-const SORT_COLS = ['name', 'regular', 'volunteering', 'outreach', 'competition', 'total']
+// Defined outside HoursBoard so React sees a stable component reference across renders.
+function SortTh({ col, label, sort, onSort }) {
+  const active = sort.col === col
+  const arrow  = active ? (sort.dir === 'desc' ? ' ↓' : ' ↑') : ''
+  return (
+    <th
+      className={`board-th board-th-sort${active ? ' board-th-sorted' : ''}`}
+      onClick={() => onSort(col)}
+    >
+      {label}{arrow}
+    </th>
+  )
+}
 
 export default function HoursBoard() {
   const [seasons,   setSeasons]   = useState(null)
@@ -20,23 +32,29 @@ export default function HoursBoard() {
       supabase.from('attendance_events').select('user_id, type, event_time').order('event_time'),
       supabase.from('logged_hours').select('member_id, type, hours, date').eq('status', 'verified'),
     ]).then(([{ data: s }, { data: p }, { data: ae }, { data: lh }]) => {
-      const seasons = s ?? []
-      setSeasons(seasons)
+      const seas = s ?? []
+      setSeasons(seas)
       setProfiles(p ?? [])
       setAllEvents(ae ?? [])
       setAllLogged(lh ?? [])
-      setSelSeason(seasons.length > 0 ? seasons[0].id : 'all')
+      setSelSeason(seas.length > 0 ? seas[0].id : 'all')
     })
   }, [])
 
-  // Per-member breakdown map, computed once when data arrives
   const byMember = useMemo(() => {
     if (!seasons || !profiles || !allEvents || !allLogged) return null
 
-    const eventMap  = {}
-    for (const e of allEvents) ;(eventMap[e.user_id]    ??= []).push(e)
+    // Group events and logged hours by member id.
+    // Curly braces are required — a leading ; would be parsed as the loop body,
+    // leaving the expression to run after the loop where e/l are out of scope.
+    const eventMap = {}
+    for (const e of allEvents) {
+      (eventMap[e.user_id] ??= []).push(e)
+    }
     const loggedMap = {}
-    for (const l of allLogged) ;(loggedMap[l.member_id] ??= []).push(l)
+    for (const l of allLogged) {
+      (loggedMap[l.member_id] ??= []).push(l)
+    }
 
     return profiles.map(p => ({
       id:        p.id,
@@ -46,7 +64,6 @@ export default function HoursBoard() {
     }))
   }, [seasons, profiles, allEvents, allLogged])
 
-  // Flatten to rows for the selected season
   const rows = useMemo(() => {
     if (!byMember || selSeason === null) return null
     return byMember.map(m => {
@@ -74,26 +91,12 @@ export default function HoursBoard() {
     return mul * ((a[sort.col] ?? 0) - (b[sort.col] ?? 0))
   })
 
-  function SortTh({ col, label }) {
-    const active = sort.col === col
-    const arrow  = active ? (sort.dir === 'desc' ? ' ↓' : ' ↑') : ''
-    return (
-      <th
-        className={`board-th board-th-sort${active ? ' board-th-sorted' : ''}`}
-        onClick={() => toggleSort(col)}
-      >
-        {label}{arrow}
-      </th>
-    )
-  }
-
   const tabs = [...(seasons ?? []), { id: 'all', name: 'All Time' }]
 
   return (
     <div className="board-wrap">
       <div className="board-body">
 
-        {/* Season tabs */}
         <div className="board-tabs-scroll">
           <div className="board-tabs">
             {tabs.map(s => (
@@ -112,12 +115,12 @@ export default function HoursBoard() {
           <table className="board-table">
             <thead>
               <tr>
-                <SortTh col="name"         label="Member" />
-                <SortTh col="regular"      label="Regular" />
-                <SortTh col="volunteering" label="Volunteering" />
-                <SortTh col="outreach"     label="Outreach" />
-                <SortTh col="competition"  label="Competition" />
-                <SortTh col="total"        label="Total" />
+                <SortTh col="name"         label="Member"       sort={sort} onSort={toggleSort} />
+                <SortTh col="regular"      label="Regular"      sort={sort} onSort={toggleSort} />
+                <SortTh col="volunteering" label="Volunteering" sort={sort} onSort={toggleSort} />
+                <SortTh col="outreach"     label="Outreach"     sort={sort} onSort={toggleSort} />
+                <SortTh col="competition"  label="Competition"  sort={sort} onSort={toggleSort} />
+                <SortTh col="total"        label="Total"        sort={sort} onSort={toggleSort} />
                 <th className="board-th">Status</th>
               </tr>
             </thead>

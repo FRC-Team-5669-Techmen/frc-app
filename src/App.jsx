@@ -2,6 +2,7 @@ import { useState, useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { supabase } from './supabase'
 import NavBar from './NavBar'
+import ErrorBoundary from './ErrorBoundary'
 import './App.css'
 
 const LandingPage = lazy(() => import('./LandingPage'))
@@ -67,6 +68,7 @@ export default function App() {
   const hasRole = (r) => roles.includes(r)
 
   return (
+    <ErrorBoundary>
     <Suspense fallback={<Splash />}>
       <Routes>
         {/* ── Public ── */}
@@ -97,5 +99,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
+    </ErrorBoundary>
   )
 }
