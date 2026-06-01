@@ -21,7 +21,7 @@ export default function LandingPage() {
     <div className="landing-wrap">
       <nav className="landing-nav">
         <div className="landing-inner">
-          <span className="landing-brand">5669</span>
+          <img src="/assets/logos/Mark-Gold.svg" className="landing-mark" alt="Techmen" />
           <Link className="landing-nav-link" to="/login">Sign in</Link>
         </div>
       </nav>

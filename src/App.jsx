@@ -13,7 +13,7 @@ const CheckinPage = lazy(() => import('./CheckinPage'))
 
 const Splash = () => (
   <div className="splash">
-    <div className="logo">5669</div>
+    <img src="/assets/logos/Mark-Gold.svg" className="splash-mark" alt="" />
   </div>
 )
 

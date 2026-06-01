@@ -6,7 +6,7 @@ export default function NavBar() {
   return (
     <nav className="navbar">
       <div className="navbar-shell">
-        <span className="navbar-brand">5669</span>
+        <img src="/assets/logos/Mark-Gold.svg" className="navbar-mark" alt="Techmen" />
 
         <div className="navbar-links">
           <NavLink to="/dashboard" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
