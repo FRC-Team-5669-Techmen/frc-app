@@ -9,8 +9,9 @@ const LoginPage   = lazy(() => import('./LoginPage'))
 const HomePage    = lazy(() => import('./HomePage'))
 const MyHoursPage = lazy(() => import('./MyHoursPage'))
 const HoursBoard  = lazy(() => import('./HoursBoard'))
-const RosterPage  = lazy(() => import('./RosterPage'))
-const CheckinPage = lazy(() => import('./CheckinPage'))
+const RosterPage   = lazy(() => import('./RosterPage'))
+const ProfilePage  = lazy(() => import('./ProfilePage'))
+const CheckinPage  = lazy(() => import('./CheckinPage'))
 
 const Splash = () => (
   <div className="splash">
@@ -72,6 +73,7 @@ export default function App() {
           <Route path="/my-hours"  element={<MyHoursPage session={session} />} />
           <Route path="/hours"     element={<HoursBoard />} />
           <Route path="/roster"    element={<RosterPage />} />
+          <Route path="/profile"   element={<ProfilePage session={session} />} />
         </Route>
 
         {/* ── Minimal: no NavBar, bundle stays small ── */}

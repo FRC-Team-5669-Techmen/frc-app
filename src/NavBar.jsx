@@ -18,6 +18,9 @@ export default function NavBar({ hasRole = () => false }) {
           <NavLink to="/hours" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             Team Hours
           </NavLink>
+          <NavLink to="/profile" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            My Profile
+          </NavLink>
           {hasRole('admin') && (
             <NavLink to="/roster" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
               Roster
