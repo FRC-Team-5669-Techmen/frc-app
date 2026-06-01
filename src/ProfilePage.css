@@ -28,9 +28,19 @@
 
 .profile-body {
   width: 100%;
-  max-width: 560px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 1rem;
+}
+
+.profile-section-heading {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #999;
+  margin: 1.25rem 0 0.5rem;
+  opacity: 1;
 }
 
 .profile-card {

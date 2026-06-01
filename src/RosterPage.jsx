@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import './RosterPage.css'
 
@@ -81,6 +82,7 @@ export default function RosterPage() {
                 <th className="roster-th">Email</th>
                 <th className="roster-th">Roles</th>
                 <th className="roster-th">Status</th>
+                <th className="roster-th"></th>
               </tr>
             </thead>
             <tbody>
@@ -118,6 +120,11 @@ export default function RosterPage() {
                         <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
+                  </td>
+                  <td className="roster-td">
+                    <Link to={`/members/${m.id}`} className="roster-skills-link">
+                      Skills
+                    </Link>
                   </td>
                 </tr>
               ))}

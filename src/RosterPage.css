@@ -166,3 +166,19 @@
 
 .status-select.status-inactive { color: #999; }
 .status-select.status-alumni   { color: #6366f1; }
+
+.roster-skills-link {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  text-decoration: none;
+  border-bottom: 1.5px solid #e5e7eb;
+  padding-bottom: 1px;
+  white-space: nowrap;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.roster-skills-link:hover {
+  color: #111;
+  border-color: #111;
+}

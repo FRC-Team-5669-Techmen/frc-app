@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import MemberSkillsPanel from './MemberSkillsPanel'
 import './ProfilePage.css'
 
 const SUBTEAMS = [
@@ -172,6 +173,16 @@ export default function ProfilePage({ session }) {
           </form>
 
         </div>
+
+        {/* ── Skills ladder ── */}
+        <p className="profile-section-heading">Skills</p>
+        <MemberSkillsPanel
+          memberId={session.user.id}
+          currentUserId={session.user.id}
+          canEdit={true}
+          canCertify={false}
+        />
+
       </div>
     </div>
   )

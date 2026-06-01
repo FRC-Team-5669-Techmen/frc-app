@@ -1,0 +1,189 @@
+.msp-loading {
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.msp-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: msp-spin 0.75s linear infinite;
+}
+
+@keyframes msp-spin {
+  to { transform: rotate(360deg); }
+}
+
+.msp-empty {
+  color: #bbb;
+  font-size: 0.875rem;
+  padding: 0.5rem 0;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.msp-hint {
+  font-size: 0.78rem;
+  color: #aaa;
+  margin-bottom: 0.25rem;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ── Layout ── */
+.msp-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+/* ── Category card ── */
+.msp-category {
+  background: #fff;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.msp-cat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.msp-cat-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #111;
+  opacity: 1;
+}
+
+.msp-cat-progress {
+  font-size: 0.75rem;
+  color: #aaa;
+  font-weight: 500;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ── Status sub-sections ── */
+.msp-section {
+  padding: 0.25rem 0;
+}
+
+.msp-section + .msp-section {
+  border-top: 1px solid #f7f8fa;
+}
+
+.msp-section-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  padding: 0.5rem 1rem 0.2rem;
+  opacity: 1;
+}
+
+.msp-section-certified { color: #059669; }
+.msp-section-progress  { color: #d97706; }
+.msp-section-none      { color: #9ca3af; }
+
+/* ── Skill row ── */
+.msp-skill-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.45rem 1rem;
+  transition: background 0.1s;
+}
+
+.msp-clickable {
+  cursor: pointer;
+}
+
+.msp-clickable:hover {
+  background: #f9fafb;
+}
+
+.msp-busy {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* ── Status dot ── */
+.msp-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.msp-dot[data-status="certified"]   { background: #00a86b; }
+.msp-dot[data-status="in_progress"] { background: transparent; border: 2.5px solid #f59e0b; }
+.msp-dot[data-status="not_started"] { background: transparent; border: 2px solid #d1d5db; }
+
+/* ── Skill name ── */
+.msp-skill-name {
+  flex: 1;
+  font-size: 0.875rem;
+  color: #333;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ── Safety critical indicator ── */
+.msp-safety {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  cursor: default;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ── Certify button ── */
+.msp-certify-btn {
+  padding: 0.2rem 0.625rem;
+  background: transparent;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+
+.msp-certify-btn:hover:not(:disabled) {
+  border-color: #00a86b;
+  color: #00a86b;
+  background: #f0fdf4;
+}
+
+.msp-certify-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
