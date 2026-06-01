@@ -14,18 +14,20 @@ export default function ProfilePage({ session }) {
   const [form, setForm]       = useState({
     nickname: '', bio: '', shirt_size: '', subteam: '', grad_year: '',
   })
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved]   = useState(false)
-  const [error, setError]   = useState('')
+  const [saving,    setSaving]    = useState(false)
+  const [saved,     setSaved]     = useState(false)
+  const [error,     setError]     = useState('')
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
     async function load() {
-      const { data } = await supabase
+      const { data, error: qErr } = await supabase
         .from('profiles')
         .select('full_name, avatar_url, nickname, bio, shirt_size, subteam, grad_year')
         .eq('id', session.user.id)
         .single()
-      if (!data) return
+      if (qErr) { setLoadError(qErr.message); return }
+      if (!data) { setLoadError('Profile row not found.'); return }
 
       // Sync Google avatar into profiles if the DB row doesn't have it yet
       let { avatar_url } = data
@@ -69,6 +71,16 @@ export default function ProfilePage({ session }) {
     if (error) { setError(error.message); return }
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
+  }
+
+  if (loadError) {
+    return (
+      <div className="profile-wrap">
+        <div className="profile-body">
+          <p className="profile-error" style={{ marginTop: '1.5rem' }}>{loadError}</p>
+        </div>
+      </div>
+    )
   }
 
   if (!profile) {

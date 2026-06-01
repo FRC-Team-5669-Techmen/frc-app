@@ -20,10 +20,10 @@ begin
   return query
     select
       p.id,
-      p.full_name,
-      u.email,
-      p.status,
-      array_remove(array_agg(mr.role order by mr.role), null) as roles
+      p.full_name::text,
+      u.email::text,
+      p.status::text,
+      array_remove(array_agg(mr.role order by mr.role), null)::text[] as roles
     from public.profiles p
     join auth.users u on u.id = p.id
     left join public.member_roles mr on mr.member_id = p.id
