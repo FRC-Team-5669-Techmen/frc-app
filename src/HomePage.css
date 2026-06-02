@@ -118,6 +118,17 @@
 .toggle-in  { background: #00a86b; color: #fff; }
 .toggle-out { background: #f59e0b; color: #fff; }
 
+.nfc-hint {
+  margin: 0.5rem 1rem 0;
+  padding: 1.05rem;
+  border-radius: 0.875rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #aaa;
+  background: #fff;
+  border: 2px dashed #e5e7eb;
+}
+
 /* ── Event list ── */
 .events-section {
   margin: 1rem;

@@ -44,6 +44,8 @@ export default function HomePage({ session, hasRole }) {
 
   useEffect(() => { fetchEvents() }, [fetchEvents])
 
+  const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
+
   async function handleToggle() {
     if (acting) return
     setActing(true)
@@ -51,6 +53,8 @@ export default function HomePage({ session, hasRole }) {
     startOfToday.setHours(0, 0, 0, 0)
     const todayEvents = (allEvents ?? []).filter(e => new Date(e.event_time) >= startOfToday)
     const newType = todayEvents.at(-1)?.type === 'in' ? 'out' : 'in'
+    // Students may not check in via button — NFC only
+    if (newType === 'in' && !isStaff) { setActing(false); return }
     await supabase.from('attendance_events').insert({
       user_id: session.user.id,
       type: newType,
@@ -100,13 +104,17 @@ export default function HomePage({ session, hasRole }) {
           </div>
         </div>
 
-        <button
-          className={`toggle-btn ${isIn ? 'toggle-out' : 'toggle-in'}`}
-          onClick={handleToggle}
-          disabled={acting}
-        >
-          {acting ? '…' : isIn ? 'Check Out' : 'Check In'}
-        </button>
+        {isIn ? (
+          <button className="toggle-btn toggle-out" onClick={handleToggle} disabled={acting}>
+            {acting ? '…' : 'Check Out'}
+          </button>
+        ) : isStaff ? (
+          <button className="toggle-btn toggle-in" onClick={handleToggle} disabled={acting}>
+            {acting ? '…' : 'Check In'}
+          </button>
+        ) : (
+          <p className="nfc-hint">Tap your NFC tag to check in</p>
+        )}
 
         <section className="events-section">
           <h2 className="events-heading">Today's activity</h2>
