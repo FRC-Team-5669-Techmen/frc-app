@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabase'
 import NavBar from './NavBar'
 import ErrorBoundary from './ErrorBoundary'
@@ -35,9 +35,19 @@ function ProtectedLayout({ hasRole, session }) {
   )
 }
 
+// Saves the intended NFC check-in URL then sends the user to login
+function CheckinRedirect() {
+  const location = useLocation()
+  useEffect(() => {
+    sessionStorage.setItem('pendingCheckin', location.pathname + location.search)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  return <Navigate to="/login" replace />
+}
+
 export default function App() {
   const [session, setSession] = useState(undefined)
   const [roles, setRoles]     = useState([])
+  const navigate = useNavigate()
 
   useEffect(() => {
     async function loadRoles(userId) {
@@ -57,11 +67,20 @@ export default function App() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
-      if (session) loadRoles(session.user.id)
-      else setRoles([])
+      if (session) {
+        loadRoles(session.user.id)
+        // Complete any pending NFC check-in after login
+        const pending = sessionStorage.getItem('pendingCheckin')
+        if (pending) {
+          sessionStorage.removeItem('pendingCheckin')
+          navigate(pending, { replace: true })
+        }
+      } else {
+        setRoles([])
+      }
     })
     return () => subscription.unsubscribe()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (session === undefined) return <Splash />
 
@@ -93,7 +112,7 @@ export default function App() {
         {/* ── Minimal: no NavBar, bundle stays small ── */}
         <Route
           path="/checkin"
-          element={session ? <CheckinPage session={session} /> : <Navigate to="/" replace />}
+          element={session ? <CheckinPage session={session} /> : <CheckinRedirect />}
         />
 
         <Route path="*" element={<Navigate to="/" replace />} />

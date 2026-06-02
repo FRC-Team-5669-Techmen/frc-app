@@ -53,6 +53,11 @@
   to { transform: rotate(360deg); }
 }
 
+.checkin-hint {
+  font-size: 0.85rem;
+  opacity: 0.65;
+}
+
 .checkin-home-link {
   margin-top: 0.5rem;
   color: rgba(255, 255, 255, 0.85);
