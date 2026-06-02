@@ -1,14 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
-import { verifyAtShop } from './geo'
 import './HomePage.css'
-
-const GEO_ERRORS = {
-  denied:      'Location access denied — enable it in browser settings and try again.',
-  unavailable: 'Location services unavailable. Cannot verify you\'re at the shop.',
-  range:       'You\'re not at the shop. Move within 150 m of the build space to check in.',
-  error:       'Could not verify your location. Try again.',
-}
 
 function computeHoursMs(events) {
   let total = 0
@@ -40,7 +32,6 @@ function fmtTime(iso) {
 export default function HomePage({ session, hasRole }) {
   const [allEvents, setAllEvents] = useState(null)
   const [acting, setActing] = useState(false)
-  const [checkInError, setCheckInError] = useState('')
 
   const fetchEvents = useCallback(async () => {
     const { data } = await supabase
@@ -53,31 +44,14 @@ export default function HomePage({ session, hasRole }) {
 
   useEffect(() => { fetchEvents() }, [fetchEvents])
 
-  const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
-
-  async function handleToggle() {
+  async function handleCheckOut() {
     if (acting) return
     setActing(true)
-    setCheckInError('')
-    const startOfToday = new Date()
-    startOfToday.setHours(0, 0, 0, 0)
-    const todayEvents = (allEvents ?? []).filter(e => new Date(e.event_time) >= startOfToday)
-    const newType = todayEvents.at(-1)?.type === 'in' ? 'out' : 'in'
-    // Students may not check in via button — NFC only
-    if (newType === 'in' && !isStaff) { setActing(false); return }
-    if (newType === 'in') {
-      const geo = await verifyAtShop()
-      if (!geo.ok) {
-        setCheckInError(GEO_ERRORS[geo.reason] ?? GEO_ERRORS.error)
-        setActing(false)
-        return
-      }
-    }
     await supabase.from('attendance_events').insert({
-      user_id: session.user.id,
-      type: newType,
+      user_id:  session.user.id,
+      type:     'out',
       location: 'button',
-      method: null,
+      method:   null,
     })
     await fetchEvents()
     setActing(false)
@@ -123,17 +97,12 @@ export default function HomePage({ session, hasRole }) {
         </div>
 
         {isIn ? (
-          <button className="toggle-btn toggle-out" onClick={handleToggle} disabled={acting}>
+          <button className="toggle-btn toggle-out" onClick={handleCheckOut} disabled={acting}>
             {acting ? '…' : 'Check Out'}
-          </button>
-        ) : isStaff ? (
-          <button className="toggle-btn toggle-in" onClick={handleToggle} disabled={acting}>
-            {acting ? '…' : 'Check In'}
           </button>
         ) : (
           <p className="nfc-hint">Tap your NFC tag to check in</p>
         )}
-        {checkInError && <p className="home-geo-error">{checkInError}</p>}
 
         <section className="events-section">
           <h2 className="events-heading">Today's activity</h2>

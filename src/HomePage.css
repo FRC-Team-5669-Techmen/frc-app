@@ -115,7 +115,6 @@
 }
 
 .toggle-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-.toggle-in  { background: #00a86b; color: #fff; }
 .toggle-out { background: #f59e0b; color: #fff; }
 
 .nfc-hint {
@@ -127,16 +126,6 @@
   color: #aaa;
   background: #fff;
   border: 2px dashed #e5e7eb;
-}
-
-.home-geo-error {
-  margin: 0.4rem 1rem 0;
-  padding: 0.65rem 0.875rem;
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
-  color: #991b1b;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
 }
 
 /* ── Event list ── */
