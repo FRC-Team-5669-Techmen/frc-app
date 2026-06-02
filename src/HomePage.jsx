@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
+import { verifyAtShop } from './geo'
 import './HomePage.css'
+
+const GEO_ERRORS = {
+  denied:      'Location access denied — enable it in browser settings and try again.',
+  unavailable: 'Location services unavailable. Cannot verify you\'re at the shop.',
+  range:       'You\'re not at the shop. Move within 150 m of the build space to check in.',
+  error:       'Could not verify your location. Try again.',
+}
 
 function computeHoursMs(events) {
   let total = 0
@@ -32,6 +40,7 @@ function fmtTime(iso) {
 export default function HomePage({ session, hasRole }) {
   const [allEvents, setAllEvents] = useState(null)
   const [acting, setActing] = useState(false)
+  const [checkInError, setCheckInError] = useState('')
 
   const fetchEvents = useCallback(async () => {
     const { data } = await supabase
@@ -49,12 +58,21 @@ export default function HomePage({ session, hasRole }) {
   async function handleToggle() {
     if (acting) return
     setActing(true)
+    setCheckInError('')
     const startOfToday = new Date()
     startOfToday.setHours(0, 0, 0, 0)
     const todayEvents = (allEvents ?? []).filter(e => new Date(e.event_time) >= startOfToday)
     const newType = todayEvents.at(-1)?.type === 'in' ? 'out' : 'in'
     // Students may not check in via button — NFC only
     if (newType === 'in' && !isStaff) { setActing(false); return }
+    if (newType === 'in') {
+      const geo = await verifyAtShop()
+      if (!geo.ok) {
+        setCheckInError(GEO_ERRORS[geo.reason] ?? GEO_ERRORS.error)
+        setActing(false)
+        return
+      }
+    }
     await supabase.from('attendance_events').insert({
       user_id: session.user.id,
       type: newType,
@@ -115,6 +133,7 @@ export default function HomePage({ session, hasRole }) {
         ) : (
           <p className="nfc-hint">Tap your NFC tag to check in</p>
         )}
+        {checkInError && <p className="home-geo-error">{checkInError}</p>}
 
         <section className="events-section">
           <h2 className="events-heading">Today's activity</h2>

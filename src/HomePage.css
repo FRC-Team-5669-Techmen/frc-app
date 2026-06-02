@@ -129,6 +129,16 @@
   border: 2px dashed #e5e7eb;
 }
 
+.home-geo-error {
+  margin: 0.4rem 1rem 0;
+  padding: 0.65rem 0.875rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
 /* ── Event list ── */
 .events-section {
   margin: 1rem;

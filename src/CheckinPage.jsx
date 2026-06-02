@@ -1,16 +1,26 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { supabase } from './supabase'
+import { verifyAtShop } from './geo'
 import './CheckinPage.css'
 
 const DUPLICATE_WINDOW_MS = 60_000
+
+const GEO_MESSAGES = {
+  denied:      { heading: 'Location denied',      detail: 'Allow location access in your browser settings and tap the tag again.' },
+  unavailable: { heading: 'Location unavailable', detail: 'Location services must be enabled to check in at the shop.' },
+  range:       { heading: 'Not at the shop',      detail: 'You need to be within 150 m of the build space to check in.' },
+  error:       { heading: 'Location error',       detail: 'Could not verify your location. Move closer and try again.' },
+}
 
 export default function CheckinPage({ session }) {
   const [searchParams] = useSearchParams()
   const loc = searchParams.get('loc') || 'unknown'
   const [status, setStatus] = useState('loading')
+  const [loadingMsg, setLoadingMsg] = useState(null)
   const [eventType, setEventType] = useState(null)
   const [eventTime, setEventTime] = useState(null)
+  const [geoReason, setGeoReason] = useState(null)
 
   useEffect(() => {
     async function record() {
@@ -41,6 +51,17 @@ export default function CheckinPage({ session }) {
 
         const newType = lastEvent?.type === 'in' ? 'out' : 'in'
 
+        // Geofence check-ins only; check-outs are unrestricted
+        if (newType === 'in') {
+          setLoadingMsg('Checking location…')
+          const geo = await verifyAtShop()
+          if (!geo.ok) {
+            setGeoReason(geo.reason)
+            setStatus('geo')
+            return
+          }
+        }
+
         const { error } = await supabase
           .from('attendance_events')
           .insert({ user_id: session.user.id, type: newType, location: loc, method: 'nfc' })
@@ -61,6 +82,18 @@ export default function CheckinPage({ session }) {
     return (
       <div className="checkin-wrap">
         <div className="checkin-spinner" />
+        {loadingMsg && <p className="checkin-loading-msg">{loadingMsg}</p>}
+      </div>
+    )
+  }
+
+  if (status === 'geo') {
+    const msg = GEO_MESSAGES[geoReason] ?? GEO_MESSAGES.error
+    return (
+      <div className="checkin-wrap checkin-error">
+        <div className="checkin-icon">✗</div>
+        <h1>{msg.heading}</h1>
+        <p className="checkin-detail">{msg.detail}</p>
       </div>
     )
   }
