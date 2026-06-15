@@ -100,6 +100,10 @@ export default function NavBar({ hasRole = () => false, session = null }) {
             Skills
           </NavLink>
 
+          <NavLink to="/jobs" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            Jobs
+          </NavLink>
+
           {isStaff && (
             <NavLink to="/activity" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
               Activity

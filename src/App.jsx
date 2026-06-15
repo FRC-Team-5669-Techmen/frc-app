@@ -21,6 +21,7 @@ const LogHoursPage     = lazy(() => import('./LogHoursPage'))
 const VerifyHoursPage  = lazy(() => import('./VerifyHoursPage'))
 const ActivityPage     = lazy(() => import('./ActivityPage'))
 const AccessGate       = lazy(() => import('./AccessGate'))
+const JobsPage         = lazy(() => import('./JobsPage'))
 
 const Splash = () => (
   <div className="splash">
@@ -121,6 +122,7 @@ export default function App() {
           <Route path="/hours"     element={<HoursBoard />} />
           <Route path="/roster"    element={<RosterPage />} />
           <Route path="/skills"      element={<SkillsCatalog hasRole={hasRole} />} />
+          <Route path="/jobs"        element={<JobsPage session={session} hasRole={hasRole} />} />
           <Route path="/members/:id" element={<MemberPage session={session} hasRole={hasRole} />} />
           <Route path="/profile"     element={<ProfilePage session={session} />} />
           <Route path="/certify"     element={<CertifyPage session={session} hasRole={hasRole} />} />
