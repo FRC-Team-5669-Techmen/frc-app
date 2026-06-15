@@ -76,7 +76,7 @@ export default function HomePage({ session, hasRole }) {
   return (
     <div className="home-wrap">
       <div className="home-body">
-        <div className="status-card">
+        <div className="status-card" data-tour="status-card">
           <div className={`status-badge ${isIn ? 'status-in' : 'status-out'}`}>
             {isIn ? 'Checked in' : 'Not checked in'}
           </div>
@@ -97,14 +97,14 @@ export default function HomePage({ session, hasRole }) {
         </div>
 
         {isIn ? (
-          <button className="toggle-btn toggle-out" onClick={handleCheckOut} disabled={acting}>
+          <button className="toggle-btn toggle-out" data-tour="checkout" onClick={handleCheckOut} disabled={acting}>
             {acting ? '…' : 'Check Out'}
           </button>
         ) : (
           <p className="nfc-hint">Tap your NFC tag to check in</p>
         )}
 
-        <section className="events-section">
+        <section className="events-section" data-tour="today-activity">
           <h2 className="events-heading">Today's activity</h2>
           {todayEvents.length === 0 ? (
             <p className="events-empty">No activity yet today.</p>

@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabase'
 import NavBar from './NavBar'
@@ -53,11 +53,14 @@ export default function App() {
   const [session, setSession] = useState(undefined)
   const [roles, setRoles]     = useState([])
   const [approved, setApproved] = useState(null)
+  const [onboardedAt, setOnboardedAt] = useState(undefined)
   const navigate = useNavigate()
+  const location = useLocation()
+  const tourStarted = useRef(false)
 
   useEffect(() => {
     // Domain gate: claim_profile() approves allowed-domain members and grants
-    // the default student role, then we load roles and the approved state.
+    // the default student role, then we load roles, approval, and onboarding state.
     async function claimAndLoad(userId) {
       const { data: claimed } = await supabase.rpc('claim_profile')
       setApproved(claimed === true)
@@ -66,6 +69,12 @@ export default function App() {
         .select('role')
         .eq('member_id', userId)
       setRoles(data?.map(r => r.role) ?? [])
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('onboarded_at')
+        .eq('id', userId)
+        .single()
+      setOnboardedAt(prof?.onboarded_at ?? null)
     }
 
     supabase.auth.getSession()
@@ -88,10 +97,43 @@ export default function App() {
       } else {
         setRoles([])
         setApproved(null)
+        setOnboardedAt(undefined)
+        tourStarted.current = false
       }
     })
     return () => subscription.unsubscribe()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-run the onboarding tour once, on the dashboard, after roles load so the
+  // right track is chosen. Marks onboarded_at on finish/skip so it never repeats.
+  useEffect(() => {
+    if (tourStarted.current) return
+    if (!session || approved !== true) return
+    if (onboardedAt === undefined || onboardedAt) return  // not loaded, or already done
+    if (location.pathname !== '/dashboard') return
+    if (roles.length === 0) return                         // wait for roles to resolve
+    tourStarted.current = true
+
+    const isStaff = roles.some(r => ['mentor', 'lead', 'admin'].includes(r))
+    let tries = 0
+    let timer
+    const run = async () => {
+      // Wait for the lazy dashboard to mount before spotlighting its elements
+      if (!document.querySelector('[data-tour="status-card"]') && tries < 20) {
+        tries++
+        timer = setTimeout(run, 150)
+        return
+      }
+      const { startTour } = await import('./tour')
+      startTour(isStaff, async () => {
+        const now = new Date().toISOString()
+        await supabase.from('profiles').update({ onboarded_at: now }).eq('id', session.user.id)
+        setOnboardedAt(now)
+      })
+    }
+    run()
+    return () => clearTimeout(timer)
+  }, [session, approved, onboardedAt, roles, location.pathname])
 
   if (session === undefined) return <Splash />
 
