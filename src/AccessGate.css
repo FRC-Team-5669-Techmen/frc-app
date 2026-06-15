@@ -1,0 +1,80 @@
+.gate-wrap {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: #000;
+}
+
+.gate-card {
+  width: 100%;
+  max-width: 26rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+.gate-mark {
+  width: 4.5rem;
+  height: 4.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.gate-title {
+  color: #FFE629;
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.gate-msg {
+  color: #fff;
+  opacity: 0.8;
+  font-size: 1rem;
+  line-height: 1.5;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.gate-email {
+  color: #fff;
+  opacity: 0.65;
+  font-size: 0.9rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.gate-email strong {
+  color: #FFE629;
+  opacity: 1;
+  font-weight: 600;
+}
+
+.gate-signout {
+  margin-top: 0.5rem;
+  background: #FFE629;
+  color: #000;
+  border: none;
+  border-radius: 0.6rem;
+  padding: 0.7rem 1.8rem;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gate-signout:hover {
+  opacity: 0.9;
+}
+
+.gate-contact {
+  margin-top: 0.25rem;
+  color: #fff;
+  opacity: 0.5;
+  font-size: 0.8rem;
+  text-transform: none;
+  letter-spacing: normal;
+}

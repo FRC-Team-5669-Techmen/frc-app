@@ -201,3 +201,122 @@
   color: #111;
   border-color: #111;
 }
+
+/* ── Access (approval gate) ── */
+.roster-approved {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #15803d;
+  white-space: nowrap;
+}
+
+.roster-approve-btn {
+  padding: 0.3rem 0.85rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #111;
+  color: #FFE629;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.roster-approve-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Allowed domains panel ── */
+.roster-domains {
+  margin: 1rem 1rem 0;
+  padding: 1rem 1.25rem;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.roster-domains-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 0.75rem;
+}
+
+.roster-domain-add {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.roster-domain-input {
+  flex: 1;
+  max-width: 18rem;
+  padding: 0.45rem 0.7rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: #333;
+  outline: none;
+}
+
+.roster-domain-input:focus {
+  border-color: #111;
+}
+
+.roster-domain-btn {
+  padding: 0.45rem 1.1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #111;
+  color: #FFE629;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.roster-domain-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.roster-domain-none {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.roster-domain-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.4rem 0.25rem 0.7rem;
+  border-radius: 99px;
+  background: #f1f5f9;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.roster-domain-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: none;
+  border-radius: 50%;
+  background: #d1d5db;
+  color: #fff;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.roster-domain-remove:hover {
+  background: #b91c1c;
+}

@@ -19,6 +19,8 @@ const CertifyPage      = lazy(() => import('./CertifyPage'))
 const CoverageMatrix   = lazy(() => import('./CoverageMatrix'))
 const LogHoursPage     = lazy(() => import('./LogHoursPage'))
 const VerifyHoursPage  = lazy(() => import('./VerifyHoursPage'))
+const ActivityPage     = lazy(() => import('./ActivityPage'))
+const AccessGate       = lazy(() => import('./AccessGate'))
 
 const Splash = () => (
   <div className="splash">
@@ -47,10 +49,15 @@ function CheckinRedirect() {
 export default function App() {
   const [session, setSession] = useState(undefined)
   const [roles, setRoles]     = useState([])
+  const [approved, setApproved] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
-    async function loadRoles(userId) {
+    // Domain gate: claim_profile() approves allowed-domain members and grants
+    // the default student role, then we load roles and the approved state.
+    async function claimAndLoad(userId) {
+      const { data: claimed } = await supabase.rpc('claim_profile')
+      setApproved(claimed === true)
       const { data } = await supabase
         .from('member_roles')
         .select('role')
@@ -61,14 +68,14 @@ export default function App() {
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
         setSession(session)
-        if (session) loadRoles(session.user.id)
+        if (session) claimAndLoad(session.user.id)
       })
       .catch(() => setSession(null))
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
       if (session) {
-        loadRoles(session.user.id)
+        claimAndLoad(session.user.id)
         // Complete any pending NFC check-in after login
         const pending = sessionStorage.getItem('pendingCheckin')
         if (pending) {
@@ -77,6 +84,7 @@ export default function App() {
         }
       } else {
         setRoles([])
+        setApproved(null)
       }
     })
     return () => subscription.unsubscribe()
@@ -85,6 +93,17 @@ export default function App() {
   if (session === undefined) return <Splash />
 
   const hasRole = (r) => roles.includes(r)
+
+  // Signed in but approval not yet resolved: hold on the splash.
+  if (session && approved === null) return <Splash />
+  // Signed in but not approved: show the access gate instead of the app shell.
+  if (session && approved === false) {
+    return (
+      <Suspense fallback={<Splash />}>
+        <AccessGate session={session} />
+      </Suspense>
+    )
+  }
 
   return (
     <ErrorBoundary>
@@ -107,6 +126,7 @@ export default function App() {
           <Route path="/certify"     element={<CertifyPage session={session} hasRole={hasRole} />} />
           <Route path="/coverage"    element={<CoverageMatrix hasRole={hasRole} />} />
           <Route path="/verify-hours" element={<VerifyHoursPage session={session} hasRole={hasRole} />} />
+          <Route path="/activity"    element={<ActivityPage hasRole={hasRole} />} />
         </Route>
 
         {/* ── Minimal: no NavBar, bundle stays small ── */}

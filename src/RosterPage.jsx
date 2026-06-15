@@ -11,8 +11,10 @@ export default function RosterPage() {
   const [denied, setDenied]       = useState(false)
   const [pageError, setPageError] = useState('')
   const [saving, setSaving]       = useState({})
+  const [domains, setDomains]     = useState([])
+  const [newDomain, setNewDomain] = useState('')
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load(); loadDomains() }, [])
 
   async function load() {
     const { data, error } = await supabase.rpc('admin_get_members')
@@ -23,6 +25,49 @@ export default function RosterPage() {
       return
     }
     setMembers(data ?? [])
+  }
+
+  async function loadDomains() {
+    const { data } = await supabase
+      .from('allowed_domains')
+      .select('domain')
+      .order('domain')
+    setDomains(data?.map(d => d.domain) ?? [])
+  }
+
+  async function approve(memberId) {
+    const key = `${memberId}_approve`
+    setSaving(s => ({ ...s, [key]: true }))
+    // Approve the member and ensure the default student role (idempotent)
+    const { error: e1 } = await supabase.from('profiles').update({ approved: true }).eq('id', memberId)
+    const { error: e2 } = await supabase
+      .from('member_roles')
+      .upsert({ member_id: memberId, role: 'student' }, { onConflict: 'member_id,role', ignoreDuplicates: true })
+    setSaving(s => { const n = { ...s }; delete n[key]; return n })
+    if (e1 || e2) { setPageError((e1 || e2).message); return }
+    setMembers(ms => ms.map(m =>
+      m.id !== memberId ? m : {
+        ...m,
+        approved: true,
+        roles: m.roles?.includes('student') ? m.roles : [...(m.roles ?? []), 'student'].sort(),
+      }
+    ))
+  }
+
+  async function addDomain(e) {
+    e.preventDefault()
+    const d = newDomain.trim().toLowerCase()
+    if (!d) return
+    const { error } = await supabase.from('allowed_domains').insert({ domain: d })
+    if (error) { setPageError(error.message); return }
+    setNewDomain('')
+    setDomains(ds => [...ds, d].sort())
+  }
+
+  async function removeDomain(d) {
+    const { error } = await supabase.from('allowed_domains').delete().eq('domain', d)
+    if (error) { setPageError(error.message); return }
+    setDomains(ds => ds.filter(x => x !== d))
   }
 
   async function toggleRole(memberId, role, currentRoles) {
@@ -74,6 +119,34 @@ export default function RosterPage() {
         {pageError && (
           <p className="roster-page-error" onClick={() => setPageError('')}>{pageError}</p>
         )}
+
+        <div className="roster-domains">
+          <h2 className="roster-domains-title">Allowed sign-in domains</h2>
+          <form className="roster-domain-add" onSubmit={addDomain}>
+            <input
+              className="roster-domain-input"
+              type="text"
+              placeholder="example.edu"
+              value={newDomain}
+              onChange={e => setNewDomain(e.target.value)}
+            />
+            <button className="roster-domain-btn" type="submit">Add</button>
+          </form>
+          <div className="roster-domain-list">
+            {domains.length === 0 && <span className="roster-domain-none">No domains yet.</span>}
+            {domains.map(d => (
+              <span key={d} className="roster-domain-chip">
+                {d}
+                <button
+                  className="roster-domain-remove"
+                  onClick={() => removeDomain(d)}
+                  aria-label={`Remove ${d}`}
+                >×</button>
+              </span>
+            ))}
+          </div>
+        </div>
+
         <div className="roster-table-wrap">
           <table className="roster-table">
             <thead>
@@ -83,6 +156,7 @@ export default function RosterPage() {
                 <th className="roster-th">Subteams</th>
                 <th className="roster-th">Roles</th>
                 <th className="roster-th">Status</th>
+                <th className="roster-th">Access</th>
                 <th className="roster-th"></th>
               </tr>
             </thead>
@@ -128,6 +202,15 @@ export default function RosterPage() {
                         <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
+                  </td>
+                  <td className="roster-td">
+                    {m.approved
+                      ? <span className="roster-approved">Approved</span>
+                      : <button
+                          className="roster-approve-btn"
+                          disabled={!!saving[`${m.id}_approve`]}
+                          onClick={() => approve(m.id)}
+                        >Approve</button>}
                   </td>
                   <td className="roster-td">
                     <Link to={`/members/${m.id}`} className="roster-skills-link">

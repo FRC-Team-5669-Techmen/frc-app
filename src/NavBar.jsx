@@ -101,6 +101,12 @@ export default function NavBar({ hasRole = () => false, session = null }) {
           </NavLink>
 
           {isStaff && (
+            <NavLink to="/activity" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+              Activity
+            </NavLink>
+          )}
+
+          {isStaff && (
             <Dropdown label="Manage" paths={['/roster', '/verify-hours', '/certify', '/coverage']}>
               <NavLink to="/roster"       className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Roster</NavLink>
               <NavLink to="/verify-hours" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Verify Hours</NavLink>
