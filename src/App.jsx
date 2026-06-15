@@ -22,6 +22,7 @@ const VerifyHoursPage  = lazy(() => import('./VerifyHoursPage'))
 const ActivityPage     = lazy(() => import('./ActivityPage'))
 const AccessGate       = lazy(() => import('./AccessGate'))
 const JobsPage         = lazy(() => import('./JobsPage'))
+const ReadinessPage    = lazy(() => import('./ReadinessPage'))
 
 const Splash = () => (
   <div className="splash">
@@ -129,6 +130,7 @@ export default function App() {
           <Route path="/coverage"    element={<CoverageMatrix hasRole={hasRole} />} />
           <Route path="/verify-hours" element={<VerifyHoursPage session={session} hasRole={hasRole} />} />
           <Route path="/activity"    element={<ActivityPage hasRole={hasRole} />} />
+          <Route path="/readiness"   element={<ReadinessPage hasRole={hasRole} />} />
         </Route>
 
         {/* ── Minimal: no NavBar, bundle stays small ── */}
