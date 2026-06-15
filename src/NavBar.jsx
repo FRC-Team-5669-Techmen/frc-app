@@ -104,6 +104,10 @@ export default function NavBar({ hasRole = () => false, session = null }) {
             Jobs
           </NavLink>
 
+          <NavLink to="/study" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            Study
+          </NavLink>
+
           {isStaff && (
             <NavLink to="/activity" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
               Activity

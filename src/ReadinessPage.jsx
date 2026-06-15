@@ -44,7 +44,7 @@ export default function ReadinessPage({ hasRole = () => false }) {
     )
   }
 
-  const { live_presence = [], pulse_7d = {}, cert_readiness = [], project_staffing = [], action_queue = {} } = data ?? {}
+  const { live_presence = [], pulse_7d = {}, cert_readiness = [], project_staffing = [], action_queue = {}, study_pulse = {} } = data ?? {}
   const queue = action_queue
 
   return (
@@ -200,6 +200,30 @@ export default function ReadinessPage({ hasRole = () => false }) {
                     </div>
                   ))}
                 </div>}
+          </div>
+
+          {/* ── Study pulse ── */}
+          <div className="rd-card">
+            <h2 className="rd-card-title">Study pulse</h2>
+            <div className="rd-stats">
+              <div className="rd-stat">
+                <span className="rd-stat-num">{study_pulse.logged_7d ?? 0}</span>
+                <span className="rd-stat-label">logged study (7d)</span>
+              </div>
+              <div className="rd-stat">
+                <span className={`rd-stat-num${(study_pulse.streak_zero?.length ?? 0) > 0 ? ' rd-danger' : ''}`}>
+                  {study_pulse.streak_zero?.length ?? 0}
+                </span>
+                <span className="rd-stat-label">streak broken</span>
+              </div>
+            </div>
+            {study_pulse.streak_zero?.length > 0 && (
+              <div className="rd-atrisk">
+                {study_pulse.streak_zero.map(m => (
+                  <span key={m.member_id} className="rd-atrisk-chip">{m.name || '—'}</span>
+                ))}
+              </div>
+            )}
           </div>
 
         </div>

@@ -183,6 +183,28 @@ begin
         join auth.users u on u.id = p.id
         where p.approved = false
       ), '[]'::json)
+    ),
+
+    -- Study pulse: members who logged study in the last 7 days, and active
+    -- members whose current self-study streak has broken (streak = 0).
+    'study_pulse', json_build_object(
+      'logged_7d', (
+        select count(distinct member_id)
+        from public.study_sessions
+        where date >= (now() at time zone 'America/Los_Angeles')::date - 6
+      ),
+      'streak_zero', coalesce((
+        select json_agg(json_build_object('member_id', p.id, 'name', p.full_name)
+                        order by p.full_name)
+        from public.profiles p
+        where p.status = 'active'
+          and p.approved = true
+          and public.study_current_streak(
+                p.id,
+                coalesce((select value::int from public.app_settings
+                          where key = 'study_daily_goal_minutes'), 60)
+              ) = 0
+      ), '[]'::json)
     )
 
   ) into v_result;
