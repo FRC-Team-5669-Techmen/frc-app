@@ -44,7 +44,7 @@ export default function ReadinessPage({ hasRole = () => false }) {
     )
   }
 
-  const { live_presence = [], pulse_7d = {}, cert_readiness = [], project_staffing = [], action_queue = {}, study_pulse = {} } = data ?? {}
+  const { live_presence = [], pulse_7d = {}, cert_readiness = [], project_staffing = [], action_queue = {}, study_pulse = {}, squad_coverage = [] } = data ?? {}
   const queue = action_queue
 
   return (
@@ -224,6 +224,23 @@ export default function ReadinessPage({ hasRole = () => false }) {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* ── Squad coverage ── */}
+          <div className="rd-card">
+            <h2 className="rd-card-title">Squad coverage</h2>
+            {squad_coverage.length === 0
+              ? <p className="rd-muted">No positions defined.</p>
+              : <ul className="rd-list">
+                  {squad_coverage.map(pos => (
+                    <li key={pos.position_id} className="rd-row" title={(pos.holders ?? []).join(', ')}>
+                      <span className="rd-row-name">{pos.name}</span>
+                      <span className={`rd-cert-count${pos.vacant || pos.under_target ? ' rd-cert-low' : ''}`}>
+                        {pos.holder_count} / {pos.target_count}{pos.vacant ? ' · vacant' : pos.under_target ? ' · under' : ''}
+                      </span>
+                    </li>
+                  ))}
+                </ul>}
           </div>
 
         </div>

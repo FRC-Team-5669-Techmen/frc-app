@@ -8,6 +8,7 @@ export default function MemberPage({ session, hasRole }) {
   const { id }  = useParams()
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const [member, setMember] = useState(null)
+  const [positions, setPositions] = useState([])
 
   useEffect(() => {
     supabase
@@ -16,6 +17,17 @@ export default function MemberPage({ session, hasRole }) {
       .eq('id', id)
       .single()
       .then(({ data }) => setMember(data ?? { full_name: 'Unknown member', avatar_url: null, subteams: [], disciplines: [] }))
+
+    supabase
+      .from('position_assignments')
+      .select('position:positions(name, sort_order)')
+      .eq('member_id', id)
+      .then(({ data }) => setPositions(
+        (data ?? [])
+          .map(r => r.position)
+          .filter(Boolean)
+          .sort((a, b) => a.sort_order - b.sort_order)
+      ))
   }, [id])
 
   if (!member) {
@@ -46,6 +58,13 @@ export default function MemberPage({ session, hasRole }) {
               <div className="mp-subteams">
                 {member.disciplines.map(d => (
                   <span key={d} className="mp-discipline">{d}</span>
+                ))}
+              </div>
+            )}
+            {positions.length > 0 && (
+              <div className="mp-subteams">
+                {positions.map(p => (
+                  <span key={p.name} className="mp-position">{p.name}</span>
                 ))}
               </div>
             )}

@@ -24,6 +24,7 @@ const AccessGate       = lazy(() => import('./AccessGate'))
 const JobsPage         = lazy(() => import('./JobsPage'))
 const ReadinessPage    = lazy(() => import('./ReadinessPage'))
 const StudyPage        = lazy(() => import('./StudyPage'))
+const SquadPage        = lazy(() => import('./SquadPage'))
 
 const Splash = () => (
   <div className="splash">
@@ -175,6 +176,7 @@ export default function App() {
           <Route path="/verify-hours" element={<VerifyHoursPage session={session} hasRole={hasRole} />} />
           <Route path="/activity"    element={<ActivityPage hasRole={hasRole} />} />
           <Route path="/readiness"   element={<ReadinessPage hasRole={hasRole} />} />
+          <Route path="/squad"       element={<SquadPage session={session} hasRole={hasRole} />} />
         </Route>
 
         {/* ── Minimal: no NavBar, bundle stays small ── */}

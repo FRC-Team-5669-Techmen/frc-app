@@ -114,6 +114,19 @@
   letter-spacing: normal;
 }
 
+.mp-position {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 99px;
+  background: #111;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #FFE629;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 .mp-subtitle {
   font-size: 0.75rem;
   color: #aaa;

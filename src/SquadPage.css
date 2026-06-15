@@ -1,0 +1,336 @@
+.squad-wrap {
+  flex: 1;
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+}
+
+.squad-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+}
+
+.squad-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: squad-spin 0.75s linear infinite;
+}
+
+@keyframes squad-spin {
+  to { transform: rotate(360deg); }
+}
+
+.squad-denied {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 0.95rem;
+}
+
+.squad-body {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+.squad-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.squad-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #111;
+}
+
+.squad-add-btn {
+  padding: 0.5rem 1rem;
+  background: #FFE629;
+  color: #000;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.squad-add-btn:hover { opacity: 0.85; }
+
+.squad-error {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  color: #b91c1c;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.squad-empty {
+  color: #bbb;
+  font-size: 0.9rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ── Add / edit form ── */
+.squad-form-card {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1.5px solid #e5e7eb;
+}
+
+.squad-form-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 1rem;
+}
+
+.squad-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.squad-form-row {
+  display: flex;
+  gap: 0.875rem;
+}
+
+.squad-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.squad-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #999;
+}
+
+.squad-input {
+  width: 100%;
+  padding: 0.65rem 0.875rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #111;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.squad-input:focus { border-color: #111; }
+
+.squad-textarea { resize: vertical; line-height: 1.5; }
+
+.squad-input-num { width: 7rem; }
+
+.squad-form-actions {
+  display: flex;
+  gap: 0.625rem;
+  justify-content: flex-end;
+  padding-top: 0.25rem;
+}
+
+.squad-cancel-btn {
+  padding: 0.6rem 1.1rem;
+  background: transparent;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.squad-save-btn {
+  padding: 0.6rem 1.25rem;
+  background: #FFE629;
+  color: #000;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.squad-save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── Position cards ── */
+.squad-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 0.75rem;
+}
+
+.squad-card {
+  background: #fff;
+  border-radius: 0.9rem;
+  padding: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.squad-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.squad-card-name {
+  font-weight: 700;
+  color: #111;
+  font-size: 0.95rem;
+}
+
+.squad-count {
+  padding: 0.1rem 0.55rem;
+  border-radius: 99px;
+  background: #f1f5f9;
+  color: #555;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.squad-count-short {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.squad-card-desc {
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.45;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.squad-holders {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.squad-vacant {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.squad-holder {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.35rem 0.15rem 0.6rem;
+  border-radius: 99px;
+  background: #111;
+  color: #FFE629;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.squad-holder-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 0.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.squad-holder-x:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.squad-assign {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.squad-select {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.6rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: #333;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+}
+
+.squad-select:focus { border-color: #111; }
+
+.squad-assign-btn {
+  padding: 0.45rem 0.9rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #111;
+  color: #FFE629;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.squad-assign-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.squad-card-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+.squad-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.squad-link-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.squad-link-danger { color: #b91c1c; }

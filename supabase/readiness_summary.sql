@@ -205,7 +205,29 @@ begin
                           where key = 'study_daily_goal_minutes'), 60)
               ) = 0
       ), '[]'::json)
-    )
+    ),
+
+    -- Squad coverage: every designated position with its holders and gap flags
+    'squad_coverage', coalesce((
+      select json_agg(json_build_object(
+               'position_id',  p.id,
+               'name',         p.name,
+               'target_count', p.target_count,
+               'holder_count', h.cnt,
+               'holders',      h.names,
+               'vacant',       h.cnt = 0,
+               'under_target', h.cnt < p.target_count
+             ) order by p.sort_order, p.name)
+      from public.positions p
+      join lateral (
+        select count(*) as cnt,
+               coalesce(json_agg(pr.full_name order by pr.full_name)
+                        filter (where pr.full_name is not null), '[]'::json) as names
+        from public.position_assignments pa
+        join public.profiles pr on pr.id = pa.member_id
+        where pa.position_id = p.id
+      ) h on true
+    ), '[]'::json)
 
   ) into v_result;
 
