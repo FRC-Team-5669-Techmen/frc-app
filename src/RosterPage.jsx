@@ -5,6 +5,8 @@ import './RosterPage.css'
 
 const ALL_ROLES    = ['student', 'mentor', 'lead', 'admin']
 const ALL_STATUSES = ['active', 'inactive', 'alumni']
+const ROLE_RANK    = ['admin', 'lead', 'mentor', 'student']
+const topRole = (roles = []) => ROLE_RANK.find(r => roles.includes(r))
 
 export default function RosterPage() {
   const [members, setMembers]     = useState(null)
@@ -13,8 +15,17 @@ export default function RosterPage() {
   const [saving, setSaving]       = useState({})
   const [domains, setDomains]     = useState([])
   const [newDomain, setNewDomain] = useState('')
+  const [expanded, setExpanded]   = useState(() => new Set())
 
   useEffect(() => { load(); loadDomains() }, [])
+
+  function toggleExpand(id) {
+    setExpanded(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   async function load() {
     const { data, error } = await supabase.rpc('admin_get_members')
@@ -147,80 +158,94 @@ export default function RosterPage() {
           </div>
         </div>
 
-        <div className="roster-table-wrap">
-          <table className="roster-table">
-            <thead>
-              <tr>
-                <th className="roster-th">Member</th>
-                <th className="roster-th">Email</th>
-                <th className="roster-th">Subteams</th>
-                <th className="roster-th">Roles</th>
-                <th className="roster-th">Status</th>
-                <th className="roster-th">Access</th>
-                <th className="roster-th"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map(m => (
-                <tr key={m.id} className="roster-row">
-                  <td className="roster-td roster-name">{m.full_name || '—'}</td>
-                  <td className="roster-td roster-email">{m.email}</td>
-                  <td className="roster-td">
-                    <div className="subteam-chips">
-                      {(m.subteams ?? []).map(st => (
-                        <span key={st} className="subteam-chip">{st}</span>
-                      ))}
+        <div className="roster-list">
+          {members.map(m => {
+            const open = expanded.has(m.id)
+            const role = topRole(m.roles ?? [])
+            return (
+              <div key={m.id} className={`roster-member${m.approved ? '' : ' roster-member-pending'}`}>
+                <button
+                  className="roster-member-head"
+                  onClick={() => toggleExpand(m.id)}
+                  aria-expanded={open}
+                >
+                  <span className={`roster-caret${open ? ' open' : ''}`}>▸</span>
+                  <span className="roster-member-name">{m.full_name || '—'}</span>
+                  <span className="roster-member-email">{m.email}</span>
+                  <span className="roster-member-tags">
+                    {!m.approved && <span className="roster-pending-tag">Pending</span>}
+                    {role && <span className="roster-role-tag">{role}</span>}
+                    <span
+                      className={`roster-status-dot status-dot-${m.status ?? 'active'}`}
+                      title={m.status ?? 'active'}
+                    />
+                  </span>
+                </button>
+
+                {open && (
+                  <div className="roster-member-detail">
+                    <div className="roster-detail-row">
+                      <span className="roster-detail-label">Email</span>
+                      <span className="roster-detail-value">{m.email}</span>
                     </div>
-                  </td>
-                  <td className="roster-td">
-                    <div className="role-checks">
-                      {ALL_ROLES.map(role => {
-                        const on  = (m.roles ?? []).includes(role)
-                        const key = `${m.id}_${role}`
-                        return (
-                          <label key={role} className={`role-chip${on ? ' role-on' : ''}`}>
-                            <input
-                              type="checkbox"
-                              checked={on}
-                              disabled={!!saving[key]}
-                              onChange={() => toggleRole(m.id, role, m.roles ?? [])}
-                            />
-                            {role}
-                          </label>
-                        )
-                      })}
+                    <div className="roster-detail-row">
+                      <span className="roster-detail-label">Subteams</span>
+                      {(m.subteams ?? []).length === 0
+                        ? <span className="roster-detail-none">—</span>
+                        : <div className="subteam-chips">
+                            {m.subteams.map(st => <span key={st} className="subteam-chip">{st}</span>)}
+                          </div>}
                     </div>
-                  </td>
-                  <td className="roster-td">
-                    <select
-                      value={m.status ?? 'active'}
-                      disabled={!!saving[`${m.id}_status`]}
-                      onChange={e => setStatus(m.id, e.target.value)}
-                      className={`status-select status-${m.status ?? 'active'}`}
-                    >
-                      {ALL_STATUSES.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="roster-td">
-                    {m.approved
-                      ? <span className="roster-approved">Approved</span>
-                      : <button
-                          className="roster-approve-btn"
-                          disabled={!!saving[`${m.id}_approve`]}
-                          onClick={() => approve(m.id)}
-                        >Approve</button>}
-                  </td>
-                  <td className="roster-td">
-                    <Link to={`/members/${m.id}`} className="roster-skills-link">
-                      Skills
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <div className="roster-detail-row">
+                      <span className="roster-detail-label">Roles</span>
+                      <div className="role-checks">
+                        {ALL_ROLES.map(r => {
+                          const on  = (m.roles ?? []).includes(r)
+                          const key = `${m.id}_${r}`
+                          return (
+                            <label key={r} className={`role-chip${on ? ' role-on' : ''}`}>
+                              <input
+                                type="checkbox"
+                                checked={on}
+                                disabled={!!saving[key]}
+                                onChange={() => toggleRole(m.id, r, m.roles ?? [])}
+                              />
+                              {r}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                    <div className="roster-detail-row">
+                      <span className="roster-detail-label">Status</span>
+                      <select
+                        value={m.status ?? 'active'}
+                        disabled={!!saving[`${m.id}_status`]}
+                        onChange={e => setStatus(m.id, e.target.value)}
+                        className={`status-select status-${m.status ?? 'active'}`}
+                      >
+                        {ALL_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div className="roster-detail-row">
+                      <span className="roster-detail-label">Access</span>
+                      {m.approved
+                        ? <span className="roster-approved">Approved</span>
+                        : <button
+                            className="roster-approve-btn"
+                            disabled={!!saving[`${m.id}_approve`]}
+                            onClick={() => approve(m.id)}
+                          >Approve</button>}
+                    </div>
+                    <div className="roster-detail-row">
+                      <span className="roster-detail-label">Profile</span>
+                      <Link to={`/members/${m.id}`} className="roster-skills-link">View skills</Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

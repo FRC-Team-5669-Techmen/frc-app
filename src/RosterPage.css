@@ -320,3 +320,137 @@
 .roster-domain-remove:hover {
   background: #b91c1c;
 }
+
+/* ── Compact member list (slim rows, expand on tap) ── */
+.roster-list {
+  margin: 1rem;
+  background: #fff;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.roster-member:not(:last-child) {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.roster-member-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.55rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.roster-member-head:hover {
+  background: #fafafa;
+}
+
+.roster-member-pending .roster-member-head {
+  box-shadow: inset 3px 0 0 #f59e0b;
+}
+
+.roster-caret {
+  flex-shrink: 0;
+  color: #bbb;
+  font-size: 0.8rem;
+  transition: transform 0.15s;
+}
+
+.roster-caret.open {
+  transform: rotate(90deg);
+}
+
+.roster-member-name {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #111;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.roster-member-email {
+  flex: 1;
+  min-width: 0;
+  color: #888;
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roster-member-tags {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.roster-pending-tag {
+  padding: 0.1rem 0.45rem;
+  border-radius: 99px;
+  background: #fef3c7;
+  color: #b45309;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.roster-role-tag {
+  padding: 0.1rem 0.45rem;
+  border-radius: 99px;
+  background: #f1f5f9;
+  color: #555;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.roster-status-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #16a34a;
+}
+
+.status-dot-inactive { background: #d1d5db; }
+.status-dot-alumni   { background: #6366f1; }
+
+.roster-member-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.25rem 1rem 0.9rem 2.1rem;
+}
+
+.roster-detail-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+}
+
+.roster-detail-label {
+  flex: 0 0 4.5rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #999;
+}
+
+.roster-detail-value {
+  font-size: 0.85rem;
+  color: #333;
+  word-break: break-word;
+}
+
+.roster-detail-none {
+  color: #ccc;
+  font-size: 0.85rem;
+}
