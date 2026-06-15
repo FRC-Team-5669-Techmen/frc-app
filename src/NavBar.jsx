@@ -14,7 +14,7 @@ function useOutsideClick(ref, onClose) {
   }, [ref, onClose])
 }
 
-function Dropdown({ label, paths = [], tourId, children }) {
+function Dropdown({ label, paths = [], tourId, align = 'left', children }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const { pathname } = useLocation()
@@ -33,7 +33,10 @@ function Dropdown({ label, paths = [], tourId, children }) {
         <span className={`nav-chevron${open ? ' nav-chevron-up' : ''}`}>▾</span>
       </button>
       {open && (
-        <div className="nav-dropdown-menu" onClick={() => setOpen(false)}>
+        <div
+          className={`nav-dropdown-menu${align === 'right' ? ' nav-dropdown-menu-right' : ''}`}
+          onClick={() => setOpen(false)}
+        >
           {children}
         </div>
       )}
@@ -118,25 +121,16 @@ export default function NavBar({ hasRole = () => false, session = null }) {
           </NavLink>
 
           {isStaff && (
-            <NavLink to="/activity" data-tour="nav-activity" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-              Activity
-            </NavLink>
-          )}
-
-          {isStaff && (
-            <NavLink to="/readiness" data-tour="nav-readiness" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-              Readiness
-            </NavLink>
-          )}
-
-          {isStaff && (
-            <NavLink to="/squad" data-tour="nav-squad" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-              Squad
-            </NavLink>
-          )}
-
-          {isStaff && (
-            <Dropdown label="Manage" tourId="nav-manage" paths={['/roster', '/verify-hours', '/certify', '/coverage']}>
+            <Dropdown
+              label="Staff"
+              tourId="nav-staff"
+              align="right"
+              paths={['/readiness', '/activity', '/squad', '/roster', '/verify-hours', '/certify', '/coverage']}
+            >
+              <NavLink to="/readiness"    className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Readiness</NavLink>
+              <NavLink to="/activity"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Activity</NavLink>
+              <NavLink to="/squad"        className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Squad</NavLink>
+              <div className="nav-dropdown-divider" />
               <NavLink to="/roster"       className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Roster</NavLink>
               <NavLink to="/verify-hours" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Verify Hours</NavLink>
               <NavLink to="/certify"      className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Certify Skills</NavLink>

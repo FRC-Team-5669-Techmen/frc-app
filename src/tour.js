@@ -64,31 +64,17 @@ function tourSteps(isStaff) {
     },
   }
 
-  // Staff-only surfaces
-  const activity = {
-    element: '[data-tour="nav-activity"]',
+  // Staff-only surfaces, all under one menu
+  const staff = {
+    element: '[data-tour="nav-staff"]',
     popover: {
-      title: 'Activity feed',
-      description: 'See who is checked in live, and manually check members in or out when needed.',
-    },
-  }
-  const readiness = {
-    element: '[data-tour="nav-readiness"]',
-    popover: {
-      title: 'Readiness',
-      description: 'One glance at attendance, cert coverage, staffing, and what is waiting on you.',
-    },
-  }
-  const manage = {
-    element: '[data-tour="nav-manage"]',
-    popover: {
-      title: 'Manage',
-      description: 'Verify hours, certify skills, check coverage, and approve new roster members.',
+      title: 'Staff tools',
+      description: 'Your staff menu: live activity and overrides, the readiness dashboard, squad assignments, plus verify hours, certify skills, coverage, and roster approvals.',
     },
   }
 
   return isStaff
-    ? [welcome, checkin, checkout, hours, jobs, skills, study, activity, readiness, manage, profile]
+    ? [welcome, checkin, checkout, hours, jobs, skills, study, staff, profile]
     : [welcome, checkin, checkout, hours, jobs, skills, study, profile]
 }
 
