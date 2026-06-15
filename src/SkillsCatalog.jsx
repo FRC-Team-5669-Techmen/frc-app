@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
+import DisciplinesCatalog from './DisciplinesCatalog'
 import './SkillsCatalog.css'
 
 const EMPTY_FORM = { name: '', category: '', description: '', safety_critical: false }
@@ -262,6 +263,8 @@ export default function SkillsCatalog({ hasRole }) {
             </div>
           </div>
         ))}
+
+        <DisciplinesCatalog />
 
       </div>
     </div>

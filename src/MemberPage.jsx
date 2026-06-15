@@ -12,10 +12,10 @@ export default function MemberPage({ session, hasRole }) {
   useEffect(() => {
     supabase
       .from('profiles')
-      .select('full_name, avatar_url, subteams')
+      .select('full_name, avatar_url, subteams, disciplines')
       .eq('id', id)
       .single()
-      .then(({ data }) => setMember(data ?? { full_name: 'Unknown member', avatar_url: null, subteams: [] }))
+      .then(({ data }) => setMember(data ?? { full_name: 'Unknown member', avatar_url: null, subteams: [], disciplines: [] }))
   }, [id])
 
   if (!member) {
@@ -39,6 +39,13 @@ export default function MemberPage({ session, hasRole }) {
               <div className="mp-subteams">
                 {member.subteams.map(st => (
                   <span key={st} className="mp-subteam">{st}</span>
+                ))}
+              </div>
+            )}
+            {(member.disciplines ?? []).length > 0 && (
+              <div className="mp-subteams">
+                {member.disciplines.map(d => (
+                  <span key={d} className="mp-discipline">{d}</span>
                 ))}
               </div>
             )}

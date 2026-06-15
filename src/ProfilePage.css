@@ -198,6 +198,26 @@
   border-color: #111;
 }
 
+/* Disciplines: grouped chip toggles by category */
+.profile-disc-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.profile-disc-group:first-of-type {
+  margin-top: 0;
+}
+
+.profile-disc-cat {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #aaa;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 /* Shirt size + grad year side by side */
 .profile-form-row {
   display: grid;

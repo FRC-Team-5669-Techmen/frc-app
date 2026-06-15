@@ -100,6 +100,20 @@
   letter-spacing: normal;
 }
 
+.mp-discipline {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 99px;
+  background: #fdf7c8;
+  border: 1px solid #f3e69a;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #7a6a00;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 .mp-subtitle {
   font-size: 0.75rem;
   color: #aaa;

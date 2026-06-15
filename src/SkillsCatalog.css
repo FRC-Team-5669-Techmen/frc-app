@@ -383,3 +383,28 @@
   opacity: 0.35;
   cursor: default;
 }
+
+.sc-delete-btn {
+  padding: 0.25rem 0.7rem;
+  background: transparent;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #b91c1c;
+  cursor: pointer;
+  transition: border-color 0.12s;
+  font-family: inherit;
+  margin-left: 0.25rem;
+}
+
+.sc-delete-btn:hover {
+  border-color: #b91c1c;
+}
+
+/* ── Disciplines section (second catalog on the page) ── */
+.sc-section-divider {
+  margin-top: 1.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
