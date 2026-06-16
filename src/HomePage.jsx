@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
+import TeamStatus from './TeamStatus'
 import './HomePage.css'
 
 function computeHoursMs(events) {
@@ -76,6 +77,8 @@ export default function HomePage({ session, hasRole }) {
   return (
     <div className="home-wrap">
       <div className="home-body">
+        <TeamStatus />
+
         <div className="status-card" data-tour="status-card">
           <div className={`status-badge ${isIn ? 'status-in' : 'status-out'}`}>
             {isIn ? 'Checked in' : 'Not checked in'}

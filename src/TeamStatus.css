@@ -1,0 +1,202 @@
+/* Team Status — compact HomePage summary. Mirrors PresenceBoard's visual
+   language (gold eyebrows, present rows, mono meta) using theme.css tokens. */
+
+.ts {
+  background: var(--surface);
+  margin: 1rem 1rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.1rem 1.25rem;
+}
+
+/* ── Header ── */
+.ts-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.ts-eyebrow {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+
+.ts-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-family: var(--font-ui);
+}
+.ts-count-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--steel);
+  margin-right: 0.15rem;
+}
+.ts-count-now {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--gold-bright);
+}
+.ts-count-sep { color: var(--muted); }
+.ts-count-total {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--steel);
+}
+
+/* ── Present, grouped by subteam ── */
+.ts-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.ts-group-title {
+  font-family: var(--font-ui);
+  font-size: 0.64rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  margin-bottom: 0.4rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.ts-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ts-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ts-check {
+  flex-shrink: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #0A0B0D;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ts-name {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ts-meta {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--gold);
+}
+
+.ts-empty {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  padding: 0.25rem 0 0.75rem;
+}
+
+/* ── Recent activity feed ── */
+.ts-feed-title {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+  margin-bottom: 0.6rem;
+}
+
+.ts-feed {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ts-frow {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr auto auto;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border-left: 2px solid transparent;
+}
+
+.ts-fdir {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.ts-fname {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ts-fsub {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.ts-ftime {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+  color: var(--steel);
+}
+
+/* IN reads gold; OUT reads dim/steel so the two differ at a glance */
+.ts-in {
+  background: var(--gold-a08);
+  border-left-color: var(--gold);
+}
+.ts-in .ts-fdir { color: var(--gold-bright); }
+
+.ts-out {
+  background: transparent;
+  border-left-color: var(--border-strong);
+}
+.ts-out .ts-fdir { color: var(--steel); }
+.ts-out .ts-fname { color: var(--steel); }

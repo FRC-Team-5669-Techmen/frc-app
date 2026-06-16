@@ -30,3 +30,26 @@ export function computePresence(events) {
 export function fmtClock(iso) {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 }
+
+export const UNASSIGNED = 'UNASSIGNED'
+
+// A member's primary subteam (subteams is text[]), or UNASSIGNED. Accepts any
+// object with a `subteams` array (profile row or an embedded profile join).
+export function subteamOf(m) {
+  return (m && m.subteams && m.subteams.length) ? m.subteams[0] : UNASSIGNED
+}
+
+// Group members by primary subteam. Returns [[name, members[]], ...] ordered
+// A→Z with the UNASSIGNED catch-all last. Shared by PresenceBoard and the
+// HomePage Team Status so the two stay consistent.
+export function groupBySubteam(members) {
+  const groups = new Map()
+  for (const m of members) {
+    const key = subteamOf(m)
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push(m)
+  }
+  return [...groups.keys()]
+    .sort((a, b) => (a === UNASSIGNED ? 1 : b === UNASSIGNED ? -1 : a.localeCompare(b)))
+    .map(name => [name, groups.get(name)])
+}

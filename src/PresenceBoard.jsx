@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from './supabase'
-import { computePresence, startOfTodayISO, fmtClock } from './presence'
+import { computePresence, startOfTodayISO, fmtClock, groupBySubteam } from './presence'
 import './PresenceBoard.css'
 
 // Read-only wall-display board of who is currently present, derived from the
@@ -8,7 +8,6 @@ import './PresenceBoard.css'
 // Live updates via polling — realtime is not wired in this project.
 
 const POLL_MS = 15_000
-const UNASSIGNED = 'UNASSIGNED'
 
 export default function PresenceBoard() {
   const [members, setMembers] = useState(null)   // active roster
@@ -47,17 +46,9 @@ export default function PresenceBoard() {
   const total = members.length
   const presentCount = members.filter(m => present.has(m.id)).length
 
-  // Group by first subteam (subteams is text[]); crossover members show under their
-  // primary subteam so the present/total counts stay exact.
-  const groups = new Map()
-  for (const m of members) {
-    const key = (m.subteams && m.subteams.length) ? m.subteams[0] : UNASSIGNED
-    if (!groups.has(key)) groups.set(key, [])
-    groups.get(key).push(m)
-  }
-  const groupNames = [...groups.keys()].sort((a, b) =>
-    a === UNASSIGNED ? 1 : b === UNASSIGNED ? -1 : a.localeCompare(b)
-  )
+  // Group by primary subteam (shared with HomePage Team Status); crossover
+  // members show under their primary subteam so present/total counts stay exact.
+  const groups = groupBySubteam(members)
 
   const sortMembers = (list) => [...list].sort((a, b) => {
     const ap = present.has(a.id), bp = present.has(b.id)
@@ -81,11 +72,11 @@ export default function PresenceBoard() {
       {error && <p className="pb-error">{error}</p>}
 
       <div className="pb-groups">
-        {groupNames.map(name => (
+        {groups.map(([name, list]) => (
           <section key={name} className="pb-group">
             <h2 className="pb-group-title">{name}</h2>
             <ul className="pb-list">
-              {sortMembers(groups.get(name)).map(m => {
+              {sortMembers(list).map(m => {
                 const since = present.get(m.id)
                 const isPresent = !!since
                 const sub = (m.subteams && m.subteams.length) ? m.subteams[0] : '—'
