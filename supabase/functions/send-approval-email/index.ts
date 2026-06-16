@@ -4,19 +4,25 @@
 // their access request. The whitelist (approved_emails) is the source of truth
 // — this email is best-effort and MUST NOT block approval.
 //
+// Delivery is via Gmail SMTP, authenticating AS a real mailbox, so the message
+// is genuinely from that address and passes SPF/DKIM (no domain to verify).
+//
 // Invoked by the staff review page after approve_access_request() succeeds:
 //   supabase.functions.invoke('send-approval-email', { body: { email, full_name } })
 //
-// SECRETS (set these in the Supabase project before the email will send):
-//   RESEND_API_KEY   – Resend API key. If unset, the function logs and skips
-//                      the send, returning { skipped: true } with HTTP 200.
-//   EMAIL_FROM       – optional. Sender, e.g. "Techmen 5669 <noreply@your-domain>".
-//                      Defaults to Resend's shared "onboarding@resend.dev".
-//   APP_URL          – optional. Sign-in link shown in the email. Defaults to
-//                      the live app URL.
+// SECRETS (set in the Supabase project before email will send):
+//   GMAIL_USER          – the sending mailbox, e.g. apina@boscotech.edu
+//   GMAIL_APP_PASSWORD  – a Google App Password (NOT the account password).
+//                         Requires 2-Step Verification on the account.
+//   EMAIL_FROM          – optional display form, e.g. "Techmen 5669 <apina@boscotech.edu>".
+//                         The address part MUST be the same mailbox as GMAIL_USER.
+//   APP_URL             – optional sign-in link. Defaults to the live app URL.
+// If GMAIL_USER / GMAIL_APP_PASSWORD are unset, the send is logged and skipped
+// (HTTP 200) so approval still completes.
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected automatically.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -51,14 +57,15 @@ Deno.serve(async (req) => {
       .maybeSingle()
     if (!row) return json({ error: 'email is not approved' }, 403)
 
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-    if (!RESEND_API_KEY) {
+    const GMAIL_USER = Deno.env.get('GMAIL_USER')
+    const GMAIL_APP_PASSWORD = Deno.env.get('GMAIL_APP_PASSWORD')
+    if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
       // Not configured yet — approval already succeeded; just skip the courtesy.
-      console.log(`[send-approval-email] RESEND_API_KEY unset; skipping send to ${to}`)
-      return json({ skipped: true, reason: 'RESEND_API_KEY not set' })
+      console.log(`[send-approval-email] Gmail SMTP not configured; skipping send to ${to}`)
+      return json({ skipped: true, reason: 'GMAIL_USER/GMAIL_APP_PASSWORD not set' })
     }
 
-    const from = Deno.env.get('EMAIL_FROM') ?? 'Techmen 5669 <onboarding@resend.dev>'
+    const from = Deno.env.get('EMAIL_FROM') ?? `Techmen 5669 <${GMAIL_USER}>`
     const appUrl = Deno.env.get('APP_URL') ?? 'https://frc-app-liard.vercel.app'
     const name = (typeof full_name === 'string' && full_name.trim()) || 'there'
 
@@ -73,25 +80,36 @@ Deno.serve(async (req) => {
         <p style="color:#5A6068;font-size:13px">Techmen · FRC Team 5669</p>
       </div>`
 
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
+    const text =
+      `You're approved — Techmen 5669\n\n` +
+      `Hi ${name},\n\nYour access to the Techmen team platform has been approved. ` +
+      `You can now sign in and use the app.\n\n` +
+      `If you're already signed in and still see the request screen, reload the page ` +
+      `or sign out and back in — your session won't update on its own.\n\n${appUrl}\n`
+
+    const client = new SMTPClient({
+      connection: {
+        hostname: 'smtp.gmail.com',
+        port: 465,
+        tls: true,
+        auth: { username: GMAIL_USER, password: GMAIL_APP_PASSWORD },
       },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject: "You're approved — Techmen 5669",
-        html,
-      }),
     })
 
-    if (!res.ok) {
-      const detail = await res.text()
-      console.error(`[send-approval-email] provider error ${res.status}: ${detail}`)
-      // Still 200: approval already happened; surface the issue without failing.
-      return json({ sent: false, providerStatus: res.status })
+    try {
+      await client.send({
+        from,
+        to,
+        subject: "You're approved — Techmen 5669",
+        content: text,
+        html,
+      })
+      await client.close()
+    } catch (sendErr) {
+      try { await client.close() } catch { /* ignore */ }
+      // Still 200: approval already happened; surface without failing it.
+      console.error('[send-approval-email] SMTP send failed', sendErr)
+      return json({ sent: false, error: String(sendErr) })
     }
 
     return json({ sent: true })
