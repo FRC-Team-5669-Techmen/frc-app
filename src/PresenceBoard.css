@@ -1,0 +1,183 @@
+/* Wall-display presence board. Reuses theme.css tokens + hud-tnum.
+   Sized for across-the-room legibility, responsive down to tablet. */
+
+.pb-wrap {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1rem, 2vw, 2rem);
+  gap: clamp(1rem, 2vw, 2rem);
+}
+
+.pb-loading {
+  align-items: center;
+  justify-content: center;
+}
+
+.pb-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: pb-spin 0.8s linear infinite;
+}
+@keyframes pb-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .pb-spinner { animation: none; } }
+
+/* ── Header ── */
+.pb-header {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2vw, 2rem);
+  padding-bottom: clamp(0.75rem, 1.5vw, 1.25rem);
+  border-bottom: 1px solid var(--border-strong);
+  flex-wrap: wrap;
+}
+
+.pb-mark {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: clamp(1.3rem, 2.6vw, 2.4rem);
+  letter-spacing: 0.05em;
+  color: var(--gold);
+}
+.pb-dot { color: var(--steel); margin: 0 0.12em; }
+
+.pb-tag {
+  font-family: var(--font-mono);
+  font-size: clamp(0.8rem, 1.2vw, 1.1rem);
+  letter-spacing: 0.18em;
+  color: var(--steel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.6rem;
+}
+
+.pb-count {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--font-ui);
+}
+.pb-count-label {
+  font-size: clamp(0.7rem, 1vw, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-right: 0.25rem;
+}
+.pb-count-now {
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--gold-bright);
+}
+.pb-count-sep { font-size: clamp(1.5rem, 3vw, 2.5rem); color: var(--muted); }
+.pb-count-total {
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-weight: 600;
+  color: var(--steel);
+}
+
+.pb-error {
+  font-family: var(--font-mono);
+  color: var(--fault);
+  font-size: 0.9rem;
+}
+
+/* ── Groups ── */
+.pb-groups {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+  gap: clamp(1rem, 2vw, 2rem);
+  align-content: start;
+}
+
+.pb-group-title {
+  font-family: var(--font-ui);
+  font-size: clamp(0.75rem, 1.1vw, 1rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.pb-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.pb-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: clamp(0.5rem, 1vw, 0.8rem) clamp(0.6rem, 1vw, 1rem);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.pb-icon {
+  flex-shrink: 0;
+  width: clamp(1.4rem, 1.8vw, 1.8rem);
+  height: clamp(1.4rem, 1.8vw, 1.8rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: clamp(0.8rem, 1vw, 1rem);
+}
+
+.pb-present .pb-icon {
+  color: #0A0B0D;
+  background: var(--gold);
+  font-weight: 700;
+}
+.pb-absent .pb-icon {
+  color: var(--muted);
+  border: 1px solid var(--border-strong);
+  background: transparent;
+}
+
+.pb-name {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: clamp(1rem, 1.6vw, 1.5rem);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pb-present .pb-name { color: var(--text); }
+.pb-absent  .pb-name { color: var(--muted); opacity: 0.55; }
+
+.pb-meta {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: clamp(0.75rem, 1vw, 1.05rem);
+  letter-spacing: 0.04em;
+  text-align: right;
+}
+.pb-present .pb-meta { color: var(--gold); }
+.pb-absent  .pb-meta { color: var(--muted); opacity: 0.6; }
+
+/* ── Footer ── */
+.pb-footer {
+  font-family: var(--font-mono);
+  font-size: clamp(0.7rem, 0.9vw, 0.9rem);
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+}

@@ -36,6 +36,8 @@ Techmen. "Tactical HUD" theme — near-black base, gold targeting accent, silver
 
 - Installable PWA, OTP + Google OAuth login.
 - Check-in/out with NFC deep-link fast path. Geofence at 34.041550 / -118.086826, 150m radius (check-in gated to location, check-out always allowed).
+- Presence Board (`/display`, staff-opened wall display): read-only, who-is-present derived from open check-ins, subteam-grouped, live via 15s polling (realtime is not wired in the project). Full-screen, no NavBar.
+- Kiosk check-in (`/kiosk`, shared tablet): Web NFC reader (feature-detected; Chrome-on-Android only) that toggles a member in/out via the `staff_override_attendance` RPC. Note: tags must carry the member id (URL `?member=`/`?m=` or a UUID text record) — the door `?loc=` deep-link tags identify a location, not a person. Present-state derivation is shared in `src/presence.js`.
 - Auto-checkout at 10 PM via pg_cron; auto-closed sessions are flagged for mentor review before counting.
 - Public landing page. Nav with grouped dropdowns (Hours menu, avatar dropdown, staff-only Manage menu).
 - My Hours and Team Hours board (aggregates attendance events live).
@@ -96,4 +98,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message. Do not let this file go stale. If a task reveals a new recurring pattern worth encoding, add it rather than waiting to be told.
 
-Last reviewed: 2026-06-16
+Last reviewed: 2026-06-16 (added Presence Board + Kiosk modules)

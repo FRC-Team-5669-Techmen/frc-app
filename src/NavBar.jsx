@@ -17,6 +17,8 @@ const CONTEXT_TAGS = [
   ['/readiness',   'READINESS'],
   ['/activity',    'ACTIVITY'],
   ['/squad',       'SQUAD'],
+  ['/display',     'DISPLAY'],
+  ['/kiosk',       'KIOSK'],
   ['/roster',      'ROSTER'],
   ['/verify-hours','HRS//VERIFY'],
   ['/certify',     'CERTIFY'],
@@ -154,11 +156,14 @@ export default function NavBar({ hasRole = () => false, session = null }) {
               label="Staff"
               tourId="nav-staff"
               align="right"
-              paths={['/readiness', '/activity', '/squad', '/roster', '/verify-hours', '/certify', '/coverage']}
+              paths={['/readiness', '/activity', '/squad', '/display', '/kiosk', '/roster', '/verify-hours', '/certify', '/coverage']}
             >
               <NavLink to="/readiness"    className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Readiness</NavLink>
               <NavLink to="/activity"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Activity</NavLink>
               <NavLink to="/squad"        className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Squad</NavLink>
+              <div className="nav-dropdown-divider" />
+              <NavLink to="/display"      className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Display</NavLink>
+              <NavLink to="/kiosk"        className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Kiosk</NavLink>
               <div className="nav-dropdown-divider" />
               <NavLink to="/roster"       className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Roster</NavLink>
               <NavLink to="/verify-hours" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Verify Hours</NavLink>

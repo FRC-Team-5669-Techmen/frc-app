@@ -1,0 +1,64 @@
+/* Kiosk-specific bits layered on top of the reused CheckinPage.css HUD visuals.
+   Colors/typography come from theme.css tokens — no restyling here. */
+
+.kiosk-wrap {
+  /* The reused .checkin-wrap already provides the full-screen HUD frame. */
+  gap: 1.1rem;
+}
+
+/* Live present count chip, top-center under the header */
+.kiosk-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.kiosk-count-label {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.kiosk-count-num {
+  font-family: var(--font-ui);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--gold-bright);
+}
+
+.kiosk-arm-h {
+  font-family: var(--font-ui);
+  font-weight: 700;
+}
+
+.kiosk-msg {
+  max-width: 30rem;
+  color: var(--steel);
+  text-transform: none;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+}
+
+/* Arm / retry button — primary gold action */
+.kiosk-arm-btn {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #0A0B0D;
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 0.8rem 1.6rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.kiosk-arm-btn:hover,
+.kiosk-arm-btn:focus-visible { background: var(--gold-bright); }

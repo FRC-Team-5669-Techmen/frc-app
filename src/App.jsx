@@ -25,6 +25,8 @@ const JobsPage         = lazy(() => import('./JobsPage'))
 const ReadinessPage    = lazy(() => import('./ReadinessPage'))
 const StudyPage        = lazy(() => import('./StudyPage'))
 const SquadPage        = lazy(() => import('./SquadPage'))
+const PresenceBoard    = lazy(() => import('./PresenceBoard'))
+const KioskPage        = lazy(() => import('./KioskPage'))
 
 const Splash = () => (
   <div className="splash">
@@ -183,6 +185,16 @@ export default function App() {
         <Route
           path="/checkin"
           element={session ? <CheckinPage session={session} /> : <CheckinRedirect />}
+        />
+
+        {/* ── Full-screen display modes: behind auth, no NavBar ── */}
+        <Route
+          path="/display"
+          element={session ? <PresenceBoard /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/kiosk"
+          element={session ? <KioskPage session={session} hasRole={hasRole} /> : <Navigate to="/login" replace />}
         />
 
         <Route path="*" element={<Navigate to="/" replace />} />
