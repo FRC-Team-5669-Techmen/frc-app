@@ -1,5 +1,6 @@
 import { driver } from 'driver.js'
 import 'driver.js/dist/driver.css'
+import './tour.css'
 
 // Role-split onboarding tour. Anchored entirely on the dashboard: it spotlights
 // the persistent NavBar items and a few dashboard elements by stable data-tour
@@ -94,7 +95,9 @@ export function startTour(isStaff, onDone) {
   const d = driver({
     showProgress: true,
     allowClose: true,
-    overlayOpacity: 0.6,
+    overlayColor: '#0A0B0D',
+    overlayOpacity: 0.7,
+    popoverClass: 'techmen-tour',
     nextBtnText: 'Next',
     prevBtnText: 'Back',
     doneBtnText: 'Done',

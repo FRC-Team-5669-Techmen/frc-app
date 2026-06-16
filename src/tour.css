@@ -1,0 +1,95 @@
+/* ============================================================
+   Onboarding tour (driver.js) — Tactical HUD override.
+   driver.js injects its own light styles at runtime; we scope to
+   `.driver-popover.techmen-tour` (two classes) to win specificity
+   over its single-class base rules. popoverClass is set in tour.js.
+   ============================================================ */
+
+.driver-popover.techmen-tour {
+  background-color: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+  font-family: var(--font-ui);
+}
+
+.driver-popover.techmen-tour * {
+  font-family: var(--font-ui);
+}
+
+.driver-popover.techmen-tour .driver-popover-title {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+
+.driver-popover.techmen-tour .driver-popover-description {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--steel);
+}
+
+/* Step label ("1 of 9") — mono readout */
+.driver-popover.techmen-tour .driver-popover-progress-text {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+}
+
+.driver-popover.techmen-tour .driver-popover-close-btn {
+  color: var(--muted);
+}
+.driver-popover.techmen-tour .driver-popover-close-btn:hover,
+.driver-popover.techmen-tour .driver-popover-close-btn:focus {
+  color: var(--text);
+}
+
+/* Footer buttons — neutral by default, primary (Next/Done) in gold */
+.driver-popover.techmen-tour .driver-popover-footer button {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-shadow: none;
+  background-color: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.7rem;
+}
+
+.driver-popover.techmen-tour .driver-popover-footer button:hover,
+.driver-popover.techmen-tour .driver-popover-footer button:focus {
+  background-color: var(--gold-a08);
+  border-color: var(--gold);
+  color: var(--text);
+}
+
+/* Higher specificity (button.<class>) so it beats the footer-button base rule above */
+.driver-popover.techmen-tour .driver-popover-footer button.driver-popover-next-btn {
+  background-color: var(--gold);
+  border-color: var(--gold);
+  color: #0A0B0D;
+}
+.driver-popover.techmen-tour .driver-popover-footer button.driver-popover-next-btn:hover,
+.driver-popover.techmen-tour .driver-popover-footer button.driver-popover-next-btn:focus {
+  background-color: var(--gold-bright);
+  border-color: var(--gold-bright);
+  color: #0A0B0D;
+}
+
+.driver-popover.techmen-tour .driver-popover-btn-disabled {
+  opacity: 0.4;
+}
+
+/* Arrow: recolor the visible (non-transparent) border side to match the panel */
+.driver-popover.techmen-tour .driver-popover-arrow-side-left   { border-left-color: var(--surface); }
+.driver-popover.techmen-tour .driver-popover-arrow-side-right  { border-right-color: var(--surface); }
+.driver-popover.techmen-tour .driver-popover-arrow-side-top    { border-top-color: var(--surface); }
+.driver-popover.techmen-tour .driver-popover-arrow-side-bottom { border-bottom-color: var(--surface); }

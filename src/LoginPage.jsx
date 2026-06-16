@@ -49,7 +49,7 @@ export default function LoginPage() {
     return (
       <div className="login-wrap">
         <div className="login-card">
-          <img src="/assets/logos/Mark-Black.svg" className="login-mark" alt="Techmen" />
+          <img src="/assets/logos/Mark-Gold.svg" className="login-mark" alt="Techmen" />
           <h1>Enter your code</h1>
           <p className="login-hint">
             We sent a code to <strong>{email}</strong>.
@@ -85,7 +85,7 @@ export default function LoginPage() {
   return (
     <div className="login-wrap">
       <div className="login-card">
-        <img src="/assets/logos/Mark-Black.svg" className="login-mark" alt="Techmen" />
+        <img src="/assets/logos/Mark-Gold.svg" className="login-mark" alt="Techmen" />
         <h1>Techmen</h1>
         <p className="subtitle">FRC Team 5669</p>
 
