@@ -1,6 +1,6 @@
 .squad-wrap {
   flex: 1;
-  background: #f5f5f5;
+  background: var(--bg);
   display: flex;
   flex-direction: column;
 }
@@ -10,14 +10,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: var(--bg);
 }
 
 .squad-spinner {
   width: 2.5rem;
   height: 2.5rem;
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top-color: #111;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--gold);
   border-radius: 50%;
   animation: squad-spin 0.75s linear infinite;
 }
@@ -26,12 +26,17 @@
   to { transform: rotate(360deg); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .squad-spinner { animation: none; }
+}
+
 .squad-denied {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: var(--muted);
+  font-family: var(--font-mono);
   font-size: 0.95rem;
 }
 
@@ -50,40 +55,45 @@
 }
 
 .squad-title {
+  font-family: var(--font-ui);
   font-size: 1.4rem;
   font-weight: 800;
-  color: #111;
+  color: var(--text);
 }
 
 .squad-add-btn {
   padding: 0.5rem 1rem;
-  background: #FFE629;
-  color: #000;
+  background: var(--gold);
+  color: #0A0B0D;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
   font-size: 0.875rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  font-family: inherit;
 }
 
-.squad-add-btn:hover { opacity: 0.85; }
+.squad-add-btn:hover { background: var(--gold-bright); }
 
 .squad-error {
   margin-bottom: 1rem;
   padding: 0.75rem 1rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 0.75rem;
+  background: var(--fault-a10);
+  border: 1px solid var(--fault);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
   font-size: 0.875rem;
-  color: #b91c1c;
+  color: var(--fault);
   cursor: pointer;
   text-transform: none;
   letter-spacing: normal;
 }
 
 .squad-empty {
-  color: #bbb;
+  color: var(--muted);
+  font-family: var(--font-mono);
   font-size: 0.9rem;
   text-transform: none;
   letter-spacing: normal;
@@ -91,18 +101,18 @@
 
 /* ── Add / edit form ── */
 .squad-form-card {
-  background: #fff;
-  border-radius: 1rem;
+  background: var(--surface);
+  border-radius: var(--radius);
   padding: 1.25rem 1.5rem;
   margin-bottom: 1.25rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  border: 1.5px solid #e5e7eb;
+  border: 1px solid var(--border);
 }
 
 .squad-form-heading {
+  font-family: var(--font-ui);
   font-size: 0.95rem;
   font-weight: 700;
-  color: #111;
+  color: var(--text);
   margin-bottom: 1rem;
 }
 
@@ -124,27 +134,30 @@
 }
 
 .squad-label {
+  font-family: var(--font-ui);
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #999;
+  letter-spacing: 0.16em;
+  color: var(--gold);
 }
 
 .squad-input {
   width: 100%;
   padding: 0.65rem 0.875rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
   font-size: 0.9rem;
   font-family: inherit;
-  color: #111;
-  background: #fff;
+  color: var(--text);
+  background: var(--surface-2);
   outline: none;
   transition: border-color 0.15s;
 }
 
-.squad-input:focus { border-color: #111; }
+.squad-input::placeholder { color: var(--muted); }
+
+.squad-input:focus { border-color: var(--gold); }
 
 .squad-textarea { resize: vertical; line-height: 1.5; }
 
@@ -160,25 +173,29 @@
 .squad-cancel-btn {
   padding: 0.6rem 1.1rem;
   background: transparent;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
   font-size: 0.875rem;
   font-weight: 600;
-  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text);
   cursor: pointer;
-  font-family: inherit;
 }
 
 .squad-save-btn {
   padding: 0.6rem 1.25rem;
-  background: #FFE629;
-  color: #000;
+  background: var(--gold);
+  color: #0A0B0D;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
   font-size: 0.875rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  font-family: inherit;
 }
 
 .squad-save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -191,10 +208,10 @@
 }
 
 .squad-card {
-  background: #fff;
-  border-radius: 0.9rem;
+  background: var(--surface);
+  border-radius: var(--radius);
   padding: 1rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -208,29 +225,33 @@
 }
 
 .squad-card-name {
+  font-family: var(--font-ui);
   font-weight: 700;
-  color: #111;
+  color: var(--text);
   font-size: 0.95rem;
 }
 
 .squad-count {
   padding: 0.1rem 0.55rem;
-  border-radius: 99px;
-  background: #f1f5f9;
-  color: #555;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--steel);
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .squad-count-short {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--fault-a10);
+  border-color: var(--fault);
+  color: var(--fault);
 }
 
 .squad-card-desc {
   font-size: 0.85rem;
-  color: #555;
+  color: var(--steel);
   line-height: 1.45;
   text-transform: none;
   letter-spacing: normal;
@@ -243,9 +264,10 @@
 }
 
 .squad-vacant {
+  font-family: var(--font-mono);
   font-size: 0.8rem;
   font-weight: 600;
-  color: #b91c1c;
+  color: var(--fault);
 }
 
 .squad-holder {
@@ -253,9 +275,10 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.15rem 0.35rem 0.15rem 0.6rem;
-  border-radius: 99px;
-  background: #111;
-  color: #FFE629;
+  border-radius: var(--radius);
+  background: var(--gold);
+  color: #0A0B0D;
+  font-family: var(--font-ui);
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -268,8 +291,8 @@
   height: 1.05rem;
   border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: var(--gold-a24);
+  color: #0A0B0D;
   font-size: 0.8rem;
   line-height: 1;
   cursor: pointer;
@@ -286,27 +309,29 @@
   flex: 1;
   min-width: 0;
   padding: 0.45rem 0.6rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.5rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
   font-size: 0.85rem;
   font-family: inherit;
-  color: #333;
-  background: #fff;
+  color: var(--text);
+  background: var(--surface-2);
   cursor: pointer;
   outline: none;
 }
 
-.squad-select:focus { border-color: #111; }
+.squad-select:focus { border-color: var(--gold); }
 
 .squad-assign-btn {
   padding: 0.45rem 0.9rem;
   border: none;
-  border-radius: 0.5rem;
-  background: #111;
-  color: #FFE629;
-  font-family: inherit;
+  border-radius: var(--radius);
+  background: var(--gold);
+  color: #0A0B0D;
+  font-family: var(--font-ui);
   font-size: 0.85rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
 }
 
@@ -323,14 +348,14 @@
   background: none;
   border: none;
   padding: 0;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 0.78rem;
   font-weight: 600;
-  color: #555;
+  color: var(--steel);
   cursor: pointer;
   text-decoration: underline;
 }
 
 .squad-link-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.squad-link-danger { color: #b91c1c; }
+.squad-link-danger { color: var(--fault); }

@@ -1,4 +1,5 @@
 .checkin-wrap {
+  position: relative;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -7,69 +8,227 @@
   gap: 1rem;
   padding: 2rem;
   text-align: center;
-  color: #fff;
-  background: #000;
+  color: var(--text);
+  background: var(--bg);
 }
 
-.checkin-in  { background: #00a86b; }
-.checkin-out { background: #f59e0b; }
-.checkin-error { background: #dc2626; }
+/* ── Header (no NavBar on the fast path) ── */
+.checkin-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+}
 
-.checkin-icon {
-  font-size: 3.5rem;
-  line-height: 1;
-  width: 7rem;
-  height: 7rem;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
+.checkin-header-mark {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+}
+
+.checkin-header-dot { color: var(--steel); margin: 0 0.1em; }
+
+.checkin-header-tag {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: var(--steel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.45rem;
+}
+
+/* Dark header sits on the gold success flood */
+.checkin-header-dark .checkin-header-mark { color: #0A0B0D; }
+.checkin-header-dark .checkin-header-dot  { color: rgba(10,11,13,0.55); }
+.checkin-header-dark .checkin-header-tag  { color: #0A0B0D; border-color: rgba(10,11,13,0.4); }
+
+/* ── Idle / scan-ready target ── */
+.checkin-target {
+  width: 11rem;
+  height: 11rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.5rem;
+  padding: 1rem;
+}
+
+.checkin-ring {
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--gold);
+  border-right-color: var(--gold);
+  animation: checkin-sweep 1.1s linear infinite;
+}
+
+.checkin-target-label {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+}
+
+@keyframes checkin-sweep { to { transform: rotate(360deg); } }
+
+.checkin-loading-msg {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  color: var(--steel);
+  text-transform: none;
+}
+
+/* ── Success: check-in floods gold, black text ── */
+.checkin-success {
+  background: var(--gold);
+  color: #0A0B0D;
+}
+.checkin-success .checkin-mark,
+.checkin-success .checkin-name,
+.checkin-success .checkin-status,
+.checkin-success .checkin-loc,
+.checkin-success .checkin-footer { color: #0A0B0D; }
+
+.checkin-success {
+  animation: checkin-flash 0.25s ease-out;
+}
+@keyframes checkin-flash {
+  from { background: var(--gold-bright); }
+  to   { background: var(--gold); }
+}
+
+/* ── Check-out: dark confirm panel with gold accent ── */
+.checkin-checkout { background: var(--bg); }
+.checkin-checkout .checkin-mark {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.checkin-checkout .checkin-status { color: var(--gold-bright); }
+
+/* ── Mark (check / cross) ── */
+.checkin-mark {
+  font-size: 3rem;
+  line-height: 1;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 50%;
+  border: 3px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkin-mark-fault {
+  color: var(--fault);
+  border-color: var(--fault);
+}
+
+/* ── Name + readout lines ── */
+.checkin-name {
+  font-family: var(--font-ui);
+  font-size: 2.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .checkin-wrap h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  letter-spacing: -0.5px;
+  font-family: var(--font-ui);
+  font-size: 2rem;
+  font-weight: 700;
 }
 
-.checkin-detail {
-  font-size: 1.1rem;
-  opacity: 0.85;
-  text-transform: capitalize;
+.checkin-status {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
 }
 
-.checkin-spinner {
-  width: 3rem;
-  height: 3rem;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.75s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.checkin-loading-msg {
-  margin-top: 1rem;
-  font-size: 0.9rem;
-  opacity: 0.7;
-  color: #fff;
-}
-
-.checkin-hint {
+.checkin-loc {
+  font-family: var(--font-mono);
   font-size: 0.85rem;
-  opacity: 0.65;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
 }
 
+/* ── Already on deck (duplicate): amber, NOT an error ── */
+.checkin-duplicate { background: var(--bg); }
+
+.checkin-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.75rem 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.checkin-panel-amber {
+  border-left: 4px solid var(--gold-dim);
+}
+
+.checkin-bang {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 2.2rem;
+  line-height: 1;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  border: 3px solid var(--gold-dim);
+  color: var(--gold-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.checkin-duplicate .checkin-status { color: var(--gold-dim); }
+
+/* ── Fault: the only place red appears ── */
+.checkin-fault { background: var(--bg); }
+.checkin-fault h1 { color: var(--fault); }
+.checkin-fault .checkin-status { color: var(--steel); }
+
+/* ── Footer status line ── */
+.checkin-footer {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 0;
+  right: 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+.checkin-footer-fault { color: var(--fault); }
+.checkin-footer-amber { color: var(--gold-dim); }
+
+/* ── Return link ── */
 .checkin-home-link {
+  font-family: var(--font-mono);
   margin-top: 0.5rem;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 0.95rem;
+  color: var(--steel);
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
   text-decoration: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid var(--border-strong);
   padding-bottom: 1px;
+}
+.checkin-home-link:hover { color: var(--gold); border-bottom-color: var(--gold); }
+.checkin-success .checkin-home-link { color: #0A0B0D; border-bottom-color: rgba(10,11,13,0.4); }
+
+/* ── Reduced motion: no sweep / flash animation ── */
+@media (prefers-reduced-motion: reduce) {
+  .checkin-ring { animation: none; border-top-color: var(--gold); }
+  .checkin-success { animation: none; }
 }

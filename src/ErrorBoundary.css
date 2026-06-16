@@ -3,18 +3,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: var(--bg);
   padding: 2rem;
 }
 
 .eb-card {
-  background: #fff;
-  border-radius: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 2rem 2rem 1.75rem;
   max-width: 480px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -22,9 +22,10 @@
 }
 
 .eb-title {
+  font-family: var(--font-ui);
   font-size: 1rem;
   font-weight: 700;
-  color: #111;
+  color: var(--text);
   margin: 0;
   opacity: 1;
   text-transform: none;
@@ -33,15 +34,16 @@
 
 .eb-detail {
   font-size: 0.8rem;
-  color: #b91c1c;
-  background: #fef2f2;
-  border-radius: 0.5rem;
+  color: var(--fault);
+  background: var(--fault-a10);
+  border: 1px solid var(--fault);
+  border-radius: var(--radius-sm);
   padding: 0.7rem 1rem;
   margin: 0;
   text-align: left;
   width: 100%;
   box-sizing: border-box;
-  font-family: monospace;
+  font-family: var(--font-mono);
   word-break: break-word;
   opacity: 1;
   text-transform: none;
@@ -50,17 +52,19 @@
 
 .eb-btn {
   padding: 0.6rem 1.5rem;
-  background: #111;
-  color: #FFE629;
+  background: var(--gold);
+  color: #0A0B0D;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
   font-size: 0.9rem;
   font-weight: 700;
-  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: background 0.15s;
 }
 
 .eb-btn:hover {
-  opacity: 0.85;
+  background: var(--gold-bright);
 }

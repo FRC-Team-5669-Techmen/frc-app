@@ -3,13 +3,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #000;
+  background: var(--bg);
   padding: 1rem;
 }
 
 .login-card {
-  background: #fff;
-  border-radius: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 2rem 1.75rem;
   width: 100%;
   max-width: 360px;
@@ -26,9 +27,10 @@
 }
 
 .login-card h1 {
+  font-family: var(--font-ui);
   font-size: 1.4rem;
   font-weight: 700;
-  color: #111;
+  color: var(--text);
 }
 
 .google-btn {
@@ -70,7 +72,8 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #ccc;
+  font-family: var(--font-mono);
+  color: var(--muted);
   font-size: 0.8rem;
 }
 
@@ -79,20 +82,22 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: #e5e7eb;
+  background: var(--border);
 }
 
 .login-card .subtitle {
+  font-family: var(--font-ui);
   font-size: 0.875rem;
-  color: #666;
-  letter-spacing: 0.12em;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   margin-bottom: 0.5rem;
 }
 
 .login-hint {
   font-size: 0.9rem;
-  color: #555;
+  color: var(--steel);
   text-align: center;
   line-height: 1.5;
   opacity: 1;
@@ -101,7 +106,7 @@
 }
 
 .login-hint strong {
-  color: #111;
+  color: var(--text);
 }
 
 .login-card form {
@@ -115,21 +120,28 @@
 .login-card input[type='text'] {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1.5px solid #ddd;
-  border-radius: 0.75rem;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
   font-size: 1rem;
-  outline: none;
   transition: border-color 0.15s;
   font-family: inherit;
 }
 
+.login-card input[type='email']::placeholder,
+.login-card input[type='text']::placeholder {
+  color: var(--muted);
+}
+
 .login-card input[type='email']:focus,
 .login-card input[type='text']:focus {
-  border-color: #000;
+  border-color: var(--gold);
 }
 
 .code-input {
   text-align: center;
+  font-family: var(--font-mono) !important;
   font-size: 1.5rem !important;
   letter-spacing: 0.15em;
   font-variant-numeric: tabular-nums;
@@ -138,15 +150,21 @@
 .login-card button[type='submit'] {
   width: 100%;
   padding: 0.875rem;
-  background: #FFE629;
-  color: #000;
+  background: var(--gold);
+  color: #0A0B0D;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
   font-size: 1rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  transition: opacity 0.15s;
-  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.login-card button[type='submit']:hover:not(:disabled) {
+  background: var(--gold-bright);
 }
 
 .login-card button[type='submit']:disabled {
@@ -157,7 +175,7 @@
 .back-link {
   background: none;
   border: none;
-  color: #aaa;
+  color: var(--muted);
   font-size: 0.85rem;
   cursor: pointer;
   padding: 0;
@@ -168,14 +186,15 @@
 }
 
 .back-link:hover {
-  color: #666;
+  color: var(--gold);
 }
 
 .login-card .error {
-  color: #c00;
+  font-family: var(--font-mono);
+  color: var(--fault);
   font-size: 0.875rem;
   text-align: center;
   opacity: 1;
   text-transform: none;
-  letter-spacing: normal;
+  letter-spacing: 0.04em;
 }

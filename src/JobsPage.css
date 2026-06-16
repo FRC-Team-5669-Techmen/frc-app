@@ -3,14 +3,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: var(--bg);
 }
 
 .jobs-spinner {
   width: 2.5rem;
   height: 2.5rem;
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top-color: #111;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--gold);
   border-radius: 50%;
   animation: jobs-spin 0.75s linear infinite;
 }
@@ -19,9 +19,13 @@
   to { transform: rotate(360deg); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .jobs-spinner { animation: none; }
+}
+
 .jobs-wrap {
   flex: 1;
-  background: #f5f5f5;
+  background: var(--bg);
   display: flex;
   flex-direction: column;
 }
@@ -41,57 +45,63 @@
 }
 
 .jobs-title {
+  font-family: var(--font-ui);
   font-size: 1.4rem;
   font-weight: 800;
-  color: #111;
+  color: var(--text);
 }
 
 .jobs-add-btn {
   padding: 0.5rem 1rem;
   border: none;
-  border-radius: 0.6rem;
-  background: #111;
-  color: #FFE629;
-  font-family: inherit;
+  border-radius: var(--radius);
+  background: var(--gold);
+  color: #0A0B0D;
+  font-family: var(--font-ui);
   font-size: 0.85rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
 }
 
 .jobs-error {
   margin-bottom: 1rem;
   padding: 0.75rem 1rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 0.75rem;
+  background: var(--fault-a10);
+  border: 1px solid var(--fault);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
   font-size: 0.875rem;
-  color: #b91c1c;
+  color: var(--fault);
   cursor: pointer;
   text-transform: none;
-  letter-spacing: normal;
+  letter-spacing: 0.04em;
 }
 
 .jobs-empty,
 .jobs-none {
-  color: #999;
+  font-family: var(--font-mono);
+  color: var(--muted);
   font-size: 0.9rem;
   text-transform: none;
-  letter-spacing: normal;
+  letter-spacing: 0.04em;
 }
 
 /* ── Staff form ── */
 .jobs-form-card {
-  background: #fff;
-  border-radius: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 1.25rem;
   margin-bottom: 1.25rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .jobs-form-heading {
+  font-family: var(--font-ui);
   font-size: 1rem;
   font-weight: 700;
-  color: #111;
+  color: var(--text);
   margin-bottom: 0.85rem;
 }
 
@@ -102,26 +112,32 @@
 }
 
 .jobs-label {
+  font-family: var(--font-ui);
   font-size: 0.78rem;
   font-weight: 600;
-  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
   margin-bottom: 0.3rem;
-  text-transform: none;
-  letter-spacing: normal;
 }
 
 .jobs-input {
   padding: 0.5rem 0.7rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.5rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
   font-family: inherit;
   font-size: 0.9rem;
-  color: #333;
+  color: var(--text);
+  background: var(--surface-2);
   outline: none;
 }
 
+.jobs-input::placeholder {
+  color: var(--muted);
+}
+
 .jobs-input:focus {
-  border-color: #111;
+  border-color: var(--gold);
 }
 
 .jobs-textarea {
@@ -140,9 +156,10 @@
   gap: 0.3rem;
   padding: 0.25rem 0.65rem;
   border-radius: 99px;
-  border: 1.5px solid #e5e7eb;
-  background: #fafafa;
-  color: #888;
+  border: 1.5px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--steel);
+  font-family: var(--font-ui);
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
@@ -154,9 +171,9 @@
 }
 
 .jobs-skill-chip.on {
-  background: #111;
-  color: #FFE629;
-  border-color: #111;
+  background: var(--gold-a14);
+  color: var(--gold);
+  border-color: var(--gold);
 }
 
 .jobs-skill-safety {
@@ -166,8 +183,9 @@
   width: 1rem;
   height: 1rem;
   border-radius: 50%;
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--fault-a10);
+  color: var(--fault);
+  font-family: var(--font-mono);
   font-size: 0.7rem;
   font-weight: 800;
 }
@@ -181,25 +199,29 @@
 
 .jobs-cancel-btn {
   padding: 0.5rem 1rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.5rem;
-  background: #fff;
-  color: #555;
-  font-family: inherit;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-ui);
   font-size: 0.85rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
 }
 
 .jobs-save-btn {
   padding: 0.5rem 1.1rem;
   border: none;
-  border-radius: 0.5rem;
-  background: #111;
-  color: #FFE629;
-  font-family: inherit;
+  border-radius: var(--radius);
+  background: var(--gold);
+  color: #0A0B0D;
+  font-family: var(--font-ui);
   font-size: 0.85rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
 }
 
@@ -210,18 +232,19 @@
 
 /* ── Verification queue ── */
 .jobs-queue {
-  background: #fff;
-  border-radius: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 1rem 1.25rem;
   margin-bottom: 1.5rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  border-left: 4px solid #FFE629;
+  border-left: 4px solid var(--gold);
 }
 
 .jobs-queue-heading {
+  font-family: var(--font-ui);
   font-size: 0.95rem;
   font-weight: 700;
-  color: #111;
+  color: var(--text);
   margin-bottom: 0.75rem;
 }
 
@@ -231,7 +254,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.6rem 0;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--border);
 }
 
 .jobs-queue-info {
@@ -242,18 +265,21 @@
 }
 
 .jobs-queue-title {
+  font-family: var(--font-ui);
   font-weight: 600;
-  color: #111;
+  color: var(--text);
   font-size: 0.9rem;
 }
 
 .jobs-queue-sub {
   padding: 0.1rem 0.5rem;
   border-radius: 99px;
-  background: #f1f5f9;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  font-family: var(--font-ui);
   font-size: 0.7rem;
   font-weight: 600;
-  color: #555;
+  color: var(--steel);
   white-space: nowrap;
 }
 
@@ -269,11 +295,12 @@
 }
 
 .jobs-group-label {
+  font-family: var(--font-ui);
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #999;
+  letter-spacing: 0.16em;
+  color: var(--gold);
   margin-bottom: 0.6rem;
 }
 
@@ -284,10 +311,10 @@
 }
 
 .jobs-card {
-  background: #fff;
-  border-radius: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 1rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -301,14 +328,15 @@
 }
 
 .jobs-card-title {
+  font-family: var(--font-ui);
   font-weight: 700;
-  color: #111;
+  color: var(--text);
   font-size: 0.95rem;
 }
 
 .jobs-card-desc {
   font-size: 0.85rem;
-  color: #555;
+  color: var(--steel);
   line-height: 1.45;
   text-transform: none;
   letter-spacing: normal;
@@ -324,17 +352,20 @@
   display: inline-block;
   padding: 0.18rem 0.55rem;
   border-radius: 99px;
+  font-family: var(--font-ui);
   font-size: 0.72rem;
   font-weight: 600;
-  background: #f1f5f9;
-  color: #555;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  color: var(--steel);
   white-space: nowrap;
 }
 
 /* Safety-critical skills, matching SkillsCatalog .sc-badge-safety */
 .jobs-skill-badge.safety {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--fault-a10);
+  border-color: var(--fault);
+  color: var(--fault);
   font-weight: 700;
 }
 
@@ -342,16 +373,18 @@
 .jobs-status {
   padding: 0.15rem 0.6rem;
   border-radius: 99px;
+  font-family: var(--font-mono);
   font-size: 0.68rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.jobs-status-open                  { background: #dcfce7; color: #15803d; }
-.jobs-status-claimed               { background: #dbeafe; color: #1d4ed8; }
-.jobs-status-awaiting_verification { background: #fef3c7; color: #b45309; }
-.jobs-status-completed             { background: #f1f5f9; color: #64748b; }
+.jobs-status-open                  { background: var(--gold-a14); color: var(--gold-bright); }
+.jobs-status-claimed               { background: var(--surface-2); color: var(--steel); border: 1px solid var(--border-strong); }
+.jobs-status-awaiting_verification { background: var(--gold-a08); color: var(--gold-dim); }
+.jobs-status-completed             { background: var(--surface-2); color: var(--muted); }
 
 /* ── Card actions ── */
 .jobs-card-actions {
@@ -365,11 +398,13 @@
 .jobs-btn {
   padding: 0.4rem 0.9rem;
   border: none;
-  border-radius: 0.5rem;
-  font-family: inherit;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
   font-size: 0.8rem;
   font-weight: 700;
-  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text);
   cursor: pointer;
 }
 
@@ -378,27 +413,29 @@
   cursor: not-allowed;
 }
 
-.jobs-btn-claim   { background: #111; color: #FFE629; }
-.jobs-btn-done    { background: #00a86b; }
-.jobs-btn-release { background: #fff; color: #555; border: 1.5px solid #e5e7eb; }
-.jobs-btn-approve { background: #00a86b; }
-.jobs-btn-reject  { background: #dc2626; }
+.jobs-btn-claim   { background: var(--gold); color: #0A0B0D; }
+.jobs-btn-done    { background: var(--gold); color: #0A0B0D; }
+.jobs-btn-release { background: transparent; color: var(--text); border: 1.5px solid var(--border-strong); }
+.jobs-btn-approve { background: var(--gold); color: #0A0B0D; }
+.jobs-btn-reject  { background: var(--fault); color: #0A0B0D; }
 
 .jobs-locked {
+  font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 600;
-  color: #b45309;
+  color: var(--gold-dim);
   line-height: 1.3;
 }
 
 .jobs-note {
+  font-family: var(--font-mono);
   font-size: 0.8rem;
   font-weight: 600;
-  color: #888;
+  color: var(--steel);
 }
 
 .jobs-note-done {
-  color: #15803d;
+  color: var(--gold-bright);
 }
 
 .jobs-staff-actions {
@@ -411,10 +448,10 @@
   background: none;
   border: none;
   padding: 0;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 0.78rem;
   font-weight: 600;
-  color: #555;
+  color: var(--steel);
   cursor: pointer;
   text-decoration: underline;
 }
@@ -425,5 +462,5 @@
 }
 
 .jobs-link-danger {
-  color: #b91c1c;
+  color: var(--fault);
 }

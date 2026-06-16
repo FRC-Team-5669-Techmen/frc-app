@@ -3,14 +3,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f5f5;
+  background: var(--bg);
 }
 
 .sc-spinner {
   width: 2.5rem;
   height: 2.5rem;
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top-color: #111;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--gold);
   border-radius: 50%;
   animation: sc-spin 0.75s linear infinite;
 }
@@ -19,9 +19,13 @@
   to { transform: rotate(360deg); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .sc-spinner { animation: none; }
+}
+
 .sc-wrap {
   flex: 1;
-  background: #f5f5f5;
+  background: var(--bg);
   display: flex;
   flex-direction: column;
 }
@@ -31,7 +35,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: var(--muted);
+  font-family: var(--font-mono);
   font-size: 0.95rem;
 }
 
@@ -53,40 +58,43 @@
 }
 
 .sc-page-title {
+  font-family: var(--font-ui);
   font-size: 1.05rem;
   font-weight: 700;
-  color: #111;
+  color: var(--text);
 }
 
 .sc-add-btn {
   padding: 0.5rem 1rem;
-  background: #FFE629;
-  color: #000;
+  background: var(--gold);
+  color: #0A0B0D;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
   font-size: 0.875rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  font-family: inherit;
-  transition: opacity 0.15s;
+  transition: background 0.15s;
 }
 
-.sc-add-btn:hover { opacity: 0.85; }
+.sc-add-btn:hover { background: var(--gold-bright); }
 
 /* ── Add / Edit form card ── */
 .sc-form-card {
   margin: 0 1rem 1rem;
-  background: #fff;
-  border-radius: 1rem;
+  background: var(--surface);
+  border-radius: var(--radius);
   padding: 1.25rem 1.5rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  border: 1.5px solid #e5e7eb;
+  border: 1px solid var(--border);
 }
 
 .sc-form-heading {
+  font-family: var(--font-ui);
   font-size: 0.95rem;
   font-weight: 700;
-  color: #111;
+  color: var(--text);
   margin-bottom: 1rem;
 }
 
@@ -116,27 +124,28 @@
 }
 
 .sc-label {
+  font-family: var(--font-ui);
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #999;
+  letter-spacing: 0.16em;
+  color: var(--gold);
 }
 
 .sc-input {
   width: 100%;
   padding: 0.65rem 0.875rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   font-size: 0.9rem;
   font-family: inherit;
-  color: #111;
-  background: #fff;
+  color: var(--text);
+  background: var(--surface-2);
   outline: none;
   transition: border-color 0.15s;
 }
 
-.sc-input:focus { border-color: #111; }
+.sc-input:focus { border-color: var(--gold); }
 
 .sc-textarea {
   resize: vertical;
@@ -166,7 +175,8 @@
   width: 2.5rem;
   height: 1.375rem;
   border-radius: 99px;
-  background: #e5e7eb;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
   padding: 2px;
   transition: background 0.15s;
   flex-shrink: 0;
@@ -176,22 +186,23 @@
   width: 1rem;
   height: 1rem;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  background: var(--steel);
   transition: transform 0.15s;
 }
 
 .sc-toggle-input:checked + .sc-toggle-track {
-  background: #dc2626;
+  background: var(--fault-a10);
+  border-color: var(--fault);
 }
 
 .sc-toggle-input:checked + .sc-toggle-track .sc-toggle-thumb {
+  background: var(--fault);
   transform: translateX(1.125rem);
 }
 
 .sc-toggle-text {
   font-size: 0.9rem;
-  color: #333;
+  color: var(--text);
   opacity: 1;
   text-transform: none;
   letter-spacing: normal;
@@ -208,36 +219,42 @@
 .sc-cancel-btn {
   padding: 0.6rem 1.1rem;
   background: transparent;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
   font-size: 0.875rem;
   font-weight: 600;
-  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text);
   cursor: pointer;
-  font-family: inherit;
   transition: border-color 0.15s;
 }
 
-.sc-cancel-btn:hover { border-color: #aaa; }
+.sc-cancel-btn:hover { border-color: var(--gold); }
 
 .sc-save-btn {
   padding: 0.6rem 1.25rem;
-  background: #FFE629;
-  color: #000;
+  background: var(--gold);
+  color: #0A0B0D;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
   font-size: 0.875rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  font-family: inherit;
-  transition: opacity 0.15s;
+  transition: background 0.15s;
 }
 
+.sc-save-btn:hover:not(:disabled) { background: var(--gold-bright); }
 .sc-save-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .sc-form-error {
+  font-family: var(--font-mono);
   font-size: 0.875rem;
-  color: #b91c1c;
+  color: var(--fault);
   opacity: 1;
   text-transform: none;
   letter-spacing: normal;
@@ -246,7 +263,8 @@
 /* ── Empty state ── */
 .sc-empty {
   margin: 0.5rem 1rem;
-  color: #bbb;
+  color: var(--muted);
+  font-family: var(--font-mono);
   font-size: 0.9rem;
   opacity: 1;
   text-transform: none;
@@ -259,20 +277,21 @@
 }
 
 .sc-category-label {
+  font-family: var(--font-ui);
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #999;
+  letter-spacing: 0.16em;
+  color: var(--gold);
   margin-bottom: 0.5rem;
   opacity: 1;
 }
 
 .sc-table-wrap {
-  background: #fff;
-  border-radius: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .sc-table {
@@ -283,12 +302,13 @@
 .sc-th {
   padding: 0.65rem 1rem;
   text-align: left;
+  font-family: var(--font-ui);
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #999;
-  border-bottom: 1px solid #f1f5f9;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
@@ -296,39 +316,43 @@
 .sc-th-actions { text-align: right; }
 
 .sc-row:not(:last-child) .sc-td {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border);
 }
 
 .sc-td {
   padding: 0.75rem 1rem;
   font-size: 0.9rem;
-  color: #333;
+  color: var(--text);
   vertical-align: middle;
 }
 
 .sc-td-name {
+  font-family: var(--font-ui);
   font-weight: 600;
-  color: #111;
+  color: var(--text);
   white-space: nowrap;
 }
 
 .sc-td-desc {
-  color: #555;
+  color: var(--steel);
   font-size: 0.875rem;
   line-height: 1.45;
 }
 
-.sc-none { color: #ccc; }
+.sc-none { color: var(--muted); }
 
 /* ── Safety critical badge ── */
 .sc-badge-safety {
   display: inline-block;
   padding: 0.18rem 0.55rem;
-  border-radius: 99px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 700;
-  background: #fee2e2;
-  color: #b91c1c;
+  letter-spacing: 0.04em;
+  background: var(--fault-a10);
+  color: var(--fault);
+  border: 1px solid var(--fault);
   white-space: nowrap;
 }
 
@@ -341,19 +365,19 @@
 .sc-reorder-btn {
   padding: 0.25rem 0.45rem;
   background: transparent;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.4rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
   font-size: 0.8rem;
-  color: #666;
+  color: var(--steel);
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s;
   margin-right: 0.25rem;
-  font-family: inherit;
 }
 
 .sc-reorder-btn:hover:not(:disabled) {
-  border-color: #aaa;
-  color: #111;
+  border-color: var(--gold);
+  color: var(--text);
 }
 
 .sc-reorder-btn:disabled {
@@ -364,19 +388,21 @@
 .sc-edit-btn {
   padding: 0.25rem 0.7rem;
   background: transparent;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.4rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
   font-size: 0.8rem;
   font-weight: 600;
-  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--steel);
   cursor: pointer;
   transition: border-color 0.12s, color 0.12s;
-  font-family: inherit;
 }
 
 .sc-edit-btn:hover:not(:disabled) {
-  border-color: #111;
-  color: #111;
+  border-color: var(--gold);
+  color: var(--text);
 }
 
 .sc-edit-btn:disabled {
@@ -387,24 +413,26 @@
 .sc-delete-btn {
   padding: 0.25rem 0.7rem;
   background: transparent;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.4rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
   font-size: 0.8rem;
   font-weight: 600;
-  color: #b91c1c;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fault);
   cursor: pointer;
   transition: border-color 0.12s;
-  font-family: inherit;
   margin-left: 0.25rem;
 }
 
 .sc-delete-btn:hover {
-  border-color: #b91c1c;
+  border-color: var(--fault);
 }
 
 /* ── Disciplines section (second catalog on the page) ── */
 .sc-section-divider {
   margin-top: 1.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border);
 }

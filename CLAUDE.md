@@ -12,11 +12,14 @@ Local: set on first run
 
 ## Branding
 
-Techmen. Gold and black. Space Grotesk. Team logo in the header, not "5669" or "FRC App". Student-facing name is always Techmen.
+Techmen. "Tactical HUD" theme — near-black base, gold targeting accent, silver/steel chrome. Display/UI face is Chakra Petch; all data/readout lines (timestamps, codes, counts, status) use Share Tech Mono. Both fonts are self-hosted via @fontsource (no Google Fonts CDN). Team logo + "TECHMEN·5669" wordmark in the header, not "5669" or "FRC App". Student-facing name is always Techmen.
+
+**Theme tokens live in `src/theme.css`** — a single source of truth (CSS custom properties) imported once in `main.jsx` before `App.css`. Never scatter raw hex through components; use the vars (`--bg`, `--surface`, `--border`/`--border-strong`, `--text`, `--steel`, `--muted`, `--gold`/`--gold-bright`/`--gold-dim`, `--fault`, `--font-ui`, `--font-mono`, `--radius`). Red (`--fault`) is reserved for genuine faults/errors/destructive actions only.
 
 ## Tech stack
 
 - Vite + React. PWA (service worker + manifest).
+- Fonts: Chakra Petch + Share Tech Mono, bundled offline via @fontsource (woff2 precached by the service worker). No runtime font CDN.
 - Supabase: Postgres + auth + RLS. This is live team data.
 - Deployed on Vercel, auto-deploys on push.
 - Auth: email OTP (6-digit code) and Google OAuth via an Internal consent screen scoped to boscotech.edu. Every student has a school Google account.
@@ -93,4 +96,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message. Do not let this file go stale. If a task reveals a new recurring pattern worth encoding, add it rather than waiting to be told.
 
-Last reviewed: 2026-06-15
+Last reviewed: 2026-06-16

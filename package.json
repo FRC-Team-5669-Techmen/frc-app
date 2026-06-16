@@ -10,6 +10,8 @@
     "gen-icons": "node scripts/gen-icons.js"
   },
   "dependencies": {
+    "@fontsource/chakra-petch": "^5.2.7",
+    "@fontsource/share-tech-mono": "^5.2.7",
     "@supabase/supabase-js": "^2.106.2",
     "driver.js": "^1.4.0",
     "react": "^18.3.1",

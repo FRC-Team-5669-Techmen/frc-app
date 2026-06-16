@@ -13,6 +13,16 @@ const GEO_MESSAGES = {
   error:       { heading: 'Location error',       detail: 'Could not verify your location. Move closer and try again.' },
 }
 
+// Minimal HUD header — the fast-path route carries no NavBar.
+function CheckinHeader({ tag = 'CHECK-IN', dark = false }) {
+  return (
+    <header className={`checkin-header${dark ? ' checkin-header-dark' : ''}`}>
+      <span className="checkin-header-mark">TECHMEN<span className="checkin-header-dot">·</span>5669</span>
+      <span className="checkin-header-tag">{tag}</span>
+    </header>
+  )
+}
+
 export default function CheckinPage({ session }) {
   const [searchParams] = useSearchParams()
   const loc = searchParams.get('loc') || 'unknown'
@@ -21,6 +31,17 @@ export default function CheckinPage({ session }) {
   const [eventType, setEventType] = useState(null)
   const [eventTime, setEventTime] = useState(null)
   const [geoReason, setGeoReason] = useState(null)
+
+  const memberName = session?.user?.user_metadata?.full_name
+    || session?.user?.email?.split('@')[0]
+    || 'MEMBER'
+
+  // Short haptic pulse on a recorded event, where supported.
+  useEffect(() => {
+    if (status === 'success' && typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(40)
+    }
+  }, [status])
 
   useEffect(() => {
     async function record() {
@@ -80,55 +101,65 @@ export default function CheckinPage({ session }) {
 
   if (status === 'loading') {
     return (
-      <div className="checkin-wrap">
-        <div className="checkin-spinner" />
-        {loadingMsg && <p className="checkin-loading-msg">{loadingMsg}</p>}
+      <div className="checkin-wrap checkin-idle">
+        <CheckinHeader />
+        <div className="checkin-target hud-brackets">
+          <span className="hud-bracket-b" />
+          <div className="checkin-ring" />
+          <div className="checkin-target-label">SCAN NFC</div>
+        </div>
+        <p className="checkin-loading-msg">{loadingMsg || 'Reading tag…'}</p>
+        <footer className="checkin-footer">STATUS // AWAITING TAG</footer>
       </div>
     )
   }
 
-  if (status === 'geo') {
-    const msg = GEO_MESSAGES[geoReason] ?? GEO_MESSAGES.error
+  if (status === 'geo' || status === 'error') {
+    const msg = status === 'geo'
+      ? (GEO_MESSAGES[geoReason] ?? GEO_MESSAGES.error)
+      : { heading: 'System fault', detail: 'Could not record your attendance. Try again.' }
     return (
-      <div className="checkin-wrap checkin-error">
-        <div className="checkin-icon">✗</div>
+      <div className="checkin-wrap checkin-fault">
+        <CheckinHeader tag="FAULT" />
+        <div className="checkin-mark checkin-mark-fault">✗</div>
         <h1>{msg.heading}</h1>
-        <p className="checkin-detail">{msg.detail}</p>
-      </div>
-    )
-  }
-
-  if (status === 'error') {
-    return (
-      <div className="checkin-wrap checkin-error">
-        <div className="checkin-icon">✗</div>
-        <h1>Something went wrong</h1>
-        <p className="checkin-detail">Could not record your attendance. Try again.</p>
+        <p className="checkin-status">{msg.detail}</p>
+        <footer className="checkin-footer checkin-footer-fault">STATUS // FAULT</footer>
       </div>
     )
   }
 
   const timeStr = eventTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
   const locDisplay = loc.replace(/-/g, ' ')
+  const verb = eventType === 'in' ? 'IN' : 'OUT'
 
   if (status === 'duplicate') {
     return (
-      <div className={`checkin-wrap checkin-${eventType}`}>
-        <div className="checkin-icon">✓</div>
-        <h1>Already {eventType === 'in' ? 'checked in' : 'checked out'}</h1>
-        <p className="checkin-detail">{timeStr} · {locDisplay}</p>
-        <p className="checkin-hint">Tap again in a moment to {eventType === 'in' ? 'check out' : 'check in'}.</p>
-        <Link to="/dashboard" className="checkin-home-link">View status →</Link>
+      <div className="checkin-wrap checkin-duplicate">
+        <CheckinHeader />
+        <div className="checkin-panel checkin-panel-amber">
+          <div className="checkin-bang">!</div>
+          <h1 className="checkin-name">{memberName}</h1>
+          <p className="checkin-status">ALREADY {verb} · {timeStr}</p>
+          <p className="checkin-loc">{locDisplay}</p>
+        </div>
+        <footer className="checkin-footer checkin-footer-amber">STATUS // NO DUPLICATE</footer>
+        <Link to="/dashboard" className="checkin-home-link">VIEW STATUS →</Link>
       </div>
     )
   }
 
+  // success — check-in floods gold; check-out is a dark confirm panel
+  const isIn = eventType === 'in'
   return (
-    <div className={`checkin-wrap checkin-${eventType}`}>
-      <div className="checkin-icon">✓</div>
-      <h1>Checked {eventType}</h1>
-      <p className="checkin-detail">{timeStr} · {locDisplay}</p>
-      <Link to="/dashboard" className="checkin-home-link">View status →</Link>
+    <div className={`checkin-wrap ${isIn ? 'checkin-success' : 'checkin-checkout'}`}>
+      <CheckinHeader tag={isIn ? 'ON DECK' : 'CHECK-OUT'} dark={isIn} />
+      <div className="checkin-mark">✓</div>
+      <h1 className="checkin-name">{memberName}</h1>
+      <p className="checkin-status">CHECKED {verb} · {timeStr}</p>
+      <p className="checkin-loc">{locDisplay}</p>
+      <footer className="checkin-footer">STATUS // {isIn ? 'ON DECK' : 'CLEAR'}</footer>
+      <Link to="/dashboard" className="checkin-home-link">VIEW STATUS →</Link>
     </div>
   )
 }

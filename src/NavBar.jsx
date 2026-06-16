@@ -3,6 +3,30 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { supabase } from './supabase'
 import './NavBar.css'
 
+// Mono unit/context tag shown at the right of the header, derived from route.
+const CONTEXT_TAGS = [
+  ['/dashboard',   'CMD'],
+  ['/my-hours',    'HRS//SELF'],
+  ['/hours',       'HRS//TEAM'],
+  ['/log-hours',   'HRS//LOG'],
+  ['/skills',      'SKILLS'],
+  ['/jobs',        'TASKING'],
+  ['/study',       'TRAINING'],
+  ['/members/',    'PERSONNEL'],
+  ['/profile',     'PROFILE'],
+  ['/readiness',   'READINESS'],
+  ['/activity',    'ACTIVITY'],
+  ['/squad',       'SQUAD'],
+  ['/roster',      'ROSTER'],
+  ['/verify-hours','HRS//VERIFY'],
+  ['/certify',     'CERTIFY'],
+  ['/coverage',    'COVERAGE'],
+]
+function contextTag(pathname) {
+  const hit = CONTEXT_TAGS.find(([p]) => pathname === p || pathname.startsWith(p))
+  return hit ? hit[1] : 'TECHMEN'
+}
+
 function useOutsideClick(ref, onClose) {
   useEffect(() => {
     if (!ref) return
@@ -91,11 +115,16 @@ export default function NavBar({ hasRole = () => false, session = null }) {
   const avatarUrl = session?.user?.user_metadata?.avatar_url
   const name      = session?.user?.user_metadata?.full_name || session?.user?.email || ''
   const initials  = (name[0] || '?').toUpperCase()
+  const { pathname } = useLocation()
 
   return (
     <nav className="navbar">
       <div className="navbar-shell">
-        <img src="/assets/logos/Mark-Gold.svg" className="navbar-mark" alt="Techmen" />
+        <div className="navbar-brand">
+          <img src="/assets/logos/Mark-Gold.svg" className="navbar-mark" alt="Techmen" />
+          <span className="navbar-wordmark">TECHMEN<span className="navbar-wordmark-dot">·</span>5669</span>
+        </div>
+        <span className="navbar-context">{contextTag(pathname)}</span>
 
         <div className="navbar-links">
           <NavLink to="/dashboard" data-tour="nav-dashboard" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>

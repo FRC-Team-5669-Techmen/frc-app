@@ -1,6 +1,6 @@
 .lh-wrap {
   flex: 1;
-  background: #f5f5f5;
+  background: var(--bg);
   display: flex;
   flex-direction: column;
 }
@@ -14,15 +14,15 @@
 
 /* ── Summary strip ── */
 .lh-summary {
-  background: #fff;
+  background: var(--surface);
   margin: 1rem 1rem 0;
-  border-radius: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 2rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .lh-stat {
@@ -33,48 +33,53 @@
 }
 
 .lh-stat-value {
+  font-family: var(--font-ui);
   font-size: 1.6rem;
   font-weight: 700;
-  color: #111;
+  color: var(--text);
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
   opacity: 1;
   text-transform: none;
   letter-spacing: normal;
 }
 
-.lh-stat-green { color: #00a86b; }
+.lh-stat-green { color: var(--gold-bright); }
 
 .lh-stat-label {
+  font-family: var(--font-ui);
   font-size: 0.7rem;
   font-weight: 600;
-  color: #999;
+  color: var(--gold);
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.16em;
 }
 
 .lh-stat-divider {
   width: 1px;
   height: 2.5rem;
-  background: #e5e7eb;
+  background: var(--border-strong);
 }
 
 /* ── Section headings ── */
 .lh-section-heading {
+  font-family: var(--font-ui);
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #999;
+  letter-spacing: 0.16em;
+  color: var(--gold);
   margin: 1.25rem 1rem 0.5rem;
   opacity: 1;
 }
 
 /* ── Form card ── */
 .lh-form-card {
-  background: #fff;
-  border-radius: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 1.5rem;
   margin: 0 1rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .lh-form {
@@ -102,29 +107,34 @@
 }
 
 .lh-label {
+  font-family: var(--font-ui);
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: #999;
+  letter-spacing: 0.16em;
+  color: var(--gold);
 }
 
 .lh-input {
   width: 100%;
   padding: 0.7rem 0.875rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   font-size: 0.95rem;
   font-family: inherit;
-  color: #111;
-  background: #fff;
+  color: var(--text);
+  background: var(--surface-2);
   outline: none;
   transition: border-color 0.15s;
   box-sizing: border-box;
 }
 
+.lh-input::placeholder {
+  color: var(--muted);
+}
+
 .lh-input:focus {
-  border-color: #111;
+  border-color: var(--gold);
 }
 
 .lh-textarea {
@@ -136,29 +146,30 @@
 .lh-select {
   width: 100%;
   padding: 0.7rem 0.875rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   font-size: 0.95rem;
   font-family: inherit;
-  color: #111;
-  background: #fff;
+  color: var(--text);
+  background: var(--surface-2);
   outline: none;
   cursor: pointer;
   transition: border-color 0.15s;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235A6068' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.875rem center;
   padding-right: 2.25rem;
 }
 
 .lh-select:focus {
-  border-color: #111;
+  border-color: var(--gold);
 }
 
 .lh-form-error {
+  font-family: var(--font-mono);
   font-size: 0.875rem;
-  color: #b91c1c;
+  color: var(--fault);
   opacity: 1;
   text-transform: none;
   letter-spacing: normal;
@@ -168,15 +179,21 @@
 .lh-submit {
   align-self: flex-start;
   padding: 0.65rem 1.5rem;
-  background: #FFE629;
-  color: #000;
+  background: var(--gold);
+  color: #0A0B0D;
   border: none;
-  border-radius: 0.75rem;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
   font-size: 0.95rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
-  font-family: inherit;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.lh-submit:hover:not(:disabled) {
+  background: var(--gold-bright);
 }
 
 .lh-submit:disabled {
@@ -194,8 +211,8 @@
 .lh-spinner {
   width: 2rem;
   height: 2rem;
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top-color: #111;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--gold);
   border-radius: 50%;
   animation: lh-spin 0.75s linear infinite;
 }
@@ -204,9 +221,14 @@
   to { transform: rotate(360deg); }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .lh-spinner { animation: none; }
+}
+
 .lh-empty {
   margin: 0 1rem;
-  color: #bbb;
+  font-family: var(--font-mono);
+  color: var(--muted);
   font-size: 0.9rem;
   opacity: 1;
   text-transform: none;
@@ -222,10 +244,10 @@
 }
 
 .lh-entry {
-  background: #fff;
-  border-radius: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 1rem 1.25rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -239,18 +261,22 @@
 }
 
 .lh-entry-date {
+  font-family: var(--font-mono);
   font-size: 0.9rem;
   font-weight: 600;
-  color: #111;
+  color: var(--text);
   opacity: 1;
   text-transform: none;
   letter-spacing: normal;
 }
 
 .lh-entry-hours {
+  font-family: var(--font-mono);
   font-size: 0.9rem;
   font-weight: 700;
-  color: #111;
+  color: var(--text);
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
   margin-left: auto;
   opacity: 1;
   text-transform: none;
@@ -259,7 +285,7 @@
 
 .lh-entry-desc {
   font-size: 0.875rem;
-  color: #555;
+  color: var(--steel);
   line-height: 1.5;
   margin: 0;
   opacity: 1;
@@ -278,53 +304,53 @@
   display: inline-flex;
   align-items: center;
   padding: 0.15rem 0.55rem;
-  border-radius: 99px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 600;
-  opacity: 1;
-  text-transform: none;
-  letter-spacing: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-.lh-type-volunteering { background: #eff6ff; color: #1d4ed8; }
-.lh-type-outreach     { background: #f5f3ff; color: #6d28d9; }
-.lh-type-competition  { background: #fffbeb; color: #92400e; }
+.lh-type-volunteering { background: var(--surface-2); color: var(--steel); }
+.lh-type-outreach     { background: var(--surface-2); color: var(--steel); }
+.lh-type-competition  { background: var(--gold-a08); color: var(--gold-dim); }
 
 /* ── Status chips ── */
 .lh-status-chip {
   display: inline-flex;
   align-items: center;
   padding: 0.2rem 0.625rem;
-  border-radius: 99px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 600;
-  opacity: 1;
-  text-transform: none;
-  letter-spacing: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-.lh-status-pending  { background: #f3f4f6; color: #6b7280; }
-.lh-status-verified { background: #f0fdf4; color: #15803d; }
-.lh-status-rejected { background: #fef2f2; color: #b91c1c; }
+.lh-status-pending  { background: var(--surface-2); color: var(--steel); }
+.lh-status-verified { background: var(--gold-a14); color: var(--gold-bright); }
+.lh-status-rejected { background: var(--fault-a10); color: var(--fault); }
 
 /* ── Delete button ── */
 .lh-delete-btn {
   margin-left: auto;
   padding: 0.2rem 0.625rem;
   background: transparent;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.4rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
   font-size: 0.75rem;
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--muted);
   cursor: pointer;
-  font-family: inherit;
   transition: border-color 0.12s, color 0.12s;
 }
 
 .lh-delete-btn:hover:not(:disabled) {
-  border-color: #dc2626;
-  color: #dc2626;
+  border-color: var(--fault);
+  color: var(--fault);
 }
 
 .lh-delete-btn:disabled {

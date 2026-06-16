@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: #000;
+  background: var(--bg);
 }
 
 .gate-card {
@@ -24,15 +24,16 @@
 }
 
 .gate-title {
-  color: #FFE629;
+  font-family: var(--font-ui);
+  color: var(--gold);
   font-size: 1.9rem;
   font-weight: 800;
-  letter-spacing: -0.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .gate-msg {
-  color: #fff;
-  opacity: 0.8;
+  color: var(--text);
   font-size: 1rem;
   line-height: 1.5;
   text-transform: none;
@@ -40,40 +41,42 @@
 }
 
 .gate-email {
-  color: #fff;
-  opacity: 0.65;
+  font-family: var(--font-mono);
+  color: var(--steel);
   font-size: 0.9rem;
+  letter-spacing: 0.04em;
   text-transform: none;
-  letter-spacing: normal;
 }
 
 .gate-email strong {
-  color: #FFE629;
+  color: var(--gold);
   opacity: 1;
   font-weight: 600;
 }
 
 .gate-signout {
   margin-top: 0.5rem;
-  background: #FFE629;
-  color: #000;
+  background: var(--gold);
+  color: #0A0B0D;
   border: none;
-  border-radius: 0.6rem;
+  border-radius: var(--radius);
   padding: 0.7rem 1.8rem;
-  font-family: inherit;
+  font-family: var(--font-ui);
   font-size: 1rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   cursor: pointer;
+  transition: background 0.15s;
 }
 
 .gate-signout:hover {
-  opacity: 0.9;
+  background: var(--gold-bright);
 }
 
 .gate-contact {
   margin-top: 0.25rem;
-  color: #fff;
-  opacity: 0.5;
+  color: var(--muted);
   font-size: 0.8rem;
   text-transform: none;
   letter-spacing: normal;
