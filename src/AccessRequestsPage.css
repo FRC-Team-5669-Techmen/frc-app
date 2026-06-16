@@ -1,0 +1,210 @@
+.ar-wrap {
+  flex: 1;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100%;
+}
+
+.ar-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+.ar-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: ar-spin 0.8s linear infinite;
+}
+@keyframes ar-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ar-spinner { animation: none; } }
+
+.ar-body {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}
+
+.ar-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ar-title {
+  font-family: var(--font-ui);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ar-count {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.5rem;
+}
+
+.ar-denied {
+  max-width: 720px;
+  margin: 3rem auto;
+  padding: 1rem;
+  text-align: center;
+  font-family: var(--font-mono);
+  color: var(--steel);
+}
+
+.ar-error {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--fault);
+  background: var(--fault-a10);
+  border: 1px solid var(--fault);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.7rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
+.ar-empty {
+  font-family: var(--font-mono);
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.ar-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ar-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold-dim);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.ar-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 14rem;
+  flex: 1;
+}
+
+.ar-name {
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.ar-email {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  color: var(--steel);
+}
+.ar-note {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--steel);
+  line-height: 1.4;
+  margin-top: 0.2rem;
+}
+.ar-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+}
+.ar-req-role { color: var(--gold); }
+.ar-when { color: var(--muted); }
+
+.ar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: stretch;
+  min-width: 9rem;
+}
+
+.ar-role-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.ar-role-label {
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+.ar-select {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.6rem;
+  text-transform: capitalize;
+}
+.ar-select:focus { outline: none; border-color: var(--gold); }
+.ar-select:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+.ar-btns {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ar-approve, .ar-deny {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: var(--radius);
+  padding: 0.55rem 0.6rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.ar-approve {
+  background: var(--gold);
+  color: #0A0B0D;
+  border: 1px solid var(--gold);
+}
+.ar-approve:hover:not(:disabled) { background: var(--gold-bright); }
+
+.ar-deny {
+  background: transparent;
+  color: var(--steel);
+  border: 1px solid var(--border-strong);
+}
+.ar-deny:hover:not(:disabled) { color: var(--fault); border-color: var(--fault); }
+
+.ar-approve:disabled, .ar-deny:disabled { opacity: 0.5; cursor: not-allowed; }

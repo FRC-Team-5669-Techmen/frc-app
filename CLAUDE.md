@@ -31,6 +31,7 @@ Techmen. "Tactical HUD" theme — near-black base, gold targeting accent, silver
 - **Check-in is the fast path.** The NFC tag deep-links straight to a deliberately minimal check-in route. Keep it light. Do not pull the dashboard, nav, or other modules into that route.
 - **Public site stays separate** from team data. No login, different audience, different security.
 - **Read and write RLS differ.** Students write only their own attendance; all members can read the team hours board. Respect this split when adding policies.
+- **Parent vs staff role resolution.** `is_staff()` is mentor/lead/admin only — `parent` is never staff. A parent who ALSO holds a staff role is treated as staff and sees the mentor view. Any parent-specific UI must gate on `(hasRole('parent') && !isStaff)`, never on `hasRole('parent')` alone.
 
 ## Built so far
 
@@ -42,7 +43,8 @@ Techmen. "Tactical HUD" theme — near-black base, gold targeting accent, silver
 - Public landing page. Nav with grouped dropdowns (Hours menu, avatar dropdown, staff-only Manage menu).
 - My Hours and Team Hours board (aggregates attendance events live).
 - Profile customization (subteam, nickname, bio, shirt_size, avatar_url, grad_year). Multi-select subteams for crossover members.
-- Admin roster: manage roles (student, mentor, lead, admin) and status (active, inactive, alumni), gated by has_role('admin').
+- Admin roster: manage roles (student, mentor, lead, admin, parent) and status (active, inactive, alumni), gated by has_role('admin').
+- Access-request system + `parent` role (`supabase/access_requests.sql`). Non-allowed-email sign-ins hit a request form (replaces the old AccessGate dead-end) that writes an `access_requests` row; staff review at `/access-requests` and Approve (with assigned role student/mentor/parent) or Deny via SECURITY DEFINER RPCs. Approve whitelists the email in `approved_emails`; `claim_profile()` approval order is domain → approved_emails (grants the stored role) → already-approved (still defaults to student). Approval sends a courtesy email via the `send-approval-email` Edge Function (Resend; secret `RESEND_API_KEY`, optional `EMAIL_FROM`/`APP_URL`) — approval never fails if the key is unset. boscotech.edu still auto-approves as student.
 - Skills and certifications: catalog, member view, certify screen with audit trail.
 - Hours types / seasons table (Offseason 2026 ends 2027-01-06, Biocore 2027 starts 2027-01-07). Logged hours (volunteering, outreach, competition) with mentor verification.
 
@@ -98,4 +100,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message. Do not let this file go stale. If a task reveals a new recurring pattern worth encoding, add it rather than waiting to be told.
 
-Last reviewed: 2026-06-16 (added Presence Board + Kiosk modules)
+Last reviewed: 2026-06-16 (added Presence Board + Kiosk modules; access-request system + parent role)

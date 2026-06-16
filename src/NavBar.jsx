@@ -20,6 +20,7 @@ const CONTEXT_TAGS = [
   ['/display',     'DISPLAY'],
   ['/kiosk',       'KIOSK'],
   ['/roster',      'ROSTER'],
+  ['/access-requests', 'ACCESS'],
   ['/verify-hours','HRS//VERIFY'],
   ['/certify',     'CERTIFY'],
   ['/coverage',    'COVERAGE'],
@@ -40,7 +41,7 @@ function useOutsideClick(ref, onClose) {
   }, [ref, onClose])
 }
 
-function Dropdown({ label, paths = [], tourId, align = 'left', children }) {
+function Dropdown({ label, paths = [], tourId, align = 'left', badge = 0, children }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const { pathname } = useLocation()
@@ -56,6 +57,7 @@ function Dropdown({ label, paths = [], tourId, align = 'left', children }) {
         onClick={() => setOpen(o => !o)}
       >
         {label}
+        {badge > 0 && <span className="nav-badge nav-badge-trigger">{badge}</span>}
         <span className={`nav-chevron${open ? ' nav-chevron-up' : ''}`}>▾</span>
       </button>
       {open && (
@@ -119,6 +121,20 @@ export default function NavBar({ hasRole = () => false, session = null }) {
   const initials  = (name[0] || '?').toUpperCase()
   const { pathname } = useLocation()
 
+  // Pending access-request count for the staff menu badge (staff-only; RLS
+  // returns 0 for non-staff). Refreshes when navigating to/from the page.
+  const [pendingAccess, setPendingAccess] = useState(0)
+  useEffect(() => {
+    if (!isStaff) return
+    let active = true
+    supabase
+      .from('access_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending')
+      .then(({ count }) => { if (active) setPendingAccess(count ?? 0) })
+    return () => { active = false }
+  }, [isStaff, pathname])
+
   return (
     <nav className="navbar">
       <div className="navbar-shell">
@@ -156,7 +172,8 @@ export default function NavBar({ hasRole = () => false, session = null }) {
               label="Staff"
               tourId="nav-staff"
               align="right"
-              paths={['/readiness', '/activity', '/squad', '/display', '/kiosk', '/roster', '/verify-hours', '/certify', '/coverage']}
+              paths={['/readiness', '/activity', '/squad', '/display', '/kiosk', '/roster', '/access-requests', '/verify-hours', '/certify', '/coverage']}
+              badge={pendingAccess}
             >
               <NavLink to="/readiness"    className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Readiness</NavLink>
               <NavLink to="/activity"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Activity</NavLink>
@@ -166,6 +183,10 @@ export default function NavBar({ hasRole = () => false, session = null }) {
               <NavLink to="/kiosk"        className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Kiosk</NavLink>
               <div className="nav-dropdown-divider" />
               <NavLink to="/roster"       className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Roster</NavLink>
+              <NavLink to="/access-requests" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>
+                Access Requests
+                {pendingAccess > 0 && <span className="nav-badge">{pendingAccess}</span>}
+              </NavLink>
               <NavLink to="/verify-hours" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Verify Hours</NavLink>
               <NavLink to="/certify"      className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Certify Skills</NavLink>
               <NavLink to="/coverage"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Skill Coverage</NavLink>

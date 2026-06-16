@@ -81,3 +81,103 @@
   text-transform: none;
   letter-spacing: normal;
 }
+
+/* ── Request form ── */
+.gate-card-form { max-width: 28rem; }
+
+.gate-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin: 0.5rem 0 0.25rem;
+  text-align: left;
+}
+
+.gate-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.gate-label {
+  font-family: var(--font-ui);
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+
+.gate-optional {
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.gate-input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.75rem;
+}
+.gate-input::placeholder { color: var(--muted); }
+.gate-input:focus { outline: none; border-color: var(--gold); }
+.gate-input:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.gate-input[readonly] { color: var(--steel); cursor: default; }
+
+.gate-textarea {
+  resize: vertical;
+  min-height: 3.5rem;
+  line-height: 1.4;
+}
+
+.gate-hint {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.gate-error {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--fault);
+  background: var(--fault-a10);
+  border: 1px solid var(--fault);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.7rem;
+}
+
+.gate-submit {
+  margin-top: 0.25rem;
+  background: var(--gold);
+  color: #0A0B0D;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.8rem 1rem;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.gate-submit:hover:not(:disabled) { background: var(--gold-bright); }
+.gate-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Loading spinner for the initial status check */
+.gate-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: gate-spin 0.8s linear infinite;
+}
+@keyframes gate-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .gate-spinner { animation: none; } }

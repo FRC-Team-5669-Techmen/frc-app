@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import './RosterPage.css'
 
-const ALL_ROLES    = ['student', 'mentor', 'lead', 'admin']
+const ALL_ROLES    = ['student', 'mentor', 'lead', 'admin', 'parent']
 const ALL_STATUSES = ['active', 'inactive', 'alumni']
-const ROLE_RANK    = ['admin', 'lead', 'mentor', 'student']
+const ROLE_RANK    = ['admin', 'lead', 'mentor', 'student', 'parent']
 const topRole = (roles = []) => ROLE_RANK.find(r => roles.includes(r))
 
 export default function RosterPage() {
