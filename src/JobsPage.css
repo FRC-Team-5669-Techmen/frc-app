@@ -382,9 +382,97 @@
 }
 
 .jobs-status-open                  { background: var(--gold-a14); color: var(--gold-bright); }
-.jobs-status-claimed               { background: var(--surface-2); color: var(--steel); border: 1px solid var(--border-strong); }
-.jobs-status-awaiting_verification { background: var(--gold-a08); color: var(--gold-dim); }
+.jobs-status-closed                { background: var(--surface-2); color: var(--steel); border: 1px solid var(--border-strong); }
 .jobs-status-completed             { background: var(--surface-2); color: var(--muted); }
+
+/* ── Group / capacity meta ── */
+.jobs-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.1rem;
+}
+.jobs-group-tag {
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.4rem;
+}
+.jobs-card-count {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.03em;
+  color: var(--steel);
+}
+
+/* ── Claimant list ── */
+.jobs-claimants {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0.2rem 0 0.1rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+.jobs-claimant {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.jobs-claimant-name {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.jobs-claim-state {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.jobs-claim-claimed   { color: var(--steel); border: 1px solid var(--border-strong); }
+.jobs-claim-submitted { color: var(--gold-dim); background: var(--gold-a08); }
+.jobs-claim-completed { color: var(--gold-bright); background: var(--gold-a14); }
+.jobs-claimant-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+
+/* ── Form: solo vs group ── */
+.jobs-claimtype {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+.jobs-claimtype-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--steel);
+  cursor: pointer;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+.jobs-claimtype-opt input { accent-color: var(--gold); }
+.jobs-claimtype-opt.on { color: var(--text); border-color: var(--gold); background: var(--gold-a08); }
+.jobs-cap-input { max-width: 12rem; }
 
 /* ── Card actions ── */
 .jobs-card-actions {

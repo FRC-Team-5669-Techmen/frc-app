@@ -129,15 +129,17 @@ begin
                'completed',             t.completed_c
              ) order by coalesce(t.subteam, 'Other'))
       from (
-        select subteam,
-               count(distinct claimed_by)
-                 filter (where status in ('claimed', 'awaiting_verification', 'completed')) as contributors,
-               count(*) filter (where status = 'open')                  as open_c,
-               count(*) filter (where status = 'claimed')               as claimed_c,
-               count(*) filter (where status = 'awaiting_verification')  as awaiting_c,
-               count(*) filter (where status = 'completed')             as completed_c
-        from public.tasks
-        group by subteam
+        -- Multi-claim model: open is task-level (tasks.status), the rest are
+        -- per-claimant counts from task_claims.
+        select t.subteam,
+               count(distinct tc.member_id)                              as contributors,
+               count(distinct t.id) filter (where t.status = 'open')     as open_c,
+               count(*) filter (where tc.status = 'claimed')             as claimed_c,
+               count(*) filter (where tc.status = 'submitted')           as awaiting_c,
+               count(*) filter (where tc.status = 'completed')           as completed_c
+        from public.tasks t
+        left join public.task_claims tc on tc.task_id = t.id
+        group by t.subteam
       ) t
     ), '[]'::json),
 
@@ -146,7 +148,7 @@ begin
 
       'total', (
         (select count(*) from public.logged_hours where status = 'pending') +
-        (select count(*) from public.tasks where status = 'awaiting_verification') +
+        (select count(*) from public.task_claims where status = 'submitted') +
         (select count(*) from public.profiles where approved = false)
       ),
 
@@ -170,7 +172,10 @@ begin
                  'subteam', t.subteam
                ) order by t.updated_at)
         from public.tasks t
-        where t.status = 'awaiting_verification'
+        where exists (
+          select 1 from public.task_claims tc
+          where tc.task_id = t.id and tc.status = 'submitted'
+        )
       ), '[]'::json),
 
       'roster_pending', coalesce((

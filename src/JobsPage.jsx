@@ -9,14 +9,21 @@ const SUBTEAMS = [
   'Fabrication', 'Media', 'Business/Outreach', 'Drive Team',
 ]
 
+// tasks.status is now staff-controlled availability.
 const STATUS_LABELS = {
-  open:                  'Open',
-  claimed:               'Claimed',
-  awaiting_verification: 'Awaiting verification',
-  completed:             'Completed',
+  open:      'Open',
+  closed:    'Closed',
+  completed: 'Completed',
 }
 
-const EMPTY_FORM = { title: '', description: '', subteam: '', skillIds: [] }
+// Per-claimant state labels (task_claims.status).
+const CLAIM_LABELS = {
+  claimed:   'On it',
+  submitted: 'Submitted',
+  completed: 'Done ✓',
+}
+
+const EMPTY_FORM = { title: '', description: '', subteam: '', skillIds: [], group: false, maxClaimants: '' }
 
 export default function JobsPage({ session, hasRole = () => false }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
@@ -26,6 +33,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
   const [reqMap, setReqMap]   = useState({})        // task_id -> [skill_id]
   const [skills, setSkills]   = useState({})        // skill_id -> { name, safety_critical }
   const [myCerts, setMyCerts] = useState(new Set()) // skill_ids the member is certified in
+  const [claimsMap, setClaimsMap] = useState({})    // task_id -> [claim rows]
   const [busy, setBusy]       = useState({})
   const [error, setError]     = useState('')
 
@@ -35,11 +43,12 @@ export default function JobsPage({ session, hasRole = () => false }) {
   const [saving, setSaving]         = useState(false)
 
   const load = useCallback(async () => {
-    const [tRes, trsRes, skRes, msRes] = await Promise.all([
+    const [tRes, trsRes, skRes, msRes, tcRes] = await Promise.all([
       supabase.from('tasks').select('*').order('created_at', { ascending: false }),
       supabase.from('task_required_skills').select('task_id, skill_id'),
       supabase.from('skills').select('id, name, safety_critical').order('name'),
       supabase.from('member_skills').select('skill_id').eq('member_id', uid).eq('status', 'certified'),
+      supabase.from('task_claims').select('task_id, member_id, status, profiles!task_claims_member_id_fkey(full_name, avatar_url)'),
     ])
     if (tRes.error) { setError(tRes.error.message); setTasks([]); return }
 
@@ -47,10 +56,13 @@ export default function JobsPage({ session, hasRole = () => false }) {
     for (const r of trsRes.data ?? []) (rm[r.task_id] ??= []).push(r.skill_id)
     const sk = {}
     for (const s of skRes.data ?? []) sk[s.id] = { name: s.name, safety_critical: s.safety_critical }
+    const cm = {}
+    for (const c of tcRes.data ?? []) (cm[c.task_id] ??= []).push(c)
 
     setReqMap(rm)
     setSkills(sk)
     setMyCerts(new Set((msRes.data ?? []).map(m => m.skill_id)))
+    setClaimsMap(cm)
     setTasks(tRes.data ?? [])
   }, [uid])
 
@@ -84,7 +96,19 @@ export default function JobsPage({ session, hasRole = () => false }) {
   const claim   = id => runRpc('claim_task',   { p_task: id }, id)
   const release = id => runRpc('release_task', { p_task: id }, id)
   const submit  = id => runRpc('submit_task',  { p_task: id }, id)
-  const verify  = (id, approve) => runRpc('verify_task', { p_task: id, p_approve: approve }, id)
+  const verify  = (id, member, approve) => runRpc('verify_task', { p_task: id, p_member: member, p_approve: approve }, id)
+
+  // Staff set the whole job's availability directly (existing staff write policy).
+  async function setJobStatus(t, status) {
+    setBusy(b => ({ ...b, [t.id]: true }))
+    const patch = { status, updated_at: new Date().toISOString() }
+    if (status === 'completed') patch.completed_at = new Date().toISOString()
+    if (status === 'open')      patch.completed_at = null
+    const { error } = await supabase.from('tasks').update(patch).eq('id', t.id)
+    setBusy(b => { const n = { ...b }; delete n[t.id]; return n })
+    if (error) { setError(error.message); return }
+    setError(''); load()
+  }
 
   // ── Staff create / edit form ──
   function openAdd() { setEditTarget(null); setForm(EMPTY_FORM); setError(''); setFormOpen(true) }
@@ -95,6 +119,8 @@ export default function JobsPage({ session, hasRole = () => false }) {
       description: t.description ?? '',
       subteam: t.subteam ?? '',
       skillIds: reqMap[t.id] ?? [],
+      group: t.max_claimants !== 1,                                  // null (unlimited) or >1
+      maxClaimants: (t.max_claimants && t.max_claimants > 1) ? String(t.max_claimants) : '',
     })
     setError(''); setFormOpen(true)
   }
@@ -110,10 +136,14 @@ export default function JobsPage({ session, hasRole = () => false }) {
   async function handleSubmit(e) {
     e.preventDefault()
     setSaving(true); setError('')
+    // Solo => 1; Group => a number >= 2, or null for unlimited.
+    const capNum = parseInt(form.maxClaimants, 10)
+    const maxClaimants = !form.group ? 1 : (Number.isFinite(capNum) && capNum >= 2 ? capNum : null)
     const payload = {
       title:       form.title.trim(),
       description: form.description.trim() || null,
       subteam:     form.subteam.trim() || null,
+      max_claimants: maxClaimants,
     }
 
     let taskId
@@ -156,8 +186,6 @@ export default function JobsPage({ session, hasRole = () => false }) {
   if (tasks === null) {
     return <div className="jobs-loading"><div className="jobs-spinner" /></div>
   }
-
-  const queue = tasks.filter(t => t.status === 'awaiting_verification')
 
   const groups = {}
   for (const t of tasks) (groups[t.subteam || 'Other'] ??= []).push(t)
@@ -233,6 +261,30 @@ export default function JobsPage({ session, hasRole = () => false }) {
                     </div>}
               </div>
 
+              <div className="jobs-field">
+                <label className="jobs-label">Who can claim</label>
+                <div className="jobs-claimtype">
+                  <label className={`jobs-claimtype-opt${!form.group ? ' on' : ''}`}>
+                    <input type="radio" name="claimtype" checked={!form.group}
+                      onChange={() => setForm(f => ({ ...f, group: false }))} />
+                    Solo (one person)
+                  </label>
+                  <label className={`jobs-claimtype-opt${form.group ? ' on' : ''}`}>
+                    <input type="radio" name="claimtype" checked={form.group}
+                      onChange={() => setForm(f => ({ ...f, group: true }))} />
+                    Group
+                  </label>
+                  {form.group && (
+                    <input
+                      type="number" min="2" className="jobs-input jobs-cap-input"
+                      value={form.maxClaimants}
+                      onChange={e => setForm(f => ({ ...f, maxClaimants: e.target.value }))}
+                      placeholder="Max (blank = no limit)"
+                    />
+                  )}
+                </div>
+              </div>
+
               <div className="jobs-form-actions">
                 <button type="button" className="jobs-cancel-btn" onClick={closeForm}>Cancel</button>
                 <button type="submit" className="jobs-save-btn" disabled={saving}>
@@ -240,25 +292,6 @@ export default function JobsPage({ session, hasRole = () => false }) {
                 </button>
               </div>
             </form>
-          </div>
-        )}
-
-        {/* ── Staff: verification queue ── */}
-        {isStaff && queue.length > 0 && (
-          <div className="jobs-queue">
-            <h2 className="jobs-queue-heading">Verification queue</h2>
-            {queue.map(t => (
-              <div key={t.id} className="jobs-queue-row">
-                <div className="jobs-queue-info">
-                  <span className="jobs-queue-title">{t.title}</span>
-                  {t.subteam && <span className="jobs-queue-sub">{t.subteam}</span>}
-                </div>
-                <div className="jobs-queue-actions">
-                  <button className="jobs-btn jobs-btn-approve" disabled={!!busy[t.id]} onClick={() => verify(t.id, true)}>Approve</button>
-                  <button className="jobs-btn jobs-btn-reject" disabled={!!busy[t.id]} onClick={() => verify(t.id, false)}>Reject</button>
-                </div>
-              </div>
-            ))}
           </div>
         )}
 
@@ -272,12 +305,27 @@ export default function JobsPage({ session, hasRole = () => false }) {
               {groups[name].map(t => {
                 const reqs    = requiredSkillsFor(t.id)
                 const missing = missingFor(t.id)
-                const mine    = t.claimed_by === uid
+                const claims  = claimsMap[t.id] ?? []
+                const myClaim = claims.find(c => c.member_id === uid)
+                const max     = t.max_claimants            // 1 solo, null unlimited, N capped
+                const isGroup = max === null || max > 1
+                const full    = max != null && claims.length >= max
+                const spots   = max == null ? null : max - claims.length
+                const nameOf  = c => (c.member_id === uid ? 'You' : (c.profiles?.full_name || 'Member'))
                 return (
                   <div key={t.id} className="jobs-card">
                     <div className="jobs-card-top">
                       <span className="jobs-card-title">{t.title}</span>
                       <span className={`jobs-status jobs-status-${t.status}`}>{STATUS_LABELS[t.status]}</span>
+                    </div>
+
+                    <div className="jobs-card-meta">
+                      {isGroup && <span className="jobs-group-tag">Group</span>}
+                      <span className="jobs-card-count hud-mono">
+                        {max == null
+                          ? `${claims.length} on it`
+                          : `${claims.length} of ${max}${full ? ' · full' : spots > 0 ? ` · ${spots} left` : ''}`}
+                      </span>
                     </div>
 
                     {t.description && <p className="jobs-card-desc">{t.description}</p>}
@@ -292,24 +340,53 @@ export default function JobsPage({ session, hasRole = () => false }) {
                       </div>
                     )}
 
+                    {/* Claimant list with per-claimant state (+ staff sign-off) */}
+                    {claims.length > 0 && (
+                      <ul className="jobs-claimants">
+                        {claims.map(c => (
+                          <li key={c.member_id} className="jobs-claimant">
+                            <span className="jobs-claimant-name">{nameOf(c)}</span>
+                            <span className={`jobs-claim-state jobs-claim-${c.status}`}>{CLAIM_LABELS[c.status]}</span>
+                            {isStaff && c.status === 'submitted' && (
+                              <span className="jobs-claimant-actions">
+                                <button className="jobs-link-btn" disabled={!!busy[t.id]} onClick={() => verify(t.id, c.member_id, true)}>Approve</button>
+                                <button className="jobs-link-btn jobs-link-danger" disabled={!!busy[t.id]} onClick={() => verify(t.id, c.member_id, false)}>Reject</button>
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
                     <div className="jobs-card-actions">
-                      {t.status === 'open' && (
-                        missing.length > 0
-                          ? <span className="jobs-locked">🔒 Needs: {missing.map(s => s.name).join(', ')}</span>
-                          : <button className="jobs-btn jobs-btn-claim" disabled={!!busy[t.id]} onClick={() => claim(t.id)}>Claim</button>
+                      {/* My own claim lifecycle */}
+                      {myClaim ? (
+                        myClaim.status === 'claimed' ? (
+                          <>
+                            <button className="jobs-btn jobs-btn-done" disabled={!!busy[t.id]} onClick={() => submit(t.id)}>Mark done</button>
+                            <button className="jobs-btn jobs-btn-release" disabled={!!busy[t.id]} onClick={() => release(t.id)}>Release</button>
+                          </>
+                        ) : myClaim.status === 'submitted' ? (
+                          <span className="jobs-note">Awaiting sign-off</span>
+                        ) : (
+                          <span className="jobs-note jobs-note-done">Done ✓</span>
+                        )
+                      ) : t.status === 'open' ? (
+                        full
+                          ? <span className="jobs-note">Full</span>
+                          : missing.length > 0
+                            ? <span className="jobs-locked">🔒 Needs: {missing.map(s => s.name).join(', ')}</span>
+                            : <button className="jobs-btn jobs-btn-claim" disabled={!!busy[t.id]} onClick={() => claim(t.id)}>Claim</button>
+                      ) : (
+                        <span className="jobs-note">{t.status === 'completed' ? 'Completed ✓' : 'Closed'}</span>
                       )}
-                      {t.status === 'claimed' && mine && (
-                        <>
-                          <button className="jobs-btn jobs-btn-done" disabled={!!busy[t.id]} onClick={() => submit(t.id)}>Mark done</button>
-                          <button className="jobs-btn jobs-btn-release" disabled={!!busy[t.id]} onClick={() => release(t.id)}>Release</button>
-                        </>
-                      )}
-                      {t.status === 'claimed' && !mine && <span className="jobs-note">Claimed</span>}
-                      {t.status === 'awaiting_verification' && <span className="jobs-note">Awaiting verification</span>}
-                      {t.status === 'completed' && <span className="jobs-note jobs-note-done">Completed ✓</span>}
 
                       {isStaff && (
                         <span className="jobs-staff-actions">
+                          {t.status === 'open'      && <button className="jobs-link-btn" disabled={!!busy[t.id]} onClick={() => setJobStatus(t, 'closed')}>Close</button>}
+                          {t.status === 'closed'    && <button className="jobs-link-btn" disabled={!!busy[t.id]} onClick={() => setJobStatus(t, 'open')}>Reopen</button>}
+                          {t.status !== 'completed' && <button className="jobs-link-btn" disabled={!!busy[t.id]} onClick={() => setJobStatus(t, 'completed')}>Complete</button>}
+                          {t.status === 'completed' && <button className="jobs-link-btn" disabled={!!busy[t.id]} onClick={() => setJobStatus(t, 'open')}>Reopen</button>}
                           <button className="jobs-link-btn" disabled={formOpen} onClick={() => openEdit(t)}>Edit</button>
                           <button className="jobs-link-btn jobs-link-danger" disabled={!!busy[t.id]} onClick={() => remove(t)}>Delete</button>
                         </span>
