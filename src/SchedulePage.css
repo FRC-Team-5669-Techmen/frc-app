@@ -137,12 +137,13 @@
 
 .sch-event {
   display: flex;
-  gap: 0.9rem;
+  flex-direction: column;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.7rem 0.9rem;
 }
+.sch-event-row { display: flex; gap: 0.9rem; }
 .sch-event-time {
   flex-shrink: 0;
   width: 5.5rem;
@@ -193,6 +194,112 @@
 .sch-edit:hover { border-color: var(--gold); color: var(--gold-bright); }
 .sch-del { color: var(--steel); }
 .sch-del:hover { border-color: var(--fault); color: var(--fault); }
+
+/* ── Form: RSVP toggle + capacity ── */
+.sch-rsvp-fields { align-items: flex-end; }
+.sch-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.55rem 0;
+}
+.sch-toggle input { width: 1.05rem; height: 1.05rem; accent-color: var(--gold); cursor: pointer; }
+.sch-cap-field { max-width: 9rem; }
+
+/* ── RSVP toggle line on an event ── */
+.sch-rsvp-toggle {
+  margin-top: 0.4rem;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  color: var(--gold);
+}
+.sch-rsvp-cap { color: var(--steel); }
+.sch-rsvp-mine { color: var(--gold-bright); }
+.sch-rsvp-caret { display: inline-block; transition: transform 0.15s; color: var(--steel); }
+.sch-rsvp-caret.open { transform: rotate(90deg); }
+
+/* ── RSVP panel ── */
+.sch-rsvp {
+  margin-top: 0.7rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.sch-rsvp-controls { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.sch-rsvp-btn {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.8rem;
+  cursor: pointer;
+}
+.sch-rsvp-btn:hover { border-color: var(--gold); }
+.sch-rsvp-btn.on {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #0A0B0D;
+}
+.sch-rsvp-clear {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.35rem 0.4rem;
+}
+.sch-rsvp-clear:hover { color: var(--fault); }
+
+.sch-rsvp-item { display: flex; gap: 0.5rem; }
+.sch-rsvp-item .sch-input { flex: 1; }
+.sch-rsvp-item-save { flex-shrink: 0; }
+
+.sch-rsvp-warn {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--gold-dim);
+  background: var(--gold-a08);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.6rem;
+}
+
+.sch-rsvp-list { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; }
+.sch-rsvp-attendee { display: flex; align-items: baseline; gap: 0.6rem; }
+.sch-rsvp-name {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.sch-rsvp-bringing {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--gold);
+}
+.sch-rsvp-none, .sch-rsvp-maybe {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
 
 .sch-empty {
   font-family: var(--font-mono);
