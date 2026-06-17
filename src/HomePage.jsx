@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import TeamStatus from './TeamStatus'
+import GlanceCard from './GlanceCard'
 import { computeHoursMs, fmtDuration } from './hoursUtils'
 import './HomePage.css'
 
@@ -55,6 +56,7 @@ export default function HomePage({ session, hasRole }) {
   return (
     <div className="home-wrap">
       <div className="home-body">
+        <GlanceCard />
         <TeamStatus />
 
         <div className="status-card" data-tour="status-card">

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { computeHoursMs, fmtDuration } from './hoursUtils'
 import { computePresence, startOfTodayISO, fmtClock, subteamOf } from './presence'
+import GlanceCard from './GlanceCard'
 import './ParentHomePage.css'
 
 // Parent dashboard. Renders at /dashboard only for (hasRole('parent') && !isStaff).
@@ -103,6 +104,8 @@ export default function ParentHomePage({ session }) {
           <span className="ph-eyebrow">FAMILY VIEW</span>
           <h1 className="ph-title">Your students</h1>
         </header>
+
+        <GlanceCard flush />
 
         {students.length === 0 ? (
           <div className="ph-empty">

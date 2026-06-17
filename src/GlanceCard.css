@@ -1,0 +1,98 @@
+.glance {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 1rem 1rem 0;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* In flex-gap containers (ParentHomePage) the parent controls spacing. */
+.glance-flush { margin: 0; }
+
+/* ── Shop status row ── */
+.glance-shop {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.glance-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.glance-open   { background: var(--gold); box-shadow: 0 0 0 3px var(--gold-a14); }
+.glance-opens  { background: var(--gold-dim); }
+.glance-closed { background: var(--muted); }
+
+.glance-shop-head {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.glance-shop-detail {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  color: var(--steel);
+}
+.glance-present {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--gold-bright);
+  white-space: nowrap;
+}
+
+/* ── Next event row ── */
+.glance-next {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border);
+  text-decoration: none;
+}
+.glance-next-when {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+}
+.glance-next-title {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.glance-next-more {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+.glance-next-none {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.glance-arrow {
+  flex-shrink: 0;
+  color: var(--gold);
+  font-family: var(--font-mono);
+}
+.glance-next:hover .glance-next-title { color: var(--gold-bright); }
+.glance-next:hover .glance-arrow { color: var(--gold-bright); }

@@ -6,6 +6,7 @@ import './NavBar.css'
 // Mono unit/context tag shown at the right of the header, derived from route.
 const CONTEXT_TAGS = [
   ['/dashboard',   'CMD'],
+  ['/schedule',    'SCHEDULE'],
   ['/my-hours',    'HRS//SELF'],
   ['/hours',       'HRS//TEAM'],
   ['/log-hours',   'HRS//LOG'],
@@ -149,6 +150,10 @@ export default function NavBar({ hasRole = () => false, session = null }) {
         <div className="navbar-links">
           <NavLink to="/dashboard" data-tour="nav-dashboard" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             Dashboard
+          </NavLink>
+
+          <NavLink to="/schedule" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            Schedule
           </NavLink>
 
           {isParent ? (
