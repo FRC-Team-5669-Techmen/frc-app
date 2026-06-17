@@ -1,30 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import TeamStatus from './TeamStatus'
+import { computeHoursMs, fmtDuration } from './hoursUtils'
 import './HomePage.css'
-
-function computeHoursMs(events) {
-  let total = 0
-  let inTime = null
-  for (const e of events) {
-    if (e.type === 'in') {
-      inTime = new Date(e.event_time)
-    } else if (e.type === 'out' && inTime) {
-      total += new Date(e.event_time) - inTime
-      inTime = null
-    }
-  }
-  if (inTime) total += Date.now() - inTime
-  return total
-}
-
-function fmtDuration(ms) {
-  const mins = Math.floor(ms / 60000)
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  if (h === 0) return `${m}m`
-  return `${h}h ${m}m`
-}
 
 function fmtTime(iso) {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })

@@ -28,6 +28,7 @@ const SquadPage        = lazy(() => import('./SquadPage'))
 const PresenceBoard    = lazy(() => import('./PresenceBoard'))
 const KioskPage        = lazy(() => import('./KioskPage'))
 const AccessRequestsPage = lazy(() => import('./AccessRequestsPage'))
+const ParentHomePage   = lazy(() => import('./ParentHomePage'))
 
 const Splash = () => (
   <div className="splash">
@@ -142,6 +143,9 @@ export default function App() {
   if (session === undefined) return <Splash />
 
   const hasRole = (r) => roles.includes(r)
+  const isStaffUser = ['mentor', 'lead', 'admin'].some(hasRole)
+  // Parent view renders only for a parent who is NOT staff (established rule).
+  const parentView = hasRole('parent') && !isStaffUser
 
   // Signed in but approval not yet resolved: hold on the splash.
   if (session && approved === null) return <Splash />
@@ -164,7 +168,7 @@ export default function App() {
 
         {/* ── Protected: shared NavBar via ProtectedLayout ── */}
         <Route element={session ? <ProtectedLayout hasRole={hasRole} session={session} /> : <Navigate to="/login" replace />}>
-          <Route path="/dashboard" element={<HomePage    session={session} hasRole={hasRole} />} />
+          <Route path="/dashboard" element={parentView ? <ParentHomePage session={session} /> : <HomePage session={session} hasRole={hasRole} />} />
           <Route path="/my-hours"  element={<MyHoursPage session={session} />} />
           <Route path="/log-hours" element={<LogHoursPage session={session} />} />
           <Route path="/hours"     element={<HoursBoard />} />

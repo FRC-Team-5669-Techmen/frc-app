@@ -116,6 +116,8 @@ function AvatarMenu({ avatarUrl, initials, name, isStaff }) {
 
 export default function NavBar({ hasRole = () => false, session = null }) {
   const isStaff   = hasRole('mentor') || hasRole('lead') || hasRole('admin')
+  // Parent-only view: parent who is NOT staff sees a reduced, read-only nav.
+  const isParent  = hasRole('parent') && !isStaff
   const avatarUrl = session?.user?.user_metadata?.avatar_url
   const name      = session?.user?.user_metadata?.full_name || session?.user?.email || ''
   const initials  = (name[0] || '?').toUpperCase()
@@ -149,6 +151,11 @@ export default function NavBar({ hasRole = () => false, session = null }) {
             Dashboard
           </NavLink>
 
+          {isParent ? (
+            <NavLink to="/hours" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+              Team Hours
+            </NavLink>
+          ) : (<>
           <Dropdown label="Hours" tourId="nav-hours" paths={['/my-hours', '/hours', '/log-hours']}>
             <NavLink to="/my-hours"  className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>My Hours</NavLink>
             <NavLink to="/hours"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Team Hours</NavLink>
@@ -192,6 +199,7 @@ export default function NavBar({ hasRole = () => false, session = null }) {
               <NavLink to="/coverage"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Skill Coverage</NavLink>
             </Dropdown>
           )}
+          </>)}
         </div>
 
         <div className="navbar-account">

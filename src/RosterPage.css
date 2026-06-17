@@ -486,3 +486,60 @@
   color: var(--muted);
   font-size: 0.85rem;
 }
+
+/* ── Guardian (parent → students) links ── */
+.roster-guardian {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+.roster-guardian-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.roster-guardian-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text);
+  background: var(--gold-a08);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.5rem;
+}
+.roster-guardian-remove {
+  background: none;
+  border: none;
+  color: var(--gold-dim);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+}
+.roster-guardian-remove:hover { color: var(--fault); }
+.roster-guardian-add {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.roster-guardian-select { flex: 1 1 12rem; }
+.roster-guardian-btn {
+  flex: 0 0 auto;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #0A0B0D;
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+}
+.roster-guardian-btn:hover:not(:disabled) { background: var(--gold-bright); }
+.roster-guardian-btn:disabled { opacity: 0.5; cursor: not-allowed; }

@@ -16,8 +16,34 @@ export default function RosterPage() {
   const [domains, setDomains]     = useState([])
   const [newDomain, setNewDomain] = useState('')
   const [expanded, setExpanded]   = useState(() => new Set())
+  const [links, setLinks]         = useState([])        // guardian_links rows
+  const [linkPick, setLinkPick]   = useState({})        // parent_id -> selected student_id
 
-  useEffect(() => { load(); loadDomains() }, [])
+  useEffect(() => { load(); loadDomains(); loadLinks() }, [])
+
+  async function loadLinks() {
+    const { data } = await supabase.from('guardian_links').select('parent_id, student_id')
+    setLinks(data ?? [])
+  }
+
+  async function linkStudent(parentId) {
+    const studentId = linkPick[parentId]
+    if (!studentId) return
+    const key = `${parentId}_link`
+    setSaving(s => ({ ...s, [key]: true }))
+    const { error } = await supabase.rpc('link_guardian', { p_parent: parentId, p_student: studentId })
+    setSaving(s => { const n = { ...s }; delete n[key]; return n })
+    if (error) { setPageError(error.message); return }
+    setLinks(ls => ls.some(l => l.parent_id === parentId && l.student_id === studentId)
+      ? ls : [...ls, { parent_id: parentId, student_id: studentId }])
+    setLinkPick(p => ({ ...p, [parentId]: '' }))
+  }
+
+  async function unlinkStudent(parentId, studentId) {
+    const { error } = await supabase.rpc('unlink_guardian', { p_parent: parentId, p_student: studentId })
+    if (error) { setPageError(error.message); return }
+    setLinks(ls => ls.filter(l => !(l.parent_id === parentId && l.student_id === studentId)))
+  }
 
   function toggleExpand(id) {
     setExpanded(prev => {
@@ -162,6 +188,14 @@ export default function RosterPage() {
           {members.map(m => {
             const open = expanded.has(m.id)
             const role = topRole(m.roles ?? [])
+            const isParentMember = (m.roles ?? []).includes('parent')
+            const linkedIds = isParentMember
+              ? links.filter(l => l.parent_id === m.id).map(l => l.student_id) : []
+            const linkedStudents = isParentMember
+              ? members.filter(mm => linkedIds.includes(mm.id)) : []
+            const candidates = isParentMember
+              ? members.filter(mm => mm.id !== m.id && (mm.roles ?? []).includes('student') && !linkedIds.includes(mm.id))
+              : []
             return (
               <div key={m.id} className={`roster-member${m.approved ? '' : ' roster-member-pending'}`}>
                 <button
@@ -237,6 +271,44 @@ export default function RosterPage() {
                             onClick={() => approve(m.id)}
                           >Approve</button>}
                     </div>
+                    {isParentMember && (
+                      <div className="roster-detail-row">
+                        <span className="roster-detail-label">Students</span>
+                        <div className="roster-guardian">
+                          {linkedStudents.length === 0
+                            ? <span className="roster-detail-none">No students linked</span>
+                            : <div className="roster-guardian-chips">
+                                {linkedStudents.map(st => (
+                                  <span key={st.id} className="roster-guardian-chip">
+                                    {st.full_name || st.email}
+                                    <button
+                                      className="roster-guardian-remove"
+                                      onClick={() => unlinkStudent(m.id, st.id)}
+                                      aria-label={`Unlink ${st.full_name || st.email}`}
+                                    >×</button>
+                                  </span>
+                                ))}
+                              </div>}
+                          <div className="roster-guardian-add">
+                            <select
+                              className="status-select roster-guardian-select"
+                              value={linkPick[m.id] || ''}
+                              onChange={e => setLinkPick(p => ({ ...p, [m.id]: e.target.value }))}
+                            >
+                              <option value="">Add a student…</option>
+                              {candidates.map(c => (
+                                <option key={c.id} value={c.id}>{c.full_name || c.email}</option>
+                              ))}
+                            </select>
+                            <button
+                              className="roster-guardian-btn"
+                              disabled={!linkPick[m.id] || !!saving[`${m.id}_link`]}
+                              onClick={() => linkStudent(m.id)}
+                            >Link</button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <div className="roster-detail-row">
                       <span className="roster-detail-label">Profile</span>
                       <Link to={`/members/${m.id}`} className="roster-skills-link">View skills</Link>

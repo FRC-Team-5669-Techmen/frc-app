@@ -10,6 +10,32 @@ export function fmtHours(h) {
   return `${hrs}h ${mins}m`
 }
 
+// Total worked milliseconds from in/out pairs, counting an open session up to
+// now. Shared by HomePage and ParentHomePage (was HomePage-local). Sorts
+// defensively so callers can pass events in any order.
+export function computeHoursMs(events) {
+  let total = 0
+  let inTime = null
+  for (const e of [...events].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))) {
+    if (e.type === 'in') {
+      inTime = new Date(e.event_time)
+    } else if (e.type === 'out' && inTime) {
+      total += new Date(e.event_time) - inTime
+      inTime = null
+    }
+  }
+  if (inTime) total += Date.now() - inTime
+  return total
+}
+
+export function fmtDuration(ms) {
+  const mins = Math.floor(ms / 60000)
+  const h = Math.floor(mins / 60)
+  const m = mins % 60
+  if (h === 0) return `${m}m`
+  return `${h}h ${m}m`
+}
+
 export function isCheckedIn(events) {
   if (!events?.length) return false
   return [...events]
