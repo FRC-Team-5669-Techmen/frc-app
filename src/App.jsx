@@ -26,7 +26,8 @@ const ReadinessPage    = lazy(() => import('./ReadinessPage'))
 const StudyPage        = lazy(() => import('./StudyPage'))
 const SquadPage        = lazy(() => import('./SquadPage'))
 const PresenceBoard    = lazy(() => import('./PresenceBoard'))
-const KioskPage        = lazy(() => import('./KioskPage'))
+// Kiosk deactivated (hidden from the UI). Restore with the /kiosk route + nav entry.
+// const KioskPage        = lazy(() => import('./KioskPage'))
 const AccessRequestsPage = lazy(() => import('./AccessRequestsPage'))
 const ParentHomePage   = lazy(() => import('./ParentHomePage'))
 const SchedulePage     = lazy(() => import('./SchedulePage'))
@@ -187,6 +188,8 @@ export default function App() {
           <Route path="/readiness"   element={<ReadinessPage hasRole={hasRole} />} />
           <Route path="/squad"       element={<SquadPage session={session} hasRole={hasRole} />} />
           <Route path="/access-requests" element={<AccessRequestsPage hasRole={hasRole} />} />
+          {/* Display lives inside the layout so the nav + profile stay visible. */}
+          <Route path="/display" element={<PresenceBoard />} />
         </Route>
 
         {/* ── Minimal: no NavBar, bundle stays small ── */}
@@ -195,15 +198,12 @@ export default function App() {
           element={session ? <CheckinPage session={session} /> : <CheckinRedirect />}
         />
 
-        {/* ── Full-screen display modes: behind auth, no NavBar ── */}
-        <Route
-          path="/display"
-          element={session ? <PresenceBoard /> : <Navigate to="/login" replace />}
-        />
+        {/* Kiosk deactivated — route disabled so it can't be reached. Restore by
+            un-commenting this and the Kiosk nav entry in NavBar.jsx.
         <Route
           path="/kiosk"
           element={session ? <KioskPage session={session} hasRole={hasRole} /> : <Navigate to="/login" replace />}
-        />
+        /> */}
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -15,8 +15,17 @@ export default function SkillsCatalog({ hasRole }) {
   const [saving,     setSaving]     = useState(false)
   const [moving,     setMoving]     = useState(null)   // id of skill mid-reorder
   const [error,      setError]      = useState('')
+  const [expanded,   setExpanded]   = useState(() => new Set()) // expanded category names
 
   useEffect(() => { load() }, [])
+
+  function toggleCat(cat) {
+    setExpanded(prev => {
+      const next = new Set(prev)
+      next.has(cat) ? next.delete(cat) : next.add(cat)
+      return next
+    })
+  }
 
   async function load() {
     const { data, error } = await supabase
@@ -211,10 +220,31 @@ export default function SkillsCatalog({ hasRole }) {
           <p className="sc-empty">No skills yet. Use "Add skill" to build the catalog.</p>
         )}
 
-        {/* ── Catalog grouped by category ── */}
-        {grouped.map(([category, rows]) => (
+        {/* ── Catalog: collapsible category sections (calm by default) ── */}
+        {grouped.length > 0 && (
+          <div className="sc-controls">
+            <span className="sc-controls-count">{grouped.length} categories · {skills.length} skills</span>
+            <span className="sc-controls-btns">
+              <button className="sc-link" onClick={() => setExpanded(new Set(grouped.map(([c]) => c)))}>Expand all</button>
+              <button className="sc-link" onClick={() => setExpanded(new Set())}>Collapse all</button>
+            </span>
+          </div>
+        )}
+
+        {grouped.map(([category, rows]) => {
+          const open = expanded.has(category)
+          const safetyCount = rows.filter(r => r.safety_critical).length
+          return (
           <div key={category} className="sc-category">
-            <p className="sc-category-label">{category}</p>
+            <button className="sc-cat-header" onClick={() => toggleCat(category)} aria-expanded={open}>
+              <span className={`sc-cat-caret${open ? ' open' : ''}`}>▸</span>
+              <span className="sc-cat-name">{category}</span>
+              <span className="sc-cat-meta">
+                {safetyCount > 0 && <span className="sc-cat-safety">{safetyCount} safety</span>}
+                <span className="sc-cat-count">{rows.length}</span>
+              </span>
+            </button>
+            {open && (
             <div className="sc-table-wrap">
               <table className="sc-table">
                 <thead>
@@ -261,8 +291,10 @@ export default function SkillsCatalog({ hasRole }) {
                 </tbody>
               </table>
             </div>
+            )}
           </div>
-        ))}
+          )
+        })}
 
         <DisciplinesCatalog />
 

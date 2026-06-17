@@ -120,6 +120,45 @@
 }
 .sch-cancel:hover { border-color: var(--gold); }
 
+/* ── Repeat on multiple days ── */
+.sch-repeat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.sch-repeat-body { display: flex; flex-direction: column; gap: 0.6rem; }
+.sch-weekdays { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.sch-weekday {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--steel);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.55rem;
+  cursor: pointer;
+  min-width: 2.6rem;
+}
+.sch-weekday:hover { border-color: var(--gold); }
+.sch-weekday.on {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #0A0B0D;
+  font-weight: 700;
+}
+.sch-repeat-until { max-width: 12rem; }
+.sch-repeat-hint {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
 /* ── Day groups ── */
 .sch-day { margin-bottom: 1.25rem; }
 .sch-day-title {

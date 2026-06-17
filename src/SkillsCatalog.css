@@ -272,25 +272,94 @@
 }
 
 /* ── Category sections ── */
+/* ── Expand/collapse controls ── */
+.sc-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 1rem 0.75rem;
+  flex-wrap: wrap;
+}
+.sc-controls-count {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.03em;
+  color: var(--steel);
+}
+.sc-controls-btns { display: flex; gap: 1rem; }
+.sc-link {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.03em;
+  color: var(--gold);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.sc-link:hover { color: var(--gold-bright); text-decoration: underline; }
+
 .sc-category {
-  margin: 0 1rem 1.25rem;
+  margin: 0 1rem 0.5rem;
 }
 
-.sc-category-label {
-  font-family: var(--font-ui);
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
+/* Collapsible category header (calm default: collapsed) */
+.sc-cat-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  text-align: left;
+}
+.sc-cat-header:hover { border-color: var(--border-strong); }
+.sc-cat-caret {
   color: var(--gold);
-  margin-bottom: 0.5rem;
-  opacity: 1;
+  font-size: 0.8rem;
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+.sc-cat-caret.open { transform: rotate(90deg); }
+.sc-cat-name {
+  flex: 1;
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.sc-cat-meta { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+.sc-cat-count {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--steel);
+  background: var(--surface-2);
+  border-radius: 99px;
+  min-width: 1.5rem;
+  text-align: center;
+  padding: 0.1rem 0.45rem;
+}
+.sc-cat-safety {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--gold-dim);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  padding: 0.05rem 0.4rem;
 }
 
 .sc-table-wrap {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
   overflow: hidden;
 }
 

@@ -5,7 +5,13 @@ import './SchedulePage.css'
 
 const KINDS = ['build', 'meeting', 'competition', 'potluck', 'outreach', 'other']
 const RESPONSES = [['going', 'Going'], ['maybe', 'Maybe'], ['declined', "Can't go"]]
-const blankForm = () => ({ title: '', kind: 'build', start: '', end: '', location: '', notes: '', rsvp_enabled: false, capacity: '' })
+// 0 = Sunday … 6 = Saturday (matches Date.getDay()).
+const WEEKDAYS = [[0, 'Sun'], [1, 'Mon'], [2, 'Tue'], [3, 'Wed'], [4, 'Thu'], [5, 'Fri'], [6, 'Sat']]
+const blankForm = () => ({
+  title: '', kind: 'build', start: '', end: '', location: '', notes: '',
+  rsvp_enabled: false, capacity: '',
+  repeat: false, repeatDays: [], repeatUntil: '',
+})
 
 // UTC ISO -> value for <input type="datetime-local"> in the browser's local time.
 function toLocalInput(iso) {
@@ -99,6 +105,37 @@ export default function SchedulePage({ session, hasRole }) {
       rsvp_enabled: form.rsvp_enabled,
       capacity: form.rsvp_enabled && Number.isFinite(capNum) && capNum > 0 ? capNum : null,
     }
+
+    // Bulk create: one submission → the same time block on every selected
+    // weekday from the start date through the repeat-until date (new only).
+    if (editing === 'new' && form.repeat) {
+      if (form.repeatDays.length === 0 || !form.repeatUntil) {
+        setSaving(false); setError('Pick at least one weekday and a repeat-until date'); return
+      }
+      const start = new Date(form.start)
+      const durationMs = new Date(form.end) - start
+      const until = new Date(form.repeatUntil + 'T23:59:59')
+      if (until < start) { setSaving(false); setError('Repeat-until must be on or after the start date'); return }
+
+      const rows = []
+      const cur = new Date(start); cur.setHours(0, 0, 0, 0)
+      while (cur <= until) {
+        if (form.repeatDays.includes(cur.getDay())) {
+          const s = new Date(cur); s.setHours(start.getHours(), start.getMinutes(), 0, 0)
+          const e2 = new Date(s.getTime() + durationMs)
+          rows.push({ ...payload, starts_at: s.toISOString(), ends_at: e2.toISOString(), created_by: session.user.id })
+        }
+        cur.setDate(cur.getDate() + 1)
+      }
+      if (rows.length === 0) { setSaving(false); setError('No selected weekdays fall in that date range'); return }
+
+      const { error: bulkErr } = await supabase.from('events').insert(rows)
+      setSaving(false)
+      if (bulkErr) { setError(bulkErr.message); return }
+      setEditing(null); load()
+      return
+    }
+
     const res = editing === 'new'
       ? await supabase.from('events').insert({ ...payload, created_by: session.user.id })
       : await supabase.from('events').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editing)
@@ -176,6 +213,47 @@ export default function SchedulePage({ session, hasRole }) {
                   onChange={e => setForm(f => ({ ...f, end: e.target.value }))} />
               </label>
             </div>
+            {editing === 'new' && (
+              <div className="sch-repeat">
+                <label className="sch-toggle">
+                  <input type="checkbox" checked={form.repeat}
+                    onChange={e => setForm(f => {
+                      // Pre-select the start day's weekday when turning repeat on.
+                      const startDay = f.start ? new Date(f.start).getDay() : null
+                      return {
+                        ...f, repeat: e.target.checked,
+                        repeatDays: e.target.checked && f.repeatDays.length === 0 && startDay != null
+                          ? [startDay] : f.repeatDays,
+                      }
+                    })} />
+                  <span className="sch-label">Repeat on multiple days</span>
+                </label>
+                {form.repeat && (
+                  <div className="sch-repeat-body">
+                    <div className="sch-weekdays">
+                      {WEEKDAYS.map(([n, label]) => (
+                        <button key={n} type="button"
+                          className={`sch-weekday${form.repeatDays.includes(n) ? ' on' : ''}`}
+                          onClick={() => setForm(f => ({
+                            ...f,
+                            repeatDays: f.repeatDays.includes(n)
+                              ? f.repeatDays.filter(d => d !== n)
+                              : [...f.repeatDays, n],
+                          }))}
+                        >{label}</button>
+                      ))}
+                    </div>
+                    <label className="sch-field sch-repeat-until">
+                      <span className="sch-label">Repeat until</span>
+                      <input className="sch-input" type="date" value={form.repeatUntil}
+                        onChange={e => setForm(f => ({ ...f, repeatUntil: e.target.value }))} />
+                    </label>
+                    <p className="sch-repeat-hint">Uses the start/end time above as the block for each day.</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             <label className="sch-field">
               <span className="sch-label">Notes <span className="sch-optional">(optional)</span></span>
               <textarea className="sch-input sch-textarea" value={form.notes} rows={2}

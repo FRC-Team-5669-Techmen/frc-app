@@ -79,7 +79,9 @@ const STAFF_LINKS = [
   ['/activity',       'Activity'],
   ['/squad',          'Squad'],
   ['/display',        'Display'],
-  ['/kiosk',          'Kiosk'],
+  // Kiosk deactivated — entry hidden so it can't be navigated to. Restore by
+  // un-commenting this line and the /kiosk route in App.jsx.
+  // ['/kiosk',          'Kiosk'],
   ['/roster',         'Roster'],
   ['/access-requests','Access Requests'],
   ['/verify-hours',   'Verify Hours'],
@@ -192,12 +194,12 @@ export default function NavBar({ hasRole = () => false, session = null }) {
             <NavLink to="/log-hours" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Log Hours</NavLink>
           </Dropdown>
 
-          <NavLink to="/skills" data-tour="nav-skills" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            Skills
-          </NavLink>
-
           <NavLink to="/jobs" data-tour="nav-jobs" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             Jobs
+          </NavLink>
+
+          <NavLink to="/skills" data-tour="nav-skills" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            Skills
           </NavLink>
 
           <NavLink to="/study" data-tour="nav-study" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
