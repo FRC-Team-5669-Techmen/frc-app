@@ -83,6 +83,59 @@
   text-align: center;
 }
 
+/* ── Invite panel ── */
+.ar-invite {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+.ar-invite-title {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  margin-bottom: 0.2rem;
+}
+.ar-invite-sub {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: var(--muted);
+  margin-bottom: 0.7rem;
+  letter-spacing: 0.02em;
+}
+.ar-invite-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.ar-invite-email {
+  flex: 1 1 12rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.7rem;
+}
+.ar-invite-email::placeholder { color: var(--muted); }
+.ar-invite-email:focus { outline: none; border-color: var(--gold); }
+.ar-invite-email:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.ar-invite-role { flex: 0 0 auto; }
+.ar-invite-btn { flex: 0 0 auto; }
+.ar-invite-msg {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  margin-top: 0.6rem;
+  letter-spacing: 0.02em;
+}
+.ar-invite-ok  { color: var(--gold-bright); }
+.ar-invite-err { color: var(--fault); }
+
 .ar-list {
   list-style: none;
   display: flex;

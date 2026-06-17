@@ -21,6 +21,12 @@ export default function AccessRequestsPage({ hasRole }) {
   const [busy, setBusy]         = useState({})
   const [error, setError]       = useState('')
 
+  // Invite-a-member (one-tap link) state
+  const [invEmail, setInvEmail] = useState('')
+  const [invRole, setInvRole]   = useState('parent')
+  const [inviting, setInviting] = useState(false)
+  const [invMsg, setInvMsg]     = useState(null) // { ok, text }
+
   const load = useCallback(async () => {
     const { data, error: err } = await supabase
       .from('access_requests')
@@ -62,6 +68,30 @@ export default function AccessRequestsPage({ hasRole }) {
     setRequests(rs => rs.filter(x => x.id !== r.id))
   }
 
+  async function invite(e) {
+    e.preventDefault()
+    const email = invEmail.trim().toLowerCase()
+    if (!email) return
+    setInviting(true)
+    setInvMsg(null)
+    const { data, error: err } = await supabase.functions.invoke('invite-member', {
+      body: { email, role: invRole },
+    })
+    setInviting(false)
+    if (err || data?.error) {
+      setInvMsg({ ok: false, text: data?.error || err.message })
+      return
+    }
+    if (data?.invited) {
+      setInvMsg({ ok: true, text: `Invite sent to ${email} — they're approved as ${data.role}.` })
+    } else if (data?.alreadyRegistered) {
+      setInvMsg({ ok: true, text: `${email} already has an account — approved as ${data.role}. They can just sign in.` })
+    } else {
+      setInvMsg({ ok: true, text: `${email} approved as ${data?.role || invRole}.` })
+    }
+    setInvEmail('')
+  }
+
   if (!isStaff) {
     return (
       <div className="ar-wrap">
@@ -83,6 +113,37 @@ export default function AccessRequestsPage({ hasRole }) {
         </header>
 
         {error && <p className="ar-error" onClick={() => setError('')}>{error}</p>}
+
+        <section className="ar-invite">
+          <h2 className="ar-invite-title">Invite someone</h2>
+          <p className="ar-invite-sub">Whitelists the email and sends a one-tap sign-in link — no request needed.</p>
+          <form className="ar-invite-form" onSubmit={invite}>
+            <input
+              className="ar-invite-email"
+              type="email"
+              placeholder="parent@example.com"
+              value={invEmail}
+              onChange={e => setInvEmail(e.target.value)}
+              required
+            />
+            <select
+              className="ar-select ar-invite-role"
+              value={invRole}
+              onChange={e => setInvRole(e.target.value)}
+              aria-label="Invite role"
+            >
+              {ROLES.map(role => <option key={role} value={role}>{role}</option>)}
+            </select>
+            <button className="ar-approve ar-invite-btn" type="submit" disabled={inviting}>
+              {inviting ? 'Sending…' : 'Send invite'}
+            </button>
+          </form>
+          {invMsg && (
+            <p className={`ar-invite-msg${invMsg.ok ? ' ar-invite-ok' : ' ar-invite-err'}`}>
+              {invMsg.text}
+            </p>
+          )}
+        </section>
 
         {requests.length === 0 ? (
           <p className="ar-empty">No pending requests.</p>

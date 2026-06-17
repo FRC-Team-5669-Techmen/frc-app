@@ -96,24 +96,28 @@ export default function LoginPage() {
             <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
           </svg>
-          Continue with Google
+          Continue with school account
         </button>
+        <p className="login-cap">Students &amp; mentors — your <strong>@boscotech.edu</strong> Google account</p>
 
-        <div className="login-divider"><span>or</span></div>
+        <div className="login-divider"><span>parents &amp; guests</span></div>
 
         <form onSubmit={handleSendCode}>
           <input
             type="email"
-            placeholder="your@email.com"
+            placeholder="you@example.com"
             value={email}
             onChange={e => setEmail(e.target.value)}
             required
             autoComplete="email"
           />
           <button type="submit" disabled={loading}>
-            {loading ? 'Sending…' : 'Send Code'}
+            {loading ? 'Sending…' : 'Email me a sign-in code'}
           </button>
         </form>
+        <p className="login-cap login-cap-sub">
+          Using a personal email? Sign in here — you can request access on the next screen.
+        </p>
         {error && <p className="error">{error}</p>}
       </div>
     </div>

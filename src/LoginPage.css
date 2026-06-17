@@ -26,6 +26,20 @@
   margin-bottom: 0.25rem;
 }
 
+/* Helper caption under a sign-in option */
+.login-cap {
+  width: 100%;
+  margin-top: -0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-align: center;
+}
+.login-cap strong { color: var(--steel); font-weight: 600; }
+.login-cap-sub { margin-top: -0.2rem; }
+
 .login-card h1 {
   font-family: var(--font-ui);
   font-size: 1.4rem;
