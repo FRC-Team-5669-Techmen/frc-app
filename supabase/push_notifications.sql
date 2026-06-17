@@ -78,6 +78,10 @@ create table if not exists private.push_config (
 );
 insert into private.push_config (id) values (1) on conflict (id) do nothing;
 
+-- RLS on (no policies): anon/authenticated get nothing; the SECURITY DEFINER
+-- trigger/cron functions (owned by postgres) bypass RLS and still read it.
+alter table private.push_config enable row level security;
+
 -- ── 6. Immediate trigger: task sign-off result → claimant ───────────────────
 -- Fires on the verify_task transition out of 'submitted'. completed = approved,
 -- back to 'claimed' = rejected. Calls send-push via pg_net.
