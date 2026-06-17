@@ -9,16 +9,25 @@ import './NotificationsPanel.css'
 
 const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY
 
+// `wired` = a backend trigger already sends this. Toggles with wired:false save
+// the preference but won't fire until their trigger is built (see report).
 const CATEGORIES = [
-  ['task_signoff',   'Job sign-offs',     'When a mentor approves or returns your job'],
-  ['event_reminder', 'Event reminders',   "Events you're going to, within 24 hours"],
-  ['parent_digest',  'Daily family recap', "One evening summary of your students' day"],
-  ['shop_status',    'Shop open / closed', 'When the shop opens or closes (off by default)'],
+  { key: 'task_signoff',    label: 'Job sign-offs',      hint: 'When a mentor approves or returns your job',   wired: true },
+  { key: 'event_reminder',  label: 'Event reminders',    hint: 'Before an event or meeting you’re going to',    wired: true },
+  { key: 'schedule_change', label: 'Schedule changes',   hint: 'When an event is added, edited, or canceled',   wired: false },
+  { key: 'shop_status',     label: 'Shop hours',         hint: 'When the shop opens or closes',                 wired: true },
+  { key: 'job_assignment',  label: 'Job assignments',    hint: 'When you’re assigned a new job or task',        wired: false },
+  { key: 'skill_signoff',   label: 'Skill sign-offs',    hint: 'When a skill is approved or pending review',    wired: false },
+  { key: 'checkin_reminder',label: 'Check-in reminders', hint: 'Reminders to check in or out',                  wired: false },
+  { key: 'parent_digest',   label: 'Daily family recap', hint: 'One evening summary of your students’ day',     wired: true },
+  { key: 'announcements',   label: 'Team announcements', hint: 'Important messages from mentors',               wired: false },
 ]
 
 const DEFAULT_PREFS = {
-  enabled: true, task_signoff: true, event_reminder: true,
-  shop_status: false, parent_digest: true,
+  enabled: true,
+  task_signoff: true, event_reminder: true, schedule_change: true,
+  shop_status: false, job_assignment: true, skill_signoff: true,
+  checkin_reminder: false, parent_digest: true, announcements: true,
   quiet_hours: { start: '21:00', end: '07:00' },
 }
 
@@ -145,7 +154,7 @@ export default function NotificationsPanel({ session }) {
               <span>All notifications</span>
             </label>
 
-            {CATEGORIES.map(([key, label, hint]) => (
+            {CATEGORIES.map(({ key, label, hint, wired }) => (
               <label key={key} className="np-cat">
                 <input
                   type="checkbox"
@@ -154,7 +163,10 @@ export default function NotificationsPanel({ session }) {
                   onChange={e => setCategory(key, e.target.checked)}
                 />
                 <span className="np-cat-text">
-                  <span className="np-cat-label">{label}</span>
+                  <span className="np-cat-label">
+                    {label}
+                    {!wired && <span className="np-cat-soon">soon</span>}
+                  </span>
                   <span className="np-cat-hint">{hint}</span>
                 </span>
               </label>

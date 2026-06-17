@@ -144,99 +144,113 @@ export default function ProfilePage({ session }) {
 
           <form onSubmit={handleSave} className="profile-form">
 
-            <div className="profile-field">
-              <label className="profile-label" htmlFor="nickname">Nickname</label>
-              <input
-                id="nickname"
-                type="text"
-                placeholder="What the team calls you"
-                maxLength={60}
-                value={form.nickname}
-                onChange={field('nickname')}
-                className="profile-input"
-              />
-            </div>
-
-            <div className="profile-field">
-              <label className="profile-label">Subteams</label>
-              <div className="profile-subteam-chips">
-                {SUBTEAMS.map(st => (
-                  <button
-                    key={st}
-                    type="button"
-                    className={`profile-subteam-chip${form.subteams.includes(st) ? ' chip-on' : ''}`}
-                    onClick={() => toggleSubteam(st)}
-                  >
-                    {st}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {groupedDisciplines.length > 0 && (
-              <div className="profile-field">
-                <label className="profile-label">Disciplines</label>
-                {groupedDisciplines.map(([cat, opts]) => (
-                  <div key={cat} className="profile-disc-group">
-                    <span className="profile-disc-cat">{cat}</span>
-                    <div className="profile-subteam-chips">
-                      {opts.map(d => (
-                        <button
-                          key={d.id}
-                          type="button"
-                          className={`profile-subteam-chip${form.disciplines.includes(d.name) ? ' chip-on' : ''}`}
-                          onClick={() => toggleDiscipline(d.name)}
-                        >
-                          {d.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="profile-form-row">
-              <div className="profile-field">
-                <label className="profile-label" htmlFor="shirt-size">Shirt size</label>
-                <select
-                  id="shirt-size"
-                  value={form.shirt_size}
-                  onChange={field('shirt_size')}
-                  className="profile-select"
-                >
-                  <option value="">— Select —</option>
-                  {SHIRT_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
+            {/* ── Basics ── */}
+            <section className="profile-group">
+              <h3 className="profile-group-title">Basics</h3>
 
               <div className="profile-field">
-                <label className="profile-label" htmlFor="grad-year">Grad year</label>
+                <label className="profile-label" htmlFor="nickname">Nickname</label>
                 <input
-                  id="grad-year"
-                  type="number"
-                  min="2020"
-                  max="2035"
-                  placeholder="2027"
-                  value={form.grad_year}
-                  onChange={field('grad_year')}
+                  id="nickname"
+                  type="text"
+                  placeholder="What the team calls you"
+                  maxLength={60}
+                  value={form.nickname}
+                  onChange={field('nickname')}
                   className="profile-input"
                 />
               </div>
-            </div>
 
-            <div className="profile-field">
-              <label className="profile-label" htmlFor="bio">Bio</label>
-              <textarea
-                id="bio"
-                placeholder="A few words about yourself"
-                maxLength={500}
-                rows={4}
-                value={form.bio}
-                onChange={field('bio')}
-                className="profile-input profile-textarea"
-              />
-            </div>
+              <div className="profile-form-row">
+                <div className="profile-field">
+                  <label className="profile-label" htmlFor="shirt-size">Shirt size</label>
+                  <select
+                    id="shirt-size"
+                    value={form.shirt_size}
+                    onChange={field('shirt_size')}
+                    className="profile-select"
+                  >
+                    <option value="">— Select —</option>
+                    {SHIRT_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+
+                <div className="profile-field">
+                  <label className="profile-label" htmlFor="grad-year">Grad year</label>
+                  <input
+                    id="grad-year"
+                    type="number"
+                    min="1950"
+                    max="2035"
+                    placeholder="2027"
+                    value={form.grad_year}
+                    onChange={field('grad_year')}
+                    className="profile-input"
+                  />
+                </div>
+              </div>
+            </section>
+
+            {/* ── Team ── */}
+            <section className="profile-group">
+              <h3 className="profile-group-title">Team</h3>
+
+              <div className="profile-field">
+                <label className="profile-label">Subteams</label>
+                <div className="profile-subteam-chips">
+                  {SUBTEAMS.map(st => (
+                    <button
+                      key={st}
+                      type="button"
+                      className={`profile-subteam-chip${form.subteams.includes(st) ? ' chip-on' : ''}`}
+                      onClick={() => toggleSubteam(st)}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {groupedDisciplines.length > 0 && (
+                <div className="profile-field">
+                  <label className="profile-label">Disciplines</label>
+                  {groupedDisciplines.map(([cat, opts]) => (
+                    <div key={cat} className="profile-disc-group">
+                      <span className="profile-disc-cat">{cat}</span>
+                      <div className="profile-subteam-chips">
+                        {opts.map(d => (
+                          <button
+                            key={d.id}
+                            type="button"
+                            className={`profile-subteam-chip${form.disciplines.includes(d.name) ? ' chip-on' : ''}`}
+                            onClick={() => toggleDiscipline(d.name)}
+                          >
+                            {d.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* ── About ── */}
+            <section className="profile-group">
+              <h3 className="profile-group-title">About you</h3>
+              <div className="profile-field">
+                <label className="profile-label" htmlFor="bio">Bio</label>
+                <textarea
+                  id="bio"
+                  placeholder="A few words about yourself"
+                  maxLength={500}
+                  rows={4}
+                  value={form.bio}
+                  onChange={field('bio')}
+                  className="profile-input profile-textarea"
+                />
+              </div>
+            </section>
 
             {error && <p className="profile-error">{error}</p>}
 

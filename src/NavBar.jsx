@@ -179,7 +179,7 @@ export default function NavBar({ hasRole = () => false, session = null }) {
             Dashboard
           </NavLink>
 
-          <NavLink to="/schedule" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+          <NavLink to="/schedule" data-tour="nav-schedule" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             Schedule
           </NavLink>
 

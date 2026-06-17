@@ -39,15 +39,42 @@ create policy "push_subs delete own" on public.push_subscriptions
 grant all on public.push_subscriptions to authenticated;
 
 -- ── 2. profiles.notification_prefs (jsonb with defaults) ────────────────────
--- Categories: task_signoff (on), event_reminder (on), shop_status (OFF),
--- parent_digest (on). Master enabled flag + quiet hours (America/Los_Angeles).
+-- Categories: master enabled flag + per-category toggles + quiet hours
+-- (America/Los_Angeles). Some categories don't have a backend trigger yet —
+-- the toggle is stored but won't fire until its trigger is built (the UI marks
+-- those "soon"): schedule_change, job_assignment, skill_signoff,
+-- checkin_reminder, announcements. Wired today: task_signoff, event_reminder,
+-- shop_status, parent_digest.
 alter table public.profiles
   add column if not exists notification_prefs jsonb not null default '{
     "enabled": true,
     "task_signoff": true,
     "event_reminder": true,
+    "schedule_change": true,
     "shop_status": false,
+    "job_assignment": true,
+    "skill_signoff": true,
+    "checkin_reminder": false,
     "parent_digest": true,
+    "announcements": true,
+    "quiet_hours": { "start": "21:00", "end": "07:00" }
+  }'::jsonb;
+
+-- Adopt the expanded default on an existing column too (add-column-if-not-exists
+-- won't change a default that already exists). Existing rows keep their stored
+-- value; the app merges in any missing keys on the settings screen.
+alter table public.profiles
+  alter column notification_prefs set default '{
+    "enabled": true,
+    "task_signoff": true,
+    "event_reminder": true,
+    "schedule_change": true,
+    "shop_status": false,
+    "job_assignment": true,
+    "skill_signoff": true,
+    "checkin_reminder": false,
+    "parent_digest": true,
+    "announcements": true,
     "quiet_hours": { "start": "21:00", "end": "07:00" }
   }'::jsonb;
 

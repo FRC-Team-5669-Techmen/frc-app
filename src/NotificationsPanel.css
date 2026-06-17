@@ -92,7 +92,17 @@
 }
 .np-cat input { margin-top: 0.15rem; width: 1rem; height: 1rem; accent-color: var(--gold); }
 .np-cat-text { display: flex; flex-direction: column; gap: 0.1rem; }
-.np-cat-label { font-family: var(--font-ui); font-size: 0.9rem; font-weight: 600; color: var(--text); }
+.np-cat-label { font-family: var(--font-ui); font-size: 0.9rem; font-weight: 600; color: var(--text); display: inline-flex; align-items: center; gap: 0.4rem; }
+.np-cat-soon {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.02rem 0.3rem;
+}
 .np-cat-hint { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); letter-spacing: 0.02em; }
 
 .np-quiet {
