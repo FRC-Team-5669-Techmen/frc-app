@@ -1,16 +1,88 @@
 // Edge Function: cron-notify
 // Batched/scheduled sender, invoked by pg_cron (via pg_net) with a shared secret.
 // Body: { job: 'event_reminder' | 'parent_digest' | 'shop_status' }.
-// Deploy with --no-verify-jwt.
+// Deploy with "Enforce JWT" OFF.
+//
+// Self-contained (push core inlined) so it deploys via the Dashboard editor.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { configureVapid, sendToMember, laDate, laMidnightISO } from '../_shared/push.ts'
+import webpush from 'npm:web-push@3.6.7'
 
+// ── Push core ───────────────────────────────────────────────────────────────
+function configureVapid() {
+  webpush.setVapidDetails(
+    Deno.env.get('VAPID_SUBJECT') || 'mailto:techmen@boscotech.edu',
+    Deno.env.get('VAPID_PUBLIC_KEY')!,
+    Deno.env.get('VAPID_PRIVATE_KEY')!,
+  )
+}
+function laHourMinute(now = new Date()): string {
+  return now.toLocaleTimeString('en-GB', {
+    hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'America/Los_Angeles',
+  })
+}
+function laDate(now = new Date()): string {
+  return now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+}
+function laMidnightISO(now = new Date()): string {
+  const p = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).formatToParts(now)
+  const get = (t: string) => parseInt(p.find(x => x.type === t)?.value || '0', 10)
+  const elapsed = ((get('hour') * 60 + get('minute')) * 60 + get('second')) * 1000 + now.getMilliseconds()
+  return new Date(now.getTime() - elapsed).toISOString()
+}
+function inQuietHours(prefs: any, now = new Date()): boolean {
+  const qh = prefs?.quiet_hours
+  if (!qh?.start || !qh?.end) return false
+  const t = laHourMinute(now)
+  return qh.start <= qh.end ? (t >= qh.start && t < qh.end) : (t >= qh.start || t < qh.end)
+}
+async function sendToMember(admin: any, target: any) {
+  const { data: prof } = await admin
+    .from('profiles').select('notification_prefs').eq('id', target.member_id).maybeSingle()
+  const prefs = prof?.notification_prefs ?? {}
+  if (prefs.enabled === false) return { skipped: 'disabled' }
+  if (target.category && prefs[target.category] === false) return { skipped: 'category-off' }
+  if (inQuietHours(prefs)) return { skipped: 'quiet-hours' }
+
+  const { error: dErr } = await admin
+    .from('notifications_sent')
+    .insert({ member_id: target.member_id, kind: target.kind, ref_id: target.ref_id })
+  if (dErr) {
+    if (dErr.code === '23505') return { skipped: 'duplicate' }
+    throw dErr
+  }
+
+  const { data: subs } = await admin
+    .from('push_subscriptions').select('endpoint, p256dh, auth').eq('member_id', target.member_id)
+  if (!subs || subs.length === 0) return { skipped: 'no-subscription' }
+
+  const payload = JSON.stringify({
+    title: target.title, body: target.body, url: target.url,
+    tag: `${target.kind}:${target.ref_id}`,
+  })
+  let sent = 0
+  for (const s of subs) {
+    const subscription = { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }
+    try {
+      await webpush.sendNotification(subscription, payload)
+      sent++
+    } catch (err: any) {
+      const code = err?.statusCode
+      if (code === 404 || code === 410) {
+        await admin.from('push_subscriptions').delete().eq('endpoint', s.endpoint)
+      }
+    }
+  }
+  return { sent }
+}
+
+// ── Batched jobs ────────────────────────────────────────────────────────────
 const fmtDur = (ms: number) => {
   const m = Math.floor(ms / 60000), h = Math.floor(m / 60)
   return h === 0 ? `${m}m` : `${h}h ${m % 60}m`
 }
-// Worked ms from in/out pairs today, counting an open session up to now.
 function dayHoursMs(evs: any[]) {
   let total = 0, inT: number | null = null
   for (const e of [...evs].sort((a, b) => +new Date(a.event_time) - +new Date(b.event_time))) {
@@ -23,7 +95,6 @@ function dayHoursMs(evs: any[]) {
 const isIn = (evs: any[]) =>
   [...evs].sort((a, b) => +new Date(a.event_time) - +new Date(b.event_time)).at(-1)?.type === 'in'
 
-// ── Event reminders: one batched message per member for events within 24h ──
 async function eventReminders(admin: any) {
   const now = new Date()
   const in24 = new Date(now.getTime() + 24 * 3600_000)
@@ -64,7 +135,6 @@ async function eventReminders(admin: any) {
   }
 }
 
-// ── Parent daily digest: one message per parent summarizing each child's day ──
 async function parentDigest(admin: any) {
   const now = new Date()
   const { data: parents } = await admin.from('member_roles').select('member_id').eq('role', 'parent')
@@ -102,7 +172,6 @@ async function parentDigest(admin: any) {
   }
 }
 
-// ── Shop status (opt-in): fire once shortly after a build window opens/closes ──
 async function shopStatus(admin: any) {
   const now = new Date()
   const WINDOW = 15 * 60_000
@@ -129,6 +198,7 @@ async function shopStatus(admin: any) {
   }
 }
 
+// ── HTTP entry ──────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.headers.get('x-push-secret') !== Deno.env.get('PUSH_SECRET')) {
     return new Response('forbidden', { status: 403 })
