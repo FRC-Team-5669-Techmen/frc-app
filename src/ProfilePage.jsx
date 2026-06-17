@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import MemberSkillsPanel from './MemberSkillsPanel'
+import NotificationsPanel from './NotificationsPanel'
 import './ProfilePage.css'
 
 const SUBTEAMS = [
@@ -245,6 +246,8 @@ export default function ProfilePage({ session }) {
           </form>
 
         </div>
+
+        <NotificationsPanel session={session} />
 
         <p className="profile-section-heading">Skills</p>
         <MemberSkillsPanel
