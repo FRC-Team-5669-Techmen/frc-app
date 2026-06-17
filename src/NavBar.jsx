@@ -73,7 +73,21 @@ function Dropdown({ label, paths = [], tourId, align = 'left', badge = 0, childr
   )
 }
 
-function AvatarMenu({ avatarUrl, initials, name, isStaff }) {
+// Staff links now live here (moved out of the top-row Staff dropdown).
+const STAFF_LINKS = [
+  ['/readiness',      'Readiness'],
+  ['/activity',       'Activity'],
+  ['/squad',          'Squad'],
+  ['/display',        'Display'],
+  ['/kiosk',          'Kiosk'],
+  ['/roster',         'Roster'],
+  ['/access-requests','Access Requests'],
+  ['/verify-hours',   'Verify Hours'],
+  ['/certify',        'Certify Skills'],
+  ['/coverage',       'Skill Coverage'],
+]
+
+function AvatarMenu({ avatarUrl, initials, name, isStaff, pendingAccess = 0 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -84,6 +98,8 @@ function AvatarMenu({ avatarUrl, initials, name, isStaff }) {
     startTour(isStaff)
   }
 
+  const itemClass = ({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`
+
   return (
     <div className="nav-avatar-wrap" ref={ref}>
       <button className="nav-avatar-btn" data-tour="nav-profile" onClick={() => setOpen(o => !o)} aria-label="Account menu">
@@ -91,18 +107,27 @@ function AvatarMenu({ avatarUrl, initials, name, isStaff }) {
           ? <img src={avatarUrl} className="navbar-avatar" alt={name} />
           : <div className="navbar-avatar navbar-avatar-init">{initials}</div>
         }
+        {isStaff && pendingAccess > 0 && <span className="nav-avatar-dot" aria-hidden="true" />}
       </button>
       {open && (
         <div className="nav-dropdown-menu nav-avatar-menu" onClick={() => setOpen(false)}>
-          <NavLink
-            to="/profile"
-            className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}
-          >
-            My Profile
-          </NavLink>
-          <button className="nav-dropdown-item" onClick={replayTour}>
-            Replay tour
-          </button>
+          <NavLink to="/profile" className={itemClass}>My Profile</NavLink>
+          <button className="nav-dropdown-item" onClick={replayTour}>Replay tour</button>
+
+          {isStaff && (
+            <>
+              <div className="nav-dropdown-divider" />
+              <span className="nav-dropdown-section">Staff</span>
+              {STAFF_LINKS.map(([to, label]) => (
+                <NavLink key={to} to={to} className={itemClass}>
+                  {label}
+                  {to === '/access-requests' && pendingAccess > 0 && <span className="nav-badge">{pendingAccess}</span>}
+                </NavLink>
+              ))}
+            </>
+          )}
+
+          <div className="nav-dropdown-divider" />
           <button
             className="nav-dropdown-item nav-signout-item"
             onClick={() => supabase.auth.signOut()}
@@ -178,37 +203,11 @@ export default function NavBar({ hasRole = () => false, session = null }) {
           <NavLink to="/study" data-tour="nav-study" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             Study
           </NavLink>
-
-          {isStaff && (
-            <Dropdown
-              label="Staff"
-              tourId="nav-staff"
-              align="right"
-              paths={['/readiness', '/activity', '/squad', '/display', '/kiosk', '/roster', '/access-requests', '/verify-hours', '/certify', '/coverage']}
-              badge={pendingAccess}
-            >
-              <NavLink to="/readiness"    className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Readiness</NavLink>
-              <NavLink to="/activity"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Activity</NavLink>
-              <NavLink to="/squad"        className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Squad</NavLink>
-              <div className="nav-dropdown-divider" />
-              <NavLink to="/display"      className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Display</NavLink>
-              <NavLink to="/kiosk"        className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Kiosk</NavLink>
-              <div className="nav-dropdown-divider" />
-              <NavLink to="/roster"       className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Roster</NavLink>
-              <NavLink to="/access-requests" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>
-                Access Requests
-                {pendingAccess > 0 && <span className="nav-badge">{pendingAccess}</span>}
-              </NavLink>
-              <NavLink to="/verify-hours" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Verify Hours</NavLink>
-              <NavLink to="/certify"      className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Certify Skills</NavLink>
-              <NavLink to="/coverage"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Skill Coverage</NavLink>
-            </Dropdown>
-          )}
           </>)}
         </div>
 
         <div className="navbar-account">
-          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} isStaff={isStaff} />
+          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} isStaff={isStaff} pendingAccess={pendingAccess} />
         </div>
       </div>
     </nav>

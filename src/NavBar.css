@@ -100,12 +100,37 @@
   padding: 0;
   display: flex;
   align-items: center;
+  position: relative;
 }
 
-.nav-avatar-menu {
+/* Pending-access indicator on the avatar when the staff menu is collapsed */
+.nav-avatar-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 1.5px solid var(--bg);
+}
+
+.nav-dropdown-menu.nav-avatar-menu {
   right: 0;
   left: auto;
   min-width: 9rem;
+}
+
+/* Section label inside the avatar menu (e.g. STAFF) */
+.nav-dropdown-section {
+  display: block;
+  padding: 0.3rem 1rem 0.2rem;
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
 }
 
 /* ── Primary link row ── */

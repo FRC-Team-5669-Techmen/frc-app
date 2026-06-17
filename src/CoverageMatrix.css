@@ -120,7 +120,9 @@
 }
 
 .cm-corner {
-  z-index: 3; /* above both sticky col and sticky head */
+  position: sticky;
+  top: 0;
+  z-index: 6; /* above both the sticky column and the sticky header rows */
   vertical-align: bottom;
   padding: 0.6rem 1rem 0.5rem;
   text-align: left;
@@ -151,8 +153,12 @@
   letter-spacing: normal;
 }
 
-/* ── Category header row ── */
+/* ── Category header row (sticky band) ── */
 .cm-cat-th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  height: 1.75rem;
   font-family: var(--font-ui);
   font-size: 0.65rem;
   font-weight: 700;
@@ -167,11 +173,15 @@
   opacity: 1;
 }
 
-/* ── Skill name column header (rotated) ── */
+/* ── Skill name column header (rotated, sticky below the category band) ── */
 .cm-skill-th {
-  width: 2.25rem;
+  position: sticky;
+  top: 1.75rem; /* sits directly under the category band height above */
+  z-index: 3;
+  width: 2.5rem;
   padding: 0.25rem 0.125rem 0;
   vertical-align: bottom;
+  background: var(--surface);
   border-bottom: 2px solid var(--border-strong);
 }
 
@@ -223,16 +233,16 @@
 
 .cm-cell {
   text-align: center;
-  padding: 0.45rem 0;
+  padding: 0.6rem 0;
   vertical-align: middle;
-  width: 2.25rem;
+  width: 2.5rem;
 }
 
 /* ── Status dot ── */
 .cm-dot {
   display: inline-block;
-  width: 0.7rem;
-  height: 0.7rem;
+  width: 0.9rem;
+  height: 0.9rem;
   border-radius: 50%;
   vertical-align: middle;
   flex-shrink: 0;
