@@ -120,6 +120,66 @@
 }
 .sch-cancel:hover { border-color: var(--gold); }
 
+/* ── Recurring series: tag, edit scope, delete confirm ── */
+.sch-series-tag {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold-dim);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  padding: 0.05rem 0.35rem;
+}
+
+.sch-scope {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.7rem 0.8rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+.sch-scope-opts { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.sch-scope-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--steel);
+  cursor: pointer;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+.sch-scope-opt input { accent-color: var(--gold); }
+.sch-scope-opt.on { color: var(--text); border-color: var(--gold); background: var(--gold-a08); }
+.sch-scope-hint {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+.sch-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--fault);
+  border-radius: var(--radius);
+}
+.sch-confirm-text { font-family: var(--font-ui); font-weight: 600; color: var(--text); }
+.sch-confirm-btns { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
 /* ── Repeat on multiple days ── */
 .sch-repeat {
   display: flex;

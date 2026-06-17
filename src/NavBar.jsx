@@ -19,7 +19,8 @@ const CONTEXT_TAGS = [
   ['/activity',    'ACTIVITY'],
   ['/squad',       'SQUAD'],
   ['/display',     'DISPLAY'],
-  ['/kiosk',       'KIOSK'],
+  // Kiosk deactivated — context tag left out; restore alongside the route + nav entry.
+  // ['/kiosk',       'KIOSK'],
   ['/roster',      'ROSTER'],
   ['/access-requests', 'ACCESS'],
   ['/verify-hours','HRS//VERIFY'],

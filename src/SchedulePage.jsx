@@ -32,6 +32,8 @@ export default function SchedulePage({ session, hasRole }) {
   const [itemDraft, setItemDraft] = useState({}) // event_id -> bringing text
   const [showPast, setShowPast] = useState(false)
   const [editing, setEditing] = useState(null) // null | 'new' | event id
+  const [editScope, setEditScope] = useState('one') // 'one' | 'series' (when editing a series event)
+  const [confirmDel, setConfirmDel] = useState(null) // event pending delete confirmation
   const [form, setForm]       = useState(blankForm())
   const [saving, setSaving]   = useState(false)
   const [error, setError]     = useState('')
@@ -88,7 +90,7 @@ export default function SchedulePage({ session, hasRole }) {
       location: ev.location || '', notes: ev.notes || '',
       rsvp_enabled: !!ev.rsvp_enabled, capacity: ev.capacity ?? '',
     })
-    setEditing(ev.id); setError('')
+    setEditing(ev.id); setEditScope('one'); setError('')
   }
 
   async function save(e) {
@@ -129,9 +131,41 @@ export default function SchedulePage({ session, hasRole }) {
       }
       if (rows.length === 0) { setSaving(false); setError('No selected weekdays fall in that date range'); return }
 
+      // Tie a real multi-day batch together as a series so it can be edited /
+      // deleted as a group. A single-day result stays a standalone event.
+      if (rows.length > 1) {
+        const seriesId = crypto.randomUUID()
+        for (const r of rows) r.series_id = seriesId
+      }
+
       const { error: bulkErr } = await supabase.from('events').insert(rows)
       setSaving(false)
       if (bulkErr) { setError(bulkErr.message); return }
+      setEditing(null); load()
+      return
+    }
+
+    // Editing a whole series: apply the field changes to every event in it, and
+    // shift each one to the new time-of-day while keeping its own date.
+    const editingEvent = editing !== 'new' ? events.find(ev => ev.id === editing) : null
+    if (editingEvent?.series_id && editScope === 'series') {
+      const start = new Date(form.start)
+      const durationMs = new Date(form.end) - start
+      const fields = {
+        title: payload.title, kind: payload.kind, location: payload.location,
+        notes: payload.notes, rsvp_enabled: payload.rsvp_enabled, capacity: payload.capacity,
+        updated_at: new Date().toISOString(),
+      }
+      const sibs = events.filter(ev => ev.series_id === editingEvent.series_id)
+      const results = await Promise.all(sibs.map(sib => {
+        const s = new Date(sib.starts_at)
+        s.setHours(start.getHours(), start.getMinutes(), 0, 0)
+        const e2 = new Date(s.getTime() + durationMs)
+        return supabase.from('events').update({ ...fields, starts_at: s.toISOString(), ends_at: e2.toISOString() }).eq('id', sib.id)
+      }))
+      setSaving(false)
+      const failed = results.find(r => r.error)
+      if (failed) { setError(failed.error.message); return }
       setEditing(null); load()
       return
     }
@@ -144,9 +178,14 @@ export default function SchedulePage({ session, hasRole }) {
     setEditing(null); load()
   }
 
-  async function remove(ev) {
-    if (!window.confirm(`Delete "${ev.title}"?`)) return
-    const { error: err } = await supabase.from('events').delete().eq('id', ev.id)
+  // Standalone events confirm-then-delete; series events get a one-vs-series choice.
+  function remove(ev) { setConfirmDel(ev) }
+  async function doDelete(ev, scope) {
+    const q = scope === 'series'
+      ? supabase.from('events').delete().eq('series_id', ev.series_id)
+      : supabase.from('events').delete().eq('id', ev.id)
+    const { error: err } = await q
+    setConfirmDel(null)
     if (err) { setError(err.message); return }
     load()
   }
@@ -167,6 +206,11 @@ export default function SchedulePage({ session, hasRole }) {
   }
   const pastCount = events.length - events.filter(ev => new Date(ev.ends_at) >= now).length
 
+  const editingEvent = editing && editing !== 'new' ? events.find(e => e.id === editing) : null
+  const editingSeriesCount = editingEvent?.series_id
+    ? events.filter(e => e.series_id === editingEvent.series_id).length : 0
+  const seriesCountOf = ev => ev.series_id ? events.filter(e => e.series_id === ev.series_id).length : 0
+
   return (
     <div className="sch-wrap">
       <div className="sch-body">
@@ -179,9 +223,48 @@ export default function SchedulePage({ session, hasRole }) {
 
         {error && <p className="sch-error" onClick={() => setError('')}>{error}</p>}
 
+        {confirmDel && (
+          <div className="sch-confirm">
+            <span className="sch-confirm-text">Delete “{confirmDel.title}”?</span>
+            <div className="sch-confirm-btns">
+              {confirmDel.series_id ? (
+                <>
+                  <button className="sch-del" onClick={() => doDelete(confirmDel, 'one')}>This event only</button>
+                  <button className="sch-del" onClick={() => doDelete(confirmDel, 'series')}>Whole series ({seriesCountOf(confirmDel)})</button>
+                </>
+              ) : (
+                <button className="sch-del" onClick={() => doDelete(confirmDel, 'one')}>Delete</button>
+              )}
+              <button className="sch-cancel" onClick={() => setConfirmDel(null)}>Cancel</button>
+            </div>
+          </div>
+        )}
+
         {isStaff && editing !== null && (
           <form className="sch-form" onSubmit={save}>
             <h2 className="sch-form-title">{editing === 'new' ? 'New event' : 'Edit event'}</h2>
+
+            {editingEvent?.series_id && (
+              <div className="sch-scope">
+                <span className="sch-label">Apply changes to</span>
+                <div className="sch-scope-opts">
+                  <label className={`sch-scope-opt${editScope === 'one' ? ' on' : ''}`}>
+                    <input type="radio" name="editscope" checked={editScope === 'one'}
+                      onChange={() => setEditScope('one')} />
+                    This event only
+                  </label>
+                  <label className={`sch-scope-opt${editScope === 'series' ? ' on' : ''}`}>
+                    <input type="radio" name="editscope" checked={editScope === 'series'}
+                      onChange={() => setEditScope('series')} />
+                    Whole series ({editingSeriesCount})
+                  </label>
+                </div>
+                {editScope === 'series' && (
+                  <p className="sch-scope-hint">Title, kind, location, notes, RSVP, and the time block apply to all {editingSeriesCount} events; each keeps its own day.</p>
+                )}
+              </div>
+            )}
+
             <label className="sch-field">
               <span className="sch-label">Title</span>
               <input className="sch-input" value={form.title} required
@@ -308,6 +391,7 @@ export default function SchedulePage({ session, hasRole }) {
                         <div className="sch-event-head">
                           <span className={`sch-kind sch-kind-${ev.kind}`}>{ev.kind}</span>
                           <span className="sch-event-title">{ev.title}</span>
+                          {ev.series_id && <span className="sch-series-tag" title="Part of a recurring series">series</span>}
                         </div>
                         {ev.location && <span className="sch-event-loc hud-mono">@ {ev.location}</span>}
                         {ev.notes && <p className="sch-event-notes">{ev.notes}</p>}
