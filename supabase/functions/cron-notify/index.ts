@@ -198,6 +198,31 @@ async function shopStatus(admin: any) {
   }
 }
 
+// ── Check-in reminders: nudge anyone still checked in to check out ──────────
+// Condition: their most recent attendance event today is an 'in' (open
+// check-in). Run once in the evening; deduped to one per member per day.
+async function checkinReminder(admin: any) {
+  const now = new Date()
+  const startToday = laMidnightISO(now)
+  const { data: events } = await admin
+    .from('attendance_events').select('user_id, type, event_time').gte('event_time', startToday)
+  if (!events || events.length === 0) return
+
+  const byUser: Record<string, any[]> = {}
+  for (const e of events) (byUser[e.user_id] ??= []).push(e)
+
+  const ref = `checkin:${laDate(now)}`
+  for (const [userId, evs] of Object.entries(byUser)) {
+    if (!isIn(evs)) continue  // already checked out
+    await sendToMember(admin, {
+      member_id: userId, category: 'checkin_reminder', kind: 'checkin_reminder', ref_id: ref,
+      title: 'Still checked in?',
+      body: 'You’re still checked in — remember to check out before you leave.',
+      url: '/dashboard',
+    })
+  }
+}
+
 // ── HTTP entry ──────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.headers.get('x-push-secret') !== Deno.env.get('PUSH_SECRET')) {
@@ -214,6 +239,7 @@ Deno.serve(async (req) => {
     if (job === 'event_reminder') await eventReminders(admin)
     else if (job === 'parent_digest') await parentDigest(admin)
     else if (job === 'shop_status') await shopStatus(admin)
+    else if (job === 'checkin_reminder') await checkinReminder(admin)
     else return new Response('unknown job', { status: 400 })
 
     return new Response(JSON.stringify({ ok: true, job }), { headers: { 'Content-Type': 'application/json' } })

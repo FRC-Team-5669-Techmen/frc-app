@@ -11,16 +11,19 @@ const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY
 
 // `wired` = a backend trigger already sends this. Toggles with wired:false save
 // the preference but won't fire until their trigger is built (see report).
+// job_assignment + announcements are HIDDEN for now (no assignment action and no
+// announcements system exist yet) — their prefs keys stay in DEFAULT_PREFS so
+// re-enabling is just un-commenting the rows below once those features land.
 const CATEGORIES = [
   { key: 'task_signoff',    label: 'Job sign-offs',      hint: 'When a mentor approves or returns your job',   wired: true },
   { key: 'event_reminder',  label: 'Event reminders',    hint: 'Before an event or meeting you’re going to',    wired: true },
-  { key: 'schedule_change', label: 'Schedule changes',   hint: 'When an event is added, edited, or canceled',   wired: false },
+  { key: 'schedule_change', label: 'Schedule changes',   hint: 'When an event is added, edited, or canceled',   wired: true },
   { key: 'shop_status',     label: 'Shop hours',         hint: 'When the shop opens or closes',                 wired: true },
-  { key: 'job_assignment',  label: 'Job assignments',    hint: 'When you’re assigned a new job or task',        wired: false },
-  { key: 'skill_signoff',   label: 'Skill sign-offs',    hint: 'When a skill is approved or pending review',    wired: false },
-  { key: 'checkin_reminder',label: 'Check-in reminders', hint: 'Reminders to check in or out',                  wired: false },
+  // { key: 'job_assignment',  label: 'Job assignments',    hint: 'When you’re assigned a new job or task',        wired: false },
+  { key: 'skill_signoff',   label: 'Skill sign-offs',    hint: 'When a skill is certified',                     wired: true },
+  { key: 'checkin_reminder',label: 'Check-in reminders', hint: 'A nudge if you forget to check out',            wired: true },
   { key: 'parent_digest',   label: 'Daily family recap', hint: 'One evening summary of your students’ day',     wired: true },
-  { key: 'announcements',   label: 'Team announcements', hint: 'Important messages from mentors',               wired: false },
+  // { key: 'announcements',   label: 'Team announcements', hint: 'Important messages from mentors',               wired: false },
 ]
 
 const DEFAULT_PREFS = {
