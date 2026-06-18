@@ -3,6 +3,20 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { supabase } from './supabase'
 import './NavBar.css'
 
+// Self-hosted inline-SVG icon set (no CDN / dependency, themed via currentColor
+// so each icon inherits its nav link's color, including the active gold).
+const Svg = ({ children }) => (
+  <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    {children}
+  </svg>
+)
+const IconDashboard = () => <Svg><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></Svg>
+const IconSchedule  = () => <Svg><rect x="3" y="4" width="18" height="17" rx="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="16" y1="2" x2="16" y2="6" /></Svg>
+const IconJobs      = () => <Svg><rect x="5" y="4" width="14" height="17" rx="2" /><rect x="9" y="2" width="6" height="4" rx="1" /><path d="M8.5 12.5l2.5 2.5 4.5-4.5" /></Svg>
+const IconHours     = () => <Svg><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></Svg>
+const IconSkills    = () => <Svg><circle cx="12" cy="9" r="5.5" /><path d="M8.5 13.5 7 22l5-2.6L17 22l-1.5-8.5" /></Svg>
+
 // Mono unit/context tag shown at the right of the header, derived from route.
 const CONTEXT_TAGS = [
   ['/dashboard',   'CMD'],
@@ -90,7 +104,7 @@ const STAFF_LINKS = [
   ['/coverage',       'Skill Coverage'],
 ]
 
-function AvatarMenu({ avatarUrl, initials, name, isStaff, pendingAccess = 0 }) {
+function AvatarMenu({ avatarUrl, initials, name, isStaff, isParent = false, pendingAccess = 0 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -115,6 +129,9 @@ function AvatarMenu({ avatarUrl, initials, name, isStaff, pendingAccess = 0 }) {
       {open && (
         <div className="nav-dropdown-menu nav-avatar-menu" onClick={() => setOpen(false)}>
           <NavLink to="/profile" className={itemClass}>My Profile</NavLink>
+          {!isParent && (
+            <NavLink to="/study" data-tour="nav-study" className={itemClass}>Study</NavLink>
+          )}
           <button className="nav-dropdown-item" onClick={replayTour}>Replay tour</button>
 
           {isStaff && (
@@ -180,40 +197,37 @@ export default function NavBar({ hasRole = () => false, session = null }) {
 
         <div className="navbar-links">
           <NavLink to="/dashboard" data-tour="nav-dashboard" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            Dashboard
+            <IconDashboard />Dashboard
           </NavLink>
 
           <NavLink to="/schedule" data-tour="nav-schedule" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            Schedule
+            <IconSchedule />Schedule
           </NavLink>
 
           {isParent ? (
             <NavLink to="/hours" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-              Team Hours
+              <IconHours />Team Hours
             </NavLink>
           ) : (<>
-          <Dropdown label="Hours" tourId="nav-hours" paths={['/my-hours', '/hours', '/log-hours']}>
+          {/* Jobs now sits before Hours (swapped). */}
+          <NavLink to="/jobs" data-tour="nav-jobs" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <IconJobs />Jobs
+          </NavLink>
+
+          <Dropdown label={<><IconHours />Hours</>} tourId="nav-hours" paths={['/my-hours', '/hours', '/log-hours']}>
             <NavLink to="/my-hours"  className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>My Hours</NavLink>
             <NavLink to="/hours"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Team Hours</NavLink>
             <NavLink to="/log-hours" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Log Hours</NavLink>
           </Dropdown>
 
-          <NavLink to="/jobs" data-tour="nav-jobs" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            Jobs
-          </NavLink>
-
           <NavLink to="/skills" data-tour="nav-skills" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            Skills
-          </NavLink>
-
-          <NavLink to="/study" data-tour="nav-study" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            Study
+            <IconSkills />Skills
           </NavLink>
           </>)}
         </div>
 
         <div className="navbar-account">
-          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} isStaff={isStaff} pendingAccess={pendingAccess} />
+          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} isStaff={isStaff} isParent={isParent} pendingAccess={pendingAccess} />
         </div>
       </div>
     </nav>

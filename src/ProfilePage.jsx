@@ -20,6 +20,8 @@ export default function ProfilePage({ session }) {
   const [saved,     setSaved]     = useState(false)
   const [error,     setError]     = useState('')
   const [loadError, setLoadError] = useState('')
+  // Team (subteams + disciplines) rarely changes — collapsed by default to save space.
+  const [teamOpen,  setTeamOpen]  = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -191,10 +193,25 @@ export default function ProfilePage({ session }) {
               </div>
             </section>
 
-            {/* ── Team ── */}
+            {/* ── Team (collapsible — rarely changes) ── */}
             <section className="profile-group">
-              <h3 className="profile-group-title">Team</h3>
+              <button
+                type="button"
+                className="profile-group-toggle"
+                onClick={() => setTeamOpen(o => !o)}
+                aria-expanded={teamOpen}
+              >
+                <span className={`profile-group-caret${teamOpen ? ' open' : ''}`}>▸</span>
+                <h3 className="profile-group-title">Team</h3>
+                {!teamOpen && (
+                  <span className="profile-group-summary">
+                    {form.subteams.length || 0} subteam{form.subteams.length === 1 ? '' : 's'}
+                    {form.disciplines.length > 0 && ` · ${form.disciplines.length} discipline${form.disciplines.length === 1 ? '' : 's'}`}
+                  </span>
+                )}
+              </button>
 
+              {teamOpen && (<>
               <div className="profile-field">
                 <label className="profile-label">Subteams</label>
                 <div className="profile-subteam-chips">
@@ -233,6 +250,7 @@ export default function ProfilePage({ session }) {
                   ))}
                 </div>
               )}
+              </>)}
             </section>
 
             {/* ── About ── */}

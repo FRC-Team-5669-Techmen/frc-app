@@ -289,3 +289,29 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ── Collapsible group header (Team) ── */
+.profile-group-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.profile-group-toggle .profile-group-title { margin: 0; }
+.profile-group-caret {
+  color: var(--gold);
+  font-size: 0.85rem;
+  transition: transform 0.15s ease;
+}
+.profile-group-caret.open { transform: rotate(90deg); }
+.profile-group-summary {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
