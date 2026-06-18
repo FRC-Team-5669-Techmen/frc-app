@@ -575,6 +575,19 @@
   padding: 0.03rem 0.3rem;
 }
 
+.sch-mandatory-tag {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #0A0B0D;
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  padding: 0.03rem 0.3rem;
+}
+
 /* ── Form: conflict warning (non-blocking) ── */
 .sch-conflict {
   font-family: var(--font-mono);

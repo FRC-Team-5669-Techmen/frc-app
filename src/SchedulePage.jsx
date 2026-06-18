@@ -10,7 +10,7 @@ const RESPONSES = [['going', 'Going'], ['maybe', 'Maybe'], ['declined', "Can't g
 const WEEKDAYS = [[0, 'Sun'], [1, 'Mon'], [2, 'Tue'], [3, 'Wed'], [4, 'Thu'], [5, 'Fri'], [6, 'Sat']]
 const blankForm = () => ({
   title: '', kind: 'build', start: '', end: '', location: '', notes: '',
-  rsvp_enabled: false, capacity: '',
+  rsvp_enabled: false, capacity: '', mandatory: false,
   repeat: false, repeatDays: [], repeatUntil: '',
 })
 
@@ -119,7 +119,7 @@ export default function SchedulePage({ session, hasRole }) {
       title: ev.title, kind: ev.kind,
       start: toLocalInput(ev.starts_at), end: toLocalInput(ev.ends_at),
       location: ev.location || '', notes: ev.notes || '',
-      rsvp_enabled: !!ev.rsvp_enabled, capacity: ev.capacity ?? '',
+      rsvp_enabled: !!ev.rsvp_enabled, capacity: ev.capacity ?? '', mandatory: !!ev.mandatory,
     })
     setEditing(ev.id); setEditScope('one'); setError('')
   }
@@ -137,6 +137,7 @@ export default function SchedulePage({ session, hasRole }) {
       location: form.location.trim() || null, notes: form.notes.trim() || null,
       rsvp_enabled: form.rsvp_enabled,
       capacity: form.rsvp_enabled && Number.isFinite(capNum) && capNum > 0 ? capNum : null,
+      mandatory: form.mandatory,
     }
 
     // Bulk create: one submission → the same time block on every selected
@@ -185,6 +186,7 @@ export default function SchedulePage({ session, hasRole }) {
       const fields = {
         title: payload.title, kind: payload.kind, location: payload.location,
         notes: payload.notes, rsvp_enabled: payload.rsvp_enabled, capacity: payload.capacity,
+        mandatory: payload.mandatory,
         updated_at: new Date().toISOString(),
       }
       const sibs = events.filter(ev => ev.series_id === editingEvent.series_id)
@@ -269,6 +271,7 @@ export default function SchedulePage({ session, hasRole }) {
               <span className={`sch-kind sch-kind-${ev.kind}`}>{ev.kind}</span>
               <span className="sch-event-title">{ev.title}</span>
               {ev.series_id && <span className="sch-series-tag" title="Part of a recurring series">series</span>}
+              {ev.mandatory && <span className="sch-mandatory-tag" title="Mandatory — all active members reminded">mandatory</span>}
               {full && <span className="sch-full-tag">FULL</span>}
             </div>
             {ev.location && <span className="sch-event-loc hud-mono">@ {ev.location}</span>}
@@ -539,6 +542,14 @@ export default function SchedulePage({ session, hasRole }) {
                     onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))} placeholder="e.g. 30" />
                 </label>
               )}
+            </div>
+            <div className="sch-field">
+              <label className="sch-toggle">
+                <input type="checkbox" checked={form.mandatory}
+                  onChange={e => setForm(f => ({ ...f, mandatory: e.target.checked }))} />
+                <span className="sch-label">Mandatory</span>
+              </label>
+              <span className="sch-repeat-hint">Reminds every active member regardless of RSVP.</span>
             </div>
             <div className="sch-form-actions">
               <button type="button" className="sch-cancel" onClick={() => setEditing(null)}>Cancel</button>
