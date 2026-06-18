@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
+import { roleColor, topRoleOf } from './roles'
 import './CoverageMatrix.css'
 
 const displayName = (m) => (m?.nickname && m.nickname.trim()) || m?.full_name || '—'
@@ -12,6 +13,7 @@ export default function CoverageMatrix({ hasRole, canView = false }) {
   const [members,    setMembers]    = useState(null)
   const [catalog,    setCatalog]    = useState(null)
   const [skillRows,  setSkillRows]  = useState(null)
+  const [roleById,   setRoleById]   = useState({})   // member_id -> top role
   const [activeOnly, setActiveOnly] = useState(true)
 
   useEffect(() => {
@@ -23,10 +25,14 @@ export default function CoverageMatrix({ hasRole, canView = false }) {
       supabase.from('profiles').select('id, full_name, nickname, status').order('full_name'),
       supabase.from('skills').select('*').order('sort_order'),
       supabase.from('member_skills').select('member_id, skill_id, status'),
-    ]).then(([{ data: p }, { data: s }, { data: ms }]) => {
+      supabase.from('member_roles').select('member_id, role'),
+    ]).then(([{ data: p }, { data: s }, { data: ms }, { data: mr }]) => {
       setMembers(p ?? [])
       setCatalog(s ?? [])
       setSkillRows(ms ?? [])
+      const byId = {}
+      for (const r of mr ?? []) (byId[r.member_id] ??= []).push(r.role)
+      setRoleById(Object.fromEntries(Object.entries(byId).map(([id, rs]) => [id, topRoleOf(rs)])))
     })
   }, [])
 
@@ -147,7 +153,12 @@ export default function CoverageMatrix({ hasRole, canView = false }) {
           <tbody>
             {visibleMembers.map(m => (
               <tr key={m.id} className="cm-row">
-                <td className="cm-td cm-name-cell">{displayName(m)}</td>
+                <td className="cm-td cm-name-cell">
+                  {roleById[m.id] && (
+                    <span className="role-dot cm-role-dot" style={{ '--rc': roleColor(roleById[m.id]) }} title={roleById[m.id]} />
+                  )}
+                  {displayName(m)}
+                </td>
                 {flatSkills.map((skill, i) => {
                   const isFirst = grouped.some(g => g.skills[0]?.id === skill.id)
                   const status = statusMap[m.id]?.[skill.id] ?? 'not_started'

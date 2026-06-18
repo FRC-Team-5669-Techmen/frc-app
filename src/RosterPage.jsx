@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { computeHoursMs, fmtHours } from './hoursUtils'
+import { RoleBadge, roleColor } from './roles'
 import './RosterPage.css'
 
 const ALL_ROLES    = ['student', 'mentor', 'lead', 'admin', 'parent']
@@ -321,7 +322,7 @@ export default function RosterPage() {
                   <span className="roster-member-email">{m.email}</span>
                   <span className="roster-member-tags">
                     {!m.approved && <span className="roster-pending-tag">Pending</span>}
-                    {role && <span className="roster-role-tag">{role}</span>}
+                    {role && <RoleBadge role={role} />}
                     <span
                       className={`roster-status-dot status-dot-${m.status ?? 'active'}`}
                       title={m.status ?? 'active'}
@@ -350,7 +351,11 @@ export default function RosterPage() {
                           const on  = (m.roles ?? []).includes(r)
                           const key = `${m.id}_${r}`
                           return (
-                            <label key={r} className={`role-chip${on ? ' role-on' : ''}`}>
+                            <label
+                              key={r}
+                              className={`role-chip${on ? ' role-on' : ''}`}
+                              style={on ? { color: roleColor(r), borderColor: roleColor(r) } : undefined}
+                            >
                               <input
                                 type="checkbox"
                                 checked={on}

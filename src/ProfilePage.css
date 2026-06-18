@@ -315,3 +315,7 @@
   font-size: 0.72rem;
   color: var(--muted);
 }
+
+/* role badge beside the profile display name */
+.profile-display-name { display: inline-flex; align-items: center; gap: 0.5rem; }
+.profile-role-badge { vertical-align: middle; }

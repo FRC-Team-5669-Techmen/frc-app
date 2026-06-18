@@ -91,10 +91,15 @@ export default function TeamStatus() {
             const isIn = e.type === 'in'
             return (
               <li key={e.id} className={`ts-frow ${isIn ? 'ts-in' : 'ts-out'}`}>
-                <span className="ts-fdir hud-tnum">{isIn ? 'IN' : 'OUT'}</span>
-                <span className="ts-fname">{e.profiles?.full_name || '—'}</span>
-                <span className="ts-fsub">{subteamOf(e.profiles)}</span>
-                <span className="ts-ftime hud-tnum">{fmtClock(e.event_time)}</span>
+                <span className="ts-ficon" aria-hidden="true">{isIn ? '↓' : '↑'}</span>
+                <span className="ts-fbody">
+                  <span className="ts-fname">{e.profiles?.full_name || '—'}</span>
+                  <span className="ts-fsub">{subteamOf(e.profiles)}</span>
+                </span>
+                <span className="ts-fright">
+                  <span className="ts-fdir">{isIn ? 'IN' : 'OUT'}</span>
+                  <span className="ts-ftime hud-tnum">{fmtClock(e.event_time)}</span>
+                </span>
               </li>
             )
           })}

@@ -145,58 +145,79 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
 }
 
 .ts-frow {
-  display: grid;
-  grid-template-columns: 2.4rem 1fr auto auto;
-  align-items: baseline;
-  gap: 0.6rem;
-  padding: 0.35rem 0.5rem;
-  border-radius: var(--radius-sm);
-  border-left: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.45rem 0.4rem;
 }
+.ts-frow:not(:last-child) { border-bottom: 1px solid var(--border); }
 
-.ts-fdir {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
+/* Circular direction icon — mirrors the present-row check for visual consistency */
+.ts-ficon {
+  flex-shrink: 0;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  line-height: 1;
+}
+.ts-in  .ts-ficon { background: var(--gold); color: #0A0B0D; }
+.ts-out .ts-ficon { background: var(--surface-2); color: var(--steel); border: 1px solid var(--border-strong); }
+
+.ts-fbody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
 }
 .ts-fname {
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.ts-out .ts-fname { color: var(--steel); }
 .ts-fsub {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   letter-spacing: 0.03em;
   color: var(--muted);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+.ts-fright {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+.ts-fdir {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.05rem 0.35rem;
+  border-radius: var(--radius-sm);
+}
+.ts-in  .ts-fdir { color: var(--gold-bright); background: var(--gold-a08); }
+.ts-out .ts-fdir { color: var(--steel); background: var(--surface-2); }
 .ts-ftime {
   font-family: var(--font-mono);
-  font-size: 0.74rem;
+  font-size: 0.76rem;
   letter-spacing: 0.03em;
   color: var(--steel);
 }
-
-/* IN reads gold; OUT reads dim/steel so the two differ at a glance */
-.ts-in {
-  background: var(--gold-a08);
-  border-left-color: var(--gold);
-}
-.ts-in .ts-fdir { color: var(--gold-bright); }
-
-.ts-out {
-  background: transparent;
-  border-left-color: var(--border-strong);
-}
-.ts-out .ts-fdir { color: var(--steel); }
-.ts-out .ts-fname { color: var(--steel); }

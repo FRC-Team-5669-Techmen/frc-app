@@ -14,7 +14,7 @@ Local: set on first run
 
 Techmen. "Tactical HUD" theme — near-black base, gold targeting accent, silver/steel chrome. Display/UI face is Chakra Petch; all data/readout lines (timestamps, codes, counts, status) use Share Tech Mono. Both fonts are self-hosted via @fontsource (no Google Fonts CDN). Team logo + "TECHMEN·5669" wordmark in the header, not "5669" or "FRC App". Student-facing name is always Techmen.
 
-**Theme tokens live in `src/theme.css`** — a single source of truth (CSS custom properties) imported once in `main.jsx` before `App.css`. Never scatter raw hex through components; use the vars (`--bg`, `--surface`, `--border`/`--border-strong`, `--text`, `--steel`, `--muted`, `--gold`/`--gold-bright`/`--gold-dim`, `--fault`, `--font-ui`, `--font-mono`, `--radius`). Red (`--fault`) is reserved for genuine faults/errors/destructive actions only.
+**Theme tokens live in `src/theme.css`** — a single source of truth (CSS custom properties) imported once in `main.jsx` before `App.css`. Never scatter raw hex through components; use the vars (`--bg`, `--surface`, `--border`/`--border-strong`, `--text`, `--steel`, `--muted`, `--gold`/`--gold-bright`/`--gold-dim`, `--fault`, `--font-ui`, `--font-mono`, `--radius`). Red (`--fault`) is reserved for genuine faults/errors/destructive actions only. **Role colors** are tokens too (`--role-parent/-student/-mentor/-lead/-admin`, same pattern as `--hr-*`); render roles via the shared `RoleBadge`/`roleColor`/`topRoleOf` from `src/roles.jsx` (styled by the global `.role-badge`/`.role-dot` primitives in theme.css) so the same role is the same color on the roster, access requests, coverage matrix, nav avatar menu, and profile.
 
 ## Tech stack
 

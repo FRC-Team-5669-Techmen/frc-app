@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
+import { RoleBadge } from './roles'
 import './AccessRequestsPage.css'
 
 const ROLES = ['student', 'mentor', 'parent']
@@ -290,7 +291,8 @@ export default function AccessRequestsPage({ hasRole }) {
                   <span className="ar-email">{r.email}</span>
                   {r.note && <p className="ar-note">{r.note}</p>}
                   <div className="ar-meta hud-tnum">
-                    <span className="ar-req-role">WANTS // {(r.requested_role || '—').toUpperCase()}</span>
+                    <span className="ar-req-role">WANTS</span>
+                    {r.requested_role ? <RoleBadge role={r.requested_role} /> : <span className="ar-req-role">—</span>}
                     <span className="ar-when">{fmtWhen(r.created_at)}</span>
                   </div>
                 </div>

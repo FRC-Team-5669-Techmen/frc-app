@@ -182,7 +182,7 @@ export default function App() {
           <Route path="/jobs"        element={<JobsPage session={session} hasRole={hasRole} />} />
           <Route path="/study"       element={<StudyPage session={session} hasRole={hasRole} />} />
           <Route path="/members/:id" element={<MemberPage session={session} hasRole={hasRole} />} />
-          <Route path="/profile"     element={<ProfilePage session={session} />} />
+          <Route path="/profile"     element={<ProfilePage session={session} hasRole={hasRole} />} />
           <Route path="/certify"     element={<CertifyPage session={session} hasRole={hasRole} />} />
           <Route path="/coverage"    element={<CoverageMatrix hasRole={hasRole} />} />
           <Route path="/verify-hours" element={<VerifyHoursPage session={session} hasRole={hasRole} />} />

@@ -338,3 +338,21 @@
   flex: 0 0 auto;
 }
 .navbar-links .nav-link { gap: 0.4rem; }
+
+/* ── Avatar menu identity header (name + role badge) ── */
+.nav-menu-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.5rem 0.85rem 0.55rem;
+}
+.nav-menu-name {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

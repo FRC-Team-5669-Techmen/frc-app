@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { supabase } from './supabase'
+import { RoleBadge, ROLE_ORDER } from './roles'
 import './NavBar.css'
 
 // Self-hosted inline-SVG icon set (no CDN / dependency, themed via currentColor
@@ -104,7 +105,7 @@ const STAFF_LINKS = [
   ['/coverage',       'Skill Coverage'],
 ]
 
-function AvatarMenu({ avatarUrl, initials, name, isStaff, isParent = false, pendingAccess = 0 }) {
+function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isParent = false, pendingAccess = 0 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -128,6 +129,11 @@ function AvatarMenu({ avatarUrl, initials, name, isStaff, isParent = false, pend
       </button>
       {open && (
         <div className="nav-dropdown-menu nav-avatar-menu" onClick={() => setOpen(false)}>
+          <div className="nav-menu-head">
+            <span className="nav-menu-name">{name}</span>
+            {role && <RoleBadge role={role} />}
+          </div>
+          <div className="nav-dropdown-divider" />
           <NavLink to="/profile" className={itemClass}>My Profile</NavLink>
           {!isParent && (
             <NavLink to="/study" data-tour="nav-study" className={itemClass}>Study</NavLink>
@@ -167,6 +173,7 @@ export default function NavBar({ hasRole = () => false, session = null }) {
   const avatarUrl = session?.user?.user_metadata?.avatar_url
   const name      = session?.user?.user_metadata?.full_name || session?.user?.email || ''
   const initials  = (name[0] || '?').toUpperCase()
+  const myRole    = ROLE_ORDER.find(r => hasRole(r))
   const { pathname } = useLocation()
 
   // Pending access-request count for the staff menu badge (staff-only; RLS
@@ -229,7 +236,7 @@ export default function NavBar({ hasRole = () => false, session = null }) {
         </div>
 
         <div className="navbar-account">
-          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} isStaff={isStaff} isParent={isParent} pendingAccess={pendingAccess} />
+          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isParent={isParent} pendingAccess={pendingAccess} />
         </div>
       </div>
     </nav>

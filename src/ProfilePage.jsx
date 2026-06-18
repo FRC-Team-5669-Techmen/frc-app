@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import MemberSkillsPanel from './MemberSkillsPanel'
 import NotificationsPanel from './NotificationsPanel'
+import { RoleBadge, ROLE_ORDER } from './roles'
 import './ProfilePage.css'
 
 const SUBTEAMS = [
@@ -10,7 +11,7 @@ const SUBTEAMS = [
 ]
 const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 
-export default function ProfilePage({ session }) {
+export default function ProfilePage({ session, hasRole = () => false }) {
   const [profile, setProfile] = useState(null)
   const [disciplineCatalog, setDisciplineCatalog] = useState([])
   const [form, setForm]       = useState({
@@ -139,7 +140,10 @@ export default function ProfilePage({ session }) {
               : <div className="profile-avatar profile-avatar-init">{initials}</div>
             }
             <div className="profile-identity-text">
-              <span className="profile-display-name">{profile.full_name || '—'}</span>
+              <span className="profile-display-name">
+                {profile.full_name || '—'}
+                {(() => { const r = ROLE_ORDER.find(x => hasRole(x)); return r ? <RoleBadge role={r} className="profile-role-badge" /> : null })()}
+              </span>
               <span className="profile-display-email">{session.user.email}</span>
             </div>
           </div>
