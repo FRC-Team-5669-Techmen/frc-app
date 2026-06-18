@@ -20,6 +20,7 @@ export default function AccessRequestsPage({ hasRole }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const [requests, setRequests] = useState(null)
   const [linkReqs, setLinkReqs] = useState([])   // pending parent→student link requests
+  const [certReqs, setCertReqs] = useState([])   // pending skill-cert requests
   const [roleSel, setRoleSel]   = useState({})
   const [busy, setBusy]         = useState({})
   const [error, setError]       = useState('')
@@ -52,7 +53,39 @@ export default function AccessRequestsPage({ hasRole }) {
     setLinkReqs(data ?? [])
   }, [])
 
-  useEffect(() => { if (isStaff) { load(); loadLinkReqs() } }, [isStaff, load, loadLinkReqs])
+  const loadCertReqs = useCallback(async () => {
+    const { data, error: err } = await supabase
+      .from('cert_requests')
+      .select('id, note, created_at, member:member_id(full_name, nickname), skill:skill_id(name)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+    if (err) { setError(err.message); setCertReqs([]); return }
+    setCertReqs(data ?? [])
+  }, [])
+
+  useEffect(() => { if (isStaff) { load(); loadLinkReqs(); loadCertReqs() } }, [isStaff, load, loadLinkReqs, loadCertReqs])
+
+  async function approveCert(r) {
+    setBusy(b => ({ ...b, [r.id]: true }))
+    const { error: err } = await supabase.rpc('approve_cert_request', { p_request: r.id })
+    if (err) {
+      setError(err.message)
+      setBusy(b => { const n = { ...b }; delete n[r.id]; return n })
+      return
+    }
+    setCertReqs(rs => rs.filter(x => x.id !== r.id))
+  }
+
+  async function denyCert(r) {
+    setBusy(b => ({ ...b, [r.id]: true }))
+    const { error: err } = await supabase.rpc('deny_cert_request', { p_request: r.id })
+    if (err) {
+      setError(err.message)
+      setBusy(b => { const n = { ...b }; delete n[r.id]; return n })
+      return
+    }
+    setCertReqs(rs => rs.filter(x => x.id !== r.id))
+  }
 
   async function approveLink(r) {
     setBusy(b => ({ ...b, [r.id]: true }))
@@ -205,6 +238,39 @@ export default function AccessRequestsPage({ hasRole }) {
                     <div className="ar-btns">
                       <button className="ar-approve" disabled={!!busy[r.id]} onClick={() => approveLink(r)}>Approve</button>
                       <button className="ar-deny" disabled={!!busy[r.id]} onClick={() => denyLink(r)}>Deny</button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="ar-linkreqs">
+          <h2 className="ar-invite-title">
+            Cert requests
+            <span className="ar-count hud-tnum">{certReqs.length} PENDING</span>
+          </h2>
+          {certReqs.length === 0 ? (
+            <p className="ar-empty">No pending cert requests.</p>
+          ) : (
+            <ul className="ar-list">
+              {certReqs.map(r => (
+                <li key={r.id} className="ar-card">
+                  <div className="ar-card-main">
+                    <span className="ar-name">
+                      {personName(r.member)} <span className="ar-link-arrow">→</span> {r.skill?.name || 'skill'}
+                    </span>
+                    {r.note && <p className="ar-note">{r.note}</p>}
+                    <div className="ar-meta hud-tnum">
+                      <span className="ar-req-role">MEMBER // CERT</span>
+                      <span className="ar-when">{fmtWhen(r.created_at)}</span>
+                    </div>
+                  </div>
+                  <div className="ar-actions">
+                    <div className="ar-btns">
+                      <button className="ar-approve" disabled={!!busy[r.id]} onClick={() => approveCert(r)}>Approve</button>
+                      <button className="ar-deny" disabled={!!busy[r.id]} onClick={() => denyCert(r)}>Deny</button>
                     </div>
                   </div>
                 </li>

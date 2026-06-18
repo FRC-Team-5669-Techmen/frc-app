@@ -4,7 +4,9 @@ import './CoverageMatrix.css'
 
 const displayName = (m) => (m?.nickname && m.nickname.trim()) || m?.full_name || '—'
 
-export default function CoverageMatrix({ hasRole }) {
+// canView lets a non-staff member see the matrix read-only (it has no mutations);
+// used by the member skills dashboard's "Team coverage" toggle.
+export default function CoverageMatrix({ hasRole, canView = false }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
 
   const [members,    setMembers]    = useState(null)
@@ -59,7 +61,7 @@ export default function CoverageMatrix({ hasRole }) {
       : members
   }, [members, activeOnly])
 
-  if (!isStaff) {
+  if (!isStaff && !canView) {
     return (
       <div className="cm-wrap">
         <div className="cm-denied">You need a staff role to view this page.</div>

@@ -59,7 +59,9 @@ function tourSteps(isStaff, isParent) {
     element: '[data-tour="nav-skills"]',
     popover: {
       title: 'Skills',
-      description: 'The skills ladder, grouped into collapsible categories — tap a section header to expand it and see the skills inside.',
+      description: isStaff
+        ? 'Manage the skills catalog and disciplines, in collapsible categories. Certify members from the Certify tool, and check team gaps on Skill Coverage — both in your avatar menu.'
+        : 'Your certifications and in-progress skills. Request a cert sign-off when you\'re ready, and toggle to the team coverage matrix to see where the team stands.',
     },
   }
   // Parent-only: present only on the parent dashboard, so it self-filters for

@@ -13,6 +13,7 @@ const HoursBoard  = lazy(() => import('./HoursBoard'))
 const RosterPage     = lazy(() => import('./RosterPage'))
 const ProfilePage    = lazy(() => import('./ProfilePage'))
 const SkillsCatalog  = lazy(() => import('./SkillsCatalog'))
+const MemberSkillsHome = lazy(() => import('./MemberSkillsHome'))
 const MemberPage     = lazy(() => import('./MemberPage'))
 const CheckinPage    = lazy(() => import('./CheckinPage'))
 const CertifyPage      = lazy(() => import('./CertifyPage'))
@@ -177,7 +178,7 @@ export default function App() {
           <Route path="/log-hours" element={<LogHoursPage session={session} />} />
           <Route path="/hours"     element={<HoursBoard hasRole={hasRole} />} />
           <Route path="/roster"    element={<RosterPage />} />
-          <Route path="/skills"      element={<SkillsCatalog hasRole={hasRole} />} />
+          <Route path="/skills"      element={isStaffUser ? <SkillsCatalog hasRole={hasRole} /> : <MemberSkillsHome session={session} hasRole={hasRole} />} />
           <Route path="/jobs"        element={<JobsPage session={session} hasRole={hasRole} />} />
           <Route path="/study"       element={<StudyPage session={session} hasRole={hasRole} />} />
           <Route path="/members/:id" element={<MemberPage session={session} hasRole={hasRole} />} />

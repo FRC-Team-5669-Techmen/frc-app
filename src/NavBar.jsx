@@ -180,8 +180,10 @@ export default function NavBar({ hasRole = () => false, session = null }) {
         .select('id', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('parent_link_requests')
         .select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-    ]).then(([a, b]) => {
-      if (active) setPendingAccess((a.count ?? 0) + (b.count ?? 0))
+      supabase.from('cert_requests')
+        .select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+    ]).then(([a, b, c]) => {
+      if (active) setPendingAccess((a.count ?? 0) + (b.count ?? 0) + (c.count ?? 0))
     })
     return () => { active = false }
   }, [isStaff, pathname])
