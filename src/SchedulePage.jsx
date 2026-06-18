@@ -4,7 +4,7 @@ import { fmtTime, fmtDay, SHOP_OPEN_KINDS } from './shopStatus'
 import './SchedulePage.css'
 
 const KINDS = ['build', 'meeting', 'competition', 'potluck', 'outreach', 'other']
-const VIEWS = [['agenda', 'Agenda'], ['month', 'Month'], ['week', 'Week']]
+const VIEWS = [['agenda', 'Agenda'], ['month', 'Month']]
 const RESPONSES = [['going', 'Going'], ['maybe', 'Maybe'], ['declined', "Can't go"]]
 // 0 = Sunday … 6 = Saturday (matches Date.getDay()).
 const WEEKDAYS = [[0, 'Sun'], [1, 'Mon'], [2, 'Tue'], [3, 'Wed'], [4, 'Thu'], [5, 'Fri'], [6, 'Sat']]
@@ -25,7 +25,7 @@ function dayKey(iso) {
   return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
 }
 
-// ── Calendar-date helpers (for the Month/Week grids) ──
+// ── Calendar-date helpers (for the Month grid) ──
 // Days are handled as 'YYYY-MM-DD' keys (same shape dayKey produces, in LA time).
 // Date math runs through UTC so it never drifts on DST — these only ever produce
 // day keys + weekday indices, which are pure calendar facts.
@@ -63,10 +63,9 @@ export default function SchedulePage({ session, hasRole }) {
   const [form, setForm]       = useState(blankForm())
   const [saving, setSaving]   = useState(false)
   const [error, setError]     = useState('')
-  const [view, setView]       = useState('agenda') // 'agenda' | 'month' | 'week' (in-memory only)
+  const [view, setView]       = useState('month') // 'agenda' | 'month' (in-memory only)
   const [myOnly, setMyOnly]   = useState(false)
   const [monthAnchor, setMonthAnchor] = useState(() => firstOfMonth(todayKey()))
-  const [weekAnchor, setWeekAnchor]   = useState(() => todayKey())
   const [selectedDay, setSelectedDay] = useState(() => todayKey()) // day shown below the month grid
 
   const load = useCallback(async () => {
@@ -249,7 +248,7 @@ export default function SchedulePage({ session, hasRole }) {
     return gs
   }
 
-  // One event row — reused by the agenda, the week view, and the month day panel
+  // One event row — reused by the agenda and the month day panel
   // so RSVP behavior stays identical everywhere.
   function renderEvent(ev) {
     const evSignups = signups.filter(s => s.event_id === ev.id)
@@ -362,13 +361,6 @@ export default function SchedulePage({ session, hasRole }) {
     return { key, inMonth: key.slice(0, 7) === monthAnchor.slice(0, 7), events: evByDay[key] ?? [] }
   })
 
-  // ── Week (current week, Sun–Sat) ──
-  const weekStart = addDays(weekAnchor, -keyToUTC(weekAnchor).getUTCDay())
-  const weekEnd = addDays(weekStart, 6)
-  const weekGroups = buildGroups(events.filter(ev => {
-    const k = dayKey(ev.starts_at)
-    return k >= weekStart && k <= weekEnd && passMine(ev)
-  }))
 
   // ── Conflict detection for the form (overlap: new.start < other.end && new.end > other.start) ──
   const conflicts = (() => {
@@ -612,20 +604,6 @@ export default function SchedulePage({ session, hasRole }) {
                 ? renderDayGroup({ key: selectedDay, label: fmtKeyDay(selectedDay), items: evByDay[selectedDay] })
                 : <p className="sch-empty">No events on {fmtKeyDay(selectedDay)}.</p>
             )}
-          </div>
-        )}
-
-        {view === 'week' && (
-          <div className="sch-week">
-            <div className="sch-cal-nav">
-              <button className="sch-nav-btn" onClick={() => setWeekAnchor(a => addDays(a, -7))} aria-label="Previous week">‹</button>
-              <span className="sch-cal-label">{fmtKeyDay(weekStart)} – {fmtKeyDay(weekEnd)}</span>
-              <button className="sch-nav-btn" onClick={() => setWeekAnchor(a => addDays(a, 7))} aria-label="Next week">›</button>
-              <button className="sch-today-btn" onClick={() => setWeekAnchor(todayKey())}>Today</button>
-            </div>
-            {weekGroups.length === 0
-              ? <p className="sch-empty">{myOnly ? 'No events match “My events” this week.' : 'No events this week.'}</p>
-              : weekGroups.map(renderDayGroup)}
           </div>
         )}
       </div>
