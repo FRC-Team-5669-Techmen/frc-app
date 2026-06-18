@@ -214,3 +214,14 @@
 
 .pill-in  { background: var(--gold-a14); color: var(--gold-bright); }
 .pill-out { background: var(--surface-2); color: var(--steel); }
+
+/* ── Sessions view: entrance/exit detail ── */
+.board-loc {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--steel);
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+.board-open { color: var(--gold-dim); font-family: var(--font-mono); font-size: 0.78rem; }
+.board-flag { color: var(--gold-dim); }

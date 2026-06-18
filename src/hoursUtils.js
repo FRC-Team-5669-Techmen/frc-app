@@ -10,9 +10,11 @@ export const HOUR_TYPES = [
 ]
 
 // Pair a member's raw in/out events into discrete sessions, newest concerns
-// handled by the caller. Returns [{ inTime, outTime|null, ms, open, outId }]
-// in chronological order. An unmatched trailing 'in' is an open session counted
-// up to now.
+// handled by the caller. Returns
+// [{ inTime, outTime|null, ms, open, outId, inLoc, outLoc }] in chronological
+// order. inLoc/outLoc are the entrance/exit used (attendance_events.location);
+// null when the source rows don't carry it. An unmatched trailing 'in' is an
+// open session counted up to now.
 export function sessionsFromEvents(events) {
   const sorted = [...events].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
   const sessions = []
@@ -27,6 +29,8 @@ export function sessionsFromEvents(events) {
         ms:      new Date(e.event_time) - new Date(openIn.event_time),
         open:    false,
         outId:   e.id,
+        inLoc:   openIn.location ?? null,
+        outLoc:  e.location ?? null,
       })
       openIn = null
     }
@@ -35,9 +39,16 @@ export function sessionsFromEvents(events) {
     sessions.push({
       inTime: new Date(openIn.event_time), outTime: null,
       ms: Date.now() - new Date(openIn.event_time), open: true, outId: null,
+      inLoc: openIn.location ?? null, outLoc: null,
     })
   }
   return sessions
+}
+
+// Prettify an entrance/exit code ("main-door" → "main door"); '—' when absent.
+export function fmtLocation(loc) {
+  if (!loc || loc === 'unknown') return '—'
+  return loc.replace(/[-_]/g, ' ')
 }
 
 export function fmtHours(h) {

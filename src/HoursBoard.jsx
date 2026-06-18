@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
-import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, HOUR_TYPES } from './hoursUtils'
+import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, HOUR_TYPES } from './hoursUtils'
 import './HoursBoard.css'
 
 const TYPE_COLOR = Object.fromEntries(HOUR_TYPES.map(t => [t.key, t.color]))
@@ -39,7 +39,7 @@ export default function HoursBoard({ hasRole = () => false }) {
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
       supabase.from('profiles').select('id, full_name'),
-      supabase.from('attendance_events').select('id, user_id, type, event_time').order('event_time'),
+      supabase.from('attendance_events').select('id, user_id, type, event_time, location').order('event_time'),
       supabase.from('logged_hours').select('member_id, type, hours, date').eq('status', 'verified'),
       supabase.from('session_reviews').select('user_id, checkout_id').in('status', ['pending', 'voided']),
     ]).then(([{ data: s }, { data: p }, { data: ae }, { data: lh }, { data: sr }]) => {
@@ -154,12 +154,36 @@ export default function HoursBoard({ hasRole = () => false }) {
       .sort((a, b) => b.date.localeCompare(a.date))
   }, [profiles, allEvents, allLogged, excluded, selRange])
 
+  // Fine-grained per-person, per-day sessions for the selected season: exact
+  // in/out times and the entrance/exit used for each.
+  const sessionRows = useMemo(() => {
+    if (!profiles || !allEvents || !excluded) return null
+    const eventMap = {}
+    for (const e of allEvents) (eventMap[e.user_id] ??= []).push(e)
+    const inRange = d => !selRange || (d >= selRange.start && (selRange.end == null || d <= selRange.end))
+    const rows = []
+    for (const p of profiles) {
+      const name = p.full_name || '—'
+      for (const s of sessionsFromEvents(eventMap[p.id] ?? [])) {
+        const date = s.inTime.toISOString().slice(0, 10)
+        if (!inRange(date)) continue
+        rows.push({
+          key: `${p.id}-${s.inTime.getTime()}`,
+          name, date, ...s,
+          flagged: !!(s.outId && excluded[p.id]?.has(s.outId)),
+        })
+      }
+    }
+    rows.sort((a, b) => a.name.localeCompare(b.name) || a.inTime - b.inTime)
+    return rows
+  }, [profiles, allEvents, excluded, selRange])
+
   // Admin CSV: every member's full sign in/out history + logged hours.
   function exportCsv() {
     const nameById = Object.fromEntries((profiles ?? []).map(p => [p.id, p.full_name || '—']))
     const eventMap = {}
     for (const e of (allEvents ?? [])) (eventMap[e.user_id] ??= []).push(e)
-    const lines = [['Member', 'Hour Type', 'Date', 'Check In', 'Check Out', 'Duration (h)', 'Flagged']
+    const lines = [['Member', 'Hour Type', 'Date', 'Check In', 'Entrance', 'Check Out', 'Exit', 'Duration (h)', 'Flagged']
       .map(csv).join(',')]
     for (const p of (profiles ?? [])) {
       const name = p.full_name || '—'
@@ -167,8 +191,9 @@ export default function HoursBoard({ hasRole = () => false }) {
         const flagged = s.outId && excluded?.[p.id]?.has(s.outId) ? 'review' : ''
         lines.push([
           name, 'Regular', s.inTime.toISOString().slice(0, 10),
-          s.inTime.toLocaleString(),
+          s.inTime.toLocaleString(), fmtLocation(s.inLoc),
           s.open ? '(open)' : s.outTime.toLocaleString(),
+          s.open ? '' : fmtLocation(s.outLoc),
           (s.ms / 3600000).toFixed(2), flagged,
         ].map(csv).join(','))
       }
@@ -176,7 +201,7 @@ export default function HoursBoard({ hasRole = () => false }) {
     for (const l of (allLogged ?? [])) {
       lines.push([
         nameById[l.member_id] || '—', TYPE_LABEL[l.type] ?? l.type, l.date,
-        '', '', (parseFloat(l.hours) || 0).toFixed(2), '',
+        '', '', '', '', (parseFloat(l.hours) || 0).toFixed(2), '',
       ].map(csv).join(','))
     }
     const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8' })
@@ -235,6 +260,10 @@ export default function HoursBoard({ hasRole = () => false }) {
               className={`board-viewbtn${view === 'days' ? ' active' : ''}`}
               onClick={() => setView('days')}
             >By day</button>
+            <button
+              className={`board-viewbtn${view === 'sessions' ? ' active' : ''}`}
+              onClick={() => setView('sessions')}
+            >Sessions</button>
           </div>
           {isAdmin && (
             <button className="board-export" onClick={exportCsv}>⬇ Export CSV</button>
@@ -274,7 +303,7 @@ export default function HoursBoard({ hasRole = () => false }) {
               </tbody>
             </table>
           </div>
-        ) : (
+        ) : view === 'days' ? (
           <div className="board-table-wrap">
             {(byDay?.length ?? 0) === 0 ? (
               <p className="board-empty">No hours recorded for this period.</p>
@@ -305,10 +334,51 @@ export default function HoursBoard({ hasRole = () => false }) {
               </table>
             )}
           </div>
+        ) : (
+          <div className="board-table-wrap">
+            {(sessionRows?.length ?? 0) === 0 ? (
+              <p className="board-empty">No sessions recorded for this period.</p>
+            ) : (
+              <table className="board-table">
+                <thead>
+                  <tr>
+                    <th className="board-th">Member</th>
+                    <th className="board-th">Day</th>
+                    <th className="board-th">Check In</th>
+                    <th className="board-th">Entrance</th>
+                    <th className="board-th">Check Out</th>
+                    <th className="board-th">Exit</th>
+                    <th className="board-th">Duration</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessionRows.map(s => (
+                    <tr key={s.key} className="board-row">
+                      <td className="board-td">{s.name}</td>
+                      <td className="board-td board-day">{fmtDay(s.date)}</td>
+                      <td className="board-td board-num">{fmtTime(s.inTime)}</td>
+                      <td className="board-td board-loc">{fmtLocation(s.inLoc)}</td>
+                      <td className="board-td board-num">
+                        {s.open ? <span className="board-open">— open —</span> : fmtTime(s.outTime)}
+                      </td>
+                      <td className="board-td board-loc">{s.open ? '—' : fmtLocation(s.outLoc)}</td>
+                      <td className="board-td board-num board-total">
+                        {fmtHours(s.ms / 3600000)}{s.flagged && <span className="board-flag" title="Pending/auto-close review"> ⚠</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
         )}
       </div>
     </div>
   )
+}
+
+function fmtTime(d) {
+  return d ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '—'
 }
 
 function fmtDay(date) {
