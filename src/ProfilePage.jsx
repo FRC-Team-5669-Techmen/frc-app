@@ -147,7 +147,10 @@ export default function ProfilePage({ session, hasRole = () => false }) {
   // Calendar feed links: Supabase functions endpoint + the member's capability token.
   const feedBase  = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-feed`
   const feedHttps = calToken ? `${feedBase}?token=${calToken}&scope=${calScope}` : ''
+  // webcal:// is the one-tap scheme for Apple Calendar; Google Calendar needs its
+  // own add-by-URL deep link (it never handles webcal:// on desktop).
   const feedWebcal = feedHttps.replace(/^https:\/\//, 'webcal://')
+  const feedGoogle = calToken ? `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(feedWebcal)}` : ''
 
   return (
     <div className="profile-wrap">
@@ -308,8 +311,8 @@ export default function ProfilePage({ session, hasRole = () => false }) {
             <p className="profile-section-heading">Calendar subscription</p>
             <div className="profile-card profile-cal-card">
               <p className="profile-cal-intro">
-                Subscribe in Apple or Google Calendar to keep the team schedule in sync.
-                This link is private to you — don't share it.
+                Subscribe to keep the team schedule in sync. Pick your calendar below,
+                or copy the link into any app. This link is private to you — don't share it.
               </p>
 
               <div className="profile-cal-scope">
@@ -321,9 +324,15 @@ export default function ProfilePage({ session, hasRole = () => false }) {
                   onClick={() => { setCalScope('all'); setCopied(false) }}>Full team</button>
               </div>
 
-              <a className="profile-cal-subscribe" href={feedWebcal}>Subscribe (one tap)</a>
+              <div className="profile-cal-actions">
+                <a className="profile-cal-subscribe" href={feedGoogle} target="_blank" rel="noreferrer">Add to Google Calendar</a>
+                <a className="profile-cal-subscribe profile-cal-apple" href={feedWebcal}>Add to Apple Calendar</a>
+              </div>
+              <span className="profile-cal-hint">
+                The Apple button opens a calendar app (iPhone, Mac, or Outlook). On a desktop without one, use the link below instead.
+              </span>
 
-              <label className="profile-label profile-cal-urllabel">Or add by URL (Google Calendar)</label>
+              <label className="profile-label profile-cal-urllabel">Or add by URL (any calendar app)</label>
               <div className="profile-cal-url">
                 <input className="profile-input profile-cal-input" readOnly value={feedHttps}
                   onFocus={e => e.target.select()} aria-label="Calendar feed URL" />

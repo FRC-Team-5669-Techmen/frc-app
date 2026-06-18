@@ -372,6 +372,15 @@
 }
 .profile-cal-subscribe:hover { background: var(--gold-bright); }
 
+.profile-cal-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+/* Apple/webcal as the secondary (outlined) option next to the gold Google button */
+.profile-cal-apple {
+  color: var(--text);
+  background: transparent;
+  border-color: var(--border-strong);
+}
+.profile-cal-apple:hover { background: transparent; border-color: var(--gold); color: var(--gold); }
+
 .profile-cal-urllabel { margin-bottom: -0.5rem; }
 .profile-cal-url { display: flex; gap: 0.5rem; }
 .profile-cal-input {
