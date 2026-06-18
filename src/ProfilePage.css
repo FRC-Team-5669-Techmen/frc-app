@@ -319,3 +319,99 @@
 /* role badge beside the profile display name */
 .profile-display-name { display: inline-flex; align-items: center; gap: 0.5rem; }
 .profile-role-badge { vertical-align: middle; }
+
+/* ── Calendar subscription ── */
+.profile-cal-card {
+  gap: 1rem;
+  padding: 1.5rem;
+}
+.profile-cal-intro {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--steel);
+}
+
+.profile-cal-scope {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.15rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  align-self: flex-start;
+}
+.profile-cal-tab {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--steel);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.85rem;
+  cursor: pointer;
+}
+.profile-cal-tab:hover { color: var(--gold); }
+.profile-cal-tab.on { background: var(--gold); color: #0A0B0D; }
+
+.profile-cal-subscribe {
+  align-self: flex-start;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #0A0B0D;
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 0.55rem 1.1rem;
+  text-decoration: none;
+}
+.profile-cal-subscribe:hover { background: var(--gold-bright); }
+
+.profile-cal-urllabel { margin-bottom: -0.5rem; }
+.profile-cal-url { display: flex; gap: 0.5rem; }
+.profile-cal-input {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--steel);
+}
+.profile-cal-copy {
+  flex-shrink: 0;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+.profile-cal-copy:hover { border-color: var(--gold); color: var(--gold); }
+
+.profile-cal-regen-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.profile-cal-regen {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  color: var(--steel);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+.profile-cal-regen:hover:not(:disabled) { border-color: var(--fault); color: var(--fault); }
+.profile-cal-regen:disabled { opacity: 0.55; cursor: not-allowed; }
+.profile-cal-hint {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}

@@ -23,6 +23,11 @@ export default function ProfilePage({ session, hasRole = () => false }) {
   const [loadError, setLoadError] = useState('')
   // Team (subteams + disciplines) rarely changes — collapsed by default to save space.
   const [teamOpen,  setTeamOpen]  = useState(false)
+  // Calendar subscription (.ics feed)
+  const [calToken,  setCalToken]  = useState(null)
+  const [calScope,  setCalScope]  = useState('mine') // 'mine' | 'all'
+  const [copied,    setCopied]    = useState(false)
+  const [rotating,  setRotating]  = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -59,6 +64,9 @@ export default function ProfilePage({ session, hasRole = () => false }) {
       .select('id, name, category, sort_order')
       .order('sort_order', { ascending: true })
       .then(({ data }) => setDisciplineCatalog(data ?? []))
+
+    // Own calendar token, via SECURITY DEFINER RPC (the column is not client-readable).
+    supabase.rpc('get_calendar_token').then(({ data }) => { if (data) setCalToken(data) })
   }, [session.user.id])
 
   // Group catalog by category, preserving sort_order (categories in seed order)
@@ -113,6 +121,13 @@ export default function ProfilePage({ session, hasRole = () => false }) {
     setTimeout(() => setSaved(false), 2500)
   }
 
+  async function regenerateCalToken() {
+    setRotating(true)
+    const { data, error: rotErr } = await supabase.rpc('rotate_calendar_token')
+    setRotating(false)
+    if (!rotErr && data) { setCalToken(data); setCopied(false) }
+  }
+
   if (loadError) {
     return (
       <div className="profile-wrap">
@@ -128,6 +143,11 @@ export default function ProfilePage({ session, hasRole = () => false }) {
   }
 
   const initials = (profile.full_name || session.user.email || '?')[0].toUpperCase()
+
+  // Calendar feed links: Supabase functions endpoint + the member's capability token.
+  const feedBase  = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-feed`
+  const feedHttps = calToken ? `${feedBase}?token=${calToken}&scope=${calScope}` : ''
+  const feedWebcal = feedHttps.replace(/^https:\/\//, 'webcal://')
 
   return (
     <div className="profile-wrap">
@@ -282,6 +302,46 @@ export default function ProfilePage({ session, hasRole = () => false }) {
           </form>
 
         </div>
+
+        {calToken && (
+          <>
+            <p className="profile-section-heading">Calendar subscription</p>
+            <div className="profile-card profile-cal-card">
+              <p className="profile-cal-intro">
+                Subscribe in Apple or Google Calendar to keep the team schedule in sync.
+                This link is private to you — don't share it.
+              </p>
+
+              <div className="profile-cal-scope">
+                <button type="button"
+                  className={`profile-cal-tab${calScope === 'mine' ? ' on' : ''}`}
+                  onClick={() => { setCalScope('mine'); setCopied(false) }}>My events</button>
+                <button type="button"
+                  className={`profile-cal-tab${calScope === 'all' ? ' on' : ''}`}
+                  onClick={() => { setCalScope('all'); setCopied(false) }}>Full team</button>
+              </div>
+
+              <a className="profile-cal-subscribe" href={feedWebcal}>Subscribe (one tap)</a>
+
+              <label className="profile-label profile-cal-urllabel">Or add by URL (Google Calendar)</label>
+              <div className="profile-cal-url">
+                <input className="profile-input profile-cal-input" readOnly value={feedHttps}
+                  onFocus={e => e.target.select()} aria-label="Calendar feed URL" />
+                <button type="button" className="profile-cal-copy"
+                  onClick={async () => {
+                    try { await navigator.clipboard.writeText(feedHttps); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* clipboard blocked */ }
+                  }}>{copied ? 'Copied ✓' : 'Copy'}</button>
+              </div>
+
+              <div className="profile-cal-regen-row">
+                <button type="button" className="profile-cal-regen" onClick={regenerateCalToken} disabled={rotating}>
+                  {rotating ? 'Regenerating…' : 'Regenerate link'}
+                </button>
+                <span className="profile-cal-hint">Regenerating stops the old link from working.</span>
+              </div>
+            </div>
+          </>
+        )}
 
         <NotificationsPanel session={session} />
 
