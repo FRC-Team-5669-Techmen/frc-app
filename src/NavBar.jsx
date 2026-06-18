@@ -112,7 +112,7 @@ function AvatarMenu({ avatarUrl, initials, name, isStaff, isParent = false, pend
 
   async function replayTour() {
     const { startTour } = await import('./tour')
-    startTour(isStaff)
+    startTour(isStaff, undefined, isParent)
   }
 
   const itemClass = ({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`

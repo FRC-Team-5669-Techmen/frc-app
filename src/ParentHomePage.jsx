@@ -209,7 +209,7 @@ export default function ParentHomePage({ session }) {
         )}
 
         {/* Self-service: request a link to a student */}
-        <section className="ph-link">
+        <section className="ph-link" data-tour="parent-link">
           <header className="ph-link-head">
             <span className="ph-eyebrow">LINK A STUDENT</span>
           </header>

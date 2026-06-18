@@ -122,6 +122,7 @@ export default function App() {
     tourStarted.current = true
 
     const isStaff = roles.some(r => ['mentor', 'lead', 'admin'].includes(r))
+    const isParentTrack = roles.includes('parent') && !isStaff
     let tries = 0
     let timer
     const run = async () => {
@@ -136,7 +137,7 @@ export default function App() {
         const now = new Date().toISOString()
         await supabase.from('profiles').update({ onboarded_at: now }).eq('id', session.user.id)
         setOnboardedAt(now)
-      })
+      }, isParentTrack)
     }
     run()
     return () => clearTimeout(timer)

@@ -6,11 +6,11 @@ import './tour.css'
 // the persistent NavBar items and a few dashboard elements by stable data-tour
 // attributes, so it never has to navigate across routes mid-tour.
 
-function tourSteps(isStaff) {
+function tourSteps(isStaff, isParent) {
   const welcome = {
     popover: {
       title: 'Welcome to Techmen',
-      description: 'A quick tour of the team platform. You can replay it anytime from your avatar menu.',
+      description: 'A quick tour of the team platform. The top tabs are now icon-labeled for quick scanning. You can replay this anytime from your avatar menu.',
     },
   }
   const checkin = {
@@ -36,20 +36,23 @@ function tourSteps(isStaff) {
         : 'See what\'s happening — build nights, meetings, and competitions — and RSVP to events that need it.',
     },
   }
-  const hours = {
-    element: '[data-tour="nav-hours"]',
-    popover: {
-      title: 'Hours',
-      description: 'See your hours, the team board, and log outside hours like outreach or competition.',
-    },
-  }
+  // Jobs now sits before Hours in the tab bar.
   const jobs = {
     element: '[data-tour="nav-jobs"]',
     popover: {
       title: 'Jobs',
       description: isStaff
-        ? 'Post jobs and sign off finished work per claimant. Jobs can be solo or a group with a capacity, and some require a certification to claim.'
-        : 'Claim team jobs here — solo or group. Some require a certification first; submit your work when done for mentor sign-off.',
+        ? 'Post jobs and sign off finished work per claimant. Click a job to open its detail view — reference links, images, a progress-update thread, and time logged per member. Admins can undo an approval there too.'
+        : 'Claim team jobs — solo or group. Open a job to post progress updates, and tap "I\'m on this job" while checked in to log your time to it. Submit when done for mentor sign-off.',
+    },
+  }
+  const hours = {
+    element: '[data-tour="nav-hours"]',
+    popover: {
+      title: 'Hours',
+      description: isStaff
+        ? 'Your hours, the team board (toggle a by-day breakdown; admins can export the full history to CSV), and logging outside hours like outreach.'
+        : 'Your hours, the team board with a per-day breakdown, and logging outside hours like outreach or competition.',
     },
   }
   const skills = {
@@ -59,31 +62,35 @@ function tourSteps(isStaff) {
       description: 'The skills ladder, grouped into collapsible categories — tap a section header to expand it and see the skills inside.',
     },
   }
-  const study = {
-    element: '[data-tour="nav-study"]',
+  // Parent-only: present only on the parent dashboard, so it self-filters for
+  // everyone else.
+  const parentLink = {
+    element: '[data-tour="parent-link"]',
     popover: {
-      title: 'Self-study',
-      description: 'Log study minutes and keep your daily streak going.',
+      title: 'Link your student',
+      description: 'Search for your student and send a link request. A mentor approves it, then their live status, hours, and certs appear here.',
     },
   }
   const profile = {
     element: '[data-tour="nav-profile"]',
     popover: {
-      title: isStaff ? 'Profile & staff tools' : 'Your profile',
+      title: isStaff ? 'Profile, study & staff tools' : 'Profile & menu',
       description: isStaff
-        ? 'Edit your details and notification settings, replay this tour, or sign out. Your staff tools — readiness, activity, squad, roster, access requests, verify hours, certify, and coverage — all live in this menu.'
-        : 'Edit your details, choose which notifications you get, replay this tour, or sign out — all from here.',
+        ? 'Edit your details and notifications, open Self-study, replay this tour, or sign out. Your staff tools — readiness, activity, squad, roster (with search & sort), access + parent-link requests, verify hours, certify, and coverage — all live in this menu.'
+        : isParent
+          ? 'Edit your details and notification settings, replay this tour, or sign out — all from here.'
+          : 'Edit your details and notifications, open Self-study (moved here from the tab bar), replay this tour, or sign out — all from here.',
     },
   }
 
-  return [welcome, checkin, checkout, schedule, hours, jobs, skills, study, profile]
+  return [welcome, checkin, checkout, schedule, jobs, hours, skills, parentLink, profile]
 }
 
 // Starts the tour for the given track. Steps whose target is not in the DOM for
 // this user/role are dropped so a missing element never breaks the run.
 // onDone (optional) fires once when the tour finishes or is skipped.
-export function startTour(isStaff, onDone) {
-  const steps = tourSteps(isStaff).filter(s => !s.element || document.querySelector(s.element))
+export function startTour(isStaff, onDone, isParent = false) {
+  const steps = tourSteps(isStaff, isParent).filter(s => !s.element || document.querySelector(s.element))
 
   let finished = false
   const finish = () => {
