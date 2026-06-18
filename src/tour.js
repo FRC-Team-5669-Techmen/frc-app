@@ -42,8 +42,8 @@ function tourSteps(isStaff, isParent) {
     popover: {
       title: 'Jobs',
       description: isStaff
-        ? 'Post jobs and sign off finished work per claimant. Click a job to open its detail view — reference links, images, a progress-update thread, and time logged per member. Admins can undo an approval there too.'
-        : 'Claim team jobs — solo or group. Open a job to post progress updates, and tap "I\'m on this job" while checked in to log your time to it. Submit when done for mentor sign-off.',
+        ? 'Post jobs and sign off finished work per claimant. Click a job for its detail — links, images, a progress thread, and time logged per member (admins can undo an approval). Cert-gated group jobs are covered collectively: the detail shows who covers each required cert and what\'s still uncovered.'
+        : 'Claim team jobs — solo or group. On a cert-gated group job the required certs are covered by the team together, so you can claim if you hold at least one; the detail shows per-cert coverage and any gaps. Post progress updates, tap "I\'m on this job" while checked in to log time, and submit when done for sign-off.',
     },
   }
   const hours = {
@@ -51,7 +51,7 @@ function tourSteps(isStaff, isParent) {
     popover: {
       title: 'Hours',
       description: isStaff
-        ? 'Your hours, the team board (toggle a by-day breakdown; admins can export the full history to CSV), and logging outside hours like outreach.'
+        ? 'Your hours, the team board, and logging outside hours. The board toggles By member / By day / Sessions — the per-person, per-day session view shows exact check-in/out times and the entrance/exit used; admins can export the full history (sessions, times and doors included) to CSV.'
         : 'Your hours, the team board with a per-day breakdown, and logging outside hours like outreach or competition.',
     },
   }
@@ -61,7 +61,7 @@ function tourSteps(isStaff, isParent) {
       title: 'Skills',
       description: isStaff
         ? 'Manage the skills catalog and disciplines, in collapsible categories. Certify members from the Certify tool, and check team gaps on Skill Coverage — both in your avatar menu.'
-        : 'Your certifications and in-progress skills. Request a cert sign-off when you\'re ready, and toggle to the team coverage matrix to see where the team stands.',
+        : 'Your personal Skills dashboard — your own certifications and in-progress skills. Request a cert sign-off when you\'re ready, and use the toggle to view the team coverage matrix read-only.',
     },
   }
   // Parent-only: present only on the parent dashboard, so it self-filters for
@@ -78,7 +78,7 @@ function tourSteps(isStaff, isParent) {
     popover: {
       title: isStaff ? 'Profile, study & staff tools' : 'Profile & menu',
       description: isStaff
-        ? 'Edit your details and notifications, open Self-study, replay this tour, or sign out. Your staff tools — readiness, activity, squad, roster (with search & sort), access + parent-link requests, verify hours, certify, and coverage — all live in this menu.'
+        ? 'Edit your details and notifications, open Self-study, replay this tour, or sign out. Your staff tools live in this menu — readiness, activity, squad, roster (search, sort, color-coded roles), verify hours, certify, coverage, and Access Requests, which now holds three queues (access, parent-link, and cert requests), each with approve/deny.'
         : isParent
           ? 'Edit your details and notification settings, replay this tour, or sign out — all from here.'
           : 'Edit your details and notifications, open Self-study (moved here from the tab bar), replay this tour, or sign out — all from here.',
