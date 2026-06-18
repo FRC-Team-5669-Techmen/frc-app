@@ -2,10 +2,6 @@ const SHOP_LAT = 34.041550
 const SHOP_LON = -118.086826
 const RADIUS_M  = 150
 
-// TEMPORARY: geofence disabled — check-in is not gated to location.
-// Flip back to false to re-enable the shop geofence.
-const GEO_DISABLED = true
-
 function haversineMeters(lat1, lon1, lat2, lon2) {
   const R = 6_371_000
   const toRad = d => d * Math.PI / 180
@@ -29,7 +25,6 @@ function gpsPosition() {
 
 // Returns { ok: true } or { ok: false, reason: 'denied'|'unavailable'|'range'|'error' }
 export async function verifyAtShop() {
-  if (GEO_DISABLED) return { ok: true }
   if (!navigator.geolocation) return { ok: false, reason: 'unavailable' }
   try {
     const { coords } = await gpsPosition()
