@@ -829,3 +829,62 @@
 .jobs-update-img img { width: 100%; display: block; }
 .jobs-update-compose { display: flex; flex-direction: column; gap: 0.5rem; }
 .jobs-update-compose-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+
+/* ── Detail: collective cert coverage ──────────────────────────────────── */
+.jobs-coverage {
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.jobs-coverage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.jobs-coverage-title {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+}
+.jobs-coverage-state {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.jobs-coverage-state.ok  { color: #56D364; }
+.jobs-coverage-state.gap { color: var(--fault); }
+.jobs-cov-list { list-style: none; margin: 0; padding: 0; }
+.jobs-cov-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+.jobs-cov-row:not(:last-child) { border-bottom: 1px solid var(--border); }
+.jobs-cov-row.uncovered { background: var(--fault-a10); }
+.jobs-cov-cert {
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  color: var(--text);
+}
+.jobs-cov-safety { color: var(--gold-bright); }
+.jobs-cov-by {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--steel);
+  text-align: right;
+}
+.jobs-cov-row.uncovered .jobs-cov-by {
+  color: var(--fault);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

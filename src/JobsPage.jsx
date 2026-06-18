@@ -78,6 +78,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
   const [skills, setSkills]   = useState({})        // skill_id -> { name, safety_critical }
   const [myCerts, setMyCerts] = useState(new Set()) // skill_ids the member is certified in
   const [claimsMap, setClaimsMap] = useState({})    // task_id -> [claim rows]
+  const [certsByMember, setCertsByMember] = useState({}) // member_id -> Set(certified skill_ids); claimants only
   const [busy, setBusy]       = useState({})
   const [error, setError]     = useState('')
 
@@ -117,10 +118,20 @@ export default function JobsPage({ session, hasRole = () => false }) {
     const cm = {}
     for (const c of tcRes.data ?? []) (cm[c.task_id] ??= []).push(c)
 
+    // Certified skills for everyone who has claimed a job — needed to compute
+    // collective cert coverage (which claimant covers which required cert).
+    const claimantIds = [...new Set((tcRes.data ?? []).map(c => c.member_id))]
+    const cbRes = claimantIds.length
+      ? await supabase.from('member_skills').select('member_id, skill_id').eq('status', 'certified').in('member_id', claimantIds)
+      : { data: [] }
+    const cbm = {}
+    for (const r of cbRes.data ?? []) (cbm[r.member_id] ??= new Set()).add(r.skill_id)
+
     setReqMap(rm)
     setSkills(sk)
     setMyCerts(new Set((msRes.data ?? []).map(m => m.skill_id)))
     setClaimsMap(cm)
+    setCertsByMember(cbm)
     setTasks(tRes.data ?? [])
   }, [uid])
 
@@ -207,8 +218,20 @@ export default function JobsPage({ session, hasRole = () => false }) {
       id, ...(skills[id] ?? { name: '(unknown skill)', safety_critical: false }),
     }))
   }
-  function missingFor(taskId) {
-    return requiredSkillsFor(taskId).filter(s => !myCerts.has(s.id))
+  // Collective cert coverage: certs are covered by the GROUP of claimants, not
+  // any single member. For each required cert, which claim rows cover it.
+  function coverageFor(taskId) {
+    const claims = claimsMap[taskId] ?? []
+    return requiredSkillsFor(taskId).map(s => ({
+      ...s,
+      coverers: claims.filter(c => certsByMember[c.member_id]?.has(s.id)),
+    }))
+  }
+  // The current member may claim a cert-gated job if they hold AT LEAST ONE of
+  // its required certs (none required → open to all).
+  function canClaimCerts(taskId) {
+    const reqIds = reqMap[taskId] ?? []
+    return reqIds.length === 0 || reqIds.some(id => myCerts.has(id))
   }
 
   // ── Member / staff transitions, all via SECURITY DEFINER RPCs ──
@@ -597,11 +620,11 @@ export default function JobsPage({ session, hasRole = () => false }) {
               {!isCollapsed && (
                 <ul className="jobs-rows">
                   {rows.map(t => {
-                    const ds      = displayStatus(t)
-                    const meta    = STATUS_META[ds]
-                    const reqs    = requiredSkillsFor(t.id)
-                    const missing = missingFor(t.id)
-                    const claims  = claimsMap[t.id] ?? []
+                    const ds        = displayStatus(t)
+                    const meta      = STATUS_META[ds]
+                    const reqs      = requiredSkillsFor(t.id)
+                    const uncovered = coverageFor(t.id).filter(c => c.coverers.length === 0)
+                    const claims    = claimsMap[t.id] ?? []
                     const max     = t.max_claimants
                     const isGroup = max === null || max > 1
                     const overdue = t.due_date && t.due_date < today && (ds === 'open' || ds === 'progress')
@@ -627,10 +650,12 @@ export default function JobsPage({ session, hasRole = () => false }) {
                           </span>
                           {reqs.length > 0 && (
                             <span
-                              className={`jobs-row-cert${missing.length > 0 ? ' locked' : ''}`}
-                              title={reqs.map(s => s.name).join(', ')}
+                              className={`jobs-row-cert${uncovered.length > 0 ? ' locked' : ''}`}
+                              title={uncovered.length > 0
+                                ? `Cert gap: ${uncovered.map(s => s.name).join(', ')}`
+                                : `Certs covered: ${reqs.map(s => s.name).join(', ')}`}
                             >
-                              {missing.length > 0 ? '🔒' : '✓'} cert
+                              {uncovered.length > 0 ? `⚠ ${uncovered.length} cert gap` : '✓ certs'}
                             </span>
                           )}
                         </span>
@@ -647,11 +672,14 @@ export default function JobsPage({ session, hasRole = () => false }) {
 
       {/* ── Detail view ── */}
       {selectedTask && (() => {
-        const t       = selectedTask
-        const ds      = displayStatus(t)
-        const meta    = STATUS_META[ds]
-        const reqs    = requiredSkillsFor(t.id)
-        const missing = missingFor(t.id)
+        const t        = selectedTask
+        const ds       = displayStatus(t)
+        const meta     = STATUS_META[ds]
+        const reqs     = requiredSkillsFor(t.id)
+        const coverage = coverageFor(t.id)
+        const uncovered = coverage.filter(c => c.coverers.length === 0)
+        const fullyCovered = reqs.length === 0 || uncovered.length === 0
+        const canClaim = canClaimCerts(t.id)
         const claims  = claimsMap[t.id] ?? []
         const myClaim = claims.find(c => c.member_id === uid)
         const max     = t.max_claimants
@@ -686,12 +714,29 @@ export default function JobsPage({ session, hasRole = () => false }) {
               {t.description && <p className="jobs-detail-desc">{t.description}</p>}
 
               {reqs.length > 0 && (
-                <div className="jobs-card-skills">
-                  {reqs.map(s => (
-                    <span key={s.id} className={`jobs-skill-badge${s.safety_critical ? ' safety' : ''}`}>
-                      {s.name}
+                <div className="jobs-coverage">
+                  <div className="jobs-coverage-head">
+                    <span className="jobs-coverage-title">Cert coverage</span>
+                    <span className={`jobs-coverage-state${fullyCovered ? ' ok' : ' gap'}`}>
+                      {fullyCovered
+                        ? 'Fully staffed ✓'
+                        : `Not fully staffed · ${uncovered.length} uncovered`}
                     </span>
-                  ))}
+                  </div>
+                  <ul className="jobs-cov-list">
+                    {coverage.map(c => (
+                      <li key={c.id} className={`jobs-cov-row${c.coverers.length === 0 ? ' uncovered' : ''}`}>
+                        <span className="jobs-cov-cert">
+                          {c.name}{c.safety_critical && <span className="jobs-cov-safety" title="Safety critical"> ⚠</span>}
+                        </span>
+                        <span className="jobs-cov-by">
+                          {c.coverers.length === 0
+                            ? 'uncovered'
+                            : c.coverers.map(cl => nameOf(cl)).join(', ')}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
@@ -768,8 +813,8 @@ export default function JobsPage({ session, hasRole = () => false }) {
                 {!myClaim && (t.status === 'open' ? (
                   full
                     ? <span className="jobs-note">Full</span>
-                    : missing.length > 0
-                      ? <span className="jobs-locked">🔒 Needs: {missing.map(s => s.name).join(', ')}</span>
+                    : !canClaim
+                      ? <span className="jobs-locked">🔒 Needs one of: {reqs.map(s => s.name).join(', ')}</span>
                       : <button className="jobs-btn jobs-btn-claim" disabled={!!busy[t.id]} onClick={() => claim(t.id)}>Claim</button>
                 ) : (
                   <span className="jobs-note">{t.status === 'completed' ? 'Completed ✓' : 'Closed'}</span>
