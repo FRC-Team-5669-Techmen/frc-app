@@ -22,190 +22,242 @@
   animation: home-spin 0.75s linear infinite;
 }
 
-@keyframes home-spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes home-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .home-spinner { animation: none; } }
 
-@media (prefers-reduced-motion: reduce) {
-  .home-spinner { animation: none; }
-}
-
-/* Centers content on desktop */
 .home-body {
   display: flex;
   flex-direction: column;
   flex: 1;
   width: 100%;
-  max-width: 720px;
+  max-width: 880px;
   margin: 0 auto;
+  padding: 1rem;
 }
 
-/* ── Status card ── */
-.status-card {
+/* ============================================================
+   Mission-board tile grid
+   Phone (default): 1 column, YOU hero first + full width.
+   Tablet ≥600px: 2 columns.
+   Desktop ≥960px: 4 columns, YOU spans 2.
+   minmax(0, 1fr) so tiles never overflow their column.
+   ============================================================ */
+.mb-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 600px) {
+  .mb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mb-you  { grid-column: 1 / -1; }
+}
+
+@media (min-width: 960px) {
+  .mb-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .mb-you  { grid-column: span 2; }
+}
+
+/* ── Base tile ── */
+.mb-tile {
+  min-width: 0;
   background: var(--surface);
-  margin: 1rem 1rem 0.5rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.5rem 1.25rem;
+  padding: 0.9rem 1rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
-.status-badge {
+/* Link tiles: same surface, gold edge on hover, comfortable tap target */
+.mb-link-tile {
+  text-decoration: none;
+  color: inherit;
+  min-height: 6.5rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+.mb-link-tile:hover { border-color: var(--gold-dim); }
+.mb-link-tile:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.mb-tile-eyebrow {
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+
+.mb-tile-headline {
+  font-family: var(--font-ui);
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.mb-tile-detail { font-size: 0.78rem; letter-spacing: 0.04em; }
+.mb-tile-foot { font-size: 0.74rem; color: var(--muted); margin-top: auto; }
+
+.mb-tile-big {
+  font-family: var(--font-ui);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text);
+}
+.mb-tile-big-sub { font-size: 1rem; font-weight: 600; color: var(--steel); }
+
+/* Bar (skills progress) */
+.mb-bar-track {
+  height: 5px;
+  background: var(--surface-2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.mb-bar-fill {
+  height: 100%;
+  background: var(--role-student);
+  border-radius: 99px;
+  transition: width 0.3s;
+}
+
+/* ── YOU hero ── */
+.mb-you {
+  gap: 0.6rem;
+  /* room so the gold corner brackets never clip the content */
+  padding: 1.15rem 1.15rem 1.25rem;
+}
+.mb-you-top { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.mb-status {
   font-family: var(--font-mono);
-  padding: 0.3rem 0.9rem;
+  padding: 0.3rem 0.8rem;
   border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  letter-spacing: 0.12em;
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   border: 1px solid var(--border-strong);
 }
+.mb-status-in  { background: var(--gold-a14); color: var(--gold-bright); border-color: var(--gold-dim); }
+.mb-status-out { background: var(--surface-2); color: var(--steel); }
+.mb-you-since { font-size: 0.85rem; color: var(--steel); }
 
-.status-in  { background: var(--gold-a14); color: var(--gold-bright); border-color: var(--gold-dim); }
-.status-out { background: var(--surface-2); color: var(--steel); }
-
-.status-since {
-  font-family: var(--font-mono);
-  font-size: 0.9rem;
-  color: var(--steel);
-  text-transform: none;
-  letter-spacing: 0.04em;
-}
-
-.stats-row {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-top: 0.5rem;
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1rem;
-}
-
-.stat-value {
+.mb-you-stats { display: flex; align-items: center; gap: 1.5rem; }
+.mb-stat { display: flex; flex-direction: column; gap: 0.1rem; }
+.mb-stat-value { font-family: var(--font-ui); font-size: 1.6rem; font-weight: 700; color: var(--text); }
+.mb-stat-label {
   font-family: var(--font-ui);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text);
-  font-feature-settings: "tnum" 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-label {
-  font-family: var(--font-ui);
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 600;
   color: var(--gold);
   text-transform: uppercase;
   letter-spacing: 0.16em;
 }
+.mb-stat-divider { width: 1px; height: 2rem; background: var(--border-strong); }
 
-.stat-divider {
-  width: 1px;
-  height: 2rem;
-  background: var(--border-strong);
-}
-
-/* ── Toggle button ── */
-.toggle-btn {
-  margin: 0.5rem 1rem 0;
-  padding: 1.05rem;
+.mb-checkout {
+  margin-top: 0.3rem;
+  min-height: 48px;
+  padding: 0.85rem 1rem;
   border: 1px solid transparent;
   border-radius: var(--radius);
   font-family: var(--font-ui);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   cursor: pointer;
-  transition: opacity 0.15s, background 0.15s;
+  background: var(--gold-dim);
+  color: #0A0B0D;
+  transition: background 0.15s, opacity 0.15s;
 }
+.mb-checkout:hover:not(:disabled) { background: var(--gold-bright); }
+.mb-checkout:disabled { opacity: 0.55; cursor: not-allowed; }
 
-.toggle-btn:disabled { opacity: 0.55; cursor: not-allowed; }
-.toggle-out { background: var(--gold-dim); color: #0A0B0D; }
-.toggle-out:hover:not(:disabled) { background: var(--gold-bright); }
-
-.nfc-hint {
-  margin: 0.5rem 1rem 0;
-  padding: 1.05rem;
-  border-radius: var(--radius);
+.mb-nfc-hint {
+  margin-top: 0.3rem;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  font-family: var(--font-mono);
-  font-size: 0.9rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
   letter-spacing: 0.06em;
   color: var(--steel);
-  background: var(--surface);
   border: 1px dashed var(--border-strong);
 }
 
-/* ── Event list ── */
-.events-section {
-  margin: 1rem;
-  flex: 1;
-}
+/* ── Shop dot ── */
+.mb-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; flex-shrink: 0; }
+.mb-dot-open   { background: var(--gold-bright); box-shadow: 0 0 0 3px var(--gold-a14); }
+.mb-dot-opens  { background: var(--gold-dim); }
+.mb-dot-closed { background: var(--muted); }
 
-.events-heading {
+/* ── Next Up + RSVP ── */
+.mb-next { gap: 0.5rem; }
+.mb-next-body { text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 0.25rem; }
+.mb-next-body:hover .mb-next-title { color: var(--gold-bright); }
+.mb-next-title { font-size: 0.95rem; }
+.mb-next-none { margin-top: 0.3rem; }
+.mb-rsvp { display: flex; gap: 0.4rem; margin-top: auto; }
+.mb-rsvp-btn {
+  flex: 1;
+  min-height: 44px;
   font-family: var(--font-ui);
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--gold);
-  margin-bottom: 0.625rem;
-}
-
-.events-empty {
-  font-family: var(--font-mono);
-  color: var(--muted);
-  font-size: 0.85rem;
-  padding: 0.5rem 0;
-  text-transform: none;
-  letter-spacing: 0.04em;
-}
-
-.events-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.event-item {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.8rem 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.event-pip {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.event-in  .event-pip { background: var(--gold); }
-.event-out .event-pip { background: var(--gold-dim); }
-
-.event-label {
-  flex: 1;
-  font-size: 0.9rem;
-  color: var(--text);
-  text-transform: capitalize;
-}
-
-.event-meta {
-  font-family: var(--font-mono);
   font-size: 0.8rem;
+  font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--steel);
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
 }
+.mb-rsvp-btn:hover:not(:disabled) { border-color: var(--gold); }
+.mb-rsvp-btn.on { background: var(--gold); border-color: var(--gold); color: #0A0B0D; }
+.mb-rsvp-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Big-number value alignment for metric tiles ── */
+.mb-link-tile .mb-tile-big { margin-top: 0.1rem; }
+
+/* ── Student tile accent: blue (--role-student) ── */
+.mb-role-student .mb-tile-eyebrow { color: var(--role-student); }
+.mb-role-student { border-color: color-mix(in srgb, var(--role-student) 22%, var(--border)); }
+.mb-role-student:hover { border-color: var(--role-student); }
+
+/* ── Staff alert tiles: fault accent when count > 0 ── */
+.mb-fault { color: var(--fault); }
+.mb-alert { border-color: color-mix(in srgb, var(--fault) 35%, var(--border)); }
+.mb-alert:hover { border-color: var(--fault); }
+
+/* ── Staff team pulse (count + mini feed) ── */
+.mb-pulse-tile { gap: 0.55rem; }
+.mb-pulse-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.mb-feed { list-style: none; display: flex; flex-direction: column; gap: 0.3rem; margin-top: auto; }
+.mb-feed-row { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.mb-feed-icon {
+  flex-shrink: 0;
+  width: 1.05rem; height: 1.05rem;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+}
+.mb-feed-in  .mb-feed-icon { color: var(--gold-bright); background: var(--gold-a14); }
+.mb-feed-out .mb-feed-icon { color: var(--steel); background: var(--surface-2); }
+.mb-feed-name {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mb-feed-time { font-size: 0.72rem; color: var(--steel); flex-shrink: 0; }
