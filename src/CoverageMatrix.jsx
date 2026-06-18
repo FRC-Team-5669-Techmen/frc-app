@@ -2,6 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import './CoverageMatrix.css'
 
+const displayName = (m) => (m?.nickname && m.nickname.trim()) || m?.full_name || '—'
+
 export default function CoverageMatrix({ hasRole }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
 
@@ -12,7 +14,11 @@ export default function CoverageMatrix({ hasRole }) {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('profiles').select('id, full_name, email, status').order('full_name'),
+      // NB: select only columns that exist on profiles. A stray `email` here
+      // (email lives on auth.users, not profiles) made this query error, leaving
+      // the member list empty — so no one, including freshly certified members,
+      // rendered on the matrix.
+      supabase.from('profiles').select('id, full_name, nickname, status').order('full_name'),
       supabase.from('skills').select('*').order('sort_order'),
       supabase.from('member_skills').select('member_id, skill_id, status'),
     ]).then(([{ data: p }, { data: s }, { data: ms }]) => {
@@ -139,7 +145,7 @@ export default function CoverageMatrix({ hasRole }) {
           <tbody>
             {visibleMembers.map(m => (
               <tr key={m.id} className="cm-row">
-                <td className="cm-td cm-name-cell">{m.full_name || m.email}</td>
+                <td className="cm-td cm-name-cell">{displayName(m)}</td>
                 {flatSkills.map((skill, i) => {
                   const isFirst = grouped.some(g => g.skills[0]?.id === skill.id)
                   const status = statusMap[m.id]?.[skill.id] ?? 'not_started'
@@ -147,7 +153,7 @@ export default function CoverageMatrix({ hasRole }) {
                     <td
                       key={skill.id}
                       className={`cm-cell${isFirst ? ' cm-cat-start' : ''}`}
-                      title={`${m.full_name || m.email} · ${skill.name}: ${status.replace('_', ' ')}`}
+                      title={`${displayName(m)} · ${skill.name}: ${status.replace('_', ' ')}`}
                     >
                       {status !== 'not_started' && (
                         <span className="cm-dot" data-status={status} />

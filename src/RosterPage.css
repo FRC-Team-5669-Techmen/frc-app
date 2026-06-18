@@ -543,3 +543,156 @@
 }
 .roster-guardian-btn:hover:not(:disabled) { background: var(--gold-bright); }
 .roster-guardian-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Search + sort toolbar ─────────────────────────────────────────────── */
+.roster-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.roster-search {
+  flex: 1 1 16rem;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+}
+.roster-search:focus {
+  outline: none;
+  border-color: var(--gold-dim);
+}
+.roster-search::placeholder { color: var(--muted); }
+.roster-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.roster-sort-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.roster-sort-btn {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--steel);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
+.roster-sort-btn:hover { border-color: var(--border-strong); color: var(--text); }
+.roster-sort-btn.active {
+  color: var(--gold-bright);
+  border-color: var(--gold-dim);
+}
+.roster-count {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+
+/* ── Delete account ────────────────────────────────────────────────────── */
+.roster-delete-btn {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fault);
+  background: transparent;
+  border: 1px solid var(--fault);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+}
+.roster-delete-btn:hover { background: var(--fault); color: #0A0B0D; }
+
+.roster-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 1000;
+}
+.roster-modal {
+  width: 100%;
+  max-width: 27rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+.roster-modal-title {
+  font-family: var(--font-ui);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--fault);
+  margin: 0 0 0.75rem;
+}
+.roster-modal-text {
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text);
+  margin: 0 0 0.75rem;
+}
+.roster-modal-text strong { color: var(--gold-bright); }
+.roster-modal-input {
+  width: 100%;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1.1rem;
+}
+.roster-modal-input:focus { outline: none; border-color: var(--fault); }
+.roster-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+.roster-modal-cancel,
+.roster-modal-delete {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+.roster-modal-cancel {
+  color: var(--steel);
+  background: transparent;
+  border: 1px solid var(--border);
+}
+.roster-modal-cancel:hover:not(:disabled) { border-color: var(--border-strong); color: var(--text); }
+.roster-modal-delete {
+  color: #0A0B0D;
+  background: var(--fault);
+  border: 1px solid var(--fault);
+}
+.roster-modal-delete:hover:not(:disabled) { filter: brightness(1.1); }
+.roster-modal-delete:disabled,
+.roster-modal-cancel:disabled { opacity: 0.5; cursor: not-allowed; }

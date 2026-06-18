@@ -1,12 +1,26 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
+import { computeHoursMs, fmtHours } from './hoursUtils'
 import './RosterPage.css'
 
 const ALL_ROLES    = ['student', 'mentor', 'lead', 'admin', 'parent']
 const ALL_STATUSES = ['active', 'inactive', 'alumni']
 const ROLE_RANK    = ['admin', 'lead', 'mentor', 'student', 'parent']
 const topRole = (roles = []) => ROLE_RANK.find(r => roles.includes(r))
+// Nickname is the display name everywhere on the roster; legal name is the fallback.
+const displayName = (m) => (m?.nickname && m.nickname.trim()) || m?.full_name || '—'
+const roleRank = (roles = []) => {
+  const i = ROLE_RANK.indexOf(topRole(roles))
+  return i === -1 ? ROLE_RANK.length : i
+}
+
+const SORT_COLS = [
+  ['name',    'Name'],
+  ['subteam', 'Subteam'],
+  ['role',    'Role'],
+  ['hours',   'Hours'],
+]
 
 export default function RosterPage() {
   const [members, setMembers]     = useState(null)
@@ -18,8 +32,14 @@ export default function RosterPage() {
   const [expanded, setExpanded]   = useState(() => new Set())
   const [links, setLinks]         = useState([])        // guardian_links rows
   const [linkPick, setLinkPick]   = useState({})        // parent_id -> selected student_id
+  const [hoursById, setHoursById] = useState({})        // member_id -> total hours (number)
+  const [query, setQuery]         = useState('')        // name/nickname/email search
+  const [sort, setSort]           = useState({ col: 'name', dir: 'asc' })
+  const [delTarget, setDelTarget] = useState(null)      // member being deleted, or null
+  const [delConfirm, setDelConfirm] = useState('')      // typed full-name confirmation
+  const [deleting, setDeleting]   = useState(false)
 
-  useEffect(() => { load(); loadDomains(); loadLinks() }, [])
+  useEffect(() => { load(); loadDomains(); loadLinks(); loadHours() }, [])
 
   async function loadLinks() {
     const { data } = await supabase.from('guardian_links').select('parent_id, student_id')
@@ -72,6 +92,22 @@ export default function RosterPage() {
     setDomains(data?.map(d => d.domain) ?? [])
   }
 
+  // Total hours per member (attendance + verified logged hours) for sorting.
+  async function loadHours() {
+    const [{ data: ae }, { data: lh }] = await Promise.all([
+      supabase.from('attendance_events').select('user_id, type, event_time').order('event_time'),
+      supabase.from('logged_hours').select('member_id, hours').eq('status', 'verified'),
+    ])
+    const byId = {}
+    const evByMember = {}
+    for (const e of ae ?? []) (evByMember[e.user_id] ??= []).push(e)
+    for (const [id, evts] of Object.entries(evByMember)) {
+      byId[id] = (byId[id] ?? 0) + computeHoursMs(evts) / 3600000
+    }
+    for (const l of lh ?? []) byId[l.member_id] = (byId[l.member_id] ?? 0) + parseFloat(l.hours)
+    setHoursById(byId)
+  }
+
   async function approve(memberId) {
     const key = `${memberId}_approve`
     setSaving(s => ({ ...s, [key]: true }))
@@ -111,19 +147,37 @@ export default function RosterPage() {
     const key = `${memberId}_${role}`
     setSaving(s => ({ ...s, [key]: true }))
     const has = currentRoles.includes(role)
-    const { error } = has
-      ? await supabase.from('member_roles').delete().match({ member_id: memberId, role })
-      : await supabase.from('member_roles').insert({ member_id: memberId, role })
+    // Route through a SECURITY DEFINER RPC: a direct client write on member_roles
+    // silently no-ops (0 rows, no error) when the row policy doesn't match, which
+    // is why role edits used to "save" in the UI but never persist. The RPC
+    // enforces admin server-side and raises a real error otherwise.
+    const { error } = await supabase.rpc('admin_set_member_role', {
+      p_member: memberId, p_role: role, p_grant: !has,
+    })
     setSaving(s => { const n = { ...s }; delete n[key]; return n })
     if (error) { setPageError(error.message); return }
     setMembers(ms => ms.map(m =>
       m.id !== memberId ? m : {
         ...m,
         roles: has
-          ? m.roles.filter(r => r !== role)
-          : [...m.roles, role].sort(),
+          ? (m.roles ?? []).filter(r => r !== role)
+          : [...(m.roles ?? []), role].sort(),
       }
     ))
+  }
+
+  async function deleteMember() {
+    if (!delTarget || delConfirm.trim() !== (delTarget.full_name ?? '').trim()) return
+    setDeleting(true)
+    const { error } = await supabase.rpc('admin_delete_member', { p_member: delTarget.id })
+    setDeleting(false)
+    if (error) { setPageError(error.message); return }
+    const id = delTarget.id
+    setMembers(ms => ms.filter(m => m.id !== id))
+    setLinks(ls => ls.filter(l => l.parent_id !== id && l.student_id !== id))
+    setExpanded(prev => { const n = new Set(prev); n.delete(id); return n })
+    setDelTarget(null)
+    setDelConfirm('')
   }
 
   async function setStatus(memberId, status) {
@@ -136,6 +190,35 @@ export default function RosterPage() {
     setSaving(s => { const n = { ...s }; delete n[key]; return n })
     if (error) { setPageError(error.message); return }
     setMembers(ms => ms.map(m => m.id === memberId ? { ...m, status } : m))
+  }
+
+  const visibleMembers = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const list = (members ?? []).filter(m => {
+      if (!q) return true
+      return [m.full_name, m.nickname, m.email].some(v => (v ?? '').toLowerCase().includes(q))
+    })
+    const dir = sort.dir === 'desc' ? -1 : 1
+    const byName = (a, b) => displayName(a).localeCompare(displayName(b))
+    const cmp = (a, b) => {
+      switch (sort.col) {
+        case 'hours':
+          return ((hoursById[a.id] ?? 0) - (hoursById[b.id] ?? 0)) * dir || byName(a, b)
+        case 'subteam':
+          return ((a.subteams ?? [])[0] ?? '').localeCompare((b.subteams ?? [])[0] ?? '') * dir || byName(a, b)
+        case 'role':
+          return (roleRank(a.roles) - roleRank(b.roles)) * dir || byName(a, b)
+        default:
+          return byName(a, b) * dir
+      }
+    }
+    return [...list].sort(cmp)
+  }, [members, query, sort, hoursById])
+
+  function toggleSort(col) {
+    setSort(s => s.col === col
+      ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' }
+      : { col, dir: col === 'hours' ? 'desc' : 'asc' })
   }
 
   if (members === null) {
@@ -184,8 +267,38 @@ export default function RosterPage() {
           </div>
         </div>
 
+        <div className="roster-toolbar">
+          <input
+            className="roster-search"
+            type="search"
+            placeholder="Search name, nickname, or email…"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+          />
+          <div className="roster-sort">
+            <span className="roster-sort-label">Sort</span>
+            {SORT_COLS.map(([col, label]) => (
+              <button
+                key={col}
+                className={`roster-sort-btn${sort.col === col ? ' active' : ''}`}
+                onClick={() => toggleSort(col)}
+              >
+                {label}{sort.col === col && (sort.dir === 'asc' ? ' ↑' : ' ↓')}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="roster-count">
+          {visibleMembers.length} {visibleMembers.length === 1 ? 'member' : 'members'}
+          {query && ` matching “${query}”`}
+        </div>
+
         <div className="roster-list">
-          {members.map(m => {
+          {visibleMembers.length === 0 && (
+            <p className="roster-domain-none">No members match your search.</p>
+          )}
+          {visibleMembers.map(m => {
             const open = expanded.has(m.id)
             const role = topRole(m.roles ?? [])
             const isParentMember = (m.roles ?? []).includes('parent')
@@ -204,7 +317,7 @@ export default function RosterPage() {
                   aria-expanded={open}
                 >
                   <span className={`roster-caret${open ? ' open' : ''}`}>▸</span>
-                  <span className="roster-member-name">{m.full_name || '—'}</span>
+                  <span className="roster-member-name">{displayName(m)}</span>
                   <span className="roster-member-email">{m.email}</span>
                   <span className="roster-member-tags">
                     {!m.approved && <span className="roster-pending-tag">Pending</span>}
@@ -280,11 +393,11 @@ export default function RosterPage() {
                             : <div className="roster-guardian-chips">
                                 {linkedStudents.map(st => (
                                   <span key={st.id} className="roster-guardian-chip">
-                                    {st.full_name || st.email}
+                                    {displayName(st)}
                                     <button
                                       className="roster-guardian-remove"
                                       onClick={() => unlinkStudent(m.id, st.id)}
-                                      aria-label={`Unlink ${st.full_name || st.email}`}
+                                      aria-label={`Unlink ${displayName(st)}`}
                                     >×</button>
                                   </span>
                                 ))}
@@ -297,7 +410,7 @@ export default function RosterPage() {
                             >
                               <option value="">Add a student…</option>
                               {candidates.map(c => (
-                                <option key={c.id} value={c.id}>{c.full_name || c.email}</option>
+                                <option key={c.id} value={c.id}>{displayName(c)}</option>
                               ))}
                             </select>
                             <button
@@ -310,8 +423,19 @@ export default function RosterPage() {
                       </div>
                     )}
                     <div className="roster-detail-row">
+                      <span className="roster-detail-label">Hours</span>
+                      <span className="roster-detail-value">{fmtHours(hoursById[m.id] ?? 0)}</span>
+                    </div>
+                    <div className="roster-detail-row">
                       <span className="roster-detail-label">Profile</span>
                       <Link to={`/members/${m.id}`} className="roster-skills-link">View skills</Link>
+                    </div>
+                    <div className="roster-detail-row">
+                      <span className="roster-detail-label">Danger zone</span>
+                      <button
+                        className="roster-delete-btn"
+                        onClick={() => { setDelTarget(m); setDelConfirm('') }}
+                      >Delete account</button>
                     </div>
                   </div>
                 )}
@@ -320,6 +444,42 @@ export default function RosterPage() {
           })}
         </div>
       </div>
+
+      {delTarget && (
+        <div className="roster-modal-backdrop" onClick={() => !deleting && setDelTarget(null)}>
+          <div className="roster-modal" onClick={e => e.stopPropagation()}>
+            <h2 className="roster-modal-title">Delete account</h2>
+            <p className="roster-modal-text">
+              This permanently removes <strong>{displayName(delTarget)}</strong> and all of their
+              data — attendance, hours, job claims, skills, parent links, and notifications.
+              This cannot be undone.
+            </p>
+            <p className="roster-modal-text">
+              Type their full name <strong>{delTarget.full_name || '(no name on file)'}</strong> to confirm:
+            </p>
+            <input
+              className="roster-modal-input"
+              type="text"
+              autoFocus
+              value={delConfirm}
+              placeholder={delTarget.full_name || ''}
+              onChange={e => setDelConfirm(e.target.value)}
+            />
+            <div className="roster-modal-actions">
+              <button
+                className="roster-modal-cancel"
+                onClick={() => { setDelTarget(null); setDelConfirm('') }}
+                disabled={deleting}
+              >Cancel</button>
+              <button
+                className="roster-modal-delete"
+                disabled={deleting || delConfirm.trim() !== (delTarget.full_name ?? '').trim()}
+                onClick={deleteMember}
+              >{deleting ? 'Deleting…' : 'Delete permanently'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

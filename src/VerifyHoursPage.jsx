@@ -48,7 +48,9 @@ async function fetchMissedCheckouts() {
 
   const [{ data: evts }, { data: profs }] = await Promise.all([
     supabase.from('attendance_events').select('id, event_time').in('id', eventIds),
-    supabase.from('profiles').select('id, full_name, email').in('id', userIds),
+    // email lives on auth.users, not profiles — selecting it here errors the
+    // whole query and blanks every member name. Use full_name.
+    supabase.from('profiles').select('id, full_name').in('id', userIds),
   ])
 
   const evtMap  = Object.fromEntries((evts  ?? []).map(e => [e.id, e]))
@@ -94,7 +96,7 @@ export default function VerifyHoursPage({ session, hasRole }) {
 
     supabase
       .from('logged_hours')
-      .select('*, member:member_id(full_name, email)')
+      .select('*, member:member_id(full_name)')
       .eq('status', 'pending')
       .order('date', { ascending: true })
       .order('created_at', { ascending: true })
