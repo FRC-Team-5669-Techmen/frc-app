@@ -38,10 +38,39 @@ const fmtDue = d =>
   d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null
 const todayStr = () => new Date().toISOString().slice(0, 10)
 
-const EMPTY_FORM = { title: '', description: '', subteam: '', skillIds: [], group: false, maxClaimants: '', dueDate: '' }
+const fmtWhen = iso =>
+  new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+const fmtDur = ms => {
+  const m = Math.floor(ms / 60000), h = Math.floor(m / 60)
+  if (ms < 60000) return '—'
+  return h === 0 ? `${m}m` : `${h}h ${m % 60}m`
+}
+const personName = p => (p?.nickname && p.nickname.trim()) || p?.full_name || 'Member'
+const jobImageUrl = path => supabase.storage.from('jobs').getPublicUrl(path).data.publicUrl
+
+// Accrue a member's time on one job from their attendance stream: a session
+// counts when its 'in' event was stamped with this job id.
+function sessionMsForJob(events, taskId) {
+  let total = 0, openIn = null
+  for (const e of [...events].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))) {
+    if (e.type === 'in') openIn = e
+    else if (e.type === 'out' && openIn) {
+      if (openIn.job_id === taskId) total += new Date(e.event_time) - new Date(openIn.event_time)
+      openIn = null
+    }
+  }
+  if (openIn && openIn.job_id === taskId) total += Date.now() - new Date(openIn.event_time)
+  return total
+}
+
+const EMPTY_FORM = {
+  title: '', description: '', subteam: '', skillIds: [], group: false,
+  maxClaimants: '', dueDate: '', links: [], images: [],
+}
 
 export default function JobsPage({ session, hasRole = () => false }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
+  const isAdmin = hasRole('admin')
   const uid = session.user.id
 
   const [tasks, setTasks]     = useState(null)
@@ -62,6 +91,14 @@ export default function JobsPage({ session, hasRole = () => false }) {
   const [sort, setSort]             = useState({ col: 'status', dir: 'asc' })
   const [collapsed, setCollapsed]   = useState(() => new Set())
   const [selectedId, setSelectedId] = useState(null)
+
+  // Detail-view data for the selected job.
+  const [updates, setUpdates]             = useState([])  // progress thread
+  const [timeByMember, setTimeByMember]   = useState({})  // member_id -> ms on this job
+  const [updBody, setUpdBody]             = useState('')
+  const [updImg, setUpdImg]               = useState(null)
+  const [updBusy, setUpdBusy]             = useState(false)
+  const [imgBusy, setImgBusy]             = useState(false)
 
   const load = useCallback(async () => {
     const [tRes, trsRes, skRes, msRes, tcRes] = await Promise.all([
@@ -88,6 +125,75 @@ export default function JobsPage({ session, hasRole = () => false }) {
   }, [uid])
 
   useEffect(() => { load() }, [load])
+
+  // Detail-view data: progress thread + per-member time on the selected job.
+  const loadDetail = useCallback(async (taskId) => {
+    const memberIds = (claimsMap[taskId] ?? []).map(c => c.member_id)
+    const [upRes, attRes] = await Promise.all([
+      supabase.from('task_updates')
+        .select('id, body, image_path, created_at, member_id, author:member_id(full_name, nickname)')
+        .eq('task_id', taskId).order('created_at', { ascending: true }),
+      memberIds.length
+        ? supabase.from('attendance_events').select('user_id, type, event_time, job_id').in('user_id', memberIds)
+        : Promise.resolve({ data: [] }),
+    ])
+    setUpdates(upRes.data ?? [])
+    const evByMember = {}
+    for (const e of attRes.data ?? []) (evByMember[e.user_id] ??= []).push(e)
+    const tbm = {}
+    for (const [mid, evs] of Object.entries(evByMember)) tbm[mid] = sessionMsForJob(evs, taskId)
+    setTimeByMember(tbm)
+  }, [claimsMap])
+
+  useEffect(() => {
+    if (!selectedId) { setUpdates([]); setTimeByMember({}); setUpdBody(''); setUpdImg(null); return }
+    loadDetail(selectedId)
+  }, [selectedId, loadDetail])
+
+  // Upload an image to the 'jobs' bucket; returns the stored path.
+  async function uploadImage(file, prefix) {
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+    const path = `${prefix}/${crypto.randomUUID()}.${ext}`
+    const { error } = await supabase.storage.from('jobs').upload(path, file, { cacheControl: '3600', upsert: false })
+    if (error) throw error
+    return path
+  }
+
+  // ── Progress updates ──
+  async function postUpdate() {
+    if (!updBody.trim() && !updImg) return
+    setUpdBusy(true); setError('')
+    try {
+      let image_path = null
+      if (updImg) image_path = await uploadImage(updImg, `update/${selectedId}`)
+      const { error } = await supabase.from('task_updates')
+        .insert({ task_id: selectedId, member_id: uid, body: updBody.trim() || null, image_path })
+      if (error) throw error
+      setUpdBody(''); setUpdImg(null)
+      loadDetail(selectedId)
+    } catch (err) { setError(err.message) }
+    setUpdBusy(false)
+  }
+
+  // ── Time tracking: link my current open session to this job ──
+  async function logSessionToJob(taskId) {
+    const { error } = await supabase.rpc('set_session_job', { p_task: taskId })
+    if (error) { setError(error.message); return }
+    setError(''); loadDetail(taskId)
+  }
+
+  // ── Admin: undo a completed/approved claim ──
+  async function undoApproval(t, member) {
+    const msg = t.status === 'completed'
+      ? 'Undo this approval? The claim returns to "submitted" for re-review and the job reopens.'
+      : 'Undo this approval? The claim returns to "submitted" for re-review.'
+    if (!window.confirm(msg)) return
+    setBusy(b => ({ ...b, [t.id]: true }))
+    const { error } = await supabase.rpc('admin_revert_claim', { p_task: t.id, p_member: member })
+    setBusy(b => { const n = { ...b }; delete n[t.id]; return n })
+    if (error) { setError(error.message); return }
+    setError(''); load(); loadDetail(t.id)
+  }
 
   const allSkills = useMemo(
     () => Object.entries(skills)
@@ -143,6 +249,8 @@ export default function JobsPage({ session, hasRole = () => false }) {
       group: t.max_claimants !== 1,                                  // null (unlimited) or >1
       maxClaimants: (t.max_claimants && t.max_claimants > 1) ? String(t.max_claimants) : '',
       dueDate: t.due_date ?? '',
+      links: Array.isArray(t.links) ? t.links : [],
+      images: Array.isArray(t.images) ? t.images : [],
     })
     setError(''); setFormOpen(true)
   }
@@ -153,6 +261,23 @@ export default function JobsPage({ session, hasRole = () => false }) {
       ...f,
       skillIds: f.skillIds.includes(id) ? f.skillIds.filter(x => x !== id) : [...f.skillIds, id],
     }))
+  }
+
+  // ── Form: reference links + image uploads ──
+  function addLink()              { setForm(f => ({ ...f, links: [...f.links, { label: '', url: '' }] })) }
+  function setLink(i, key, val)   { setForm(f => ({ ...f, links: f.links.map((l, idx) => idx === i ? { ...l, [key]: val } : l) })) }
+  function removeLink(i)          { setForm(f => ({ ...f, links: f.links.filter((_, idx) => idx !== i) })) }
+  function removeFormImage(path)  { setForm(f => ({ ...f, images: f.images.filter(p => p !== path) })) }
+  async function onFormImage(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setImgBusy(true); setError('')
+    try {
+      const path = await uploadImage(file, `task/${editTarget?.id ?? 'new'}`)
+      setForm(f => ({ ...f, images: [...f.images, path] }))
+    } catch (err) { setError(err.message) }
+    setImgBusy(false)
   }
 
   async function handleSubmit(e) {
@@ -167,6 +292,9 @@ export default function JobsPage({ session, hasRole = () => false }) {
       subteam:     form.subteam.trim() || null,
       max_claimants: maxClaimants,
       due_date:    form.dueDate || null,
+      links:       form.links.map(l => ({ label: (l.label || '').trim(), url: (l.url || '').trim() }))
+                             .filter(l => l.url),
+      images:      form.images,
     }
 
     let taskId
@@ -350,6 +478,42 @@ export default function JobsPage({ session, hasRole = () => false }) {
               </div>
 
               <div className="jobs-field">
+                <label className="jobs-label">Reference links</label>
+                {form.links.map((l, i) => (
+                  <div key={i} className="jobs-link-row">
+                    <input
+                      type="text" className="jobs-input jobs-link-label" placeholder="Label"
+                      value={l.label} onChange={e => setLink(i, 'label', e.target.value)}
+                    />
+                    <input
+                      type="url" className="jobs-input jobs-link-url" placeholder="https://…"
+                      value={l.url} onChange={e => setLink(i, 'url', e.target.value)}
+                    />
+                    <button type="button" className="jobs-link-remove" onClick={() => removeLink(i)} aria-label="Remove link">×</button>
+                  </div>
+                ))}
+                <button type="button" className="jobs-link-add" onClick={addLink}>+ Add link</button>
+              </div>
+
+              <div className="jobs-field">
+                <label className="jobs-label">Images</label>
+                {form.images.length > 0 && (
+                  <div className="jobs-img-grid">
+                    {form.images.map(path => (
+                      <div key={path} className="jobs-img-thumb">
+                        <img src={jobImageUrl(path)} alt="" />
+                        <button type="button" className="jobs-img-remove" onClick={() => removeFormImage(path)} aria-label="Remove image">×</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label className="jobs-img-upload">
+                  <input type="file" accept="image/*" onChange={onFormImage} disabled={imgBusy} />
+                  {imgBusy ? 'Uploading…' : '+ Upload image'}
+                </label>
+              </div>
+
+              <div className="jobs-field">
                 <label className="jobs-label">Who can claim</label>
                 <div className="jobs-claimtype">
                   <label className={`jobs-claimtype-opt${!form.group ? ' on' : ''}`}>
@@ -506,6 +670,8 @@ export default function JobsPage({ session, hasRole = () => false }) {
 
               <h2 className="jobs-detail-title">{t.title}</h2>
 
+              {error && <p className="jobs-error" onClick={() => setError('')}>{error}</p>}
+
               <div className="jobs-detail-meta hud-mono">
                 <span>{t.subteam || 'Other'}</span>
                 {t.due_date && <span className={overdue ? 'jobs-row-due overdue' : 'jobs-row-due'}>Due {fmtDue(t.due_date)}</span>}
@@ -529,16 +695,46 @@ export default function JobsPage({ session, hasRole = () => false }) {
                 </div>
               )}
 
+              {Array.isArray(t.links) && t.links.length > 0 && (
+                <div className="jobs-detail-links">
+                  {t.links.map((l, i) => (
+                    <a key={i} className="jobs-detail-link" href={l.url} target="_blank" rel="noopener noreferrer">
+                      🔗 {l.label || l.url}
+                    </a>
+                  ))}
+                </div>
+              )}
+
+              {Array.isArray(t.images) && t.images.length > 0 && (
+                <div className="jobs-img-grid">
+                  {t.images.map(path => (
+                    <a key={path} className="jobs-img-thumb" href={jobImageUrl(path)} target="_blank" rel="noopener noreferrer">
+                      <img src={jobImageUrl(path)} alt="" />
+                    </a>
+                  ))}
+                </div>
+              )}
+
               {claims.length > 0 && (
                 <ul className="jobs-claimants">
                   {claims.map(c => (
                     <li key={c.member_id} className="jobs-claimant">
                       <span className="jobs-claimant-name">{nameOf(c)}</span>
                       <span className={`jobs-claim-state jobs-claim-${c.status}`}>{CLAIM_LABELS[c.status]}</span>
+                      {timeByMember[c.member_id] > 0 && (
+                        <span className="jobs-claimant-time hud-mono" title="Check-in time logged to this job">
+                          ⏱ {fmtDur(timeByMember[c.member_id])}
+                        </span>
+                      )}
                       {isStaff && c.status === 'submitted' && (
                         <span className="jobs-claimant-actions">
                           <button className="jobs-link-btn" disabled={!!busy[t.id]} onClick={() => verify(t.id, c.member_id, true)}>Approve</button>
                           <button className="jobs-link-btn jobs-link-danger" disabled={!!busy[t.id]} onClick={() => verify(t.id, c.member_id, false)}>Reject</button>
+                        </span>
+                      )}
+                      {isAdmin && c.status === 'completed' && (
+                        <span className="jobs-claimant-actions">
+                          <button className="jobs-link-btn jobs-link-danger" disabled={!!busy[t.id]} onClick={() => undoApproval(t, c.member_id)}>Undo approval</button>
                         </span>
                       )}
                     </li>
@@ -558,7 +754,18 @@ export default function JobsPage({ session, hasRole = () => false }) {
                   ) : (
                     <span className="jobs-note jobs-note-done">Done ✓</span>
                   )
-                ) : t.status === 'open' ? (
+                ) : null}
+
+                {myClaim && myClaim.status !== 'completed' && (
+                  <button
+                    className="jobs-btn jobs-btn-release"
+                    disabled={!!busy[t.id]}
+                    onClick={() => logSessionToJob(t.id)}
+                    title="Link your current check-in session to this job"
+                  >I'm on this job</button>
+                )}
+
+                {!myClaim && (t.status === 'open' ? (
                   full
                     ? <span className="jobs-note">Full</span>
                     : missing.length > 0
@@ -566,7 +773,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
                       : <button className="jobs-btn jobs-btn-claim" disabled={!!busy[t.id]} onClick={() => claim(t.id)}>Claim</button>
                 ) : (
                   <span className="jobs-note">{t.status === 'completed' ? 'Completed ✓' : 'Closed'}</span>
-                )}
+                ))}
 
                 {isStaff && (
                   <span className="jobs-staff-actions">
@@ -577,6 +784,53 @@ export default function JobsPage({ session, hasRole = () => false }) {
                     <button className="jobs-link-btn" disabled={formOpen} onClick={() => { setSelectedId(null); openEdit(t) }}>Edit</button>
                     <button className="jobs-link-btn jobs-link-danger" disabled={!!busy[t.id]} onClick={() => remove(t)}>Delete</button>
                   </span>
+                )}
+              </div>
+
+              {/* ── Progress updates thread ── */}
+              <div className="jobs-thread">
+                <h3 className="jobs-thread-title">Progress updates</h3>
+                {updates.length === 0
+                  ? <p className="jobs-thread-empty">No updates yet.</p>
+                  : <ul className="jobs-thread-list">
+                      {updates.map(u => (
+                        <li key={u.id} className="jobs-update">
+                          <div className="jobs-update-head">
+                            <span className="jobs-update-author">{personName(u.author)}</span>
+                            <span className="jobs-update-when hud-mono">{fmtWhen(u.created_at)}</span>
+                          </div>
+                          {u.body && <p className="jobs-update-body">{u.body}</p>}
+                          {u.image_path && (
+                            <a className="jobs-update-img" href={jobImageUrl(u.image_path)} target="_blank" rel="noopener noreferrer">
+                              <img src={jobImageUrl(u.image_path)} alt="" />
+                            </a>
+                          )}
+                        </li>
+                      ))}
+                    </ul>}
+
+                {(myClaim || isStaff) && (
+                  <div className="jobs-update-compose">
+                    <textarea
+                      className="jobs-input jobs-textarea"
+                      rows={2}
+                      maxLength={1000}
+                      placeholder="Post a progress update…"
+                      value={updBody}
+                      onChange={e => setUpdBody(e.target.value)}
+                    />
+                    <div className="jobs-update-compose-row">
+                      <label className="jobs-img-upload jobs-img-upload-sm">
+                        <input type="file" accept="image/*" onChange={e => setUpdImg(e.target.files?.[0] ?? null)} />
+                        {updImg ? updImg.name.slice(0, 20) : '+ Image'}
+                      </label>
+                      <button
+                        className="jobs-btn jobs-btn-claim"
+                        disabled={updBusy || (!updBody.trim() && !updImg)}
+                        onClick={postUpdate}
+                      >{updBusy ? 'Posting…' : 'Post update'}</button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
