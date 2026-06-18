@@ -158,11 +158,14 @@ export default function NavBar({ hasRole = () => false, session = null }) {
   useEffect(() => {
     if (!isStaff) return
     let active = true
-    supabase
-      .from('access_requests')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending')
-      .then(({ count }) => { if (active) setPendingAccess(count ?? 0) })
+    Promise.all([
+      supabase.from('access_requests')
+        .select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+      supabase.from('parent_link_requests')
+        .select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+    ]).then(([a, b]) => {
+      if (active) setPendingAccess((a.count ?? 0) + (b.count ?? 0))
+    })
     return () => { active = false }
   }, [isStaff, pathname])
 

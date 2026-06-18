@@ -195,3 +195,82 @@
   padding-bottom: 1px;
 }
 .ph-team-link:hover { color: var(--gold-bright); border-bottom-color: var(--gold); }
+
+/* ── Self-service: link a student ──────────────────────────────────────── */
+.ph-link {
+  margin-top: 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+}
+.ph-link-head { margin-bottom: 0.35rem; }
+.ph-link-sub {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0 0 0.8rem;
+}
+.ph-req-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+.ph-req-chip {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--gold-bright);
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  padding: 0.3rem 0.6rem;
+}
+.ph-link-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.ph-link-search,
+.ph-link-select,
+.ph-link-note {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.7rem;
+}
+.ph-link-search { flex: 1 1 11rem; }
+.ph-link-select { flex: 1 1 11rem; }
+.ph-link-note   { flex: 2 1 14rem; }
+.ph-link-search:focus,
+.ph-link-select:focus,
+.ph-link-note:focus { outline: none; border-color: var(--gold-dim); }
+.ph-link-search::placeholder,
+.ph-link-note::placeholder { color: var(--muted); }
+.ph-link-btn {
+  flex: 0 0 auto;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #0A0B0D;
+  background: var(--gold);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+.ph-link-btn:hover:not(:disabled) { background: var(--gold-bright); }
+.ph-link-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ph-link-msg {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  margin: 0.7rem 0 0;
+}
+.ph-link-ok  { color: var(--gold-bright); }
+.ph-link-err { color: var(--fault); }

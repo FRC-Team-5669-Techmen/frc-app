@@ -4,6 +4,8 @@ import './AccessRequestsPage.css'
 
 const ROLES = ['student', 'mentor', 'parent']
 
+const personName = (p) => (p?.nickname && p.nickname.trim()) || p?.full_name || '—'
+
 function fmtWhen(iso) {
   return new Date(iso).toLocaleString('en-US', {
     month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
@@ -17,6 +19,7 @@ function fmtWhen(iso) {
 export default function AccessRequestsPage({ hasRole }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const [requests, setRequests] = useState(null)
+  const [linkReqs, setLinkReqs] = useState([])   // pending parent→student link requests
   const [roleSel, setRoleSel]   = useState({})
   const [busy, setBusy]         = useState({})
   const [error, setError]       = useState('')
@@ -39,7 +42,39 @@ export default function AccessRequestsPage({ hasRole }) {
     setRoleSel(Object.fromEntries((data ?? []).map(r => [r.id, r.requested_role || 'student'])))
   }, [])
 
-  useEffect(() => { if (isStaff) load() }, [isStaff, load])
+  const loadLinkReqs = useCallback(async () => {
+    const { data, error: err } = await supabase
+      .from('parent_link_requests')
+      .select('id, note, created_at, parent:parent_id(full_name, nickname), student:student_id(full_name, nickname)')
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+    if (err) { setError(err.message); setLinkReqs([]); return }
+    setLinkReqs(data ?? [])
+  }, [])
+
+  useEffect(() => { if (isStaff) { load(); loadLinkReqs() } }, [isStaff, load, loadLinkReqs])
+
+  async function approveLink(r) {
+    setBusy(b => ({ ...b, [r.id]: true }))
+    const { error: err } = await supabase.rpc('approve_parent_link', { p_request: r.id })
+    if (err) {
+      setError(err.message)
+      setBusy(b => { const n = { ...b }; delete n[r.id]; return n })
+      return
+    }
+    setLinkReqs(rs => rs.filter(x => x.id !== r.id))
+  }
+
+  async function denyLink(r) {
+    setBusy(b => ({ ...b, [r.id]: true }))
+    const { error: err } = await supabase.rpc('deny_parent_link', { p_request: r.id })
+    if (err) {
+      setError(err.message)
+      setBusy(b => { const n = { ...b }; delete n[r.id]; return n })
+      return
+    }
+    setLinkReqs(rs => rs.filter(x => x.id !== r.id))
+  }
 
   async function approve(r) {
     const role = roleSel[r.id] || 'student'
@@ -142,6 +177,39 @@ export default function AccessRequestsPage({ hasRole }) {
             <p className={`ar-invite-msg${invMsg.ok ? ' ar-invite-ok' : ' ar-invite-err'}`}>
               {invMsg.text}
             </p>
+          )}
+        </section>
+
+        <section className="ar-linkreqs">
+          <h2 className="ar-invite-title">
+            Parent link requests
+            <span className="ar-count hud-tnum">{linkReqs.length} PENDING</span>
+          </h2>
+          {linkReqs.length === 0 ? (
+            <p className="ar-empty">No pending link requests.</p>
+          ) : (
+            <ul className="ar-list">
+              {linkReqs.map(r => (
+                <li key={r.id} className="ar-card">
+                  <div className="ar-card-main">
+                    <span className="ar-name">
+                      {personName(r.parent)} <span className="ar-link-arrow">→</span> {personName(r.student)}
+                    </span>
+                    {r.note && <p className="ar-note">{r.note}</p>}
+                    <div className="ar-meta hud-tnum">
+                      <span className="ar-req-role">PARENT // STUDENT</span>
+                      <span className="ar-when">{fmtWhen(r.created_at)}</span>
+                    </div>
+                  </div>
+                  <div className="ar-actions">
+                    <div className="ar-btns">
+                      <button className="ar-approve" disabled={!!busy[r.id]} onClick={() => approveLink(r)}>Approve</button>
+                      <button className="ar-deny" disabled={!!busy[r.id]} onClick={() => denyLink(r)}>Deny</button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </section>
 

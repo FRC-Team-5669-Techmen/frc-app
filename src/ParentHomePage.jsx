@@ -18,6 +18,43 @@ export default function ParentHomePage({ session }) {
   const [data, setData] = useState(null) // { students:[], present:Map, team:{present,total,names} }
   const timer = useRef(null)
 
+  // Self-service student linking (kept separate from the polled `data` so the
+  // 15s refresh never clobbers the form).
+  const [roster, setRoster]   = useState([])   // active members for the picker
+  const [myReqs, setMyReqs]   = useState([])   // my pending link requests
+  const [pick, setPick]       = useState('')   // selected student id
+  const [q, setQ]             = useState('')   // picker search text
+  const [note, setNote]       = useState('')
+  const [linkMsg, setLinkMsg] = useState(null) // { ok, text }
+  const [submitting, setSubmitting] = useState(false)
+
+  const dispName = (m) => (m?.nickname && m.nickname.trim()) || m?.full_name || '—'
+
+  const loadLinkData = useCallback(async () => {
+    const [{ data: r }, { data: reqs }] = await Promise.all([
+      supabase.from('profiles').select('id, full_name, nickname').eq('status', 'active'),
+      supabase.from('parent_link_requests')
+        .select('id, student_id, status').eq('parent_id', parentId).eq('status', 'pending'),
+    ])
+    setRoster(r ?? [])
+    setMyReqs(reqs ?? [])
+  }, [parentId])
+
+  useEffect(() => { loadLinkData() }, [loadLinkData])
+
+  async function submitLink(e) {
+    e.preventDefault()
+    if (!pick) return
+    setSubmitting(true)
+    setLinkMsg(null)
+    const { error } = await supabase.rpc('request_parent_link', { p_student: pick, p_note: note || null })
+    setSubmitting(false)
+    if (error) { setLinkMsg({ ok: false, text: error.message }); return }
+    setLinkMsg({ ok: true, text: 'Request sent — a mentor will review it.' })
+    setPick(''); setQ(''); setNote('')
+    loadLinkData()
+  }
+
   const load = useCallback(async () => {
     // Who am I linked to?
     const { data: links } = await supabase
@@ -97,6 +134,15 @@ export default function ParentHomePage({ session }) {
 
   const { students, team } = data
 
+  const linkedIds  = new Set(students.map(s => s.id))
+  const pendingIds = new Set(myReqs.map(r => r.student_id))
+  const nameById   = Object.fromEntries(roster.map(m => [m.id, dispName(m)]))
+  const ql = q.trim().toLowerCase()
+  const candidates = roster
+    .filter(m => m.id !== parentId && !linkedIds.has(m.id) && !pendingIds.has(m.id))
+    .filter(m => !ql || dispName(m).toLowerCase().includes(ql) || (m.full_name ?? '').toLowerCase().includes(ql))
+    .sort((a, b) => dispName(a).localeCompare(dispName(b)))
+
   return (
     <div className="ph-wrap">
       <div className="ph-body">
@@ -110,7 +156,7 @@ export default function ParentHomePage({ session }) {
         {students.length === 0 ? (
           <div className="ph-empty">
             <p className="ph-empty-h">No students linked to your account yet.</p>
-            <p className="ph-empty-sub">Ask a mentor to link you to your student.</p>
+            <p className="ph-empty-sub">Use “Link a student” below to request one.</p>
           </div>
         ) : (
           <div className="ph-students">
@@ -161,6 +207,62 @@ export default function ParentHomePage({ session }) {
             })}
           </div>
         )}
+
+        {/* Self-service: request a link to a student */}
+        <section className="ph-link">
+          <header className="ph-link-head">
+            <span className="ph-eyebrow">LINK A STUDENT</span>
+          </header>
+          <p className="ph-link-sub">
+            Request to follow your student. A mentor approves it, then they appear above.
+          </p>
+
+          {myReqs.length > 0 && (
+            <div className="ph-req-list">
+              {myReqs.map(r => (
+                <span key={r.id} className="ph-req-chip">
+                  {nameById[r.student_id] || 'Student'} · pending review
+                </span>
+              ))}
+            </div>
+          )}
+
+          <form className="ph-link-form" onSubmit={submitLink}>
+            <input
+              className="ph-link-search"
+              type="search"
+              placeholder="Search students…"
+              value={q}
+              onChange={e => setQ(e.target.value)}
+            />
+            <select
+              className="ph-link-select"
+              value={pick}
+              onChange={e => setPick(e.target.value)}
+            >
+              <option value="">{candidates.length ? 'Select a student…' : 'No matching students'}</option>
+              {candidates.map(m => (
+                <option key={m.id} value={m.id}>{dispName(m)}</option>
+              ))}
+            </select>
+            <input
+              className="ph-link-note"
+              type="text"
+              placeholder="Note (optional)"
+              value={note}
+              maxLength={200}
+              onChange={e => setNote(e.target.value)}
+            />
+            <button className="ph-link-btn" type="submit" disabled={!pick || submitting}>
+              {submitting ? 'Sending…' : 'Request link'}
+            </button>
+          </form>
+          {linkMsg && (
+            <p className={`ph-link-msg${linkMsg.ok ? ' ph-link-ok' : ' ph-link-err'}`}>
+              {linkMsg.text}
+            </p>
+          )}
+        </section>
 
         {/* Read-only team glance */}
         <section className="ph-team">
