@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
-import { fmtTime, fmtDay } from './shopStatus'
+import { fmtTime, fmtDay, SHOP_OPEN_KINDS } from './shopStatus'
 import './SchedulePage.css'
 
 const KINDS = ['build', 'meeting', 'competition', 'potluck', 'outreach', 'other']
+const VIEWS = [['agenda', 'Agenda'], ['month', 'Month'], ['week', 'Week']]
 const RESPONSES = [['going', 'Going'], ['maybe', 'Maybe'], ['declined', "Can't go"]]
 // 0 = Sunday … 6 = Saturday (matches Date.getDay()).
 const WEEKDAYS = [[0, 'Sun'], [1, 'Mon'], [2, 'Tue'], [3, 'Wed'], [4, 'Thu'], [5, 'Fri'], [6, 'Sat']]
@@ -24,6 +25,31 @@ function dayKey(iso) {
   return new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
 }
 
+// ── Calendar-date helpers (for the Month/Week grids) ──
+// Days are handled as 'YYYY-MM-DD' keys (same shape dayKey produces, in LA time).
+// Date math runs through UTC so it never drifts on DST — these only ever produce
+// day keys + weekday indices, which are pure calendar facts.
+function todayKey() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+}
+function keyToUTC(key) {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d))
+}
+function utcToKey(dt) {
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`
+}
+function addDays(key, n) { const dt = keyToUTC(key); dt.setUTCDate(dt.getUTCDate() + n); return utcToKey(dt) }
+function addMonths(key, n) { const dt = keyToUTC(key); dt.setUTCDate(1); dt.setUTCMonth(dt.getUTCMonth() + n); return utcToKey(dt) }
+function firstOfMonth(key) { return key.slice(0, 7) + '-01' }
+// Format a calendar key for display (formatted in UTC so the key's date is exact).
+function fmtKeyDay(key) {
+  return keyToUTC(key).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
+}
+function fmtMonth(key) {
+  return keyToUTC(key).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+}
+
 export default function SchedulePage({ session, hasRole }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const [events, setEvents]   = useState(null)
@@ -37,6 +63,11 @@ export default function SchedulePage({ session, hasRole }) {
   const [form, setForm]       = useState(blankForm())
   const [saving, setSaving]   = useState(false)
   const [error, setError]     = useState('')
+  const [view, setView]       = useState('agenda') // 'agenda' | 'month' | 'week' (in-memory only)
+  const [myOnly, setMyOnly]   = useState(false)
+  const [monthAnchor, setMonthAnchor] = useState(() => firstOfMonth(todayKey()))
+  const [weekAnchor, setWeekAnchor]   = useState(() => todayKey())
+  const [selectedDay, setSelectedDay] = useState(() => todayKey()) // day shown below the month grid
 
   const load = useCallback(async () => {
     const [{ data: evData, error: e1 }, { data: suData, error: e2 }] = await Promise.all([
@@ -195,16 +226,154 @@ export default function SchedulePage({ session, hasRole }) {
   }
 
   const now = new Date()
-  const visible = events.filter(ev => showPast || new Date(ev.ends_at) >= now)
-  // Group by LA calendar day, ascending.
-  const groups = []
-  for (const ev of visible) {
-    const key = dayKey(ev.starts_at)
-    let grp = groups.find(g => g.key === key)
-    if (!grp) { grp = { key, label: fmtDay(ev.starts_at), items: [] }; groups.push(grp) }
-    grp.items.push(ev)
+  const tKey = todayKey()
+  // "My events": events I've RSVP'd going to, plus every shop-open (build) session.
+  const goingIds = new Set(signups.filter(s => s.member_id === myId && s.response === 'going').map(s => s.event_id))
+  const mineEvent = ev => SHOP_OPEN_KINDS.includes(ev.kind) || goingIds.has(ev.id)
+  const passMine = ev => !myOnly || mineEvent(ev)
+  // Capacity helper for chips/badges (matches the agenda's own full logic).
+  const goingCount = ev => signups.filter(s => s.event_id === ev.id && s.response === 'going').length
+  const isFull = ev => ev.rsvp_enabled && ev.capacity != null && goingCount(ev) >= ev.capacity
+
+  // Group a list of events by LA calendar day, ascending (events arrive sorted).
+  function buildGroups(list) {
+    const gs = []
+    for (const ev of list) {
+      const key = dayKey(ev.starts_at)
+      let grp = gs.find(g => g.key === key)
+      if (!grp) { grp = { key, label: fmtDay(ev.starts_at), items: [] }; gs.push(grp) }
+      grp.items.push(ev)
+    }
+    return gs
   }
+
+  // One event row — reused by the agenda, the week view, and the month day panel
+  // so RSVP behavior stays identical everywhere.
+  function renderEvent(ev) {
+    const evSignups = signups.filter(s => s.event_id === ev.id)
+    const going = evSignups.filter(s => s.response === 'going')
+    const maybe = evSignups.filter(s => s.response === 'maybe')
+    const mine = mySignup(ev.id)
+    const open = expanded.has(ev.id)
+    const cap = ev.capacity
+    const full = cap != null && going.length >= cap
+    const nameOf = s => (s.member_id === myId ? 'You' : (s.profiles?.full_name || 'Member'))
+    return (
+      <li key={ev.id} className="sch-event">
+        <div className="sch-event-row">
+          <div className="sch-event-time hud-mono">
+            {fmtTime(ev.starts_at)}<span className="sch-event-dash">–</span>{fmtTime(ev.ends_at)}
+          </div>
+          <div className="sch-event-main">
+            <div className="sch-event-head">
+              <span className={`sch-kind sch-kind-${ev.kind}`}>{ev.kind}</span>
+              <span className="sch-event-title">{ev.title}</span>
+              {ev.series_id && <span className="sch-series-tag" title="Part of a recurring series">series</span>}
+              {full && <span className="sch-full-tag">FULL</span>}
+            </div>
+            {ev.location && <span className="sch-event-loc hud-mono">@ {ev.location}</span>}
+            {ev.notes && <p className="sch-event-notes">{ev.notes}</p>}
+            {ev.rsvp_enabled && (
+              <button className="sch-rsvp-toggle" onClick={() => toggleExpand(ev)} aria-expanded={open}>
+                <span className="hud-tnum">{going.length}</span> going
+                {cap != null && <span className="sch-rsvp-cap">{` · ${going.length} of ${cap}${full ? ' · FULL' : ''}`}</span>}
+                {mine && <span className="sch-rsvp-mine"> · {mine.response === 'declined' ? "you can't go" : `you're ${mine.response}`}</span>}
+                <span className={`sch-rsvp-caret${open ? ' open' : ''}`}>▸</span>
+              </button>
+            )}
+          </div>
+          {isStaff && (
+            <div className="sch-event-actions">
+              <button className="sch-edit" onClick={() => openEdit(ev)}>Edit</button>
+              <button className="sch-del" onClick={() => remove(ev)}>Delete</button>
+            </div>
+          )}
+        </div>
+
+        {ev.rsvp_enabled && open && (
+          <div className="sch-rsvp">
+            <div className="sch-rsvp-controls">
+              {RESPONSES.map(([val, label]) => (
+                <button key={val}
+                  className={`sch-rsvp-btn${mine?.response === val ? ' on' : ''}`}
+                  onClick={() => upsertSignup(ev, { response: val })}
+                >{label}</button>
+              ))}
+              {mine && <button className="sch-rsvp-clear" onClick={() => clearSignup(ev)}>Clear</button>}
+            </div>
+
+            {mine && mine.response !== 'declined' && (
+              <div className="sch-rsvp-item">
+                <input className="sch-input" placeholder="Bringing… (optional)"
+                  value={itemDraft[ev.id] ?? ''}
+                  onChange={e => setItemDraft(d => ({ ...d, [ev.id]: e.target.value }))} />
+                <button className="sch-save sch-rsvp-item-save"
+                  onClick={() => upsertSignup(ev, { item: (itemDraft[ev.id] ?? '').trim() })}>Save</button>
+              </div>
+            )}
+
+            {full && <p className="sch-rsvp-warn">This event is at capacity ({cap}). You can still RSVP — capacity is a guide.</p>}
+
+            {going.length === 0
+              ? <p className="sch-rsvp-none">No one's going yet.</p>
+              : <ul className="sch-rsvp-list">
+                  {going.map(s => (
+                    <li key={s.member_id} className="sch-rsvp-attendee">
+                      <span className="sch-rsvp-name">{nameOf(s)}</span>
+                      {s.item && <span className="sch-rsvp-bringing hud-mono">{s.item}</span>}
+                    </li>
+                  ))}
+                </ul>}
+            {maybe.length > 0 && (
+              <p className="sch-rsvp-maybe hud-mono">Maybe: {maybe.map(nameOf).join(', ')}</p>
+            )}
+          </div>
+        )}
+      </li>
+    )
+  }
+
+  function renderDayGroup(g) {
+    return (
+      <section key={g.key} className="sch-day">
+        <h2 className="sch-day-title">{g.label}</h2>
+        <ul className="sch-list">{g.items.map(renderEvent)}</ul>
+      </section>
+    )
+  }
+
+  // ── Agenda ──
+  const agendaGroups = buildGroups(events.filter(ev => (showPast || new Date(ev.ends_at) >= now) && passMine(ev)))
   const pastCount = events.length - events.filter(ev => new Date(ev.ends_at) >= now).length
+
+  // ── Month grid (LA calendar days) ──
+  const evByDay = {}
+  for (const ev of events) { if (passMine(ev)) (evByDay[dayKey(ev.starts_at)] ||= []).push(ev) }
+  const [mY, mM] = monthAnchor.split('-').map(Number)
+  const firstWeekday = keyToUTC(monthAnchor).getUTCDay()
+  const daysInMonth = new Date(Date.UTC(mY, mM, 0)).getUTCDate()
+  const gridStart = addDays(monthAnchor, -firstWeekday)
+  const cellCount = Math.ceil((firstWeekday + daysInMonth) / 7) * 7
+  const monthCells = Array.from({ length: cellCount }, (_, i) => {
+    const key = addDays(gridStart, i)
+    return { key, inMonth: key.slice(0, 7) === monthAnchor.slice(0, 7), events: evByDay[key] ?? [] }
+  })
+
+  // ── Week (current week, Sun–Sat) ──
+  const weekStart = addDays(weekAnchor, -keyToUTC(weekAnchor).getUTCDay())
+  const weekEnd = addDays(weekStart, 6)
+  const weekGroups = buildGroups(events.filter(ev => {
+    const k = dayKey(ev.starts_at)
+    return k >= weekStart && k <= weekEnd && passMine(ev)
+  }))
+
+  // ── Conflict detection for the form (overlap: new.start < other.end && new.end > other.start) ──
+  const conflicts = (() => {
+    if (editing === null || !form.start || !form.end) return []
+    const s = new Date(form.start), e = new Date(form.end)
+    if (!(e > s)) return []
+    return events.filter(ev => ev.id !== editing && s < new Date(ev.ends_at) && e > new Date(ev.starts_at))
+  })()
 
   const editingEvent = editing && editing !== 'new' ? events.find(e => e.id === editing) : null
   const editingSeriesCount = editingEvent?.series_id
@@ -216,6 +385,12 @@ export default function SchedulePage({ session, hasRole }) {
       <div className="sch-body">
         <header className="sch-head">
           <h1 className="sch-title">Schedule</h1>
+          <div className="sch-viewtabs" role="tablist">
+            {VIEWS.map(([v, label]) => (
+              <button key={v} type="button" role="tab" aria-selected={view === v}
+                className={`sch-viewtab${view === v ? ' on' : ''}`} onClick={() => setView(v)}>{label}</button>
+            ))}
+          </div>
           {isStaff && editing === null && (
             <button className="sch-new-btn" onClick={openNew}>+ New event</button>
           )}
@@ -296,6 +471,15 @@ export default function SchedulePage({ session, hasRole }) {
                   onChange={e => setForm(f => ({ ...f, end: e.target.value }))} />
               </label>
             </div>
+            {conflicts.length > 0 && (
+              <div className="sch-conflict">
+                ⚠ Overlaps {conflicts.length === 1 ? '' : `${conflicts.length} events: `}
+                {conflicts.map((c, i) => (
+                  <span key={c.id}>{i > 0 ? ', ' : ''}<strong>{c.title}</strong> ({fmtTime(c.starts_at)}–{fmtTime(c.ends_at)})</span>
+                ))}
+                . You can still save.
+              </div>
+            )}
             {editing === 'new' && (
               <div className="sch-repeat">
                 <label className="sch-toggle">
@@ -365,104 +549,73 @@ export default function SchedulePage({ session, hasRole }) {
           </form>
         )}
 
-        {groups.length === 0 ? (
-          <p className="sch-empty">No upcoming events.</p>
-        ) : (
-          groups.map(g => (
-            <section key={g.key} className="sch-day">
-              <h2 className="sch-day-title">{g.label}</h2>
-              <ul className="sch-list">
-                {g.items.map(ev => {
-                  const evSignups = signups.filter(s => s.event_id === ev.id)
-                  const going = evSignups.filter(s => s.response === 'going')
-                  const maybe = evSignups.filter(s => s.response === 'maybe')
-                  const mine = mySignup(ev.id)
-                  const open = expanded.has(ev.id)
-                  const cap = ev.capacity
-                  const full = cap != null && going.length >= cap
-                  const nameOf = s => (s.member_id === myId ? 'You' : (s.profiles?.full_name || 'Member'))
-                  return (
-                  <li key={ev.id} className="sch-event">
-                    <div className="sch-event-row">
-                      <div className="sch-event-time hud-mono">
-                        {fmtTime(ev.starts_at)}<span className="sch-event-dash">–</span>{fmtTime(ev.ends_at)}
-                      </div>
-                      <div className="sch-event-main">
-                        <div className="sch-event-head">
-                          <span className={`sch-kind sch-kind-${ev.kind}`}>{ev.kind}</span>
-                          <span className="sch-event-title">{ev.title}</span>
-                          {ev.series_id && <span className="sch-series-tag" title="Part of a recurring series">series</span>}
-                        </div>
-                        {ev.location && <span className="sch-event-loc hud-mono">@ {ev.location}</span>}
-                        {ev.notes && <p className="sch-event-notes">{ev.notes}</p>}
-                        {ev.rsvp_enabled && (
-                          <button className="sch-rsvp-toggle" onClick={() => toggleExpand(ev)} aria-expanded={open}>
-                            <span className="hud-tnum">{going.length}</span> going
-                            {cap != null && <span className="sch-rsvp-cap">{` · ${going.length} of ${cap}${full ? ' · FULL' : ''}`}</span>}
-                            {mine && <span className="sch-rsvp-mine"> · {mine.response === 'declined' ? "you can't go" : `you're ${mine.response}`}</span>}
-                            <span className={`sch-rsvp-caret${open ? ' open' : ''}`}>▸</span>
-                          </button>
-                        )}
-                      </div>
-                      {isStaff && (
-                        <div className="sch-event-actions">
-                          <button className="sch-edit" onClick={() => openEdit(ev)}>Edit</button>
-                          <button className="sch-del" onClick={() => remove(ev)}>Delete</button>
-                        </div>
-                      )}
-                    </div>
+        <div className="sch-controls">
+          <label className="sch-myonly-toggle">
+            <input type="checkbox" checked={myOnly} onChange={e => setMyOnly(e.target.checked)} />
+            <span>My events</span>
+          </label>
+        </div>
 
-                    {ev.rsvp_enabled && open && (
-                      <div className="sch-rsvp">
-                        <div className="sch-rsvp-controls">
-                          {RESPONSES.map(([val, label]) => (
-                            <button key={val}
-                              className={`sch-rsvp-btn${mine?.response === val ? ' on' : ''}`}
-                              onClick={() => upsertSignup(ev, { response: val })}
-                            >{label}</button>
-                          ))}
-                          {mine && <button className="sch-rsvp-clear" onClick={() => clearSignup(ev)}>Clear</button>}
-                        </div>
-
-                        {mine && mine.response !== 'declined' && (
-                          <div className="sch-rsvp-item">
-                            <input className="sch-input" placeholder="Bringing… (optional)"
-                              value={itemDraft[ev.id] ?? ''}
-                              onChange={e => setItemDraft(d => ({ ...d, [ev.id]: e.target.value }))} />
-                            <button className="sch-save sch-rsvp-item-save"
-                              onClick={() => upsertSignup(ev, { item: (itemDraft[ev.id] ?? '').trim() })}>Save</button>
-                          </div>
-                        )}
-
-                        {full && <p className="sch-rsvp-warn">This event is at capacity ({cap}). You can still RSVP — capacity is a guide.</p>}
-
-                        {going.length === 0
-                          ? <p className="sch-rsvp-none">No one's going yet.</p>
-                          : <ul className="sch-rsvp-list">
-                              {going.map(s => (
-                                <li key={s.member_id} className="sch-rsvp-attendee">
-                                  <span className="sch-rsvp-name">{nameOf(s)}</span>
-                                  {s.item && <span className="sch-rsvp-bringing hud-mono">{s.item}</span>}
-                                </li>
-                              ))}
-                            </ul>}
-                        {maybe.length > 0 && (
-                          <p className="sch-rsvp-maybe hud-mono">Maybe: {maybe.map(nameOf).join(', ')}</p>
-                        )}
-                      </div>
-                    )}
-                  </li>
-                  )
-                })}
-              </ul>
-            </section>
-          ))
+        {view === 'agenda' && (
+          <>
+            {agendaGroups.length === 0
+              ? <p className="sch-empty">{myOnly ? 'No events match “My events”.' : 'No upcoming events.'}</p>
+              : agendaGroups.map(renderDayGroup)}
+            {pastCount > 0 && (
+              <button className="sch-past-toggle" onClick={() => setShowPast(p => !p)}>
+                {showPast ? 'Hide past events' : `Show ${pastCount} past event${pastCount === 1 ? '' : 's'}`}
+              </button>
+            )}
+          </>
         )}
 
-        {pastCount > 0 && (
-          <button className="sch-past-toggle" onClick={() => setShowPast(p => !p)}>
-            {showPast ? 'Hide past events' : `Show ${pastCount} past event${pastCount === 1 ? '' : 's'}`}
-          </button>
+        {view === 'month' && (
+          <div className="sch-month">
+            <div className="sch-cal-nav">
+              <button className="sch-nav-btn" onClick={() => setMonthAnchor(a => addMonths(a, -1))} aria-label="Previous month">‹</button>
+              <span className="sch-cal-label">{fmtMonth(monthAnchor)}</span>
+              <button className="sch-nav-btn" onClick={() => setMonthAnchor(a => addMonths(a, 1))} aria-label="Next month">›</button>
+              <button className="sch-today-btn" onClick={() => { const t = todayKey(); setMonthAnchor(firstOfMonth(t)); setSelectedDay(t) }}>Today</button>
+            </div>
+            <div className="sch-grid-dow">{WEEKDAYS.map(([n, l]) => <span key={n}>{l}</span>)}</div>
+            <div className="sch-grid">
+              {monthCells.map(cell => (
+                <button type="button" key={cell.key}
+                  className={`sch-cell${cell.inMonth ? '' : ' out'}${cell.key === tKey ? ' today' : ''}${cell.key === selectedDay ? ' sel' : ''}`}
+                  onClick={() => setSelectedDay(cell.key)}>
+                  <span className="sch-cell-date hud-mono">{Number(cell.key.slice(8, 10))}</span>
+                  <span className="sch-cell-chips">
+                    {cell.events.slice(0, 3).map(ev => (
+                      <span key={ev.id} className={`sch-mchip sch-kind-${ev.kind}`} title={ev.title}>
+                        <span className="sch-mchip-title">{ev.title}</span>
+                        {isFull(ev) && <span className="sch-mchip-full">FULL</span>}
+                      </span>
+                    ))}
+                    {cell.events.length > 3 && <span className="sch-mchip-more">+{cell.events.length - 3}</span>}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {selectedDay && (
+              (evByDay[selectedDay] ?? []).length > 0
+                ? renderDayGroup({ key: selectedDay, label: fmtKeyDay(selectedDay), items: evByDay[selectedDay] })
+                : <p className="sch-empty">No events on {fmtKeyDay(selectedDay)}.</p>
+            )}
+          </div>
+        )}
+
+        {view === 'week' && (
+          <div className="sch-week">
+            <div className="sch-cal-nav">
+              <button className="sch-nav-btn" onClick={() => setWeekAnchor(a => addDays(a, -7))} aria-label="Previous week">‹</button>
+              <span className="sch-cal-label">{fmtKeyDay(weekStart)} – {fmtKeyDay(weekEnd)}</span>
+              <button className="sch-nav-btn" onClick={() => setWeekAnchor(a => addDays(a, 7))} aria-label="Next week">›</button>
+              <button className="sch-today-btn" onClick={() => setWeekAnchor(todayKey())}>Today</button>
+            </div>
+            {weekGroups.length === 0
+              ? <p className="sch-empty">{myOnly ? 'No events match “My events” this week.' : 'No events this week.'}</p>
+              : weekGroups.map(renderDayGroup)}
+          </div>
         )}
       </div>
     </div>
