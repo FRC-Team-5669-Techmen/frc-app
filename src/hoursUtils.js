@@ -1,5 +1,45 @@
 // Shared bucketing logic for MyHoursPage and HoursBoard.
 
+// Hour types in display order, each with its theme color token. Used to color
+// the breakdowns consistently across My Hours and Team Hours.
+export const HOUR_TYPES = [
+  { key: 'regular',      label: 'Regular',      color: 'var(--hr-regular)' },
+  { key: 'volunteering', label: 'Volunteering', color: 'var(--hr-volunteer)' },
+  { key: 'outreach',     label: 'Outreach',     color: 'var(--hr-outreach)' },
+  { key: 'competition',  label: 'Competition',  color: 'var(--hr-competition)' },
+]
+
+// Pair a member's raw in/out events into discrete sessions, newest concerns
+// handled by the caller. Returns [{ inTime, outTime|null, ms, open, outId }]
+// in chronological order. An unmatched trailing 'in' is an open session counted
+// up to now.
+export function sessionsFromEvents(events) {
+  const sorted = [...events].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
+  const sessions = []
+  let openIn = null
+  for (const e of sorted) {
+    if (e.type === 'in') {
+      openIn = e
+    } else if (e.type === 'out' && openIn) {
+      sessions.push({
+        inTime:  new Date(openIn.event_time),
+        outTime: new Date(e.event_time),
+        ms:      new Date(e.event_time) - new Date(openIn.event_time),
+        open:    false,
+        outId:   e.id,
+      })
+      openIn = null
+    }
+  }
+  if (openIn) {
+    sessions.push({
+      inTime: new Date(openIn.event_time), outTime: null,
+      ms: Date.now() - new Date(openIn.event_time), open: true, outId: null,
+    })
+  }
+  return sessions
+}
+
 export function fmtHours(h) {
   if (!h || h < 0.01) return '—'
   const totalMins = Math.round(h * 60)

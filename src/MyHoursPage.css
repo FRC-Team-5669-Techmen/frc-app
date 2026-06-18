@@ -197,3 +197,105 @@
   text-transform: none;
   letter-spacing: normal;
 }
+
+/* ── Enriched cards (by-type, trend, sessions) ─────────────────────────── */
+.mh-card {
+  margin: 1rem 1rem 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.mh-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.mh-card-title {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+.mh-card-sub {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+.mh-section-label {
+  margin: 1.5rem 1rem 0;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+
+/* By hour type */
+.mh-types { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.9rem 1rem; }
+.mh-type-row { display: flex; align-items: center; gap: 0.6rem; }
+.mh-type-dot { flex: 0 0 auto; width: 0.6rem; height: 0.6rem; border-radius: 2px; }
+.mh-type-label { flex: 0 0 6rem; font-size: 0.85rem; color: var(--steel); }
+.mh-type-bar { flex: 1; height: 0.5rem; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.mh-type-fill { display: block; height: 100%; border-radius: 999px; }
+.mh-type-val {
+  flex: 0 0 auto;
+  min-width: 3.5rem;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Weekly trend mini bars */
+.mh-trend { display: flex; align-items: flex-end; gap: 0.6rem; padding: 1rem; height: 7rem; }
+.mh-trend-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; height: 100%; }
+.mh-trend-bar-track { flex: 1; width: 100%; display: flex; align-items: flex-end; }
+.mh-trend-bar { width: 100%; background: var(--gold); border-radius: 2px 2px 0 0; min-height: 3px; }
+.mh-trend-x { font-family: var(--font-mono); font-size: 0.62rem; color: var(--muted); }
+
+/* Recent sessions */
+.mh-sessions { list-style: none; margin: 0; padding: 0; }
+.mh-session {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+}
+.mh-session:not(:last-child) { border-bottom: 1px solid var(--border); }
+.mh-session-date { flex: 0 0 8rem; font-size: 0.85rem; color: var(--text); }
+.mh-session-time { flex: 1; font-size: 0.8rem; color: var(--steel); }
+.mh-session-dur {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.mh-session-flag {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gold-dim);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  padding: 0.05rem 0.35rem;
+}
+
+@media (max-width: 480px) {
+  .mh-session-date { flex-basis: 6rem; }
+  .mh-type-label { flex-basis: 4.5rem; }
+}
+
+/* dot reads inline inside breakdown labels too */
+.mh-type-dot { display: inline-block; }
+.mh-breakdown-label .mh-type-dot { margin-right: 0.45rem; vertical-align: middle; }

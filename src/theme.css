@@ -35,6 +35,12 @@
   --gold-a24:      rgba(212, 175, 55, 0.24);
   --fault-a10:     rgba(226, 75, 74, 0.10);
 
+  /* Hour-type accents — consistent across My Hours + Team Hours */
+  --hr-regular:     #D4AF37;  /* gold  — build / regular   */
+  --hr-volunteer:   #4FB477;  /* green — volunteering       */
+  --hr-outreach:    #5B9BD5;  /* blue  — outreach           */
+  --hr-competition: #B98BE0;  /* violet — competition       */
+
   /* ── Type ── */
   --font-ui:   'Chakra Petch', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'Share Tech Mono', ui-monospace, SFMono-Regular, 'Roboto Mono', monospace;

@@ -174,7 +174,7 @@ export default function App() {
           <Route path="/schedule"  element={<SchedulePage session={session} hasRole={hasRole} />} />
           <Route path="/my-hours"  element={<MyHoursPage session={session} />} />
           <Route path="/log-hours" element={<LogHoursPage session={session} />} />
-          <Route path="/hours"     element={<HoursBoard />} />
+          <Route path="/hours"     element={<HoursBoard hasRole={hasRole} />} />
           <Route path="/roster"    element={<RosterPage />} />
           <Route path="/skills"      element={<SkillsCatalog hasRole={hasRole} />} />
           <Route path="/jobs"        element={<JobsPage session={session} hasRole={hasRole} />} />

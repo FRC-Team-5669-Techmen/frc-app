@@ -85,12 +85,71 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: hidden;
+  /* Was overflow:hidden, which clipped the wide table on the right. Scroll
+     horizontally instead so every column is reachable on narrow screens. */
+  overflow-x: auto;
 }
 
 .board-table {
   width: 100%;
   border-collapse: collapse;
+}
+
+/* ── Controls: view toggle + export ── */
+.board-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem 0;
+}
+.board-viewtoggle {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.board-viewbtn {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--steel);
+  background: var(--surface);
+  border: none;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+}
+.board-viewbtn:not(:last-child) { border-right: 1px solid var(--border-strong); }
+.board-viewbtn.active { background: var(--gold); color: #0A0B0D; }
+.board-export {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+  background: var(--surface);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+}
+.board-export:hover { background: var(--gold-a08); }
+
+/* Hour-type color swatch on headers / day cells */
+.board-type-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 2px;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+.board-day { font-family: var(--font-mono); color: var(--steel); white-space: nowrap; }
+.board-empty {
+  padding: 1.5rem 1rem;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .board-th {
