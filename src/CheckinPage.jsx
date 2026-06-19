@@ -7,10 +7,28 @@ import './CheckinPage.css'
 const DUPLICATE_WINDOW_MS = 60_000
 
 const GEO_MESSAGES = {
-  denied:      { heading: 'Location denied',      detail: 'Allow location access in your browser settings and tap the tag again.' },
+  denied:      { heading: 'Location denied',      detail: 'Allow location access in your browser settings, then tap Confirm again.' },
   unavailable: { heading: 'Location unavailable', detail: 'Location services must be enabled to check in at the shop.' },
   range:       { heading: 'Not at the shop',      detail: 'You need to be within 150 m of the build space to check in.' },
-  error:       { heading: 'Location error',       detail: 'Could not verify your location. Move closer and try again.' },
+  error:       { heading: 'Location error',       detail: 'Could not verify your location. Move closer and tap Confirm again.' },
+  imprecise:   { heading: 'Precise location off', detail: 'iPhone needs Precise Location on: Settings → Privacy & Location Services → Location Services → your browser (or this app) → set to While Using and turn on Precise Location. Then tap Confirm again.' },
+}
+
+// Gold HUD action button. Inline-styled (the check-in route keeps its CSS lean)
+// using theme tokens so it matches the rest of the app.
+const CONFIRM_BTN_STYLE = {
+  marginTop: '1.75rem',
+  fontFamily: 'var(--font-ui)',
+  fontSize: '1.05rem',
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  color: '#0A0B0D',
+  background: 'var(--gold)',
+  border: 'none',
+  borderRadius: 'var(--radius)',
+  padding: '0.95rem 2.25rem',
+  cursor: 'pointer',
 }
 
 // Minimal HUD header — the fast-path route carries no NavBar.
@@ -31,6 +49,7 @@ export default function CheckinPage({ session }) {
   const [eventType, setEventType] = useState(null)
   const [eventTime, setEventTime] = useState(null)
   const [geoReason, setGeoReason] = useState(null)
+  const [acting, setActing] = useState(false)
 
   const memberName = session?.user?.user_metadata?.full_name
     || session?.user?.email?.split('@')[0]
@@ -43,8 +62,43 @@ export default function CheckinPage({ session }) {
     }
   }, [status])
 
+  // Write the attendance event and flip to the success screen.
+  async function insertEvent(newType) {
+    const now = new Date()
+    const { error } = await supabase
+      .from('attendance_events')
+      .insert({ user_id: session.user.id, type: newType, location: loc, method: 'nfc' })
+    if (error) throw error
+    setEventType(newType)
+    setEventTime(now)
+    setStatus('success')
+  }
+
+  // Check-in is gated by the geofence and only runs from a user tap — iOS
+  // resolves geolocation far more reliably from a gesture than on page load.
+  async function confirmCheckin() {
+    if (acting) return
+    setActing(true)
+    setStatus('loading')
+    setLoadingMsg('Checking location…')
+    try {
+      const geo = await verifyAtShop()
+      if (!geo.ok) {
+        setGeoReason(geo.reason)
+        setStatus('geo')
+        return
+      }
+      await insertEvent('in')
+    } catch (err) {
+      console.error(err)
+      setStatus('error')
+    } finally {
+      setActing(false)
+    }
+  }
+
   useEffect(() => {
-    async function record() {
+    async function init() {
       try {
         await supabase.from('profiles').upsert({ id: session.user.id }, { onConflict: 'id' })
 
@@ -72,31 +126,20 @@ export default function CheckinPage({ session }) {
 
         const newType = lastEvent?.type === 'in' ? 'out' : 'in'
 
-        // Geofence check-ins only; check-outs are unrestricted
-        if (newType === 'in') {
-          setLoadingMsg('Checking location…')
-          const geo = await verifyAtShop()
-          if (!geo.ok) {
-            setGeoReason(geo.reason)
-            setStatus('geo')
-            return
-          }
+        if (newType === 'out') {
+          // Check-out: automatic and unrestricted, exactly as before.
+          await insertEvent('out')
+        } else {
+          // Check-in: don't call geolocation on load (iOS treats it as
+          // low-priority and it often never resolves). Wait for a tap.
+          setStatus('confirm')
         }
-
-        const { error } = await supabase
-          .from('attendance_events')
-          .insert({ user_id: session.user.id, type: newType, location: loc, method: 'nfc' })
-
-        if (error) throw error
-        setEventType(newType)
-        setEventTime(now)
-        setStatus('success')
       } catch (err) {
         console.error(err)
         setStatus('error')
       }
     }
-    record()
+    init()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (status === 'loading') {
@@ -124,7 +167,35 @@ export default function CheckinPage({ session }) {
         <div className="checkin-mark checkin-mark-fault">✗</div>
         <h1>{msg.heading}</h1>
         <p className="checkin-status">{msg.detail}</p>
+        {status === 'geo' && (
+          <button
+            onClick={confirmCheckin}
+            disabled={acting}
+            style={{ ...CONFIRM_BTN_STYLE, opacity: acting ? 0.6 : 1 }}
+          >
+            {acting ? 'Checking…' : 'Confirm check-in'}
+          </button>
+        )}
         <footer className="checkin-footer checkin-footer-fault">STATUS // FAULT</footer>
+      </div>
+    )
+  }
+
+  if (status === 'confirm') {
+    return (
+      <div className="checkin-wrap checkin-idle">
+        <CheckinHeader />
+        <h1 className="checkin-name">{memberName}</h1>
+        <p className="checkin-status">Tap to confirm your check-in</p>
+        <p className="checkin-loc">{loc.replace(/-/g, ' ')}</p>
+        <button
+          onClick={confirmCheckin}
+          disabled={acting}
+          style={{ ...CONFIRM_BTN_STYLE, opacity: acting ? 0.6 : 1 }}
+        >
+          {acting ? 'Checking…' : 'Confirm check-in'}
+        </button>
+        <footer className="checkin-footer">STATUS // CONFIRM TO CHECK IN</footer>
       </div>
     )
   }

@@ -16,18 +16,22 @@ function haversineMeters(lat1, lon1, lat2, lon2) {
 function gpsPosition() {
   return new Promise((resolve, reject) =>
     navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: false,
-      timeout: 10_000,
-      maximumAge: 30_000,
+      enableHighAccuracy: true,
+      timeout: 20_000,
+      maximumAge: 0,
     })
   )
 }
 
-// Returns { ok: true } or { ok: false, reason: 'denied'|'unavailable'|'range'|'error' }
+// Returns { ok: true } or
+// { ok: false, reason: 'denied'|'unavailable'|'range'|'error'|'imprecise' }
 export async function verifyAtShop() {
   if (!navigator.geolocation) return { ok: false, reason: 'unavailable' }
   try {
     const { coords } = await gpsPosition()
+    // Reject coarse fixes (e.g. iOS "Precise Location" off): a >100 m accuracy
+    // radius can't be trusted against a 150 m geofence.
+    if (coords.accuracy > 100) return { ok: false, reason: 'imprecise' }
     const dist = haversineMeters(coords.latitude, coords.longitude, SHOP_LAT, SHOP_LON)
     return dist <= RADIUS_M ? { ok: true } : { ok: false, reason: 'range' }
   } catch (err) {
