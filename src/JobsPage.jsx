@@ -21,6 +21,7 @@ const STATUS_META = {
 const STATUS_RANK = { review: 0, progress: 1, open: 2, completed: 3, closed: 4 }
 
 const SORT_COLS = [
+  ['relevance', 'For you'],
   ['status', 'Status'],
   ['due',    'Due date'],
   ['cert',   'Cert'],
@@ -79,6 +80,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
   const [myCerts, setMyCerts] = useState(new Set()) // skill_ids the member is certified in
   const [claimsMap, setClaimsMap] = useState({})    // task_id -> [claim rows]
   const [certsByMember, setCertsByMember] = useState({}) // member_id -> Set(certified skill_ids); claimants only
+  const [viewerTeam, setViewerTeam] = useState({ subteams: [], disciplines: [] }) // for "For you" relevance
   const [busy, setBusy]       = useState({})
   const [error, setError]     = useState('')
 
@@ -89,7 +91,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
 
   // Browsing: search, sort, collapsible groups, row→detail selection.
   const [query, setQuery]           = useState('')
-  const [sort, setSort]             = useState({ col: 'status', dir: 'asc' })
+  const [sort, setSort]             = useState({ col: 'relevance', dir: 'asc' })
   const [collapsed, setCollapsed]   = useState(() => new Set())
   const [selectedId, setSelectedId] = useState(null)
 
@@ -102,12 +104,13 @@ export default function JobsPage({ session, hasRole = () => false }) {
   const [imgBusy, setImgBusy]             = useState(false)
 
   const load = useCallback(async () => {
-    const [tRes, trsRes, skRes, msRes, tcRes] = await Promise.all([
+    const [tRes, trsRes, skRes, msRes, tcRes, pfRes] = await Promise.all([
       supabase.from('tasks').select('*').order('created_at', { ascending: false }),
       supabase.from('task_required_skills').select('task_id, skill_id'),
       supabase.from('skills').select('id, name, safety_critical').order('name'),
       supabase.from('member_skills').select('skill_id').eq('member_id', uid).eq('status', 'certified'),
       supabase.from('task_claims').select('task_id, member_id, status, profiles!task_claims_member_id_fkey(full_name, avatar_url)'),
+      supabase.from('profiles').select('subteams, disciplines').eq('id', uid).single(),
     ])
     if (tRes.error) { setError(tRes.error.message); setTasks([]); return }
 
@@ -132,6 +135,10 @@ export default function JobsPage({ session, hasRole = () => false }) {
     setMyCerts(new Set((msRes.data ?? []).map(m => m.skill_id)))
     setClaimsMap(cm)
     setCertsByMember(cbm)
+    setViewerTeam({
+      subteams:    pfRes.data?.subteams    ?? [],
+      disciplines: pfRes.data?.disciplines ?? [],
+    })
     setTasks(tRes.data ?? [])
   }, [uid])
 
@@ -386,6 +393,18 @@ export default function JobsPage({ session, hasRole = () => false }) {
     return <div className="jobs-loading"><div className="jobs-spinner" /></div>
   }
 
+  // ── "For you" relevance ──
+  // A job is relevant when its subteam is one the viewer belongs to. (Discipline
+  // relevance — a required skill belonging to one of the viewer's disciplines —
+  // is NOT wired: skills carry only a free-text `category` with no FK or join
+  // table to the disciplines catalog, so there is no clean skill→discipline link.
+  // Subteam-only is the documented fallback; `disciplineRelevant` stays as a hook
+  // for when such a link exists.)
+  const mySubteams = new Set((viewerTeam.subteams ?? []).map(s => s.toLowerCase()))
+  const subteamRelevant    = t => !!t.subteam && mySubteams.has(t.subteam.toLowerCase())
+  const disciplineRelevant = () => false
+  const relevanceMode = sort.col === 'relevance'
+
   // Search → filter → group by subteam → sort within each group.
   const q = query.trim().toLowerCase()
   const certKey = t => requiredSkillsFor(t.id).map(s => s.name).sort().join(', ')
@@ -394,6 +413,13 @@ export default function JobsPage({ session, hasRole = () => false }) {
     const dir = sort.dir === 'desc' ? -1 : 1
     const tie = a.title.localeCompare(b.title)
     switch (sort.col) {
+      case 'relevance': {
+        // Discipline-relevant first (inactive — no skill→discipline link), then
+        // fall back to the current tiebreak (status order, then title).
+        const dr = (disciplineRelevant(b) ? 1 : 0) - (disciplineRelevant(a) ? 1 : 0)
+        if (dr) return dr
+        return (STATUS_RANK[displayStatus(a)] - STATUS_RANK[displayStatus(b)]) || tie
+      }
       case 'status':
         return (STATUS_RANK[displayStatus(a)] - STATUS_RANK[displayStatus(b)]) * dir || tie
       case 'due':
@@ -414,7 +440,16 @@ export default function JobsPage({ session, hasRole = () => false }) {
   }
   const groups = {}
   for (const t of filtered) (groups[t.subteam || 'Other'] ??= []).push(t)
-  const groupNames = Object.keys(groups).sort((a, b) => a.localeCompare(b))
+  // In "For you" mode, the viewer's matching subteams lead, then the rest A→Z;
+  // any explicit sort drops back to plain alphabetical (overrides relevance).
+  const groupNames = Object.keys(groups).sort((a, b) => {
+    if (relevanceMode) {
+      const ra = mySubteams.has(a.toLowerCase()) ? 0 : 1
+      const rb = mySubteams.has(b.toLowerCase()) ? 0 : 1
+      if (ra !== rb) return ra - rb
+    }
+    return a.localeCompare(b)
+  })
   for (const n of groupNames) groups[n].sort(cmp)
 
   const selectedTask = selectedId ? tasks.find(t => t.id === selectedId) : null

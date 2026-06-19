@@ -54,6 +54,7 @@ export default function SchedulePage({ session, hasRole }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const [events, setEvents]   = useState(null)
   const [signups, setSignups] = useState([])
+  const [jobDues, setJobDues] = useState([]) // jobs with a due_date, surfaced read-only on the calendar
   const [expanded, setExpanded] = useState(() => new Set())
   const [itemDraft, setItemDraft] = useState({}) // event_id -> bringing text
   const [showPast, setShowPast] = useState(false)
@@ -69,14 +70,17 @@ export default function SchedulePage({ session, hasRole }) {
   const [selectedDay, setSelectedDay] = useState(() => todayKey()) // day shown below the month grid
 
   const load = useCallback(async () => {
-    const [{ data: evData, error: e1 }, { data: suData, error: e2 }] = await Promise.all([
+    const [{ data: evData, error: e1 }, { data: suData, error: e2 }, { data: jbData }] = await Promise.all([
       supabase.from('events').select('*').order('starts_at', { ascending: true }),
       supabase.from('event_signups').select('event_id, member_id, response, item, profiles(full_name)'),
+      // Job due dates — read-only surfacing on the calendar (this page never edits jobs).
+      supabase.from('tasks').select('id, title, due_date, status').not('due_date', 'is', null),
     ])
     if (e1 || e2) { setError((e1 || e2).message); setEvents([]); return }
     setError('')
     setEvents(evData ?? [])
     setSignups(suData ?? [])
+    setJobDues(jbData ?? [])
   }, [])
 
   const myId = session.user.id
@@ -348,6 +352,12 @@ export default function SchedulePage({ session, hasRole }) {
   const agendaGroups = buildGroups(events.filter(ev => (showPast || new Date(ev.ends_at) >= now) && passMine(ev)))
   const pastCount = events.length - events.filter(ev => new Date(ev.ends_at) >= now).length
 
+  // Job due dates by calendar day (due_date is already a 'YYYY-MM-DD' day key).
+  // Overdue = due before today and not yet completed.
+  const jobOverdue = j => j.due_date < tKey && j.status !== 'completed'
+  const jobDueByDay = {}
+  for (const j of jobDues) (jobDueByDay[j.due_date] ||= []).push(j)
+
   // ── Month grid (LA calendar days) ──
   const evByDay = {}
   for (const ev of events) { if (passMine(ev)) (evByDay[dayKey(ev.starts_at)] ||= []).push(ev) }
@@ -358,7 +368,12 @@ export default function SchedulePage({ session, hasRole }) {
   const cellCount = Math.ceil((firstWeekday + daysInMonth) / 7) * 7
   const monthCells = Array.from({ length: cellCount }, (_, i) => {
     const key = addDays(gridStart, i)
-    return { key, inMonth: key.slice(0, 7) === monthAnchor.slice(0, 7), events: evByDay[key] ?? [] }
+    return {
+      key,
+      inMonth: key.slice(0, 7) === monthAnchor.slice(0, 7),
+      events: evByDay[key] ?? [],
+      jobs: jobDueByDay[key] ?? [],
+    }
   })
 
 
@@ -595,15 +610,42 @@ export default function SchedulePage({ session, hasRole }) {
                       </span>
                     ))}
                     {cell.events.length > 3 && <span className="sch-mchip-more">+{cell.events.length - 3}</span>}
+                    {cell.jobs.length > 0 && (
+                      <span
+                        className={`sch-jobdue${cell.jobs.some(jobOverdue) ? ' overdue' : ''}`}
+                        title={cell.jobs.map(j => `Job due: ${j.title}`).join('\n')}
+                      >
+                        ◆ {cell.jobs.length === 1 ? 'job due' : `${cell.jobs.length} jobs due`}
+                      </span>
+                    )}
                   </span>
                 </button>
               ))}
             </div>
-            {selectedDay && (
-              (evByDay[selectedDay] ?? []).length > 0
-                ? renderDayGroup({ key: selectedDay, label: fmtKeyDay(selectedDay), items: evByDay[selectedDay] })
-                : <p className="sch-empty">No events on {fmtKeyDay(selectedDay)}.</p>
-            )}
+            {selectedDay && (() => {
+              const dayEvents = evByDay[selectedDay] ?? []
+              const dayJobs   = jobDueByDay[selectedDay] ?? []
+              return (
+                <>
+                  {dayEvents.length > 0
+                    ? renderDayGroup({ key: selectedDay, label: fmtKeyDay(selectedDay), items: dayEvents })
+                    : dayJobs.length === 0 && <p className="sch-empty">No events on {fmtKeyDay(selectedDay)}.</p>}
+                  {dayJobs.length > 0 && (
+                    <section className="sch-jobdue-detail">
+                      <h2 className="sch-day-title">Jobs due {fmtKeyDay(selectedDay)}</h2>
+                      <ul className="sch-jobdue-list">
+                        {dayJobs.map(j => (
+                          <li key={j.id} className={`sch-jobdue-item${jobOverdue(j) ? ' overdue' : ''}`}>
+                            <span className="sch-jobdue-label">Job due:</span> {j.title}
+                            {jobOverdue(j) && <span className="sch-jobdue-flag">overdue</span>}
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+                </>
+              )
+            })()}
           </div>
         )}
       </div>

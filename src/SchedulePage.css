@@ -562,6 +562,58 @@
 }
 .sch-mchip-more { font-family: var(--font-mono); font-size: 0.58rem; color: var(--muted); padding-left: 0.1rem; }
 
+/* ── Job due dates surfaced on the calendar (read-only) ── */
+.sch-jobdue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold-bright);
+  border: 1px solid var(--gold-dim);
+  border-radius: 2px;
+  padding: 0.04rem 0.25rem;
+}
+.sch-jobdue.overdue { color: var(--fault); border-color: var(--fault); }
+
+.sch-jobdue-detail { margin-top: 0.8rem; }
+.sch-jobdue-list { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.sch-jobdue-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.6rem;
+}
+.sch-jobdue-item.overdue { border-left-color: var(--fault); color: var(--fault); }
+.sch-jobdue-label { font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--steel); }
+.sch-jobdue-item.overdue .sch-jobdue-label { color: var(--fault); }
+.sch-jobdue-flag {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fault);
+  border: 1px solid var(--fault);
+  border-radius: var(--radius-sm);
+  padding: 0.02rem 0.3rem;
+}
+
+@media (max-width: 480px) {
+  .sch-jobdue { font-size: 0.5rem; }
+}
+
 /* FULL badge in an event head (agenda + week) */
 .sch-full-tag {
   font-family: var(--font-mono);
