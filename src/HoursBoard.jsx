@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, Fragment } from 'react'
 import { supabase } from './supabase'
 import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, HOUR_TYPES } from './hoursUtils'
 import { displayName } from './names'
@@ -8,12 +8,12 @@ const TYPE_COLOR = Object.fromEntries(HOUR_TYPES.map(t => [t.key, t.color]))
 const TYPE_LABEL = Object.fromEntries(HOUR_TYPES.map(t => [t.key, t.label]))
 
 // Defined outside HoursBoard so React sees a stable component reference across renders.
-function SortTh({ col, label, sort, onSort, color }) {
+function SortTh({ col, label, sort, onSort, color, className = '' }) {
   const active = sort.col === col
   const arrow  = active ? (sort.dir === 'desc' ? ' ↓' : ' ↑') : ''
   return (
     <th
-      className={`board-th board-th-sort${active ? ' board-th-sorted' : ''}`}
+      className={`board-th board-th-sort${active ? ' board-th-sorted' : ''}${className ? ' ' + className : ''}`}
       onClick={() => onSort(col)}
     >
       {color && <span className="board-type-dot" style={{ background: color }} />}
@@ -25,6 +25,59 @@ function SortTh({ col, label, sort, onSort, color }) {
 // Quote a CSV field (wrap in quotes, escape embedded quotes).
 const csv = v => `"${String(v ?? '').replace(/"/g, '""')}"`
 
+// ── Matrix helpers (member × day timesheet) ──
+const DOW2 = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+const weekdayOf = key => new Date(key + 'T00:00:00').getDay()
+const fmtMD = key => { const [, m, d] = key.split('-'); return `${Number(m)}/${Number(d)}` }
+function addDaysKey(key, n) {
+  const d = new Date(key + 'T00:00:00')
+  d.setDate(d.getDate() + n)
+  const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+// Saturday that starts the Sat–Fri week containing `key`.
+function weekStartKey(key) { return addDaysKey(key, -((weekdayOf(key) + 1) % 7)) }
+
+// Per-date regular (attendance-derived) hours for one member — mirrors the
+// by-date pairing in buildBreakdown, including an open session counted to now.
+function regularHoursByDate(events, excludedSet) {
+  const byDate = {}
+  for (const e of events) (byDate[e.event_time.slice(0, 10)] ??= []).push(e)
+  const out = {}
+  for (const [date, evts] of Object.entries(byDate)) {
+    evts.sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
+    let inT = null, ms = 0
+    for (const e of evts) {
+      if (e.type === 'in') inT = new Date(e.event_time)
+      else if (e.type === 'out' && inT) {
+        if (!excludedSet?.has(e.id)) ms += new Date(e.event_time) - inT
+        inT = null
+      }
+    }
+    if (ms > 0) out[date] = (out[date] ?? 0) + ms / 3600000
+  }
+  const sorted = [...events].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
+  let openIn = null, openDate = null
+  for (const e of sorted) {
+    if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10) }
+    else if (e.type === 'out' && openIn) { openIn = null; openDate = null }
+  }
+  if (openIn) out[openDate] = (out[openDate] ?? 0) + (Date.now() - openIn) / 3600000
+  return out
+}
+
+const fmtCell = h => (h ?? 0).toFixed(1)
+
+function downloadCsv(lines, filename) {
+  const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export default function HoursBoard({ hasRole = () => false }) {
   const isAdmin = hasRole('admin')
   const [seasons,   setSeasons]   = useState(null)
@@ -34,7 +87,7 @@ export default function HoursBoard({ hasRole = () => false }) {
   const [excluded,  setExcluded]  = useState(null) // Map<userId, Set<checkoutId>>
   const [selSeason, setSelSeason] = useState(null) // season id | 'all'
   const [sort,      setSort]      = useState({ col: 'total', dir: 'desc' })
-  const [view,      setView]      = useState('members') // 'members' | 'days'
+  const [view,      setView]      = useState('members') // 'members' | 'days' | 'sessions' | 'matrix'
 
   useEffect(() => {
     Promise.all([
@@ -179,8 +232,89 @@ export default function HoursBoard({ hasRole = () => false }) {
     return rows
   }, [profiles, allEvents, excluded, selRange])
 
+  // The matrix needs exactly one season. A specific tab uses that season; the
+  // 'All Time' tab falls back to the active (current) season for this view.
+  const matrixSeason = useMemo(() => {
+    if (!seasons || selSeason === null) return null
+    const today  = new Date().toISOString().slice(0, 10)
+    const active = seasons.find(s => s.start_date <= today && (s.end_date == null || s.end_date >= today))
+    if (selSeason === 'all') return active ?? seasons[0] ?? null
+    return seasons.find(s => s.id === selSeason) ?? active ?? null
+  }, [seasons, selSeason])
+
+  // Member × day grid of regular (attendance-derived) hours: a row per member
+  // (zeros included), a column per calendar day from season start through today,
+  // grouped into Sat–Fri weeks with a per-week subtotal and a season Total.
+  const matrix = useMemo(() => {
+    if (!profiles || !allEvents || !excluded || !matrixSeason) return null
+    const today     = new Date().toISOString().slice(0, 10)
+    const start     = matrixSeason.start_date
+    const seasonEnd = matrixSeason.end_date ?? today
+    const end       = seasonEnd < today ? seasonEnd : today  // never render future days
+
+    const days = []
+    if (start <= end) for (let k = start; k <= end; k = addDaysKey(k, 1)) days.push(k)
+
+    // Group days into Sat–Fri weeks, keyed by the week's Saturday.
+    const weekMap = new Map()
+    for (const k of days) {
+      const ws = weekStartKey(k)
+      if (!weekMap.has(ws)) weekMap.set(ws, { key: ws, days: [], friKey: addDaysKey(ws, 6) })
+      weekMap.get(ws).days.push(k)
+    }
+    const weeks = [...weekMap.values()].sort((a, b) => a.key.localeCompare(b.key))
+
+    const eventMap = {}
+    for (const e of allEvents) (eventMap[e.user_id] ??= []).push(e)
+
+    const rows = profiles.map(p => {
+      const hoursByDate = regularHoursByDate(eventMap[p.id] ?? [], excluded[p.id])
+      const perDay = {}, weekSub = {}
+      let total = 0
+      for (const w of weeks) {
+        let wsum = 0
+        for (const k of w.days) { const h = hoursByDate[k] ?? 0; perDay[k] = h; wsum += h }
+        weekSub[w.key] = wsum
+        total += wsum
+      }
+      return { id: p.id, name: displayName(p), perDay, weekSub, total }
+    })
+
+    // Footer: per-day, per-week, and grand totals across all members.
+    const dailyTotal = { perDay: {}, weekSub: {}, total: 0 }
+    for (const w of weeks) {
+      let wsum = 0
+      for (const k of w.days) {
+        let s = 0
+        for (const r of rows) s += r.perDay[k] ?? 0
+        dailyTotal.perDay[k] = s
+        wsum += s
+      }
+      dailyTotal.weekSub[w.key] = wsum
+    }
+    dailyTotal.total = rows.reduce((a, r) => a + r.total, 0)
+
+    return { season: matrixSeason, fromAll: selSeason === 'all', days, weeks, rows, dailyTotal }
+  }, [profiles, allEvents, excluded, matrixSeason, selSeason])
+
+  const matrixSorted = useMemo(() => {
+    if (!matrix) return null
+    const mul = sort.dir === 'desc' ? -1 : 1
+    const col = sort.col
+    return [...matrix.rows].sort((a, b) => {
+      if (col === 'name') return mul * a.name.localeCompare(b.name)
+      if (col && col.startsWith('wk:')) {
+        const wk = col.slice(3)
+        return mul * ((a.weekSub[wk] ?? 0) - (b.weekSub[wk] ?? 0)) || a.name.localeCompare(b.name)
+      }
+      // 'total' (and any column carried over from another view) sorts by Total.
+      return mul * (a.total - b.total) || a.name.localeCompare(b.name)
+    })
+  }, [matrix, sort])
+
   // Admin CSV: every member's full sign in/out history + logged hours.
   function exportCsv() {
+    if (view === 'matrix') { exportMatrixCsv(); return }
     const nameById = Object.fromEntries((profiles ?? []).map(p => [p.id, displayName(p)]))
     const eventMap = {}
     for (const e of (allEvents ?? [])) (eventMap[e.user_id] ??= []).push(e)
@@ -205,13 +339,39 @@ export default function HoursBoard({ hasRole = () => false }) {
         '', '', '', '', (parseFloat(l.hours) || 0).toFixed(2), '',
       ].map(csv).join(','))
     }
-    const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `techmen-hours-${new Date().toISOString().slice(0, 10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadCsv(lines, `techmen-hours-${new Date().toISOString().slice(0, 10)}.csv`)
+  }
+
+  // Matrix CSV: the member × day grid with each week's subtotal and the Total.
+  function exportMatrixCsv() {
+    if (!matrix) return
+    const header = ['Member']
+    for (const w of matrix.weeks) {
+      for (const k of w.days) header.push(k)
+      header.push(`Week of ${w.key}`)
+    }
+    header.push('Total')
+    const lines = [header.map(csv).join(',')]
+
+    for (const r of (matrixSorted ?? matrix.rows)) {
+      const cells = [r.name]
+      for (const w of matrix.weeks) {
+        for (const k of w.days) cells.push(fmtCell(r.perDay[k]))
+        cells.push(fmtCell(r.weekSub[w.key]))
+      }
+      cells.push(fmtCell(r.total))
+      lines.push(cells.map(csv).join(','))
+    }
+
+    const foot = ['Daily Total']
+    for (const w of matrix.weeks) {
+      for (const k of w.days) foot.push(fmtCell(matrix.dailyTotal.perDay[k]))
+      foot.push(fmtCell(matrix.dailyTotal.weekSub[w.key]))
+    }
+    foot.push(fmtCell(matrix.dailyTotal.total))
+    lines.push(foot.map(csv).join(','))
+
+    downloadCsv(lines, `techmen-matrix-${new Date().toISOString().slice(0, 10)}.csv`)
   }
 
   function toggleSort(col) {
@@ -265,6 +425,10 @@ export default function HoursBoard({ hasRole = () => false }) {
               className={`board-viewbtn${view === 'sessions' ? ' active' : ''}`}
               onClick={() => setView('sessions')}
             >Sessions</button>
+            <button
+              className={`board-viewbtn${view === 'matrix' ? ' active' : ''}`}
+              onClick={() => setView('matrix')}
+            >Matrix</button>
           </div>
           {isAdmin && (
             <button className="board-export" onClick={exportCsv}>⬇ Export CSV</button>
@@ -335,7 +499,7 @@ export default function HoursBoard({ hasRole = () => false }) {
               </table>
             )}
           </div>
-        ) : (
+        ) : view === 'sessions' ? (
           <div className="board-table-wrap">
             {(sessionRows?.length ?? 0) === 0 ? (
               <p className="board-empty">No sessions recorded for this period.</p>
@@ -372,6 +536,75 @@ export default function HoursBoard({ hasRole = () => false }) {
               </table>
             )}
           </div>
+        ) : (
+          <>
+            {matrix && (
+              <p className="board-matrix-note">
+                Member × day grid — regular shop hours, weeks Sat–Fri.
+                {matrix.fromAll && <> Showing <strong>{matrix.season.name}</strong> (active season).</>}
+              </p>
+            )}
+            <div className="board-table-wrap">
+              {(!matrix || matrix.days.length === 0) ? (
+                <p className="board-empty">No days to show for this season yet.</p>
+              ) : (
+                <table className="board-table board-matrix">
+                  <thead>
+                    <tr>
+                      <SortTh col="name" label="Member" sort={sort} onSort={toggleSort} className="board-sticky" />
+                      {matrix.weeks.map(w => (
+                        <Fragment key={w.key}>
+                          {w.days.map(k => (
+                            <th key={k} className="board-th board-matrix-dayth">
+                              <span className="board-matrix-dow">{DOW2[weekdayOf(k)]}</span>
+                              <span className="board-matrix-date">{fmtMD(k)}</span>
+                            </th>
+                          ))}
+                          <SortTh col={`wk:${w.key}`} label={`Wk ${fmtMD(w.friKey)}`} sort={sort} onSort={toggleSort} className="board-matrix-subth" />
+                        </Fragment>
+                      ))}
+                      <SortTh col="total" label="Total" sort={sort} onSort={toggleSort} />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {matrixSorted.map(r => (
+                      <tr key={r.id} className="board-row">
+                        <td className="board-td board-sticky board-matrix-name">{r.name}</td>
+                        {matrix.weeks.map(w => (
+                          <Fragment key={w.key}>
+                            {w.days.map(k => {
+                              const h = r.perDay[k] ?? 0
+                              return (
+                                <td key={k} className={`board-td board-num board-matrix-cell${h < 0.05 ? ' board-matrix-zero' : ''}`}>
+                                  {fmtCell(h)}
+                                </td>
+                              )
+                            })}
+                            <td className="board-td board-num board-matrix-sub">{fmtCell(r.weekSub[w.key])}</td>
+                          </Fragment>
+                        ))}
+                        <td className="board-td board-num board-total">{fmtCell(r.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="board-matrix-foot">
+                      <td className="board-td board-sticky board-matrix-name board-total">Daily Total</td>
+                      {matrix.weeks.map(w => (
+                        <Fragment key={w.key}>
+                          {w.days.map(k => (
+                            <td key={k} className="board-td board-num board-total">{fmtCell(matrix.dailyTotal.perDay[k])}</td>
+                          ))}
+                          <td className="board-td board-num board-matrix-sub board-total">{fmtCell(matrix.dailyTotal.weekSub[w.key])}</td>
+                        </Fragment>
+                      ))}
+                      <td className="board-td board-num board-total">{fmtCell(matrix.dailyTotal.total)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>

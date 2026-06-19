@@ -225,3 +225,49 @@
 }
 .board-open { color: var(--gold-dim); font-family: var(--font-mono); font-size: 0.78rem; }
 .board-flag { color: var(--gold-dim); }
+
+/* ── Matrix view: member × day timesheet ── */
+.board-matrix-note {
+  margin: 0.75rem 1rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.board-matrix-note strong { color: var(--gold-bright); font-weight: 600; }
+
+/* Right-align every grid cell except the sticky member column. */
+.board-matrix th,
+.board-matrix td { text-align: right; }
+.board-matrix .board-sticky { text-align: left; }
+
+/* Sticky member-name column stays put while day columns scroll. */
+.board-sticky {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 2;
+  border-right: 1px solid var(--border-strong);
+}
+.board-matrix thead .board-sticky { z-index: 3; }
+.board-matrix-name { font-weight: 500; color: var(--text); }
+
+.board-matrix-dayth { padding: 0.5rem 0.7rem; }
+.board-matrix-dow {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.board-matrix-date { display: block; }
+
+.board-matrix-cell { min-width: 2.75rem; padding: 0.6rem 0.7rem; }
+.board-matrix-zero { color: var(--muted); opacity: 0.4; }
+
+/* Weekly subtotal columns + footer carry a faint fill to read as the grid spine. */
+.board-matrix-subth { background: var(--surface-2); }
+.board-matrix-sub {
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 600;
+}
+.board-matrix-foot .board-td { border-top: 1px solid var(--border-strong); }
