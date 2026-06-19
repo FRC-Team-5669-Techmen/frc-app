@@ -50,6 +50,7 @@ export default function CheckinPage({ session }) {
   const [eventTime, setEventTime] = useState(null)
   const [geoReason, setGeoReason] = useState(null)
   const [acting, setActing] = useState(false)
+  const [exempt, setExempt] = useState(false)  // staff-granted geofence exemption
 
   const memberName = session?.user?.user_metadata?.full_name
     || session?.user?.email?.split('@')[0]
@@ -82,11 +83,14 @@ export default function CheckinPage({ session }) {
     setStatus('loading')
     setLoadingMsg('Checking location…')
     try {
-      const geo = await verifyAtShop()
-      if (!geo.ok) {
-        setGeoReason(geo.reason)
-        setStatus('geo')
-        return
+      // Exempt members skip the geofence entirely and check in directly.
+      if (!exempt) {
+        const geo = await verifyAtShop()
+        if (!geo.ok) {
+          setGeoReason(geo.reason)
+          setStatus('geo')
+          return
+        }
       }
       await insertEvent('in')
     } catch (err) {
@@ -101,6 +105,15 @@ export default function CheckinPage({ session }) {
     async function init() {
       try {
         await supabase.from('profiles').upsert({ id: session.user.id }, { onConflict: 'id' })
+
+        // Staff can exempt a member from the location gate (e.g. a phone with
+        // unreliable GPS). Read it now so a tapped check-in can skip the fence.
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('geofence_exempt')
+          .eq('id', session.user.id)
+          .single()
+        setExempt(prof?.geofence_exempt === true)
 
         const startOfToday = new Date()
         startOfToday.setHours(0, 0, 0, 0)

@@ -82,7 +82,11 @@ export default function RosterPage() {
       setMembers([])
       return
     }
-    setMembers(data ?? [])
+    // admin_get_members() doesn't return geofence_exempt — fetch it separately
+    // and merge onto each member by id.
+    const { data: exemptRows } = await supabase.from('profiles').select('id, geofence_exempt')
+    const exemptById = Object.fromEntries((exemptRows ?? []).map(r => [r.id, r.geofence_exempt === true]))
+    setMembers((data ?? []).map(m => ({ ...m, geofence_exempt: exemptById[m.id] ?? false })))
   }
 
   async function loadDomains() {
@@ -191,6 +195,20 @@ export default function RosterPage() {
     setSaving(s => { const n = { ...s }; delete n[key]; return n })
     if (error) { setPageError(error.message); return }
     setMembers(ms => ms.map(m => m.id === memberId ? { ...m, status } : m))
+  }
+
+  // Per-student geofence exemption: lets a member (e.g. an iPhone with flaky GPS)
+  // check in without the location gate. Mirrors setStatus.
+  async function toggleGeoExempt(memberId, next) {
+    const key = `${memberId}_geo`
+    setSaving(s => ({ ...s, [key]: true }))
+    const { error } = await supabase
+      .from('profiles')
+      .update({ geofence_exempt: next })
+      .eq('id', memberId)
+    setSaving(s => { const n = { ...s }; delete n[key]; return n })
+    if (error) { setPageError(error.message); return }
+    setMembers(ms => ms.map(m => m.id === memberId ? { ...m, geofence_exempt: next } : m))
   }
 
   const visibleMembers = useMemo(() => {
@@ -377,6 +395,18 @@ export default function RosterPage() {
                         className={`status-select status-${m.status ?? 'active'}`}
                       >
                         {ALL_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div className="roster-detail-row">
+                      <span className="roster-detail-label">Geo exempt</span>
+                      <select
+                        value={m.geofence_exempt ? 'yes' : 'no'}
+                        disabled={!!saving[`${m.id}_geo`]}
+                        onChange={e => toggleGeoExempt(m.id, e.target.value === 'yes')}
+                        className="status-select"
+                      >
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
                       </select>
                     </div>
                     <div className="roster-detail-row">
