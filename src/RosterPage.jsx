@@ -35,7 +35,7 @@ export default function RosterPage() {
   const [linkPick, setLinkPick]   = useState({})        // parent_id -> selected student_id
   const [hoursById, setHoursById] = useState({})        // member_id -> total hours (number)
   const [query, setQuery]         = useState('')        // name/nickname/email search
-  const [sort, setSort]           = useState({ col: 'name', dir: 'asc' })
+  const [sort, setSort]           = useState({ col: 'role', dir: 'asc' })  // default: role order, pending last
   const [delTarget, setDelTarget] = useState(null)      // member being deleted, or null
   const [delConfirm, setDelConfirm] = useState('')      // typed full-name confirmation
   const [deleting, setDeleting]   = useState(false)
@@ -225,8 +225,12 @@ export default function RosterPage() {
           return ((hoursById[a.id] ?? 0) - (hoursById[b.id] ?? 0)) * dir || byName(a, b)
         case 'subteam':
           return ((a.subteams ?? [])[0] ?? '').localeCompare((b.subteams ?? [])[0] ?? '') * dir || byName(a, b)
-        case 'role':
-          return (roleRank(a.roles) - roleRank(b.roles)) * dir || byName(a, b)
+        case 'role': {
+          // Order: admin, (lead), mentor, student, parent — then pending
+          // (unapproved) members last, regardless of role.
+          const rank = m => m.approved === false ? ROLE_RANK.length + 1 : roleRank(m.roles)
+          return (rank(a) - rank(b)) * dir || byName(a, b)
+        }
         default:
           return byName(a, b) * dir
       }
