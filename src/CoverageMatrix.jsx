@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { roleColor, topRoleOf } from './roles'
+import { displayName } from './names'
 import './CoverageMatrix.css'
-
-const displayName = (m) => (m?.nickname && m.nickname.trim()) || m?.full_name || '—'
 
 // canView lets a non-staff member see the matrix read-only (it has no mutations);
 // used by the member skills dashboard's "Team coverage" toggle.

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
+import { displayName } from './names'
 import './ActivityPage.css'
 
 // Staff-only live view of today's attendance, plus a manual override control
@@ -19,7 +20,7 @@ export default function ActivityPage({ hasRole = () => false }) {
     const { data, error } = await supabase
       .from('attendance_events')
       // Two FKs point at profiles now (user_id, overridden_by) so name the FK
-      .select('id, type, event_time, location, overridden_by, member:profiles!attendance_events_user_fkey(full_name)')
+      .select('id, type, event_time, location, overridden_by, member:profiles!attendance_events_user_fkey(full_name, nickname)')
       .gte('event_time', start.toISOString())
       .order('event_time', { ascending: false })
     if (error) { setPageError(error.message); setEvents([]); return }
@@ -29,7 +30,7 @@ export default function ActivityPage({ hasRole = () => false }) {
   useEffect(() => {
     if (!isStaff) return
     load()
-    supabase.from('profiles').select('id, full_name').order('full_name')
+    supabase.from('profiles').select('id, full_name, nickname').order('full_name')
       .then(({ data }) => setMembers(data ?? []))
 
     const timer = setInterval(load, 60_000)
@@ -78,7 +79,7 @@ export default function ActivityPage({ hasRole = () => false }) {
           >
             <option value="">Select a member…</option>
             {members.map(m => (
-              <option key={m.id} value={m.id}>{m.full_name || m.id}</option>
+              <option key={m.id} value={m.id}>{displayName(m)}</option>
             ))}
           </select>
           <button
@@ -116,7 +117,7 @@ export default function ActivityPage({ hasRole = () => false }) {
                 {events.map(ev => (
                   <tr key={ev.id} className="activity-row">
                     <td className="activity-td activity-name">
-                      {ev.member?.full_name || '—'}
+                      {displayName(ev.member)}
                       {ev.overridden_by && <span className="activity-badge">override</span>}
                     </td>
                     <td className="activity-td">

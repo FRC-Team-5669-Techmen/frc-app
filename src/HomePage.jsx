@@ -5,6 +5,7 @@ import { computeHoursMs, fmtDuration } from './hoursUtils'
 import { useGlance } from './useGlance'
 import { fmtTime, fmtDay } from './shopStatus'
 import { startOfTodayISO, fmtClock } from './presence'
+import { displayName } from './names'
 import './HomePage.css'
 
 function fmtClock12(iso) {
@@ -36,7 +37,7 @@ function useTileMetrics(uid, isStaff) {
           supabase.from('member_skills').select('member_id, skill_id, status').eq('status', 'certified'),
           supabase.from('profiles').select('id').eq('status', 'active'),
           supabase.from('attendance_events')
-            .select('id, user_id, type, event_time, profiles!attendance_events_user_fkey(full_name, subteams)')
+            .select('id, user_id, type, event_time, profiles!attendance_events_user_fkey(full_name, nickname, subteams)')
             .order('event_time', { ascending: false }).limit(6),
         ])
         if (!active) return
@@ -329,7 +330,7 @@ function StaffTiles({ m, present }) {
             {m.feed.slice(0, 4).map(e => (
               <li key={e.id} className={`mb-feed-row ${e.type === 'in' ? 'mb-feed-in' : 'mb-feed-out'}`}>
                 <span className="mb-feed-icon" aria-hidden="true">{e.type === 'in' ? '↓' : '↑'}</span>
-                <span className="mb-feed-name">{e.profiles?.full_name || '—'}</span>
+                <span className="mb-feed-name">{displayName(e.profiles)}</span>
                 <span className="mb-feed-time hud-mono hud-tnum">{fmtClock(e.event_time)}</span>
               </li>
             ))}

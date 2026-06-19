@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from './supabase'
 import { computePresence, startOfTodayISO, fmtClock } from './presence'
+import { displayName } from './names'
 import './CheckinPage.css'   // reuse the HUD state visuals (idle reticle, flood, fault)
 import './KioskPage.css'
 
@@ -76,7 +77,7 @@ export default function KioskPage({ session, hasRole }) {
       }
       // Resolve the member against the existing profiles table.
       const { data: prof } = await supabase
-        .from('profiles').select('id, full_name').eq('id', memberId).maybeSingle()
+        .from('profiles').select('id, full_name, nickname').eq('id', memberId).maybeSingle()
       if (!prof) {
         setResult({ faultMsg: 'Unknown member tag' })
         setMode('fault'); return returnToIdle()
@@ -98,7 +99,7 @@ export default function KioskPage({ session, hasRole }) {
 
       if (navigator.vibrate) navigator.vibrate(40)
       const time = fmtClock(new Date().toISOString())
-      setResult({ name: prof.full_name || 'Member', time })
+      setResult({ name: displayName(prof), time })
       setMode(newType === 'in' ? 'success' : 'checkout')
       setPresentCount(c => (c == null ? c : c + (newType === 'in' ? 1 : -1)))
       returnToIdle()

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from './supabase'
 import { computePresence, startOfTodayISO, fmtClock, groupBySubteam } from './presence'
+import { displayName } from './names'
 import './PresenceBoard.css'
 
 // Read-only wall-display board of who is currently present, derived from the
@@ -18,7 +19,7 @@ export default function PresenceBoard() {
   const load = useCallback(async () => {
     // Active roster + today's attendance, both readable by any authenticated member.
     const [{ data: profs, error: pErr }, { data: events, error: eErr }] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, subteams, status').eq('status', 'active'),
+      supabase.from('profiles').select('id, full_name, nickname, subteams, status').eq('status', 'active'),
       supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', startOfTodayISO()),
     ])
     if (pErr || eErr) { setError((pErr || eErr).message); return }
@@ -53,7 +54,7 @@ export default function PresenceBoard() {
   const sortMembers = (list) => [...list].sort((a, b) => {
     const ap = present.has(a.id), bp = present.has(b.id)
     if (ap !== bp) return ap ? -1 : 1                 // present first
-    return (a.full_name || '').localeCompare(b.full_name || '')
+    return displayName(a).localeCompare(displayName(b))
   })
 
   return (
@@ -83,7 +84,7 @@ export default function PresenceBoard() {
                 return (
                   <li key={m.id} className={`pb-row${isPresent ? ' pb-present' : ' pb-absent'}`}>
                     <span className="pb-icon" aria-hidden="true">{isPresent ? '✓' : '○'}</span>
-                    <span className="pb-name">{m.full_name || '—'}</span>
+                    <span className="pb-name">{displayName(m)}</span>
                     <span className="pb-meta hud-tnum">{sub} · {isPresent ? fmtClock(since) : '--'}</span>
                   </li>
                 )

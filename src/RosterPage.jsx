@@ -3,14 +3,13 @@ import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { computeHoursMs, fmtHours } from './hoursUtils'
 import { RoleBadge, roleColor } from './roles'
+import { displayName } from './names'
 import './RosterPage.css'
 
 const ALL_ROLES    = ['student', 'mentor', 'lead', 'admin', 'parent']
 const ALL_STATUSES = ['active', 'inactive', 'alumni']
 const ROLE_RANK    = ['admin', 'lead', 'mentor', 'student', 'parent']
 const topRole = (roles = []) => ROLE_RANK.find(r => roles.includes(r))
-// Nickname is the display name everywhere on the roster; legal name is the fallback.
-const displayName = (m) => (m?.nickname && m.nickname.trim()) || m?.full_name || '—'
 const roleRank = (roles = []) => {
   const i = ROLE_RANK.indexOf(topRole(roles))
   return i === -1 ? ROLE_RANK.length : i

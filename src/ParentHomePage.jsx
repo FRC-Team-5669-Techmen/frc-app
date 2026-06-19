@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { computeHoursMs, fmtDuration } from './hoursUtils'
 import { computePresence, startOfTodayISO, fmtClock, subteamOf } from './presence'
+import { displayName } from './names'
 import GlanceCard from './GlanceCard'
 import './ParentHomePage.css'
 
@@ -27,8 +28,6 @@ export default function ParentHomePage({ session }) {
   const [note, setNote]       = useState('')
   const [linkMsg, setLinkMsg] = useState(null) // { ok, text }
   const [submitting, setSubmitting] = useState(false)
-
-  const dispName = (m) => (m?.nickname && m.nickname.trim()) || m?.full_name || '—'
 
   const loadLinkData = useCallback(async () => {
     const [{ data: r }, { data: reqs }] = await Promise.all([
@@ -68,13 +67,13 @@ export default function ParentHomePage({ session }) {
     const todayISO = startOfTodayISO()
     const [{ data: todayEvents }, { data: active }] = await Promise.all([
       supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', todayISO),
-      supabase.from('profiles').select('id, full_name').eq('status', 'active'),
+      supabase.from('profiles').select('id, full_name, nickname').eq('status', 'active'),
     ])
     const present = computePresence(todayEvents ?? [])
     const activeRoster = active ?? []
     const team = {
       total: activeRoster.length,
-      names: activeRoster.filter(m => present.has(m.id)).map(m => m.full_name || '—').sort(),
+      names: activeRoster.filter(m => present.has(m.id)).map(m => displayName(m)).sort(),
     }
     team.present = team.names.length
 
@@ -85,7 +84,7 @@ export default function ParentHomePage({ session }) {
 
     // Per-student detail.
     const [{ data: profs }, { data: allEvents }, { data: certs }, { data: logged }] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, subteams, avatar_url').in('id', studentIds),
+      supabase.from('profiles').select('id, full_name, nickname, subteams, avatar_url').in('id', studentIds),
       supabase.from('attendance_events').select('id, user_id, type, event_time').in('user_id', studentIds),
       supabase.from('member_skills').select('member_id, skill_id, updated_at, skills(name)').eq('status', 'certified').in('member_id', studentIds),
       supabase.from('logged_hours').select('member_id, hours, type').eq('status', 'verified').in('member_id', studentIds),
@@ -106,7 +105,7 @@ export default function ParentHomePage({ session }) {
         .filter(Boolean))]
       return {
         id: p.id,
-        name: p.full_name || '—',
+        name: displayName(p),
         subteam: subteamOf(p),
         avatar: p.avatar_url,
         since: present.get(p.id) || null,
@@ -136,12 +135,12 @@ export default function ParentHomePage({ session }) {
 
   const linkedIds  = new Set(students.map(s => s.id))
   const pendingIds = new Set(myReqs.map(r => r.student_id))
-  const nameById   = Object.fromEntries(roster.map(m => [m.id, dispName(m)]))
+  const nameById   = Object.fromEntries(roster.map(m => [m.id, displayName(m)]))
   const ql = q.trim().toLowerCase()
   const candidates = roster
     .filter(m => m.id !== parentId && !linkedIds.has(m.id) && !pendingIds.has(m.id))
-    .filter(m => !ql || dispName(m).toLowerCase().includes(ql) || (m.full_name ?? '').toLowerCase().includes(ql))
-    .sort((a, b) => dispName(a).localeCompare(dispName(b)))
+    .filter(m => !ql || displayName(m).toLowerCase().includes(ql) || (m.full_name ?? '').toLowerCase().includes(ql))
+    .sort((a, b) => displayName(a).localeCompare(displayName(b)))
 
   return (
     <div className="ph-wrap">
@@ -242,7 +241,7 @@ export default function ParentHomePage({ session }) {
             >
               <option value="">{candidates.length ? 'Select a student…' : 'No matching students'}</option>
               {candidates.map(m => (
-                <option key={m.id} value={m.id}>{dispName(m)}</option>
+                <option key={m.id} value={m.id}>{displayName(m)}</option>
               ))}
             </select>
             <input

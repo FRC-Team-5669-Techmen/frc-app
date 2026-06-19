@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 import MemberSkillsPanel from './MemberSkillsPanel'
 import NotificationsPanel from './NotificationsPanel'
 import { RoleBadge, ROLE_ORDER } from './roles'
+import { displayName } from './names'
 import './ProfilePage.css'
 
 const SUBTEAMS = [
@@ -142,7 +143,8 @@ export default function ProfilePage({ session, hasRole = () => false }) {
     return <div className="profile-loading"><div className="profile-spinner" /></div>
   }
 
-  const initials = (profile.full_name || session.user.email || '?')[0].toUpperCase()
+  const headerName = displayName({ ...profile, email: session.user.email })
+  const initials = (headerName || '?')[0].toUpperCase()
 
   // Calendar feed links: Supabase functions endpoint + the member's capability token.
   const feedBase  = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calendar-feed`
@@ -159,12 +161,12 @@ export default function ProfilePage({ session, hasRole = () => false }) {
 
           <div className="profile-identity">
             {profile.avatar_url
-              ? <img src={profile.avatar_url} className="profile-avatar" alt={profile.full_name} />
+              ? <img src={profile.avatar_url} className="profile-avatar" alt={headerName} />
               : <div className="profile-avatar profile-avatar-init">{initials}</div>
             }
             <div className="profile-identity-text">
               <span className="profile-display-name">
-                {profile.full_name || '—'}
+                {headerName}
                 {(() => { const r = ROLE_ORDER.find(x => hasRole(x)); return r ? <RoleBadge role={r} className="profile-role-badge" /> : null })()}
               </span>
               <span className="profile-display-email">{session.user.email}</span>

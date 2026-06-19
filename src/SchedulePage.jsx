@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import { fmtTime, fmtDay, SHOP_OPEN_KINDS } from './shopStatus'
+import { displayName } from './names'
 import './SchedulePage.css'
 
 const KINDS = ['build', 'meeting', 'competition', 'potluck', 'outreach', 'other']
@@ -72,7 +73,7 @@ export default function SchedulePage({ session, hasRole }) {
   const load = useCallback(async () => {
     const [{ data: evData, error: e1 }, { data: suData, error: e2 }, { data: jbData }] = await Promise.all([
       supabase.from('events').select('*').order('starts_at', { ascending: true }),
-      supabase.from('event_signups').select('event_id, member_id, response, item, profiles(full_name)'),
+      supabase.from('event_signups').select('event_id, member_id, response, item, profiles(full_name, nickname)'),
       // Job due dates — read-only surfacing on the calendar (this page never edits jobs).
       supabase.from('tasks').select('id, title, due_date, status').not('due_date', 'is', null),
     ])
@@ -262,7 +263,7 @@ export default function SchedulePage({ session, hasRole }) {
     const open = expanded.has(ev.id)
     const cap = ev.capacity
     const full = cap != null && going.length >= cap
-    const nameOf = s => (s.member_id === myId ? 'You' : (s.profiles?.full_name || 'Member'))
+    const nameOf = s => (s.member_id === myId ? 'You' : displayName(s.profiles))
     return (
       <li key={ev.id} className="sch-event">
         <div className="sch-event-row">

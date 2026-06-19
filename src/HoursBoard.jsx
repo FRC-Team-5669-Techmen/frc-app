@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, HOUR_TYPES } from './hoursUtils'
+import { displayName } from './names'
 import './HoursBoard.css'
 
 const TYPE_COLOR = Object.fromEntries(HOUR_TYPES.map(t => [t.key, t.color]))
@@ -38,7 +39,7 @@ export default function HoursBoard({ hasRole = () => false }) {
   useEffect(() => {
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
-      supabase.from('profiles').select('id, full_name'),
+      supabase.from('profiles').select('id, full_name, nickname'),
       supabase.from('attendance_events').select('id, user_id, type, event_time, location').order('event_time'),
       supabase.from('logged_hours').select('member_id, type, hours, date').eq('status', 'verified'),
       supabase.from('session_reviews').select('user_id, checkout_id').in('status', ['pending', 'voided']),
@@ -81,7 +82,7 @@ export default function HoursBoard({ hasRole = () => false }) {
 
     return profiles.map(p => ({
       id:        p.id,
-      name:      p.full_name || '—',
+      name:      displayName(p),
       checkedIn: isCheckedIn(eventMap[p.id] ?? []),
       breakdown: buildBreakdown(seasons, eventMap[p.id] ?? [], loggedMap[p.id] ?? [], excluded[p.id] ?? null),
     }))
@@ -163,7 +164,7 @@ export default function HoursBoard({ hasRole = () => false }) {
     const inRange = d => !selRange || (d >= selRange.start && (selRange.end == null || d <= selRange.end))
     const rows = []
     for (const p of profiles) {
-      const name = p.full_name || '—'
+      const name = displayName(p)
       for (const s of sessionsFromEvents(eventMap[p.id] ?? [])) {
         const date = s.inTime.toISOString().slice(0, 10)
         if (!inRange(date)) continue
@@ -180,13 +181,13 @@ export default function HoursBoard({ hasRole = () => false }) {
 
   // Admin CSV: every member's full sign in/out history + logged hours.
   function exportCsv() {
-    const nameById = Object.fromEntries((profiles ?? []).map(p => [p.id, p.full_name || '—']))
+    const nameById = Object.fromEntries((profiles ?? []).map(p => [p.id, displayName(p)]))
     const eventMap = {}
     for (const e of (allEvents ?? [])) (eventMap[e.user_id] ??= []).push(e)
     const lines = [['Member', 'Hour Type', 'Date', 'Check In', 'Entrance', 'Check Out', 'Exit', 'Duration (h)', 'Flagged']
       .map(csv).join(',')]
     for (const p of (profiles ?? [])) {
-      const name = p.full_name || '—'
+      const name = displayName(p)
       for (const s of sessionsFromEvents(eventMap[p.id] ?? [])) {
         const flagged = s.outId && excluded?.[p.id]?.has(s.outId) ? 'review' : ''
         lines.push([

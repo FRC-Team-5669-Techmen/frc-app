@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import { displayName } from './names'
 import './VerifyHoursPage.css'
 
 // ─── formatting helpers ───────────────────────────────────────────────────────
@@ -49,8 +50,8 @@ async function fetchMissedCheckouts() {
   const [{ data: evts }, { data: profs }] = await Promise.all([
     supabase.from('attendance_events').select('id, event_time').in('id', eventIds),
     // email lives on auth.users, not profiles — selecting it here errors the
-    // whole query and blanks every member name. Use full_name.
-    supabase.from('profiles').select('id, full_name').in('id', userIds),
+    // whole query and blanks every member name. Use full_name/nickname.
+    supabase.from('profiles').select('id, full_name, nickname').in('id', userIds),
   ])
 
   const evtMap  = Object.fromEntries((evts  ?? []).map(e => [e.id, e]))
@@ -96,7 +97,7 @@ export default function VerifyHoursPage({ session, hasRole }) {
 
     supabase
       .from('logged_hours')
-      .select('*, member:member_id(full_name)')
+      .select('*, member:member_id(full_name, nickname)')
       .eq('status', 'pending')
       .order('date', { ascending: true })
       .order('created_at', { ascending: true })
@@ -208,7 +209,7 @@ export default function VerifyHoursPage({ session, hasRole }) {
                 <div key={r.id} className={`vh-card${busy ? ' vh-card-busy' : ''}`}>
                   <div className="vh-card-top">
                     <span className="vh-member-name">
-                      {r.member?.full_name || r.member?.email || 'Unknown member'}
+                      {displayName(r.member)}
                     </span>
                     <span className="vh-hours">{fmtDuration(durationMs)}</span>
                   </div>
@@ -267,7 +268,7 @@ export default function VerifyHoursPage({ session, hasRole }) {
                 <div key={entry.id} className={`vh-card${busy ? ' vh-card-busy' : ''}`}>
                   <div className="vh-card-top">
                     <span className="vh-member-name">
-                      {entry.member?.full_name || entry.member?.email || 'Unknown member'}
+                      {displayName(entry.member)}
                     </span>
                     <span className="vh-meta-right">
                       <span className={`vh-type-chip vh-type-${entry.type}`}>{entry.type}</span>

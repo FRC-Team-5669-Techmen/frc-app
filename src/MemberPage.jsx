@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from './supabase'
+import { displayName } from './names'
 import MemberSkillsPanel from './MemberSkillsPanel'
 import './MemberPage.css'
 
@@ -13,10 +14,10 @@ export default function MemberPage({ session, hasRole }) {
   useEffect(() => {
     supabase
       .from('profiles')
-      .select('full_name, avatar_url, subteams, disciplines')
+      .select('full_name, nickname, avatar_url, subteams, disciplines')
       .eq('id', id)
       .single()
-      .then(({ data }) => setMember(data ?? { full_name: 'Unknown member', avatar_url: null, subteams: [], disciplines: [] }))
+      .then(({ data }) => setMember(data ?? { full_name: 'Unknown member', nickname: null, avatar_url: null, subteams: [], disciplines: [] }))
 
     supabase
       .from('position_assignments')
@@ -34,7 +35,8 @@ export default function MemberPage({ session, hasRole }) {
     return <div className="mp-loading"><div className="mp-spinner" /></div>
   }
 
-  const initials = (member.full_name || '?')[0].toUpperCase()
+  const name     = displayName(member)
+  const initials = (name || '?')[0].toUpperCase()
 
   return (
     <div className="mp-wrap">
@@ -42,11 +44,11 @@ export default function MemberPage({ session, hasRole }) {
 
         <div className="mp-id-card">
           {member.avatar_url
-            ? <img src={member.avatar_url} className="mp-avatar" alt={member.full_name} />
+            ? <img src={member.avatar_url} className="mp-avatar" alt={name} />
             : <div className="mp-avatar mp-avatar-init">{initials}</div>
           }
           <div className="mp-id-text">
-            <span className="mp-name">{member.full_name || '—'}</span>
+            <span className="mp-name">{name}</span>
             {(member.subteams ?? []).length > 0 && (
               <div className="mp-subteams">
                 {member.subteams.map(st => (

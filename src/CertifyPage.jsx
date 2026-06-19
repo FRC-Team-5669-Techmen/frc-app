@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
+import { displayName } from './names'
 import './CertifyPage.css'
 
 const STATUSES = ['not_started', 'in_progress', 'certified']
@@ -18,7 +19,7 @@ export default function CertifyPage({ session, hasRole }) {
     async function loadMembers() {
       const { data } = await supabase
         .from('profiles')
-        .select('id, full_name')
+        .select('id, full_name, nickname')
         .order('full_name')
       const list = data ?? []
       // Ensure the current staff member appears so they can certify their own skills.
@@ -27,7 +28,7 @@ export default function CertifyPage({ session, hasRole }) {
       if (!list.find(p => p.id === session.user.id)) {
         const { data: own } = await supabase
           .from('profiles')
-          .select('id, full_name')
+          .select('id, full_name, nickname')
           .eq('id', session.user.id)
           .single()
         if (own) list.unshift(own)
@@ -43,7 +44,7 @@ export default function CertifyPage({ session, hasRole }) {
     Promise.all([
       supabase.from('skills').select('*').order('sort_order'),
       supabase.from('member_skills')
-        .select('*, certifier:certified_by(full_name)')
+        .select('*, certifier:certified_by(full_name, nickname)')
         .eq('member_id', selectedId),
     ]).then(([{ data: cat }, { data: ms }]) => {
       setCatalog(cat ?? [])
@@ -89,7 +90,7 @@ export default function CertifyPage({ session, hasRole }) {
       }
       const { data } = await supabase.from('member_skills')
         .upsert(row)
-        .select('*, certifier:certified_by(full_name)')
+        .select('*, certifier:certified_by(full_name, nickname)')
         .single()
       if (data) setMemberSkills(prev => [...prev.filter(ms => ms.skill_id !== skill.id), data])
     }
@@ -119,7 +120,7 @@ export default function CertifyPage({ session, hasRole }) {
             <option value="">— Select a member —</option>
             {(members ?? []).map(m => (
               <option key={m.id} value={m.id}>
-                {m.full_name || '(no name)'}
+                {displayName(m)}
                 {m.id === session.user.id ? ' (you)' : ''}
               </option>
             ))}
@@ -152,9 +153,9 @@ export default function CertifyPage({ session, hasRole }) {
                       {skill.safety_critical && (
                         <span className="cp-safety" title="Safety critical">!</span>
                       )}
-                      {currentStatus === 'certified' && ms?.certifier?.full_name && (
+                      {currentStatus === 'certified' && ms?.certifier && (
                         <span className="cp-cert-meta">
-                          by {ms.certifier.full_name}
+                          by {displayName(ms.certifier)}
                           {ms.certified_at && ` · ${new Date(ms.certified_at).toLocaleDateString()}`}
                         </span>
                       )}

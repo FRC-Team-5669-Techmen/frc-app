@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import { RoleBadge } from './roles'
+import { displayName } from './names'
 import './AccessRequestsPage.css'
 
 const ROLES = ['student', 'mentor', 'parent']
-
-const personName = (p) => (p?.nickname && p.nickname.trim()) || p?.full_name || '—'
 
 function fmtWhen(iso) {
   return new Date(iso).toLocaleString('en-US', {
@@ -227,7 +226,7 @@ export default function AccessRequestsPage({ hasRole }) {
                 <li key={r.id} className="ar-card">
                   <div className="ar-card-main">
                     <span className="ar-name">
-                      {personName(r.parent)} <span className="ar-link-arrow">→</span> {personName(r.student)}
+                      {displayName(r.parent)} <span className="ar-link-arrow">→</span> {displayName(r.student)}
                     </span>
                     {r.note && <p className="ar-note">{r.note}</p>}
                     <div className="ar-meta hud-tnum">
@@ -260,7 +259,7 @@ export default function AccessRequestsPage({ hasRole }) {
                 <li key={r.id} className="ar-card">
                   <div className="ar-card-main">
                     <span className="ar-name">
-                      {personName(r.member)} <span className="ar-link-arrow">→</span> {r.skill?.name || 'skill'}
+                      {displayName(r.member)} <span className="ar-link-arrow">→</span> {r.skill?.name || 'skill'}
                     </span>
                     {r.note && <p className="ar-note">{r.note}</p>}
                     <div className="ar-meta hud-tnum">

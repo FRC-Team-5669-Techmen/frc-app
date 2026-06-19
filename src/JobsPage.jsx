@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from './supabase'
+import { displayName } from './names'
 import './JobsPage.css'
 
 // Mirrors the subteam vocabulary used for profiles.subteams (see ProfilePage).
@@ -46,7 +47,6 @@ const fmtDur = ms => {
   if (ms < 60000) return '—'
   return h === 0 ? `${m}m` : `${h}h ${m % 60}m`
 }
-const personName = p => (p?.nickname && p.nickname.trim()) || p?.full_name || 'Member'
 const jobImageUrl = path => supabase.storage.from('jobs').getPublicUrl(path).data.publicUrl
 
 // Accrue a member's time on one job from their attendance stream: a session
@@ -109,7 +109,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
       supabase.from('task_required_skills').select('task_id, skill_id'),
       supabase.from('skills').select('id, name, safety_critical').order('name'),
       supabase.from('member_skills').select('skill_id').eq('member_id', uid).eq('status', 'certified'),
-      supabase.from('task_claims').select('task_id, member_id, status, profiles!task_claims_member_id_fkey(full_name, avatar_url)'),
+      supabase.from('task_claims').select('task_id, member_id, status, profiles!task_claims_member_id_fkey(full_name, nickname, avatar_url)'),
       supabase.from('profiles').select('subteams, disciplines').eq('id', uid).single(),
     ])
     if (tRes.error) { setError(tRes.error.message); setTasks([]); return }
@@ -722,7 +722,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
         const full    = max != null && claims.length >= max
         const spots   = max == null ? null : max - claims.length
         const overdue = t.due_date && t.due_date < today && (ds === 'open' || ds === 'progress')
-        const nameOf  = c => (c.member_id === uid ? 'You' : (c.profiles?.full_name || 'Member'))
+        const nameOf  = c => (c.member_id === uid ? 'You' : displayName(c.profiles))
         return (
           <div className="jobs-detail-backdrop" onClick={() => setSelectedId(null)}>
             <div className="jobs-detail" onClick={e => e.stopPropagation()}>
@@ -876,7 +876,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
                       {updates.map(u => (
                         <li key={u.id} className="jobs-update">
                           <div className="jobs-update-head">
-                            <span className="jobs-update-author">{personName(u.author)}</span>
+                            <span className="jobs-update-author">{displayName(u.author)}</span>
                             <span className="jobs-update-when hud-mono">{fmtWhen(u.created_at)}</span>
                           </div>
                           {u.body && <p className="jobs-update-body">{u.body}</p>}

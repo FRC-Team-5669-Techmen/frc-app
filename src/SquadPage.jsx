@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
+import { displayName } from './names'
 import './SquadPage.css'
 
 const EMPTY_FORM = { name: '', description: '', target_count: 1, sort_order: 0 }
@@ -25,14 +26,14 @@ export default function SquadPage({ session, hasRole = () => false }) {
       supabase.from('positions').select('*').order('sort_order', { ascending: true }),
       // member_id and assigned_by both reference profiles, so name the FK
       supabase.from('position_assignments')
-        .select('position_id, member_id, member:profiles!position_assignments_member_id_fkey(full_name)'),
-      supabase.from('profiles').select('id, full_name')
+        .select('position_id, member_id, member:profiles!position_assignments_member_id_fkey(full_name, nickname)'),
+      supabase.from('profiles').select('id, full_name, nickname')
         .eq('status', 'active').eq('approved', true).order('full_name'),
     ])
     if (posRes.error) { setError(posRes.error.message); setPositions([]); return }
     const map = {}
     for (const a of asgRes.data ?? []) {
-      (map[a.position_id] ??= []).push({ member_id: a.member_id, name: a.member?.full_name })
+      (map[a.position_id] ??= []).push({ member_id: a.member_id, name: displayName(a.member) })
     }
     setAssignments(map)
     setMembers(memRes.data ?? [])
@@ -215,7 +216,7 @@ export default function SquadPage({ session, hasRole = () => false }) {
                   >
                     <option value="">Assign a member…</option>
                     {available.map(m => (
-                      <option key={m.id} value={m.id}>{m.full_name || m.id}</option>
+                      <option key={m.id} value={m.id}>{displayName(m)}</option>
                     ))}
                   </select>
                   <button

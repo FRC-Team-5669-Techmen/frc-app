@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
+import { displayName } from './names'
 import './MemberSkillsPanel.css'
 
 // canEdit:    member can toggle own in_progress status
@@ -15,7 +16,7 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
     setMemberSkills(null)
     Promise.all([
       supabase.from('skills').select('*').order('sort_order'),
-      supabase.from('member_skills').select('*, certifier:certified_by(full_name)').eq('member_id', memberId),
+      supabase.from('member_skills').select('*, certifier:certified_by(full_name, nickname)').eq('member_id', memberId),
     ]).then(([{ data: cat }, { data: ms }]) => {
       setCatalog(cat ?? [])
       setMemberSkills(ms ?? [])
@@ -56,7 +57,7 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
     } else {
       const { data } = await supabase.from('member_skills')
         .upsert({ member_id: memberId, skill_id: skill.id, status: 'in_progress', updated_at: new Date().toISOString() })
-        .select('*, certifier:certified_by(full_name)').single()
+        .select('*, certifier:certified_by(full_name, nickname)').single()
       if (data) setMemberSkills(prev => [...prev.filter(r => r.skill_id !== skill.id), data])
     }
     setBusy(null)
@@ -75,7 +76,7 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
         certified_at: now,
         updated_at:   now,
       })
-      .select('*, certifier:certified_by(full_name)').single()
+      .select('*, certifier:certified_by(full_name, nickname)').single()
     if (data) setMemberSkills(prev => [...prev.filter(r => r.skill_id !== skill.id), data])
     setBusy(null)
   }
@@ -183,9 +184,9 @@ function SkillRow({ skill, status, busy, onClick, onCertify, msRow }) {
           ⚠ Safety critical
         </span>
       )}
-      {status === 'certified' && msRow?.certifier?.full_name && (
+      {status === 'certified' && msRow?.certifier && (
         <span className="msp-cert-meta">
-          {msRow.certifier.full_name}
+          {displayName(msRow.certifier)}
           {msRow.certified_at && ` · ${new Date(msRow.certified_at).toLocaleDateString()}`}
         </span>
       )}
