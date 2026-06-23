@@ -16,6 +16,7 @@ const SkillsCatalog  = lazy(() => import('./SkillsCatalog'))
 const MemberSkillsHome = lazy(() => import('./MemberSkillsHome'))
 const MemberPage     = lazy(() => import('./MemberPage'))
 const CheckinPage    = lazy(() => import('./CheckinPage'))
+const VolunteerCheckinPage = lazy(() => import('./VolunteerCheckinPage'))
 const CertifyPage      = lazy(() => import('./CertifyPage'))
 const CoverageMatrix   = lazy(() => import('./CoverageMatrix'))
 const LogHoursPage     = lazy(() => import('./LogHoursPage'))
@@ -198,6 +199,13 @@ export default function App() {
         <Route
           path="/checkin"
           element={session ? <CheckinPage session={session} /> : <CheckinRedirect />}
+        />
+
+        {/* Volunteer-hours fast path (summer FLL-room). Same minimal layout +
+            pending-URL bounce as /checkin; sessions it opens are category='volunteer'. */}
+        <Route
+          path="/checkin-volunteer"
+          element={session ? <VolunteerCheckinPage session={session} /> : <CheckinRedirect />}
         />
 
         {/* Kiosk deactivated — route disabled so it can't be reached. Restore by
