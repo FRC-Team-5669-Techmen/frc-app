@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { supabase } from './supabase'
-import { verifyAtShop } from './geo'
+import { verifyAtFLL } from './geo'
 import './CheckinPage.css'
 
 // Volunteer check-in fast path for summer FLL-room volunteering. Structured like
@@ -102,7 +102,7 @@ export default function VolunteerCheckinPage({ session }) {
     try {
       // Exempt members skip the geofence entirely and check in directly.
       if (!exempt) {
-        const geo = await verifyAtShop()
+        const geo = await verifyAtFLL()
         if (!geo.ok) {
           setGeoReason(geo.reason)
           setStatus('geo')
