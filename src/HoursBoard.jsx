@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, Fragment } from 'react'
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { supabase } from './supabase'
 import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, HOUR_TYPES } from './hoursUtils'
 import { displayName } from './names'
@@ -87,7 +87,9 @@ export default function HoursBoard({ hasRole = () => false }) {
   const [excluded,  setExcluded]  = useState(null) // Map<userId, Set<checkoutId>>
   const [selSeason, setSelSeason] = useState(null) // season id | 'all'
   const [sort,      setSort]      = useState({ col: 'total', dir: 'desc' })
-  const [view,      setView]      = useState('members') // 'members' | 'days' | 'sessions' | 'matrix'
+  const [view,      setView]      = useState('members') // 'members' | 'matrix'
+  const [detail,    setDetail]    = useState(null)       // { memberId, name, day|null } drill-down
+  const todayThRef = useRef(null)                        // matrix's current-day header, for auto-scroll
 
   useEffect(() => {
     Promise.all([
@@ -158,79 +160,13 @@ export default function HoursBoard({ hasRole = () => false }) {
     return s ? { start: s.start_date, end: s.end_date } : null
   }, [seasons, selSeason])
 
-  // Team-wide per-day, per-type totals for the selected season.
-  const byDay = useMemo(() => {
-    if (!profiles || !allEvents || !allLogged || !excluded) return null
-    const eventMap = {}
-    for (const e of allEvents) (eventMap[e.user_id] ??= []).push(e)
-    const map = {}
-    const bucket = d => (map[d] ??= { regular: 0, volunteering: 0, outreach: 0, competition: 0, total: 0 })
-    const inRange = d => !selRange || (d >= selRange.start && (selRange.end == null || d <= selRange.end))
-
-    for (const p of profiles) {
-      const evs = eventMap[p.id] ?? []
-      // Regular hours: group by date, pair within date (mirrors buildBreakdown).
-      const byDate = {}
-      for (const e of evs) (byDate[e.event_time.slice(0, 10)] ??= []).push(e)
-      for (const [date, dayEvs] of Object.entries(byDate)) {
-        if (!inRange(date)) continue
-        dayEvs.sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-        let inT = null, ms = 0
-        for (const e of dayEvs) {
-          if (e.type === 'in') inT = new Date(e.event_time)
-          else if (e.type === 'out' && inT) {
-            if (!(excluded[p.id]?.has(e.id))) ms += new Date(e.event_time) - inT
-            inT = null
-          }
-        }
-        if (ms > 0) { const b = bucket(date); b.regular += ms / 3600000; b.total += ms / 3600000 }
-      }
-      // Open session counted up to now (mirrors buildBreakdown).
-      const sorted = [...evs].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-      let openIn = null, openDate = null
-      for (const e of sorted) {
-        if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10) }
-        else if (e.type === 'out' && openIn) { openIn = null; openDate = null }
-      }
-      if (openIn && inRange(openDate)) {
-        const h = (Date.now() - openIn) / 3600000
-        const b = bucket(openDate); b.regular += h; b.total += h
-      }
-    }
-    // Logged hours by date + type.
-    for (const l of allLogged) {
-      if (!inRange(l.date)) continue
-      const h = parseFloat(l.hours) || 0
-      const b = bucket(l.date); b[l.type] = (b[l.type] ?? 0) + h; b.total += h
-    }
-    return Object.entries(map)
-      .map(([date, b]) => ({ date, ...b }))
-      .sort((a, b) => b.date.localeCompare(a.date))
-  }, [profiles, allEvents, allLogged, excluded, selRange])
-
-  // Fine-grained per-person, per-day sessions for the selected season: exact
-  // in/out times and the entrance/exit used for each.
-  const sessionRows = useMemo(() => {
-    if (!profiles || !allEvents || !excluded) return null
-    const eventMap = {}
-    for (const e of allEvents) (eventMap[e.user_id] ??= []).push(e)
-    const inRange = d => !selRange || (d >= selRange.start && (selRange.end == null || d <= selRange.end))
-    const rows = []
-    for (const p of profiles) {
-      const name = displayName(p)
-      for (const s of sessionsFromEvents(eventMap[p.id] ?? [])) {
-        const date = s.inTime.toISOString().slice(0, 10)
-        if (!inRange(date)) continue
-        rows.push({
-          key: `${p.id}-${s.inTime.getTime()}`,
-          name, date, ...s,
-          flagged: !!(s.outId && excluded[p.id]?.has(s.outId)),
-        })
-      }
-    }
-    rows.sort((a, b) => a.name.localeCompare(b.name) || a.inTime - b.inTime)
-    return rows
-  }, [profiles, allEvents, excluded, selRange])
+  // Raw attendance events grouped by member — source for the drill-down panel,
+  // which reads stored sign-in/out records rather than recomputing any totals.
+  const eventsByMember = useMemo(() => {
+    const m = {}
+    for (const e of (allEvents ?? [])) (m[e.user_id] ??= []).push(e)
+    return m
+  }, [allEvents])
 
   // The matrix needs exactly one season. A specific tab uses that season; the
   // 'All Time' tab falls back to the active (current) season for this view.
@@ -312,6 +248,33 @@ export default function HoursBoard({ hasRole = () => false }) {
     })
   }, [matrix, sort])
 
+  // On opening the matrix (or when its data lands), scroll the current day into
+  // view so today's column is visible without manual horizontal scrolling.
+  useEffect(() => {
+    if (view === 'matrix' && todayThRef.current) {
+      todayThRef.current.scrollIntoView({ inline: 'center', block: 'nearest' })
+    }
+  }, [view, matrix])
+
+  // Drill-down: the stored sessions behind a member's hours, grouped by day and
+  // pulled straight from the attendance records (no recomputed/fabricated times).
+  // detail.day set → just that day (matrix cell); null → every in-season day.
+  const detailData = useMemo(() => {
+    if (!detail) return null
+    const evs = eventsByMember[detail.memberId] ?? []
+    const inRange = d => !selRange || (d >= selRange.start && (selRange.end == null || d <= selRange.end))
+    const byDay = new Map()
+    for (const s of sessionsFromEvents(evs)) {
+      const day = s.inTime.toISOString().slice(0, 10)
+      if (detail.day ? day !== detail.day : !inRange(day)) continue
+      if (!byDay.has(day)) byDay.set(day, [])
+      byDay.get(day).push({ ...s, flagged: !!(s.outId && excluded?.[detail.memberId]?.has(s.outId)) })
+    }
+    return [...byDay.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([day, sessions]) => ({ day, sessions }))
+  }, [detail, eventsByMember, selRange, excluded])
+
   // Admin CSV: every member's full sign in/out history + logged hours.
   function exportCsv() {
     if (view === 'matrix') { exportMatrixCsv(); return }
@@ -392,6 +355,7 @@ export default function HoursBoard({ hasRole = () => false }) {
   })
 
   const tabs = [...(seasons ?? []), { id: 'all', name: 'All Time' }]
+  const todayKey = new Date().toISOString().slice(0, 10)
 
   return (
     <div className="board-wrap">
@@ -418,14 +382,6 @@ export default function HoursBoard({ hasRole = () => false }) {
               onClick={() => setView('members')}
             >By member</button>
             <button
-              className={`board-viewbtn${view === 'days' ? ' active' : ''}`}
-              onClick={() => setView('days')}
-            >By day</button>
-            <button
-              className={`board-viewbtn${view === 'sessions' ? ' active' : ''}`}
-              onClick={() => setView('sessions')}
-            >Sessions</button>
-            <button
               className={`board-viewbtn${view === 'matrix' ? ' active' : ''}`}
               onClick={() => setView('matrix')}
             >Matrix</button>
@@ -451,8 +407,13 @@ export default function HoursBoard({ hasRole = () => false }) {
               </thead>
               <tbody>
                 {sorted.map(r => (
-                  <tr key={r.id} className="board-row">
-                    <td className="board-td">{r.name}</td>
+                  <tr
+                    key={r.id}
+                    className="board-row board-row-click"
+                    onClick={() => setDetail({ memberId: r.id, name: r.name, day: null })}
+                    title="View sessions by day"
+                  >
+                    <td className="board-td board-member-link">{r.name}</td>
                     <td className="board-td board-num">{fmtHours(r.regular)}</td>
                     <td className="board-td board-num">{fmtHours(r.volunteering)}</td>
                     <td className="board-td board-num">{fmtHours(r.outreach)}</td>
@@ -467,74 +428,6 @@ export default function HoursBoard({ hasRole = () => false }) {
                 ))}
               </tbody>
             </table>
-          </div>
-        ) : view === 'days' ? (
-          <div className="board-table-wrap">
-            {(byDay?.length ?? 0) === 0 ? (
-              <p className="board-empty">No hours recorded for this period.</p>
-            ) : (
-              <table className="board-table">
-                <thead>
-                  <tr>
-                    <th className="board-th">Day</th>
-                    {HOUR_TYPES.map(t => (
-                      <th key={t.key} className="board-th">
-                        <span className="board-type-dot" style={{ background: t.color }} />{t.label}
-                      </th>
-                    ))}
-                    <th className="board-th">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {byDay.map(d => (
-                    <tr key={d.date} className="board-row">
-                      <td className="board-td board-day">{fmtDay(d.date)}</td>
-                      {HOUR_TYPES.map(t => (
-                        <td key={t.key} className="board-td board-num">{fmtHours(d[t.key])}</td>
-                      ))}
-                      <td className="board-td board-num board-total">{fmtHours(d.total)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        ) : view === 'sessions' ? (
-          <div className="board-table-wrap">
-            {(sessionRows?.length ?? 0) === 0 ? (
-              <p className="board-empty">No sessions recorded for this period.</p>
-            ) : (
-              <table className="board-table">
-                <thead>
-                  <tr>
-                    <th className="board-th">Member</th>
-                    <th className="board-th">Day</th>
-                    <th className="board-th">Check In</th>
-                    <th className="board-th">Entrance</th>
-                    <th className="board-th">Check Out</th>
-                    <th className="board-th">Exit</th>
-                    <th className="board-th">Duration</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sessionRows.map(s => (
-                    <tr key={s.key} className="board-row">
-                      <td className="board-td">{s.name}</td>
-                      <td className="board-td board-day">{fmtDay(s.date)}</td>
-                      <td className="board-td board-num">{fmtTime(s.inTime)}</td>
-                      <td className="board-td board-loc">{fmtLocation(s.inLoc)}</td>
-                      <td className="board-td board-num">
-                        {s.open ? <span className="board-open">— open —</span> : fmtTime(s.outTime)}
-                      </td>
-                      <td className="board-td board-loc">{s.open ? '—' : fmtLocation(s.outLoc)}</td>
-                      <td className="board-td board-num board-total">
-                        {fmtHours(s.ms / 3600000)}{s.flagged && <span className="board-flag" title="Pending/auto-close review"> ⚠</span>}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
           </div>
         ) : (
           <>
@@ -555,7 +448,11 @@ export default function HoursBoard({ hasRole = () => false }) {
                       {matrix.weeks.map(w => (
                         <Fragment key={w.key}>
                           {w.days.map(k => (
-                            <th key={k} className="board-th board-matrix-dayth">
+                            <th
+                              key={k}
+                              ref={k === todayKey ? todayThRef : undefined}
+                              className={`board-th board-matrix-dayth${k === todayKey ? ' board-matrix-today' : ''}`}
+                            >
                               <span className="board-matrix-dow">{DOW2[weekdayOf(k)]}</span>
                               <span className="board-matrix-date">{fmtMD(k)}</span>
                             </th>
@@ -574,8 +471,14 @@ export default function HoursBoard({ hasRole = () => false }) {
                           <Fragment key={w.key}>
                             {w.days.map(k => {
                               const h = r.perDay[k] ?? 0
+                              const has = h >= 0.05
                               return (
-                                <td key={k} className={`board-td board-num board-matrix-cell${h < 0.05 ? ' board-matrix-zero' : ''}`}>
+                                <td
+                                  key={k}
+                                  className={`board-td board-num board-matrix-cell${has ? ' board-matrix-cell-click' : ' board-matrix-zero'}`}
+                                  onClick={has ? () => setDetail({ memberId: r.id, name: r.name, day: k }) : undefined}
+                                  title={has ? 'View sessions this day' : undefined}
+                                >
                                   {fmtCell(h)}
                                 </td>
                               )
@@ -607,6 +510,59 @@ export default function HoursBoard({ hasRole = () => false }) {
           </>
         )}
       </div>
+
+      {/* ── Drill-down: stored sessions behind a member's hours ── */}
+      {detail && (
+        <div className="board-detail-backdrop" onClick={() => setDetail(null)}>
+          <div className="board-detail" onClick={e => e.stopPropagation()}>
+            <div className="board-detail-head">
+              <div>
+                <h2 className="board-detail-title">{detail.name}</h2>
+                <p className="board-detail-sub hud-mono">
+                  {detail.day ? fmtDay(detail.day) : 'Sessions by day'}
+                </p>
+              </div>
+              <button className="board-detail-close" onClick={() => setDetail(null)} aria-label="Close">×</button>
+            </div>
+            {(!detailData || detailData.length === 0) ? (
+              <p className="board-empty">No sessions recorded{detail.day ? ' this day' : ' for this period'}.</p>
+            ) : (
+              <div className="board-detail-body">
+                {detailData.map(({ day, sessions }) => (
+                  <div key={day} className="board-detail-day">
+                    {!detail.day && <h3 className="board-detail-dayhead">{fmtDay(day)}</h3>}
+                    <table className="board-detail-table">
+                      <thead>
+                        <tr>
+                          <th>In</th><th>Out</th><th>Where</th><th>Duration</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sessions.map((s, i) => (
+                          <tr key={i}>
+                            <td className="board-num">{fmtTime(s.inTime)}</td>
+                            <td className="board-num">
+                              {s.open ? <span className="board-open">— open —</span> : fmtTime(s.outTime)}
+                            </td>
+                            <td className="board-loc">
+                              {fmtLocation(s.inLoc)}
+                              {!s.open && s.outLoc && s.outLoc !== s.inLoc ? ` → ${fmtLocation(s.outLoc)}` : ''}
+                            </td>
+                            <td className="board-num board-total">
+                              {fmtHours(s.ms / 3600000)}
+                              {s.flagged && <span className="board-flag" title="Pending/auto-close review"> ⚠</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

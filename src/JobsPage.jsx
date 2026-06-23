@@ -461,15 +461,16 @@ export default function JobsPage({ session, hasRole = () => false }) {
 
         <div className="jobs-header">
           <h1 className="jobs-title">Jobs</h1>
-          {isStaff && !formOpen && (
+          {/* Any signed-in member can post a job; edit/delete stay staff-only. */}
+          {!formOpen && (
             <button className="jobs-add-btn" onClick={openAdd}>+ New job</button>
           )}
         </div>
 
         {error && <p className="jobs-error" onClick={() => setError('')}>{error}</p>}
 
-        {/* ── Staff: create / edit ── */}
-        {isStaff && formOpen && (
+        {/* ── Create / edit form (create open to all; edit reached only via staff) ── */}
+        {formOpen && (
           <div className="jobs-form-card">
             <h2 className="jobs-form-heading">{editTarget ? 'Edit job' : 'New job'}</h2>
             <form onSubmit={handleSubmit} className="jobs-form">

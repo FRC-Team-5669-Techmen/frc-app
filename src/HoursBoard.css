@@ -271,3 +271,82 @@
   font-weight: 600;
 }
 .board-matrix-foot .board-td { border-top: 1px solid var(--border-strong); }
+
+/* ── Drill-down affordances ── */
+.board-row-click { cursor: pointer; }
+.board-row-click:hover { background: var(--surface-2); }
+.board-member-link { color: var(--gold-bright); }
+
+.board-matrix-cell-click { cursor: pointer; }
+.board-matrix-cell-click:hover { background: var(--surface-2); color: var(--gold-bright); }
+
+/* Current-day column header in the matrix. */
+.board-matrix-today {
+  color: var(--gold-bright);
+  border-bottom: 2px solid var(--gold);
+}
+
+/* ── Drill-down modal ── */
+.board-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.66);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4rem 1rem;
+  z-index: 50;
+  overflow-y: auto;
+}
+.board-detail {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 34rem;
+  padding: 1.25rem 1.4rem 1.6rem;
+}
+.board-detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.board-detail-title { margin: 0; font-size: 1.15rem; color: var(--text); }
+.board-detail-sub { margin: 0.2rem 0 0; font-size: 0.78rem; color: var(--muted); }
+.board-detail-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.2rem;
+}
+.board-detail-close:hover { color: var(--text); }
+.board-detail-day { margin-bottom: 1.1rem; }
+.board-detail-dayhead {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gold-bright);
+}
+.board-detail-table { width: 100%; border-collapse: collapse; }
+.board-detail-table th {
+  text-align: left;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.board-detail-table td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+.board-detail-table .board-loc { color: var(--steel); font-family: var(--font-mono); }

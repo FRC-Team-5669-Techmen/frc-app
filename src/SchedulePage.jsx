@@ -5,7 +5,7 @@ import { displayName } from './names'
 import './SchedulePage.css'
 
 const KINDS = ['build', 'meeting', 'competition', 'potluck', 'outreach', 'other']
-const VIEWS = [['agenda', 'Agenda'], ['month', 'Month']]
+const VIEWS = [['month', 'Month'], ['agenda', 'Agenda']]
 const RESPONSES = [['going', 'Going'], ['maybe', 'Maybe'], ['declined', "Can't go"]]
 // 0 = Sunday … 6 = Saturday (matches Date.getDay()).
 const WEEKDAYS = [[0, 'Sun'], [1, 'Mon'], [2, 'Tue'], [3, 'Wed'], [4, 'Thu'], [5, 'Fri'], [6, 'Sat']]
