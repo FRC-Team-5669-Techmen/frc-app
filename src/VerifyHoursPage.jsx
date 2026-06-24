@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
+import { CATEGORIES, categoryLabel } from './categories'
 import './VerifyHoursPage.css'
 
 // ─── formatting helpers ───────────────────────────────────────────────────────
@@ -65,6 +66,39 @@ async function fetchMissedCheckouts() {
   }))
 }
 
+// Pending student correction requests, enriched with the member name and the
+// referenced events' CURRENT times (so the mentor can compare to the proposal).
+async function fetchCorrections() {
+  const { data: raw } = await supabase
+    .from('session_corrections')
+    .select('id, member_id, checkin_id, checkout_id, note, proposed_in, proposed_out, proposed_category, created_at')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true })
+
+  if (!raw?.length) return []
+
+  const eventIds = raw.flatMap(r => [r.checkin_id, r.checkout_id]).filter(Boolean)
+  const userIds  = [...new Set(raw.map(r => r.member_id))]
+
+  const [{ data: evts }, { data: profs }] = await Promise.all([
+    eventIds.length
+      ? supabase.from('attendance_events').select('id, event_time, category').in('id', eventIds)
+      : Promise.resolve({ data: [] }),
+    supabase.from('profiles').select('id, full_name, nickname').in('id', userIds),
+  ])
+
+  const evtMap  = Object.fromEntries((evts  ?? []).map(e => [e.id, e]))
+  const profMap = Object.fromEntries((profs ?? []).map(p => [p.id, p]))
+
+  return raw.map(r => ({
+    ...r,
+    member:       profMap[r.member_id],
+    curIn:        evtMap[r.checkin_id]?.event_time ?? null,
+    curOut:       evtMap[r.checkout_id]?.event_time ?? null,
+    curCategory:  evtMap[r.checkin_id]?.category ?? null,
+  }))
+}
+
 // ─── component ────────────────────────────────────────────────────────────────
 
 export default function VerifyHoursPage({ session, hasRole }) {
@@ -83,6 +117,9 @@ export default function VerifyHoursPage({ session, hasRole }) {
   const [entries, setEntries] = useState(null)
   const [acting,  setActing]  = useState({})
 
+  // Student correction requests
+  const [corrections, setCorrections] = useState(null)
+
   useEffect(() => {
     if (!isStaff) return
 
@@ -94,6 +131,7 @@ export default function VerifyHoursPage({ session, hasRole }) {
       })
 
     fetchMissedCheckouts().then(rows => setMissed(rows))
+    fetchCorrections().then(rows => setCorrections(rows))
 
     supabase
       .from('logged_hours')
@@ -152,7 +190,20 @@ export default function VerifyHoursPage({ session, hasRole }) {
     )
   }
 
-  if (missed === null || entries === null || cutoff === null) {
+  async function resolveCorrection(id, approve, payload) {
+    const { error } = await supabase.rpc('resolve_session_correction', {
+      p_id: id,
+      p_approve: approve,
+      p_resolution: payload?.resolution || null,
+      p_apply_in:  payload?.apply_in  || null,
+      p_apply_out: payload?.apply_out || null,
+      p_apply_category: payload?.apply_category || null,
+    })
+    if (!error) setCorrections(prev => prev.filter(c => c.id !== id))
+    return error
+  }
+
+  if (missed === null || entries === null || cutoff === null || corrections === null) {
     return (
       <div className="vh-wrap">
         <div className="vh-loading"><div className="vh-spinner" /></div>
@@ -247,6 +298,27 @@ export default function VerifyHoursPage({ session, hasRole }) {
 
         <div className="vh-section-divider" />
 
+        {/* ── Session correction requests ── */}
+        <div className="vh-header">
+          <span className="vh-title">Correction Requests</span>
+          {corrections.length > 0 && <span className="vh-badge">{corrections.length}</span>}
+        </div>
+
+        {corrections.length === 0 ? (
+          <div className="vh-empty">
+            <span className="vh-empty-mark">✓</span>
+            <p className="vh-empty-text">No correction requests to review.</p>
+          </div>
+        ) : (
+          <div className="vh-list">
+            {corrections.map(c => (
+              <CorrectionCard key={c.id} c={c} onResolve={resolveCorrection} />
+            ))}
+          </div>
+        )}
+
+        <div className="vh-section-divider" />
+
         {/* ── Pending logged hours ── */}
         <div className="vh-header">
           <span className="vh-title">Pending Hours</span>
@@ -304,6 +376,86 @@ export default function VerifyHoursPage({ session, hasRole }) {
           </div>
         )}
 
+      </div>
+    </div>
+  )
+}
+
+// One pending session-correction request. The mentor can tweak the corrected
+// in/out/category (prefilled from the student's proposal, else the current
+// values) before approving; approval applies the change to the underlying
+// events and audits it. Reject records the decision with an optional note.
+function CorrectionCard({ c, onResolve }) {
+  const toLocalInput = iso => {
+    if (!iso) return ''
+    const d = new Date(iso)
+    const t = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+    return t.toISOString().slice(0, 16)
+  }
+  const [applyIn,  setApplyIn]  = useState(toLocalInput(c.proposed_in  ?? c.curIn))
+  const [applyOut, setApplyOut] = useState(toLocalInput(c.proposed_out ?? c.curOut))
+  const [applyCat, setApplyCat] = useState(c.proposed_category ?? c.curCategory ?? '')
+  const [resolution, setResolution] = useState('')
+  const [busy, setBusy] = useState(null)
+  const [err,  setErr]  = useState('')
+
+  async function go(approve) {
+    setBusy(approve ? 'approve' : 'reject'); setErr('')
+    const error = await onResolve(c.id, approve, approve ? {
+      resolution: resolution.trim() || null,
+      apply_in:  applyIn  ? new Date(applyIn).toISOString()  : null,
+      apply_out: applyOut ? new Date(applyOut).toISOString() : null,
+      apply_category: applyCat || null,
+    } : { resolution: resolution.trim() || null })
+    if (error) { setBusy(null); setErr(error.message) }
+  }
+
+  return (
+    <div className={`vh-card${busy ? ' vh-card-busy' : ''}`}>
+      <div className="vh-card-top">
+        <span className="vh-member-name">{displayName(c.member)}</span>
+        <span className="vh-hours">{c.checkin_id && c.checkout_id ? 'session' : c.checkin_id ? 'check-in' : 'check-out'}</span>
+      </div>
+      <p className="vh-desc">{c.note}</p>
+
+      <div className="vh-corr-cur">
+        <span className="vh-time-label">Current</span>
+        <span className="vh-time-val">
+          {fmtDateTime(c.curIn)} → {c.curOut ? fmtDateTime(c.curOut) : '— open —'}
+          {c.curCategory ? ` · ${categoryLabel(c.curCategory)}` : ''}
+        </span>
+      </div>
+
+      <div className="vh-corr-grid">
+        <div className="vh-corr-field">
+          <label className="vh-time-label">Apply check-in</label>
+          <input className="vh-corr-input" type="datetime-local" value={applyIn} onChange={e => setApplyIn(e.target.value)} />
+        </div>
+        <div className="vh-corr-field">
+          <label className="vh-time-label">Apply check-out</label>
+          <input className="vh-corr-input" type="datetime-local" value={applyOut} onChange={e => setApplyOut(e.target.value)} />
+        </div>
+        <div className="vh-corr-field">
+          <label className="vh-time-label">Category</label>
+          <select className="vh-corr-input" value={applyCat} onChange={e => setApplyCat(e.target.value)}>
+            <option value="">— unchanged —</option>
+            {CATEGORIES.map(cat => <option key={cat.key} value={cat.key}>{cat.label}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <input className="vh-corr-input vh-corr-resolution" type="text" maxLength={300}
+        placeholder="Optional note to the student…" value={resolution}
+        onChange={e => setResolution(e.target.value)} />
+
+      {err && <p className="vh-corr-error">{err}</p>}
+      <div className="vh-actions">
+        <button className="vh-btn vh-reject" disabled={!!busy} onClick={() => go(false)}>
+          {busy === 'reject' ? 'Rejecting…' : 'Reject'}
+        </button>
+        <button className="vh-btn vh-approve" disabled={!!busy} onClick={() => go(true)}>
+          {busy === 'approve' ? 'Approving…' : 'Approve & apply'}
+        </button>
       </div>
     </div>
   )

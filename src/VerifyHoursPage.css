@@ -355,3 +355,23 @@
 .vh-approve:hover:not(:disabled) {
   background: var(--gold-bright);
 }
+
+/* ── Correction-request card extras ── */
+.vh-corr-cur {
+  display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap;
+  margin: 0.5rem 0 0.75rem;
+}
+.vh-corr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.6rem;
+}
+.vh-corr-field { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.vh-corr-input {
+  width: 100%; box-sizing: border-box;
+  background: var(--surface-2); border: 1px solid var(--border-strong);
+  border-radius: var(--radius); color: var(--text);
+  font-family: var(--font-ui); font-size: 0.85rem; padding: 0.4rem 0.5rem;
+}
+.vh-corr-resolution { margin-top: 0.6rem; }
+.vh-corr-error { color: var(--fault); font-size: 0.82rem; margin: 0.5rem 0 0; }

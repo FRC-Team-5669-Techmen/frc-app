@@ -305,16 +305,15 @@
   align-items: center;
   padding: 0.15rem 0.55rem;
   border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  /* color + borderColor are set inline per category (categoryColor) */
 }
-
-.lh-type-volunteering { background: var(--surface-2); color: var(--steel); }
-.lh-type-outreach     { background: var(--surface-2); color: var(--steel); }
-.lh-type-competition  { background: var(--gold-a08); color: var(--gold-dim); }
 
 /* ── Status chips ── */
 .lh-status-chip {

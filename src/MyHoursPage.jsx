@@ -12,12 +12,22 @@ export default function MyHoursPage({ session }) {
   const [events,   setEvents]   = useState(null)
   const [logged,   setLogged]   = useState(null)
   const [reviews,  setReviews]  = useState(null)  // user's session_reviews rows
+  const [corrections, setCorrections] = useState([]) // user's session_corrections
+  const [flagFor,  setFlagFor]  = useState(null)  // session being flagged for correction
+
+  function loadCorrections(uid) {
+    return supabase.from('session_corrections')
+      .select('id, checkin_id, checkout_id, note, status, resolution_note, created_at')
+      .eq('member_id', uid)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setCorrections(data ?? []))
+  }
 
   useEffect(() => {
     const uid = session.user.id
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
-      supabase.from('attendance_events').select('id, type, event_time, category').eq('user_id', uid).order('event_time'),
+      supabase.from('attendance_events').select('id, type, event_time, category, manual_entry').eq('user_id', uid).order('event_time'),
       supabase.from('logged_hours').select('type, hours, date').eq('member_id', uid).eq('status', 'verified'),
       supabase.from('session_reviews').select('checkout_id, status').eq('user_id', uid).in('status', ['pending', 'voided']),
     ]).then(([{ data: s }, { data: ae }, { data: lh }, { data: sr }]) => {
@@ -26,7 +36,19 @@ export default function MyHoursPage({ session }) {
       setLogged(lh ?? [])
       setReviews(sr ?? [])
     })
+    loadCorrections(uid)
   }, [session.user.id])
+
+  // Checkout/checkin IDs that already have an open (pending) correction request.
+  const flaggedIds = useMemo(() => {
+    const s = new Set()
+    for (const c of corrections) {
+      if (c.status !== 'pending') continue
+      if (c.checkin_id)  s.add(c.checkin_id)
+      if (c.checkout_id) s.add(c.checkout_id)
+    }
+    return s
+  }, [corrections])
 
   // Checkout IDs excluded from official hours (pending or voided review)
   const excludedIds = useMemo(
@@ -59,9 +81,11 @@ export default function MyHoursPage({ session }) {
   const sessions = useMemo(() => events ? sessionsFromEvents(events) : [], [events])
   const recent = useMemo(
     () => [...sessions].reverse().slice(0, 8).map(s => ({
-      ...s, pending: s.outId ? !!pendingIds?.has(s.outId) : false,
+      ...s,
+      pending: s.outId ? !!pendingIds?.has(s.outId) : false,
+      flagged: (s.inId && flaggedIds.has(s.inId)) || (s.outId && flaggedIds.has(s.outId)),
     })),
-    [sessions, pendingIds]
+    [sessions, pendingIds, flaggedIds]
   )
 
   // Trailing-7-day hours (attendance sessions + logged), and a 6-week trend.
@@ -144,6 +168,23 @@ export default function MyHoursPage({ session }) {
           </div>
         )}
 
+        {corrections.length > 0 && (
+          <div className="mh-card">
+            <div className="mh-card-head">
+              <span className="mh-card-title">Correction requests</span>
+            </div>
+            <ul className="mh-corrections">
+              {corrections.slice(0, 6).map(c => (
+                <li key={c.id} className="mh-correction">
+                  <span className={`mh-corr-status mh-corr-${c.status}`}>{c.status}</span>
+                  <span className="mh-corr-note">{c.note}</span>
+                  {c.resolution_note && <span className="mh-corr-resolution">“{c.resolution_note}”</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {grandTotal >= 0.01 && allTime && (
           <>
             {/* All-time breakdown by hour type */}
@@ -204,7 +245,14 @@ export default function MyHoursPage({ session }) {
                       {s.category !== DEFAULT_CATEGORY && (
                         <span className="mh-session-flag" style={{ color: categoryColor(s.category) }}>{categoryLabel(s.category)}</span>
                       )}
+                      {s.manual && <span className="mh-session-flag" style={{ color: 'var(--steel)' }}>manual</span>}
+                      {s.wasCapped && <span className="mh-session-flag" style={{ color: 'var(--gold-dim)' }} title="Capped — exceeded the max session length (likely a missed check-out)">capped</span>}
                       {s.pending && <span className="mh-session-flag">review</span>}
+                      {s.flagged
+                        ? <span className="mh-session-flag" style={{ color: 'var(--gold)' }}>flagged</span>
+                        : (s.inId || s.outId) && (
+                          <button className="mh-session-flagbtn" onClick={() => setFlagFor(s)} title="Report a problem with this session">flag</button>
+                        )}
                     </li>
                   ))}
                 </ul>
@@ -235,6 +283,87 @@ export default function MyHoursPage({ session }) {
           </div>
         ))}
 
+      </div>
+
+      {flagFor && (
+        <FlagModal
+          session={flagFor}
+          onClose={() => setFlagFor(null)}
+          onSubmitted={() => { setFlagFor(null); loadCorrections(session.user.id) }}
+        />
+      )}
+    </div>
+  )
+}
+
+// Student-facing form to flag a wrong derived session for mentor correction.
+// References the underlying attendance_events row(s); note required, proposed
+// corrected times/category optional.
+function FlagModal({ session, onClose, onSubmitted }) {
+  const toLocalInput = d => {
+    if (!d) return ''
+    const t = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+    return t.toISOString().slice(0, 16)
+  }
+  const [note, setNote] = useState('')
+  const [inT, setInT]   = useState(toLocalInput(session.inTime))
+  const [outT, setOutT] = useState(session.outTime ? toLocalInput(session.outTime) : '')
+  const [cat, setCat]   = useState(session.category)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr]   = useState('')
+
+  async function submit() {
+    if (!note.trim()) { setErr('Please describe what is wrong.'); return }
+    setBusy(true); setErr('')
+    const { error } = await supabase.rpc('request_session_correction', {
+      p_checkin: session.inId ?? null,
+      p_checkout: session.outId ?? null,
+      p_note: note.trim(),
+      p_proposed_in:  inT  ? new Date(inT).toISOString()  : null,
+      p_proposed_out: outT ? new Date(outT).toISOString() : null,
+      p_proposed_category: cat || null,
+    })
+    setBusy(false)
+    if (error) { setErr(error.message); return }
+    onSubmitted()
+  }
+
+  return (
+    <div className="mh-modal-backdrop" onClick={onClose}>
+      <div className="mh-modal" onClick={e => e.stopPropagation()}>
+        <div className="mh-modal-head">
+          <h2 className="mh-modal-title">Flag this session</h2>
+          <button className="mh-modal-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+        <p className="mh-modal-sub hud-mono">
+          {fmtSessionDate(session.inTime)} · {fmtClock(session.inTime)} – {session.outTime ? fmtClock(session.outTime) : 'open'}
+        </p>
+        <label className="mh-modal-label">What's wrong? <span className="mh-req">*</span></label>
+        <textarea className="mh-modal-input mh-modal-textarea" rows={3} maxLength={500}
+          placeholder="e.g. I forgot to sign out — I actually left at 6:30." value={note}
+          onChange={e => setNote(e.target.value)} />
+        <p className="mh-modal-hint">Optional — suggest the correct values:</p>
+        <div className="mh-modal-row">
+          <div className="mh-modal-field">
+            <label className="mh-modal-label">Check-in</label>
+            <input className="mh-modal-input" type="datetime-local" value={inT} onChange={e => setInT(e.target.value)} />
+          </div>
+          <div className="mh-modal-field">
+            <label className="mh-modal-label">Check-out</label>
+            <input className="mh-modal-input" type="datetime-local" value={outT} onChange={e => setOutT(e.target.value)} />
+          </div>
+        </div>
+        <div className="mh-modal-field">
+          <label className="mh-modal-label">Category</label>
+          <select className="mh-modal-input" value={cat} onChange={e => setCat(e.target.value)}>
+            {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+          </select>
+        </div>
+        {err && <p className="mh-modal-error">{err}</p>}
+        <div className="mh-modal-actions">
+          <button className="mh-modal-cancel" onClick={onClose} disabled={busy}>Cancel</button>
+          <button className="mh-modal-submit" onClick={submit} disabled={busy}>{busy ? 'Sending…' : 'Submit request'}</button>
+        </div>
       </div>
     </div>
   )

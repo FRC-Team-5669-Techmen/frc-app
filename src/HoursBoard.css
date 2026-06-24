@@ -391,3 +391,55 @@
   font-size: 0.85rem;
 }
 .board-detail-table .board-loc { color: var(--steel); font-family: var(--font-mono); }
+
+/* ── Staff session adjustment: manual entry / edit / void ── */
+.board-detail-head-actions { display: flex; align-items: center; gap: 0.6rem; }
+.board-adjust-btn {
+  font-family: var(--font-ui); font-size: 0.78rem; font-weight: 600;
+  color: var(--gold-bright); background: var(--gold-a08);
+  border: 1px solid var(--gold-dim); border-radius: var(--radius);
+  padding: 0.35rem 0.7rem; cursor: pointer; white-space: nowrap;
+}
+.board-sess-actions { white-space: nowrap; }
+.board-mini-btn {
+  font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--steel); background: transparent;
+  border: 1px solid var(--border-strong); border-radius: var(--radius);
+  padding: 0.1rem 0.4rem; margin-left: 0.3rem; cursor: pointer;
+}
+.board-mini-btn:hover { color: var(--gold); border-color: var(--gold); }
+.board-mini-danger:hover { color: var(--fault); border-color: var(--fault); }
+
+.board-adjust {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  width: 100%; max-width: 30rem;
+  padding: 1.25rem 1.4rem 1.5rem;
+}
+.board-adjust-warn { color: var(--steel); font-size: 0.88rem; margin: 0 0 0.5rem; }
+.board-adjust-row { display: flex; gap: 0.6rem; }
+.board-adjust-field { flex: 1 1 0; min-width: 0; margin-top: 0.7rem; }
+.board-adjust-label {
+  display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--muted); margin-bottom: 0.25rem;
+}
+.board-req { color: var(--fault); }
+.board-adjust-input {
+  width: 100%; box-sizing: border-box;
+  background: var(--surface-2); border: 1px solid var(--border-strong);
+  border-radius: var(--radius); color: var(--text);
+  font-family: var(--font-ui); font-size: 0.9rem; padding: 0.5rem 0.6rem;
+}
+.board-adjust-error { color: var(--fault); font-size: 0.82rem; margin: 0.6rem 0 0; }
+.board-adjust-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.1rem; }
+.board-adjust-cancel {
+  background: transparent; border: 1px solid var(--border-strong); color: var(--steel);
+  border-radius: var(--radius); padding: 0.5rem 1rem; cursor: pointer; font-family: var(--font-ui);
+}
+.board-adjust-save {
+  background: var(--gold); border: none; color: #0A0B0D; font-weight: 700;
+  border-radius: var(--radius); padding: 0.5rem 1.1rem; cursor: pointer; font-family: var(--font-ui);
+}
+.board-adjust-danger { background: var(--fault); color: #fff; }
+.board-adjust-save:disabled, .board-adjust-cancel:disabled { opacity: 0.6; cursor: default; }

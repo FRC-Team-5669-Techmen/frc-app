@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import { CATEGORIES, DEFAULT_CATEGORY, categoryLabel, categoryColor } from './categories'
 import './LogHoursPage.css'
 
-const TYPES = ['volunteering', 'outreach', 'competition']
+const TYPES = CATEGORIES.map(c => c.key)
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -14,7 +15,7 @@ function fmtDate(str) {
 
 export default function LogHoursPage({ session }) {
   const [entries,    setEntries]    = useState(null)
-  const [form,       setForm]       = useState({ date: today(), hours: '', type: 'volunteering', description: '' })
+  const [form,       setForm]       = useState({ date: today(), hours: '', type: DEFAULT_CATEGORY, description: '' })
   const [submitting, setSubmitting] = useState(false)
   const [formError,  setFormError]  = useState('')
   const [deleting,   setDeleting]   = useState({})
@@ -58,7 +59,7 @@ export default function LogHoursPage({ session }) {
 
     if (error) { setFormError(error.message); return }
     setEntries(prev => [data, ...prev])
-    setForm({ date: today(), hours: '', type: 'volunteering', description: '' })
+    setForm({ date: today(), hours: '', type: DEFAULT_CATEGORY, description: '' })
   }
 
   async function handleDelete(id) {
@@ -141,7 +142,7 @@ export default function LogHoursPage({ session }) {
                 >
                   {TYPES.map(t => (
                     <option key={t} value={t}>
-                      {t.charAt(0).toUpperCase() + t.slice(1)}
+                      {categoryLabel(t)}
                     </option>
                   ))}
                 </select>
@@ -182,8 +183,8 @@ export default function LogHoursPage({ session }) {
                 <div key={entry.id} className="lh-entry">
                   <div className="lh-entry-top">
                     <span className="lh-entry-date">{fmtDate(entry.date)}</span>
-                    <span className={`lh-type-chip lh-type-${entry.type}`}>
-                      {entry.type}
+                    <span className="lh-type-chip" style={{ color: categoryColor(entry.type), borderColor: categoryColor(entry.type) }}>
+                      {categoryLabel(entry.type)}
                     </span>
                     <span className="lh-entry-hours">
                       {parseFloat(entry.hours) % 1 === 0

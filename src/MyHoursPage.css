@@ -299,3 +299,85 @@
 /* dot reads inline inside breakdown labels too */
 .mh-type-dot { display: inline-block; }
 .mh-breakdown-label .mh-type-dot { margin-right: 0.45rem; vertical-align: middle; }
+
+/* ── Flag-for-correction button on a recent session ── */
+.mh-session-flagbtn {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--steel);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.05rem 0.4rem;
+  cursor: pointer;
+}
+.mh-session-flagbtn:hover { color: var(--gold); border-color: var(--gold); }
+
+/* ── Correction-request status list ── */
+.mh-corrections { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.mh-correction { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+.mh-corr-status {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: var(--radius);
+  padding: 0.05rem 0.4rem;
+  border: 1px solid currentColor;
+}
+.mh-corr-pending  { color: var(--gold-dim); }
+.mh-corr-approved { color: var(--hr-volunteer); }
+.mh-corr-rejected { color: var(--fault); }
+.mh-corr-note { color: var(--text); font-size: 0.85rem; }
+.mh-corr-resolution { color: var(--muted); font-size: 0.8rem; font-style: italic; }
+
+/* ── Flag-for-correction modal ── */
+.mh-modal-backdrop {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.mh-modal {
+  width: 100%; max-width: 30rem;
+  max-height: 90vh; overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+.mh-modal-head { display: flex; align-items: center; justify-content: space-between; }
+.mh-modal-title { margin: 0; font-family: var(--font-ui); font-size: 1.1rem; color: var(--text); }
+.mh-modal-close { background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; }
+.mh-modal-sub { margin: 0.25rem 0 1rem; color: var(--steel); font-size: 0.8rem; }
+.mh-modal-label { display: block; font-size: 0.78rem; color: var(--muted); margin: 0.6rem 0 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.mh-req { color: var(--fault); }
+.mh-modal-hint { margin: 1rem 0 0; font-size: 0.78rem; color: var(--muted); }
+.mh-modal-row { display: flex; gap: 0.6rem; }
+.mh-modal-field { flex: 1 1 0; min-width: 0; }
+.mh-modal-input {
+  width: 100%; box-sizing: border-box;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  padding: 0.5rem 0.6rem;
+}
+.mh-modal-textarea { resize: vertical; font-family: var(--font-ui); }
+.mh-modal-error { color: var(--fault); font-size: 0.82rem; margin: 0.6rem 0 0; }
+.mh-modal-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.1rem; }
+.mh-modal-cancel {
+  background: transparent; border: 1px solid var(--border-strong); color: var(--steel);
+  border-radius: var(--radius); padding: 0.5rem 1rem; cursor: pointer; font-family: var(--font-ui);
+}
+.mh-modal-submit {
+  background: var(--gold); border: none; color: #0A0B0D; font-weight: 700;
+  border-radius: var(--radius); padding: 0.5rem 1.1rem; cursor: pointer; font-family: var(--font-ui);
+}
+.mh-modal-submit:disabled, .mh-modal-cancel:disabled { opacity: 0.6; cursor: default; }

@@ -8,14 +8,45 @@ import {
 // Re-export so the hours displays keep importing everything from one module.
 export { CATEGORIES, DEFAULT_CATEGORY, categoryLabel, categoryColor, loggedTypeToCategory, emptyBreakdown }
 
+// ── Forgot-to-sign-out cap ──────────────────────────────────────────────────
+// Sessions are DERIVED (IN/OUT pairing), so we cap at derivation time rather
+// than writing synthetic events. A session is clamped to a maximum duration; a
+// still-active session UNDER the cap stays live and uncapped (someone who is
+// legitimately checked in right now). The cap only bites once a session goes
+// stale (open past the cap) or a closed pair exceeds it.
+export const MAX_SESSION_MS = 4 * 60 * 60 * 1000   // default 4-hour cap (config constant)
+
+/**
+ * Apply the forgot-to-sign-out cap to one session.
+ * @param {Date}   inTime  - the IN event time
+ * @param {Date?}  outTime - the OUT event time, or null for a still-open session
+ * @param {{maxMs?:number, eventEnd?:Date|null}} [opts]
+ *        eventEnd: if the session ties to a calendar event, the clamp end is
+ *        min(eventEnd, IN + maxMs) — so a short event can't credit a full cap.
+ * @returns {{ ms, wasCapped, effectiveEnd }} effectiveEnd is the clamped end
+ *        used for ms (the real outTime when uncapped, null for a live open one).
+ */
+export function cappedSession(inTime, outTime, { maxMs = MAX_SESSION_MS, eventEnd = null } = {}) {
+  const start  = inTime.getTime()
+  const rawEnd = (outTime ?? new Date()).getTime()
+  let capEnd = start + maxMs
+  if (eventEnd) capEnd = Math.min(capEnd, eventEnd.getTime())
+  if (rawEnd > capEnd) {
+    return { ms: Math.max(0, capEnd - start), wasCapped: true, effectiveEnd: new Date(capEnd) }
+  }
+  return { ms: Math.max(0, rawEnd - start), wasCapped: false, effectiveEnd: outTime ?? null }
+}
+
 // Pair a member's raw in/out events into discrete sessions, newest concerns
 // handled by the caller. Returns
-// [{ inTime, outTime|null, ms, open, outId, inLoc, outLoc, category }] in
-// chronological order. inLoc/outLoc are the entrance/exit used
-// (attendance_events.location); null when the source rows don't carry it.
-// category is the in event's attendance_events.category, normalized to one of
-// the six categories (legacy 'normal'/null → 'build'). An unmatched trailing
-// 'in' is an open session counted up to now.
+// [{ inTime, outTime|null, ms, open, inId, outId, inLoc, outLoc, category,
+//    manual, wasCapped, effectiveOut }] in chronological order. inLoc/outLoc are
+// the entrance/exit used (attendance_events.location); null when absent. ms is
+// the CAPPED duration (see cappedSession); wasCapped flags a clamped session.
+// category is the IN event's attendance_events.category, normalized to one of
+// the six categories (legacy 'normal'/null → 'build'). manual mirrors the IN
+// event's manual_entry. An unmatched trailing 'in' is an open session counted up
+// to now (still live + uncapped while under the cap).
 export function sessionsFromEvents(events) {
   const sorted = [...events].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
   const sessions = []
@@ -24,25 +55,34 @@ export function sessionsFromEvents(events) {
     if (e.type === 'in') {
       openIn = e
     } else if (e.type === 'out' && openIn) {
+      const cap = cappedSession(new Date(openIn.event_time), new Date(e.event_time))
       sessions.push({
         inTime:  new Date(openIn.event_time),
         outTime: new Date(e.event_time),
-        ms:      new Date(e.event_time) - new Date(openIn.event_time),
+        ms:      cap.ms,
         open:    false,
+        inId:    openIn.id,
         outId:   e.id,
         inLoc:   openIn.location ?? null,
         outLoc:  e.location ?? null,
         category: normAttendanceCategory(openIn.category),
+        manual:  !!openIn.manual_entry,
+        wasCapped: cap.wasCapped,
+        effectiveOut: cap.effectiveEnd,
       })
       openIn = null
     }
   }
   if (openIn) {
+    const cap = cappedSession(new Date(openIn.event_time), null)
     sessions.push({
       inTime: new Date(openIn.event_time), outTime: null,
-      ms: Date.now() - new Date(openIn.event_time), open: true, outId: null,
+      ms: cap.ms, open: true, inId: openIn.id, outId: null,
       inLoc: openIn.location ?? null, outLoc: null,
-      category: openIn.category ?? 'normal',
+      category: normAttendanceCategory(openIn.category),
+      manual: !!openIn.manual_entry,
+      wasCapped: cap.wasCapped,
+      effectiveOut: cap.effectiveEnd,
     })
   }
   return sessions
@@ -74,11 +114,11 @@ export function computeHoursMs(events) {
     if (e.type === 'in') {
       inTime = new Date(e.event_time)
     } else if (e.type === 'out' && inTime) {
-      total += new Date(e.event_time) - inTime
+      total += cappedSession(inTime, new Date(e.event_time)).ms
       inTime = null
     }
   }
-  if (inTime) total += Date.now() - inTime
+  if (inTime) total += cappedSession(inTime, null).ms
   return total
 }
 
@@ -138,7 +178,7 @@ export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows, exclu
       } else if (e.type === 'out' && inTime) {
         // Always close the pair; only count it if not excluded (pending/voided review)
         if (!excludedCheckoutIds || !excludedCheckoutIds.has(e.id)) {
-          addHours(sidFor(date, seasons), inCat, (new Date(e.event_time) - inTime) / 3600000)
+          addHours(sidFor(date, seasons), inCat, cappedSession(inTime, new Date(e.event_time)).ms / 3600000)
         }
         inTime = null; inCat = null
       }
@@ -153,7 +193,7 @@ export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows, exclu
     if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10); openCat = normAttendanceCategory(e.category) }
     else if (e.type === 'out' && openIn) { openIn = null; openDate = null; openCat = null }
   }
-  if (openIn) addHours(sidFor(openDate, seasons), openCat, (Date.now() - openIn) / 3600000)
+  if (openIn) addHours(sidFor(openDate, seasons), openCat, cappedSession(openIn, null).ms / 3600000)
 
   // --- Logged hours (verified only, already filtered by caller) ---
   for (const row of loggedHoursRows) {
@@ -194,7 +234,7 @@ export function computePendingMs(attendanceEvents, pendingCheckoutIds) {
       inTime = new Date(e.event_time)
     } else if (e.type === 'out' && inTime) {
       if (pendingCheckoutIds.has(e.id)) {
-        total += new Date(e.event_time) - inTime
+        total += cappedSession(inTime, new Date(e.event_time)).ms
       }
       inTime = null
     }

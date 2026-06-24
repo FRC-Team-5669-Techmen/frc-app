@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { supabase } from './supabase'
-import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, CATEGORIES, categoryLabel, categoryColor, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
+import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, cappedSession, CATEGORIES, categoryLabel, categoryColor, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
 import { displayName } from './names'
 import './HoursBoard.css'
 
@@ -50,7 +50,7 @@ function attendanceHoursByDate(events, excludedSet) {
     for (const e of evts) {
       if (e.type === 'in') inT = new Date(e.event_time)
       else if (e.type === 'out' && inT) {
-        if (!excludedSet?.has(e.id)) ms += new Date(e.event_time) - inT
+        if (!excludedSet?.has(e.id)) ms += cappedSession(inT, new Date(e.event_time)).ms
         inT = null
       }
     }
@@ -62,7 +62,7 @@ function attendanceHoursByDate(events, excludedSet) {
     if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10) }
     else if (e.type === 'out' && openIn) { openIn = null; openDate = null }
   }
-  if (openIn) out[openDate] = (out[openDate] ?? 0) + (Date.now() - openIn) / 3600000
+  if (openIn) out[openDate] = (out[openDate] ?? 0) + cappedSession(openIn, null).ms / 3600000
   return out
 }
 
@@ -80,6 +80,7 @@ function downloadCsv(lines, filename) {
 
 export default function HoursBoard({ hasRole = () => false }) {
   const isAdmin = hasRole('admin')
+  const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const [seasons,   setSeasons]   = useState(null)
   const [profiles,  setProfiles]  = useState(null)
   const [allEvents, setAllEvents] = useState(null)
@@ -89,13 +90,27 @@ export default function HoursBoard({ hasRole = () => false }) {
   const [sort,      setSort]      = useState({ col: 'total', dir: 'desc' })
   const [view,      setView]      = useState('members') // 'members' | 'matrix'
   const [detail,    setDetail]    = useState(null)       // { memberId, name, day|null } drill-down
+  const [adjust,    setAdjust]    = useState(null)       // staff manual entry / edit / void panel
   const todayThRef = useRef(null)                        // matrix's current-day header, for auto-scroll
+
+  // Reloads only the volatile data (events + the review-exclusion map) after a
+  // staff adjustment; the season selection and tabs are left untouched.
+  async function reloadEvents() {
+    const [{ data: ae }, { data: sr }] = await Promise.all([
+      supabase.from('attendance_events').select('id, user_id, type, event_time, location, category, manual_entry').order('event_time'),
+      supabase.from('session_reviews').select('user_id, checkout_id').in('status', ['pending', 'voided']),
+    ])
+    setAllEvents(ae ?? [])
+    const excMap = {}
+    for (const row of sr ?? []) (excMap[row.user_id] ??= new Set()).add(row.checkout_id)
+    setExcluded(excMap)
+  }
 
   useEffect(() => {
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
       supabase.from('profiles').select('id, full_name, nickname'),
-      supabase.from('attendance_events').select('id, user_id, type, event_time, location, category').order('event_time'),
+      supabase.from('attendance_events').select('id, user_id, type, event_time, location, category, manual_entry').order('event_time'),
       supabase.from('logged_hours').select('member_id, type, hours, date').eq('status', 'verified'),
       supabase.from('session_reviews').select('user_id, checkout_id').in('status', ['pending', 'voided']),
     ]).then(([{ data: s }, { data: p }, { data: ae }, { data: lh }, { data: sr }]) => {
@@ -564,7 +579,15 @@ export default function HoursBoard({ hasRole = () => false }) {
                   {detail.day ? fmtDay(detail.day) : 'Sessions by day'}
                 </p>
               </div>
-              <button className="board-detail-close" onClick={() => setDetail(null)} aria-label="Close">×</button>
+              <div className="board-detail-head-actions">
+                {isStaff && (
+                  <button
+                    className="board-adjust-btn"
+                    onClick={() => setAdjust({ mode: 'add', memberId: detail.memberId, name: detail.name, day: detail.day })}
+                  >+ Manual session</button>
+                )}
+                <button className="board-detail-close" onClick={() => setDetail(null)} aria-label="Close">×</button>
+              </div>
             </div>
             {(!detailData || detailData.length === 0) ? (
               <p className="board-empty">No sessions recorded{detail.day ? ' this day' : ' for this period'}.</p>
@@ -591,7 +614,7 @@ export default function HoursBoard({ hasRole = () => false }) {
                     <table className="board-detail-table">
                       <thead>
                         <tr>
-                          <th>In</th><th>Out</th><th>Where</th><th>Duration</th>
+                          <th>In</th><th>Out</th><th>Where</th><th>Duration</th>{isStaff && <th></th>}
                         </tr>
                       </thead>
                       <tbody>
@@ -608,8 +631,16 @@ export default function HoursBoard({ hasRole = () => false }) {
                             <td className="board-num board-total">
                               {fmtHours(s.ms / 3600000)}
                               <span className="board-cat-tag" style={{ color: categoryColor(s.category) }} title={`${categoryLabel(s.category)} hours`}> · {categoryLabel(s.category)}</span>
+                              {s.manual && <span className="board-cat-tag" style={{ color: 'var(--steel)' }} title="Manual entry"> · MANUAL</span>}
+                              {s.wasCapped && <span className="board-cat-tag" style={{ color: 'var(--gold-dim)' }} title="Capped at the max session length (likely a missed check-out)"> · CAPPED</span>}
                               {s.flagged && <span className="board-flag" title="Pending/auto-close review"> ⚠</span>}
                             </td>
+                            {isStaff && (
+                              <td className="board-num board-sess-actions">
+                                <button className="board-mini-btn" onClick={() => setAdjust({ mode: 'edit', memberId: detail.memberId, name: detail.name, session: s })}>Edit</button>
+                                <button className="board-mini-btn board-mini-danger" onClick={() => setAdjust({ mode: 'void', memberId: detail.memberId, name: detail.name, session: s })}>Void</button>
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -621,6 +652,130 @@ export default function HoursBoard({ hasRole = () => false }) {
           </div>
         </div>
       )}
+
+      {adjust && (
+        <AdjustPanel
+          adjust={adjust}
+          onClose={() => setAdjust(null)}
+          onDone={async () => { setAdjust(null); await reloadEvents() }}
+        />
+      )}
+    </div>
+  )
+}
+
+// Staff-only manual entry / edit / void. mode 'add' inserts a matched IN/OUT pair
+// (staff_add_manual_session); 'edit' patches an existing session's times +
+// category (staff_edit_event, per event); 'void' deletes the session's events
+// (staff_void_event). Every action requires a reason and hits the audit trail.
+function AdjustPanel({ adjust, onClose, onDone }) {
+  const { mode, memberId, name, session, day } = adjust
+  const toLocalInput = d => {
+    if (!d) return ''
+    const t = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+    return t.toISOString().slice(0, 16)
+  }
+  const baseDay = day || new Date().toISOString().slice(0, 10)
+  const [inT,  setInT]  = useState(mode === 'edit' ? toLocalInput(session.inTime)  : `${baseDay}T16:00`)
+  const [outT, setOutT] = useState(mode === 'edit'
+    ? (session.outTime ? toLocalInput(session.outTime) : '')
+    : `${baseDay}T18:00`)
+  const [cat,  setCat]  = useState(mode === 'edit' ? session.category : DEFAULT_CATEGORY)
+  const [reason, setReason] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err,  setErr]  = useState('')
+
+  async function run() {
+    if (!reason.trim()) { setErr('A reason is required.'); return }
+    setBusy(true); setErr('')
+    let error = null
+    if (mode === 'add') {
+      if (!inT || !outT) { setBusy(false); setErr('Both times are required.'); return }
+      ;({ error } = await supabase.rpc('staff_add_manual_session', {
+        p_member: memberId,
+        p_in:  new Date(inT).toISOString(),
+        p_out: new Date(outT).toISOString(),
+        p_category: cat,
+        p_reason: reason.trim(),
+      }))
+    } else if (mode === 'edit') {
+      // Patch the IN event (time + category); patch the OUT event (time) if present.
+      ;({ error } = await supabase.rpc('staff_edit_event', {
+        p_event: session.inId, p_event_time: inT ? new Date(inT).toISOString() : null,
+        p_category: cat, p_reason: reason.trim(),
+      }))
+      if (!error && session.outId && outT) {
+        ;({ error } = await supabase.rpc('staff_edit_event', {
+          p_event: session.outId, p_event_time: new Date(outT).toISOString(),
+          p_category: null, p_reason: reason.trim(),
+        }))
+      }
+    } else if (mode === 'void') {
+      if (session.outId) {
+        ;({ error } = await supabase.rpc('staff_void_event', { p_event: session.outId, p_reason: reason.trim() }))
+      }
+      if (!error && session.inId) {
+        ;({ error } = await supabase.rpc('staff_void_event', { p_event: session.inId, p_reason: reason.trim() }))
+      }
+    }
+    setBusy(false)
+    if (error) { setErr(error.message); return }
+    onDone()
+  }
+
+  const title = mode === 'add' ? `Add manual session — ${name}`
+    : mode === 'edit' ? `Edit session — ${name}`
+    : `Void session — ${name}`
+
+  return (
+    <div className="board-detail-backdrop" onClick={onClose}>
+      <div className="board-adjust" onClick={e => e.stopPropagation()}>
+        <div className="board-detail-head">
+          <h2 className="board-detail-title">{title}</h2>
+          <button className="board-detail-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+
+        {mode === 'void' ? (
+          <p className="board-adjust-warn">
+            This permanently deletes the session's check-in{session.outId ? ' and check-out' : ''} event(s).
+            The change is recorded in the audit trail.
+          </p>
+        ) : (
+          <>
+            <div className="board-adjust-row">
+              <div className="board-adjust-field">
+                <label className="board-adjust-label">Check-in</label>
+                <input className="board-adjust-input" type="datetime-local" value={inT} onChange={e => setInT(e.target.value)} />
+              </div>
+              <div className="board-adjust-field">
+                <label className="board-adjust-label">Check-out</label>
+                <input className="board-adjust-input" type="datetime-local" value={outT} onChange={e => setOutT(e.target.value)} />
+              </div>
+            </div>
+            <div className="board-adjust-field">
+              <label className="board-adjust-label">Category</label>
+              <select className="board-adjust-input" value={cat} onChange={e => setCat(e.target.value)}>
+                {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+              </select>
+            </div>
+          </>
+        )}
+
+        <div className="board-adjust-field">
+          <label className="board-adjust-label">Reason <span className="board-req">*</span></label>
+          <input className="board-adjust-input" type="text" maxLength={300}
+            placeholder="e.g. Offsite build at sponsor; no signal." value={reason}
+            onChange={e => setReason(e.target.value)} />
+        </div>
+
+        {err && <p className="board-adjust-error">{err}</p>}
+        <div className="board-adjust-actions">
+          <button className="board-adjust-cancel" onClick={onClose} disabled={busy}>Cancel</button>
+          <button className={`board-adjust-save${mode === 'void' ? ' board-adjust-danger' : ''}`} onClick={run} disabled={busy}>
+            {busy ? 'Working…' : (mode === 'add' ? 'Add session' : mode === 'edit' ? 'Save changes' : 'Void session')}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
