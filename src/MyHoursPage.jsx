@@ -17,7 +17,7 @@ export default function MyHoursPage({ session }) {
     const uid = session.user.id
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
-      supabase.from('attendance_events').select('id, type, event_time').eq('user_id', uid).order('event_time'),
+      supabase.from('attendance_events').select('id, type, event_time, category').eq('user_id', uid).order('event_time'),
       supabase.from('logged_hours').select('type, hours, date').eq('member_id', uid).eq('status', 'verified'),
       supabase.from('session_reviews').select('checkout_id, status').eq('user_id', uid).in('status', ['pending', 'voided']),
     ]).then(([{ data: s }, { data: ae }, { data: lh }, { data: sr }]) => {
@@ -201,6 +201,9 @@ export default function MyHoursPage({ session }) {
                       <span className="mh-session-date">{fmtSessionDate(s.inTime)}</span>
                       <span className="mh-session-time hud-mono">{fmtClock(s.inTime)} – {s.open ? 'open' : fmtClock(s.outTime)}</span>
                       <span className="mh-session-dur">{s.open ? 'in progress' : fmtHours(s.ms / 3600000)}</span>
+                      {s.category === 'volunteer' && (
+                        <span className="mh-session-flag" style={{ color: 'var(--hr-volunteer)' }}>volunteer</span>
+                      )}
                       {s.pending && <span className="mh-session-flag">review</span>}
                     </li>
                   ))}

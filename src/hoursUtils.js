@@ -11,10 +11,12 @@ export const HOUR_TYPES = [
 
 // Pair a member's raw in/out events into discrete sessions, newest concerns
 // handled by the caller. Returns
-// [{ inTime, outTime|null, ms, open, outId, inLoc, outLoc }] in chronological
-// order. inLoc/outLoc are the entrance/exit used (attendance_events.location);
-// null when the source rows don't carry it. An unmatched trailing 'in' is an
-// open session counted up to now.
+// [{ inTime, outTime|null, ms, open, outId, inLoc, outLoc, category }] in
+// chronological order. inLoc/outLoc are the entrance/exit used
+// (attendance_events.location); null when the source rows don't carry it.
+// category is the in event's attendance_events.category ('normal' | 'volunteer'),
+// defaulting to 'normal' when the source rows don't carry it. An unmatched
+// trailing 'in' is an open session counted up to now.
 export function sessionsFromEvents(events) {
   const sorted = [...events].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
   const sessions = []
@@ -31,6 +33,7 @@ export function sessionsFromEvents(events) {
         outId:   e.id,
         inLoc:   openIn.location ?? null,
         outLoc:  e.location ?? null,
+        category: openIn.category ?? 'normal',
       })
       openIn = null
     }
@@ -40,6 +43,7 @@ export function sessionsFromEvents(events) {
       inTime: new Date(openIn.event_time), outTime: null,
       ms: Date.now() - new Date(openIn.event_time), open: true, outId: null,
       inLoc: openIn.location ?? null, outLoc: null,
+      category: openIn.category ?? 'normal',
     })
   }
   return sessions
@@ -102,13 +106,18 @@ function sidFor(dateStr, seasons) {
  * Build a per-season breakdown map for one member.
  *
  * @param {object[]} seasons            - rows from the seasons table
- * @param {object[]} attendanceEvents   - { id, type, event_time } for this member, any order
+ * @param {object[]} attendanceEvents   - { id, type, event_time, category } for this member, any order
  * @param {object[]} loggedHoursRows    - { type, hours, date } verified entries for this member
  * @param {Set<string>} [excludedCheckoutIds] - checkout event IDs to skip (auto-closed, pending/voided review)
  * @returns {{ [seasonId|'other']: { regular, volunteering, outreach, competition, total } }}
+ *
+ * Attendance sessions are attributed by the IN event's category: a 'volunteer'
+ * check-in (the /checkin-volunteer route) lands in `volunteering`, everything
+ * else in `regular`. Attributing by the IN side keeps it robust to the auto-
+ * close 'out' event, which need not carry the matching category.
  */
 export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows, excludedCheckoutIds = null) {
-  const raw = {} // sid → { regularMs, volunteering, outreach, competition }
+  const raw = {} // sid → { regularMs, volunteerMs, volunteering, outreach, competition }
 
   // --- Attendance: group events by calendar date, compute closed session ms ---
   const byDate = {}
@@ -117,35 +126,42 @@ export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows, exclu
   }
   for (const [date, evts] of Object.entries(byDate)) {
     evts.sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-    let inTime = null, ms = 0
+    let inTime = null, inCat = null, msReg = 0, msVol = 0
     for (const e of evts) {
       if (e.type === 'in') {
         inTime = new Date(e.event_time)
+        inCat  = e.category
       } else if (e.type === 'out' && inTime) {
         // Always close the pair; only count it if not excluded (pending/voided review)
         if (!excludedCheckoutIds || !excludedCheckoutIds.has(e.id)) {
-          ms += new Date(e.event_time) - inTime
+          const dur = new Date(e.event_time) - inTime
+          if (inCat === 'volunteer') msVol += dur; else msReg += dur
         }
-        inTime = null
+        inTime = null; inCat = null
       }
     }
-    if (ms > 0) {
+    if (msReg > 0 || msVol > 0) {
       const sid = sidFor(date, seasons)
-      ;(raw[sid] ??= {}).regularMs = (raw[sid].regularMs ?? 0) + ms
+      const b = (raw[sid] ??= {})
+      b.regularMs   = (b.regularMs   ?? 0) + msReg
+      b.volunteerMs = (b.volunteerMs ?? 0) + msVol
     }
   }
 
   // Open session: find the last unmatched 'in' (member is currently checked in)
   // Auto-close checkouts clear inTime, so this only fires for genuinely open sessions.
   const sorted = [...attendanceEvents].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-  let openIn = null, openDate = null
+  let openIn = null, openDate = null, openCat = null
   for (const e of sorted) {
-    if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10) }
-    else if (e.type === 'out' && openIn) { openIn = null; openDate = null }
+    if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10); openCat = e.category }
+    else if (e.type === 'out' && openIn) { openIn = null; openDate = null; openCat = null }
   }
   if (openIn) {
     const sid = sidFor(openDate, seasons)
-    ;(raw[sid] ??= {}).regularMs = (raw[sid].regularMs ?? 0) + (Date.now() - openIn)
+    const b = (raw[sid] ??= {})
+    const dur = Date.now() - openIn
+    if (openCat === 'volunteer') b.volunteerMs = (b.volunteerMs ?? 0) + dur
+    else b.regularMs = (b.regularMs ?? 0) + dur
   }
 
   // --- Logged hours (verified only, already filtered by caller) ---
@@ -159,7 +175,8 @@ export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows, exclu
   const result = {}
   for (const [sid, b] of Object.entries(raw)) {
     const regular      = (b.regularMs ?? 0) / 3600000
-    const volunteering = b.volunteering ?? 0
+    // Volunteer attendance (FLL-room check-ins) + any verified logged volunteering.
+    const volunteering = (b.volunteering ?? 0) + (b.volunteerMs ?? 0) / 3600000
     const outreach     = b.outreach     ?? 0
     const competition  = b.competition  ?? 0
     result[sid] = { regular, volunteering, outreach, competition, total: regular + volunteering + outreach + competition }

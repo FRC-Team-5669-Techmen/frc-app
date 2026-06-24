@@ -38,31 +38,33 @@ function addDaysKey(key, n) {
 // Saturday that starts the Sat–Fri week containing `key`.
 function weekStartKey(key) { return addDaysKey(key, -((weekdayOf(key) + 1) % 7)) }
 
-// Per-date regular (attendance-derived) hours for one member — mirrors the
+// Per-date REGULAR (attendance-derived) hours for one member — mirrors the
 // by-date pairing in buildBreakdown, including an open session counted to now.
+// Volunteer sessions (category 'volunteer', attributed by the IN event) are
+// excluded: the matrix is a coach timesheet of regular shop hours only.
 function regularHoursByDate(events, excludedSet) {
   const byDate = {}
   for (const e of events) (byDate[e.event_time.slice(0, 10)] ??= []).push(e)
   const out = {}
   for (const [date, evts] of Object.entries(byDate)) {
     evts.sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-    let inT = null, ms = 0
+    let inT = null, inCat = null, ms = 0
     for (const e of evts) {
-      if (e.type === 'in') inT = new Date(e.event_time)
+      if (e.type === 'in') { inT = new Date(e.event_time); inCat = e.category }
       else if (e.type === 'out' && inT) {
-        if (!excludedSet?.has(e.id)) ms += new Date(e.event_time) - inT
-        inT = null
+        if (!excludedSet?.has(e.id) && inCat !== 'volunteer') ms += new Date(e.event_time) - inT
+        inT = null; inCat = null
       }
     }
     if (ms > 0) out[date] = (out[date] ?? 0) + ms / 3600000
   }
   const sorted = [...events].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-  let openIn = null, openDate = null
+  let openIn = null, openDate = null, openCat = null
   for (const e of sorted) {
-    if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10) }
-    else if (e.type === 'out' && openIn) { openIn = null; openDate = null }
+    if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10); openCat = e.category }
+    else if (e.type === 'out' && openIn) { openIn = null; openDate = null; openCat = null }
   }
-  if (openIn) out[openDate] = (out[openDate] ?? 0) + (Date.now() - openIn) / 3600000
+  if (openIn && openCat !== 'volunteer') out[openDate] = (out[openDate] ?? 0) + (Date.now() - openIn) / 3600000
   return out
 }
 
@@ -95,7 +97,7 @@ export default function HoursBoard({ hasRole = () => false }) {
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
       supabase.from('profiles').select('id, full_name, nickname'),
-      supabase.from('attendance_events').select('id, user_id, type, event_time, location').order('event_time'),
+      supabase.from('attendance_events').select('id, user_id, type, event_time, location, category').order('event_time'),
       supabase.from('logged_hours').select('member_id, type, hours, date').eq('status', 'verified'),
       supabase.from('session_reviews').select('user_id, checkout_id').in('status', ['pending', 'voided']),
     ]).then(([{ data: s }, { data: p }, { data: ae }, { data: lh }, { data: sr }]) => {
@@ -288,7 +290,7 @@ export default function HoursBoard({ hasRole = () => false }) {
       for (const s of sessionsFromEvents(eventMap[p.id] ?? [])) {
         const flagged = s.outId && excluded?.[p.id]?.has(s.outId) ? 'review' : ''
         lines.push([
-          name, 'Regular', s.inTime.toISOString().slice(0, 10),
+          name, s.category === 'volunteer' ? 'Volunteer' : 'Regular', s.inTime.toISOString().slice(0, 10),
           s.inTime.toLocaleString(), fmtLocation(s.inLoc),
           s.open ? '(open)' : s.outTime.toLocaleString(),
           s.open ? '' : fmtLocation(s.outLoc),
@@ -550,6 +552,9 @@ export default function HoursBoard({ hasRole = () => false }) {
                             </td>
                             <td className="board-num board-total">
                               {fmtHours(s.ms / 3600000)}
+                              {s.category === 'volunteer' && (
+                                <span className="board-vol-tag" style={{ color: 'var(--hr-volunteer)' }} title="Volunteer hours"> · VOL</span>
+                              )}
                               {s.flagged && <span className="board-flag" title="Pending/auto-close review"> ⚠</span>}
                             </td>
                           </tr>
