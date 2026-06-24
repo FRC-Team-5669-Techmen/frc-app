@@ -33,6 +33,7 @@ const PresenceBoard    = lazy(() => import('./PresenceBoard'))
 const AccessRequestsPage = lazy(() => import('./AccessRequestsPage'))
 const ParentHomePage   = lazy(() => import('./ParentHomePage'))
 const SchedulePage     = lazy(() => import('./SchedulePage'))
+const ReportsPage      = lazy(() => import('./ReportsPage'))
 
 const Splash = () => (
   <div className="splash">
@@ -187,6 +188,7 @@ export default function App() {
           <Route path="/certify"     element={<CertifyPage session={session} hasRole={hasRole} />} />
           <Route path="/coverage"    element={<CoverageMatrix hasRole={hasRole} />} />
           <Route path="/verify-hours" element={<VerifyHoursPage session={session} hasRole={hasRole} />} />
+          <Route path="/reports"     element={<ReportsPage session={session} hasRole={hasRole} />} />
           <Route path="/activity"    element={<ActivityPage hasRole={hasRole} />} />
           <Route path="/readiness"   element={<ReadinessPage hasRole={hasRole} />} />
           <Route path="/squad"       element={<SquadPage session={session} hasRole={hasRole} />} />

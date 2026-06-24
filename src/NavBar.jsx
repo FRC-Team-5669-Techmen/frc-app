@@ -39,6 +39,7 @@ const CONTEXT_TAGS = [
   ['/roster',      'ROSTER'],
   ['/access-requests', 'ACCESS'],
   ['/verify-hours','HRS//VERIFY'],
+  ['/reports',     'REPORTS'],
   ['/certify',     'CERTIFY'],
   ['/coverage',    'COVERAGE'],
 ]
@@ -101,6 +102,7 @@ const STAFF_LINKS = [
   ['/roster',         'Roster'],
   ['/access-requests','Access Requests'],
   ['/verify-hours',   'Verify Hours'],
+  ['/reports',        'Reports'],
   ['/certify',        'Certify Skills'],
   ['/coverage',       'Skill Coverage'],
 ]
