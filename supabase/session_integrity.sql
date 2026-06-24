@@ -260,13 +260,16 @@ grant execute on function public.resolve_session_correction(uuid, boolean, text,
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 6) ALIGN logged_hours.type TO THE SIX CATEGORIES.
---    Migrate the legacy 'volunteering' value to 'volunteer', then widen the
---    constraint to the full set. The read-time mapping (loggedTypeToCategory)
+--    Drop the old 3-value constraint FIRST, then migrate 'volunteering' →
+--    'volunteer', then widen the constraint. (Order matters: the legacy
+--    constraint forbids 'volunteer', so updating before dropping it fails with
+--    "logged_hours_type_check".) The read-time mapping (loggedTypeToCategory)
 --    still maps any stray 'volunteering' → 'volunteer', so it keeps working.
 -- ─────────────────────────────────────────────────────────────────────────────
+alter table public.logged_hours drop constraint if exists logged_hours_type_check;
+
 update public.logged_hours set type = 'volunteer' where type = 'volunteering';
 
-alter table public.logged_hours drop constraint if exists logged_hours_type_check;
 alter table public.logged_hours
   add constraint logged_hours_type_check
   check (type in ('build', 'outreach', 'volunteer', 'competition', 'fundraising', 'mentoring'))
