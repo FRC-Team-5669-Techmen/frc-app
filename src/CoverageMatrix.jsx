@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { roleColor, topRoleOf } from './roles'
 import { displayName } from './names'
@@ -156,7 +157,7 @@ export default function CoverageMatrix({ hasRole, canView = false }) {
                   {roleById[m.id] && (
                     <span className="role-dot cm-role-dot" style={{ '--rc': roleColor(roleById[m.id]) }} title={roleById[m.id]} />
                   )}
-                  {displayName(m)}
+                  <Link to={`/members/${m.id}`} className="cm-name-link">{displayName(m)}</Link>
                 </td>
                 {flatSkills.map((skill, i) => {
                   const isFirst = grouped.some(g => g.skills[0]?.id === skill.id)

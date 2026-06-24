@@ -28,8 +28,6 @@ const ReadinessPage    = lazy(() => import('./ReadinessPage'))
 const StudyPage        = lazy(() => import('./StudyPage'))
 const SquadPage        = lazy(() => import('./SquadPage'))
 const PresenceBoard    = lazy(() => import('./PresenceBoard'))
-// Kiosk deactivated (hidden from the UI). Restore with the /kiosk route + nav entry.
-// const KioskPage        = lazy(() => import('./KioskPage'))
 const AccessRequestsPage = lazy(() => import('./AccessRequestsPage'))
 const ParentHomePage   = lazy(() => import('./ParentHomePage'))
 const SchedulePage     = lazy(() => import('./SchedulePage'))
@@ -209,13 +207,6 @@ export default function App() {
           path="/checkin-volunteer"
           element={session ? <VolunteerCheckinPage session={session} /> : <CheckinRedirect />}
         />
-
-        {/* Kiosk deactivated — route disabled so it can't be reached. Restore by
-            un-commenting this and the Kiosk nav entry in NavBar.jsx.
-        <Route
-          path="/kiosk"
-          element={session ? <KioskPage session={session} hasRole={hasRole} /> : <Navigate to="/login" replace />}
-        /> */}
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

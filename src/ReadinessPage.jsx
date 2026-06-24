@@ -9,6 +9,7 @@ const timeStr = ts =>
 
 export default function ReadinessPage({ hasRole = () => false }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
+  const isAdmin = hasRole('admin')   // /roster is admin-only — gate its links
 
   const [data, setData]       = useState(null)
   const [loading, setLoading] = useState(true)
@@ -75,14 +76,16 @@ export default function ReadinessPage({ hasRole = () => false }) {
               <span className="rd-bucket-count">{queue.tasks_pending?.length ?? 0}</span>
               <span className="rd-bucket-name">Jobs to sign off</span>
             </Link>
-            <Link to="/roster" className="rd-bucket">
-              <span className="rd-bucket-count">{queue.roster_pending?.length ?? 0}</span>
-              <span className="rd-bucket-name">Roster approvals</span>
-            </Link>
+            {isAdmin && (
+              <Link to="/roster" className="rd-bucket">
+                <span className="rd-bucket-count">{queue.roster_pending?.length ?? 0}</span>
+                <span className="rd-bucket-name">Roster approvals</span>
+              </Link>
+            )}
           </div>
           {(queue.hours_pending?.length || queue.tasks_pending?.length || queue.roster_pending?.length) ? (
             <div className="rd-queue-lists">
-              {queue.roster_pending?.length > 0 && (
+              {isAdmin && queue.roster_pending?.length > 0 && (
                 <div className="rd-queue-list">
                   <Link to="/roster" className="rd-queue-list-head">Roster approvals</Link>
                   {queue.roster_pending.map(r => (

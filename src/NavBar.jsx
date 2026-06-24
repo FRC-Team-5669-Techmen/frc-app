@@ -34,8 +34,6 @@ const CONTEXT_TAGS = [
   ['/activity',    'ACTIVITY'],
   ['/squad',       'SQUAD'],
   ['/display',     'DISPLAY'],
-  // Kiosk deactivated — context tag left out; restore alongside the route + nav entry.
-  // ['/kiosk',       'KIOSK'],
   ['/roster',      'ROSTER'],
   ['/access-requests', 'ACCESS'],
   ['/verify-hours','HRS//VERIFY'],
@@ -90,24 +88,7 @@ function Dropdown({ label, paths = [], tourId, align = 'left', badge = 0, childr
   )
 }
 
-// Staff links now live here (moved out of the top-row Staff dropdown).
-const STAFF_LINKS = [
-  ['/readiness',      'Readiness'],
-  ['/activity',       'Activity'],
-  ['/squad',          'Squad'],
-  ['/display',        'Display'],
-  // Kiosk deactivated — entry hidden so it can't be navigated to. Restore by
-  // un-commenting this line and the /kiosk route in App.jsx.
-  // ['/kiosk',          'Kiosk'],
-  ['/roster',         'Roster'],
-  ['/access-requests','Access Requests'],
-  ['/verify-hours',   'Verify Hours'],
-  ['/reports',        'Reports'],
-  ['/certify',        'Certify Skills'],
-  ['/coverage',       'Skill Coverage'],
-]
-
-function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isParent = false, pendingAccess = 0 }) {
+function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false, isParent = false, pendingAccess = 0 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -145,13 +126,19 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isParent = false
           {isStaff && (
             <>
               <div className="nav-dropdown-divider" />
-              <span className="nav-dropdown-section">Staff</span>
-              {STAFF_LINKS.map(([to, label]) => (
-                <NavLink key={to} to={to} className={itemClass}>
-                  {label}
-                  {to === '/access-requests' && pendingAccess > 0 && <span className="nav-badge">{pendingAccess}</span>}
-                </NavLink>
-              ))}
+              <NavLink to="/readiness" className={itemClass}>Readiness</NavLink>
+
+              <span className="nav-dropdown-section">People</span>
+              {isAdmin && <NavLink to="/roster" className={itemClass}>Roster</NavLink>}
+              <NavLink to="/access-requests" className={itemClass}>
+                Access Requests
+                {pendingAccess > 0 && <span className="nav-badge">{pendingAccess}</span>}
+              </NavLink>
+              <NavLink to="/squad" className={itemClass}>Squad</NavLink>
+
+              <span className="nav-dropdown-section">Live</span>
+              <NavLink to="/activity" className={itemClass}>Activity</NavLink>
+              <NavLink to="/display" className={itemClass}>Display</NavLink>
             </>
           )}
 
@@ -170,6 +157,7 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isParent = false
 
 export default function NavBar({ hasRole = () => false, session = null }) {
   const isStaff   = hasRole('mentor') || hasRole('lead') || hasRole('admin')
+  const isAdmin   = hasRole('admin')
   // Parent-only view: parent who is NOT staff sees a reduced, read-only nav.
   const isParent  = hasRole('parent') && !isStaff
   const avatarUrl = session?.user?.user_metadata?.avatar_url
@@ -225,20 +213,31 @@ export default function NavBar({ hasRole = () => false, session = null }) {
             <IconJobs />Jobs
           </NavLink>
 
-          <Dropdown label={<><IconHours />Hours</>} tourId="nav-hours" paths={['/my-hours', '/hours', '/log-hours']}>
+          <Dropdown label={<><IconHours />Hours</>} tourId="nav-hours" paths={['/my-hours', '/log-hours', '/hours', '/verify-hours', '/reports']}>
             <NavLink to="/my-hours"  className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>My Hours</NavLink>
-            <NavLink to="/hours"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Team Hours</NavLink>
             <NavLink to="/log-hours" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Log Hours</NavLink>
+            {isStaff && <div className="nav-dropdown-divider" />}
+            <NavLink to="/hours"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Team Hours</NavLink>
+            {isStaff && <NavLink to="/verify-hours" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Verify Hours</NavLink>}
+            {isStaff && <NavLink to="/reports"      className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Reports</NavLink>}
           </Dropdown>
 
-          <NavLink to="/skills" data-tour="nav-skills" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            <IconSkills />Skills
-          </NavLink>
+          {isStaff ? (
+            <Dropdown label={<><IconSkills />Skills</>} tourId="nav-skills" paths={['/skills', '/certify', '/coverage']}>
+              <NavLink to="/skills"   className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Catalog</NavLink>
+              <NavLink to="/certify"  className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Certify</NavLink>
+              <NavLink to="/coverage" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Coverage</NavLink>
+            </Dropdown>
+          ) : (
+            <NavLink to="/skills" data-tour="nav-skills" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+              <IconSkills />Skills
+            </NavLink>
+          )}
           </>)}
         </div>
 
         <div className="navbar-account">
-          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isParent={isParent} pendingAccess={pendingAccess} />
+          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isAdmin={isAdmin} isParent={isParent} pendingAccess={pendingAccess} />
         </div>
       </div>
     </nav>
