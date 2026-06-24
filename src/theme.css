@@ -35,11 +35,14 @@
   --gold-a24:      rgba(212, 175, 55, 0.24);
   --fault-a10:     rgba(226, 75, 74, 0.10);
 
-  /* Hour-type accents — consistent across My Hours + Team Hours */
+  /* Hour-category accents — consistent across My Hours + Team Hours */
   --hr-regular:     #D4AF37;  /* gold  — build / regular   */
-  --hr-volunteer:   #4FB477;  /* green — volunteering       */
+  --hr-build:       #D4AF37;  /* gold  — build (default)    */
+  --hr-volunteer:   #4FB477;  /* green — volunteer          */
   --hr-outreach:    #5B9BD5;  /* blue  — outreach           */
   --hr-competition: #B98BE0;  /* violet — competition       */
+  --hr-fundraising: #E07B39;  /* orange — fundraising       */
+  --hr-mentoring:   #D96A9A;  /* rose  — mentoring          */
 
   /* Role accents — one color per role, used wherever a role renders */
   --role-parent:    #4FB477;  /* green  */

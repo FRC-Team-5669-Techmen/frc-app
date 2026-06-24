@@ -225,6 +225,47 @@
 }
 .board-open { color: var(--gold-dim); font-family: var(--font-mono); font-size: 0.78rem; }
 .board-flag { color: var(--gold-dim); }
+.board-cat-tag { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.02em; }
+
+/* ── Category totals strip (by-member view + drill-down) ── */
+.board-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 1rem 0;
+}
+.board-detail-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.board-total-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.board-total-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.board-total-val {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.board-total-grand {
+  background: var(--gold-a08);
+  border-color: var(--gold-dim);
+}
+.board-total-grand .board-total-val { color: var(--gold-bright); }
 
 /* ── Matrix view: member × day timesheet ── */
 .board-matrix-note {

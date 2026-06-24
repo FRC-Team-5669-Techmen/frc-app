@@ -227,6 +227,38 @@
 .checkin-home-link:hover { color: var(--gold); border-bottom-color: var(--gold); }
 .checkin-success .checkin-home-link { color: #0A0B0D; border-bottom-color: rgba(10,11,13,0.4); }
 
+/* ── Hour-category picker (check-in confirm screen) ── */
+.checkin-cats-label {
+  margin: 1.5rem 0 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.checkin-cats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  max-width: 22rem;
+}
+.checkin-cat {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--steel);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+}
+.checkin-cat-on {
+  background: var(--gold-a08);
+  font-weight: 700;
+}
+
 /* ── Reduced motion: no sweep / flash animation ── */
 @media (prefers-reduced-motion: reduce) {
   .checkin-ring { animation: none; border-top-color: var(--gold); }

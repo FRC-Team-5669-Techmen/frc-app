@@ -1,11 +1,8 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { supabase } from './supabase'
-import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, HOUR_TYPES } from './hoursUtils'
+import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, CATEGORIES, categoryLabel, categoryColor, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
 import { displayName } from './names'
 import './HoursBoard.css'
-
-const TYPE_COLOR = Object.fromEntries(HOUR_TYPES.map(t => [t.key, t.color]))
-const TYPE_LABEL = Object.fromEntries(HOUR_TYPES.map(t => [t.key, t.label]))
 
 // Defined outside HoursBoard so React sees a stable component reference across renders.
 function SortTh({ col, label, sort, onSort, color, className = '' }) {
@@ -38,33 +35,34 @@ function addDaysKey(key, n) {
 // Saturday that starts the Sat–Fri week containing `key`.
 function weekStartKey(key) { return addDaysKey(key, -((weekdayOf(key) + 1) % 7)) }
 
-// Per-date REGULAR (attendance-derived) hours for one member — mirrors the
-// by-date pairing in buildBreakdown, including an open session counted to now.
-// Volunteer sessions (category 'volunteer', attributed by the IN event) are
-// excluded: the matrix is a coach timesheet of regular shop hours only.
-function regularHoursByDate(events, excludedSet) {
+// Per-date attendance (on-site, all categories) hours for one member — mirrors
+// the by-date pairing in buildBreakdown, including an open session counted to
+// now. The matrix is a coach timesheet of physical presence, so every category
+// counts toward the daily total; the category split lives in the by-member table
+// and the per-member drill-down.
+function attendanceHoursByDate(events, excludedSet) {
   const byDate = {}
   for (const e of events) (byDate[e.event_time.slice(0, 10)] ??= []).push(e)
   const out = {}
   for (const [date, evts] of Object.entries(byDate)) {
     evts.sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-    let inT = null, inCat = null, ms = 0
+    let inT = null, ms = 0
     for (const e of evts) {
-      if (e.type === 'in') { inT = new Date(e.event_time); inCat = e.category }
+      if (e.type === 'in') inT = new Date(e.event_time)
       else if (e.type === 'out' && inT) {
-        if (!excludedSet?.has(e.id) && inCat !== 'volunteer') ms += new Date(e.event_time) - inT
-        inT = null; inCat = null
+        if (!excludedSet?.has(e.id)) ms += new Date(e.event_time) - inT
+        inT = null
       }
     }
     if (ms > 0) out[date] = (out[date] ?? 0) + ms / 3600000
   }
   const sorted = [...events].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-  let openIn = null, openDate = null, openCat = null
+  let openIn = null, openDate = null
   for (const e of sorted) {
-    if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10); openCat = e.category }
-    else if (e.type === 'out' && openIn) { openIn = null; openDate = null; openCat = null }
+    if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10) }
+    else if (e.type === 'out' && openIn) { openIn = null; openDate = null }
   }
-  if (openIn && openCat !== 'volunteer') out[openDate] = (out[openDate] ?? 0) + (Date.now() - openIn) / 3600000
+  if (openIn) out[openDate] = (out[openDate] ?? 0) + (Date.now() - openIn) / 3600000
   return out
 }
 
@@ -150,10 +148,22 @@ export default function HoursBoard({ hasRole = () => false }) {
     return byMember.map(m => {
       const stats = selSeason === 'all'
         ? sumBreakdown(m.breakdown)
-        : (m.breakdown[selSeason] ?? { regular: 0, volunteering: 0, outreach: 0, competition: 0, total: 0 })
+        : (m.breakdown[selSeason] ?? emptyBreakdown())
       return { id: m.id, name: m.name, checkedIn: m.checkedIn, ...stats }
     })
   }, [byMember, selSeason])
+
+  // Team-wide category totals (+ grand total) for the selected season — the
+  // summary strip above the table.
+  const teamTotals = useMemo(() => {
+    if (!rows) return null
+    const t = emptyBreakdown()
+    for (const r of rows) {
+      for (const c of CATEGORIES) t[c.key] += r[c.key] ?? 0
+      t.total += r.total ?? 0
+    }
+    return t
+  }, [rows])
 
   // Selected season's date range (null = All Time → no filter).
   const selRange = useMemo(() => {
@@ -206,7 +216,7 @@ export default function HoursBoard({ hasRole = () => false }) {
     for (const e of allEvents) (eventMap[e.user_id] ??= []).push(e)
 
     const rows = profiles.map(p => {
-      const hoursByDate = regularHoursByDate(eventMap[p.id] ?? [], excluded[p.id])
+      const hoursByDate = attendanceHoursByDate(eventMap[p.id] ?? [], excluded[p.id])
       const perDay = {}, weekSub = {}
       let total = 0
       for (const w of weeks) {
@@ -277,20 +287,36 @@ export default function HoursBoard({ hasRole = () => false }) {
       .map(([day, sessions]) => ({ day, sessions }))
   }, [detail, eventsByMember, selRange, excluded])
 
+  // Category breakdown (+ grand total) of the sessions shown in the drill-down,
+  // counting only the ones that count toward official hours (not flagged).
+  const detailTotals = useMemo(() => {
+    if (!detailData) return null
+    const t = emptyBreakdown()
+    for (const { sessions } of detailData) {
+      for (const s of sessions) {
+        if (s.flagged) continue
+        const h = s.ms / 3600000
+        t[s.category] = (t[s.category] ?? 0) + h
+        t.total += h
+      }
+    }
+    return t
+  }, [detailData])
+
   // Admin CSV: every member's full sign in/out history + logged hours.
   function exportCsv() {
     if (view === 'matrix') { exportMatrixCsv(); return }
     const nameById = Object.fromEntries((profiles ?? []).map(p => [p.id, displayName(p)]))
     const eventMap = {}
     for (const e of (allEvents ?? [])) (eventMap[e.user_id] ??= []).push(e)
-    const lines = [['Member', 'Hour Type', 'Date', 'Check In', 'Entrance', 'Check Out', 'Exit', 'Duration (h)', 'Flagged']
+    const lines = [['Member', 'Category', 'Date', 'Check In', 'Entrance', 'Check Out', 'Exit', 'Duration (h)', 'Flagged']
       .map(csv).join(',')]
     for (const p of (profiles ?? [])) {
       const name = displayName(p)
       for (const s of sessionsFromEvents(eventMap[p.id] ?? [])) {
         const flagged = s.outId && excluded?.[p.id]?.has(s.outId) ? 'review' : ''
         lines.push([
-          name, s.category === 'volunteer' ? 'Volunteer' : 'Regular', s.inTime.toISOString().slice(0, 10),
+          name, categoryLabel(s.category), s.inTime.toISOString().slice(0, 10),
           s.inTime.toLocaleString(), fmtLocation(s.inLoc),
           s.open ? '(open)' : s.outTime.toLocaleString(),
           s.open ? '' : fmtLocation(s.outLoc),
@@ -300,7 +326,7 @@ export default function HoursBoard({ hasRole = () => false }) {
     }
     for (const l of (allLogged ?? [])) {
       lines.push([
-        nameById[l.member_id] || '—', TYPE_LABEL[l.type] ?? l.type, l.date,
+        nameById[l.member_id] || '—', categoryLabel(loggedTypeToCategory(l.type)), l.date,
         '', '', '', '', (parseFloat(l.hours) || 0).toFixed(2), '',
       ].map(csv).join(','))
     }
@@ -393,17 +419,32 @@ export default function HoursBoard({ hasRole = () => false }) {
           )}
         </div>
 
+        {view === 'members' && teamTotals && (
+          <div className="board-totals">
+            {CATEGORIES.map(c => (
+              <div key={c.key} className="board-total-chip">
+                <span className="board-type-dot" style={{ background: c.color }} />
+                <span className="board-total-label">{c.label}</span>
+                <span className="board-total-val hud-tnum">{fmtHours(teamTotals[c.key])}</span>
+              </div>
+            ))}
+            <div className="board-total-chip board-total-grand">
+              <span className="board-total-label">Grand total</span>
+              <span className="board-total-val hud-tnum">{fmtHours(teamTotals.total)}</span>
+            </div>
+          </div>
+        )}
+
         {view === 'members' ? (
           <div className="board-table-wrap">
             <table className="board-table">
               <thead>
                 <tr>
-                  <SortTh col="name"         label="Member"       sort={sort} onSort={toggleSort} />
-                  <SortTh col="regular"      label="Regular"      sort={sort} onSort={toggleSort} color={TYPE_COLOR.regular} />
-                  <SortTh col="volunteering" label="Volunteering" sort={sort} onSort={toggleSort} color={TYPE_COLOR.volunteering} />
-                  <SortTh col="outreach"     label="Outreach"     sort={sort} onSort={toggleSort} color={TYPE_COLOR.outreach} />
-                  <SortTh col="competition"  label="Competition"  sort={sort} onSort={toggleSort} color={TYPE_COLOR.competition} />
-                  <SortTh col="total"        label="Total"        sort={sort} onSort={toggleSort} />
+                  <SortTh col="name" label="Member" sort={sort} onSort={toggleSort} />
+                  {CATEGORIES.map(c => (
+                    <SortTh key={c.key} col={c.key} label={c.label} sort={sort} onSort={toggleSort} color={c.color} />
+                  ))}
+                  <SortTh col="total" label="Total" sort={sort} onSort={toggleSort} />
                   <th className="board-th">Status</th>
                 </tr>
               </thead>
@@ -416,10 +457,9 @@ export default function HoursBoard({ hasRole = () => false }) {
                     title="View sessions by day"
                   >
                     <td className="board-td board-member-link">{r.name}</td>
-                    <td className="board-td board-num">{fmtHours(r.regular)}</td>
-                    <td className="board-td board-num">{fmtHours(r.volunteering)}</td>
-                    <td className="board-td board-num">{fmtHours(r.outreach)}</td>
-                    <td className="board-td board-num">{fmtHours(r.competition)}</td>
+                    {CATEGORIES.map(c => (
+                      <td key={c.key} className="board-td board-num">{fmtHours(r[c.key])}</td>
+                    ))}
                     <td className="board-td board-num board-total">{fmtHours(r.total)}</td>
                     <td className="board-td">
                       <span className={`board-pill ${r.checkedIn ? 'pill-in' : 'pill-out'}`}>
@@ -435,7 +475,7 @@ export default function HoursBoard({ hasRole = () => false }) {
           <>
             {matrix && (
               <p className="board-matrix-note">
-                Member × day grid — regular shop hours, weeks Sat–Fri.
+                Member × day grid — total attendance hours (all categories), weeks Sat–Fri. Click a cell for the category breakdown.
                 {matrix.fromAll && <> Showing <strong>{matrix.season.name}</strong> (active season).</>}
               </p>
             )}
@@ -530,6 +570,21 @@ export default function HoursBoard({ hasRole = () => false }) {
               <p className="board-empty">No sessions recorded{detail.day ? ' this day' : ' for this period'}.</p>
             ) : (
               <div className="board-detail-body">
+                {detailTotals && detailTotals.total > 0 && (
+                  <div className="board-detail-totals">
+                    {CATEGORIES.filter(c => (detailTotals[c.key] || 0) >= 0.01).map(c => (
+                      <span key={c.key} className="board-total-chip">
+                        <span className="board-type-dot" style={{ background: c.color }} />
+                        <span className="board-total-label">{c.label}</span>
+                        <span className="board-total-val hud-tnum">{fmtHours(detailTotals[c.key])}</span>
+                      </span>
+                    ))}
+                    <span className="board-total-chip board-total-grand">
+                      <span className="board-total-label">Total</span>
+                      <span className="board-total-val hud-tnum">{fmtHours(detailTotals.total)}</span>
+                    </span>
+                  </div>
+                )}
                 {detailData.map(({ day, sessions }) => (
                   <div key={day} className="board-detail-day">
                     {!detail.day && <h3 className="board-detail-dayhead">{fmtDay(day)}</h3>}
@@ -552,9 +607,7 @@ export default function HoursBoard({ hasRole = () => false }) {
                             </td>
                             <td className="board-num board-total">
                               {fmtHours(s.ms / 3600000)}
-                              {s.category === 'volunteer' && (
-                                <span className="board-vol-tag" style={{ color: 'var(--hr-volunteer)' }} title="Volunteer hours"> · VOL</span>
-                              )}
+                              <span className="board-cat-tag" style={{ color: categoryColor(s.category) }} title={`${categoryLabel(s.category)} hours`}> · {categoryLabel(s.category)}</span>
                               {s.flagged && <span className="board-flag" title="Pending/auto-close review"> ⚠</span>}
                             </td>
                           </tr>

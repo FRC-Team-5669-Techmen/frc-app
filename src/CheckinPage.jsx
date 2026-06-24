@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { verifyAtShop } from './geo'
+import { CATEGORIES, DEFAULT_CATEGORY } from './categories'
 import './CheckinPage.css'
 
 const DUPLICATE_WINDOW_MS = 60_000
@@ -51,6 +52,7 @@ export default function CheckinPage({ session }) {
   const [geoReason, setGeoReason] = useState(null)
   const [acting, setActing] = useState(false)
   const [exempt, setExempt] = useState(false)  // staff-granted geofence exemption
+  const [category, setCategory] = useState(DEFAULT_CATEGORY)  // hour category for this check-in
 
   const memberName = session?.user?.user_metadata?.full_name
     || session?.user?.email?.split('@')[0]
@@ -63,12 +65,14 @@ export default function CheckinPage({ session }) {
     }
   }, [status])
 
-  // Write the attendance event and flip to the success screen.
+  // Write the attendance event and flip to the success screen. A check-IN carries
+  // the picked hour category; a check-OUT just closes the open session (the math
+  // attributes a session by its IN category, so the OUT need not carry one).
   async function insertEvent(newType) {
     const now = new Date()
-    const { error } = await supabase
-      .from('attendance_events')
-      .insert({ user_id: session.user.id, type: newType, location: loc, method: 'nfc' })
+    const row = { user_id: session.user.id, type: newType, location: loc, method: 'nfc' }
+    if (newType === 'in') row.category = category
+    const { error } = await supabase.from('attendance_events').insert(row)
     if (error) throw error
     setEventType(newType)
     setEventTime(now)
@@ -201,6 +205,20 @@ export default function CheckinPage({ session }) {
         <h1 className="checkin-name">{memberName}</h1>
         <p className="checkin-status">Tap to confirm your check-in</p>
         <p className="checkin-loc">{loc.replace(/-/g, ' ')}</p>
+        <p className="checkin-cats-label">What are you here for?</p>
+        <div className="checkin-cats">
+          {CATEGORIES.map(c => (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => setCategory(c.key)}
+              className={`checkin-cat${category === c.key ? ' checkin-cat-on' : ''}`}
+              style={category === c.key ? { borderColor: c.color, color: c.color } : undefined}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
         <button
           onClick={confirmCheckin}
           disabled={acting}

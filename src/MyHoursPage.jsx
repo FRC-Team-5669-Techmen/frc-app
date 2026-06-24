@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
-import { fmtHours, buildBreakdown, computePendingMs, sumBreakdown, sessionsFromEvents, HOUR_TYPES } from './hoursUtils'
+import { fmtHours, buildBreakdown, computePendingMs, sumBreakdown, sessionsFromEvents, CATEGORIES, categoryLabel, categoryColor, DEFAULT_CATEGORY } from './hoursUtils'
 import './MyHoursPage.css'
 
 const DAY_MS = 86_400_000
@@ -108,7 +108,7 @@ export default function MyHoursPage({ session }) {
 
   const grandTotal = cards.reduce((s, c) => s + c.b.total, 0)
   const pendingCount = pendingIds?.size ?? 0
-  const typeMax = allTime ? Math.max(...HOUR_TYPES.map(t => allTime[t.key] || 0), 0.01) : 0.01
+  const typeMax = allTime ? Math.max(...CATEGORIES.map(t => allTime[t.key] || 0), 0.01) : 0.01
 
   return (
     <div className="mh-wrap">
@@ -149,11 +149,11 @@ export default function MyHoursPage({ session }) {
             {/* All-time breakdown by hour type */}
             <div className="mh-card">
               <div className="mh-card-head">
-                <span className="mh-card-title">By hour type</span>
+                <span className="mh-card-title">By category</span>
                 <span className="mh-card-sub">All time</span>
               </div>
               <div className="mh-types">
-                {HOUR_TYPES.filter(t => (allTime[t.key] || 0) >= 0.01).map(t => (
+                {CATEGORIES.filter(t => (allTime[t.key] || 0) >= 0.01).map(t => (
                   <div key={t.key} className="mh-type-row">
                     <span className="mh-type-dot" style={{ background: t.color }} />
                     <span className="mh-type-label">{t.label}</span>
@@ -201,8 +201,8 @@ export default function MyHoursPage({ session }) {
                       <span className="mh-session-date">{fmtSessionDate(s.inTime)}</span>
                       <span className="mh-session-time hud-mono">{fmtClock(s.inTime)} – {s.open ? 'open' : fmtClock(s.outTime)}</span>
                       <span className="mh-session-dur">{s.open ? 'in progress' : fmtHours(s.ms / 3600000)}</span>
-                      {s.category === 'volunteer' && (
-                        <span className="mh-session-flag" style={{ color: 'var(--hr-volunteer)' }}>volunteer</span>
+                      {s.category !== DEFAULT_CATEGORY && (
+                        <span className="mh-session-flag" style={{ color: categoryColor(s.category) }}>{categoryLabel(s.category)}</span>
                       )}
                       {s.pending && <span className="mh-session-flag">review</span>}
                     </li>
@@ -228,7 +228,7 @@ export default function MyHoursPage({ session }) {
               <span className="mh-season-total">{fmtHours(b.total)}</span>
             </div>
             <div className="mh-breakdown">
-              {HOUR_TYPES.filter(t => (b[t.key] || 0) >= 0.01).map(t => (
+              {CATEGORIES.filter(t => (b[t.key] || 0) >= 0.01).map(t => (
                 <BreakdownRow key={t.key} color={t.color} label={t.label} value={fmtHours(b[t.key])} />
               ))}
             </div>

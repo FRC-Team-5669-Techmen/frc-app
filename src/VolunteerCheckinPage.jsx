@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { verifyAtFLL } from './geo'
+import { DEFAULT_CATEGORY } from './categories'
 import './CheckinPage.css'
 
 // Volunteer check-in fast path for summer FLL-room volunteering. Structured like
@@ -81,13 +82,14 @@ export default function VolunteerCheckinPage({ session }) {
     return now
   }
 
-  // Close an already-open NORMAL session before opening the volunteer one. The
-  // close mirrors CheckinPage's check-out (an 'out' event), tagged 'normal' so it
-  // pairs with the normal session it's ending.
+  // Close an already-open NON-volunteer session before opening the volunteer one.
+  // The close mirrors CheckinPage's check-out (an 'out' event); the hours math
+  // attributes a session by its IN category, so the OUT's category is immaterial
+  // — we use the default 'build' to satisfy the category check constraint.
   async function closeNormalSession() {
     const { error } = await supabase
       .from('attendance_events')
-      .insert({ user_id: session.user.id, type: 'out', location: loc, method: 'nfc', category: 'normal' })
+      .insert({ user_id: session.user.id, type: 'out', location: loc, method: 'nfc', category: DEFAULT_CATEGORY })
     if (error) throw error
   }
 
