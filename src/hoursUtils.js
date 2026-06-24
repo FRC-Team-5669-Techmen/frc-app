@@ -148,7 +148,7 @@ function sidFor(dateStr, seasons) {
  * @param {object[]} attendanceEvents   - { id, type, event_time, category } for this member, any order
  * @param {object[]} loggedHoursRows    - { type, hours, date } verified entries for this member
  * @param {Set<string>} [excludedCheckoutIds] - checkout event IDs to skip (auto-closed, pending/voided review)
- * @returns {{ [seasonId|'other']: { build, outreach, volunteer, competition, fundraising, mentoring, total } }}
+ * @returns {{ [seasonId|'other']: { build, outreach, volunteer, competition, total } }}
  *
  * Attendance sessions are attributed by the IN event's category (normalized;
  * legacy 'normal'/null → 'build'). Attributing by the IN side keeps it robust to

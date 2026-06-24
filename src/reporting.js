@@ -166,7 +166,7 @@ export function totalsByCategory(rows) {
 // ── Service-hour letter ──────────────────────────────────────────────────────
 // Service-relevant categories default to community-service kinds; staff can
 // adjust which count via the UI. Letters exclude review-flagged sessions.
-export const SERVICE_CATEGORIES = ['volunteer', 'outreach', 'fundraising']
+export const SERVICE_CATEGORIES = ['volunteer', 'outreach']
 
 export function letterData(rows, { memberId, memberName, from, to, categories }) {
   const set = new Set(categories)

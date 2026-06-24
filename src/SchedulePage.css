@@ -275,6 +275,7 @@
 .sch-kind-meeting     { color: var(--steel); }
 .sch-kind-potluck     { color: var(--steel); }
 .sch-kind-outreach    { color: var(--steel); }
+.sch-kind-volunteering { color: var(--hr-volunteer); border-color: var(--hr-volunteer); }
 .sch-kind-other       { color: var(--muted); }
 
 .sch-event-actions { display: flex; flex-direction: column; gap: 0.35rem; flex-shrink: 0; }

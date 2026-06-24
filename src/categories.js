@@ -9,8 +9,6 @@ export const CATEGORIES = [
   { key: 'outreach',    label: 'Outreach',    color: 'var(--hr-outreach)' },
   { key: 'volunteer',   label: 'Volunteer',   color: 'var(--hr-volunteer)' },
   { key: 'competition', label: 'Competition', color: 'var(--hr-competition)' },
-  { key: 'fundraising', label: 'Fundraising', color: 'var(--hr-fundraising)' },
-  { key: 'mentoring',   label: 'Mentoring',   color: 'var(--hr-mentoring)' },
 ]
 
 // The regular shop check-in flow defaults here; the DB column defaults to it too.
@@ -22,7 +20,9 @@ export const categoryLabel = k => BY_KEY[k]?.label ?? (k ? k[0].toUpperCase() + 
 export const categoryColor = k => BY_KEY[k]?.color ?? 'var(--muted)'
 
 // Normalize a stored attendance_events.category to a known category. Legacy rows
-// predate the 6-category system: the old default 'normal' (and null) → 'build'.
+// predate the category system (old default 'normal'/null → 'build'); removed
+// categories (fundraising/mentoring) were re-tagged to outreach in the DB, but
+// any stray value falls back to 'build' here.
 export function normAttendanceCategory(cat) {
   if (!cat || cat === 'normal') return DEFAULT_CATEGORY
   return BY_KEY[cat] ? cat : DEFAULT_CATEGORY

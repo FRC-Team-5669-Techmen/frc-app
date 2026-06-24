@@ -4,7 +4,7 @@ import { fmtTime, fmtDay, SHOP_OPEN_KINDS } from './shopStatus'
 import { displayName } from './names'
 import './SchedulePage.css'
 
-const KINDS = ['build', 'meeting', 'competition', 'potluck', 'outreach', 'other']
+const KINDS = ['build', 'meeting', 'competition', 'potluck', 'outreach', 'volunteering', 'other']
 const VIEWS = [['month', 'Month'], ['agenda', 'Agenda']]
 const RESPONSES = [['going', 'Going'], ['maybe', 'Maybe'], ['declined', "Can't go"]]
 // 0 = Sunday … 6 = Saturday (matches Date.getDay()).
