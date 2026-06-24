@@ -443,3 +443,34 @@
 }
 .board-adjust-danger { background: var(--fault); color: #fff; }
 .board-adjust-save:disabled, .board-adjust-cancel:disabled { opacity: 0.6; cursor: default; }
+
+/* ── Goals / who's-behind view ── */
+.board-goal-config {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  margin: 0.75rem 1rem 0; padding: 0.6rem 0.8rem;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.board-goal-config-label { font-size: 0.85rem; color: var(--steel); }
+.board-goal-config-label strong { color: var(--gold-bright); }
+.board-goal-none { color: var(--muted); font-style: italic; }
+.board-goal-cell { width: 30%; min-width: 7rem; }
+.board-goal-track {
+  display: block; height: 0.55rem; border-radius: var(--radius);
+  background: var(--surface-2); border: 1px solid var(--border); overflow: hidden;
+}
+.board-goal-fill { display: block; height: 100%; background: var(--gold); }
+.board-goal-fill-met { background: var(--hr-volunteer); }
+.board-goal-of { color: var(--muted); }
+.board-goal-ok { color: var(--hr-volunteer); }
+.board-goal-behind { color: var(--gold-dim); }
+
+/* category toggle chips in the goal editor */
+.board-goal-cats { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.board-goal-cat {
+  font-family: var(--font-ui); font-size: 0.82rem; font-weight: 600;
+  color: var(--steel); background: var(--surface-2);
+  border: 1px solid var(--border-strong); border-radius: var(--radius);
+  padding: 0.35rem 0.6rem; cursor: pointer;
+}
+.board-goal-cat.on { background: var(--gold-a08); }
+.board-goal-cathint { margin: 0.4rem 0 0; font-size: 0.72rem; color: var(--muted); }

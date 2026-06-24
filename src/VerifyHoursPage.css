@@ -375,3 +375,10 @@
 }
 .vh-corr-resolution { margin-top: 0.6rem; }
 .vh-corr-error { color: var(--fault); font-size: 0.82rem; margin: 0.5rem 0 0; }
+
+/* ── Attendance anomalies (advisory) ── */
+.vh-anom-note { margin: 0 0 0.75rem; font-size: 0.8rem; color: var(--muted); }
+.vh-anom-kind {
+  font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em;
+  border: 1px solid currentColor; border-radius: var(--radius); padding: 0.05rem 0.4rem;
+}

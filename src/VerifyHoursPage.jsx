@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
 import { CATEGORIES, categoryLabel } from './categories'
+import { detectAnomalies } from './accountability'
 import './VerifyHoursPage.css'
 
 // ─── formatting helpers ───────────────────────────────────────────────────────
@@ -23,6 +24,13 @@ function fmtDateTime(iso) {
     month: 'short', day: 'numeric',
     hour: 'numeric', minute: '2-digit',
   })
+}
+
+const ANOMALY_META = {
+  double_in: { short: 'Double in', color: 'var(--fault)' },
+  overlap:   { short: 'Overlap',   color: 'var(--fault)' },
+  capped:    { short: 'Capped',    color: 'var(--gold-dim)' },
+  geofence:  { short: 'Geofence',  color: 'var(--hr-outreach)' },
 }
 
 function fmtDuration(ms) {
@@ -99,6 +107,28 @@ async function fetchCorrections() {
   }))
 }
 
+// Advisory anomaly list across all members (never mutates anything). Pairs the
+// event ledger per member with their exemption status so the geofence check is
+// accurate, then flattens detectAnomalies output with member names attached.
+async function fetchAnomalies() {
+  const [{ data: ev }, { data: profs }] = await Promise.all([
+    supabase.from('attendance_events').select('id, user_id, type, event_time, geo_ok').order('event_time'),
+    supabase.from('profiles').select('id, full_name, nickname, geofence_exempt'),
+  ])
+  const byMember = {}
+  for (const e of ev ?? []) (byMember[e.user_id] ??= []).push(e)
+  const profMap = Object.fromEntries((profs ?? []).map(p => [p.id, p]))
+
+  const out = []
+  for (const [uid, events] of Object.entries(byMember)) {
+    const exempt = profMap[uid]?.geofence_exempt === true
+    for (const a of detectAnomalies(events, { exempt })) {
+      out.push({ ...a, member: profMap[uid] })
+    }
+  }
+  return out.sort((a, b) => new Date(b.at) - new Date(a.at))
+}
+
 // ─── component ────────────────────────────────────────────────────────────────
 
 export default function VerifyHoursPage({ session, hasRole }) {
@@ -120,6 +150,9 @@ export default function VerifyHoursPage({ session, hasRole }) {
   // Student correction requests
   const [corrections, setCorrections] = useState(null)
 
+  // Advisory attendance anomalies
+  const [anomalies, setAnomalies] = useState(null)
+
   useEffect(() => {
     if (!isStaff) return
 
@@ -132,6 +165,7 @@ export default function VerifyHoursPage({ session, hasRole }) {
 
     fetchMissedCheckouts().then(rows => setMissed(rows))
     fetchCorrections().then(rows => setCorrections(rows))
+    fetchAnomalies().then(rows => setAnomalies(rows))
 
     supabase
       .from('logged_hours')
@@ -369,6 +403,45 @@ export default function VerifyHoursPage({ session, hasRole }) {
                     >
                       {busy === 'approve' ? 'Approving…' : 'Approve'}
                     </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        <div className="vh-section-divider" />
+
+        {/* ── Attendance anomalies (advisory — nothing is auto-changed) ── */}
+        <div className="vh-header">
+          <span className="vh-title">Attendance Anomalies</span>
+          {anomalies?.length > 0 && <span className="vh-badge">{anomalies.length}</span>}
+        </div>
+        <p className="vh-anom-note">
+          Advisory review only — nothing is auto-deleted. Fix via Team Hours → a member's sessions (edit / void / manual entry).
+        </p>
+
+        {anomalies === null ? (
+          <div className="vh-loading"><div className="vh-spinner" /></div>
+        ) : anomalies.length === 0 ? (
+          <div className="vh-empty">
+            <span className="vh-empty-mark">✓</span>
+            <p className="vh-empty-text">No anomalies detected.</p>
+          </div>
+        ) : (
+          <div className="vh-list">
+            {anomalies.map((a, i) => {
+              const meta = ANOMALY_META[a.kind] ?? { short: a.kind, color: 'var(--steel)' }
+              return (
+                <div key={i} className="vh-card vh-anom-card">
+                  <div className="vh-card-top">
+                    <span className="vh-member-name">{displayName(a.member)}</span>
+                    <span className="vh-anom-kind" style={{ color: meta.color, borderColor: meta.color }}>{meta.short}</span>
+                  </div>
+                  <p className="vh-desc">{a.detail}</p>
+                  <div className="vh-time-row">
+                    <span className="vh-time-label">{a.label}</span>
+                    <span className="vh-time-val">{fmtDateTime(a.at)}</span>
                   </div>
                 </div>
               )

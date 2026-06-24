@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { supabase } from './supabase'
 import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, cappedSession, CATEGORIES, categoryLabel, categoryColor, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
+import { daysPresent, effectiveGoal, goalCategoryKeys, hoursTowardGoal } from './accountability'
 import { displayName } from './names'
 import './HoursBoard.css'
 
@@ -88,10 +89,17 @@ export default function HoursBoard({ hasRole = () => false }) {
   const [excluded,  setExcluded]  = useState(null) // Map<userId, Set<checkoutId>>
   const [selSeason, setSelSeason] = useState(null) // season id | 'all'
   const [sort,      setSort]      = useState({ col: 'total', dir: 'desc' })
-  const [view,      setView]      = useState('members') // 'members' | 'matrix'
+  const [view,      setView]      = useState('members') // 'members' | 'matrix' | 'goals'
   const [detail,    setDetail]    = useState(null)       // { memberId, name, day|null } drill-down
   const [adjust,    setAdjust]    = useState(null)       // staff manual entry / edit / void panel
+  const [goals,     setGoals]     = useState([])         // hour_goals rows (team + overrides)
+  const [goalEdit,  setGoalEdit]  = useState(null)       // { memberId|null, name } goal editor
   const todayThRef = useRef(null)                        // matrix's current-day header, for auto-scroll
+
+  async function reloadGoals() {
+    const { data } = await supabase.from('hour_goals').select('member_id, season_id, target_hours, categories')
+    setGoals(data ?? [])
+  }
 
   // Reloads only the volatile data (events + the review-exclusion map) after a
   // staff adjustment; the season selection and tabs are left untouched.
@@ -113,12 +121,14 @@ export default function HoursBoard({ hasRole = () => false }) {
       supabase.from('attendance_events').select('id, user_id, type, event_time, location, category, manual_entry').order('event_time'),
       supabase.from('logged_hours').select('member_id, type, hours, date').eq('status', 'verified'),
       supabase.from('session_reviews').select('user_id, checkout_id').in('status', ['pending', 'voided']),
-    ]).then(([{ data: s }, { data: p }, { data: ae }, { data: lh }, { data: sr }]) => {
+      supabase.from('hour_goals').select('member_id, season_id, target_hours, categories'),
+    ]).then(([{ data: s }, { data: p }, { data: ae }, { data: lh }, { data: sr }, { data: hg }]) => {
       const seas = s ?? []
       setSeasons(seas)
       setProfiles(p ?? [])
       setAllEvents(ae ?? [])
       setAllLogged(lh ?? [])
+      setGoals(hg ?? [])
 
       // Build per-user set of checkout IDs that don't count toward official totals
       const excMap = {}
@@ -154,19 +164,30 @@ export default function HoursBoard({ hasRole = () => false }) {
       id:        p.id,
       name:      displayName(p),
       checkedIn: isCheckedIn(eventMap[p.id] ?? []),
+      events:    eventMap[p.id] ?? [],
       breakdown: buildBreakdown(seasons, eventMap[p.id] ?? [], loggedMap[p.id] ?? [], excluded[p.id] ?? null),
     }))
   }, [seasons, profiles, allEvents, allLogged, excluded])
 
+  // Selected season's date range (null = All Time → no filter).
+  const selRange = useMemo(() => {
+    if (!seasons || selSeason === null || selSeason === 'all') return null
+    const s = seasons.find(x => x.id === selSeason)
+    return s ? { start: s.start_date, end: s.end_date } : null
+  }, [seasons, selSeason])
+
   const rows = useMemo(() => {
     if (!byMember || selSeason === null) return null
+    const today = new Date().toISOString().slice(0, 10)
     return byMember.map(m => {
       const stats = selSeason === 'all'
         ? sumBreakdown(m.breakdown)
         : (m.breakdown[selSeason] ?? emptyBreakdown())
-      return { id: m.id, name: m.name, checkedIn: m.checkedIn, ...stats }
+      // Days present (attendance) — tracked separately from clocked hours.
+      const days = daysPresent(m.events, { since: selRange?.start, until: selRange?.end ?? (selRange ? today : null) })
+      return { id: m.id, name: m.name, checkedIn: m.checkedIn, days, ...stats }
     })
-  }, [byMember, selSeason])
+  }, [byMember, selSeason, selRange])
 
   // Team-wide category totals (+ grand total) for the selected season — the
   // summary strip above the table.
@@ -179,13 +200,6 @@ export default function HoursBoard({ hasRole = () => false }) {
     }
     return t
   }, [rows])
-
-  // Selected season's date range (null = All Time → no filter).
-  const selRange = useMemo(() => {
-    if (!seasons || selSeason === null || selSeason === 'all') return null
-    const s = seasons.find(x => x.id === selSeason)
-    return s ? { start: s.start_date, end: s.end_date } : null
-  }, [seasons, selSeason])
 
   // Raw attendance events grouped by member — source for the drill-down panel,
   // which reads stored sign-in/out records rather than recomputing any totals.
@@ -204,6 +218,37 @@ export default function HoursBoard({ hasRole = () => false }) {
     if (selSeason === 'all') return active ?? seasons[0] ?? null
     return seasons.find(s => s.id === selSeason) ?? active ?? null
   }, [seasons, selSeason])
+
+  // Goals view shares the matrix's one-season resolution. The team default for
+  // that season (if any) drives whether members appear in the who's-behind list.
+  const teamGoal = useMemo(
+    () => matrixSeason ? effectiveGoal(goals, null, matrixSeason.id) : null,
+    [goals, matrixSeason]
+  )
+
+  // Per-member goal progress, sorted most-behind first. Only members with an
+  // effective goal (override else team default, target > 0) are listed.
+  const goalRows = useMemo(() => {
+    if (!byMember || !matrixSeason) return null
+    const sid = matrixSeason.id
+    const today = new Date().toISOString().slice(0, 10)
+    const range = { since: matrixSeason.start_date, until: matrixSeason.end_date ?? today }
+    const list = []
+    for (const m of byMember) {
+      const goal = effectiveGoal(goals, m.id, sid)
+      if (!goal || !(goal.target_hours > 0)) continue
+      const hours = hoursTowardGoal(m.breakdown[sid] ?? emptyBreakdown(), goal)
+      const gap = goal.target_hours - hours
+      const override = goals.some(g => g.member_id === m.id && g.season_id === sid)
+      list.push({
+        id: m.id, name: m.name, target: goal.target_hours, hours,
+        gap, met: gap <= 0, pct: Math.min(100, (hours / goal.target_hours) * 100),
+        days: daysPresent(m.events, range), override,
+        catKeys: goalCategoryKeys(goal), allCats: !goal.categories?.length,
+      })
+    }
+    return list.sort((a, b) => b.gap - a.gap || a.name.localeCompare(b.name))
+  }, [byMember, matrixSeason, goals])
 
   // Member × day grid of regular (attendance-derived) hours: a row per member
   // (zeros included), a column per calendar day from season start through today,
@@ -428,8 +473,12 @@ export default function HoursBoard({ hasRole = () => false }) {
               className={`board-viewbtn${view === 'matrix' ? ' active' : ''}`}
               onClick={() => setView('matrix')}
             >Matrix</button>
+            <button
+              className={`board-viewbtn${view === 'goals' ? ' active' : ''}`}
+              onClick={() => setView('goals')}
+            >Goals</button>
           </div>
-          {isAdmin && (
+          {isAdmin && view !== 'goals' && (
             <button className="board-export" onClick={exportCsv}>⬇ Export CSV</button>
           )}
         </div>
@@ -460,6 +509,7 @@ export default function HoursBoard({ hasRole = () => false }) {
                     <SortTh key={c.key} col={c.key} label={c.label} sort={sort} onSort={toggleSort} color={c.color} />
                   ))}
                   <SortTh col="total" label="Total" sort={sort} onSort={toggleSort} />
+                  <SortTh col="days" label="Days" sort={sort} onSort={toggleSort} />
                   <th className="board-th">Status</th>
                 </tr>
               </thead>
@@ -476,6 +526,7 @@ export default function HoursBoard({ hasRole = () => false }) {
                       <td key={c.key} className="board-td board-num">{fmtHours(r[c.key])}</td>
                     ))}
                     <td className="board-td board-num board-total">{fmtHours(r.total)}</td>
+                    <td className="board-td board-num" title="Distinct days present (attendance), separate from hours">{r.days}</td>
                     <td className="board-td">
                       <span className={`board-pill ${r.checkedIn ? 'pill-in' : 'pill-out'}`}>
                         {r.checkedIn ? 'In' : 'Out'}
@@ -486,7 +537,7 @@ export default function HoursBoard({ hasRole = () => false }) {
               </tbody>
             </table>
           </div>
-        ) : (
+        ) : view === 'matrix' ? (
           <>
             {matrix && (
               <p className="board-matrix-note">
@@ -561,6 +612,78 @@ export default function HoursBoard({ hasRole = () => false }) {
                       <td className="board-td board-num board-total">{fmtCell(matrix.dailyTotal.total)}</td>
                     </tr>
                   </tfoot>
+                </table>
+              )}
+            </div>
+          </>
+        ) : (
+          /* ── Goals / who's-behind view ── */
+          <>
+            <div className="board-matrix-note">
+              Hours toward each member's season goal, most behind first.
+              {matrixSeason && <> Season: <strong>{matrixSeason.name}</strong>.</>}
+              {' '}Days present is tracked separately from hours.
+            </div>
+
+            {isStaff && matrixSeason && (
+              <div className="board-goal-config">
+                <span className="board-goal-config-label">
+                  Team default: {teamGoal?.target_hours > 0
+                    ? <strong>{fmtHours(teamGoal.target_hours)}</strong>
+                    : <span className="board-goal-none">not set</span>}
+                  {teamGoal?.target_hours > 0 && !teamGoal.categories?.length && ' · all categories'}
+                  {teamGoal?.categories?.length ? ` · ${teamGoal.categories.map(categoryLabel).join(', ')}` : ''}
+                </span>
+                <button className="board-adjust-btn" onClick={() => setGoalEdit({ memberId: null, name: 'Team default' })}>
+                  {teamGoal?.target_hours > 0 ? 'Edit team default' : 'Set team default'}
+                </button>
+              </div>
+            )}
+
+            <div className="board-table-wrap">
+              {(!goalRows || goalRows.length === 0) ? (
+                <p className="board-empty">
+                  {teamGoal?.target_hours > 0
+                    ? 'No members with a goal for this season yet.'
+                    : 'No goal set for this season. Set a team default to start tracking.'}
+                </p>
+              ) : (
+                <table className="board-table">
+                  <thead>
+                    <tr>
+                      <th className="board-th">Member</th>
+                      <th className="board-th">Progress</th>
+                      <th className="board-th">Toward goal</th>
+                      <th className="board-th">Gap</th>
+                      <th className="board-th">Days</th>
+                      {isStaff && <th className="board-th"></th>}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {goalRows.map(r => (
+                      <tr key={r.id} className="board-row">
+                        <td className="board-td board-member-link">
+                          {r.name}
+                          {r.override && <span className="board-cat-tag" style={{ color: 'var(--steel)' }} title="Has a personal override"> · override</span>}
+                        </td>
+                        <td className="board-td board-goal-cell">
+                          <span className="board-goal-track">
+                            <span className={`board-goal-fill${r.met ? ' board-goal-fill-met' : ''}`} style={{ width: `${r.pct}%` }} />
+                          </span>
+                        </td>
+                        <td className="board-td board-num">{fmtHours(r.hours)} <span className="board-goal-of">/ {fmtHours(r.target)}</span></td>
+                        <td className={`board-td board-num ${r.met ? 'board-goal-ok' : 'board-goal-behind'}`}>
+                          {r.met ? '✓ met' : `-${fmtHours(r.gap)}`}
+                        </td>
+                        <td className="board-td board-num" title="Distinct days present (attendance)">{r.days}</td>
+                        {isStaff && (
+                          <td className="board-td board-sess-actions">
+                            <button className="board-mini-btn" onClick={() => setGoalEdit({ memberId: r.id, name: r.name })}>Goal</button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
               )}
             </div>
@@ -660,6 +783,98 @@ export default function HoursBoard({ hasRole = () => false }) {
           onDone={async () => { setAdjust(null); await reloadEvents() }}
         />
       )}
+
+      {goalEdit && matrixSeason && (
+        <GoalEditor
+          target={goalEdit}
+          season={matrixSeason}
+          current={effectiveExisting(goals, goalEdit.memberId, matrixSeason.id)}
+          onClose={() => setGoalEdit(null)}
+          onDone={async () => { setGoalEdit(null); await reloadGoals() }}
+        />
+      )}
+    </div>
+  )
+}
+
+// The member's/team's OWN goal row for this season (not inherited), so the editor
+// prefills only an actually-stored goal and the Clear action knows it exists.
+function effectiveExisting(goals, memberId, seasonId) {
+  return goals.find(g => g.season_id === seasonId && (g.member_id ?? null) === (memberId ?? null)) ?? null
+}
+
+// Staff goal editor: team default (target.memberId null) or a member override.
+// Target hours + optional category subset (no chips selected = all categories).
+function GoalEditor({ target, season, current, onClose, onDone }) {
+  const isTeam = target.memberId == null
+  const [hours, setHours] = useState(current ? String(current.target_hours) : '')
+  const [cats, setCats] = useState(new Set(current?.categories ?? []))
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+
+  const toggleCat = k => setCats(s => {
+    const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n
+  })
+
+  async function save() {
+    const t = parseFloat(hours)
+    if (isNaN(t) || t < 0) { setErr('Enter a valid number of hours (0 or more).'); return }
+    setBusy(true); setErr('')
+    const { error } = await supabase.rpc('set_hour_goal', {
+      p_member: target.memberId, p_season: season.id, p_target: t,
+      p_categories: [...cats],
+    })
+    setBusy(false)
+    if (error) { setErr(error.message); return }
+    onDone()
+  }
+
+  async function clear() {
+    setBusy(true); setErr('')
+    const { error } = await supabase.rpc('clear_hour_goal', { p_member: target.memberId, p_season: season.id })
+    setBusy(false)
+    if (error) { setErr(error.message); return }
+    onDone()
+  }
+
+  return (
+    <div className="board-detail-backdrop" onClick={onClose}>
+      <div className="board-adjust" onClick={e => e.stopPropagation()}>
+        <div className="board-detail-head">
+          <h2 className="board-detail-title">{isTeam ? 'Team default goal' : `Goal — ${target.name}`}</h2>
+          <button className="board-detail-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+        <p className="board-detail-sub hud-mono">{season.name}{isTeam ? '' : ' · personal override'}</p>
+
+        <div className="board-adjust-field">
+          <label className="board-adjust-label">Target hours <span className="board-req">*</span></label>
+          <input className="board-adjust-input" type="number" min="0" step="1"
+            placeholder="e.g. 40" value={hours} onChange={e => setHours(e.target.value)} />
+        </div>
+
+        <div className="board-adjust-field">
+          <label className="board-adjust-label">Counts toward goal</label>
+          <div className="board-goal-cats">
+            {CATEGORIES.map(c => (
+              <button key={c.key} type="button"
+                className={`board-goal-cat${cats.has(c.key) ? ' on' : ''}`}
+                style={cats.has(c.key) ? { borderColor: c.color, color: c.color } : undefined}
+                onClick={() => toggleCat(c.key)}
+              >{c.label}</button>
+            ))}
+          </div>
+          <p className="board-goal-cathint">{cats.size === 0 ? 'None selected = all categories count.' : 'Only the selected categories count.'}</p>
+        </div>
+
+        {err && <p className="board-adjust-error">{err}</p>}
+        <div className="board-adjust-actions">
+          {!isTeam && current && (
+            <button className="board-adjust-cancel" onClick={clear} disabled={busy}>Clear override</button>
+          )}
+          <button className="board-adjust-cancel" onClick={onClose} disabled={busy}>Cancel</button>
+          <button className="board-adjust-save" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save goal'}</button>
+        </div>
+      </div>
     </div>
   )
 }

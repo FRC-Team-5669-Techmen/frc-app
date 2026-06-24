@@ -66,12 +66,13 @@ export default function CheckinPage({ session }) {
   }, [status])
 
   // Write the attendance event and flip to the success screen. A check-IN carries
-  // the picked hour category; a check-OUT just closes the open session (the math
-  // attributes a session by its IN category, so the OUT need not carry one).
-  async function insertEvent(newType) {
+  // the picked hour category + geo_ok (true = geofence verified, false = exempt
+  // member skipped the fence); a check-OUT just closes the open session (the math
+  // attributes a session by its IN category, so the OUT need not carry either).
+  async function insertEvent(newType, geoVerified = null) {
     const now = new Date()
     const row = { user_id: session.user.id, type: newType, location: loc, method: 'nfc' }
-    if (newType === 'in') row.category = category
+    if (newType === 'in') { row.category = category; row.geo_ok = geoVerified }
     const { error } = await supabase.from('attendance_events').insert(row)
     if (error) throw error
     setEventType(newType)
@@ -96,7 +97,9 @@ export default function CheckinPage({ session }) {
           return
         }
       }
-      await insertEvent('in')
+      // geo_ok: true when the fence was verified, false when an exempt member
+      // skipped it (location not proven — surfaced if the exemption is removed).
+      await insertEvent('in', !exempt)
     } catch (err) {
       console.error(err)
       setStatus('error')

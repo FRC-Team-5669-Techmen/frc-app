@@ -73,11 +73,11 @@ export default function VolunteerCheckinPage({ session }) {
 
   // Write a volunteer attendance event. Client-side insert, matching the normal
   // check-in path (CheckinPage also inserts directly — there is no check-in RPC).
-  async function insertEvent(newType) {
+  async function insertEvent(newType, geoVerified = null) {
     const now = new Date()
-    const { error } = await supabase
-      .from('attendance_events')
-      .insert({ user_id: session.user.id, type: newType, location: loc, method: 'nfc', category: CATEGORY })
+    const row = { user_id: session.user.id, type: newType, location: loc, method: 'nfc', category: CATEGORY }
+    if (newType === 'in') row.geo_ok = geoVerified
+    const { error } = await supabase.from('attendance_events').insert(row)
     if (error) throw error
     return now
   }
@@ -112,7 +112,9 @@ export default function VolunteerCheckinPage({ session }) {
         }
       }
       if (switched) await closeNormalSession()
-      const now = await insertEvent('in')
+      // geo_ok mirrors CheckinPage: true when the FLL fence was verified, false
+      // when an exempt member skipped it.
+      const now = await insertEvent('in', !exempt)
       setEventType('in')
       setEventTime(now)
       setStatus('success')

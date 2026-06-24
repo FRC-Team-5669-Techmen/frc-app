@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { fmtHours, buildBreakdown, computePendingMs, sumBreakdown, sessionsFromEvents, CATEGORIES, categoryLabel, categoryColor, DEFAULT_CATEGORY } from './hoursUtils'
+import { effectiveGoal, goalCategoryKeys, hoursTowardGoal, daysPresent } from './accountability'
 import './MyHoursPage.css'
 
 const DAY_MS = 86_400_000
@@ -13,6 +14,7 @@ export default function MyHoursPage({ session }) {
   const [logged,   setLogged]   = useState(null)
   const [reviews,  setReviews]  = useState(null)  // user's session_reviews rows
   const [corrections, setCorrections] = useState([]) // user's session_corrections
+  const [goals,    setGoals]    = useState([])    // hour_goals (team default + own override)
   const [flagFor,  setFlagFor]  = useState(null)  // session being flagged for correction
 
   function loadCorrections(uid) {
@@ -30,11 +32,13 @@ export default function MyHoursPage({ session }) {
       supabase.from('attendance_events').select('id, type, event_time, category, manual_entry').eq('user_id', uid).order('event_time'),
       supabase.from('logged_hours').select('type, hours, date').eq('member_id', uid).eq('status', 'verified'),
       supabase.from('session_reviews').select('checkout_id, status').eq('user_id', uid).in('status', ['pending', 'voided']),
-    ]).then(([{ data: s }, { data: ae }, { data: lh }, { data: sr }]) => {
+      supabase.from('hour_goals').select('member_id, season_id, target_hours, categories'),
+    ]).then(([{ data: s }, { data: ae }, { data: lh }, { data: sr }, { data: hg }]) => {
       setSeasons(s ?? [])
       setEvents(ae ?? [])
       setLogged(lh ?? [])
       setReviews(sr ?? [])
+      setGoals(hg ?? [])
     })
     loadCorrections(uid)
   }, [session.user.id])
@@ -76,6 +80,26 @@ export default function MyHoursPage({ session }) {
 
   // All-time totals per type (across every season).
   const allTime = useMemo(() => breakdown ? sumBreakdown(breakdown) : null, [breakdown])
+
+  // Active-season goal progress: effective goal (own override else team default),
+  // hours toward it (only the goal's categories), and days present this season.
+  const goalProgress = useMemo(() => {
+    if (!seasons || !breakdown || !events) return null
+    const today = new Date().toISOString().slice(0, 10)
+    const active = seasons.find(s => s.start_date <= today && (s.end_date == null || s.end_date >= today))
+    if (!active) return null
+    const goal = effectiveGoal(goals, session.user.id, active.id)
+    if (!goal || !(goal.target_hours > 0)) return null
+    const hours = hoursTowardGoal(breakdown[active.id], goal)
+    const days  = daysPresent(events, { since: active.start_date, until: active.end_date ?? today })
+    return {
+      season: active, target: goal.target_hours, hours, days,
+      pct: Math.min(100, (hours / goal.target_hours) * 100),
+      met: hours >= goal.target_hours,
+      catKeys: goalCategoryKeys(goal),
+      allCats: !goal.categories?.length,
+    }
+  }, [seasons, breakdown, events, goals, session.user.id])
 
   // Sessions newest-first, with the pending/voided flag for display.
   const sessions = useMemo(() => events ? sessionsFromEvents(events) : [], [events])
@@ -165,6 +189,32 @@ export default function MyHoursPage({ session }) {
               {pendingMs > 0 && ` (${fmtHours(pendingMs / 3600000)})`}
               {' '}pending mentor review — not counted in your totals yet.
             </span>
+          </div>
+        )}
+
+        {goalProgress && (
+          <div className="mh-card">
+            <div className="mh-card-head">
+              <span className="mh-card-title">Season goal</span>
+              <span className="mh-card-sub">{goalProgress.season.name}</span>
+            </div>
+            <div className="mh-goal-row">
+              <span className="mh-goal-nums hud-tnum">
+                {fmtHours(goalProgress.hours)} <span className="mh-goal-of">of {fmtHours(goalProgress.target)}</span>
+              </span>
+              <span className={`mh-goal-state ${goalProgress.met ? 'mh-goal-met' : 'mh-goal-behind'}`}>
+                {goalProgress.met ? '✓ Goal met' : `${fmtHours(goalProgress.target - goalProgress.hours)} to go`}
+              </span>
+            </div>
+            <div className="mh-goal-track">
+              <span className="mh-goal-fill" style={{ width: `${goalProgress.pct}%` }} />
+            </div>
+            <div className="mh-goal-meta">
+              <span>{goalProgress.allCats ? 'All categories count' : `Counts: ${goalProgress.catKeys.map(categoryLabel).join(', ')}`}</span>
+              <span className="mh-goal-days" title="Distinct days you checked in this season — tracked separately from hours">
+                {goalProgress.days} day{goalProgress.days === 1 ? '' : 's'} present
+              </span>
+            </div>
           </div>
         )}
 
