@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 import { displayName } from './names'
 import { CATEGORIES, categoryLabel } from './categories'
 import { detectAnomalies } from './accountability'
+import MemberHoursAdmin from './MemberHoursAdmin'
 import './VerifyHoursPage.css'
 
 // ─── formatting helpers ───────────────────────────────────────────────────────
@@ -296,6 +297,18 @@ export default function VerifyHoursPage({ session, hasRole }) {
   return (
     <div className="vh-wrap">
       <div className="vh-body">
+
+        {/* ── Per-member hours management (edit/add/delete + adjustments) ── */}
+        <div className="vh-header">
+          <span className="vh-title">Member Hours Management</span>
+        </div>
+        <p className="vh-anom-note">
+          Pick a member to edit/delete their logged hours, add/edit/delete attendance events
+          (sessions recompute automatically), or post a labeled hour adjustment.
+        </p>
+        <MemberHoursAdmin />
+
+        <div className="vh-section-divider" />
 
         {/* ── Missed checkouts ── */}
         <div className="vh-section-header">

@@ -151,14 +151,17 @@ function sidFor(dateStr, seasons) {
  * @param {object[]} attendanceEvents   - { id, type, event_time, category } for this member, any order
  * @param {object[]} loggedHoursRows    - { type, hours, date } verified entries for this member
  * @param {Set<string>} [excludedCheckoutIds] - checkout event IDs to skip (auto-closed, pending/voided review)
+ * @param {object[]} [adjustments]      - { category, hours(signed), created_at } staff hour_adjustments
  * @returns {{ [seasonId|'other']: { build, outreach, volunteer, competition, total } }}
  *
  * Attendance sessions are attributed by the IN event's category (normalized;
  * legacy 'normal'/null → 'build'). Attributing by the IN side keeps it robust to
  * the auto-close 'out' event, which need not carry the matching category. Logged
- * hours fold into the same category buckets (volunteering → volunteer).
+ * hours fold into the same category buckets (volunteering → volunteer). Staff
+ * hour_adjustments fold in too — signed (negative debits allowed), attributed to
+ * the season of their created_at, so a labeled correction shows in the same split.
  */
-export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows, excludedCheckoutIds = null) {
+export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows, excludedCheckoutIds = null, adjustments = []) {
   const raw = {} // sid → { [category]: hours }
   const addHours = (sid, cat, hours) => {
     const b = (raw[sid] ??= {})
@@ -201,6 +204,12 @@ export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows, exclu
   // --- Logged hours (verified only, already filtered by caller) ---
   for (const row of loggedHoursRows) {
     addHours(sidFor(row.date, seasons), loggedTypeToCategory(row.type), parseFloat(row.hours))
+  }
+
+  // --- Staff hour adjustments (signed; attributed to the season of created_at) ---
+  for (const a of adjustments) {
+    const date = (a.created_at ?? '').slice(0, 10)
+    addHours(sidFor(date, seasons), normAttendanceCategory(a.category), parseFloat(a.hours) || 0)
   }
 
   // --- Shape each season bucket as { ...allCategories, total } ---

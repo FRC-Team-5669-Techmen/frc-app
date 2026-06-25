@@ -86,6 +86,7 @@ export default function HoursBoard({ hasRole = () => false }) {
   const [profiles,  setProfiles]  = useState(null)
   const [allEvents, setAllEvents] = useState(null)
   const [allLogged, setAllLogged] = useState(null)
+  const [allAdjust, setAllAdjust] = useState([])   // hour_adjustments rows (staff-created)
   const [excluded,  setExcluded]  = useState(null) // Map<userId, Set<checkoutId>>
   const [selSeason, setSelSeason] = useState(null) // season id | 'all'
   const [sort,      setSort]      = useState({ col: 'total', dir: 'desc' })
@@ -122,13 +123,15 @@ export default function HoursBoard({ hasRole = () => false }) {
       supabase.from('logged_hours').select('member_id, type, hours, date').eq('status', 'verified'),
       supabase.from('session_reviews').select('user_id, checkout_id').in('status', ['pending', 'voided']),
       supabase.from('hour_goals').select('member_id, season_id, target_hours, categories'),
-    ]).then(([{ data: s }, { data: p }, { data: ae }, { data: lh }, { data: sr }, { data: hg }]) => {
+      supabase.from('hour_adjustments').select('member_id, category, hours, created_at'),
+    ]).then(([{ data: s }, { data: p }, { data: ae }, { data: lh }, { data: sr }, { data: hg }, { data: adj }]) => {
       const seas = s ?? []
       setSeasons(seas)
       setProfiles(p ?? [])
       setAllEvents(ae ?? [])
       setAllLogged(lh ?? [])
       setGoals(hg ?? [])
+      setAllAdjust(adj ?? [])
 
       // Build per-user set of checkout IDs that don't count toward official totals
       const excMap = {}
@@ -159,15 +162,19 @@ export default function HoursBoard({ hasRole = () => false }) {
     for (const l of allLogged) {
       (loggedMap[l.member_id] ??= []).push(l)
     }
+    const adjustMap = {}
+    for (const a of allAdjust) {
+      (adjustMap[a.member_id] ??= []).push(a)
+    }
 
     return profiles.map(p => ({
       id:        p.id,
       name:      displayName(p),
       checkedIn: isCheckedIn(eventMap[p.id] ?? []),
       events:    eventMap[p.id] ?? [],
-      breakdown: buildBreakdown(seasons, eventMap[p.id] ?? [], loggedMap[p.id] ?? [], excluded[p.id] ?? null),
+      breakdown: buildBreakdown(seasons, eventMap[p.id] ?? [], loggedMap[p.id] ?? [], excluded[p.id] ?? null, adjustMap[p.id] ?? []),
     }))
-  }, [seasons, profiles, allEvents, allLogged, excluded])
+  }, [seasons, profiles, allEvents, allLogged, excluded, allAdjust])
 
   // Selected season's date range (null = All Time → no filter).
   const selRange = useMemo(() => {

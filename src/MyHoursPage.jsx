@@ -15,6 +15,7 @@ export default function MyHoursPage({ session }) {
   const [reviews,  setReviews]  = useState(null)  // user's session_reviews rows
   const [corrections, setCorrections] = useState([]) // user's session_corrections
   const [goals,    setGoals]    = useState([])    // hour_goals (team default + own override)
+  const [adjustments, setAdjustments] = useState([]) // staff hour_adjustments for this member
   const [flagFor,  setFlagFor]  = useState(null)  // session being flagged for correction
 
   function loadCorrections(uid) {
@@ -33,12 +34,14 @@ export default function MyHoursPage({ session }) {
       supabase.from('logged_hours').select('type, hours, date').eq('member_id', uid).eq('status', 'verified'),
       supabase.from('session_reviews').select('checkout_id, status').eq('user_id', uid).in('status', ['pending', 'voided']),
       supabase.from('hour_goals').select('member_id, season_id, target_hours, categories'),
-    ]).then(([{ data: s }, { data: ae }, { data: lh }, { data: sr }, { data: hg }]) => {
+      supabase.from('hour_adjustments').select('id, category, hours, reason, created_at').eq('member_id', uid).order('created_at', { ascending: false }),
+    ]).then(([{ data: s }, { data: ae }, { data: lh }, { data: sr }, { data: hg }, { data: adj }]) => {
       setSeasons(s ?? [])
       setEvents(ae ?? [])
       setLogged(lh ?? [])
       setReviews(sr ?? [])
       setGoals(hg ?? [])
+      setAdjustments(adj ?? [])
     })
     loadCorrections(uid)
   }, [session.user.id])
@@ -68,9 +71,9 @@ export default function MyHoursPage({ session }) {
 
   const breakdown = useMemo(
     () => seasons && events && logged && excludedIds
-      ? buildBreakdown(seasons, events, logged, excludedIds)
+      ? buildBreakdown(seasons, events, logged, excludedIds, adjustments)
       : null,
-    [seasons, events, logged, excludedIds]
+    [seasons, events, logged, excludedIds, adjustments]
   )
 
   const pendingMs = useMemo(
@@ -229,6 +232,28 @@ export default function MyHoursPage({ session }) {
                   <span className={`mh-corr-status mh-corr-${c.status}`}>{c.status}</span>
                   <span className="mh-corr-note">{c.note}</span>
                   {c.resolution_note && <span className="mh-corr-resolution">“{c.resolution_note}”</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {adjustments.length > 0 && (
+          <div className="mh-card">
+            <div className="mh-card-head">
+              <span className="mh-card-title">Hour adjustments</span>
+              <span className="mh-card-sub">Staff corrections</span>
+            </div>
+            <ul className="mh-adjustments">
+              {adjustments.map(a => (
+                <li key={a.id} className="mh-adjustment">
+                  <span className="mh-type-dot" style={{ background: categoryColor(a.category) }} />
+                  <span className="mh-adj-cat">{categoryLabel(a.category)}</span>
+                  <span className={`mh-adj-amt ${a.hours >= 0 ? 'mh-adj-credit' : 'mh-adj-debit'}`}>
+                    {a.hours >= 0 ? '+' : '−'}{fmtHours(Math.abs(a.hours))}
+                  </span>
+                  <span className="mh-adj-reason">{a.reason}</span>
+                  <span className="mh-adj-date hud-mono">{new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                 </li>
               ))}
             </ul>

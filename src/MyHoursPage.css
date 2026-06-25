@@ -354,6 +354,16 @@
 .mh-corr-note { color: var(--text); font-size: 0.85rem; }
 .mh-corr-resolution { color: var(--muted); font-size: 0.8rem; font-style: italic; }
 
+/* ── Hour adjustments (staff corrections) ── */
+.mh-adjustments { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.mh-adjustment { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+.mh-adj-cat { color: var(--steel); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.mh-adj-amt { font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700; }
+.mh-adj-credit { color: var(--hr-volunteer); }
+.mh-adj-debit  { color: var(--fault); }
+.mh-adj-reason { color: var(--text); font-size: 0.85rem; flex: 1 1 60%; }
+.mh-adj-date { color: var(--muted); font-size: 0.75rem; margin-left: auto; }
+
 /* ── Flag-for-correction modal ── */
 .mh-modal-backdrop {
   position: fixed; inset: 0; z-index: 50;
