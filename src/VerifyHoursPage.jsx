@@ -107,6 +107,35 @@ async function fetchCorrections() {
   }))
 }
 
+// Pending logged-hours correction requests, enriched with the member name and
+// the referenced entry's CURRENT values (so staff can compare to the proposal).
+async function fetchLoggedCorrections() {
+  const { data: raw } = await supabase
+    .from('logged_hours_corrections')
+    .select('id, member_id, entry_id, note, proposed_type, proposed_hours, proposed_date, created_at')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true })
+
+  if (!raw?.length) return []
+
+  const entryIds = raw.map(r => r.entry_id)
+  const userIds  = [...new Set(raw.map(r => r.member_id))]
+
+  const [{ data: lh }, { data: profs }] = await Promise.all([
+    supabase.from('logged_hours').select('id, type, hours, date, description').in('id', entryIds),
+    supabase.from('profiles').select('id, full_name, nickname').in('id', userIds),
+  ])
+
+  const lhMap   = Object.fromEntries((lh    ?? []).map(e => [e.id, e]))
+  const profMap = Object.fromEntries((profs ?? []).map(p => [p.id, p]))
+
+  return raw.map(r => ({
+    ...r,
+    member: profMap[r.member_id],
+    entry:  lhMap[r.entry_id] ?? null,
+  }))
+}
+
 // Advisory anomaly list across all members (never mutates anything). Pairs the
 // event ledger per member with their exemption status so the geofence check is
 // accurate, then flattens detectAnomalies output with member names attached.
@@ -147,8 +176,11 @@ export default function VerifyHoursPage({ session, hasRole }) {
   const [entries, setEntries] = useState(null)
   const [acting,  setActing]  = useState({})
 
-  // Student correction requests
+  // Student correction requests (derived attendance sessions)
   const [corrections, setCorrections] = useState(null)
+
+  // Member correction requests (manual logged_hours entries)
+  const [loggedCorrections, setLoggedCorrections] = useState(null)
 
   // Advisory attendance anomalies
   const [anomalies, setAnomalies] = useState(null)
@@ -165,6 +197,7 @@ export default function VerifyHoursPage({ session, hasRole }) {
 
     fetchMissedCheckouts().then(rows => setMissed(rows))
     fetchCorrections().then(rows => setCorrections(rows))
+    fetchLoggedCorrections().then(rows => setLoggedCorrections(rows))
     fetchAnomalies().then(rows => setAnomalies(rows))
 
     supabase
@@ -237,7 +270,20 @@ export default function VerifyHoursPage({ session, hasRole }) {
     return error
   }
 
-  if (missed === null || entries === null || cutoff === null || corrections === null) {
+  async function resolveLoggedCorrection(id, approve, payload) {
+    const { error } = await supabase.rpc('resolve_logged_hours_correction', {
+      p_id: id,
+      p_approve: approve,
+      p_resolution: payload?.resolution || null,
+      p_apply_type:  payload?.apply_type  || null,
+      p_apply_hours: payload?.apply_hours ?? null,
+      p_apply_date:  payload?.apply_date  || null,
+    })
+    if (!error) setLoggedCorrections(prev => prev.filter(c => c.id !== id))
+    return error
+  }
+
+  if (missed === null || entries === null || cutoff === null || corrections === null || loggedCorrections === null) {
     return (
       <div className="vh-wrap">
         <div className="vh-loading"><div className="vh-spinner" /></div>
@@ -347,6 +393,27 @@ export default function VerifyHoursPage({ session, hasRole }) {
           <div className="vh-list">
             {corrections.map(c => (
               <CorrectionCard key={c.id} c={c} onResolve={resolveCorrection} />
+            ))}
+          </div>
+        )}
+
+        <div className="vh-section-divider" />
+
+        {/* ── Logged-hours correction requests ── */}
+        <div className="vh-header">
+          <span className="vh-title">Logged-Hours Corrections</span>
+          {loggedCorrections.length > 0 && <span className="vh-badge">{loggedCorrections.length}</span>}
+        </div>
+
+        {loggedCorrections.length === 0 ? (
+          <div className="vh-empty">
+            <span className="vh-empty-mark">✓</span>
+            <p className="vh-empty-text">No logged-hours corrections to review.</p>
+          </div>
+        ) : (
+          <div className="vh-list">
+            {loggedCorrections.map(c => (
+              <LoggedCorrectionCard key={c.id} c={c} onResolve={resolveLoggedCorrection} />
             ))}
           </div>
         )}
@@ -519,6 +586,83 @@ function CorrectionCard({ c, onResolve }) {
 
       <input className="vh-corr-input vh-corr-resolution" type="text" maxLength={300}
         placeholder="Optional note to the student…" value={resolution}
+        onChange={e => setResolution(e.target.value)} />
+
+      {err && <p className="vh-corr-error">{err}</p>}
+      <div className="vh-actions">
+        <button className="vh-btn vh-reject" disabled={!!busy} onClick={() => go(false)}>
+          {busy === 'reject' ? 'Rejecting…' : 'Reject'}
+        </button>
+        <button className="vh-btn vh-approve" disabled={!!busy} onClick={() => go(true)}>
+          {busy === 'approve' ? 'Approving…' : 'Approve & apply'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// One pending logged-hours correction request. Staff can tweak the corrected
+// category / hours / date (prefilled from the member's proposal, else the
+// entry's current values) before approving; approval applies the change to the
+// underlying logged_hours row. Reject records the decision with an optional note.
+function LoggedCorrectionCard({ c, onResolve }) {
+  const cur = c.entry
+  const [applyType,  setApplyType]  = useState(c.proposed_type  ?? cur?.type  ?? '')
+  const [applyHours, setApplyHours] = useState(String(parseFloat(c.proposed_hours ?? cur?.hours ?? '')))
+  const [applyDate,  setApplyDate]  = useState(c.proposed_date  ?? cur?.date  ?? '')
+  const [resolution, setResolution] = useState('')
+  const [busy, setBusy] = useState(null)
+  const [err,  setErr]  = useState('')
+
+  async function go(approve) {
+    setBusy(approve ? 'approve' : 'reject'); setErr('')
+    const hrs = parseFloat(applyHours)
+    const error = await onResolve(c.id, approve, approve ? {
+      resolution:  resolution.trim() || null,
+      apply_type:  applyType || null,
+      apply_hours: hrs > 0 ? hrs : null,
+      apply_date:  applyDate || null,
+    } : { resolution: resolution.trim() || null })
+    if (error) { setBusy(null); setErr(error.message) }
+  }
+
+  return (
+    <div className={`vh-card${busy ? ' vh-card-busy' : ''}`}>
+      <div className="vh-card-top">
+        <span className="vh-member-name">{displayName(c.member)}</span>
+        <span className="vh-hours">logged hours</span>
+      </div>
+      <p className="vh-desc">{c.note}</p>
+
+      <div className="vh-corr-cur">
+        <span className="vh-time-label">Current</span>
+        <span className="vh-time-val">
+          {cur
+            ? `${fmtDate(cur.date)} · ${categoryLabel(cur.type)} · ${fmtHours(cur.hours)}`
+            : '— entry removed —'}
+        </span>
+      </div>
+
+      <div className="vh-corr-grid">
+        <div className="vh-corr-field">
+          <label className="vh-time-label">Category</label>
+          <select className="vh-corr-input" value={applyType} onChange={e => setApplyType(e.target.value)}>
+            {CATEGORIES.map(cat => <option key={cat.key} value={cat.key}>{cat.label}</option>)}
+          </select>
+        </div>
+        <div className="vh-corr-field">
+          <label className="vh-time-label">Hours</label>
+          <input className="vh-corr-input" type="number" min="0.25" max="24" step="0.25"
+            value={applyHours} onChange={e => setApplyHours(e.target.value)} />
+        </div>
+        <div className="vh-corr-field">
+          <label className="vh-time-label">Date</label>
+          <input className="vh-corr-input" type="date" value={applyDate} onChange={e => setApplyDate(e.target.value)} />
+        </div>
+      </div>
+
+      <input className="vh-corr-input vh-corr-resolution" type="text" maxLength={300}
+        placeholder="Optional note to the member…" value={resolution}
         onChange={e => setResolution(e.target.value)} />
 
       {err && <p className="vh-corr-error">{err}</p>}

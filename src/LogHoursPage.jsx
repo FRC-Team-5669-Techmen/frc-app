@@ -3,7 +3,11 @@ import { supabase } from './supabase'
 import { CATEGORIES, DEFAULT_CATEGORY, categoryLabel, categoryColor } from './categories'
 import './LogHoursPage.css'
 
-const TYPES = CATEGORIES.map(c => c.key)
+// Manual off-site entry has no NFC tag to derive the category from, so the user
+// picks it. Order per product spec: Build, Volunteer, Outreach, Competition
+// (guarded against the canonical CATEGORIES set so a typo can't add a bad key).
+const TYPE_ORDER = ['build', 'volunteer', 'outreach', 'competition']
+const TYPES = TYPE_ORDER.filter(k => CATEGORIES.some(c => c.key === k))
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -19,8 +23,10 @@ export default function LogHoursPage({ session }) {
   const [submitting, setSubmitting] = useState(false)
   const [formError,  setFormError]  = useState('')
   const [deleting,   setDeleting]   = useState({})
+  const [corrections, setCorrections] = useState([])  // user's logged_hours_corrections
+  const [flagFor,     setFlagFor]     = useState(null) // entry being flagged for correction
 
-  useEffect(() => { load() }, [session.user.id])
+  useEffect(() => { load(); loadCorrections() }, [session.user.id])
 
   async function load() {
     const { data } = await supabase
@@ -30,6 +36,18 @@ export default function LogHoursPage({ session }) {
       .order('date', { ascending: false })
     setEntries(data ?? [])
   }
+
+  async function loadCorrections() {
+    const { data } = await supabase
+      .from('logged_hours_corrections')
+      .select('id, entry_id, status')
+      .eq('member_id', session.user.id)
+      .eq('status', 'pending')
+    setCorrections(data ?? [])
+  }
+
+  // Entry IDs with an open correction request — hides the request button.
+  const pendingCorrectionIds = new Set(corrections.map(c => c.entry_id))
 
   const field = key => e => setForm(f => ({ ...f, [key]: e.target.value }))
 
@@ -208,6 +226,13 @@ export default function LogHoursPage({ session }) {
                         {deleting[entry.id] ? 'Deleting…' : 'Delete'}
                       </button>
                     )}
+                    {entry.status === 'verified' && (
+                      pendingCorrectionIds.has(entry.id)
+                        ? <span className="lh-corr-pending">correction pending</span>
+                        : <button className="lh-corr-btn" onClick={() => setFlagFor(entry)}>
+                            Request correction
+                          </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -219,6 +244,102 @@ export default function LogHoursPage({ session }) {
           <p className="lh-empty">No entries yet. Log your first hours above.</p>
         )}
 
+      </div>
+
+      {flagFor && (
+        <CorrectionModal
+          entry={flagFor}
+          onClose={() => setFlagFor(null)}
+          onSubmitted={() => { setFlagFor(null); loadCorrections() }}
+        />
+      )}
+    </div>
+  )
+}
+
+// Member-facing form to flag a verified logged-hours entry for staff correction.
+// References the logged_hours row; reason required, proposed corrected
+// category/hours/date prefill from the entry's current values.
+function CorrectionModal({ entry, onClose, onSubmitted }) {
+  const [type, setType]   = useState(entry.type)
+  const [hours, setHours] = useState(String(parseFloat(entry.hours)))
+  const [date, setDate]   = useState(entry.date)
+  const [reason, setReason] = useState('')
+  const [busy, setBusy]   = useState(false)
+  const [err, setErr]     = useState('')
+
+  async function submit() {
+    if (!reason.trim()) { setErr('Please describe what is wrong.'); return }
+    const hrs = parseFloat(hours)
+    if (!hrs || hrs <= 0 || hrs > 24) { setErr('Enter valid hours (0.25 – 24).'); return }
+    if (date > today()) { setErr('Date cannot be in the future.'); return }
+    setBusy(true); setErr('')
+    const { error } = await supabase.rpc('request_logged_hours_correction', {
+      p_entry: entry.id,
+      p_note: reason.trim(),
+      p_proposed_type:  type,
+      p_proposed_hours: hrs,
+      p_proposed_date:  date,
+    })
+    setBusy(false)
+    if (error) { setErr(error.message); return }
+    onSubmitted()
+  }
+
+  return (
+    <div className="lh-modal-backdrop" onClick={onClose}>
+      <div className="lh-modal" onClick={e => e.stopPropagation()}>
+        <div className="lh-modal-head">
+          <h2 className="lh-modal-title">Request correction</h2>
+          <button className="lh-modal-close" onClick={onClose} aria-label="Close">×</button>
+        </div>
+        <p className="lh-entry-desc">
+          {fmtDate(entry.date)} · {categoryLabel(entry.type)} · {parseFloat(entry.hours)}h
+        </p>
+
+        <div className="lh-field">
+          <label className="lh-label">What's wrong? <span className="lh-modal-req">*</span></label>
+          <textarea
+            className="lh-input lh-textarea"
+            rows={3}
+            maxLength={500}
+            placeholder="e.g. This should be Outreach, not Build."
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+          />
+        </div>
+
+        <p className="lh-section-heading" style={{ margin: '0.25rem 0 0' }}>Corrected values</p>
+        <div className="lh-modal-row">
+          <div className="lh-field">
+            <label className="lh-label">Type</label>
+            <select className="lh-select" value={type} onChange={e => setType(e.target.value)}>
+              {TYPES.map(t => <option key={t} value={t}>{categoryLabel(t)}</option>)}
+            </select>
+          </div>
+          <div className="lh-field">
+            <label className="lh-label">Hours</label>
+            <input
+              className="lh-input" type="number" min="0.25" max="24" step="0.25"
+              value={hours} onChange={e => setHours(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="lh-field">
+          <label className="lh-label">Date</label>
+          <input
+            className="lh-input" type="date" max={today()}
+            value={date} onChange={e => setDate(e.target.value)}
+          />
+        </div>
+
+        {err && <p className="lh-form-error">{err}</p>}
+        <div className="lh-modal-actions">
+          <button className="lh-modal-cancel" onClick={onClose} disabled={busy}>Cancel</button>
+          <button className="lh-submit" onClick={submit} disabled={busy}>
+            {busy ? 'Sending…' : 'Submit request'}
+          </button>
+        </div>
       </div>
     </div>
   )

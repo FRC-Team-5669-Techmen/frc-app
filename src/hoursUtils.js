@@ -14,7 +14,10 @@ export { CATEGORIES, DEFAULT_CATEGORY, categoryLabel, categoryColor, loggedTypeT
 // still-active session UNDER the cap stays live and uncapped (someone who is
 // legitimately checked in right now). The cap only bites once a session goes
 // stale (open past the cap) or a closed pair exceeds it.
-export const MAX_SESSION_MS = 4 * 60 * 60 * 1000   // default 4-hour cap (config constant)
+// The one knob to change: the max hours a single derived session can bank. A
+// forgotten/missing sign-out is clamped to this so it can't run away.
+export const MAX_SESSION_HOURS = 10                          // config constant — change here
+export const MAX_SESSION_MS    = MAX_SESSION_HOURS * 60 * 60 * 1000
 
 /**
  * Apply the forgot-to-sign-out cap to one session.
