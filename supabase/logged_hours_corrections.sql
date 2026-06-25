@@ -127,4 +127,4 @@ begin
   end if;
 end;
 $fn$;
-grant execute on function public.resolve_logged_hours_correction(uuid, boolean, text, numeric, date) to authenticated;
+grant execute on function public.resolve_logged_hours_correction(uuid, boolean, text, text, numeric, date) to authenticated;
