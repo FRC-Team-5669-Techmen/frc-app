@@ -12,6 +12,11 @@
 -- `using (true)`) and this script must raise -- if it still says PASS, the test
 -- is worthless.
 --
+-- HOW TO READ IT: a failure aborts the script with a FAIL message. A pass ends
+-- with a one-row result grid of per-case verdicts plus a privilege snapshot --
+-- the Supabase editor does not render NOTICE output, so verdicts are returned
+-- as columns instead.
+--
 -- Cases:
 --   1. member A cannot SELECT member B's application row            (select policy)
 --   2. member A CAN select their own row                            (positive control)
@@ -21,6 +26,14 @@
 -- ============================================================
 
 begin;
+
+-- Clear last run's verdicts. They are set with is_local = false because a
+-- SET LOCAL made inside a DO block is undone when that block exits, which would
+-- take the verdicts with it; that also means they outlive the rollback, so a
+-- stale value must not be mistaken for this run's result.
+select set_config('test.cases_1_3', '', false),
+       set_config('test.case_4',    '', false),
+       set_config('test.case_5',    '', false);
 
 -- -- Fixtures ------------------------------------------------------------------
 -- member A is deliberately a NON-staff member: is_staff() would make case 1
@@ -192,14 +205,16 @@ begin
   if stored is not false then
     raise exception 'FAIL case 4: member A changed their own application row (stored value is now %)', stored;
   elsif blocked then
-    raise notice 'case 4 PASS loudly: update is revoked at the grant layer (42501)';
+    perform set_config('test.case_4', 'PASS (loud): update revoked at the grant layer, raises 42501', false);
   elsif affected = 0 then
-    raise notice 'case 4 PASS but SILENTLY: RLS blocked the update with 0 rows and no error. Apply the "revoke update, delete, truncate ... from authenticated" line in member_applications.sql so a stray write raises instead of vanishing.';
+    perform set_config('test.case_4',
+      'PASS (silent): RLS blocked it with 0 rows and NO error. Apply the "revoke update, delete, truncate ... from authenticated" line in member_applications.sql so a stray write raises instead of vanishing.', false);
   else
     raise exception 'FAIL case 4: update affected % rows', affected;
   end if;
 
-  raise notice 'cases 1-3 PASS (member A cannot read member B''s row and cannot insert one for them)';
+  perform set_config('test.cases_1_3',
+    'PASS: member A cannot read member B''s row, sees only their own, and cannot insert one for B', false);
 end
 $as_member$;
 
@@ -220,12 +235,25 @@ begin
   if not blocked then
     raise exception 'FAIL case 5: anon read member_applications (% rows) -- the anon revoke is missing', n;
   end if;
-  raise notice 'case 5 PASS (anon has no table privilege at all)';
+  perform set_config('test.case_5', 'PASS: anon has no table privilege at all', false);
 end
 $as_anon$;
 
 reset role;
+
+-- The verdicts, as a RESULT GRID. The Supabase SQL editor does not render
+-- NOTICE output, so a silent pass would otherwise look identical to a loud one.
+-- A hard failure still aborts the script with its FAIL message.
+-- Expected: three PASS lines, case 4 loud, and both privilege columns false.
+select
+  current_setting('test.cases_1_3', true) as cases_1_to_3,
+  current_setting('test.case_4',    true) as case_4,
+  current_setting('test.case_5',    true) as case_5,
+  has_table_privilege('authenticated', 'public.member_applications', 'UPDATE') as authenticated_can_update,
+  has_table_privilege('authenticated', 'public.member_applications', 'DELETE') as authenticated_can_delete,
+  has_table_privilege('anon',          'public.member_applications', 'SELECT') as anon_can_select;
+
 rollback;
 
--- Expect five NOTICEs-worth of PASS above and zero rows left behind:
+-- Nothing is left behind. Confirm with:
 --   select count(*) from public.member_applications;  -- unchanged by this script
