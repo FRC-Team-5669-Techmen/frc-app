@@ -1,0 +1,326 @@
+/* Member application gate. Same composition as AccessGate.css — full-screen
+   card outside the app shell, no NavBar — widened for a multi-step form. */
+
+.ma-wrap {
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem 3rem;
+  background: var(--bg);
+}
+
+.ma-card {
+  width: 100%;
+  max-width: 34rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.9rem;
+}
+
+.ma-card-narrow { max-width: 26rem; margin-top: 12vh; }
+
+.ma-mark {
+  width: 3.5rem;
+  height: 3.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.ma-title {
+  font-family: var(--font-ui);
+  color: var(--gold);
+  font-size: 1.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.ma-msg {
+  color: var(--steel);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.ma-note {
+  width: 100%;
+  text-align: left;
+  color: var(--steel);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  background: var(--surface);
+  border-left: 2px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.7rem;
+}
+
+/* ── Progress ── */
+.ma-progress {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+
+.ma-progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ma-progress-step {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+.ma-progress-title {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: right;
+}
+
+.ma-progress-track {
+  width: 100%;
+  height: 3px;
+  background: var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.ma-progress-fill {
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.2s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ma-progress-fill { transition: none; }
+}
+
+/* ── Form ── */
+.ma-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin: 0.4rem 0 0.25rem;
+  text-align: left;
+}
+
+.ma-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ma-label {
+  font-family: var(--font-ui);
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+
+.ma-optional {
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.ma-input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.75rem;
+}
+.ma-input::placeholder { color: var(--muted); }
+.ma-input:focus { outline: none; border-color: var(--gold); }
+.ma-input:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.ma-input[readonly] { color: var(--steel); cursor: default; }
+
+.ma-textarea {
+  resize: vertical;
+  min-height: 3.5rem;
+  line-height: 1.4;
+}
+
+.ma-hint {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+}
+
+/* ── Multi-select chips ── */
+.ma-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+
+.ma-chip {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--steel);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.ma-chip:hover { border-color: var(--gold-dim); color: var(--text); }
+.ma-chip:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+.ma-chip-on {
+  color: var(--gold-bright);
+  background: var(--gold-a08);
+  border-color: var(--gold);
+}
+
+/* ── Schedule block the build-season acknowledgment references ── */
+.ma-schedule {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.85rem;
+}
+
+.ma-schedule-line {
+  color: var(--text);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.ma-schedule-line strong {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* ── Acknowledgment checkboxes ── */
+.ma-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.8rem;
+  cursor: pointer;
+}
+
+.ma-check input {
+  flex: 0 0 auto;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.1rem;
+  accent-color: var(--gold);
+}
+
+/* ── Errors + actions ── */
+.ma-error {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--fault);
+  background: var(--fault-a10);
+  border: 1px solid var(--fault);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.7rem;
+}
+
+.ma-actions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.ma-submit {
+  flex: 1;
+  background: var(--gold);
+  color: #0A0B0D;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.8rem 1rem;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ma-submit:hover:not(:disabled) { background: var(--gold-bright); }
+.ma-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.ma-back {
+  flex: 0 0 auto;
+  background: transparent;
+  color: var(--steel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.8rem 1.2rem;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.ma-back:hover:not(:disabled) { border-color: var(--gold-dim); color: var(--text); }
+.ma-back:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Footer ── */
+.ma-email {
+  font-family: var(--font-mono);
+  color: var(--steel);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+.ma-email strong { color: var(--gold); font-weight: 600; }
+
+.ma-signout {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+.ma-signout:hover { color: var(--steel); }
+
+/* Loading spinner while the prior-application prefill resolves */
+.ma-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: ma-spin 0.8s linear infinite;
+}
+@keyframes ma-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ma-spinner { animation: none; } }

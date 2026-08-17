@@ -36,6 +36,7 @@ const CONTEXT_TAGS = [
   ['/display',     'DISPLAY'],
   ['/roster',      'ROSTER'],
   ['/access-requests', 'ACCESS'],
+  ['/applications', 'APPS'],
   ['/verify-hours','HRS//VERIFY'],
   ['/reports',     'REPORTS'],
   ['/certify',     'CERTIFY'],
@@ -130,6 +131,7 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
 
               <span className="nav-dropdown-section">People</span>
               {isAdmin && <NavLink to="/roster" className={itemClass}>Roster</NavLink>}
+              <NavLink to="/applications" className={itemClass}>Applications</NavLink>
               <NavLink to="/access-requests" className={itemClass}>
                 Access Requests
                 {pendingAccess > 0 && <span className="nav-badge">{pendingAccess}</span>}

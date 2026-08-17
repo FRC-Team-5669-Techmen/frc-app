@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabase'
+import { resolveCurrentSeason } from './seasons'
 import NavBar from './NavBar'
 import ErrorBoundary from './ErrorBoundary'
 import './App.css'
@@ -32,6 +33,8 @@ const AccessRequestsPage = lazy(() => import('./AccessRequestsPage'))
 const ParentHomePage   = lazy(() => import('./ParentHomePage'))
 const SchedulePage     = lazy(() => import('./SchedulePage'))
 const ReportsPage      = lazy(() => import('./ReportsPage'))
+const MemberApplication  = lazy(() => import('./MemberApplication'))
+const ApplicationsPage   = lazy(() => import('./ApplicationsPage'))
 
 const Splash = () => (
   <div className="splash">
@@ -62,6 +65,9 @@ export default function App() {
   const [roles, setRoles]     = useState([])
   const [approved, setApproved] = useState(null)
   const [onboardedAt, setOnboardedAt] = useState(undefined)
+  // Current season this member still owes an application for. undefined = not
+  // resolved yet, null = nothing owed (already applied, or not a member track).
+  const [appSeason, setAppSeason] = useState(undefined)
   const navigate = useNavigate()
   const location = useLocation()
   const tourStarted = useRef(false)
@@ -76,13 +82,45 @@ export default function App() {
         .from('member_roles')
         .select('role')
         .eq('member_id', userId)
-      setRoles(data?.map(r => r.role) ?? [])
+      const roleList = data?.map(r => r.role) ?? []
+      setRoles(roleList)
       const { data: prof } = await supabase
         .from('profiles')
         .select('onboarded_at')
         .eq('id', userId)
         .single()
       setOnboardedAt(prof?.onboarded_at ?? null)
+      await loadApplicationState(userId, claimed === true, roleList)
+    }
+
+    // The per-season member application gate. Only the member track is asked:
+    // staff and parent-only accounts can't truthfully answer a student roster
+    // form (pathway, parent contact, build-season commitment), and gating them
+    // would lock mentors and parents out of the app behind it.
+    async function loadApplicationState(userId, isApproved, roleList) {
+      const staff  = roleList.some(r => ['mentor', 'lead', 'admin'].includes(r))
+      const parent = roleList.includes('parent') && !staff
+      if (!isApproved || staff || parent) { setAppSeason(null); return }
+
+      const { data: seasonRows } = await supabase
+        .from('seasons')
+        .select('id, name, start_date, end_date')
+        .order('start_date', { ascending: false })
+      // No season spanning today means there is nothing to apply for yet.
+      const season = resolveCurrentSeason(seasonRows ?? [])
+      if (!season) { setAppSeason(null); return }
+
+      const { data: existing, error: appErr } = await supabase
+        .from('member_applications')
+        .select('id')
+        .eq('member_id', userId)
+        .eq('season_id', season.id)
+        .maybeSingle()
+      // Fail OPEN: if the query itself errors (e.g. the migration hasn't run on
+      // this environment yet), let the member into the app rather than trapping
+      // them behind a form whose insert would fail.
+      if (appErr) { setAppSeason(null); return }
+      setAppSeason(existing ? null : season)
     }
 
     supabase.auth.getSession()
@@ -106,6 +144,7 @@ export default function App() {
         setRoles([])
         setApproved(null)
         setOnboardedAt(undefined)
+        setAppSeason(undefined)
         tourStarted.current = false
       }
     })
@@ -118,6 +157,7 @@ export default function App() {
     if (tourStarted.current) return
     if (!session || approved !== true) return
     if (onboardedAt === undefined || onboardedAt) return  // not loaded, or already done
+    if (appSeason !== null) return   // application gate is up (or unresolved): no dashboard to tour
     if (location.pathname !== '/dashboard') return
     if (roles.length === 0) return                         // wait for roles to resolve
     tourStarted.current = true
@@ -142,7 +182,7 @@ export default function App() {
     }
     run()
     return () => clearTimeout(timer)
-  }, [session, approved, onboardedAt, roles, location.pathname])
+  }, [session, approved, onboardedAt, roles, appSeason, location.pathname])
 
   if (session === undefined) return <Splash />
 
@@ -160,6 +200,26 @@ export default function App() {
         <AccessGate session={session} />
       </Suspense>
     )
+  }
+
+  // Approved member with no application for the current season: the application
+  // takes the AccessGate slot until it's submitted. The NFC check-in fast paths
+  // are deliberately let through — they're outside the app shell, and a member
+  // mid-session must never be blocked from signing out by a form.
+  const onCheckinPath = location.pathname.startsWith('/checkin')
+  if (session && approved === true && !onCheckinPath) {
+    if (appSeason === undefined) return <Splash />
+    if (appSeason) {
+      return (
+        <Suspense fallback={<Splash />}>
+          <MemberApplication
+            session={session}
+            season={appSeason}
+            onDone={() => setAppSeason(null)}
+          />
+        </Suspense>
+      )
+    }
   }
 
   return (
@@ -191,6 +251,7 @@ export default function App() {
           <Route path="/readiness"   element={<ReadinessPage hasRole={hasRole} />} />
           <Route path="/squad"       element={<SquadPage session={session} hasRole={hasRole} />} />
           <Route path="/access-requests" element={<AccessRequestsPage hasRole={hasRole} />} />
+          <Route path="/applications"    element={<ApplicationsPage hasRole={hasRole} />} />
           {/* Display lives inside the layout so the nav + profile stay visible. */}
           <Route path="/display" element={<PresenceBoard />} />
         </Route>

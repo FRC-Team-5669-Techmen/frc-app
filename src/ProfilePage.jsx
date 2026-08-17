@@ -10,7 +10,9 @@ const SUBTEAMS = [
   'Mechanical', 'Electrical', 'Programming', 'CAD',
   'Fabrication', 'Media', 'Business/Outreach', 'Drive Team',
 ]
-const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+// Matches the application form's sizes (XS through 3XL) so a size picked there
+// still renders here instead of showing blank.
+const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']
 
 export default function ProfilePage({ session, hasRole = () => false }) {
   const [profile, setProfile] = useState(null)
