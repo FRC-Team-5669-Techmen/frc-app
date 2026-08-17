@@ -219,10 +219,18 @@ end;
 $fn$;
 
 -- -- 5. Grants -----------------------------------------------------------------
--- Grant only what a policy backs: select + insert. No update/delete grant, so
--- the missing policies can't be the only thing standing between a client and a
--- write.
+-- Hold the grant layer to exactly what a policy backs: select + insert...
 grant select, insert on public.member_applications to authenticated;
+
+-- ...and revoke the rest EXPLICITLY. The grant above adds nothing that wasn't
+-- already there: Supabase's ALTER DEFAULT PRIVILEGES hands authenticated ALL
+-- privileges on new public tables, and a grant never narrows. Without this
+-- revoke, a client update falls into the silent-0-row hole -- RLS finds no
+-- permissive UPDATE policy, so the statement affects 0 rows and raises NOTHING,
+-- the exact failure mode documented in supabase/admin_member_management.sql.
+-- With it, a stray write is a loud 42501. staff_set_discord_confirmed() is
+-- unaffected: SECURITY DEFINER runs as the table owner.
+revoke update, delete, truncate on public.member_applications from authenticated;
 
 -- Explicit anon revoke. NOT redundant with the `to authenticated` policy
 -- scoping: ALTER DEFAULT PRIVILEGES in a Supabase project grants anon on new

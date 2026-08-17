@@ -16,7 +16,7 @@
 --   1. member A cannot SELECT member B's application row            (select policy)
 --   2. member A CAN select their own row                            (positive control)
 --   3. member A cannot INSERT a row whose member_id is member B     (insert policy)
---   4. member A cannot UPDATE their own row                         (no update policy + no grant)
+--   4. member A cannot UPDATE their own row                         (no update policy + revoked grant)
 --   5. anon cannot touch the table at all                           (explicit anon revoke)
 -- ============================================================
 
@@ -105,8 +105,10 @@ select set_config(
 
 do $as_member$
 declare
-  n       int;
-  blocked boolean;
+  n        int;
+  blocked  boolean;
+  affected int;
+  stored   boolean;
 begin
   if auth.uid()::text <> current_setting('test.member_a') then
     raise exception 'Harness broken: auth.uid() is %, expected %',
@@ -164,21 +166,40 @@ begin
     raise exception 'FAIL case 3: member A inserted an application row for member B';
   end if;
 
-  -- CASE 4: no update policy and no update grant, so even own-row edits are
-  -- refused; corrections route through a SECURITY DEFINER function instead.
-  blocked := false;
+  -- CASE 4: there is no update policy, so an own-row edit must not change
+  -- anything; corrections route through a SECURITY DEFINER function instead.
+  -- Two outcomes are acceptable and the test says which one it got:
+  --   * insufficient_privilege -- update is revoked at the grant layer (loud)
+  --   * 0 rows affected        -- RLS found no permissive UPDATE policy (silent)
+  -- The ONLY failure is a value that actually changed. Asserting on the raised
+  -- error alone would have been the wrong signal: a policy-less update raises
+  -- nothing, it just quietly affects no rows.
+  blocked  := false;
+  affected := -1;
   begin
     update public.member_applications
        set discord_server_confirmed = true
      where member_id = current_setting('test.member_a')::uuid;
+    get diagnostics affected = row_count;
   exception
     when insufficient_privilege then blocked := true;
   end;
-  if not blocked then
-    raise exception 'FAIL case 4: member A updated their own application row (expected no update path)';
+
+  select discord_server_confirmed into stored
+    from public.member_applications
+   where member_id = current_setting('test.member_a')::uuid;
+
+  if stored is not false then
+    raise exception 'FAIL case 4: member A changed their own application row (stored value is now %)', stored;
+  elsif blocked then
+    raise notice 'case 4 PASS loudly: update is revoked at the grant layer (42501)';
+  elsif affected = 0 then
+    raise notice 'case 4 PASS but SILENTLY: RLS blocked the update with 0 rows and no error. Apply the "revoke update, delete, truncate ... from authenticated" line in member_applications.sql so a stray write raises instead of vanishing.';
+  else
+    raise exception 'FAIL case 4: update affected % rows', affected;
   end if;
 
-  raise notice 'cases 1-4 PASS (member A blocked from B''s row, from spoofed insert, and from updates)';
+  raise notice 'cases 1-3 PASS (member A cannot read member B''s row and cannot insert one for them)';
 end
 $as_member$;
 
