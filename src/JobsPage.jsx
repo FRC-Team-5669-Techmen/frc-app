@@ -2,8 +2,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
 // Shared subteam vocabulary (profiles.subteams keys off the same strings).
-// Offered as datalist suggestions; staff may also type a free value.
-import { SUBTEAMS } from './subteams'
+// New jobs are restricted to these; an already-stored non-canonical value
+// (tasks.subteam predates this constraint / the CHECK below) stays selectable
+// on that one job so an unrelated edit doesn't silently retag it.
+import { SUBTEAMS, isSubteam } from './subteams'
 import './JobsPage.css'
 
 // Derived display status (richer than tasks.status) → label + color class.
@@ -482,15 +484,18 @@ export default function JobsPage({ session, hasRole = () => false }) {
 
               <div className="jobs-field">
                 <label className="jobs-label" htmlFor="job-subteam">Subteam</label>
-                <input
-                  id="job-subteam" type="text" list="job-subteam-list" maxLength={60}
+                <select
+                  id="job-subteam"
                   value={form.subteam}
                   onChange={e => setForm(f => ({ ...f, subteam: e.target.value }))}
-                  className="jobs-input" placeholder="Optional"
-                />
-                <datalist id="job-subteam-list">
-                  {SUBTEAMS.map(s => <option key={s} value={s} />)}
-                </datalist>
+                  className="jobs-input"
+                >
+                  <option value="">Optional</option>
+                  {SUBTEAMS.map(s => <option key={s} value={s}>{s}</option>)}
+                  {form.subteam && !isSubteam(form.subteam) && (
+                    <option value={form.subteam}>{form.subteam} (legacy value)</option>
+                  )}
+                </select>
               </div>
 
               <div className="jobs-field">
