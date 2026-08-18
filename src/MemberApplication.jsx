@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
+import { SUBTEAMS } from './subteams'
 import './MemberApplication.css'
 
 // ─── Schedule copy ────────────────────────────────────────────────────────────
@@ -23,17 +24,9 @@ export const MEETING_SCHEDULE = [
 
 const PATHWAYS = ['CSEE', 'MSET', 'MAT', 'IDEA', 'ACE', 'BMET', 'Freshman - in rotation']
 
-// The eight-value taxonomy, matching member_applications_subteam_values_chk.
-const SUBTEAMS = [
-  'Mechanical Design (CAD)',
-  'Fabrication and Machining',
-  'Assembly and Robot Construction',
-  'Electrical and Wiring',
-  'Programming and Controls',
-  'Drive Team (selection by tryout)',
-  'Field and Pit Crew',
-  'Media Outreach and Business',
-]
+// Subteam choices come from the shared vocabulary (src/subteams.js); the DB
+// CHECK on subteam_first/second/third is pinned to the same list
+// (supabase/subteams_vocabulary.sql).
 
 const AVAILABILITY = ['Yes', 'No', 'Sometimes']
 const TRANSPORT    = ['Parent pickup', 'Own transport', 'Public transit', 'Needs help arranging']

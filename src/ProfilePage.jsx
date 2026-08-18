@@ -4,12 +4,9 @@ import MemberSkillsPanel from './MemberSkillsPanel'
 import NotificationsPanel from './NotificationsPanel'
 import { RoleBadge, ROLE_ORDER } from './roles'
 import { displayName } from './names'
+import { SUBTEAMS } from './subteams'
 import './ProfilePage.css'
 
-const SUBTEAMS = [
-  'Mechanical', 'Electrical', 'Programming', 'CAD',
-  'Fabrication', 'Media', 'Business/Outreach', 'Drive Team',
-]
 // Matches the application form's sizes (XS through 3XL) so a size picked there
 // still renders here instead of showing blank.
 const SHIRT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL']

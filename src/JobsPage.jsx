@@ -1,14 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
-import './JobsPage.css'
-
-// Mirrors the subteam vocabulary used for profiles.subteams (see ProfilePage).
+// Shared subteam vocabulary (profiles.subteams keys off the same strings).
 // Offered as datalist suggestions; staff may also type a free value.
-const SUBTEAMS = [
-  'Mechanical', 'Electrical', 'Programming', 'CAD',
-  'Fabrication', 'Media', 'Business/Outreach', 'Drive Team',
-]
+import { SUBTEAMS } from './subteams'
+import './JobsPage.css'
 
 // Derived display status (richer than tasks.status) → label + color class.
 // Scale: open=green, in progress=amber, needs-review=red, completed/closed=gray.

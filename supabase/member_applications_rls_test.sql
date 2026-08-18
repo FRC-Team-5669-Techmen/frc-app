@@ -1,7 +1,9 @@
 -- ============================================================
 -- member_applications RLS mutation test
 --
--- Run in the Supabase SQL editor AFTER supabase/member_applications.sql.
+-- Run in the Supabase SQL editor AFTER supabase/member_applications.sql and
+-- supabase/subteams_vocabulary.sql (the fixtures use the canonical subteam
+-- vocabulary, which the older CHECK would reject).
 -- SAFE ON LIVE DATA: the whole script runs inside one transaction that ends in
 -- ROLLBACK, so the two fixture rows it writes never persist. It writes nothing
 -- to auth.users and modifies no existing row.
@@ -91,7 +93,7 @@ insert into public.member_applications (
   current_setting('test.member_a')::uuid, current_setting('test.season')::uuid,
   'Test', 'MemberA', '5555550100',
   'CSEE', false,
-  'Programming and Controls', 'Electrical and Wiring', 'rls fixture',
+  'Programming', 'Electrical', 'rls fixture',
   'Yes', 'Yes', 'Yes', 'Parent pickup',
   true,
   'Parent A', 'parent-a@example.invalid', '5555550101',
@@ -101,7 +103,7 @@ insert into public.member_applications (
   current_setting('test.member_b')::uuid, current_setting('test.season')::uuid,
   'Test', 'MemberB', '5555550200',
   'MSET', false,
-  'Mechanical Design (CAD)', 'Fabrication and Machining', 'rls fixture',
+  'Mechanical', 'Fabrication', 'rls fixture',
   'No', 'Sometimes', 'Yes', 'Own transport',
   true,
   'Parent B', 'parent-b@example.invalid', '5555550201',
@@ -163,7 +165,7 @@ begin
       current_setting('test.member_b')::uuid, current_setting('test.season')::uuid,
       'Spoofed', 'Row', '5555550300',
       'ACE', false,
-      'Field and Pit Crew', 'Media Outreach and Business', 'should never land',
+      'Field & Pit', 'Media', 'should never land',
       'Yes', 'Yes', 'Yes', 'Own transport',
       true,
       'Parent X', 'parent-x@example.invalid', '5555550301',
