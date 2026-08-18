@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { SUBTEAMS } from './subteams'
+import { APPLICATION_SELECT } from './applicationFields'
 import './MemberApplication.css'
 
 // ─── Schedule copy ────────────────────────────────────────────────────────────
@@ -228,6 +229,9 @@ export default function MemberApplication({ session, season, onDone }) {
   const [done,   setDone]   = useState(false)
   const [prior,  setPrior]  = useState(undefined)   // undefined = loading, null = none
   const [prefilled, setPrefilled] = useState(false)
+  // Set only when the parent questionnaire email actually went out, so the
+  // confirmation screen never promises an email that failed to send.
+  const [parentEmail, setParentEmail] = useState('')
 
   // Prefill what the platform already knows: the profile's own name/year/size,
   // plus the most recent prior application (used when they say they're
@@ -238,8 +242,11 @@ export default function MemberApplication({ session, season, onDone }) {
       supabase.from('profiles')
         .select('full_name, nickname, grad_year, shirt_size')
         .eq('id', uid).single(),
+      // Explicit column list, not `*`: parent_token is revoked from clients at
+      // the column level, and Postgres expands the star before checking
+      // privileges (supabase/parent_responses.sql).
       supabase.from('member_applications')
-        .select('*')
+        .select(APPLICATION_SELECT)
         .eq('member_id', uid)
         .order('submitted_at', { ascending: false })
         .limit(1),
@@ -377,7 +384,9 @@ export default function MemberApplication({ session, season, onDone }) {
       // discord_server_confirmed is staff-set — never written from here.
     }
 
-    const { error: insErr } = await supabase.from('member_applications').insert(row)
+    // Returning the id costs nothing here and is what the parent email needs.
+    const { data: inserted, error: insErr } = await supabase
+      .from('member_applications').insert(row).select('id').single()
     if (insErr) {
       setSaving(false)
       // 23505 = the unique (member_id, season_id) index: already applied.
@@ -397,8 +406,27 @@ export default function MemberApplication({ session, season, onDone }) {
       shirt_size: form.shirt_size || null,
     }).eq('id', uid)
 
+    // Email the parent their questionnaire link. This is SUPPLEMENTARY: the
+    // application is already saved and complete, the questionnaire gates
+    // nothing, and a send failure is a note on the confirmation screen — never
+    // a failed or rolled-back submit. Staff can resend from /applications.
+    let parentSent = false
+    let parentNote = ''
+    if (inserted?.id) {
+      const { data: mail, error: mailErr } = await supabase.functions
+        .invoke('send-parent-request', { body: { application_id: inserted.id } })
+      if (mailErr) parentNote = "We couldn't email your parent right now — a mentor will send it."
+      else if (mail?.skipped) parentNote = 'A mentor will send your parent their questions separately.'
+      else parentSent = true
+    }
+
     setSaving(false)
-    if (profErr) setError(`Application saved. Your profile details didn't update: ${profErr.message}`)
+    setParentEmail(parentSent ? form.parent_email.trim() : '')
+    const notes = [
+      profErr ? `Your profile details didn't update: ${profErr.message}` : '',
+      parentNote,
+    ].filter(Boolean)
+    if (notes.length) setError(`Application saved. ${notes.join(' ')}`)
     setDone(true)
   }
 
@@ -631,6 +659,13 @@ export default function MemberApplication({ session, season, onDone }) {
             Your {season.name} application is in. Mentors use it to place you on a
             subteam — you will hear about that at the first meetings.
           </p>
+          {parentEmail && (
+            <p className="ma-msg">
+              We also emailed <strong>{parentEmail}</strong> a few optional
+              questions about how your family could help out. Nothing about your
+              place on the team depends on their answer.
+            </p>
+          )}
           {error && <p className="ma-error">{error}</p>}
           <button className="ma-submit" type="button" onClick={() => (onDone ? onDone() : window.location.reload())}>
             Continue

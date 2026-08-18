@@ -35,6 +35,7 @@ const SchedulePage     = lazy(() => import('./SchedulePage'))
 const ReportsPage      = lazy(() => import('./ReportsPage'))
 const MemberApplication  = lazy(() => import('./MemberApplication'))
 const ApplicationsPage   = lazy(() => import('./ApplicationsPage'))
+const ParentResponse     = lazy(() => import('./ParentResponse'))
 
 const Splash = () => (
   <div className="splash">
@@ -191,10 +192,17 @@ export default function App() {
   // Parent view renders only for a parent who is NOT staff (established rule).
   const parentView = hasRole('parent') && !isStaffUser
 
+  // The parent questionnaire is a PUBLIC capability URL — the token in the path
+  // is its only credential. It has to render for a signed-out parent, and it
+  // must not be swallowed by either gate when whoever follows the link happens
+  // to already be signed in (an unapproved guest, or a member who still owes an
+  // application).
+  const onParentPath = location.pathname.startsWith('/parent/')
+
   // Signed in but approval not yet resolved: hold on the splash.
-  if (session && approved === null) return <Splash />
+  if (session && approved === null && !onParentPath) return <Splash />
   // Signed in but not approved: show the access gate instead of the app shell.
-  if (session && approved === false) {
+  if (session && approved === false && !onParentPath) {
     return (
       <Suspense fallback={<Splash />}>
         <AccessGate session={session} />
@@ -207,7 +215,7 @@ export default function App() {
   // are deliberately let through — they're outside the app shell, and a member
   // mid-session must never be blocked from signing out by a form.
   const onCheckinPath = location.pathname.startsWith('/checkin')
-  if (session && approved === true && !onCheckinPath) {
+  if (session && approved === true && !onCheckinPath && !onParentPath) {
     if (appSeason === undefined) return <Splash />
     if (appSeason) {
       return (
@@ -229,6 +237,13 @@ export default function App() {
         {/* ── Public ── */}
         <Route path="/"      element={session ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
         <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+
+        {/* Parent questionnaire. Public by design: no session, no auth guard —
+            the emailed token IS the credential, and the page never touches a
+            Supabase table (everything goes through the parent-response
+            Edge Function). Gates nothing; a parent who ignores it costs their
+            student nothing. */}
+        <Route path="/parent/:token" element={<ParentResponse />} />
 
         {/* ── Protected: shared NavBar via ProtectedLayout ── */}
         <Route element={session ? <ProtectedLayout hasRole={hasRole} session={session} /> : <Navigate to="/login" replace />}>

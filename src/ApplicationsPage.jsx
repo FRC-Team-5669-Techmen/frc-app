@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
 import { resolveCurrentSeason } from './seasons'
+import { APPLICATION_SELECT } from './applicationFields'
 import './ApplicationsPage.css'
 
 // Staff view of per-season member applications (src/MemberApplication.jsx).
@@ -90,7 +91,52 @@ function Row({ label, value }) {
   )
 }
 
-function Detail({ app, onClose, onConfirmDiscord, busy }) {
+// The parent questionnaire (src/ParentResponse.jsx), read-only. Staff are the
+// only readers of parent_responses — not even the student sees their own
+// parent's answers. Absent is the normal case: it gates nothing.
+const WEEKEND_LABEL = {
+  saturdays: 'Saturdays', sundays: 'Sundays', either: 'Either day', neither: 'Neither',
+}
+const YNM_LABEL = { yes: 'Yes', no: 'No', maybe: 'Maybe' }
+
+function ParentResponseBlock({ response, onResend, resendState }) {
+  return (
+    <>
+      <h3 className="ap-section">
+        Parent response
+        <span className="ap-section-note">optional — gates nothing</span>
+      </h3>
+
+      {response ? (
+        <>
+          <Row label="Weekend supervision" value={WEEKEND_LABEL[response.weekend_supervision]} />
+          <Row label="Meal support"  value={YNM_LABEL[response.meal_support]} />
+          <Row label="Can drive"     value={YNM_LABEL[response.travel_driving]} />
+          <Row label="Employer"      value={response.employer_name} />
+          <Row
+            label="Employer contact"
+            value={response.employer_contact_consent
+              ? 'Consented to a sponsorship ask'
+              : 'No consent — do not contact'}
+          />
+          <Row label="Can donate or lend" value={response.donation_offer} />
+          <Row label="Answered" value={fmtDateTime(response.updated_at ?? response.submitted_at)} />
+        </>
+      ) : (
+        <p className="ap-muted">No response yet.</p>
+      )}
+
+      <button className="ap-resend" type="button" disabled={resendState === 'sending'} onClick={onResend}>
+        {resendState === 'sending' ? 'Sending…' : response ? 'Resend the link' : 'Send the parent email'}
+      </button>
+      {resendState === 'sent'    && <p className="ap-muted">Sent.</p>}
+      {resendState === 'skipped' && <p className="ap-muted">Email is not configured on this project — nothing was sent.</p>}
+      {resendState === 'failed'  && <p className="ap-error">That didn't send. Try again in a moment.</p>}
+    </>
+  )
+}
+
+function Detail({ app, onClose, onConfirmDiscord, busy, response, onResend, resendState }) {
   return (
     <div className="ap-modal-backdrop" onClick={onClose}>
       <div className="ap-modal" onClick={e => e.stopPropagation()}>
@@ -144,6 +190,8 @@ function Detail({ app, onClose, onConfirmDiscord, busy }) {
           <Row label="Second"  value={app.parent_two_name} />
           <Row label="Second contact" value={app.parent_two_contact} />
 
+          <ParentResponseBlock response={response} onResend={onResend} resendState={resendState} />
+
           <h3 className="ap-section">Logistics</h3>
           <Row label="Shirt size" value={app.profiles?.shirt_size} />
           <Row label="Dietary"    value={app.dietary_restrictions} />
@@ -176,9 +224,11 @@ export default function ApplicationsPage({ hasRole = () => false }) {
   const [seasons, setSeasons] = useState(null)
   const [seasonId, setSeasonId] = useState('')
   const [apps, setApps] = useState(null)
+  const [responses, setResponses] = useState({})   // application_id -> parent response
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(null)     // application id
   const [busy, setBusy] = useState(false)
+  const [resendState, setResendState] = useState('')  // '' | sending | sent | skipped | failed
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -196,13 +246,26 @@ export default function ApplicationsPage({ hasRole = () => false }) {
   useEffect(() => {
     if (!isStaff || !seasonId) return
     setApps(null)
+    // Explicit column list, not `*`: parent_token is revoked from clients at
+    // the column level — staff included — and Postgres expands the star before
+    // checking privileges (supabase/parent_responses.sql).
     supabase.from('member_applications')
-      .select('*, profiles(full_name, nickname, grad_year, shirt_size)')
+      .select(`${APPLICATION_SELECT}, profiles(full_name, nickname, grad_year, shirt_size)`)
       .eq('season_id', seasonId)
       .order('submitted_at', { ascending: false })
       .then(({ data, error: err }) => {
         if (err) { setError(err.message); setApps([]); return }
-        setApps(data ?? [])
+        const rows = data ?? []
+        setApps(rows)
+        // Parent questionnaires, staff-read-only. A failure here is silent on
+        // purpose: it is supplementary, and the roster must still render.
+        if (!rows.length) { setResponses({}); return }
+        supabase.from('parent_responses')
+          .select('application_id, weekend_supervision, meal_support, travel_driving, employer_name, employer_contact_consent, donation_offer, submitted_at, updated_at')
+          .in('application_id', rows.map(r => r.id))
+          .then(({ data: prs }) => {
+            setResponses(Object.fromEntries((prs ?? []).map(p => [p.application_id, p])))
+          })
       })
   }, [isStaff, seasonId])
 
@@ -233,6 +296,17 @@ export default function ApplicationsPage({ hasRole = () => false }) {
     setBusy(false)
     if (err) { setError(err.message); return }
     setApps(prev => prev.map(a => (a.id === id ? { ...a, discord_server_confirmed: confirmed } : a)))
+  }
+
+  // Staff resend. Same Edge Function the student's submit calls — it accepts a
+  // staff caller for ANY application (is_staff() checked server-side), which is
+  // what covers a send that failed at submit time.
+  async function resendParent(id) {
+    setResendState('sending')
+    const { data, error: err } = await supabase.functions
+      .invoke('send-parent-request', { body: { application_id: id } })
+    if (err) { setResendState('failed'); return }
+    setResendState(data?.skipped ? 'skipped' : 'sent')
   }
 
   if (!isStaff) {
@@ -328,7 +402,7 @@ export default function ApplicationsPage({ hasRole = () => false }) {
               </thead>
               <tbody>
                 {filtered.map(a => (
-                  <tr key={a.id} className="ap-tr" onClick={() => setOpen(a.id)}>
+                  <tr key={a.id} className="ap-tr" onClick={() => { setOpen(a.id); setResendState('') }}>
                     <td className="ap-name">{displayName(a.profiles)}</td>
                     <td>{a.pathway}</td>
                     <td className="ap-num">{a.profiles?.grad_year ?? '—'}</td>
@@ -358,6 +432,9 @@ export default function ApplicationsPage({ hasRole = () => false }) {
           busy={busy}
           onClose={() => setOpen(null)}
           onConfirmDiscord={confirmDiscord}
+          response={responses[openApp.id] ?? null}
+          resendState={resendState}
+          onResend={() => resendParent(openApp.id)}
         />
       )}
     </div>
