@@ -273,7 +273,7 @@ export default function ApplicationsPage({ hasRole = () => false }) {
           disabled={!filtered?.length}
           onClick={() => downloadCsv(
             rowsToCsv(filtered),
-            `applications-${(season?.name ?? 'season').replace(/\s+/g, '-').toLowerCase()}.csv`,
+            `applications-${(season?.name ?? 'season').replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.csv`,
           )}
         >
           Export CSV

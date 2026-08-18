@@ -20,6 +20,12 @@ export const MEETING_SCHEDULE = [
   },
 ]
 
+// The build_season_acknowledged checkbox can't honestly ask for agreement to a
+// placeholder line. Detected from the constant above rather than a separate
+// flag, so filling in the real schedule restores the checkbox automatically.
+const buildSeasonLine = MEETING_SCHEDULE.find(s => s.label === 'Build season')
+export const BUILD_SEASON_SCHEDULED = !!buildSeasonLine && !buildSeasonLine.detail.startsWith('TODO')
+
 // ─── Option lists ─────────────────────────────────────────────────────────────
 
 const PATHWAYS = ['CSEE', 'MSET', 'MAT', 'IDEA', 'ACE', 'BMET', 'Freshman - in rotation']
@@ -543,10 +549,16 @@ export default function MemberApplication({ session, season, onDone }) {
             rows={3}
             placeholder="e.g. wrestling practice Tue/Thu until 6, November through February"
           />
-          <CheckRow checked={form.build_season_acknowledged} onChange={check('build_season_acknowledged')}>
-            I have read the schedule above and I understand build season asks for
-            more time than the offseason does.
-          </CheckRow>
+          {BUILD_SEASON_SCHEDULED ? (
+            <CheckRow checked={form.build_season_acknowledged} onChange={check('build_season_acknowledged')}>
+              I have read the schedule above and I understand build season asks for
+              more time than the offseason does.
+            </CheckRow>
+          ) : (
+            <p className="ma-note">
+              The build season schedule will be published before the season starts.
+            </p>
+          )}
         </>
       )
 
