@@ -146,11 +146,13 @@ begin
       );
   end if;
 
-  -- Acknowledgments are not storable as false.
-  if not exists (select 1 from pg_constraint where conname = 'member_applications_build_ack_chk' and conrelid = 'public.member_applications'::regclass) then
-    alter table public.member_applications add constraint member_applications_build_ack_chk
-      check (build_season_acknowledged = true);
-  end if;
+  -- build_season_acknowledged has NO check constraint, deliberately: the
+  -- checkbox only renders (and is only required) when BUILD_SEASON_SCHEDULED
+  -- is true (src/MemberApplication.jsx). A CHECK forcing true broke every
+  -- submission while the schedule was a placeholder -- see
+  -- supabase/member_applications_drop_build_ack_chk.sql. The column is a
+  -- plain boolean recording whether the student actually saw and checked it;
+  -- "never shown the schedule" is honestly false, not something to coerce.
 
   if not exists (select 1 from pg_constraint where conname = 'member_applications_conduct_ack_chk' and conrelid = 'public.member_applications'::regclass) then
     alter table public.member_applications add constraint member_applications_conduct_ack_chk
