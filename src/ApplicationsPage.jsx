@@ -21,8 +21,28 @@ function fmtDateTime(iso) {
   })
 }
 
-// The export IS the full table: every application column, one row per member.
-// Order matches the form so a mentor reading the CSV reads it in question order.
+// The parent questionnaire (src/ParentResponse.jsx), staff-read-only — not
+// even the student sees their own parent's answers. Absent is the normal
+// case: it gates nothing, so "pending" is not a fault, just unanswered.
+const WEEKEND_LABEL = {
+  saturdays: 'Saturdays', sundays: 'Sundays', either: 'Either day', neither: 'Neither',
+}
+const YNM_LABEL = { yes: 'Yes', no: 'No', maybe: 'Maybe' }
+
+// A named employer with consent is a legal sponsorship ask; a named employer
+// without it is not — the two must never be visually confusable. No employer
+// named is a third, unrelated state (nothing to contact either way).
+function employerBadge(response) {
+  if (!response?.employer_name) return null
+  return response.employer_contact_consent
+    ? { cls: 'ap-consent-yes', text: 'Consent to contact' }
+    : { cls: 'ap-consent-no', text: 'No consent — do not contact' }
+}
+
+// The export IS the full table: every application column, one row per member,
+// plus the parent response (rows are pre-merged with `_response` before this
+// runs — see downloadCsv's caller). Order matches the form so a mentor reading
+// the CSV reads it in question order.
 const COLUMNS = [
   ['Member',                  r => displayName(r.profiles)],
   ['Submitted',               r => fmtDateTime(r.submitted_at)],
@@ -62,6 +82,14 @@ const COLUMNS = [
   ['Discord username',        r => r.discord_username],
   ['Discord server confirmed', r => yn(r.discord_server_confirmed)],
   ['Conduct ack',             r => yn(r.conduct_acknowledged)],
+  ['Parent responded',        r => yn(!!r._response)],
+  ['Parent response date',    r => r._response ? fmtDateTime(r._response.updated_at ?? r._response.submitted_at) : ''],
+  ['Weekend supervision',     r => r._response ? (WEEKEND_LABEL[r._response.weekend_supervision] ?? '') : ''],
+  ['Meal support',            r => r._response ? (YNM_LABEL[r._response.meal_support] ?? '') : ''],
+  ['Can drive',               r => r._response ? (YNM_LABEL[r._response.travel_driving] ?? '') : ''],
+  ['Employer name',           r => r._response?.employer_name ?? ''],
+  ['Employer contact consent', r => (r._response ? yn(r._response.employer_contact_consent) : '')],
+  ['Can donate or lend',      r => r._response?.donation_offer ?? ''],
 ]
 
 function rowsToCsv(rows) {
@@ -91,15 +119,8 @@ function Row({ label, value }) {
   )
 }
 
-// The parent questionnaire (src/ParentResponse.jsx), read-only. Staff are the
-// only readers of parent_responses — not even the student sees their own
-// parent's answers. Absent is the normal case: it gates nothing.
-const WEEKEND_LABEL = {
-  saturdays: 'Saturdays', sundays: 'Sundays', either: 'Either day', neither: 'Neither',
-}
-const YNM_LABEL = { yes: 'Yes', no: 'No', maybe: 'Maybe' }
-
 function ParentResponseBlock({ response, onResend, resendState }) {
+  const badge = employerBadge(response)
   return (
     <>
       <h3 className="ap-section">
@@ -112,13 +133,15 @@ function ParentResponseBlock({ response, onResend, resendState }) {
           <Row label="Weekend supervision" value={WEEKEND_LABEL[response.weekend_supervision]} />
           <Row label="Meal support"  value={YNM_LABEL[response.meal_support]} />
           <Row label="Can drive"     value={YNM_LABEL[response.travel_driving]} />
-          <Row label="Employer"      value={response.employer_name} />
-          <Row
-            label="Employer contact"
-            value={response.employer_contact_consent
-              ? 'Consented to a sponsorship ask'
-              : 'No consent — do not contact'}
-          />
+          {response.employer_name && (
+            <div className="ap-row">
+              <span className="ap-row-label">Employer</span>
+              <span className="ap-row-value">
+                {response.employer_name}
+                {badge && <span className={`ap-badge ${badge.cls}`}>{badge.text}</span>}
+              </span>
+            </div>
+          )}
           <Row label="Can donate or lend" value={response.donation_offer} />
           <Row label="Answered" value={fmtDateTime(response.updated_at ?? response.submitted_at)} />
         </>
@@ -226,9 +249,12 @@ export default function ApplicationsPage({ hasRole = () => false }) {
   const [apps, setApps] = useState(null)
   const [responses, setResponses] = useState({})   // application_id -> parent response
   const [q, setQ] = useState('')
+  const [pendingOnly, setPendingOnly] = useState(false)   // filter: no parent_responses row yet
   const [open, setOpen] = useState(null)     // application id
   const [busy, setBusy] = useState(false)
-  const [resendState, setResendState] = useState('')  // '' | sending | sent | skipped | failed
+  // application id -> '' | sending | sent | skipped | failed. Shared by the
+  // per-row resend button and the modal's, since both resend the same id.
+  const [resendStates, setResendStates] = useState({})
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -271,13 +297,17 @@ export default function ApplicationsPage({ hasRole = () => false }) {
 
   const filtered = useMemo(() => {
     if (!apps) return null
+    let list = apps
     const needle = q.trim().toLowerCase()
-    if (!needle) return apps
-    return apps.filter(a =>
-      [displayName(a.profiles), a.legal_first_name, a.legal_last_name,
-       a.pathway, a.subteam_first, a.discord_username]
-        .some(v => (v ?? '').toLowerCase().includes(needle)))
-  }, [apps, q])
+    if (needle) {
+      list = list.filter(a =>
+        [displayName(a.profiles), a.legal_first_name, a.legal_last_name,
+         a.pathway, a.subteam_first, a.discord_username]
+          .some(v => (v ?? '').toLowerCase().includes(needle)))
+    }
+    if (pendingOnly) list = list.filter(a => !responses[a.id])
+    return list
+  }, [apps, q, pendingOnly, responses])
 
   // Top-choice counts: where recruiting is short, before the season starts.
   const topChoices = useMemo(() => {
@@ -286,6 +316,11 @@ export default function ApplicationsPage({ hasRole = () => false }) {
     for (const a of apps) counts.set(a.subteam_first, (counts.get(a.subteam_first) ?? 0) + 1)
     return [...counts.entries()].sort((a, b) => b[1] - a[1])
   }, [apps])
+
+  const pendingCount = useMemo(
+    () => (apps ?? []).filter(a => !responses[a.id]).length,
+    [apps, responses],
+  )
 
   async function confirmDiscord(id, confirmed) {
     setBusy(true)
@@ -300,13 +335,18 @@ export default function ApplicationsPage({ hasRole = () => false }) {
 
   // Staff resend. Same Edge Function the student's submit calls — it accepts a
   // staff caller for ANY application (is_staff() checked server-side), which is
-  // what covers a send that failed at submit time.
+  // what covers a send that failed at submit time. Called from both the
+  // per-row button and the modal's, keyed by application id so concurrent
+  // clicks on different rows don't share one disabled/confirming state.
   async function resendParent(id) {
-    setResendState('sending')
+    setResendStates(s => ({ ...s, [id]: 'sending' }))
     const { data, error: err } = await supabase.functions
       .invoke('send-parent-request', { body: { application_id: id } })
-    if (err) { setResendState('failed'); return }
-    setResendState(data?.skipped ? 'skipped' : 'sent')
+    const next = err ? 'failed' : (data?.skipped ? 'skipped' : 'sent')
+    setResendStates(s => ({ ...s, [id]: next }))
+    // Confirmation is transient — the control re-enables itself so a genuine
+    // second send (e.g. after fixing the parent email) doesn't need a reload.
+    setTimeout(() => setResendStates(s => ({ ...s, [id]: '' })), 4000)
   }
 
   if (!isStaff) {
@@ -341,12 +381,20 @@ export default function ApplicationsPage({ hasRole = () => false }) {
           value={q}
           onChange={e => setQ(e.target.value)}
         />
+        <label className="ap-filter-toggle">
+          <input
+            type="checkbox"
+            checked={pendingOnly}
+            onChange={e => setPendingOnly(e.target.checked)}
+          />
+          Pending parent response only{pendingCount ? ` (${pendingCount})` : ''}
+        </label>
         <button
           className="ap-export"
           type="button"
           disabled={!filtered?.length}
           onClick={() => downloadCsv(
-            rowsToCsv(filtered),
+            rowsToCsv(filtered.map(a => ({ ...a, _response: responses[a.id] ?? null }))),
             `applications-${(season?.name ?? 'season').replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.csv`,
           )}
         >
@@ -377,6 +425,10 @@ export default function ApplicationsPage({ hasRole = () => false }) {
               <span className="ap-stat-num">{apps.filter(a => !a.discord_server_confirmed).length}</span>
               <span className="ap-stat-label">not in Discord</span>
             </div>
+            <div className="ap-stat">
+              <span className="ap-stat-num">{pendingCount}</span>
+              <span className="ap-stat-label">parent response pending</span>
+            </div>
           </div>
 
           <div className="ap-topchoices">
@@ -398,26 +450,59 @@ export default function ApplicationsPage({ hasRole = () => false }) {
                   <th>Mon / Tue / Fri</th>
                   <th>Discord</th>
                   <th>Submitted</th>
+                  <th>Parent response</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(a => (
-                  <tr key={a.id} className="ap-tr" onClick={() => { setOpen(a.id); setResendState('') }}>
-                    <td className="ap-name">{displayName(a.profiles)}</td>
-                    <td>{a.pathway}</td>
-                    <td className="ap-num">{a.profiles?.grad_year ?? '—'}</td>
-                    <td>{a.returning_member ? `Yes${a.seasons_on_team ? ` (${a.seasons_on_team})` : ''}` : 'No'}</td>
-                    <td>{a.subteam_first}</td>
-                    <td className="ap-num">
-                      {[a.monday_lunch, a.tuesday_after_school, a.friday_after_school]
-                        .map(v => (v === 'Yes' ? 'Y' : v === 'No' ? 'N' : 'S')).join(' / ')}
-                    </td>
-                    <td className={a.discord_server_confirmed ? 'ap-ok' : 'ap-pending'}>
-                      {a.discord_server_confirmed ? 'in server' : a.discord_username}
-                    </td>
-                    <td className="ap-num">{fmtDateTime(a.submitted_at)}</td>
-                  </tr>
-                ))}
+                {filtered.map(a => {
+                  const resp = responses[a.id]
+                  const badge = employerBadge(resp)
+                  const rowResend = resendStates[a.id] ?? ''
+                  return (
+                    <tr key={a.id} className="ap-tr" onClick={() => { setOpen(a.id) }}>
+                      <td className="ap-name">{displayName(a.profiles)}</td>
+                      <td>{a.pathway}</td>
+                      <td className="ap-num">{a.profiles?.grad_year ?? '—'}</td>
+                      <td>{a.returning_member ? `Yes${a.seasons_on_team ? ` (${a.seasons_on_team})` : ''}` : 'No'}</td>
+                      <td>{a.subteam_first}</td>
+                      <td className="ap-num">
+                        {[a.monday_lunch, a.tuesday_after_school, a.friday_after_school]
+                          .map(v => (v === 'Yes' ? 'Y' : v === 'No' ? 'N' : 'S')).join(' / ')}
+                      </td>
+                      <td className={a.discord_server_confirmed ? 'ap-ok' : 'ap-pending'}>
+                        {a.discord_server_confirmed ? 'in server' : a.discord_username}
+                      </td>
+                      <td className="ap-num">{fmtDateTime(a.submitted_at)}</td>
+                      <td>
+                        <div className="ap-parent-cell">
+                          {resp ? (
+                            <>
+                              <span className="ap-ok">Responded {fmtDateTime(resp.updated_at ?? resp.submitted_at)}</span>
+                              {badge && <span className={`ap-badge ${badge.cls}`}>{badge.text}</span>}
+                            </>
+                          ) : (
+                            <>
+                              <span className="ap-pending">Pending</span>
+                              <button
+                                type="button"
+                                className="ap-row-resend"
+                                disabled={rowResend === 'sending'}
+                                title={rowResend === 'skipped' ? 'Email is not configured on this project — nothing was sent.' : undefined}
+                                onClick={e => { e.stopPropagation(); resendParent(a.id) }}
+                              >
+                                {rowResend === 'sending' ? 'Sending…'
+                                  : rowResend === 'sent' ? 'Sent'
+                                  : rowResend === 'skipped' ? 'Skipped'
+                                  : rowResend === 'failed' ? 'Failed — retry'
+                                  : 'Resend'}
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -433,7 +518,7 @@ export default function ApplicationsPage({ hasRole = () => false }) {
           onClose={() => setOpen(null)}
           onConfirmDiscord={confirmDiscord}
           response={responses[openApp.id] ?? null}
-          resendState={resendState}
+          resendState={resendStates[openApp.id] ?? ''}
           onResend={() => resendParent(openApp.id)}
         />
       )}
