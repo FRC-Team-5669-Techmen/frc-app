@@ -70,6 +70,7 @@ create table if not exists public.member_applications (
   transport_after_5pm       text    not null,
   seasonal_conflicts        text[]  not null default '{}',
   conflict_detail           text,
+  fll_volunteering_interest text,
   build_season_acknowledged boolean not null,
 
   -- Parent / guardian contact (the reason this table is not profiles).
@@ -146,13 +147,12 @@ begin
       );
   end if;
 
-  -- build_season_acknowledged has NO check constraint, deliberately: the
-  -- checkbox only renders (and is only required) when BUILD_SEASON_SCHEDULED
-  -- is true (src/MemberApplication.jsx). A CHECK forcing true broke every
-  -- submission while the schedule was a placeholder -- see
-  -- supabase/member_applications_drop_build_ack_chk.sql. The column is a
-  -- plain boolean recording whether the student actually saw and checked it;
-  -- "never shown the schedule" is honestly false, not something to coerce.
+  -- build_season_acknowledged has NO check constraint, deliberately: a CHECK
+  -- forcing true broke every submission while the schedule text was a
+  -- placeholder -- see supabase/member_applications_drop_build_ack_chk.sql.
+  -- The checkbox is unconditional in the UI now (one year-round schedule, no
+  -- placeholder to guard against), but enforcement stays there, not in a DB
+  -- constraint.
 
   if not exists (select 1 from pg_constraint where conname = 'member_applications_conduct_ack_chk' and conrelid = 'public.member_applications'::regclass) then
     alter table public.member_applications add constraint member_applications_conduct_ack_chk

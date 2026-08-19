@@ -69,6 +69,7 @@ const COLUMNS = [
   ['Transport after 5pm',     r => r.transport_after_5pm],
   ['Seasonal conflicts',      r => arr(r.seasonal_conflicts)],
   ['Conflict detail',         r => r.conflict_detail ?? ''],
+  ['FLL volunteering interest', r => r.fll_volunteering_interest ?? ''],
   ['Build season ack',        r => yn(r.build_season_acknowledged)],
   ['Parent name',             r => r.parent_name],
   ['Parent email',            r => r.parent_email],
@@ -204,6 +205,7 @@ function Detail({ app, onClose, onConfirmDiscord, busy, response, onResend, rese
           <Row label="Ride after 5pm"  value={app.transport_after_5pm} />
           <Row label="Conflicts"       value={app.seasonal_conflicts} />
           <Row label="Conflict detail" value={app.conflict_detail} />
+          <Row label="FLL volunteering interest" value={app.fll_volunteering_interest} />
           <Row label="Build season ack" value={yn(app.build_season_acknowledged)} />
 
           <h3 className="ap-section">Parent or guardian</h3>

@@ -56,6 +56,10 @@
   padding: 0.55rem 0.7rem;
 }
 
+.ma-note a {
+  color: var(--gold-bright);
+}
+
 /* ── Progress ── */
 .ma-progress {
   width: 100%;

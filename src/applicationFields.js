@@ -19,7 +19,7 @@ export const APPLICATION_SELECT = [
   'subteam_first', 'subteam_second', 'subteam_third', 'subteam_rationale',
   'monday_lunch', 'tuesday_after_school', 'friday_after_school',
   'transport_after_5pm', 'seasonal_conflicts', 'conflict_detail',
-  'build_season_acknowledged',
+  'build_season_acknowledged', 'fll_volunteering_interest',
   'parent_name', 'parent_email', 'parent_phone',
   'parent_two_name', 'parent_two_contact',
   'dietary_restrictions', 'emergency_contact_name', 'emergency_contact_phone',

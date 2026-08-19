@@ -5,27 +5,29 @@ import { APPLICATION_SELECT } from './applicationFields'
 import './MemberApplication.css'
 
 // ─── Schedule copy ────────────────────────────────────────────────────────────
-// The schedule the commitment section asks about. build_season_acknowledged
-// references this text, so it lives in ONE place and is rendered above the
+// The schedule the commitment section asks about. One year-round schedule —
+// this team does not split offseason from build season. Rendered above the
 // commitment questions.
-// TODO: the build-season line has not been supplied yet. Fill it in before the
-// build season starts — the acknowledgment is not honest without it.
 export const MEETING_SCHEDULE = [
   {
-    label: 'Offseason and preseason',
-    detail: 'Monday lunch meeting. Tuesday and Friday after school until 5:00pm.',
+    label: 'Monday',
+    detail: 'Lunch. Weekly team meeting, starting at the very start of lunch.',
   },
   {
-    label: 'Build season',
-    detail: 'TODO — not yet supplied.',
+    label: 'Tuesday and Friday',
+    detail: 'After school until 5:00pm or later. FRC days — organized training sessions, run like an after-school class. Minimum two hours per week across these days.',
+  },
+  {
+    label: 'Monday, Wednesday, Thursday',
+    detail: 'After school until 4:30pm. IDEA is open for FRC work. Not mandatory.',
+  },
+  {
+    label: 'FLL volunteering',
+    detail: 'Fridays 4:30 to 6:00pm and Saturdays 9:00 to 11:00am, weekly unless announced otherwise.',
   },
 ]
 
-// The build_season_acknowledged checkbox can't honestly ask for agreement to a
-// placeholder line. Detected from the constant above rather than a separate
-// flag, so filling in the real schedule restores the checkbox automatically.
-const buildSeasonLine = MEETING_SCHEDULE.find(s => s.label === 'Build season')
-export const BUILD_SEASON_SCHEDULED = !!buildSeasonLine && !buildSeasonLine.detail.startsWith('TODO')
+const DISCORD_INVITE = 'https://discord.gg/FcJ3BQAVnh'
 
 // ─── Option lists ─────────────────────────────────────────────────────────────
 
@@ -36,6 +38,7 @@ const PATHWAYS = ['CSEE', 'MSET', 'MAT', 'IDEA', 'ACE', 'BMET', 'Freshman - in r
 // (supabase/subteams_vocabulary.sql).
 
 const AVAILABILITY = ['Yes', 'No', 'Sometimes']
+const YES_NO_MAYBE = ['Yes', 'No', 'Maybe']
 const TRANSPORT    = ['Parent pickup', 'Own transport', 'Public transit', 'Needs help arranging']
 
 const PRIOR_ROBOTICS = ['FLL', 'FTC', 'VEX', 'FRC on this team', 'FRC on another team', 'None']
@@ -183,6 +186,7 @@ const BLANK = {
   // commitment
   monday_lunch: '', tuesday_after_school: '', friday_after_school: '',
   transport_after_5pm: '', seasonal_conflicts: [], conflict_detail: '',
+  fll_volunteering_interest: '',
   build_season_acknowledged: false,
   // parent contact
   parent_name: '', parent_email: '', parent_phone: '',
@@ -370,6 +374,7 @@ export default function MemberApplication({ session, season, onDone }) {
       transport_after_5pm:  form.transport_after_5pm,
       seasonal_conflicts:   form.seasonal_conflicts,
       conflict_detail:      form.conflict_detail.trim() || null,
+      fll_volunteering_interest: form.fll_volunteering_interest || null,
       build_season_acknowledged: form.build_season_acknowledged,
       parent_name:        form.parent_name.trim(),
       parent_email:       form.parent_email.trim(),
@@ -577,16 +582,18 @@ export default function MemberApplication({ session, season, onDone }) {
             rows={3}
             placeholder="e.g. wrestling practice Tue/Thu until 6, November through February"
           />
-          {BUILD_SEASON_SCHEDULED ? (
-            <CheckRow checked={form.build_season_acknowledged} onChange={check('build_season_acknowledged')}>
-              I have read the schedule above and I understand build season asks for
-              more time than the offseason does.
-            </CheckRow>
-          ) : (
-            <p className="ma-note">
-              The build season schedule will be published before the season starts.
-            </p>
-          )}
+          <SelectRow
+            label="Interested in FLL volunteering?"
+            value={form.fll_volunteering_interest}
+            onChange={field('fll_volunteering_interest')}
+            options={YES_NO_MAYBE}
+            optional
+          />
+          <CheckRow checked={form.build_season_acknowledged} onChange={check('build_season_acknowledged')}>
+            I have read the schedule above and I agree to the Monday lunch
+            meeting, the Tuesday and Friday commitment, and the two-hour weekly
+            minimum across those two days.
+          </CheckRow>
         </>
       )
 
@@ -630,6 +637,10 @@ export default function MemberApplication({ session, season, onDone }) {
 
       case 'discord': return (
         <>
+          <p className="ma-note">
+            Join our Discord server: <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer">{DISCORD_INVITE}</a>.
+            Once you're in, set your server nickname to your first and last name so mentors can find you.
+          </p>
           <TextRow
             label="Discord username"
             value={form.discord_username}
