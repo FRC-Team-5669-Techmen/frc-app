@@ -151,6 +151,7 @@ const RESERVED_BITS =
  * visible-but-unjoinable.
  */
 function cellOverwrite(cell, isVoice) {
+  if (cell === '~') return null; // no overwrite written for this role
   if (isVoice) {
     switch (cell) {
       case 'S':
@@ -174,7 +175,9 @@ function cellOverwrite(cell, isVoice) {
       };
     case 'V':
       return {
-        allow: P.ViewChannel | P.ReadMessageHistory,
+        // Reactions stay on so students can acknowledge an announcement
+        // without being able to reply to it (spec section 4 legend).
+        allow: P.ViewChannel | P.ReadMessageHistory | P.AddReactions,
         deny:
           P.SendMessages | P.SendMessagesInThreads |
           P.CreatePublicThreads | P.CreatePrivateThreads,
@@ -187,8 +190,10 @@ function cellOverwrite(cell, isVoice) {
 }
 
 // Restrictiveness order. Used to choose a category baseline and to break
-// ties toward the safer (fail-closed) side.
-const CELL_RANK = { '-': 0, V: 1, S: 2 };
+// ties toward the safer (fail-closed) side. '~' is not restrictive at all,
+// it is "no opinion", so it only wins a baseline by strict majority.
+const CELL_RANK = { '-': 0, V: 1, S: 2, '~': 3 };
+const CELL_TIEBREAK = ['-', 'V', 'S', '~'];
 
 const VERIFICATION_WORDS = {
   none: GuildVerificationLevel.None,
@@ -275,6 +280,14 @@ function parseRoles(lines) {
   const cName = col('role');
   const cColor = col('color');
   const cPerms = col('key permissions');
+  const cHoist = col('hoist');
+  const cMention = col('mentionable');
+  const yesNo = (v, what, role) => {
+    const t = stripMd(v).toLowerCase();
+    if (t === 'yes') return true;
+    if (t === 'no') return false;
+    throw new Error(`Role "${role}": ${what} must be Yes or No, got "${stripMd(v)}"`);
+  };
 
   const roles = table.rows
     .filter((r) => r[cName] && !/^-+$/.test(r[cName]))
@@ -314,10 +327,8 @@ function parseRoles(lines) {
         // Rank 1 is top of the spec's list. Discord positions run the other
         // way, so this is inverted when the payload is built.
         rank: idx + 1,
-        // hoist/mentionable are filled in by classifyRoles() once the
-        // channel matrix is parsed - the spec never states them directly.
-        mentionable: false,
-        hoist: false,
+        hoist: yesNo(r[cHoist], 'Hoist', name),
+        mentionable: yesNo(r[cMention], 'Mentionable', name),
       };
     });
 
@@ -344,9 +355,24 @@ function normalizeChannelName(label) {
     .replace(/^-+|-+$/g, '');
 }
 
+/** "ViewChannel, ReadMessageHistory" -> bitfield. Throws on an unknown name. */
+function permissionList(text) {
+  let bits = 0n;
+  for (const raw of stripMd(text).split(',')) {
+    const name = raw.trim();
+    if (!name) continue;
+    if (!(name in PermissionFlagsBits)) {
+      throw new Error(`Unknown Discord permission "${name}" in the gate overwrite table.`);
+    }
+    bits |= PermissionFlagsBits[name];
+  }
+  return bits;
+}
+
 function parseChannelMatrix(lines, roleNames) {
   const sec = section(lines, 'Channels and permission matrix');
   const categories = [];
+  const gate = new Map();
 
   for (let i = 0; i < sec.length; i++) {
     const m = /^###\s+(.+?)\s*$/.exec(sec[i]);
@@ -364,12 +390,37 @@ function parseChannelMatrix(lines, roleNames) {
       .join(' ')
       .trim();
 
-    if (!table) {
-      // ARCHIVE: no table, prose states the rule for every role.
-      if (/read-only for every role/i.test(prose)) {
-        const roleCols = roleNames.filter((n) => ROLE_IS_AUDIENCE.has(n));
-        categories.push({ name: catName, roleCols, channels: [], note: prose, proseCell: 'V' });
+    if (!table) continue;
+
+    // "| Channel | Allow | Deny |" is the @everyone gate table, not a category.
+    if (stripMd(table.header[1]) === 'Allow') {
+      for (const row of table.rows) {
+        const label = stripMd(row[0]);
+        if (!label) continue;
+        gate.set(normalizeChannelName(label), {
+          label,
+          allow: permissionList(row[1]),
+          deny: permissionList(row[2] ?? ''),
+        });
       }
+      continue;
+    }
+
+    // "| Category default | ... |" states a category's permissions directly,
+    // for a category that has no channels of its own yet (ARCHIVE).
+    if (stripMd(table.header[0]) === 'Category default') {
+      const roleCols = table.header.slice(1).map(stripMd);
+      const row = table.rows[0];
+      if (!row) throw new Error(`Category "${catName}": "Category default" table has no row`);
+      const catDefault = {};
+      roleCols.forEach((rn, k) => {
+        const cell = stripMd(row[k + 1]).toUpperCase();
+        if (!(cell in CELL_RANK)) {
+          throw new Error(`Category "${catName}" / role "${rn}": unreadable cell "${row[k + 1]}".`);
+        }
+        catDefault[rn] = cell;
+      });
+      categories.push({ name: catName, roleCols, channels: [], note: prose || null, catDefault });
       continue;
     }
 
@@ -401,12 +452,16 @@ function parseChannelMatrix(lines, roleNames) {
   }
 
   if (!categories.length) throw new Error('Spec section 4: no categories parsed');
-  return categories;
+  if (!gate.size) throw new Error('Spec section 4: the @everyone gate table is missing');
+  // Every gate channel must be a real channel somewhere in the matrix.
+  const known = new Set(categories.flatMap((c) => c.channels.map((ch) => ch.name)));
+  for (const name of gate.keys()) {
+    if (!known.has(name)) {
+      throw new Error(`Gate overwrite names #${name}, which is not a channel in section 4.`);
+    }
+  }
+  return { categories, gate };
 }
-
-// The four audiences the matrix columns are drawn from. Used only to give
-// the table-less ARCHIVE category a role set.
-const ROLE_IS_AUDIENCE = new Set(['Student', 'Parent', 'Alumni', 'Mentor']);
 
 /**
  * Section 3's mention rule:
@@ -484,6 +539,11 @@ function parseAutoModBullet(bullet) {
   const actionText = /action:\s*([^.]*)/i.exec(clean)?.[1] ?? '';
   const blockMessage = /block message/i.test(actionText);
   const alertChannel = /alert\s+#([a-z0-9-]+)/i.exec(actionText)?.[1] ?? null;
+  // "Exempt: Head Mentor, Mentor." - roles the rule does not apply to.
+  const exemptRoles = (/exempt:\s*([^.]+)\./i.exec(clean)?.[1] ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
 
   let trigger;
   let metadata;
@@ -525,7 +585,7 @@ function parseAutoModBullet(bullet) {
     throw new Error(`AutoMod bullet not recognised: "${head}". Extend parseAutoModBullet().`);
   }
 
-  return { name, trigger, metadata, blockMessage, alertChannel, source: clean };
+  return { name, trigger, metadata, blockMessage, alertChannel, exemptRoles, source: clean };
 }
 
 function parseOnboarding(lines) {
@@ -576,35 +636,14 @@ function parseOnboardingOption(text) {
   return { title: text.trim(), description: '' };
 }
 
-/**
- * The spec never states hoist or mentionable, so both are derived from what
- * it DOES state:
- *   hoist       - the role decides access (it is a column in the section 4
- *                 matrix) or it carries guild permissions. Those are the
- *                 roles worth separating in the member list.
- *   mentionable - everything else, i.e. the tag roles, which exist for
- *                 exactly this: "so a mentor can ping @Programming without
- *                 pinging sixty people" (section 3).
- * Both are listed in README.md as spec-silent judgement calls.
- */
-function classifyRoles(roles, categories) {
-  const matrixRoles = new Set(categories.flatMap((c) => c.roleCols));
-  for (const r of roles) {
-    const decidesAccess = matrixRoles.has(r.name) || r.permissions !== 0n;
-    r.hoist = decidesAccess;
-    r.mentionable = !decidesAccess;
-  }
-  return roles;
-}
-
 function parseSpec() {
   const lines = readSpecLines();
   const roles = parseRoles(lines);
   const roleNames = roles.map((r) => r.name);
   const mentionRule = parseMentionRule(lines);
-  const categories = parseChannelMatrix(lines, roleNames);
-  classifyRoles(roles, categories);
+  const { categories, gate } = parseChannelMatrix(lines, roleNames);
   return {
+    gate,
     serverName: parseServerName(lines),
     roles,
     roleNames,
@@ -627,18 +666,27 @@ function parseSpec() {
  * synced to the category; only the differences are written.
  */
 function categoryBaseline(cat) {
+  if (cat.catDefault) return { ...cat.catDefault };
   const baseline = {};
   for (const role of cat.roleCols) {
-    if (cat.proseCell) { baseline[role] = cat.proseCell; continue; }
-    const counts = { '-': 0, V: 0, S: 0 };
+    const counts = { '-': 0, V: 0, S: 0, '~': 0 };
     for (const ch of cat.channels) counts[ch.perms[role]]++;
-    let best = '-';
-    for (const cell of ['-', 'V', 'S']) {
+    let best = CELL_TIEBREAK[0];
+    for (const cell of CELL_TIEBREAK) {
       if (counts[cell] > counts[best]) best = cell; // strict > keeps the tie restrictive
     }
     baseline[role] = best;
   }
   return baseline;
+}
+
+const EVERYONE = '@everyone';
+
+function bitsEqual(a, b) {
+  const ka = Object.keys(a);
+  const kb = Object.keys(b);
+  if (ka.length !== kb.length) return false;
+  return ka.every((k) => b[k] && a[k].allow === b[k].allow && a[k].deny === b[k].deny);
 }
 
 /**
@@ -657,36 +705,65 @@ function sameOw(a, b) {
   return a.allow === b.allow && a.deny === b.deny;
 }
 
+/**
+ * Discord has NO runtime inheritance from a category to its channels. The
+ * client's "Synced" badge means the channel's overwrite array is identical
+ * to its parent's, and a channel created under a parent without an explicit
+ * array simply gets a copy at creation time - re-parenting an existing
+ * channel copies nothing.
+ *
+ * So every channel is written with its FULL effective overwrite list:
+ * the category baseline, with per-role replacements where the spec differs,
+ * plus any @everyone gate entry. A channel whose list comes out identical to
+ * its category is synced in exactly the sense Discord means.
+ */
 function buildDesired(spec) {
   const cats = [];
   for (const cat of spec.categories) {
     const baseline = categoryBaseline(cat);
+    const isVoiceCat = cat.channels.length > 0 && cat.channels.every((c) => c.isVoice);
 
-    // Category overwrites: baseline cell for each role, computed against a
-    // text channel (categories carry both text and voice bits; Discord
-    // stores whatever we send and children inherit the relevant ones).
     const catOw = {};
     for (const role of cat.roleCols) {
-      const anyVoice = cat.channels.length > 0 && cat.channels.every((c) => c.isVoice);
-      const ow = cellOverwrite(baseline[role], anyVoice);
-      catOw[role] = { allow: ow.allow, deny: ow.deny };
+      const ow = cellOverwrite(baseline[role], isVoiceCat);
+      if (ow) catOw[role] = { allow: ow.allow, deny: ow.deny };
     }
 
     const channels = cat.channels.map((ch) => {
-      const own = {};
+      const merged = {};
+      const differs = {};
       for (const role of cat.roleCols) {
         const base = cellOverwrite(ch.perms[role], ch.isVoice);
         const extra = channelExtras(spec, ch.name, role);
+        if (!base && !extra) continue; // '~' - no overwrite for this role
         const desired = {
-          allow: base.allow | (extra?.allow ?? 0n),
-          deny: base.deny & ~(extra?.allow ?? 0n),
+          allow: (base?.allow ?? 0n) | (extra?.allow ?? 0n),
+          deny: (base?.deny ?? 0n) & ~(extra?.allow ?? 0n),
         };
-        // Emit only where the channel differs from what it would inherit.
-        if (!sameOw(desired, catOw[role])) {
-          own[role] = { ...desired, cell: ch.perms[role], extra: extra?.why ?? null };
+        merged[role] = desired;
+        if (!catOw[role] || !sameOw(desired, catOw[role])) {
+          differs[role] = { ...desired, cell: ch.perms[role], extra: extra?.why ?? null };
         }
       }
-      return { ...ch, overwrites: own, synced: Object.keys(own).length === 0 };
+      // The @everyone gate: the only overwrites that reference @everyone.
+      const g = spec.gate.get(ch.name);
+      if (g) {
+        merged[EVERYONE] = { allow: g.allow, deny: g.deny };
+        differs[EVERYONE] = {
+          allow: g.allow, deny: g.deny, cell: 'gate',
+          extra: 'section 4 gate overwrite',
+        };
+      }
+      // A role dropped by the channel that the category grants is a diff too.
+      for (const role of Object.keys(catOw)) {
+        if (!(role in merged)) differs[role] = { removed: true, cell: ch.perms[role] };
+      }
+      return {
+        ...ch,
+        overwrites: merged,
+        differs,
+        synced: bitsEqual(merged, catOw),
+      };
     });
 
     cats.push({ ...cat, baseline, catOverwrites: catOw, channels });
@@ -760,7 +837,7 @@ const RESULT = {
 let currentPhase = null;
 
 function phase(n, title) {
-  currentPhase = { n, title, create: 0, update: 0, skip: 0, lines: [], unmanaged: [] };
+  currentPhase = { n, title, create: 0, update: 0, skip: 0, delete: 0, lines: [], unmanaged: [] };
   RESULT.phases.push(currentPhase);
   out('');
   out(`${'='.repeat(72)}`);
@@ -771,7 +848,7 @@ function phase(n, title) {
 
 function act(kind, label, detail) {
   currentPhase[kind]++;
-  const tag = { create: 'CREATE', update: 'UPDATE', skip: 'SKIP  ' }[kind];
+  const tag = { create: 'CREATE', update: 'UPDATE', skip: 'SKIP  ', delete: 'DELETE' }[kind];
   if (kind === 'skip' && !FLAGS.verbose) return;
   out(`  ${tag}  ${label}${detail ? `\n           ${detail.replace(/\n/g, '\n           ')}` : ''}`);
 }
@@ -1013,8 +1090,7 @@ function channelDiff(existing, want) {
 function describeChannelPlan(ch, parentId, overwrites) {
   const bits = [`type ${ch.isVoice ? 'voice' : 'text'}`];
   if (parentId) bits.push(`parent ${parentId}`);
-  if (overwrites) bits.push(`${overwrites.length} overwrite(s)`);
-  else bits.push('synced to category');
+  bits.push(`${overwrites?.length ?? 0} overwrite(s)${ch.synced ? ', synced to category' : ''}`);
   return bits.join(', ');
 }
 
@@ -1072,11 +1148,47 @@ async function phase3Community(spec, state, guildId, comm) {
   Object.assign(g, patch);
 }
 
+/**
+ * A bot cannot create or move a role at or above its OWN highest role.
+ * The spec wants N roles occupying positions 1..N, so the bot's managed role
+ * has to sit at N+1 or higher. Checked up front: without it the run creates
+ * every role and only then fails on the position PATCH with a bare
+ * "Missing Permissions", leaving the guild half-built.
+ */
+async function assertBotOutranksSpec(spec, state, guildId) {
+  if (FLAGS.offline) return;
+  const me = await call(() => rest.get(Routes.user('@me')), 'GET /users/@me');
+  const mine = state.roles.filter((r) => r.managed && r.tags?.bot_id === me.id);
+  if (!mine.length) {
+    throw new Error(
+      `Could not find this bot's own managed role in the guild. It must be a ` +
+      'member of the guild before it can provision it.',
+    );
+  }
+  const top = Math.max(...mine.map((r) => r.position));
+  const need = spec.roles.length + 1;
+  if (top >= need) return;
+  const nl = '\n';
+  throw new Error(
+    `The bot's own role ("${mine[0].name}") is at position ${top}, but the spec ` +
+    `places ${spec.roles.length} roles at positions 1-${spec.roles.length}, so ` +
+    `the bot needs position ${need} or higher.` + nl + nl +
+    '  Discord does not let a bot create or move a role at or above its own ' +
+    'highest role, and a bot cannot raise itself. Fix it by hand, then re-run:' + nl + nl +
+    `    Server Settings > Roles > drag "${mine[0].name}" to the TOP of the list.` + nl + nl +
+    '  Stopping before anything is written.',
+  );
+}
+
 async function phase4Roles(spec, state, guildId) {
   phase(4, 'Roles');
+  await assertBotOutranksSpec(spec, state, guildId);
   const byName = new Map(
     state.roles.filter((r) => r.id !== guildId).map((r) => [r.name, r]),
   );
+  // @everyone is a real role whose id is the guild id. The gate overwrites
+  // in section 4 reference it, so it must be resolvable like any other.
+  ids.roles.set('@everyone', guildId);
   // Snapshot before any creates: a role that does not exist yet cannot
   // already be in the right position, so the ordering check must not read
   // freshly planned roles as evidence that the order is fine.
@@ -1241,6 +1353,7 @@ async function phase5Everyone(spec, state, guildId) {
 function overwritePayload(map) {
   return Object.entries(map)
     .map(([roleName, ow]) => {
+      // @everyone's role id is the guild id.
       const id = ids.roles.get(roleName);
       return {
         id,
@@ -1324,14 +1437,19 @@ async function phase7Channels(desired, state, guildId) {
     for (const ch of cat.channels) {
       const owFull = overwritePayload(ch.overwrites);
       const ow = owFull.map(({ _role, ...rest }) => rest);
-      await ensureChannel(guildId, ch, parentId, ch.synced ? null : ow, state);
-      if (ch.synced) continue;
+      await ensureChannel(guildId, ch, parentId, ow, state);
+      const diffRoles = Object.keys(ch.differs);
+      if (!diffRoles.length) continue;
       out('           differs from category:');
-      for (const o of owFull) {
-        const src = ch.overwrites[o._role];
+      for (const role of diffRoles) {
+        const src = ch.differs[role];
+        if (src.removed) {
+          out(`             ${role.padEnd(14)} ~   (category baseline ${cat.baseline[role]}, no overwrite here)`);
+          continue;
+        }
         out(
-          `             ${o._role.padEnd(14)} ${src.cell}` +
-          `  (category baseline ${cat.baseline[o._role]})` +
+          `             ${role.padEnd(14)} ${src.cell}` +
+          `  (category baseline ${cat.baseline[role] ?? 'none'})` +
           (src.extra ? `  + ${src.extra}` : ''),
         );
       }
@@ -1373,29 +1491,48 @@ async function phase8AutoMod(spec, state, guildId, comm) {
   phase(8, 'AutoMod');
   const modLogId = ids.channels.get(comm.modLog.name);
 
+  // The one authorised exception to never-delete, scoped to AutoMod rules
+  // only. Discord allows a single rule per guild for these trigger types, so
+  // a differently-named squatter cannot be patched or worked around - it
+  // blocks the spec's rule outright. Roles, channels and categories are still
+  // never deleted.
   for (const rule of spec.safety.rules) {
     if (!SINGLETON_TRIGGERS.has(rule.trigger)) continue;
     if (state.automod.some((r) => r.name === rule.name)) continue;
     const clash = state.automod.find((r) => r.trigger_type === rule.trigger);
     if (!clash) continue;
-    warn(
-      `"${clash.name}" already occupies the only ` +
-      `${AutoModerationRuleTriggerType[rule.trigger]} slot Discord allows. ` +
-      `Creating "${rule.name}" WILL fail with 400. Rename the existing rule to ` +
-      `"${rule.name}" so this run patches it, or delete it by hand first ` +
-      '(this script never deletes).',
+    act(
+      'delete',
+      `automod rule "${clash.name}" (${clash.id})`,
+      `occupies the only ${AutoModerationRuleTriggerType[rule.trigger]} slot ` +
+      `Discord allows, and the spec's rule is named "${rule.name}". Deleting so ` +
+      'the spec version can be created. Authorised AutoMod-only exception to ' +
+      'never-delete.',
     );
+    if (FLAGS.apply) {
+      await call(
+        () => rest.delete(Routes.guildAutoModerationRule(guildId, clash.id)),
+        `DELETE automod ${clash.name}`,
+      );
+      RESULT.created.push(`automod rule "${clash.name}" DELETED (single-slot conflict)`);
+    }
+    state.automod.splice(state.automod.indexOf(clash), 1);
   }
   for (const rule of spec.safety.rules) {
     const existing = state.automod.find((r) => r.name === rule.name);
     const actions = automodActions(rule, modLogId);
+    const exemptRoleIds = rule.exemptRoles.map((n) => {
+      const id = ids.roles.get(n);
+      if (!id) throw new Error(`AutoMod rule "${rule.name}" exempts "${n}", which is not a role.`);
+      return id;
+    });
     const body = {
       name: rule.name,
       event_type: AutoModerationRuleEventType.MessageSend,
       trigger_type: rule.trigger,
       actions,
       enabled: true,
-      exempt_roles: [],
+      exempt_roles: exemptRoleIds,
       exempt_channels: [],
     };
     if (Object.keys(rule.metadata).length) body.trigger_metadata = rule.metadata;
@@ -1407,6 +1544,8 @@ async function phase8AutoMod(spec, state, guildId, comm) {
       (rule.metadata.presets ? `  presets ${JSON.stringify(rule.metadata.presets)}` : '') +
       `\nactions: ${actions.map((a) => AutoModerationActionType[a.type]).join(' + ')}` +
       (rule.alertChannel ? ` -> #${rule.alertChannel} (${modLogId})` : '') +
+      (rule.exemptRoles.length
+        ? `\nexempt_roles: ${rule.exemptRoles.map((r) => `@${r}`).join(', ')}` : '') +
       `\nspec: ${rule.source}`;
 
     if (!existing) {
@@ -1429,6 +1568,8 @@ async function phase8AutoMod(spec, state, guildId, comm) {
     if (!existing.enabled) diffs.push('enabled false -> true');
     if (JSON.stringify(normalizeAutomodActions(existing.actions)) !==
         JSON.stringify(normalizeAutomodActions(actions))) diffs.push('actions differ');
+    if (JSON.stringify([...(existing.exempt_roles ?? [])].sort()) !==
+        JSON.stringify([...exemptRoleIds].sort())) diffs.push('exempt_roles differ');
     if (body.trigger_metadata &&
         JSON.stringify(normalizeMeta(existing.trigger_metadata)) !==
         JSON.stringify(normalizeMeta(body.trigger_metadata))) diffs.push('trigger_metadata differs');
@@ -1470,11 +1611,12 @@ function normalizeMeta(meta = {}) {
 async function phase9Onboarding(spec, desired, state, guildId) {
   phase(9, 'Onboarding');
 
-  // Default channels = the first category's channels. Everything else is
-  // gated behind a hand-assigned access role, so nothing else can be a
-  // sensible default.
-  const firstCat = desired.find((c) => c.channels.length);
-  const defaultChannelIds = firstCat.channels.map((ch) => ids.channels.get(ch.name)).filter(Boolean);
+  // Default channels are exactly the @everyone gate channels from section 4.
+  // Nothing else can be one: nothing else is visible before a mentor assigns
+  // a role, and Discord validates onboarding defaults against what @everyone
+  // can actually see.
+  const gateNames = [...spec.gate.keys()];
+  const defaultChannelIds = gateNames.map((n) => ids.channels.get(n)).filter(Boolean);
 
   const existingByTitle = new Map((state.onboarding.prompts ?? []).map((p) => [p.title, p]));
   let synthId = 0;
@@ -1524,7 +1666,7 @@ async function phase9Onboarding(spec, desired, state, guildId) {
       out(`      - ${o.title.padEnd(30)} -> ${o._roleName ? `@${o._roleName} (${o.role_ids[0]})` : 'no role'}`);
     }
   }
-  out(`  default_channel_ids: ${firstCat.channels.map((c) => `#${c.name}`).join(', ')}`);
+  out(`  default_channel_ids: ${gateNames.map((n) => `#${n}`).join(', ')}`);
   out('');
 
   const body = {
@@ -1579,16 +1721,22 @@ function printSummary(spec, comm) {
   out('='.repeat(72));
   out('PLAN SUMMARY');
   out('='.repeat(72));
-  const w = 58;
-  out(`  ${'PHASE'.padEnd(w)} ${'CREATE'.padStart(6)} ${'UPDATE'.padStart(6)} ${'SKIP'.padStart(5)}`);
-  out(`  ${'-'.repeat(w)} ${'-'.repeat(6)} ${'-'.repeat(6)} ${'-'.repeat(5)}`);
-  let c = 0; let u = 0; let s = 0;
+  const w = 50;
+  const rule = `  ${'-'.repeat(w)} ${'-'.repeat(6)} ${'-'.repeat(6)} ${'-'.repeat(6)} ${'-'.repeat(5)}`;
+  out(`  ${'PHASE'.padEnd(w)} ${'CREATE'.padStart(6)} ${'UPDATE'.padStart(6)} ${'DELETE'.padStart(6)} ${'SKIP'.padStart(5)}`);
+  out(rule);
+  let c = 0; let u = 0; let d = 0; let s = 0;
   for (const p of RESULT.phases) {
-    out(`  ${`${p.n}. ${p.title}`.slice(0, w).padEnd(w)} ${String(p.create).padStart(6)} ${String(p.update).padStart(6)} ${String(p.skip).padStart(5)}`);
-    c += p.create; u += p.update; s += p.skip;
+    out(`  ${`${p.n}. ${p.title}`.slice(0, w).padEnd(w)} ${String(p.create).padStart(6)} ${String(p.update).padStart(6)} ${String(p.delete).padStart(6)} ${String(p.skip).padStart(5)}`);
+    c += p.create; u += p.update; d += p.delete; s += p.skip;
   }
-  out(`  ${'-'.repeat(w)} ${'-'.repeat(6)} ${'-'.repeat(6)} ${'-'.repeat(5)}`);
-  out(`  ${'TOTAL'.padEnd(w)} ${String(c).padStart(6)} ${String(u).padStart(6)} ${String(s).padStart(5)}`);
+  out(rule);
+  out(`  ${'TOTAL'.padEnd(w)} ${String(c).padStart(6)} ${String(u).padStart(6)} ${String(d).padStart(6)} ${String(s).padStart(5)}`);
+  if (d) {
+    out('');
+    out(`  ${d} deletion(s) above are the authorised AutoMod single-slot exception.`);
+    out('  Roles, channels and categories are never deleted.');
+  }
   out('');
   if (rateLimitHits) out(`  rate limits honoured: ${rateLimitHits}`);
 
@@ -1620,22 +1768,19 @@ function printSummary(spec, comm) {
     'Role assignment to actual people, including confirming two adults hold ' +
       'Mentor before any student joins (spec 2 steps 9-10).',
     'Retiring the old server (spec 10) - it is a different guild.',
-    'Verify the bot\'s own managed role sits ABOVE @Head Mentor in the role ' +
-      'list, or the position PATCH in phase 4 silently clamps.',
+    'Drag the bot\'s own managed role to the TOP of the role list. Phase 4 ' +
+      'refuses to start until it outranks every role in the spec, because ' +
+      'Discord will not let a bot create or move a role at or above its own ' +
+      'highest role - and a bot cannot raise itself.',
   ];
   for (const m of manual) out(`  - ${m}`);
 
   out('');
   out('WATCH - most likely failure points on a first --apply');
-  out('  - Phase 9. Discord validates onboarding against a minimum number of ' +
-      'default channels @everyone can see and post in. Spec 2 step 4 denies ' +
-      '@everyone View Channels guild-wide, so that check can fail. If phase 9 ' +
-      '400s, this is why; configure the two questions by hand in Server ' +
-      'Settings > Community > Onboarding, or relax the @everyone denial on ' +
-      '#welcome and #verify (see the ambiguity note in README.md).');
   out('  - Phase 9. The "Not sure yet?" option maps to no role and no channel ' +
       'by design (spec 7: "Assigns no role"). Discord may reject an option ' +
-      'with neither. If it does, drop that question - it carries no access.');
+      'with neither. If it does, the question carries no access and can be ' +
+      'dropped from the spec.');
   out('  - Phase 4. The bot cannot grant a permission it does not itself hold, ' +
       'so @Head Mentor (Administrator) requires an Administrator bot.');
   out('');

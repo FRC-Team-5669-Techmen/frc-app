@@ -22,10 +22,10 @@ Everything needed to build the server once and not reorganize it in week three. 
 
 Do these in order. Roles before channels is not optional, because channel permissions reference roles that must already exist.
 
-1. Create the server. Name it `FRC 5669 Techmen`. Upload the team logo as the icon.
+1. Create the server. Name it `Bosco Tech Robotics`. Upload the team logo as the icon. The name is not changing; it is recorded here so provisioning can assert it rather than rename it.
 2. Server Settings > Enable Community. This unlocks rules screening, onboarding, and the safety tooling below.
 3. Build every role in section 3, in the listed order, top to bottom.
-4. Server Settings > Roles > `@everyone` > turn **View Channels OFF**. This is the single most important click in the build. A member with no role now sees nothing.
+4. Server Settings > Roles > `@everyone` > turn **View Channels OFF**. This is the single most important click in the build. A member with no role now sees nothing except the two gate channels in section 4, which carry explicit `@everyone` overwrites so a new arrival can read #welcome and post their line in #verify. Nothing else is reachable without a role.
 5. Create the categories in section 4, set permissions at the **category** level, then create channels inside them with permissions synced to the category.
 6. Configure Safety Setup per section 5.
 7. Enter the rules screening and onboarding text from sections 6 and 7.
@@ -41,34 +41,66 @@ Do these in order. Roles before channels is not optional, because channel permis
 
 Create in this order. Discord ranks roles by list position and higher roles win, so the order is the hierarchy.
 
-| # | Role | Color | Who | Key permissions |
-|---|---|---|---|---|
-| 1 | Head Mentor | Gold | Mr. Pina (owner) | Administrator |
-| 2 | Mentor | Red | Garza, Kennedy, Pedroza | Manage Messages, Moderate Members (timeout), Kick, Manage Nicknames, Create Invite |
-| 3 | Student Lead | Blue | Subteam leads | Manage Messages, Manage Threads, Pin Messages |
-| 4 | Drive Team | Orange | Named at selection | None, access tag only |
-| 5 | Mechanical | Gray | Self-assign | None, tag only |
-| 6 | Electrical | Gray | Self-assign | None, tag only |
-| 7 | Programming | Gray | Self-assign | None, tag only |
-| 8 | CAD | Gray | Self-assign | None, tag only |
-| 9 | Business/Media | Gray | Self-assign | None, tag only |
-| 10 | Scouting | Gray | Self-assign | None, tag only |
-| 11 | Student | Green | Verified students | Base access |
-| 12 | Alumni | Purple | Graduates | Limited access |
-| 13 | Parent | Teal | Verified parents | Logistics only |
-| 14 | Bot | Default | Integrations only | Scoped per bot |
+| # | Role | Color | Hoist | Mentionable | Who | Key permissions |
+|---|---|---|---|---|---|---|
+| 1 | Head Mentor | Gold | Yes | No | Mr. Pina (owner) | Administrator |
+| 2 | Mentor | Red | Yes | No | Garza, Kennedy, Pedroza | Manage Messages, Moderate Members (timeout), Kick, Manage Nicknames, Create Invite |
+| 3 | Student Lead | Blue | Yes | No | Subteam leads | Manage Messages, Manage Threads, Pin Messages |
+| 4 | Drive Team | Orange | No | Yes | Named at selection | None, access tag only |
+| 5 | Mechanical | Gray | No | Yes | Self-assign | None, tag only |
+| 6 | Electrical | Gray | No | Yes | Self-assign | None, tag only |
+| 7 | Programming | Gray | No | Yes | Self-assign | None, tag only |
+| 8 | CAD | Gray | No | Yes | Self-assign | None, tag only |
+| 9 | Business/Media | Gray | No | Yes | Self-assign | None, tag only |
+| 10 | Scouting | Gray | No | Yes | Self-assign | None, tag only |
+| 11 | Student | Green | Yes | No | Verified students | Base access |
+| 12 | Alumni | Purple | Yes | No | Graduates | Limited access |
+| 13 | Parent | Teal | Yes | No | Verified parents | Logistics only |
+| 14 | Bot | Default | No | No | Integrations only | Scoped per bot |
+
+**Hoist** separates the role in the member list. It is on for the roles that decide access or carry moderation power, off for tags.
+
+**Mentionable** is on for Drive Team and the six subteam tags only. `@Student` is deliberately NOT mentionable: pinging sixty people is a weapon in the wrong hands. Mentors who need to reach the whole server use the Mention `@everyone` grant scoped to #announcements.
 
 Permissions nobody but Head Mentor gets: Administrator, Manage Server, Manage Roles, Manage Channels, Ban Members, Manage Webhooks.
 
 Permissions nobody gets at all: Mention `@everyone` outside #announcements. Turn this off for `@everyone` at the server level and grant it only to Mentor in that one channel.
 
-**Subteam tags carry no permissions.** They exist so a mentor can ping `@Programming` without pinging sixty people. Access is decided entirely by Student, Parent, Alumni, and Mentor.
+**Subteam tags carry no permissions.** They exist so a mentor can ping `@Programming` without pinging sixty people. Access is decided by Student, Parent, Alumni, and Mentor, plus Drive Team for the one channel it gates.
+
+**Student Lead is additive and never held alone.** It grants moderation, not access. Every lead also holds `@Student` and reaches channels through that. It therefore has no column in section 4.
+
+**Head Mentor needs no overwrites anywhere** - Administrator bypasses every channel permission. **Bot** has no column either; an integration is scoped per bot by hand when it is added.
 
 ---
 
 ## 4. Channels and permission matrix
 
-`V` = can view and read. `S` = can view and send. `-` = cannot see it exists.
+`V` = can view and read. `S` = can view and send. `-` = cannot see it exists. `~` = no overwrite at all; that role's access comes from elsewhere.
+
+These resolve to exact permission bits. Text and voice differ.
+
+| Cell | Text channel | Voice channel |
+|---|---|---|
+| `S` | allow ViewChannel, ReadMessageHistory, SendMessages, SendMessagesInThreads, CreatePublicThreads, AddReactions, AttachFiles, EmbedLinks, UseExternalEmojis, UseApplicationCommands | allow ViewChannel, Connect, Speak, Stream, UseVAD |
+| `V` | allow ViewChannel, ReadMessageHistory, AddReactions; deny SendMessages, SendMessagesInThreads, CreatePublicThreads, CreatePrivateThreads | allow ViewChannel; deny Connect |
+| `-` | deny ViewChannel | deny ViewChannel |
+| `~` | no overwrite written for this role | no overwrite written for this role |
+
+Reactions stay on for `V` so students can acknowledge an announcement without being able to reply to it.
+
+Channels carry the category's permissions plus their own differences. A channel whose result matches its category is written with the identical overwrite list, which is what Discord means by synced.
+
+### GATE OVERWRITES (@everyone)
+
+`@everyone` is denied View Channels at the guild level (section 2 step 4). These two channels are the only exceptions, and they grant less than a full `S` on purpose - a person with no role can read the welcome and post one line to be verified, and can do nothing else anywhere.
+
+| Channel | Allow | Deny |
+|---|---|---|
+| #welcome | ViewChannel, ReadMessageHistory | SendMessages |
+| #verify | ViewChannel, ReadMessageHistory, SendMessages | |
+
+These two are also the onboarding default channels in section 7. Nothing else can be, because nothing else is visible before a mentor assigns a role.
 
 ### START HERE
 
@@ -109,12 +141,14 @@ Permissions nobody gets at all: Mention `@everyone` outside #announcements. Turn
 
 ### COMPETITION
 
-| Channel | Student | Parent | Alumni | Mentor |
-|---|---|---|---|---|
-| #strategy | S | - | V | S |
-| #scouting | S | - | V | S |
-| #drive-team | S | - | - | S |
-| #event-logistics | S | V | - | S |
+| Channel | Student | Parent | Alumni | Mentor | Drive Team |
+|---|---|---|---|---|---|
+| #strategy | S | - | V | S | ~ |
+| #scouting | S | - | V | S | ~ |
+| #drive-team | - | - | - | S | S |
+| #event-logistics | S | V | - | S | ~ |
+
+#drive-team is the one channel a tag gates. Students are denied and Drive Team is allowed; a student holding both roles gets in, because Discord resolves role overwrites with allow winning over deny. Everywhere else Drive Team is `~` so it never fights with the Student row.
 
 ### VOICE
 
@@ -126,6 +160,8 @@ Permissions nobody gets at all: Mention `@everyone` outside #announcements. Turn
 | Meeting Room | V | - | - | S |
 
 Meeting Room is view-only for students so a mentor has one room that cannot be joined uninvited. Move students in manually.
+
+#announcements is a **normal text channel**, not a Discord Announcement channel. Nobody outside the team should be able to follow it, and the mentors-post-only rule is enforced by the permission matrix.
 
 ### PARENTS
 
@@ -144,7 +180,11 @@ Meeting Room is view-only for students so a mentor has one room that cannot be j
 
 ### ARCHIVE
 
-Last season's channels, moved here at season rollover and set read-only for every role.
+Last season's channels, moved here at season rollover. Read-only for everyone except mentors, who can still post corrections and notes against old material.
+
+| Category default | Student | Parent | Alumni | Mentor |
+|---|---|---|---|---|
+| ARCHIVE | V | V | V | S |
 
 ---
 
@@ -160,7 +200,7 @@ Server Settings > Safety Setup.
   - Block commonly flagged words. Action: block message, alert #mod-log.
   - Block spam content. Action: block message.
   - Block mention spam, threshold 5. Action: block message, alert #mod-log.
-  - Custom keyword rule blocking `discord.gg` and `discord.com/invite`. Action: block message, alert #mod-log. This stops members from advertising other servers and stops an invite to this server from leaking through a screenshot chain.
+  - Custom keyword rule blocking `discord.gg` and `discord.com/invite`. Action: block message, alert #mod-log. Exempt: Head Mentor, Mentor. This stops members from advertising other servers and stops an invite to this server from leaking through a screenshot chain. Mentors are exempt because they post the archive-server pointer link legitimately.
 - **No NSFW channels, ever.** Discord's teen-by-default settings block age-restricted channels for under-18 accounts with no server-level override, so marking a channel mature just breaks it for most of the team.
 - **Invites:** Create Invite permission granted to Mentor only. Every invite is set to expire in 7 days with a finite max-use count. No permanent link exists anywhere.
 
