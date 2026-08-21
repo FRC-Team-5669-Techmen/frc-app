@@ -10,7 +10,8 @@
     "gen-icons": "node scripts/gen-icons.js",
     "discord:plan": "node --env-file-if-exists=.env.local scripts/discord/provision.js",
     "discord:apply": "node --env-file-if-exists=.env.local scripts/discord/provision.js --apply",
-    "discord:offline": "node scripts/discord/provision.js --offline"
+    "discord:offline": "node scripts/discord/provision.js --offline",
+    "discord:calendar:test": "node scripts/discord/calendar-sync.test.mjs"
   },
   "dependencies": {
     "@fontsource/chakra-petch": "^5.2.7",

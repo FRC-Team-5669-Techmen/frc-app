@@ -199,7 +199,7 @@ Server Settings > Safety Setup.
 - **AutoMod rules to enable:**
   - Block commonly flagged words. Action: block message, alert #mod-log.
   - Block spam content. Action: block message.
-  - Block mention spam, threshold 5. Action: block message, alert #mod-log.
+  - Block Mention Spam, threshold 5. Action: block message, alert #mod-log.
   - Custom keyword rule blocking `discord.gg` and `discord.com/invite`. Action: block message, alert #mod-log. Exempt: Head Mentor, Mentor. This stops members from advertising other servers and stops an invite to this server from leaking through a screenshot chain. Mentors are exempt because they post the archive-server pointer link legitimately.
 - **No NSFW channels, ever.** Discord's teen-by-default settings block age-restricted channels for under-18 accounts with no server-level override, so marking a channel mature just breaks it for most of the team.
 - **Invites:** Create Invite permission granted to Mentor only. Every invite is set to expire in 7 days with a finite max-use count. No permanent link exists anywhere.
@@ -394,7 +394,7 @@ Run this once, every August.
 
 - **Administrator sign-off.** A school-sanctioned platform hosting minors needs approval before the first student invite goes out. The two-adult moderator rule, the no-DM policy, the real-name requirement, and #mod-log are the four things that make that conversation short. Confirm with Brendan Chua or the Assistant Principal.
 - **Moderation bot.** None at launch. Discord's AutoMod covers spam, slurs, and invite links without one, and a bot is another system to maintain. Revisit only if manual verification in #verify becomes a bottleneck.
-- **App integration.** A Discord webhook could post team app calendar changes into #calendar automatically. Worth building after the server is stable, not during setup.
+- **App integration.** BUILT. An hourly Vercel cron (`api/discord-calendar.js`, see `api/README.md`) posts `public.events` into #calendar as embeds and reminds #announcements 24h and 2h ahead, pinging the subteam role when an event names one. It resolves channels and roles by name from this spec's vocabulary, edits rather than reposts when an event changes, and marks a deleted event cancelled instead of removing the message. It ships **report-only**; `DISCORD_CALENDAR_MODE=live` turns posting on. The bot needs View Channel / Send Messages / Embed Links in #calendar and #announcements.
 
 ---
 
