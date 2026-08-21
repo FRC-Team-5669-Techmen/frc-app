@@ -1,10 +1,12 @@
 -- ============================================================
 -- Discord calendar posting — tracking + audit tables
--- Run once in the Supabase SQL editor BEFORE the Vercel cron is switched
--- out of report-only mode. The cron reads/writes these with the SERVICE
--- ROLE; no client ever writes them.
+-- Run once in the Supabase SQL editor. Creates the tracking + audit tables AND
+-- schedules the hourly pg_cron job that drives the discord-calendar Edge
+-- Function (section 4). The function reads/writes these with the SERVICE ROLE;
+-- no client ever writes them.
 --
--- See api/README.md for the function, env vars, and cron schedule.
+-- See supabase/functions/discord-calendar/README.md for secrets, deploy, and
+-- how to leave report-only mode.
 -- ============================================================
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -34,7 +36,8 @@ create table if not exists public.discord_calendar_posts (
   content_hash   text not null,                     -- of the rendered payload
   event_snapshot jsonb not null,                    -- last known event row
   -- pending  = row reserved (the unique constraint claimed) but the Discord
-  --            write has not confirmed yet. See api/_lib/calendarSync.js:
+  --            write has not confirmed yet. See the Edge Function's
+  --            lib/calendarSync.js:
   --            the reservation is taken BEFORE the API call so the database,
   --            not application logic, is what prevents a double post.
   -- posted    = message live, message_id set
@@ -114,3 +117,90 @@ grant select on public.discord_calendar_log   to authenticated;
 -- policy scoping alone is not the anon barrier (see parent_responses.sql).
 revoke all on public.discord_calendar_posts from anon;
 revoke all on public.discord_calendar_log   from anon;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 4. Scheduling — pg_cron → pg_net → the discord-calendar Edge Function
+--
+-- Same mechanism as push_notifications.sql section 7: a private config table
+-- holding the functions base URL and a shared secret, a SECURITY DEFINER
+-- function that POSTs via pg_net, and a cron.schedule entry. The Edge Function
+-- checks that secret in an `x-cron-secret` header (send-push / cron-notify use
+-- `x-push-secret` + PUSH_SECRET for the same purpose).
+--
+-- Separate config row rather than reusing private.push_config on purpose:
+-- filling in push_config activates the push triggers and their crons, and per
+-- CLAUDE.md the push deploy is deliberately still on hold. Chaining calendar
+-- posting to that would force one to ship before the other.
+--
+-- Until edge_base_url is filled in, invoke_discord_calendar() returns without
+-- calling anything — so applying this file early is harmless.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+
+create schema if not exists private;
+
+create table if not exists private.discord_calendar_config (
+  id            int primary key default 1 check (id = 1),
+  edge_base_url text,   -- https://<project-ref>.functions.supabase.co
+  hook_secret   text,   -- must equal the DISCORD_CRON_SECRET function secret
+  created_at    timestamptz not null default now()
+);
+insert into private.discord_calendar_config (id) values (1) on conflict (id) do nothing;
+
+-- RLS on with no policies: anon/authenticated get nothing. The SECURITY DEFINER
+-- function below is owned by postgres and bypasses RLS, so the shared secret is
+-- readable there and nowhere else.
+alter table private.discord_calendar_config enable row level security;
+
+create or replace function public.invoke_discord_calendar()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare v_cfg private.discord_calendar_config;
+begin
+  select * into v_cfg from private.discord_calendar_config where id = 1;
+  if v_cfg.edge_base_url is null then return; end if;   -- not deployed yet
+  perform net.http_post(
+    url     := v_cfg.edge_base_url || '/discord-calendar',
+    headers := jsonb_build_object(
+                 'Content-Type',   'application/json',
+                 'x-cron-secret',  v_cfg.hook_secret),
+    body    := '{}'::jsonb
+  );
+end;
+$fn$;
+
+-- Hourly, on the hour. Comfortably inside the 2-hour reminder window, so one
+-- missed run cannot skip a reminder.
+-- unschedule-then-schedule keeps this file re-runnable (cron.schedule raises on
+-- a duplicate job name).
+select cron.unschedule('discord-calendar-hourly')
+where exists (select 1 from cron.job where jobname = 'discord-calendar-hourly');
+
+select cron.schedule('discord-calendar-hourly', '0 * * * *',
+  $$ select public.invoke_discord_calendar() $$);
+
+-- ============================================================
+-- DEPLOY
+--   1. Run this whole file.
+--   2. supabase secrets set DISCORD_BOT_TOKEN=… DISCORD_GUILD_ID=… \
+--        DISCORD_CRON_SECRET=…            (DISCORD_CALENDAR_MODE stays unset =
+--                                          report-only)
+--   3. npx supabase functions deploy discord-calendar --no-verify-jwt
+--   4. Fill in the config row — this is what actually starts the schedule:
+--        update private.discord_calendar_config
+--           set edge_base_url = 'https://<project-ref>.functions.supabase.co',
+--               hook_secret   = '<the same value as DISCORD_CRON_SECRET>'
+--         where id = 1;
+--   5. Watch discord_calendar_log for report-only plan_* rows, then set
+--        DISCORD_CALENDAR_MODE=live and redeploy the function.
+--
+-- To pause posting without touching the schedule:
+--   update private.discord_calendar_config set edge_base_url = null where id = 1;
+-- To stop the schedule entirely:
+--   select cron.unschedule('discord-calendar-hourly');
+-- ============================================================

@@ -1,5 +1,10 @@
 // The calendar sync engine.
 //
+// Runs on Deno inside the discord-calendar Edge Function, and unchanged on Node
+// inside scripts/discord/calendar-sync.test.mjs. Keep it to the intersection of
+// both runtimes: plain ESM, explicit file extensions on relative imports, and
+// no imports beyond `node:crypto` (which Deno implements).
+//
 // One pass = cancellations, then #calendar posts, then #announcements reminders.
 // Everything it does is decided by two tables:
 //

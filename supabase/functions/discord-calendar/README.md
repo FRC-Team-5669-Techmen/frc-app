@@ -1,4 +1,4 @@
-# Discord calendar posting (Vercel cron)
+# Discord calendar posting (Supabase Edge Function + pg_cron)
 
 Posts the team schedule from `public.events` into the team Discord, hourly:
 
@@ -11,8 +11,12 @@ It is **report-only by default**. The first runs write nothing to Discord; they
 log exactly what they *would* have posted. See
 [Leaving report-only mode](#leaving-report-only-mode).
 
-This is the first Vercel serverless function in the repo. Everything else
-server-side lives in Supabase Edge Functions (`supabase/functions/`).
+Scheduled by pg_cron → pg_net → this function, the same way
+`push_notifications.sql` drives `cron-notify`.
+
+> **Why not a Vercel cron?** It was one, briefly. Vercel's Hobby plan caps cron
+> at one invocation per day, which cannot support a 2-hour reminder. Nothing of
+> the engine changed in the move — only the entrypoint and the scheduler.
 
 ---
 
@@ -20,80 +24,126 @@ server-side lives in Supabase Edge Functions (`supabase/functions/`).
 
 | Path | What it is |
 |---|---|
-| `api/discord-calendar.js` | The cron entrypoint: auth, env, config, response. |
-| `api/_lib/discord.js` | Discord REST client. 429 handling, name→snowflake resolution. Plain `fetch`, no new runtime dependency. |
-| `api/_lib/render.js` | Pure rendering: LA time formatting, embeds, subteam matching, content hash. |
-| `api/_lib/calendarSync.js` | The engine: cancellation sweep → calendar posts → reminders. |
-| `supabase/discord_calendar.sql` | `discord_calendar_posts` (tracking) + `discord_calendar_log` (audit). **Run this before switching to live.** |
+| `index.ts` | Entrypoint: shared-secret check, secrets, config, response. |
+| `lib/discord.js` | Discord REST client. 429 handling, name→snowflake resolution. Plain `fetch`, no dependency. |
+| `lib/render.js` | Pure rendering: LA time formatting, embeds, subteam matching, content hash. |
+| `lib/calendarSync.js` | The engine: cancellation sweep → calendar posts → reminders. |
+| `supabase/discord_calendar.sql` | Tracking + log tables, the private config row, `invoke_discord_calendar()`, and the hourly `cron.schedule`. **Run this first.** |
 | `scripts/discord/calendar-sync.test.mjs` | `npm run discord:calendar:test` — in-memory tests of the dedupe / edit / cancel rules. No network. |
 
-Files under `api/` beginning with `_` are ignored by Vercel's function detection,
-so only `api/discord-calendar.js` becomes a route.
+**This function is not single-file**, unlike its siblings here, so it **cannot be
+deployed from the Dashboard editor** — use the CLI. The `lib/` modules are the
+same files the Node test harness imports; inlining them into `index.ts` would
+mean two copies of the logic that guarantees nothing double-posts. They are
+written to the intersection of Deno and Node (plain ESM, explicit file
+extensions, nothing imported beyond `node:crypto`), so one copy runs in both.
 
 ---
 
-## Environment variables
+## Secrets and configuration
 
-All are set in **Vercel → Project → Settings → Environment Variables**. **None
-are `VITE_`-prefixed**, which is what keeps them out of the browser: Vite exposes
-only `VITE_*` through `import.meta.env`, and `api/` is not part of the client
-build at all.
+Function secrets — set with `supabase secrets set NAME=value` (or Dashboard →
+Edge Functions → Secrets). None are `VITE_`-prefixed and nothing under
+`supabase/functions/` is in the Vite build, so none can reach the browser.
 
-| Variable | Required | Default | Notes |
+| Secret | Required | Default | Notes |
 |---|---|---|---|
-| `CRON_SECRET` | **yes** | — | Vercel sends it as `Authorization: Bearer …` on cron invocations. The function **refuses to run** if it is unset — the URL is public. |
-| `DISCORD_BOT_TOKEN` | **yes** | — | Bot token. Server-side only. |
+| `DISCORD_CRON_SECRET` | **yes** | — | Must equal `private.discord_calendar_config.hook_secret`. Checked as the `x-cron-secret` header. |
+| `DISCORD_BOT_TOKEN` | **yes** | — | Bot token. |
 | `DISCORD_GUILD_ID` | **yes** | — | The Bosco Tech Robotics guild ID. |
-| `SUPABASE_URL` | **yes** | falls back to `VITE_SUPABASE_URL` | Same project URL the app uses. |
-| `SUPABASE_SERVICE_ROLE_KEY` | **yes** | — | Needed to read `events` and write the tracking tables (both are RLS-locked to staff-read / no-client-write). **Never** put this in a `VITE_` var. |
-| `DISCORD_CALENDAR_MODE` | no | `report` | Only the literal `live` enables posting. A typo, an empty value, or a missing variable all stay in report-only. |
+| `SUPABASE_URL` | auto | — | Injected by the platform. |
+| `SUPABASE_SERVICE_ROLE_KEY` | auto | — | Injected. Needed because both tracking tables are RLS staff-read / no-client-write. |
+| `DISCORD_CALENDAR_MODE` | no | `report` | Only the literal `live` enables posting. A typo, an empty value, or a missing secret all stay in report-only. |
 | `DISCORD_CALENDAR_CHANNEL` | no | `calendar` | Channel **name**, not an ID. |
 | `DISCORD_ANNOUNCE_CHANNEL` | no | `announcements` | Channel **name**, not an ID. |
 | `DISCORD_CALENDAR_HORIZON_DAYS` | no | `14` | How far ahead to post. Clamped to 1–90. |
+
+Database-side configuration lives in `private.discord_calendar_config` (RLS on,
+no policies — only the `SECURITY DEFINER` invoke function can read it):
+
+| Column | Notes |
+|---|---|
+| `edge_base_url` | `https://<project-ref>.functions.supabase.co`. **Null = the cron no-ops**, which is the pause switch. |
+| `hook_secret` | Same value as `DISCORD_CRON_SECRET`. |
+
+This is a separate row from `private.push_config` on purpose: filling in
+`push_config` activates the push triggers and crons, and that deploy is
+deliberately still on hold.
 
 **No Discord snowflakes are stored anywhere in this repo.** Channels and roles
 are resolved by name from the guild on every run, so renaming or recreating a
 channel is picked up automatically instead of posting into a dead ID.
 
-### Verifying the token never reaches the client
+### Guild prerequisites
 
-```bash
-npm run build && grep -rn "DISCORD_BOT_TOKEN\|SERVICE_ROLE\|CRON_SECRET" dist/ || echo "clean"
-```
+Provisioning (`scripts/discord/provision.js`) has completed — roles, categories,
+and channels are all live in the guild, including `#calendar` and
+`#announcements`. AutoMod did not land; that is unrelated to this feature and
+does not affect posting.
 
-Run with a canary value (`DISCORD_BOT_TOKEN=CANARY npm run build`, then
-`grep -r CANARY dist/`) to prove the value itself is absent, not just the name.
-Both checks are clean as of this commit.
+The bot needs **View Channel**, **Send Messages**, and **Embed Links** in
+`#calendar` and `#announcements`. Manage Messages is *not* needed — a bot can
+always edit its own messages.
 
 ---
 
+## Deploy
+
+```bash
+npx supabase functions deploy discord-calendar --no-verify-jwt
+```
+
+`--no-verify-jwt` is required: pg_cron calls this with a shared secret, not a
+user JWT, exactly like `send-push` and `cron-notify`.
+
+Then fill in the config row — **this is what actually starts the schedule**:
+
+```sql
+update private.discord_calendar_config
+   set edge_base_url = 'https://<project-ref>.functions.supabase.co',
+       hook_secret   = '<the same value as DISCORD_CRON_SECRET>'
+ where id = 1;
+```
+
 ## Cron schedule
 
-Declared in `vercel.json`:
+Created by `supabase/discord_calendar.sql`:
 
-```json
-{ "crons": [{ "path": "/api/discord-calendar", "schedule": "0 * * * *" }] }
+```sql
+select cron.schedule('discord-calendar-hourly', '0 * * * *',
+  $$ select public.invoke_discord_calendar() $$);
 ```
 
 Top of every hour, UTC. Hourly is comfortably inside the 2-hour reminder window,
 so a single missed run cannot skip a reminder.
 
-Two Vercel behaviours to know:
-
-- **Crons only run on Production deployments.** A preview deploy never fires.
-- **Hobby-plan projects are limited to one cron invocation per day.** If this
-  project is on Hobby, the hourly schedule will be rejected or throttled — the
-  2-hour reminder cannot work on a daily trigger. Pro is required for hourly.
-
-Running it by hand (the same thing the cron does):
-
-```bash
-curl -s -H "Authorization: Bearer $CRON_SECRET" "https://frc-app-liard.vercel.app/api/discord-calendar?mode=report" | jq
+```sql
+-- is it scheduled?
+select jobname, schedule, active from cron.job where jobname = 'discord-calendar-hourly';
+-- did the last runs succeed? (pg_cron only reports the SQL call, not the HTTP result)
+select start_time, status, return_message from cron.job_run_details
+ where jobid = (select jobid from cron.job where jobname = 'discord-calendar-hourly')
+ order by start_time desc limit 10;
 ```
 
-`?mode=report` can only **downgrade** a live deployment to a dry run. There is
-deliberately no query param that turns posting on — that decision belongs to
-`DISCORD_CALENDAR_MODE` alone.
+The HTTP outcome lands in `net._http_response`, and what the function actually
+*did* lands in `discord_calendar_log` — that is the one to read.
+
+Running it by hand (same thing the cron does):
+
+```sql
+select public.invoke_discord_calendar();
+```
+
+Or a one-off dry run against a live deployment, which can only **downgrade** to
+report mode — there is deliberately no request that turns posting on:
+
+```sql
+select net.http_post(
+  url     := 'https://<project-ref>.functions.supabase.co/discord-calendar',
+  headers := jsonb_build_object('Content-Type','application/json','x-cron-secret','<secret>'),
+  body    := '{"mode":"report"}'::jsonb);
+```
 
 ---
 
@@ -101,7 +151,8 @@ deliberately no query param that turns posting on — that decision belongs to
 
 1. Run `supabase/discord_calendar.sql` in the Supabase SQL editor. Nothing works
    before this; the function will error on the first table read.
-2. Let the hourly cron run in report mode for a day. Then read the plan:
+2. Deploy, set the config row, and let the hourly cron run for a day. Then read
+   the plan:
 
    ```sql
    select created_at, action, post_kind, detail
@@ -115,15 +166,16 @@ deliberately no query param that turns posting on — that decision belongs to
    the exact title, when/where lines, and the role IDs that would be pinged.
 3. Confirm `resolve` rows found both channels (`calendar_channel` and
    `announce_channel` non-null) and a sensible `roles_seen` count.
-4. Set `DISCORD_CALENDAR_MODE=live` in Vercel and redeploy (env changes need a
-   redeploy to take effect).
+4. `supabase secrets set DISCORD_CALENDAR_MODE=live`, then **redeploy the
+   function** — secret changes only take effect on a new deployment.
 
 **Report-only never writes to `discord_calendar_posts`.** A week of dry runs does
 not burn any dedupe keys — the first live run posts everything as if for the
 first time.
 
-Going back is symmetrical: set it to `report` (or delete the variable) and
-redeploy. Messages already posted stay posted and simply stop being updated.
+Going back is symmetrical: set it to `report` (or unset it) and redeploy.
+Messages already posted stay posted and simply stop being updated. To stop the
+whole thing without touching secrets or the schedule, null out `edge_base_url`.
 
 ---
 
@@ -169,7 +221,7 @@ closed is written as `superseded` (no message) instead of firing hours late.
 ### Pings
 
 `public.events` has no subteam column, so "the event names a subteam" is taken
-literally: `api/_lib/render.js` word-matches the subteam vocabulary in the event
+literally: `lib/render.js` word-matches the subteam vocabulary in the event
 **title and notes** and maps it to the Discord role names in
 `scripts/discord/SERVER_SPEC.md` §3. No match → no ping. `allowed_mentions` is
 pinned to the resolved role IDs with `parse: []`, so `@everyone`/`@here` can
@@ -265,16 +317,18 @@ limit 50;
 | `message_missing` | The message was deleted in Discord; the row is now `archived`. |
 | `error` | Includes `phase` (`reserve`/`create`/`edit`/`cancel`) and whether the reservation was `released`. |
 
+**Nothing in the log at all?** The cron fired but the function was never reached.
+Check `private.discord_calendar_config.edge_base_url` is set, and that
+`hook_secret` matches `DISCORD_CRON_SECRET` — a mismatch returns `403 forbidden`
+before any logging happens, and pg_net swallows the response. Look in
+`net._http_response` for the status code.
+
 Both tables are RLS **staff-read, no-client-write** — only the service role
 writes them.
 
 Rate limits are honoured off the `retry_after` the API returns (body first,
 `Retry-After` header as fallback), never a fixed delay, and the client parks
 proactively when a bucket reports `x-ratelimit-remaining: 0`.
-
-**Bot permissions needed in the guild:** View Channel, Send Messages, and Embed
-Links in `#calendar` and `#announcements`, plus Manage Messages is *not* needed —
-a bot can always edit its own messages.
 
 ---
 
@@ -286,4 +340,5 @@ npm run discord:calendar:test
 
 Runs the dedupe / edit / cancel / reminder rules against in-memory fakes,
 including a fake `unique (event_id, post_kind)` constraint. No network, no
-credentials, no Discord.
+credentials, no Discord. It imports `lib/` directly, so it exercises the exact
+files that deploy.

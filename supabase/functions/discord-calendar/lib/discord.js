@@ -2,13 +2,13 @@
 //
 // Deliberately plain `fetch` rather than @discordjs/rest: that package is a
 // devDependency used by the ops script (scripts/discord/provision.js) and this
-// function needs exactly four calls. Node 18+ has global fetch, so this adds no
-// runtime dependency to the deployed bundle.
+// function needs exactly four calls. Both Deno (production) and Node (the test
+// harness) have global fetch, so this adds no dependency to either — which is
+// what lets one copy of this file serve both.
 //
-// The bot token is read from process.env by the CALLER and passed in — it is
-// never imported here from anywhere Vite can see. Nothing in api/ is part of
-// the client bundle, and the var is not VITE_-prefixed, so it cannot be inlined
-// into dist/ by import.meta.env.
+// The bot token is read from Deno.env by the CALLER (index.ts) and passed in.
+// Nothing under supabase/functions/ is part of the Vite build and the variable
+// is not VITE_-prefixed, so it cannot be inlined into dist/ by import.meta.env.
 
 const API = 'https://discord.com/api/v10'
 const UA = 'DiscordBot (https://github.com/techmen5669/frc-app, 1.0) TechmenCalendarCron'

@@ -6,9 +6,15 @@
 // fake Discord REST client. It exists because "nothing double-posts" is the
 // core correctness requirement of this feature, and that is exactly the kind of
 // property you cannot confirm by looking at a live server.
+//
+// The engine under test lives in the Edge Function and runs on Deno in
+// production. It is deliberately written to the intersection of both runtimes —
+// plain ESM, explicit file extensions, `node:crypto` (which Deno implements),
+// no other imports — so this Node harness exercises the exact same files that
+// deploy, not a copy of them.
 
 import assert from 'node:assert/strict'
-import { runCalendarSync } from '../../api/_lib/calendarSync.js'
+import { runCalendarSync } from '../../supabase/functions/discord-calendar/lib/calendarSync.js'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fakes
@@ -269,7 +275,7 @@ test('an event naming no subteam pings nobody', async () => {
 })
 
 test('a 4xx on create releases the reservation; an ambiguous failure keeps it', async () => {
-  const { DiscordError } = await import('../../api/_lib/discord.js')
+  const { DiscordError } = await import('../../supabase/functions/discord-calendar/lib/discord.js')
 
   const sb1 = fakeSupabase({ events: [event()] })
   await run(sb1, fakeDiscord({ failCreate: new DiscordError('bad request', { status: 400 }) }))
