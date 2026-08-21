@@ -105,13 +105,15 @@ const KIND_COLORS = {
   potluck:      0x5aa55a,
   outreach:     0x4a7fd1,
   volunteering: 0x8b5cb8,
+  training:     0x5b9bd5,
   other:        0x6b7280,
 }
 const CANCELLED_COLOR = 0xb3261e
 
 const KIND_LABELS = {
   build: 'Build session', meeting: 'Meeting', competition: 'Competition',
-  potluck: 'Potluck', outreach: 'Outreach', volunteering: 'Volunteering', other: 'Event',
+  potluck: 'Potluck', outreach: 'Outreach', volunteering: 'Volunteering',
+  training: 'Training', other: 'Event',
 }
 
 const clamp = (s, n) => (s && s.length > n ? `${s.slice(0, n - 1)}…` : s)

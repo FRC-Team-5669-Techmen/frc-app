@@ -11,7 +11,8 @@ create table if not exists public.events (
   id         uuid primary key default gen_random_uuid(),
   title      text not null,
   kind       text not null default 'build'
-               check (kind in ('build', 'meeting', 'competition', 'potluck', 'outreach', 'other')),
+               check (kind in ('build', 'meeting', 'competition', 'potluck',
+                              'outreach', 'volunteering', 'training', 'other')),
   starts_at  timestamptz not null,
   ends_at    timestamptz not null,
   location   text,
