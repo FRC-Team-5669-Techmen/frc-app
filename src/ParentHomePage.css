@@ -222,7 +222,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.03em;
   color: var(--gold-bright);
-  background: rgba(212, 175, 55, 0.08);
+  background: var(--gold-a08);
   border: 1px solid var(--gold-dim);
   border-radius: var(--radius);
   padding: 0.3rem 0.6rem;

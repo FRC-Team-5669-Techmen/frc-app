@@ -54,11 +54,15 @@
   font-weight: 600;
 }
 
+  /* Techmen Gold is identity and active state, not a surface fill. At #FFE629 a
+     field this size out-shouts the team mark on the same screen, so the resting
+     state is a gold label and a gold border on the dark plate and the gold FILL
+     is kept for hover and focus, which is the active state gold exists for. */
 .gate-signout {
   margin-top: 0.5rem;
-  background: var(--gold);
-  color: #0A0B0D;
-  border: none;
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--gold);
   border-radius: var(--radius);
   padding: 0.7rem 1.8rem;
   font-family: var(--font-ui);
@@ -70,8 +74,10 @@
   transition: background 0.15s;
 }
 
-.gate-signout:hover {
-  background: var(--gold-bright);
+.gate-signout:hover,
+.gate-signout:focus-visible {
+  background: var(--gold);
+  color: #0A0B0D;
 }
 
 .gate-contact {
@@ -152,11 +158,15 @@
   padding: 0.5rem 0.7rem;
 }
 
+  /* Techmen Gold is identity and active state, not a surface fill. At #FFE629 a
+     field this size out-shouts the team mark on the same screen, so the resting
+     state is a gold label and a gold border on the dark plate and the gold FILL
+     is kept for hover and focus, which is the active state gold exists for. */
 .gate-submit {
   margin-top: 0.25rem;
-  background: var(--gold);
-  color: #0A0B0D;
-  border: none;
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--gold);
   border-radius: var(--radius);
   padding: 0.8rem 1rem;
   font-family: var(--font-ui);
@@ -167,7 +177,8 @@
   cursor: pointer;
   transition: background 0.15s;
 }
-.gate-submit:hover:not(:disabled) { background: var(--gold-bright); }
+.gate-submit:hover:not(:disabled),
+.gate-submit:focus-visible { background: var(--gold); color: #0A0B0D; }
 .gate-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
 /* Loading spinner for the initial status check */

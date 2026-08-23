@@ -24,20 +24,27 @@
   --steel:         #8A9099;  /* secondary text (steel)     */
   --muted:         #5A6068;  /* muted text                 */
 
-  --gold:          #D4AF37;  /* primary accent / brackets  */
-  --gold-bright:   #E8C24A;  /* live numbers / active      */
-  --gold-dim:      #C9A227;  /* warnings / already-in      */
+  /* Techmen Gold, as published by the team brand. NOT a generic web metallic
+     gold: the previous #D4AF37 was one, and it is not a team brand color.
+     The whole ramp below is derived from this one hue.
+     Gold is IDENTITY, hero type and active state. It is not a surface fill.
+     A large field of it reads hot at this brightness, so where a control used
+     to be a slab of gold it is now a gold border and a gold label on a dark
+     plate, and the fill is kept for the active state. */
+  --gold:          #FFE629;  /* primary accent / brackets  */
+  --gold-bright:   #FFF06B;  /* live numbers / active      */
+  --gold-dim:      #C7B320;  /* warnings / already-in      */
   --fault:         #E24B4A;  /* faults ONLY                */
 
   /* Translucent gold for fills/glows (derived from --gold) */
-  --gold-a08:      rgba(212, 175, 55, 0.08);
-  --gold-a14:      rgba(212, 175, 55, 0.14);
-  --gold-a24:      rgba(212, 175, 55, 0.24);
+  --gold-a08:      rgba(255, 230, 41, 0.08);
+  --gold-a14:      rgba(255, 230, 41, 0.14);
+  --gold-a24:      rgba(255, 230, 41, 0.24);
   --fault-a10:     rgba(226, 75, 74, 0.10);
 
   /* Hour-category accents — consistent across My Hours + Team Hours */
-  --hr-regular:     #D4AF37;  /* gold  — build / regular   */
-  --hr-build:       #D4AF37;  /* gold  — build (default)    */
+  --hr-regular:     #FFE629;  /* gold  — build / regular   */
+  --hr-build:       #FFE629;  /* gold  — build (default)    */
   --hr-volunteer:   #4FB477;  /* green — volunteer          */
   --hr-outreach:    #5B9BD5;  /* blue  — outreach           */
   --hr-competition: #B98BE0;  /* violet — competition       */

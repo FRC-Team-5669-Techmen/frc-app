@@ -95,10 +95,15 @@
   margin-bottom: 2.25rem;
 }
 
+  /* Techmen Gold is identity and active state, not a surface fill. At #FFE629 a
+     field this size out-shouts the team mark on the same screen, so the resting
+     state is a gold label and a gold border on the dark plate and the gold FILL
+     is kept for hover and focus, which is the active state gold exists for. */
 .landing-cta {
   display: inline-block;
-  background: var(--gold);
-  color: #0A0B0D;
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--gold);
   text-decoration: none;
   font-family: var(--font-ui);
   font-weight: 700;
@@ -110,8 +115,10 @@
   transition: background 0.15s;
 }
 
-.landing-cta:hover {
-  background: var(--gold-bright);
+.landing-cta:hover,
+.landing-cta:focus-visible {
+  background: var(--gold);
+  color: #0A0B0D;
 }
 
 /* ── Features ── */

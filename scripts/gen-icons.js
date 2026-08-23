@@ -1,53 +1,115 @@
-// Generates solid-color PWA icons using only Node.js built-ins (no extra deps).
-import { writeFileSync } from 'fs'
-import zlib from 'zlib'
+// Generates the PWA icons, the Apple touch icon and the favicon FROM THE
+// CANONICAL TEAM MARK.
+//
+// What this script used to do: write flat #005bff squares. The icons actually
+// on disk are mark artwork in Techmen Gold and were never produced by it, so
+// running it destroyed three correct files and replaced them with solid blue.
+// That is why it is rewritten rather than left runnable.
+//
+// It renders public/assets/logos/Mark-Gold.svg, which is byte-pinned in
+// src/lib/design-system/assets/PROVENANCE.json, and REFUSES TO RUN if that file
+// does not hash to the recorded canonical value. An icon generator that will
+// happily rasterise a recolored mark is how a wrong gold reaches every home
+// screen on the team at once.
+//
+// Usage:
+//   node scripts/gen-icons.js              write into public/
+//   node scripts/gen-icons.js --out tmp/   write elsewhere, to compare first
+//   node scripts/gen-icons.js --check      verify the mark and report, write nothing
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const crcTable = (() => {
-  const t = new Uint32Array(256)
-  for (let i = 0; i < 256; i++) {
-    let c = i
-    for (let j = 0; j < 8; j++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1)
-    t[i] = c
+const HERE = path.dirname(fileURLToPath(import.meta.url))
+const REPO = path.resolve(HERE, '..')
+
+const argv = process.argv.slice(2)
+const CHECK_ONLY = argv.includes('--check')
+const outFlag = argv.find((a) => a.startsWith('--out'))
+const OUT = outFlag
+  ? path.resolve(REPO, outFlag.includes('=') ? outFlag.split('=')[1] : argv[argv.indexOf(outFlag) + 1])
+  : path.join(REPO, 'public')
+
+const MARK = path.join(REPO, 'public/assets/logos/Mark-Gold.svg')
+const PROVENANCE = path.join(REPO, 'src/lib/design-system/assets/PROVENANCE.json')
+
+// Jet Black, the published brand ground. It is what the icons already on disk
+// use, and nothing in the system is permitted to go darker than it.
+const BG = '#000000'
+
+/** Refuse to rasterise anything but the verified mark. */
+function verifyMark() {
+  const svg = fs.readFileSync(MARK)
+  const sum = crypto.createHash('sha256').update(svg).digest('hex')
+  const prov = JSON.parse(fs.readFileSync(PROVENANCE, 'utf8'))
+  const entry = (prov.assets || []).find((a) => (a.mirrors || []).some((m) => m.endsWith('public/assets/logos/Mark-Gold.svg')))
+  if (!entry) throw new Error('gen-icons: Mark-Gold.svg is not recorded in PROVENANCE.json — refusing to generate from an unverified mark')
+  if (sum !== entry.sha256) {
+    throw new Error(
+      `gen-icons: ${path.relative(REPO, MARK)} hashes ${sum.slice(0, 16)}… but provenance records ${entry.sha256.slice(0, 16)}…\n` +
+      '  The mark on disk is not the canonical file. Refusing to generate icons from it:\n' +
+      '  a recolored mark rasterised here reaches every home screen on the team at once.',
+    )
   }
-  return t
-})()
-
-function crc32(buf) {
-  let crc = 0xffffffff
-  for (const b of buf) crc = crcTable[(crc ^ b) & 0xff] ^ (crc >>> 8)
-  return (crc ^ 0xffffffff) >>> 0
+  return { svg: svg.toString('utf8'), sum, source: entry.source }
 }
 
-function chunk(type, data) {
-  const t = Buffer.from(type, 'ascii')
-  const len = Buffer.alloc(4); len.writeUInt32BE(data.length)
-  const crcBuf = Buffer.alloc(4); crcBuf.writeUInt32BE(crc32(Buffer.concat([t, data])))
-  return Buffer.concat([len, t, data, crcBuf])
-}
+// `scale` is the fraction of the canvas the <img> box takes. The MARK inside it
+// is narrower, because the SVG carries its own margin, so these values were set
+// by measuring the ink bounding box of the icons already on disk and matching
+// it: 52% of the canvas for the standard icons, 39% for maskable, 50% for the
+// favicon. Changing a number here changes how the mark sits on a home screen,
+// so measure again rather than guessing.
+const SIZES = [
+  { file: 'pwa-192x192.png', size: 192, scale: 0.775 },
+  { file: 'pwa-512x512.png', size: 512, scale: 0.775 },
+  // Maskable art is cropped to a circle by the platform, so the mark sits well
+  // inside the safe zone on the same ground.
+  { file: 'pwa-512x512-maskable.png', size: 512, scale: 0.577 },
+  { file: 'apple-touch-icon.png', size: 180, scale: 0.775 },
+  { file: 'favicon.png', size: 32, scale: 0.734 },
+]
 
-function makePNG(w, h, r, g, b) {
-  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
-  const ihdr = Buffer.alloc(13)
-  ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4)
-  ihdr[8] = 8; ihdr[9] = 2 // 8-bit RGB
-
-  const raw = Buffer.alloc(h * (1 + w * 3))
-  for (let y = 0; y < h; y++) {
-    const row = y * (1 + w * 3)
-    raw[row] = 0 // filter: None
-    for (let x = 0; x < w; x++) {
-      raw[row + 1 + x * 3] = r
-      raw[row + 2 + x * 3] = g
-      raw[row + 3 + x * 3] = b
-    }
+async function main() {
+  const { svg, sum, source } = verifyMark()
+  console.log(`gen-icons: mark verified ${sum.slice(0, 16)}… (${source})`)
+  if (CHECK_ONLY) {
+    console.log('gen-icons: --check, nothing written')
+    return
   }
 
-  return Buffer.concat([sig, chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))])
+  let chromium
+  try {
+    ({ chromium } = await import('playwright-core'))
+  } catch {
+    throw new Error('gen-icons: playwright-core is required to rasterise the mark. npm i -D playwright-core')
+  }
+
+  const dataUri = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
+  const browser = await chromium.launch({ channel: 'chrome', headless: true })
+  fs.mkdirSync(OUT, { recursive: true })
+
+  for (const { file, size, scale } of SIZES) {
+    const page = await browser.newPage({ viewport: { width: size, height: size }, deviceScaleFactor: 1 })
+    await page.setContent(
+      `<!doctype html><html><body style="margin:0">
+         <div style="width:${size}px;height:${size}px;background:${BG};display:flex;align-items:center;justify-content:center">
+           <img src="${dataUri}" style="width:${Math.round(size * scale)}px;height:${Math.round(size * scale)}px" />
+         </div>
+       </body></html>`,
+      { waitUntil: 'load' },
+    )
+    await page.screenshot({ path: path.join(OUT, file), omitBackground: false })
+    await page.close()
+    console.log(`  ${file}  ${size}x${size}  mark at ${Math.round(scale * 100)}%`)
+  }
+
+  await browser.close()
+  console.log(`gen-icons: written to ${path.relative(REPO, OUT) || '.'}`)
 }
 
-// Brand blue: #005bff
-const [r, g, b] = [0x00, 0x5b, 0xff]
-writeFileSync('public/pwa-192x192.png',    makePNG(192, 192, r, g, b))
-writeFileSync('public/pwa-512x512.png',    makePNG(512, 512, r, g, b))
-writeFileSync('public/apple-touch-icon.png', makePNG(180, 180, r, g, b))
-console.log('Icons written to public/')
+main().catch((err) => {
+  console.error(err.message)
+  process.exit(1)
+})
