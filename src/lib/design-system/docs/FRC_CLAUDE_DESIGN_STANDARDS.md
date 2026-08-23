@@ -1,5 +1,5 @@
 # FRC Claude Design Standards
-**Version 1.6 - 2026-08-23**
+**Version 1.7 - 2026-08-23**
 
 Scoping and prompting rules for every FRC Team 5669 artifact authored in Claude Design against the FRC design system. Presentations are the primary case.
 
@@ -284,7 +284,11 @@ Chrome discipline:
 
 ## Pre-delivery audit
 
-Run against every output before it is called finished. **The audit is a separate chat pass against the exported bundle.** The session that built the artifact does not audit it, because the same reading that produced the mistake produces the check.
+Run against every output before it is called finished. **The audit is a separate chat pass against the exported bundle.**
+
+**This is not `ds:audit`.** Two things in this system are called an audit and both carry numbered checks. `ds:audit` is a script in `frc-app` that checks the design system **source**: token completeness, alias literals per scope, import order, manifest accuracy, asset hashes. The numbered checks below are a **manual pass against a generated deck**. The two number independently and must never be cross-referenced by number. When referring to either, name it: "pre-delivery check 43" or "`ds:audit` check 14."
+
+The split follows from what each can see. A deck's aspect ratio, sheet count, and visual quality exist only in the artifact. A token sheet's alias completeness exists only in the repo. Neither audit can do the other's job, and a check that could live in `ds:audit` should, because a script runs every commit and a chat pass runs when someone remembers. The session that built the artifact does not audit it, because the same reading that produced the mistake produces the check.
 
 **Structure**
 1. Every sheet uses a `sheets/` pattern. Zero sheets built from raw markup.
@@ -404,6 +408,14 @@ For any non-deck artifact, motion runs inside a `.frc-run` container and the fou
 
 ## Changelog
 
+- **1.7 (2026-08-23)** - Distinguished the pre-delivery audit from `ds:audit`. Both are called
+  audits and both carry numbered checks, and a Claude Code prompt from this session
+  cross-referenced them by number, sending a session looking for a check 43 in a script whose
+  own checks stop at 15. They number independently and are now named explicitly when
+  referenced. The split follows from what each can see: `ds:audit` checks the design system
+  source in the repo, the numbered checks below check a generated deck, and anything that
+  could live in `ds:audit` should, because a script runs every commit and a chat pass runs
+  when someone remembers.
 - **1.6 (2026-08-23)** - Gave `.frc-letterbox` its own bullet in the routing header. It was
   named only in prose under the DeckStage bullet while check 43 counts it as a fifth
   independent item, so the header and the check disagreed on what a deck must carry.
