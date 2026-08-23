@@ -1,5 +1,5 @@
 # FRC Claude Design Standards
-**Version 1.8 - 2026-08-23**
+**Version 1.9 - 2026-08-23**
 
 Scoping and prompting rules for every FRC Team 5669 artifact authored in Claude Design against the FRC design system. Presentations are the primary case.
 
@@ -290,7 +290,9 @@ Run against every output before it is called finished. **The audit is a separate
 
 **`ds:audit` green is a precondition for running the pre-delivery pass.** Twelve of the checks below now have source-side counterparts that run every commit, so auditing a generated artifact while the source is failing spends a chat pass finding what a script already reported.
 
-**Editing the inheritance block in section 2 of the prompt skeleton requires repinning `ds:audit`.** That check hashes the block and compares the motion vocabulary it quotes against what the token sheets define, which is what keeps the two from drifting. The coupling is deliberate and the failure is loud, but it reads as a code problem rather than a doc edit, so any change to that block ships with the repin in the same pass.
+**Editing the inheritance block in section 2 of the prompt skeleton requires repinning `ds:audit`.** What that check actually pins is narrower than the block: the motion vocabulary slice, from `Motion: use only classes defined in the FRC motion tokens.` through to `The two ambient systems are separate`. It hashes that slice and requires every class it names to have a rule in the token layer, one direction, so the doc and the tokens cannot drift apart silently. Edits to the Sheets, Components, Colors, Gold, Alliance, FIRST, Images, or Copy paragraphs cannot trip it.
+
+The instruction stays wider than the mechanism on purpose. Repinning on any edit to the block is never wrong and occasionally unnecessary, which is the right direction for a rule whose failure surfaces as a code problem rather than a doc edit.
 
 The split follows from what each can see. A deck's aspect ratio, sheet count, and visual quality exist only in the artifact. A token sheet's alias completeness exists only in the repo. Neither audit can do the other's job, and a check that could live in `ds:audit` should, because a script runs every commit and a chat pass runs when someone remembers. The session that built the artifact does not audit it, because the same reading that produced the mistake produces the check.
 
@@ -412,6 +414,11 @@ For any non-deck artifact, motion runs inside a `.frc-run` container and the fou
 
 ## Changelog
 
+- **1.9 (2026-08-23)** - Corrected the v1.8 description of what `ds:audit`'s inheritance pin
+  covers. It hashes the motion vocabulary slice, not the whole inheritance block, so the
+  Sheets, Components, Colors, Gold, Alliance, FIRST, Images and Copy paragraphs cannot trip
+  it. The instruction to repin on any edit to the block stays wider than the mechanism, since
+  it is never wrong and occasionally unnecessary.
 - **1.8 (2026-08-23)** - Recorded two consequences of mechanizing twelve of the checks below
   into `ds:audit`. A green `ds:audit` is now a precondition for the pre-delivery pass, since
   auditing an artifact while the source is failing spends a chat pass on what a script
