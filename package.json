@@ -14,7 +14,8 @@
     "discord:calendar:test": "node scripts/discord/calendar-sync.test.mjs",
     "ds:audit": "node scripts/design-system/ds-audit.mjs",
     "ds:dev": "vite --mode dsspec --port 5175 --strictPort",
-    "ds:capture": "node scripts/design-system/ds-capture.mjs"
+    "ds:capture": "node scripts/design-system/ds-capture.mjs",
+    "ds:audit:controls": "node scripts/design-system/ds-audit-controls.mjs"
   },
   "dependencies": {
     "@fontsource/chakra-petch": "^5.2.7",
