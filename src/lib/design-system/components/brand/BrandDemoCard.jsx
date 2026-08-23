@@ -80,7 +80,10 @@ export function BrandDemoCard({ ground = 'squadron', audience = 'internal', run 
             start in the fall, and the <FirstName program="ftc" /> pathway is under review. A second mention of <FirstName /> carries no mark.
           </p>
           <p className="frc-body">
-            Refused forms render a fault, never the text: <FirstName>{"FIRST's"}</FirstName> and <FirstName>FIRSTs</FirstName> and <FirstName>FIRST Robotics Competitions</FirstName>.
+            Refused forms are demonstrated in the Invariant guards section of /_ds, where the same component
+            is shown rendering its rust marker and throwing, side by side. They are not mounted here: this card
+            runs inside the dev harness, where a guard throws, and a deliberate demonstration of a refusal would
+            take the whole card down with it.
           </p>
         </section>
       </FirstNameScope>
