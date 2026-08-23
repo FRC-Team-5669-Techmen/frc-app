@@ -54,15 +54,17 @@
   font-weight: 600;
 }
 
-  /* Techmen Gold is identity and active state, not a surface fill. At #FFE629 a
-     field this size out-shouts the team mark on the same screen, so the resting
-     state is a gold label and a gold border on the dark plate and the gold FILL
-     is kept for hover and focus, which is the active state gold exists for. */
+  /* NO GOLD, at any state. Gold is identity and active state, and a sign-out is
+     neither: it is the way off this screen, not the thing the screen is asking
+     you to do. Carrying it in the identity color gave it equal weight with the
+     submit even as an outline, so it is steel border and ash label — the app's
+     ordinary secondary control — and .gate-submit is left as the only gold on
+     the page besides the mark and the heading. */
 .gate-signout {
   margin-top: 0.5rem;
   background: transparent;
-  color: var(--gold);
-  border: 1px solid var(--gold);
+  color: var(--steel);
+  border: 1px solid var(--steel);
   border-radius: var(--radius);
   padding: 0.7rem 1.8rem;
   font-family: var(--font-ui);
@@ -71,14 +73,21 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .gate-signout:hover,
 .gate-signout:focus-visible {
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border-strong);
 }
+
+/* The app-wide keyboard ring is gold (App.css :focus-visible). This is the one
+   control that opts out of it: no gold at ANY state, focus included. The ring
+   keeps its width and offset, so the affordance is unchanged — only its color
+   moves to steel. */
+.gate-signout:focus-visible { outline-color: var(--steel); }
 
 .gate-contact {
   margin-top: 0.25rem;
