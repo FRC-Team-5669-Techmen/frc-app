@@ -2,7 +2,7 @@
 
 The visual identity system for FRC Team 5669 (Techmen) presentations and materials: weekly meetings, training sessions, strategy and match review, kickoff, outreach, sponsor and judge presentations, and awards material. Authored as React so Claude Design can source it from GitHub.
 
-Specification: `FRC_Design_System.md` v1.2 (2026-08-22). It is authoritative for every color, token, class and rule; this guide is how the system is used and what is in it. `_ds_manifest.json` is the exported registry and the staleness authority.
+**Governing documents:** [`docs/FRC_Design_System.md`](docs/FRC_Design_System.md) (brand, tokens, type, motion, the component manifest) and [`docs/FRC_CLAUDE_DESIGN_STANDARDS.md`](docs/FRC_CLAUDE_DESIGN_STANDARDS.md) (scoping and prompting — recipes, the routing header, the pre-delivery audit). Both are committed here so a Claude Code session reads them from HEAD rather than depending on an attachment arriving — a repo file at HEAD cannot fail to arrive. Project knowledge holds the copy Alejandro maintains; a version ships to both in the same pass. These two are authoritative for every color, token, class and rule; this guide is how the system is used and what is in it. `_ds_manifest.json` is the exported registry and the staleness authority.
 
 **Built fresh, never extracted.** `frc-app` predates any token layer, so nothing here was derived from the existing app CSS or components. Migrating the app surfaces onto these tokens is separate work with its own prompts and its own risk; it does not block deck production. This bundle shares nothing with IDEA: its own namespace, its own tokens, no shared stylesheet. A deck physically cannot inherit IDEA green.
 

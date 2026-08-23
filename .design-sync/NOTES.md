@@ -316,3 +316,103 @@ out of the library.
 carries no startingPoints key", and a new **check 15** requires DeckStage to be registered,
 to read both `--bg0` and `--edge`, to import the shared guard, and requires its prompt to
 state the mount-once rule. Seven negative controls, all caught.
+
+## Governing docs committed, letterbox CSS gap closed, resync to 16, deck check 43 passed (2026-08-23)
+
+**Governing docs are now in the repo.** `docs/FRC_Design_System.md` v1.6 and
+`docs/FRC_CLAUDE_DESIGN_STANDARDS.md` v1.5 are committed under `src/lib/design-system/docs/`
+and referenced from `README.md`, `SKILL.md` and `CLAUDE.md`. The reason, stated in both
+files' own changelogs: a prior session built `DeckStage` without them because an attachment
+did not arrive, and a repo file at HEAD cannot fail to arrive the way an attachment can.
+
+### Reconciliation against v1.6 / v1.5
+
+**Found and fixed — a real gap, not a documentation nit.** `.frc-letterbox` and
+`.frc-thumbs-dock` had their CSS rules (`position: fixed; inset: 0; overflow: hidden`, and
+the absolute-positioned `.frc-stage` override) declared **only** inside the two templates'
+own inline `<style>` blocks — never in `tokens/deck-motion.css` or anywhere else that ships
+in `styles.css`. Since nothing is copied any more, a deck assembled from Blank that set
+`.frc-letterbox` on its root per the routing header would get a class `DeckStage` reads
+correctly but that does **nothing visually** — no fixed positioning, no viewport clipping,
+no absolute-positioned stage to scale into. `DeckStage` would still paint colors onto
+`document.documentElement`/`body`, but the deck itself would sit in normal document flow at
+its native 1920×1440 size rather than being pinned and scaled to the viewport.
+
+**Fixed** by moving both rules into `tokens/deck-motion.css`, beside the `.frc-stage` and
+`.frc-thumbs` rules that already live there, and removing the now-redundant copies from both
+templates (whose headers already claimed "every token, class and animation comes from
+../styles.css — nothing below is a token", which is now true rather than contradicted).
+**Verified in headless Chrome** against the bundled `styles.css` closure: a `.frc-deck
+frc-letterbox` root resolves `position: fixed` / `inset: 0` / `overflow: hidden`, and its
+child `.frc-stage` resolves `position: absolute`, `top: 0`, `left: 0` — matching the values
+the template used to hardcode.
+
+**No other disagreement found.** `DeckStage`'s six guard states were already correct against
+both v1.6's summary sentence and standards check 43: it does **not** guard on a missing
+`.frc-letterbox` (deliberately — its absence is legal for an embedded deck), matching
+"the one `DeckStage` cannot guard on" in both documents exactly. The four states the design
+doc's summary sentence names (missing aspect/ground/audience, a second instance) are a subset
+of the six actually implemented; the other two (no `.frc-deck` ancestor, no `.frc-stage`) are
+structural prerequisites the summary sentence doesn't itemize, not a contradiction.
+
+**Cosmetic reconciliation**: `DeckStage`'s position in `_ds_manifest.json`'s `components[]`
+and in `components/brand/index.js` was moved to sit right after `DeckFooter`, matching the
+brand group's listed order in `FRC_Design_System.md` v1.6 (`SealMark, MarkGlyph, Logotype,
+DeckFooter, DeckStage, ProgramLockup, …`). No functional effect — no audit check reads order.
+
+### Resync — Core + Brand, now 16
+
+`DeckStage` added to `.design-sync/config.json`'s `componentSrcMap`/`docsMap`, and
+`.design-sync/previews/DeckStage.tsx` authored (two variants, `Squadron` and `Paper` — the
+pair that proves `DeckStage` paints from the *sheet's* ground, not the root's, since `--edge`
+and `--bg0` differ visibly between them). Rebuilt: **16/16 components, 16/16 previews render
+cleanly** (`package-validate.mjs`). The `brand__DeckStage.png` render check screenshot shows
+exactly what it should: a black squadron cell and a light paper cell side by side, each
+showing the *stage* fill (`--bg0`) distinct from the *canvas* — proving the static preview
+renders the paint correctly even without interaction.
+
+Uploaded (88 files: 83 prior + `_preview/DeckStage.js` + `components/brand/DeckStage/{.jsx,
+.d.ts,.html,.prompt.md}`). The manifest did **not** recompile from the upload alone — same
+behavior as the first sync — recompiling required opening the project page in a browser once,
+which is what runs the platform's client-side self-check. After that: `_ds_manifest.json`
+reports **16 components** including `DeckStage`, **16 cards**, `source: design-sync-cli`.
+
+### Deck generated, check 43 measured — all five present
+
+Routing header written per the standards v1.5 skeleton, with one deliberate addition flagged
+below. Deck: 2 sheets, SQUADRON, internal, `DeckFooter` on both, `DeckStage` mounted once.
+
+**Flag on the routing header text itself.** The doc's own routing-header code block lists
+only four explicit "set on the root" bullets — aspect, ground class, audience class, "mount
+DeckStage once" — with `.frc-letterbox` mentioned only in prose under the DeckStage bullet
+("… so canvas **and letterbox** paint from the active ground"), not as its own bulleted class
+to set. But check 43 treats `.frc-letterbox` as a fifth, independent, required item on the
+root. Since a prompt built strictly from the quoted four-bullet block would not reliably
+produce the class, the prompt used here added a fifth explicit bullet — `Letterbox class:
+.frc-letterbox` — to make it unambiguous and directly satisfy check 43's letter. This is a
+loose end in the routing-header *text* worth tightening in a future revision of the standard,
+not a defect in `DeckStage` or in the audit.
+
+**Measured, not assumed** — verified against the raw `.dc.html` source via the project's own
+`GetFile` RPC first, then against LIVE computed values from a temporary diagnostic sheet
+mounted in the actual generated deck (removed from nothing — it stays in this one-off
+verification deck, which ships to no one):
+
+    frc-deck frc-ground-squadron frc-audience-internal frc-letterbox   (deck root className, verbatim)
+    1920px                                                              (.frc-stage computed width)
+    1440px                                                              (.frc-stage computed height)
+    4:3                                                                 (.frc-stage data-aspect)
+    true                                                                (.frc-letterbox === deck root)
+    1                                                                   ([data-frc="DeckStage"] count)
+
+All five check-43 items: **PRESENT.**
+- Aspect 4:3, 1920×1440, not the 16:9 platform default — **present**, live-measured.
+- A ground class — **present** (`frc-ground-squadron`).
+- An audience class — **present** (`frc-audience-internal`).
+- `.frc-letterbox` — **present**, and correctly IS the deck root (not a separate wrapper).
+- `DeckStage` mounted exactly once — **present** (source shows exactly one
+  `<x-import component-from-global-scope="FRC5669DesignSystem.DeckStage">`; live count = 1).
+
+This clears the last blocker recorded against syncing the remaining 62 components. Data,
+Surfaces, Forms and Sheets remain unsynced by instruction — nothing beyond Core + Brand was
+touched this session.

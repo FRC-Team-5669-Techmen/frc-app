@@ -38,10 +38,8 @@
        ==================================================================== */
     html, body { margin: 0; height: 100%; }
     body { overflow: hidden; }
-    .frc-letterbox { position: fixed; inset: 0; overflow: hidden; }
-    .frc-letterbox > .frc-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
-    .frc-thumbs-dock { position: fixed; left: 0; right: 0; bottom: 0; }
-    .frc-thumbs-dock[hidden] { display: none; }
+    /* .frc-letterbox, .frc-letterbox > .frc-stage and .frc-thumbs-dock now ship from
+       tokens/deck-motion.css — this file no longer needs its own copy. */
     a { color: inherit; }
     a:hover { color: inherit; }
   </style>

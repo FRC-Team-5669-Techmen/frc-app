@@ -283,6 +283,15 @@
       ]
     },
     {
+      "name": "DeckStage",
+      "group": "brand",
+      "sourcePath": "components/brand/DeckStage.jsx",
+      "types": "components/brand/DeckStage.d.ts",
+      "prompt": "components/brand/DeckStage.prompt.md",
+      "class": "frc-deck-stage",
+      "note": "Behaviour, not appearance. Mounted exactly once per deck. Renders nothing visible; paints canvas, letterbox and thumbnail frames from the ACTIVE sheet --bg0 and --edge, and repaints on every sheet change. Replaces the stage script that used to live in templates/Deck.dc.html. Guards: no .frc-deck ancestor, no .frc-stage, no data-aspect, no ground class, no audience class, a second instance."
+    },
+    {
       "name": "ProgramLockup",
       "group": "brand",
       "sourcePath": "components/brand/ProgramLockup.jsx",
@@ -346,15 +355,6 @@
       "types": "components/brand/StencilTitle.d.ts",
       "prompt": "components/brand/StencilTitle.prompt.md",
       "class": "frc-stencil"
-    },
-    {
-      "name": "DeckStage",
-      "group": "brand",
-      "sourcePath": "components/brand/DeckStage.jsx",
-      "types": "components/brand/DeckStage.d.ts",
-      "prompt": "components/brand/DeckStage.prompt.md",
-      "class": "frc-deck-stage",
-      "note": "Behaviour, not appearance. Mounted exactly once per deck. Renders nothing visible; paints canvas, letterbox and thumbnail frames from the ACTIVE sheet --bg0 and --edge, and repaints on every sheet change. Replaces the stage script that used to live in templates/Deck.dc.html. Guards: no .frc-deck ancestor, no .frc-stage, no data-aspect, no ground class, no audience class, a second instance."
     },
     {
       "name": "Badge",

@@ -5,7 +5,7 @@ description: Build FRC Team 5669 (Techmen) presentation decks and printed materi
 
 # FRC5669DesignSystem
 
-The visual identity system for FRC Team 5669 (Techmen) decks and materials. Specification: `FRC_Design_System.md` v1.2, which is authoritative for every color, token, class and rule. `_ds_manifest.json` is the exported registry and the staleness authority.
+The visual identity system for FRC Team 5669 (Techmen) decks and materials. **Governing documents:** [`docs/FRC_Design_System.md`](docs/FRC_Design_System.md) (brand, tokens, type, motion, the component manifest) and [`docs/FRC_CLAUDE_DESIGN_STANDARDS.md`](docs/FRC_CLAUDE_DESIGN_STANDARDS.md) (scoping and prompting — recipes, the routing header, the pre-delivery audit), both committed here so a session reads them from HEAD rather than depending on an attachment arriving. Project knowledge holds the copy Alejandro maintains; a version ships to both in the same pass. Together they are authoritative for every color, token, class and rule. `_ds_manifest.json` is the exported registry and the staleness authority.
 
 **Namespace** `FRC5669DesignSystem` · **class prefix** `frc-` · **root** `src/lib/design-system/`
 

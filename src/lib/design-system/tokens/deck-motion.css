@@ -24,6 +24,19 @@
 }
 .frc-stage[data-aspect="16:9"] { height: 1080px; }
 
+/* Letterbox: a deck root that owns the viewport carries this class, declared
+   explicitly by the routing header (never inherited — see FRC_CLAUDE_DESIGN_
+   STANDARDS.md, the routing header and audit check 43). It fixes the deck to
+   the viewport and lets DeckStage scale the stage into it by transform, which
+   is why the stage is positioned absolute only in this scope: outside a
+   letterbox a deck may be embedded (a demo card, a proof, a page section) and
+   the stage stays in normal flow. This rule used to live only inside the copied
+   Deck.dc.html shell; since nothing is copied any more, it has to ship in the
+   token layer or a deck that sets the class gets no letterbox at all — the
+   class would be present, read by DeckStage, and functionally inert. */
+.frc-letterbox { position: fixed; inset: 0; overflow: hidden; }
+.frc-letterbox > .frc-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+
 /* DeckStage is behaviour, not appearance: it renders a marker node so it can
    find its deck and be counted, and that node is never seen. A tripped guard
    renders .frc-fault instead, which is deliberately not hidden. */
@@ -41,8 +54,8 @@
 }
 
 /* Thumbnail frames follow the active ground (bg0 fill, edge frame) so the rail
-   never shows a neutral white. The Deck.dc.html stage script repaints these
-   from the computed --bg0 / --edge of the active sheet. */
+   never shows a neutral white. DeckStage repaints these from the computed
+   --bg0 / --edge of the active sheet on every sheet change. */
 .frc-thumbs {
   display: flex;
   gap: 12px;
@@ -69,6 +82,11 @@
   cursor: pointer;
 }
 .frc-thumb[data-current] { outline-color: var(--accent); color: var(--fg); }
+
+/* Docks the rail at the page bottom on a full-viewport deck (same category as
+   .frc-letterbox above: this used to live only in the copied Deck.dc.html shell). */
+.frc-thumbs-dock { position: fixed; left: 0; right: 0; bottom: 0; }
+.frc-thumbs-dock[hidden] { display: none; }
 
 /* ---- The four transitions (gated) ---------------------------------------- */
 @media (prefers-reduced-motion: no-preference) {
