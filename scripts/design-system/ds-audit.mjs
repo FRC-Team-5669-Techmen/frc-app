@@ -13,6 +13,10 @@
 //  7. _ds_manifest.json is accurate: every listed file exists, every component
 //     has .jsx + .d.ts + .prompt.md, every group has a demo card, alias names match.
 //  8. No emoji anywhere in the bundle.
+//  9. Sheet patterns inherit their ground: no `.frc-ground-*` selector in
+//     tokens/sheets.css and no ground class named in any components/sheets file.
+// 10. Every sheet pattern defaults to one of the four transitions.
+// 11. templates/Specimen.dc.html is never a starting point.
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -122,7 +126,7 @@ for (const f of allFiles) {
 }
 
 // ---------- 5. styles.css imports only, in order ----------
-const ORDER = ['fonts', 'colors', 'typography', 'effects', 'surfaces', 'motion', 'deck-motion', 'image-slot', 'data', 'surface-components', 'forms']
+const ORDER = ['fonts', 'colors', 'typography', 'effects', 'surfaces', 'motion', 'deck-motion', 'image-slot', 'data', 'surface-components', 'forms', 'sheets']
 const styles = stripComments(read('styles.css')).split('\n').map((l) => l.trim()).filter(Boolean)
 const imports = styles.map((l) => l.match(/^@import\s+'\.\/tokens\/([\w-]+)\.css';$/)?.[1])
 if (styles.some((l) => !l.startsWith('@import'))) fail('styles.css contains something other than @import lines')
@@ -188,7 +192,7 @@ if (!exists(manifest.tokens.mirror)) fail('manifest tokens.mirror missing')
 if (!fs.existsSync(path.resolve(HERE, '../../', manifest.audit.split(' ')[0]))) fail('manifest audit path missing')
 if (manifest.version !== tokens.VERSION) fail(`manifest version ${manifest.version} ≠ tokens.js ${tokens.VERSION}`)
 // every component .jsx on disk is listed
-for (const f of allFiles.filter((p) => /^components\/(core|brand|data|surfaces|forms)\/[A-Z]\w+\.jsx$/.test(p) && !/DemoCard|AssetSlot/.test(p))) {
+for (const f of allFiles.filter((p) => /^components\/(core|brand|data|surfaces|forms|sheets)\/[A-Z]\w+\.jsx$/.test(p) && !/DemoCard|AssetSlot|sheets\/Sheet\.jsx/.test(p))) {
   if (!manifest.components.some((c) => c.sourcePath === f)) fail(`${f} exists but is not in the manifest`)
 }
 for (const a of manifest.pending.assets) if (exists(a)) fail(`manifest pending asset ${a} exists — move it out of pending`)
@@ -199,6 +203,34 @@ for (const f of allFiles) {
   const lines = read(f).split('\n')
   lines.forEach((l, i) => { if (EMOJI.test(l)) fail(`${f}:${i + 1}: emoji`) })
 }
+
+// ---------- 9-11. sheet patterns ----------
+const GROUND_SELECTOR = /\.frc-ground-(squadron|field|paper)/g
+const sheetsCss = stripComments(read('tokens/sheets.css'))
+for (const m of sheetsCss.matchAll(GROUND_SELECTOR)) {
+  fail(`tokens/sheets.css names .frc-ground-${m[1]} at ${m.index} — a sheet pattern inherits its ground and never declares one`)
+}
+const SHEET_TRANSITIONS = ['shutter', 'boot', 'banner', 'cut']
+const sheetFiles = allFiles.filter((p) => /^components\/sheets\/[A-Z]\w+\.jsx$/.test(p) && !/DemoCard|sheets\/Sheet\.jsx/.test(p))
+if (sheetFiles.length !== 26) fail(`components/sheets holds ${sheetFiles.length} pattern files; the spec names 26`)
+for (const f of sheetFiles) {
+  // Comments EXPLAIN the ground rule — MatchBreakdownSheet says in prose why the
+  // alliance scoping lives in data.css. CODE is what may not name a ground.
+  const src = read(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
+  for (const m of src.matchAll(GROUND_SELECTOR)) fail(`${f} names .frc-ground-${m[1]} — patterns inherit the ground from the deck`)
+  if (/\baudience\s*[=:]/.test(src)) {
+    fail(`${f} takes an audience prop — audience is a class on the deck root, switched in CSS`)
+  }
+  const m = src.match(/transition\s*=\s*'(\w+)'/)
+  if (!m) fail(`${f} declares no default transition`)
+  else if (!SHEET_TRANSITIONS.includes(m[1])) fail(`${f} defaults to "${m[1]}", which is not one of the four transitions`)
+}
+for (const s0 of manifest.startingPoints) {
+  if (/Specimen/.test(s0.path)) fail('manifest startingPoints lists the Specimen — it is reference, never a starting point')
+}
+const specimenTpl = manifest.templates.find((t) => /Specimen/.test(t.path))
+if (!specimenTpl) fail('manifest templates does not list templates/Specimen.dc.html')
+else if (specimenTpl.copied !== false) fail('manifest: templates/Specimen.dc.html must be marked copied: false')
 
 // ---------- report ----------
 if (failures.length) {

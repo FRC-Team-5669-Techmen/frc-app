@@ -221,7 +221,7 @@ export function containsAlliance(value) {
 
 /**
  * The red partition, contained: --alliance-red and --alliance-blue may render
- * ONLY inside the named components.
+ * ONLY inside the four named components.
  *
  * Two deliberate exclusions, both reported rather than hidden:
  *  - The token catalogue (.ds-swatch) is route chrome, not deck content: it
@@ -233,7 +233,9 @@ export function containsAlliance(value) {
  *    program rail) is counted separately as a collision, never as a leak.
  */
 export function scanForAlliance(root, options = {}) {
-  const allowed = options.allowed || ['AllianceSplit', 'ScoutTable', 'FieldDiagram']
+  // The spec names FOUR: AllianceSplit, ScoutTable, MatchBreakdownSheet and
+  // FieldDiagram. MatchBreakdownSheet is the fourth and last.
+  const allowed = options.allowed || ['AllianceSplit', 'ScoutTable', 'MatchBreakdownSheet', 'FieldDiagram']
   const inside = []
   const offenders = []
   const collisions = []
@@ -375,4 +377,155 @@ export function toRgbString(value) {
 export function isTransparent(value) {
   const v = norm(value)
   return v === 'transparent' || v === 'rgba(0, 0, 0, 0)'
+}
+
+/* ---------------------------------------------------------------------------
+   PASS 3 proofs: the sheet patterns.
+   ------------------------------------------------------------------------ */
+
+/**
+ * Nothing is hidden in a base state.
+ *
+ * Walks a sheet for elements that carry text but are not rendered, which is the
+ * failure the interaction rule exists to prevent: content lost on PDF export,
+ * and a presenter who has to know an unmarked region is clickable.
+ *
+ * The AUDIENCE CHROME switches are counted separately rather than excused
+ * silently. `.frc-audience-only-external`, `-internal` and the footer rail's
+ * `.frc-footer-first` logo zone are a deck-level mode on the deck root - the
+ * cover program lockup, the closing sponsor rail, the FIRST logo zone the
+ * external audience adds - and they are chrome, never a sheet's subject matter.
+ */
+export function scanHiddenContent(root) {
+  const offenders = []
+  let audienceChrome = 0
+  let elements = 0
+  for (const el of root.querySelectorAll('*')) {
+    const text = (el.textContent || '').trim()
+    if (!text) continue
+    elements++
+    const CHROME = '.frc-audience-only-external, .frc-audience-only-internal, .frc-footer-first'
+    if (el.closest(CHROME)) {
+      if (el.matches(CHROME)) audienceChrome++
+      continue
+    }
+    const cs = getComputedStyle(el)
+    const why = []
+    if (cs.display === 'none') why.push('display none')
+    if (cs.visibility === 'hidden' || cs.visibility === 'collapse') why.push(`visibility ${cs.visibility}`)
+    if (parseFloat(cs.opacity) === 0) why.push('opacity 0')
+    if (why.length) offenders.push({ el: describe(el), why: why.join(', '), text: text.slice(0, 60) })
+  }
+  return { elements, audienceChrome, offenders, ok: offenders.length === 0 }
+}
+
+/**
+ * A FIRST mark never sits on a busy background.
+ *
+ * Finds the FIRST logo zone in each sheet's footer rail and checks every
+ * ambient texture layer against it GEOMETRICALLY: the layer's painted box,
+ * after its clip-path, must not intersect the zone. Reading the clip-path
+ * string alone would pass a layer that was never clipped because it was
+ * positioned over the rail instead.
+ */
+export function scanFirstZoneAmbient(sheet) {
+  const zone = sheet.querySelector('.frc-footer-first')
+  const layers = Array.from(sheet.querySelectorAll('.frc-ambient'))
+  if (!zone) return { zone: false, layers: layers.length, offenders: [], ok: true }
+  const z = zone.getBoundingClientRect()
+  const offenders = []
+  for (const layer of layers) {
+    const cs = getComputedStyle(layer)
+    const r = layer.getBoundingClientRect()
+    // clip-path: inset(top right bottom left) - the bottom inset is what lifts
+    // a full-bleed layer off the rail band.
+    const m = /inset\(([^)]+)\)/.exec(cs.clipPath || '')
+    let bottomInset = 0
+    if (m) {
+      const parts = m[1].trim().split(/\s+/).map((v) => parseFloat(v) || 0)
+      bottomInset = parts.length >= 3 ? parts[2] : 0
+    }
+    const painted = { top: r.top, bottom: r.bottom - bottomInset, left: r.left, right: r.right }
+    const intersects = painted.bottom > z.top && painted.top < z.bottom && painted.right > z.left && painted.left < z.right
+    if (intersects) offenders.push({ layer: layer.className, clipPath: cs.clipPath, paintedBottom: Math.round(painted.bottom), zoneTop: Math.round(z.top) })
+  }
+  return { zone: true, layers: layers.length, offenders, ok: offenders.length === 0 }
+}
+
+/** A FIRST mark requires team identification alongside it. */
+export function checkTeamIdentification(sheet, team = '5669') {
+  const marks = sheet.querySelectorAll('.frc-footer-first, .frc-slot-first, [data-frc="ProgramLockup"], [data-asset*="FIRST"], [data-asset*="FRC-"]')
+  const carriesMark = marks.length > 0
+  const carriesTeam = (sheet.textContent || '').includes(team)
+  return { carriesMark, marks: marks.length, carriesTeam, ok: !carriesMark || carriesTeam }
+}
+
+/**
+ * Copy lives in children. Counts the elements inside a sheet that carry a plain
+ * `slot` attribute - the canvas-editable homes for copy - and the text they
+ * hold. A pattern with zero is a pattern taking its copy some other way.
+ */
+export function countSlots(sheet) {
+  const slots = Array.from(sheet.querySelectorAll('[slot]'))
+  const names = {}
+  let chars = 0
+  for (const el of slots) {
+    const n = el.getAttribute('slot')
+    names[n] = (names[n] || 0) + 1
+    chars += (el.textContent || '').trim().length
+  }
+  return { slots: slots.length, names, chars, ok: slots.length > 0 }
+}
+
+/**
+ * Measure the guaranteed BASE STATE.
+ *
+ * "Base styles are the visible end state" is the rule the whole motion library
+ * rests on, and it is what a print, a PDF and a reduced-motion render show. A
+ * sheet mid-transition is deliberately transformed, blurred or clipped, so
+ * measuring layout while one runs measures the transition instead. This
+ * suspends the sheet transitions, runs the measurement, and restores them; the
+ * transition lab proves the transitions themselves, separately.
+ */
+export function withStaticTransitions(root, fn) {
+  const sheets = Array.from(root.querySelectorAll('.frc-sheet'))
+  const prior = sheets.map((el) => el.style.animation)
+  sheets.forEach((el) => { el.style.animation = 'none' })
+  void root.offsetWidth
+  try {
+    return fn()
+  } finally {
+    sheets.forEach((el, i) => { el.style.animation = prior[i] })
+  }
+}
+
+/**
+ * Nothing overflows the 1920 x 1440 stage box.
+ * The sheet ROOT is skipped: it is the box being measured against, the stage
+ * clips it, and during a transition it is transformed on purpose.
+ */
+export function scanOverflow(stage, tolerance = 2) {
+  const box = stage.getBoundingClientRect()
+  const offenders = []
+  for (const el of stage.querySelectorAll('*')) {
+    if (el.classList.contains('frc-sheet')) continue
+    const cs = getComputedStyle(el)
+    if (cs.display === 'none' || cs.visibility === 'hidden') continue
+    const r = el.getBoundingClientRect()
+    if (r.width === 0 && r.height === 0) continue
+    const over = []
+    if (r.right > box.right + tolerance) over.push(`right +${Math.round(r.right - box.right)}`)
+    if (r.bottom > box.bottom + tolerance) over.push(`bottom +${Math.round(r.bottom - box.bottom)}`)
+    if (r.left < box.left - tolerance) over.push(`left -${Math.round(box.left - r.left)}`)
+    if (over.length) offenders.push({ el: describe(el), over: over.join(', ') })
+  }
+  return { offenders, ok: offenders.length === 0 }
+}
+
+/** The transition class actually applied to a sheet, from the four. */
+export function readTransition(sheet) {
+  for (const t of ['shutter', 'boot', 'banner', 'cut']) {
+    if (sheet.classList.contains(`frc-slide-${t}`)) return t
+  }
+  return null
 }

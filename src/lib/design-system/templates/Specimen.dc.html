@@ -1,0 +1,998 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Specimen - FRC5669DesignSystem sheet patterns</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;family=Space+Mono:wght@400;700&amp;family=Roboto:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    /* ========================================================================
+       SPECIMEN - REFERENCE ONLY. THIS IS NOT A STARTING POINT.
+
+       Every one of the twenty-six sheet patterns appears here once, across all
+       three grounds and both audience modes, so a pattern can be looked at
+       before it is used.
+
+       DO NOT COPY THIS FILE. Copying it produces a fork carrying twenty-six
+       sheets nobody asked for, and that fork receives no later fix - which is
+       the exact failure the sheet-pattern architecture exists to prevent.
+
+       The ONE file anyone copies is templates/Deck.dc.html: a stage, a ground
+       class, an audience class, a footer rail and one blank sheet. Copy that,
+       then reference the patterns you actually need.
+
+       This file is a RENDERING of the patterns for Claude Design. The patterns
+       themselves are React components under components/sheets/, and those are
+       the source of truth: the dev-guarded /_ds route in frc-app mounts the
+       real components, so anything measured there is measured on the real
+       surface rather than on this markup.
+       ==================================================================== */
+    html, body { margin: 0; height: 100%; }
+    body { overflow: hidden; }
+    .frc-letterbox { position: fixed; inset: 0; overflow: hidden; }
+    .frc-letterbox > .frc-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+    .frc-thumbs-dock { position: fixed; left: 0; right: 0; bottom: 0; }
+    .frc-thumbs-dock[hidden] { display: none; }
+    a { color: inherit; }
+    a:hover { color: inherit; }
+  </style>
+</helmet>
+<div class="frc-deck frc-ground-squadron frc-audience-internal frc-letterbox" data-deck-root>
+  <div class="frc-stage" data-aspect="4:3">
+    <section class="frc-sheet frc-slide-banner frc-sheet-cover frc-ground-squadron frc-audience-external" data-label="CoverSheet" data-screen-label="CoverSheet - squadron, external" data-deck-active="">
+      <div class="frc-sheet-body">
+      <div class="frc-cover-main">
+        <div class="frc-cover-mark">
+          <span class="frc-slot" style="width: 200px; height: 200px;"><span class="frc-slot-label">5669-Seal.svg</span></span>
+          <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Kickoff briefing</span></p>
+        </div>
+        <h1 class="frc-stencil frc-stencil-display frc-stencil-bridge frc-cover-title" slot="title">Build season starts Saturday</h1>
+        <p class="frc-cover-sub" slot="subtitle">What we are building, who is on what, and the three dates that do not move.</p>
+        <div class="frc-cover-meta"><span class="frc-badge frc-badge-accent frc-badge-solid">2026-27</span></div>
+      </div>
+      <div class="frc-cover-foot">
+        <div class="frc-audience-only-external">
+          <div class="frc-program-lockup" style="--program: var(--program-frc);">
+            <span class="frc-slot" style="width: 320px; height: 60px;"><span class="frc-slot-label">FRC horizontal, reverse</span></span>
+            <div class="frc-program-rail"></div>
+            <div class="frc-program-team"><span class="frc-label">Team</span><span class="frc-numeral">5669</span></div>
+          </div>
+        </div>
+        <p class="frc-first-attrib">Techmen, Team 5669, is a registered <span class="frc-first"><span class="frc-first-word">FIRST</span><sup class="frc-first-reg">&reg;</sup> Robotics Competition</span> team at Don Bosco Technical Institute.</p>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Brief</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">1<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-current=""></li><li></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-shutter frc-sheet-agenda frc-ground-squadron" data-label="AgendaSheet" data-screen-label="AgendaSheet - squadron, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">This session</span></p>
+        <h2 class="frc-sheet-title" slot="title">What we cover today</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-steps">
+          <section class="frc-step" data-state="done"><span class="frc-step-n frc-numeral"></span><div class="frc-step-body"><h3 class="frc-step-title" slot="title">Where the season stands</h3><p class="frc-step-text" slot="text">Two minutes on the schedule, then straight to the work.</p></div></section>
+          <section class="frc-step" data-state="current"><span class="frc-step-n frc-numeral"></span><div class="frc-step-body"><h3 class="frc-step-title" slot="title">Drivetrain handoff</h3><p class="frc-step-text" slot="text">Mechanical walks Programming through the gearbox change.</p></div></section>
+          <section class="frc-step"><span class="frc-step-n frc-numeral"></span><div class="frc-step-body"><h3 class="frc-step-title" slot="title">Shop safety refresh</h3><p class="frc-step-text" slot="text">Mill and bandsaw. Everyone, not just the certified.</p></div></section>
+          <section class="frc-step"><span class="frc-step-n frc-numeral"></span><div class="frc-step-body"><h3 class="frc-step-title" slot="title">Open build</h3><p class="frc-step-text" slot="text">Subteam leads have the job board.</p></div></section>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Brief</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">2<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-current=""></li><li></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-banner frc-sheet-section frc-ground-squadron" data-label="SectionSheet" data-screen-label="SectionSheet - squadron, internal">
+      <div class="frc-sheet-body">
+      <div class="frc-section-main">
+        <span class="frc-section-index frc-numeral">Part 02</span>
+        <p class="frc-eyebrow"><span slot="eyebrow">Part two</span></p>
+        <h2 class="frc-stencil frc-stencil-display frc-stencil-bridge" slot="title">Build</h2>
+        <div class="frc-chevron-rail frc-section-rail" style="height: 12px;" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><defs><pattern id="frc-chev-spec-2" patternUnits="userSpaceOnUse" width="16" height="12"><path d="M0 0 L6 0 L12 6 L6 12 L0 12 L6 6 Z" fill="currentColor"></path></pattern></defs><rect width="100%" height="100%" fill="url(#frc-chev-spec-2)"></rect></svg></div>
+        <p class="frc-sheet-lede" slot="lede">Drivetrain, intake, and the parts we are still waiting on.</p>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Brief</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">3<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-current=""></li><li></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-banner frc-sheet-statement frc-ground-squadron" data-label="StatementSheet" data-screen-label="StatementSheet - squadron, internal">
+      <div class="frc-sheet-body">
+      <div class="frc-statement-main">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Standing order</span></p>
+        <p class="frc-stencil frc-stencil-display frc-stencil-bridge" slot="title">Nobody runs a machine alone.</p>
+        <div role="separator" class="frc-divider frc-divider-auto"><div class="frc-divider-line"></div><div class="frc-divider-chevron"><div class="frc-chevron-rail" style="height: 10px;" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"><defs><pattern id="frc-chev-spec-1" patternUnits="userSpaceOnUse" width="13.333" height="10"><path d="M0 0 L5 0 L10 5 L5 10 L0 10 L5 5 Z" fill="currentColor"></path></pattern></defs><rect width="100%" height="100%" fill="url(#frc-chev-spec-1)"></rect></svg></div></div></div>
+        <span class="frc-sheet-note" slot="attribution">Shop rule one, every season since 2019</span>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Brief</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">4<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-current=""></li><li></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-banner frc-sheet-quote frc-ground-squadron" data-label="QuoteSheet" data-screen-label="QuoteSheet - squadron, internal">
+      <div class="frc-sheet-body">
+      <div class="frc-quote-main" data-portrait="">
+        <figure class="frc-cutout frc-cutout-none" style="width: 280px; height: 280px;"><span class="frc-frame-empty">Empty slot - expected member-cutout.png</span></figure>
+        <figure class="frc-quote">
+          <span class="frc-quote-rule" aria-hidden="true"></span>
+          <blockquote class="frc-quote-text" slot="text">They did not hand us a finished robot. They handed us a shop and told us what good work looks like.</blockquote>
+          <figcaption class="frc-quote-attr"><span slot="attr">Senior, class of 2026</span><span class="frc-quote-role" slot="role">Drive coach</span></figcaption>
+        </figure>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Brief</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">5<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-current=""></li><li></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-shutter frc-sheet-hub frc-ground-squadron" data-label="HubSheet" data-screen-label="HubSheet - squadron, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Where to</span></p>
+        <h2 class="frc-sheet-title" slot="title">Pick a part</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <nav class="frc-jumps" style="--cols: 4;">
+          <a class="frc-jump" href="#brief" data-state="done"><span class="frc-jump-n frc-numeral">Part 01</span><h3 class="frc-jump-title" slot="title">Brief</h3><p class="frc-jump-note" slot="note">Where the season stands</p></a>
+          <a class="frc-jump" href="#build"><span class="frc-jump-n frc-numeral">Part 02</span><h3 class="frc-jump-title" slot="title">Build</h3><p class="frc-jump-note" slot="note">Mechanisms and blockers</p></a>
+          <a class="frc-jump" href="#field"><span class="frc-jump-n frc-numeral">Part 03</span><h3 class="frc-jump-title" slot="title">Field</h3><p class="frc-jump-note" slot="note">Match review and scouting</p></a>
+          <a class="frc-jump" href="#season"><span class="frc-jump-n frc-numeral">Part 04</span><h3 class="frc-jump-title" slot="title">Season</h3><p class="frc-jump-note" slot="note">Awards, sponsors, next year</p></a>
+        </nav>
+      </div>
+      </div>
+    </section>
+    <section class="frc-sheet frc-slide-shutter frc-sheet-roster frc-ground-squadron" data-label="RosterSheet" data-screen-label="RosterSheet - squadron, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Drive team</span></p>
+        <h2 class="frc-sheet-title" slot="title">Who is on what</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-roster" style="--cols: 2;">
+          <article class="frc-role">
+            <div class="frc-role-portrait"><figure class="frc-cutout frc-cutout-none" style="width: 160px; height: 160px;"><span class="frc-frame-empty">member-cutout.png</span></figure></div>
+            <div class="frc-role-body">
+              <h3 class="frc-role-name" slot="name">A. Rivera</h3>
+              <span class="frc-role-title" slot="title">Drive coach, class of 2027</span>
+              <div class="frc-role-tags"><span class="frc-subteam frc-subteam-lead">Drive Team</span><span class="frc-subteam">Mechanical</span></div>
+              <ul class="frc-role-certs">
+                <li class="frc-role-cert" data-status="certified" data-safety="">Mill</li>
+                <li class="frc-role-cert" data-status="certified">Bandsaw</li>
+                <li class="frc-role-cert" data-status="in_progress">Lathe</li>
+              </ul>
+            </div>
+          </article>
+          <article class="frc-role">
+            <div class="frc-role-portrait"><figure class="frc-cutout frc-cutout-none" style="width: 160px; height: 160px;"><span class="frc-frame-empty">member-cutout-2.png</span></figure></div>
+            <div class="frc-role-body">
+              <h3 class="frc-role-name" slot="name">J. Okafor</h3>
+              <span class="frc-role-title" slot="title">Driver, class of 2028</span>
+              <div class="frc-role-tags"><span class="frc-subteam">Drive Team</span><span class="frc-subteam">Programming</span></div>
+              <ul class="frc-role-certs">
+                <li class="frc-role-cert" data-status="certified">Pit safety</li>
+                <li class="frc-role-cert" data-status="in_progress" data-safety="">Mill</li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Brief</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">7<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-current=""></li><li></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-banner frc-sheet-season frc-ground-squadron" data-label="SeasonSheet" data-screen-label="SeasonSheet - squadron, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">The season</span></p>
+        <h2 class="frc-sheet-title" slot="title">2026-27</h2>
+      </header>
+      <div class="frc-sheet-content frc-sheet-content-center">
+        <div class="frc-season-main">
+          <div>
+            <div class="frc-season-lockup">
+              <span class="frc-slot" style="width: 240px; height: 240px;"><span class="frc-slot-label">Season artwork</span></span>
+              <div class="frc-season-text">
+                <p class="frc-season-name" slot="lockup">Biocore</p>
+                <div class="frc-season-rule"></div>
+                <div class="frc-season-years">2026-27</div>
+              </div>
+            </div>
+          </div>
+          <div class="frc-season-side">
+            <div class="frc-stat frc-stat-hero"><p class="frc-stat-value frc-numeral"><span slot="value">5669</span></p><span class="frc-stat-label" slot="label">Techmen, Don Bosco Technical Institute</span></div>
+            <div class="frc-stat frc-stat-sm"><p class="frc-stat-value frc-numeral"><span slot="value">38</span></p><span class="frc-stat-label" slot="label">Students on the roster</span></div>
+            <div class="frc-stat frc-stat-sm"><p class="frc-stat-value frc-numeral"><span slot="value">3</span></p><span class="frc-stat-label" slot="label">Events entered</span></div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Brief</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">8<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-current=""></li><li></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-cut frc-sheet-closing frc-ground-squadron frc-audience-external" data-label="ClosingSheet" data-screen-label="ClosingSheet - squadron, external">
+      <div class="frc-sheet-body">
+      <div class="frc-closing-main">
+        <div class="frc-closing-mark">
+          <span class="frc-slot" style="width: 160px; height: 160px;"><span class="frc-slot-label">5669-Seal.svg</span></span>
+          <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">That is the brief</span></p>
+        </div>
+        <h2 class="frc-stencil frc-stencil-display frc-stencil-bridge" slot="title">Shop opens at 15:30.</h2>
+        <p class="frc-sheet-lede" slot="lede">Tag in at the door, tag out when you leave, and put the tool back where the shadow is.</p>
+        <div class="frc-closing-next">
+          <button type="button" class="frc-button frc-button-primary"><span class="frc-button-label">Job board</span></button>
+          <button type="button" class="frc-button frc-button-ghost"><span class="frc-button-label">Ask a mentor</span></button>
+        </div>
+      </div>
+      <div class="frc-closing-foot">
+        <div class="frc-audience-only-external">
+          <div class="frc-sponsors">
+            <section class="frc-sponsor-tier">
+              <header class="frc-sponsor-tier-head"><span class="frc-sponsor-tier-name" slot="name">Lead sponsors</span><span class="frc-sponsor-tier-rule" aria-hidden="true"></span></header>
+              <div class="frc-sponsor-row">
+                <figure class="frc-cutout frc-cutout-none" style="width: 220px; height: 90px;"><span class="frc-frame-empty">sponsor-lead-1.png</span></figure>
+                <figure class="frc-cutout frc-cutout-none" style="width: 220px; height: 90px;"><span class="frc-frame-empty">sponsor-lead-2.png</span></figure>
+              </div>
+            </section>
+          </div>
+        </div>
+        <p class="frc-first-attrib">Techmen, Team 5669, is a registered <span class="frc-first"><span class="frc-first-word">FIRST</span><sup class="frc-first-reg">&reg;</sup> Robotics Competition</span> team at Don Bosco Technical Institute.</p>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Season</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">9<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-done=""></li><li data-done=""></li><li data-current=""></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-boot frc-sheet-data frc-ground-field" data-label="DataSheet" data-screen-label="DataSheet - field, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Season to date</span></p>
+        <h2 class="frc-sheet-title" slot="title">Hours in the shop</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-data-stats">
+          <div class="frc-stat frc-stat-hero"><p class="frc-stat-value frc-numeral"><span slot="value">412</span><span class="frc-stat-unit" slot="unit">hrs</span></p><span class="frc-stat-label" slot="label">Shop hours</span></div>
+          <div class="frc-stat frc-stat-sm"><p class="frc-stat-value frc-numeral"><span slot="value">38</span></p><span class="frc-stat-label" slot="label">Members active</span></div>
+          <div class="frc-stat frc-stat-sm frc-stat-warn"><p class="frc-stat-value frc-numeral"><span slot="value">9</span></p><span class="frc-stat-label" slot="label">Below the goal</span></div>
+        </div>
+        <div class="frc-data-main" data-aside="">
+          <div>
+            <div class="frc-spec">
+              <span class="frc-spec-caption" slot="caption">By subteam</span>
+              <div class="frc-spec-row"><span class="frc-spec-label" slot="label">Mechanical</span><span class="frc-spec-value" slot="value">104 h</span></div>
+              <div class="frc-spec-row"><span class="frc-spec-label" slot="label">Programming</span><span class="frc-spec-value" slot="value">88 h</span></div>
+              <div class="frc-spec-row" data-emphasis=""><span class="frc-spec-label" slot="label">Electrical</span><span class="frc-spec-value" slot="value">52 h</span></div>
+              <div class="frc-spec-row"><span class="frc-spec-label" slot="label">Media</span><span class="frc-spec-value" slot="value">21 h</span></div>
+            </div>
+          </div>
+          <div class="frc-procedure-aside">
+            <div class="frc-readout-stack">
+              <div class="frc-readout"><span class="frc-readout-label" slot="label">Meetings held</span><span class="frc-readout-leader"></span><span class="frc-readout-value" slot="value">24</span></div>
+              <div class="frc-readout frc-readout-ok"><span class="frc-readout-label" slot="label">On goal</span><span class="frc-readout-leader"></span><span class="frc-readout-value" slot="value">29 of 38</span></div>
+              <div class="frc-readout frc-readout-warn"><span class="frc-readout-label" slot="label">Behind</span><span class="frc-readout-leader"></span><span class="frc-readout-value" slot="value">9</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Build</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">10<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-current=""></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-boot frc-sheet-schedule frc-ground-field" data-label="ScheduleSheet" data-screen-label="ScheduleSheet - field, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Build calendar</span></p>
+        <h2 class="frc-sheet-title" slot="title">Who is where, when</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-schedule-main">
+          <div class="frc-gantt" style="--cols: 6;">
+            <div class="frc-gantt-head"><span></span><div class="frc-gantt-scale">
+              <span class="frc-gantt-tick" slot="tick">Wk 1</span><span class="frc-gantt-tick" slot="tick">Wk 2</span><span class="frc-gantt-tick" slot="tick">Wk 3</span>
+              <span class="frc-gantt-tick" slot="tick">Wk 4</span><span class="frc-gantt-tick" slot="tick">Wk 5</span><span class="frc-gantt-tick" slot="tick">Wk 6</span>
+            </div></div>
+            <div class="frc-gantt-row"><span class="frc-gantt-label" slot="label">Drivetrain</span><div class="frc-gantt-lane"><div class="frc-gantt-bar frc-gantt-bar-done" style="--start: 0; --span: 34;"><span slot="bar">Cut, welded, belted</span></div><div class="frc-gantt-today" style="--at: 54;"></div></div></div>
+            <div class="frc-gantt-row"><span class="frc-gantt-label" slot="label">Intake</span><div class="frc-gantt-lane"><div class="frc-gantt-bar" style="--start: 18; --span: 40;"><span slot="bar">Rev two on the bench</span></div><div class="frc-gantt-today" style="--at: 54;"></div></div></div>
+            <div class="frc-gantt-row"><span class="frc-gantt-label" slot="label">Shooter</span><div class="frc-gantt-lane"><div class="frc-gantt-bar frc-gantt-bar-risk" style="--start: 44; --span: 30;"><span slot="bar">Waiting on rollers</span></div><div class="frc-gantt-today" style="--at: 54;"></div></div></div>
+            <div class="frc-gantt-row"><span class="frc-gantt-label" slot="label">Climber</span><div class="frc-gantt-lane"><div class="frc-gantt-bar frc-gantt-bar-blocked" style="--start: 62; --span: 24;"><span slot="bar">Blocked on geometry</span></div><div class="frc-gantt-today" style="--at: 54;"></div></div></div>
+          </div>
+          <div class="frc-schedule-legend">
+            <span class="frc-chip" slot="key">Done</span><span class="frc-chip" slot="key">At risk</span><span class="frc-chip" slot="key">Blocked</span>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Build</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">11<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-current=""></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-boot frc-sheet-subteam frc-ground-field" data-label="SubteamStatusSheet" data-screen-label="SubteamStatusSheet - field, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Monday muster</span></p>
+        <h2 class="frc-sheet-title" slot="title">Where every subteam stands</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-subteam-grid" style="--cols: 3;">
+          <section class="frc-card frc-subteam-card">
+            <div class="frc-subteam-card-head"><span class="frc-subteam">Mechanical</span><span class="frc-badge frc-badge-ok">On plan</span></div>
+            <div class="frc-bars"><div class="frc-bar frc-bar-ok"><span class="frc-bar-label" slot="label">Progress</span><div class="frc-bar-track"><div class="frc-bar-fill" style="--pct: 92;"></div></div><span class="frc-bar-value frc-numeral">92</span></div></div>
+            <p class="frc-card-body" slot="note">Drivetrain closed out. Starting the superstructure fixture.</p>
+          </section>
+          <section class="frc-card frc-subteam-card">
+            <div class="frc-subteam-card-head"><span class="frc-subteam">Electrical</span><span class="frc-badge frc-badge-warn">Behind</span></div>
+            <div class="frc-bars"><div class="frc-bar frc-bar-warn"><span class="frc-bar-label" slot="label">Progress</span><div class="frc-bar-track"><div class="frc-bar-fill" style="--pct: 54;"></div></div><span class="frc-bar-value frc-numeral">54</span></div></div>
+            <p class="frc-card-body" slot="note">Waiting on the second CAN run. Two members certified this week.</p>
+          </section>
+          <section class="frc-card frc-subteam-card">
+            <div class="frc-subteam-card-head"><span class="frc-subteam">Programming</span><span class="frc-badge frc-badge-ok">On plan</span></div>
+            <div class="frc-bars"><div class="frc-bar frc-bar-ok"><span class="frc-bar-label" slot="label">Progress</span><div class="frc-bar-track"><div class="frc-bar-fill" style="--pct: 78;"></div></div><span class="frc-bar-value frc-numeral">78</span></div></div>
+            <p class="frc-card-body" slot="note">Auto paths sim-tested. Needs the real drivetrain Thursday.</p>
+          </section>
+          <section class="frc-card frc-subteam-card">
+            <div class="frc-subteam-card-head"><span class="frc-subteam">Fabrication</span><span class="frc-badge frc-badge-fault">Blocked</span></div>
+            <div class="frc-bars"><div class="frc-bar frc-bar-fault"><span class="frc-bar-label" slot="label">Progress</span><div class="frc-bar-track"><div class="frc-bar-fill" style="--pct: 22;"></div></div><span class="frc-bar-value frc-numeral">22</span></div></div>
+            <p class="frc-card-body" slot="note">Router table down. Parts queued at the shop next door.</p>
+          </section>
+          <section class="frc-card frc-subteam-card">
+            <div class="frc-subteam-card-head"><span class="frc-subteam">Media</span><span class="frc-badge frc-badge-ok">On plan</span></div>
+            <div class="frc-bars"><div class="frc-bar frc-bar-ok"><span class="frc-bar-label" slot="label">Progress</span><div class="frc-bar-track"><div class="frc-bar-fill" style="--pct: 66;"></div></div><span class="frc-bar-value frc-numeral">66</span></div></div>
+            <p class="frc-card-body" slot="note">Build photos every meeting. Sponsor packet drafted.</p>
+          </section>
+          <section class="frc-card frc-subteam-card">
+            <div class="frc-subteam-card-head"><span class="frc-subteam">Business/Outreach</span><span class="frc-badge">Steady</span></div>
+            <div class="frc-bars"><div class="frc-bar frc-bar-quiet"><span class="frc-bar-label" slot="label">Progress</span><div class="frc-bar-track"><div class="frc-bar-fill" style="--pct: 40;"></div></div><span class="frc-bar-value frc-numeral">40</span></div></div>
+            <p class="frc-card-body" slot="note">Two sponsor calls booked. Chairmans essay in review.</p>
+          </section>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Build</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">12<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-current=""></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-boot frc-sheet-blocker frc-ground-field" data-label="BlockerSheet" data-screen-label="BlockerSheet - field, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Standing blockers</span></p>
+        <h2 class="frc-sheet-title" slot="title">What is stopping work</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-blockers">
+          <div class="frc-focus">
+            <button type="button" class="frc-focus-row frc-blocker"><span class="frc-focus-rank"><span class="frc-badge frc-badge-fault">Blocked</span></span><span slot="title">Router table down, four parts queued</span><span slot="owner">Fabrication</span></button>
+            <button type="button" class="frc-focus-row frc-blocker"><span class="frc-focus-rank"><span class="frc-badge frc-badge-warn">At risk</span></span><span slot="title">Shooter rollers not shipped</span><span slot="owner">Mechanical</span></button>
+            <button type="button" class="frc-focus-row frc-blocker"><span class="frc-focus-rank"><span class="frc-badge frc-badge-warn">At risk</span></span><span slot="title">Field elements not built for driver practice</span><span slot="owner">Robot Construction</span></button>
+            <button type="button" class="frc-focus-row frc-blocker"><span class="frc-focus-rank"><span class="frc-badge frc-badge-ok">Cleared</span></span><span slot="title">Second battery charger installed</span><span slot="owner">Electrical</span></button>
+          </div>
+          <div class="frc-blockers-aside">
+            <aside class="frc-callout frc-callout-fault"><span class="frc-callout-icon"></span><div class="frc-callout-body"><span class="frc-callout-title" slot="title">Decision needed today</span><p class="frc-callout-text">Cut the climber, or move driver practice a week. The room picks one.</p></div></aside>
+            <aside class="frc-callout frc-callout-quiet"><span class="frc-callout-icon"></span><div class="frc-callout-body"><span class="frc-callout-title" slot="title">Owner rule</span><p class="frc-callout-text">Every blocker has a name next to it before this sheet closes.</p></div></aside>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Build</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">13<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-current=""></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-boot frc-sheet-targets frc-ground-field" data-label="TargetsSheet" data-screen-label="TargetsSheet - field, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Season targets</span></p>
+        <h2 class="frc-sheet-title" slot="title">What we said we would hit</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-targets">
+          <div class="frc-bars">
+            <div class="frc-bar"><span class="frc-bar-label" slot="label">Shop hours</span><div class="frc-bar-track"><div class="frc-bar-fill" style="--pct: 87;"></div><div class="frc-bar-target" style="--target: 75;"></div></div><span class="frc-bar-value" slot="value">104 of 90</span></div>
+            <div class="frc-bar frc-bar-ok"><span class="frc-bar-label" slot="label">Members certified</span><div class="frc-bar-track"><div class="frc-bar-fill" style="--pct: 73;"></div><div class="frc-bar-target" style="--target: 75;"></div></div><span class="frc-bar-value" slot="value">88%</span></div>
+            <div class="frc-bar frc-bar-warn"><span class="frc-bar-label" slot="label">Outreach hours</span><div class="frc-bar-track"><div class="frc-bar-fill" style="--pct: 43;"></div><div class="frc-bar-target" style="--target: 75;"></div></div><span class="frc-bar-value" slot="value">52 of 90</span></div>
+            <div class="frc-bar frc-bar-fault"><span class="frc-bar-label" slot="label">Driver practice</span><div class="frc-bar-track"><div class="frc-bar-fill" style="--pct: 18;"></div><div class="frc-bar-target" style="--target: 75;"></div></div><span class="frc-bar-value" slot="value">21 of 90</span></div>
+          </div>
+          <div class="frc-targets-aside">
+            <div class="frc-countdown" data-state="rest"><div class="frc-countdown-row"><span class="frc-countdown-value frc-numeral">31</span><span class="frc-countdown-unit">days</span></div><span class="frc-countdown-label" slot="label">To bag and tag</span></div>
+            <div class="frc-countdown" data-state="warn"><div class="frc-countdown-row"><span class="frc-countdown-value frc-numeral">9</span><span class="frc-countdown-unit">days</span></div><span class="frc-countdown-label" slot="label">To the Ventura regional</span></div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Build</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">14<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-current=""></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-boot frc-sheet-match frc-ground-field" data-label="MatchBreakdownSheet" data-screen-label="MatchBreakdownSheet - field, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Qualification 42</span></p>
+        <h2 class="frc-sheet-title" slot="title">Where the match was won</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-match">
+          <div class="frc-match-head">
+            <div>
+              <div class="frc-alliance" data-outcome="red">
+                <section class="frc-alliance-side frc-alliance-red" data-outcome="win"><span class="frc-alliance-tag" slot="red-tag">Red alliance</span><p class="frc-alliance-score frc-numeral" slot="red-score">88</p><span class="frc-alliance-teams" slot="red-teams">5669 &middot; 1678 &middot; 4322</span></section>
+                <span class="frc-alliance-vs" slot="vs">Qual 42</span>
+                <section class="frc-alliance-side frc-alliance-blue" data-outcome="loss"><span class="frc-alliance-tag" slot="blue-tag">Blue alliance</span><p class="frc-alliance-score frc-numeral" slot="blue-score">74</p><span class="frc-alliance-teams" slot="blue-teams">254 &middot; 973 &middot; 1671</span></section>
+              </div>
+            </div>
+            <div>
+              <div class="frc-clock" data-phase="teleop" data-state="zero"><p class="frc-clock-phase">Teleop</p><p class="frc-clock-time frc-numeral">0:00</p><div class="frc-clock-track"><div class="frc-clock-fill" style="--pct: 0;"></div></div><p class="frc-clock-note" slot="note">Final</p></div>
+            </div>
+          </div>
+          <div class="frc-match-detail">
+            <div class="frc-match-side" data-alliance="red">
+              <div class="frc-spec"><span class="frc-spec-caption" slot="caption">Red breakdown</span>
+                <div class="frc-spec-row"><span class="frc-spec-label" slot="label">Autonomous</span><span class="frc-spec-value" slot="value">26</span></div>
+                <div class="frc-spec-row" data-emphasis=""><span class="frc-spec-label" slot="label">Teleop cycles</span><span class="frc-spec-value" slot="value">41</span></div>
+                <div class="frc-spec-row"><span class="frc-spec-label" slot="label">Endgame</span><span class="frc-spec-value" slot="value">21</span></div>
+              </div>
+            </div>
+            <div class="frc-match-side" data-alliance="blue">
+              <div class="frc-spec"><span class="frc-spec-caption" slot="caption">Blue breakdown</span>
+                <div class="frc-spec-row"><span class="frc-spec-label" slot="label">Autonomous</span><span class="frc-spec-value" slot="value">30</span></div>
+                <div class="frc-spec-row"><span class="frc-spec-label" slot="label">Teleop cycles</span><span class="frc-spec-value" slot="value">33</span></div>
+                <div class="frc-spec-row"><span class="frc-spec-label" slot="label">Endgame</span><span class="frc-spec-value" slot="value">11</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Field</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">15<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-done=""></li><li data-current=""></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-boot frc-sheet-scouting frc-ground-field" data-label="ScoutingSheet" data-screen-label="ScoutingSheet - field, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Alliance selection</span></p>
+        <h2 class="frc-sheet-title" slot="title">Who we want</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-scouting">
+          <div>
+            <table class="frc-scout">
+              <thead><tr><th scope="col"><span slot="col">Team</span></th><th scope="col"><span slot="col">Auto</span></th><th scope="col"><span slot="col">Cycles</span></th><th scope="col"><span slot="col">Climb</span></th><th scope="col"><span slot="col">Notes</span></th></tr></thead>
+              <tbody>
+              <tr class="frc-scout-row" data-alliance="red" tabindex="0"><td><span class="frc-scout-team" slot="team">5669</span><span class="frc-scout-tag">red</span></td><td><span slot="cell">12</span></td><td><span slot="cell">7</span></td><td><span slot="cell">Deep</span></td><td><span slot="cell">Clean cycles, no fouls</span></td></tr>
+              <tr class="frc-scout-row" data-alliance="red" tabindex="0"><td><span class="frc-scout-team" slot="team">1678</span><span class="frc-scout-tag">red</span></td><td><span slot="cell">15</span></td><td><span slot="cell">9</span></td><td><span slot="cell">Deep</span></td><td><span slot="cell">Fast from the source</span></td></tr>
+              <tr class="frc-scout-row" data-alliance="blue" tabindex="0"><td><span class="frc-scout-team" slot="team">254</span><span class="frc-scout-tag">blue</span></td><td><span slot="cell">14</span></td><td><span slot="cell">8</span></td><td><span slot="cell">Shallow</span></td><td><span slot="cell">Defended late</span></td></tr>
+              <tr class="frc-scout-row" data-alliance="blue" tabindex="0"><td><span class="frc-scout-team" slot="team">973</span><span class="frc-scout-tag">blue</span></td><td><span slot="cell">9</span></td><td><span slot="cell">6</span></td><td><span slot="cell">None</span></td><td><span slot="cell">Battery swap between matches</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="frc-scouting-aside">
+            <div class="frc-focus" data-focus="">
+              <span class="frc-spec-caption" slot="caption">Pick order</span>
+              <button type="button" class="frc-focus-row" data-active=""><span class="frc-focus-rank" slot="rank">01</span><span class="frc-focus-label" slot="label">1678</span><span class="frc-focus-value" slot="value">2.41</span></button>
+              <button type="button" class="frc-focus-row"><span class="frc-focus-rank" slot="rank">02</span><span class="frc-focus-label" slot="label">254</span><span class="frc-focus-value" slot="value">2.28</span></button>
+              <button type="button" class="frc-focus-row"><span class="frc-focus-rank" slot="rank">03</span><span class="frc-focus-label" slot="label">973</span><span class="frc-focus-value" slot="value">2.19</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Field</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">16<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-done=""></li><li data-current=""></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-boot frc-sheet-field frc-ground-field" data-label="FieldSheet" data-screen-label="FieldSheet - field, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Field</span></p>
+        <h2 class="frc-sheet-title" slot="title">Where our cycles live</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-field-main">
+          <div>
+            <figure class="frc-field-diagram">
+              <div class="frc-fd-stage">
+                <svg viewBox="0 0 1600 800" role="img">
+                  <g class="frc-fd-grid"><line x1="200" y1="0" x2="200" y2="800"></line><line x1="400" y1="0" x2="400" y2="800"></line><line x1="600" y1="0" x2="600" y2="800"></line><line x1="800" y1="0" x2="800" y2="800"></line><line x1="1000" y1="0" x2="1000" y2="800"></line><line x1="1200" y1="0" x2="1200" y2="800"></line><line x1="1400" y1="0" x2="1400" y2="800"></line><line x1="0" y1="100" x2="1600" y2="100"></line><line x1="0" y1="300" x2="1600" y2="300"></line><line x1="0" y1="500" x2="1600" y2="500"></line><line x1="0" y1="700" x2="1600" y2="700"></line></g>
+                  <polygon class="frc-fd-zone" points="0,0 300,0 300,300 0,300" data-alliance="red"></polygon>
+                  <polygon class="frc-fd-zone" points="0,500 300,500 300,800 0,800" data-alliance="red"></polygon>
+                  <polygon class="frc-fd-zone" points="620,0 980,0 980,800 620,800"></polygon>
+                  <polygon class="frc-fd-zone" points="1300,0 1600,0 1600,300 1300,300" data-alliance="blue"></polygon>
+                  <polygon class="frc-fd-zone" points="1300,500 1600,500 1600,800 1300,800" data-alliance="blue"></polygon>
+                </svg>
+                <span class="frc-fd-label" style="--x: 9; --y: 19;" slot="zone">Red source</span>
+                <span class="frc-fd-label" style="--x: 9; --y: 81;" slot="zone">Red amp</span>
+                <span class="frc-fd-label" style="--x: 50; --y: 50;" slot="zone">Neutral zone</span>
+                <span class="frc-fd-label" style="--x: 91; --y: 19;" slot="zone">Blue source</span>
+                <span class="frc-fd-label" style="--x: 91; --y: 81;" slot="zone">Blue amp</span>
+              </div>
+              <div class="frc-fd-legend"><span class="frc-fd-key frc-fd-key-red" slot="key">Red side</span><span class="frc-fd-key frc-fd-key-blue" slot="key">Blue side</span><span class="frc-fd-key" slot="key">Neutral</span></div>
+            </figure>
+          </div>
+          <div class="frc-field-aside">
+            <div class="frc-readout-stack">
+              <div class="frc-readout"><span class="frc-readout-label" slot="label">Cycle, source to amp</span><span class="frc-readout-leader"></span><span class="frc-readout-value" slot="value">8.4 s</span></div>
+              <div class="frc-readout frc-readout-warn"><span class="frc-readout-label" slot="label">Contested lane</span><span class="frc-readout-leader"></span><span class="frc-readout-value" slot="value">Neutral</span></div>
+              <div class="frc-readout frc-readout-ok"><span class="frc-readout-label" slot="label">Auto start</span><span class="frc-readout-leader"></span><span class="frc-readout-value" slot="value">Amp side</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Field</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">17<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-done=""></li><li data-current=""></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-boot frc-sheet-bom frc-ground-field" data-label="BOMSheet" data-screen-label="BOMSheet - field, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Drivetrain</span></p>
+        <h2 class="frc-sheet-title" slot="title">What it is made of</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-bom">
+          <div class="frc-bom-parts">
+            <article class="frc-part">
+              <div class="frc-part-media"><figure class="frc-cutout frc-cutout-shelf" style="width: 180px; height: 140px;"><span class="frc-frame-empty">cots-gearbox.png</span></figure></div>
+              <div class="frc-part-body">
+                <h3 class="frc-part-name" slot="name">MAXPlanetary, 3 stage</h3>
+                <span class="frc-part-vendor" slot="vendor">REV Robotics</span>
+                <div class="frc-part-spec"><span class="frc-part-pn" slot="pn">REV-21-2100</span><span class="frc-part-price frc-numeral" slot="price">$74.00</span></div>
+                <p class="frc-part-note" slot="note">Two per side. Order the 12 tooth pinion separately.</p>
+              </div>
+            </article>
+            <article class="frc-part">
+              <div class="frc-part-media"><figure class="frc-cutout frc-cutout-shelf" style="width: 180px; height: 140px;"><span class="frc-frame-empty">cots-wheel.png</span></figure></div>
+              <div class="frc-part-body">
+                <h3 class="frc-part-name" slot="name">Colson wheel, 4 in</h3>
+                <span class="frc-part-vendor" slot="vendor">AndyMark</span>
+                <div class="frc-part-spec"><span class="frc-part-pn" slot="pn">am-0952</span><span class="frc-part-price frc-numeral" slot="price">$14.50</span></div>
+                <p class="frc-part-note" slot="note">Eight per robot, plus two spares in the pit.</p>
+              </div>
+            </article>
+          </div>
+          <div class="frc-bom-aside">
+            <div class="frc-spec"><span class="frc-spec-caption" slot="caption">Totals</span>
+              <div class="frc-spec-row"><span class="frc-spec-label" slot="label">Subtotal</span><span class="frc-spec-value" slot="value">$412.00</span></div>
+              <div class="frc-spec-row"><span class="frc-spec-label" slot="label">Shipping</span><span class="frc-spec-value" slot="value">$38.00</span></div>
+              <div class="frc-spec-row" data-emphasis=""><span class="frc-spec-label" slot="label">Total</span><span class="frc-spec-value" slot="value">$450.00</span></div>
+            </div>
+            <aside class="frc-callout frc-callout-warn"><span class="frc-callout-icon"></span><div class="frc-callout-body"><span class="frc-callout-title" slot="title">Lead time</span><p class="frc-callout-text">Ten days on the gearboxes. Order before Friday or week five slips.</p></div></aside>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Build</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">18<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-current=""></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-shutter frc-sheet-split frc-ground-paper" data-label="SplitSheet" data-screen-label="SplitSheet - paper, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Drivetrain</span></p>
+        <h2 class="frc-sheet-title" slot="title">Belted, not chained</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-split" data-media="right">
+          <div class="frc-split-media">
+            <figure class="frc-frame frc-frame-brackets"><div class="frc-frame-plate" style="aspect-ratio: 4 / 3;"><div class="frc-frame-empty">Empty slot - expected drivetrain-render.png</div></div><figcaption class="frc-frame-caption" slot="caption">Rev 3, as released to the router</figcaption></figure>
+          </div>
+          <div class="frc-split-copy">
+            <p class="frc-body">Belts hold tension through an event without a mid-match check, and the gearbox drops in without a tensioner block.</p>
+            <p class="frc-body-sm frc-dim">Trade: a belt skips a tooth under a hard hit. We accept that and carry two spares in the pit.</p>
+            <div style="display: flex; gap: 16px; flex-wrap: wrap;"><span class="frc-chip">6.75:1</span><span class="frc-chip">16.4 ft/s</span><span class="frc-chip" data-selected="">4 in colson</span></div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Build</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">19<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-current=""></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-shutter frc-sheet-gallery frc-ground-paper" data-label="GallerySheet" data-screen-label="GallerySheet - paper, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Week four</span></p>
+        <h2 class="frc-sheet-title" slot="title">Where the robot is</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-gallery">
+          <div class="frc-samples" style="--cols: 4;">
+            <figure class="frc-sample"><div class="frc-sample-media"></div><span class="frc-sample-name" slot="name">Drivetrain</span><figcaption class="frc-sample-note" slot="note">Welded, belted, wired</figcaption></figure>
+            <figure class="frc-sample"><div class="frc-sample-media"></div><span class="frc-sample-name" slot="name">Intake</span><figcaption class="frc-sample-note" slot="note">Rev two on the bench</figcaption></figure>
+            <figure class="frc-sample"><div class="frc-sample-media"></div><span class="frc-sample-name" slot="name">Shooter</span><figcaption class="frc-sample-note" slot="note">Waiting on rollers</figcaption></figure>
+            <figure class="frc-sample"><div class="frc-sample-media"></div><span class="frc-sample-name" slot="name">Climber</span><figcaption class="frc-sample-note" slot="note">Geometry under review</figcaption></figure>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Build</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">20<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-current=""></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-shutter frc-sheet-procedure frc-ground-paper" data-label="ProcedureSheet" data-screen-label="ProcedureSheet - paper, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Mill</span></p>
+        <h2 class="frc-sheet-title" slot="title">Squaring stock</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-procedure">
+          <div class="frc-steps">
+            <section class="frc-step" data-state="done"><span class="frc-step-n frc-numeral"></span><div class="frc-step-body"><h3 class="frc-step-title" slot="title">Face one side</h3><p class="frc-step-text" slot="text">Light passes. Deburr before it goes back in the vise.</p></div></section>
+            <section class="frc-step" data-state="current"><span class="frc-step-n frc-numeral"></span><div class="frc-step-body"><h3 class="frc-step-title" slot="title">Locate the datum</h3><p class="frc-step-text" slot="text">Edge find both walls, zero the readout, write the offsets on the traveller.</p></div></section>
+            <section class="frc-step"><span class="frc-step-n frc-numeral"></span><div class="frc-step-body"><h3 class="frc-step-title" slot="title">Cut the pocket</h3><p class="frc-step-text" slot="text">Rough at depth minus 0.020, finish in one pass, then check with the caliper.</p></div></section>
+          </div>
+          <div class="frc-procedure-aside">
+            <aside class="frc-callout frc-callout-warn"><span class="frc-callout-icon"></span><div class="frc-callout-body"><span class="frc-callout-title" slot="title">Before you start</span><p class="frc-callout-text">Stock clamped, sleeves down, mentor in the shop. Every time.</p></div></aside>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Build</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">21<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-current=""></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-shutter frc-sheet-comparison frc-ground-paper" data-label="ComparisonSheet" data-screen-label="ComparisonSheet - paper, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Intake geometry</span></p>
+        <h2 class="frc-sheet-title" slot="title">Over the bumper, or under</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-comparison">
+          <div class="frc-compare">
+            <div class="frc-compare-head"><span class="frc-compare-label" slot="label">Criterion</span><span class="frc-compare-option" slot="option-a">Over the bumper</span><span class="frc-compare-option" slot="option-b">Under the bumper</span></div>
+            <div class="frc-compare-row" data-lead="a"><span class="frc-compare-label" slot="label">Cycle time</span><span class="frc-compare-cell" slot="a">Faster from the source</span><span class="frc-compare-cell" slot="b">One extra beat every cycle</span></div>
+            <div class="frc-compare-row" data-lead="b"><span class="frc-compare-label" slot="label">Build hours</span><span class="frc-compare-cell" slot="a">Two weeks of iteration</span><span class="frc-compare-cell" slot="b">Fits the frame we have</span></div>
+            <div class="frc-compare-row" data-lead="a"><span class="frc-compare-label" slot="label">Reliability</span><span class="frc-compare-cell" slot="a">Fewer jam paths</span><span class="frc-compare-cell" slot="b">Jams under the bumper</span></div>
+          </div>
+          <div class="frc-comparison-verdict"><span class="frc-badge frc-badge-ok">Decision: over the bumper</span><span class="frc-badge frc-badge-warn">Revisit if the frame changes</span></div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Build</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">22<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-current=""></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-shutter frc-sheet-timeline frc-ground-paper" data-label="TimelineSheet" data-screen-label="TimelineSheet - paper, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Build season</span></p>
+        <h2 class="frc-sheet-title" slot="title">Six weeks, four gates</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-timeline-main">
+          <div class="frc-timeline">
+            <div class="frc-timeline-item" data-state="done"><span class="frc-timeline-when" slot="when">Week one</span><h3 class="frc-timeline-title" slot="title">Kickoff read</h3><p class="frc-timeline-body" slot="body">Manual read together, strategy poster on the wall.</p></div>
+            <div class="frc-timeline-item" data-state="done"><span class="frc-timeline-when" slot="when">Week two</span><h3 class="frc-timeline-title" slot="title">Prototype gate</h3><p class="frc-timeline-body" slot="body">Three intakes on the bench, one carried forward.</p></div>
+            <div class="frc-timeline-item" data-state="current"><span class="frc-timeline-when" slot="when">Week four</span><h3 class="frc-timeline-title" slot="title">Assembly</h3><p class="frc-timeline-body" slot="body">Drivetrain done, superstructure on the fixture.</p></div>
+            <div class="frc-timeline-item" data-state="risk"><span class="frc-timeline-when" slot="when">Week six</span><h3 class="frc-timeline-title" slot="title">Practice</h3><p class="frc-timeline-body" slot="body">Driver practice needs the field elements finished.</p></div>
+          </div>
+          <div class="frc-procedure-aside">
+            <aside class="frc-callout"><span class="frc-callout-icon"></span><div class="frc-callout-body"><span class="frc-callout-title" slot="title">The gate that matters</span><p class="frc-callout-text">Week two. Everything after it assumes one intake, not three.</p></div></aside>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Brief</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">23<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-current=""></li><li></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-shutter frc-sheet-safety frc-ground-paper" data-label="SafetySheet" data-screen-label="SafetySheet - paper, internal">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Shop safety</span></p>
+        <h2 class="frc-sheet-title" slot="title">The mill</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-safety-main">
+          <div class="frc-safety-side">
+            <aside class="frc-safety" role="note">
+              <div class="frc-safety-band" aria-hidden="true"></div>
+              <header class="frc-safety-head"><h3 class="frc-safety-title">Safety</h3></header>
+              <div class="frc-safety-body"><p>The mill is a two-person tool. Nobody runs it alone, and nobody runs it without a mentor in the shop.</p></div>
+              <ul class="frc-safety-list">
+                <li slot="rule">Eye protection from the door, not from the machine.</li>
+                <li slot="rule">Long hair tied back, sleeves down, no gloves at the spindle.</li>
+                <li slot="rule">Stock clamped before the spindle turns. Every time.</li>
+              </ul>
+              <div class="frc-safety-ppe"><span class="frc-chip" slot="ppe">Eye protection</span><span class="frc-chip" slot="ppe">Closed shoes</span><span class="frc-chip" slot="ppe">Hearing protection</span></div>
+            </aside>
+          </div>
+          <div class="frc-safety-side">
+            <div class="frc-steps">
+              <section class="frc-step" data-state="current"><span class="frc-step-n frc-numeral"></span><div class="frc-step-body"><h3 class="frc-step-title" slot="title">Check the vise</h3><p class="frc-step-text" slot="text">Jaws clean, stock seated on parallels, handle snug.</p></div></section>
+              <section class="frc-step"><span class="frc-step-n frc-numeral"></span><div class="frc-step-body"><h3 class="frc-step-title" slot="title">Check the tool</h3><p class="frc-step-text" slot="text">Collet tight, tool length recorded, spindle clear of the stock.</p></div></section>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Build</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">24<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-current=""></li><li></li><li></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-banner frc-sheet-award frc-ground-paper frc-audience-external" data-label="AwardSheet" data-screen-label="AwardSheet - paper, external">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Los Angeles regional</span></p>
+        <h2 class="frc-sheet-title" slot="title">What we brought home</h2>
+      </header>
+      <div class="frc-sheet-content frc-sheet-content-center">
+        <div class="frc-award-main">
+          <div>
+            <section class="frc-award">
+              <span class="frc-award-eyebrow" slot="eyebrow">Los Angeles regional</span>
+              <h3 class="frc-award-name" slot="name">Industrial Design Award</h3>
+              <span class="frc-award-event" slot="event">Presented by General Motors</span>
+              <span class="frc-award-year" slot="year">2026</span>
+            </section>
+          </div>
+          <div class="frc-award-side">
+            <div class="frc-result frc-result-win"><span class="frc-result-tag" slot="tag">Win</span><div><h3 class="frc-result-title" slot="title">Quarterfinal 2</h3><span class="frc-result-note" slot="note">Red alliance</span></div><span class="frc-result-score frc-numeral" slot="score">88 - 74</span></div>
+            <div class="frc-result frc-result-rank"><span class="frc-result-tag" slot="tag">Rank</span><div><h3 class="frc-result-title" slot="title">Seeded fourth of 42</h3><span class="frc-result-note" slot="note">Selected first round</span></div><span class="frc-result-score frc-numeral" slot="score">2.41</span></div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Season</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">25<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-done=""></li><li data-done=""></li><li data-current=""></li></ol>
+      </footer>
+    </section>
+    <section class="frc-sheet frc-slide-shutter frc-sheet-sponsor frc-ground-paper frc-audience-external" data-label="SponsorSheet" data-screen-label="SponsorSheet - paper, external">
+      <div class="frc-sheet-body">
+      <header class="frc-sheet-head">
+        <p class="frc-eyebrow frc-eyebrow-accent"><span slot="eyebrow">Thank you</span></p>
+        <h2 class="frc-sheet-title" slot="title">Who pays for this</h2>
+      </header>
+      <div class="frc-sheet-content">
+        <div class="frc-sponsor-main">
+          <p class="frc-sheet-lede" slot="thanks">Sponsorship bought the practice field, the second charger, and the bus to Ventura. Thirty-eight students used all three.</p>
+          <div class="frc-sponsors">
+            <section class="frc-sponsor-tier">
+              <header class="frc-sponsor-tier-head"><span class="frc-sponsor-tier-name" slot="name">Lead sponsors</span><span class="frc-sponsor-tier-rule" aria-hidden="true"></span></header>
+              <div class="frc-sponsor-row">
+                <figure class="frc-cutout frc-cutout-none" style="width: 260px; height: 110px;"><span class="frc-frame-empty">sponsor-lead-1.png</span></figure>
+                <figure class="frc-cutout frc-cutout-none" style="width: 260px; height: 110px;"><span class="frc-frame-empty">sponsor-lead-2.png</span></figure>
+              </div>
+            </section>
+            <section class="frc-sponsor-tier">
+              <header class="frc-sponsor-tier-head"><span class="frc-sponsor-tier-name" slot="name">Supporting</span><span class="frc-sponsor-tier-rule" aria-hidden="true"></span></header>
+              <div class="frc-sponsor-row">
+                <figure class="frc-cutout frc-cutout-none" style="width: 180px; height: 80px;"><span class="frc-frame-empty">sponsor-1.png</span></figure>
+                <figure class="frc-cutout frc-cutout-none" style="width: 180px; height: 80px;"><span class="frc-frame-empty">sponsor-2.png</span></figure>
+                <figure class="frc-cutout frc-cutout-none" style="width: 180px; height: 80px;"><span class="frc-frame-empty">sponsor-3.png</span></figure>
+              </div>
+            </section>
+          </div>
+          <p class="frc-first-attrib">Techmen, Team 5669, is a registered <span class="frc-first"><span class="frc-first-word">FIRST</span><sup class="frc-first-reg">&reg;</sup> Robotics Competition</span> team at Don Bosco Technical Institute.</p>
+        </div>
+      </div>
+      </div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Sheet pattern reference<span class="frc-footer-part">Season</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">26<span class="frc-footer-sheet-total"> / 26</span></div>
+        <ol class="frc-footer-rail"><li data-done=""></li><li data-done=""></li><li data-done=""></li><li data-current=""></li></ol>
+      </footer>
+    </section>
+  </div>
+  <nav class="frc-thumbs frc-thumbs-dock" data-deck-thumbs hidden></nav>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1920,"height":1440}}'>
+/* deck-stage: the same script Deck.dc.html carries. It activates one sheet at a
+   time, drives the keys, and paints the canvas, letterbox and thumbnail frames
+   from the ACTIVE ground --bg0 / --edge so a transition never flashes white -
+   which is what makes the per-section ground overrides in this specimen legal. */
+function frcDeckStage(doc) {
+  var root = doc.querySelector('[data-deck-root]');
+  if (!root) return;
+  var stage = root.querySelector('.frc-stage');
+  if (!stage) return;
+  var sheets = Array.prototype.filter.call(stage.children, function (el) { return el.classList.contains('frc-sheet'); });
+  if (!sheets.length) return;
+  var thumbs = root.querySelector('[data-deck-thumbs]');
+  var current = 0;
+  sheets.forEach(function (s, i) { if (s.hasAttribute('data-deck-active')) current = i; });
+
+  function paint() {
+    var cs = getComputedStyle(sheets[current]);
+    var bg0 = cs.getPropertyValue('--bg0').trim();
+    var edge = cs.getPropertyValue('--edge').trim();
+    doc.documentElement.style.background = edge;
+    doc.body.style.background = edge;
+    root.style.background = edge;
+    stage.style.background = bg0;
+    if (thumbs) {
+      thumbs.style.background = edge;
+      Array.prototype.forEach.call(thumbs.children, function (t, i) {
+        t.style.background = bg0;
+        t.style.borderColor = edge;
+        if (i === current) t.setAttribute('data-current', ''); else t.removeAttribute('data-current');
+      });
+    }
+  }
+  function fit() {
+    var w = root.clientWidth, h = root.clientHeight;
+    var sw = stage.offsetWidth, sh = stage.offsetHeight;
+    var k = Math.min(w / sw, h / sh);
+    var tx = Math.round((w - sw * k) / 2), ty = Math.round((h - sh * k) / 2);
+    stage.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + k + ')';
+  }
+  function show(n) {
+    n = Math.max(0, Math.min(sheets.length - 1, n));
+    sheets.forEach(function (s, i) { if (i === n) s.setAttribute('data-deck-active', ''); else s.removeAttribute('data-deck-active'); });
+    current = n;
+    paint();
+  }
+  function buildThumbs() {
+    if (!thumbs) return;
+    while (thumbs.firstChild) thumbs.removeChild(thumbs.firstChild);
+    sheets.forEach(function (s, i) {
+      var t = doc.createElement('button');
+      t.type = 'button';
+      t.className = 'frc-thumb';
+      t.textContent = s.getAttribute('data-screen-label') || s.getAttribute('data-label') || ('Sheet ' + (i + 1));
+      t.addEventListener('click', function () { show(i); });
+      thumbs.appendChild(t);
+    });
+  }
+  function editable(t) { return !!t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)); }
+  doc.addEventListener('keydown', function (e) {
+    if (editable(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+    switch (e.key) {
+      case 'ArrowRight': case 'PageDown': show(current + 1); break;
+      case 'ArrowLeft': case 'PageUp': show(current - 1); break;
+      case 'Home': show(0); break;
+      case 'End': show(sheets.length - 1); break;
+      case 't': case 'T': if (thumbs) thumbs.hidden = !thumbs.hidden; break;
+      default: return;
+    }
+    e.preventDefault();
+  });
+  window.addEventListener('resize', fit);
+  buildThumbs();
+  show(current);
+  fit();
+}
+if (typeof DCLogic === 'undefined') {
+  window.DCLogic = function () {};
+  window.addEventListener('DOMContentLoaded', function () { frcDeckStage(document); });
+}
+class Component extends DCLogic {
+  componentDidMount() { frcDeckStage(document); }
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

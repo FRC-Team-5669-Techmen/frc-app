@@ -9,17 +9,18 @@ import {
   IconPlay, IconRotateCcw,
   DeckFooter, FirstName, FirstNameScope, HudFrame, PlatePanel, StencilTitle,
   ImageFrame, Cutout, MatchClock, AllianceSplit, ScoutTable, ScoutRow, SponsorWall, SponsorTier,
-  CoreDemoCard, BrandDemoCard, DataDemoCard, SurfacesDemoCard, FormsDemoCard, tokens,
+  CoreDemoCard, BrandDemoCard, DataDemoCard, SurfacesDemoCard, FormsDemoCard, SheetsDemoCard, SHEET_PATTERNS, tokens,
 } from '../index.js'
 import { cx } from '../components/cx.js'
 import {
   proveGrounds, scanForGold, scanForNeutralWhite, auditMotionGate, measureStatic, replay, countMounted,
   scanForAlliance, makeAlphaPng, scanCutoutRectangles, readComputed, definePlatformImageSlot, readSlotFrame,
   PLATFORM_WASH, norm, toRgbString, isTransparent,
+  scanHiddenContent, scanFirstZoneAmbient, checkTeamIdentification, countSlots, scanOverflow, readTransition, withStaticTransitions,
 } from './proofs.js'
 import './specimen.css'
 
-const { GROUNDS, GROUND_CLASSES, GROUND_ALIASES, BRAND, RAMPS, PARTITION, PROGRAM, SEASON_DEFAULT, TYPE_SCALE, FONTS, RADII, MOTION, AMBIENT, VERSION, NAMESPACE } = tokens
+const { GROUNDS, GROUND_CLASSES, GROUND_ALIASES, AUDIENCE_CLASSES, BRAND, RAMPS, PARTITION, PROGRAM, SEASON_DEFAULT, TYPE_SCALE, FONTS, RADII, MOTION, AMBIENT, VERSION, NAMESPACE } = tokens
 const PARTS = ['Brief', 'Roster', 'Quals', 'Mission', 'Muster']
 
 /* ---------- small route helpers (chrome only; components are never copied) ---------- */
@@ -894,6 +895,171 @@ function RefusalsSection() {
   )
 }
 
+/* ---------- 7g. Sheet patterns ---------- */
+
+const AUDIENCES = ['internal', 'external']
+
+/** The role each pattern's default transition is supposed to match. */
+const TRANSITION_ROLE = {
+  shutter: 'content, general',
+  boot: 'data, telemetry, match, chart',
+  banner: 'section divider, statement, quote',
+  cut: 'quiet beat',
+}
+const EXPECTED_TRANSITION = {
+  CoverSheet: 'banner', AgendaSheet: 'shutter', SectionSheet: 'banner', StatementSheet: 'banner',
+  QuoteSheet: 'banner', HubSheet: 'shutter', ClosingSheet: 'cut', SplitSheet: 'shutter',
+  GallerySheet: 'shutter', ProcedureSheet: 'shutter', ComparisonSheet: 'shutter', DataSheet: 'boot',
+  TimelineSheet: 'shutter', ScheduleSheet: 'boot', SubteamStatusSheet: 'boot', BlockerSheet: 'boot',
+  TargetsSheet: 'boot', SafetySheet: 'shutter', RosterSheet: 'shutter', MatchBreakdownSheet: 'boot',
+  ScoutingSheet: 'boot', FieldSheet: 'boot', BOMSheet: 'boot', AwardSheet: 'banner',
+  SponsorSheet: 'shutter', SeasonSheet: 'banner',
+}
+
+function AudienceTabs({ value, onChange }) {
+  return (
+    <div className="ds-tabs">
+      {AUDIENCES.map((a) => (
+        <Button key={a} variant={value === a ? 'primary' : 'ghost'} onClick={() => onChange(a)} aria-pressed={value === a}>
+          {`audience: ${a}`}
+        </Button>
+      ))}
+    </div>
+  )
+}
+
+function SheetsSection() {
+  const [ground, setGround] = useState('squadron')
+  const [audience, setAudience] = useState('internal')
+  const [index, setIndex] = useState(0)
+  const [all, setAll] = useState(false)
+  const [ambient, setAmbient] = useState(false)
+  const ref = useRef(null)
+  const [report, setReport] = useState(null)
+
+  const shown = all ? SHEET_PATTERNS : [SHEET_PATTERNS[index]]
+
+  const run = useCallback(() => {
+    const root = ref.current
+    if (!root) return
+    const rows = withStaticTransitions(root, () => Array.from(root.querySelectorAll('[data-pattern]')).map((fig) => {
+      const name = fig.getAttribute('data-pattern')
+      const stage = fig.querySelector('.frc-stage')
+      const sheet = fig.querySelector('.frc-sheet')
+      if (!sheet) return { name, missing: true }
+      const hidden = scanHiddenContent(sheet)
+      const first = scanFirstZoneAmbient(sheet)
+      const team = checkTeamIdentification(sheet)
+      const slots = countSlots(sheet)
+      const overflow = scanOverflow(stage)
+      const transition = readTransition(sheet)
+      const expected = EXPECTED_TRANSITION[name]
+      return {
+        name,
+        hidden,
+        first,
+        team,
+        slots,
+        overflow,
+        transition,
+        transitionOk: transition === expected,
+        expected,
+        ok: hidden.ok && first.ok && team.ok && slots.ok && overflow.ok && transition === expected,
+      }
+    }))
+    setReport({ ground, audience, rows, ok: rows.length > 0 && rows.every((r) => r.ok) })
+  }, [ground, audience])
+
+  useEffect(() => { const t = setTimeout(run, 250); return () => clearTimeout(t) }, [run, index, all, ambient])
+
+  return (
+    <Section
+      id="sheets"
+      title="Sheet patterns"
+      lede="Twenty-six full-sheet patterns, the architectural core of the system. Every sheet in every deck is one of these; a deck sheet built from raw markup is a defect. Each pattern INHERITS its ground and its audience from the deck - switch the two rows of buttons below and every pattern follows, with no variant and no per-ground branch."
+    >
+      <GroundTabs
+        value={ground}
+        onChange={setGround}
+        extra={<Button variant={all ? 'secondary' : 'ghost'} onClick={() => setAll((v) => !v)} aria-pressed={all}>{all ? 'showing: all 26' : 'showing: one'}</Button>}
+      />
+      <div className="ds-tabs">
+        <AudienceTabs value={audience} onChange={setAudience} />
+        <Button variant={ambient ? 'secondary' : 'ghost'} onClick={() => setAmbient((v) => !v)} aria-pressed={ambient}>
+          {ambient ? 'ambient: on' : 'ambient: off'}
+        </Button>
+      </div>
+      {all ? null : (
+        <div className="ds-tabs">
+          <Button variant="ghost" onClick={() => setIndex((i) => (i + SHEET_PATTERNS.length - 1) % SHEET_PATTERNS.length)}>Prev</Button>
+          <select
+            className="frc-select"
+            style={{ maxWidth: 420 }}
+            value={SHEET_PATTERNS[index]}
+            onChange={(e) => setIndex(SHEET_PATTERNS.indexOf(e.target.value))}
+          >
+            {SHEET_PATTERNS.map((p, i) => <option key={p} value={p}>{`${String(i + 1).padStart(2, '0')} · ${p}`}</option>)}
+          </select>
+          <Button variant="ghost" onClick={() => setIndex((i) => (i + 1) % SHEET_PATTERNS.length)}>Next</Button>
+          <span className="ds-note">{`${index + 1} of ${SHEET_PATTERNS.length}`}</span>
+        </div>
+      )}
+
+      <div className="ds-frame">
+        <Zoomed width={1968}>
+          <div ref={ref}>
+            <SheetsDemoCard ground={ground} audience={audience} only={shown} ambient={ambient} />
+          </div>
+        </Zoomed>
+      </div>
+
+      <div className="ds-proof" data-proof="sheets">
+        <div className="ds-proof-head">
+          <Verdict state={report ? report.ok : null}>{`Patterns on ${ground} / ${audience}`}</Verdict>
+          {report ? <span>{report.rows.length} mounted · hidden content, FIRST zone, team identification, copy in children, overflow, transition</span> : null}
+          <Button variant="ghost" onClick={run}>Re-measure</Button>
+        </div>
+        {report ? (
+          <table>
+            <thead>
+              <tr>
+                <th>pattern</th><th>hidden content</th><th>FIRST zone</th><th>5669</th>
+                <th>slotted copy</th><th>overflow</th><th>transition</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.rows.map((r) => (
+                <tr key={r.name}>
+                  <td className={r.ok ? 'ds-okcell' : 'ds-fail'}>{r.name}</td>
+                  <td className={r.hidden.ok ? 'ds-okcell' : 'ds-fail'}>
+                    {r.hidden.ok ? `0 of ${r.hidden.elements} text elements` : r.hidden.offenders.map((o) => `${o.el} ${o.why}`).join('; ')}
+                    {r.hidden.audienceChrome ? ` · ${r.hidden.audienceChrome} audience-chrome switch(es)` : ''}
+                  </td>
+                  <td className={r.first.ok ? 'ds-okcell' : 'ds-fail'}>
+                    {r.first.zone ? `${r.first.layers} ambient layer(s), ${r.first.offenders.length} over the zone` : 'no rail (hub)'}
+                  </td>
+                  <td className={r.team.ok ? 'ds-okcell' : 'ds-fail'}>
+                    {r.team.carriesMark ? (r.team.carriesTeam ? `${r.team.marks} mark(s), 5669 present` : 'MARK WITHOUT 5669') : 'no FIRST mark'}
+                  </td>
+                  <td className={r.slots.ok ? 'ds-okcell' : 'ds-fail'}>{`${r.slots.slots} slots, ${r.slots.chars} chars`}</td>
+                  <td className={r.overflow.ok ? 'ds-okcell' : 'ds-fail'}>{r.overflow.ok ? '0' : r.overflow.offenders.slice(0, 2).map((o) => `${o.el} ${o.over}`).join('; ')}</td>
+                  <td className={r.transitionOk ? 'ds-okcell' : 'ds-fail'}>{`${r.transition} (${TRANSITION_ROLE[r.transition] || '?'})`}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : null}
+        <p className="ds-note">
+          Hidden content counts every element carrying text whose computed style is display:none, visibility:hidden or opacity:0.
+          The audience-chrome switches are counted separately: they are a deck-level mode on the deck root, never a sheet&apos;s subject matter.
+          The FIRST zone check is geometric - each ambient layer&apos;s painted box, after its clip-path, must not intersect the logo zone.
+          Every measurement here is taken with the sheet transitions suspended, so it measures the guaranteed base state rather than a frame of an entrance.
+        </p>
+      </div>
+    </Section>
+  )
+}
+
 /* ---------- 8. Deck chrome ---------- */
 
 function ChromeSection() {
@@ -956,6 +1122,10 @@ function WiringSection() {
     'CompareSplit', 'CompareRow', 'SampleGrid', 'Sample', 'JumpGrid', 'JumpCard', 'CalloutDrawing', 'CalloutPin',
     'QuoteBlock', 'RoleCard', 'PartCallout', 'FieldDiagram', 'SponsorWall', 'SponsorTier', 'AwardPlate', 'ResultBanner',
     'Input', 'Select',
+    'CoverSheet', 'AgendaSheet', 'SectionSheet', 'StatementSheet', 'QuoteSheet', 'HubSheet', 'ClosingSheet',
+    'SplitSheet', 'GallerySheet', 'ProcedureSheet', 'ComparisonSheet', 'DataSheet', 'TimelineSheet', 'ScheduleSheet',
+    'SubteamStatusSheet', 'SubteamStatus', 'BlockerSheet', 'Blocker', 'TargetsSheet', 'SafetySheet', 'RosterSheet',
+    'MatchBreakdownSheet', 'ScoutingSheet', 'FieldSheet', 'BOMSheet', 'AwardSheet', 'SponsorSheet', 'SeasonSheet',
   ]
   const missing = counts ? expected.filter((n) => !counts[n]) : []
   return (
@@ -982,7 +1152,7 @@ export default function SpecimenPage() {
         <span className="ds-header-title">{NAMESPACE}</span>
         <span>v{VERSION} · /_ds · dev only</span>
         <nav className="ds-nav">
-          {['grounds', 'tokens', 'type', 'motion', 'surfaces', 'core', 'brand', 'data', 'surfaces-group', 'forms', 'images', 'cutout', 'clock', 'alliance', 'refusals', 'chrome', 'wiring'].map((id) => <a key={id} href={`#${id}`}>{id}</a>)}
+          {['grounds', 'tokens', 'type', 'motion', 'surfaces', 'core', 'brand', 'data', 'surfaces-group', 'forms', 'images', 'cutout', 'clock', 'alliance', 'sheets', 'refusals', 'chrome', 'wiring'].map((id) => <a key={id} href={`#${id}`}>{id}</a>)}
         </nav>
       </header>
       <main className="ds-main">
@@ -1000,6 +1170,7 @@ export default function SpecimenPage() {
         <CutoutSection />
         <ClockSection />
         <AllianceSection />
+        <SheetsSection />
         <RefusalsSection />
         <section className="ds-section"><ExternalEnforcement /></section>
         <ChromeSection />

@@ -1,0 +1,198 @@
+/* FRC5669DesignSystem — sheets
+   Layout for the twenty-six full-sheet patterns. This sheet is LAYOUT ONLY:
+   grids, rhythm and the sheet head. Every color, surface and depth treatment
+   comes from a component or a ground alias.
+
+   THE RULE THIS FILE IS BUILT AROUND
+   A sheet pattern inherits its ground and its audience from the deck. There is
+   no `.frc-ground-*` selector anywhere in this file and no pattern has a
+   per-ground variant: if a layout cannot survive SQUADRON, FIELD and PAPER
+   unchanged, the layout is wrong, not the ground. scripts/design-system/
+   ds-audit.mjs fails if a sheet component or this stylesheet ever names a
+   ground, and /_ds steps every pattern through all three grounds and both
+   audience modes in a live browser.
+
+   The stage is 1920 x 1440. .frc-sheet (surfaces.css) already reserves the
+   footer rail, so the usable body box is about 1680 x 1200. Patterns are built
+   to that box; nothing here scrolls, because a sheet that scrolls is two
+   sheets. */
+
+/* ---- The sheet head ------------------------------------------------------- */
+.frc-sheet-head { display: grid; gap: var(--space-2); align-content: start; }
+.frc-sheet-title {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-display);
+  letter-spacing: var(--track-tight);
+  color: var(--fg);
+  margin: 0;
+}
+.frc-sheet-lede {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--fg-dim);
+  margin: 0;
+  max-width: 1200px;
+}
+.frc-sheet-note {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+
+/* The body: head on top, content filling the rest. min-height:0 keeps a grid
+   child from growing past the sheet when its own content overflows. */
+.frc-sheet-body { display: grid; grid-template-rows: auto 1fr; gap: var(--space-5); }
+.frc-sheet-content { min-height: 0; display: grid; gap: var(--space-4); align-content: start; }
+.frc-sheet-content-center { align-content: center; }
+.frc-sheet-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+
+/* ---- Audience chrome ------------------------------------------------------ */
+/* Audience is a class on the deck root (legal to override on one section), so a
+   pattern never takes an audience prop and never branches in JS. These two
+   helpers are CHROME switches — the cover program lockup, the closing sponsor
+   rail, the FIRST attribution line. They never gate CONTENT: no sheet's
+   subject matter appears in one audience mode and not the other. */
+.frc-audience-only-external { display: none; }
+.frc-audience-external .frc-audience-only-external { display: revert; }
+.frc-audience-external .frc-audience-only-internal { display: none; }
+
+/* The FIRST attribution line: cover and closing sheets only, reduced opacity.
+   Roboto is quarantined to exactly this kind of block. */
+.frc-first-attrib {
+  font-family: var(--font-first);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--fg-dim);
+  opacity: 0.72;
+  margin: 0;
+  max-width: 1100px;
+}
+
+/* ---- CoverSheet ----------------------------------------------------------- */
+.frc-sheet-cover .frc-sheet-body { grid-template-rows: 1fr auto; }
+.frc-cover-main { display: grid; gap: var(--space-4); align-content: center; justify-items: start; }
+.frc-cover-mark { display: flex; align-items: center; gap: var(--space-4); }
+.frc-cover-title { font-size: var(--fs-display); }
+.frc-cover-sub { font-family: var(--font-body); font-size: var(--fs-h3); line-height: var(--lh-heading); color: var(--fg-dim); margin: 0; max-width: 1300px; }
+.frc-cover-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+.frc-cover-foot { display: grid; gap: var(--space-3); }
+
+/* ---- AgendaSheet ---------------------------------------------------------- */
+.frc-sheet-agenda .frc-sheet-content { align-content: start; }
+
+/* ---- SectionSheet --------------------------------------------------------- */
+.frc-sheet-section .frc-sheet-body { grid-template-rows: 1fr; }
+.frc-section-main { display: grid; gap: var(--space-4); align-content: center; justify-items: start; }
+.frc-section-index {
+  font-family: var(--font-mono);
+  font-size: var(--fs-h3);
+  letter-spacing: var(--track-wider);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.frc-section-rail { width: 100%; }
+
+/* ---- StatementSheet ------------------------------------------------------- */
+.frc-sheet-statement .frc-sheet-body { grid-template-rows: 1fr; }
+.frc-statement-main { display: grid; gap: var(--space-4); align-content: center; justify-items: start; max-width: 1500px; }
+
+/* ---- QuoteSheet ----------------------------------------------------------- */
+.frc-sheet-quote .frc-sheet-body { grid-template-rows: 1fr; }
+.frc-quote-main { display: grid; gap: var(--space-5); align-content: center; grid-template-columns: 1fr; }
+.frc-quote-main[data-portrait] { grid-template-columns: 320px 1fr; align-items: center; }
+
+/* ---- HubSheet ------------------------------------------------------------- */
+/* The one sheet with no footer rail, so it reclaims the reserved band. */
+.frc-sheet-hub { padding-bottom: var(--sheet-pad-y); }
+
+/* ---- ClosingSheet --------------------------------------------------------- */
+.frc-sheet-closing .frc-sheet-body { grid-template-rows: 1fr auto; }
+.frc-closing-main { display: grid; gap: var(--space-4); align-content: center; justify-items: start; }
+.frc-closing-mark { display: flex; align-items: center; gap: var(--space-4); }
+.frc-closing-next { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.frc-closing-foot { display: grid; gap: var(--space-3); }
+
+/* ---- SplitSheet ----------------------------------------------------------- */
+.frc-split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); align-items: center; min-height: 0; }
+.frc-split[data-weight="media"] { grid-template-columns: 1.4fr 1fr; }
+.frc-split[data-weight="copy"]  { grid-template-columns: 1fr 1.4fr; }
+.frc-split[data-media="right"] .frc-split-media { order: 2; }
+.frc-split-copy { display: grid; gap: var(--space-3); align-content: center; }
+.frc-split-media { min-width: 0; }
+
+/* ---- GallerySheet --------------------------------------------------------- */
+.frc-gallery { display: grid; gap: var(--space-4); min-height: 0; }
+
+/* ---- ProcedureSheet ------------------------------------------------------- */
+.frc-procedure { display: grid; grid-template-columns: 1fr 620px; gap: var(--space-5); align-items: start; min-height: 0; }
+.frc-procedure-aside { display: grid; gap: var(--space-3); align-content: start; }
+.frc-procedure[data-aside="none"] { grid-template-columns: 1fr; }
+
+/* ---- ComparisonSheet ------------------------------------------------------ */
+.frc-comparison { display: grid; gap: var(--space-4); min-height: 0; }
+.frc-comparison-verdict { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+
+/* ---- DataSheet ------------------------------------------------------------ */
+.frc-data-stats { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: var(--space-4); }
+.frc-data-main { display: grid; gap: var(--space-4); min-height: 0; }
+.frc-data-main[data-aside] { grid-template-columns: 1fr 560px; align-items: start; }
+
+/* ---- TimelineSheet / ScheduleSheet ---------------------------------------- */
+.frc-timeline-main { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); align-items: start; min-height: 0; }
+.frc-timeline-main[data-columns="1"] { grid-template-columns: 1fr; }
+.frc-schedule-main { display: grid; gap: var(--space-4); min-height: 0; }
+.frc-schedule-legend { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+/* ---- SubteamStatusSheet --------------------------------------------------- */
+.frc-subteam-grid { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: var(--space-3); align-items: start; }
+.frc-subteam-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+/* ---- BlockerSheet --------------------------------------------------------- */
+.frc-blockers { display: grid; grid-template-columns: 1fr 620px; gap: var(--space-5); align-items: start; min-height: 0; }
+.frc-blockers-aside { display: grid; gap: var(--space-3); align-content: start; }
+
+/* ---- TargetsSheet --------------------------------------------------------- */
+.frc-targets { display: grid; grid-template-columns: 1fr 480px; gap: var(--space-5); align-items: start; min-height: 0; }
+.frc-targets-aside { display: grid; gap: var(--space-4); align-content: start; }
+
+/* ---- SafetySheet ---------------------------------------------------------- */
+.frc-safety-main { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); align-items: start; min-height: 0; }
+.frc-safety-side { display: grid; gap: var(--space-3); align-content: start; }
+
+/* ---- RosterSheet ---------------------------------------------------------- */
+.frc-roster { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: var(--space-3); align-items: start; min-height: 0; }
+
+/* ---- MatchBreakdownSheet -------------------------------------------------- */
+.frc-match { display: grid; gap: var(--space-4); min-height: 0; }
+.frc-match-head { display: grid; grid-template-columns: 1fr auto; gap: var(--space-4); align-items: start; }
+.frc-match-detail { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); align-items: start; }
+
+/* ---- ScoutingSheet -------------------------------------------------------- */
+.frc-scouting { display: grid; grid-template-columns: 1fr 520px; gap: var(--space-5); align-items: start; min-height: 0; }
+.frc-scouting-aside { display: grid; gap: var(--space-3); align-content: start; }
+
+/* ---- FieldSheet ----------------------------------------------------------- */
+.frc-field-main { display: grid; grid-template-columns: 1fr 480px; gap: var(--space-5); align-items: start; min-height: 0; }
+.frc-field-aside { display: grid; gap: var(--space-3); align-content: start; }
+
+/* ---- BOMSheet ------------------------------------------------------------- */
+.frc-bom { display: grid; grid-template-columns: 1fr 560px; gap: var(--space-5); align-items: start; min-height: 0; }
+.frc-bom-parts { display: grid; gap: var(--space-3); }
+.frc-bom-aside { display: grid; gap: var(--space-3); align-content: start; }
+
+/* ---- AwardSheet ----------------------------------------------------------- */
+.frc-award-main { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); align-items: center; min-height: 0; }
+.frc-award-side { display: grid; gap: var(--space-3); align-content: center; }
+
+/* ---- SponsorSheet --------------------------------------------------------- */
+.frc-sponsor-main { display: grid; gap: var(--space-5); align-content: start; min-height: 0; }
+
+/* ---- SeasonSheet ---------------------------------------------------------- */
+.frc-season-main { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); align-items: center; min-height: 0; }
+.frc-season-side { display: grid; gap: var(--space-4); align-content: center; }

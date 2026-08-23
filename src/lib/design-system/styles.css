@@ -1,7 +1,7 @@
 /* FRC5669DesignSystem — single entry point.
    This file ONLY imports. It never defines a token. Order is load-bearing:
    fonts → colors → typography → effects → surfaces → motion → deck-motion → image-slot
-   → data → surface-components → forms.
+   → data → surface-components → forms → sheets.
    The component sheets come last so a component class can rest on a token or a
    surface class without out-ordering it. */
 @import './tokens/fonts.css';
@@ -15,3 +15,4 @@
 @import './tokens/data.css';
 @import './tokens/surface-components.css';
 @import './tokens/forms.css';
+@import './tokens/sheets.css';

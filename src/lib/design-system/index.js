@@ -7,6 +7,7 @@ import * as brand from './components/brand/index.js'
 import * as data from './components/data/index.js'
 import * as surfaces from './components/surfaces/index.js'
 import * as forms from './components/forms/index.js'
+import * as sheets from './components/sheets/index.js'
 import * as tokens from './tokens.js'
 import { ASSETS, ASSET_FILES, MIN_SIZES } from './assets.js'
 
@@ -15,6 +16,7 @@ export * from './components/brand/index.js'
 export * from './components/data/index.js'
 export * from './components/surfaces/index.js'
 export * from './components/forms/index.js'
+export * from './components/sheets/index.js'
 export { tokens, ASSETS, ASSET_FILES, MIN_SIZES }
 
 export const FRC5669DesignSystem = Object.freeze({
@@ -26,6 +28,7 @@ export const FRC5669DesignSystem = Object.freeze({
   ...data,
   ...surfaces,
   ...forms,
+  ...sheets,
   tokens,
   assets: { ASSETS, ASSET_FILES, MIN_SIZES },
 })

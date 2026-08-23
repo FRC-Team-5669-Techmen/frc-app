@@ -20,7 +20,8 @@
       "tokens/image-slot.css",
       "tokens/data.css",
       "tokens/surface-components.css",
-      "tokens/forms.css"
+      "tokens/forms.css",
+      "tokens/sheets.css"
     ],
     "mirror": "tokens.js",
     "scope": "Root tokens are declared on .frc-deck and the three ground classes, never on :root.",
@@ -102,12 +103,39 @@
     {"name": "AwardPlate", "group": "surfaces", "sourcePath": "components/surfaces/AwardPlate.jsx", "types": "components/surfaces/AwardPlate.d.ts", "prompt": "components/surfaces/AwardPlate.prompt.md", "class": "frc-award"},
     {"name": "ResultBanner", "group": "surfaces", "sourcePath": "components/surfaces/ResultBanner.jsx", "types": "components/surfaces/ResultBanner.d.ts", "prompt": "components/surfaces/ResultBanner.prompt.md", "class": "frc-result"},
     {"name": "Input", "group": "forms", "sourcePath": "components/forms/Input.jsx", "types": "components/forms/Input.d.ts", "prompt": "components/forms/Input.prompt.md", "class": "frc-input"},
-    {"name": "Select", "group": "forms", "sourcePath": "components/forms/Select.jsx", "types": "components/forms/Select.d.ts", "prompt": "components/forms/Select.prompt.md", "class": "frc-select"}
+    {"name": "Select", "group": "forms", "sourcePath": "components/forms/Select.jsx", "types": "components/forms/Select.d.ts", "prompt": "components/forms/Select.prompt.md", "class": "frc-select"},
+    {"name": "CoverSheet", "group": "sheets", "sourcePath": "components/sheets/CoverSheet.jsx", "types": "components/sheets/CoverSheet.d.ts", "prompt": "components/sheets/CoverSheet.prompt.md", "class": "frc-sheet-cover", "transition": "frc-slide-banner", "note": "Seal, title, one line. External audience adds the ProgramLockup."},
+    {"name": "AgendaSheet", "group": "sheets", "sourcePath": "components/sheets/AgendaSheet.jsx", "types": "components/sheets/AgendaSheet.d.ts", "prompt": "components/sheets/AgendaSheet.prompt.md", "class": "frc-sheet-agenda", "transition": "frc-slide-shutter"},
+    {"name": "SectionSheet", "group": "sheets", "sourcePath": "components/sheets/SectionSheet.jsx", "types": "components/sheets/SectionSheet.d.ts", "prompt": "components/sheets/SectionSheet.prompt.md", "class": "frc-sheet-section", "transition": "frc-slide-banner"},
+    {"name": "StatementSheet", "group": "sheets", "sourcePath": "components/sheets/StatementSheet.jsx", "types": "components/sheets/StatementSheet.d.ts", "prompt": "components/sheets/StatementSheet.prompt.md", "class": "frc-sheet-statement", "transition": "frc-slide-banner"},
+    {"name": "QuoteSheet", "group": "sheets", "sourcePath": "components/sheets/QuoteSheet.jsx", "types": "components/sheets/QuoteSheet.d.ts", "prompt": "components/sheets/QuoteSheet.prompt.md", "class": "frc-sheet-quote", "transition": "frc-slide-banner"},
+    {"name": "HubSheet", "group": "sheets", "sourcePath": "components/sheets/HubSheet.jsx", "types": "components/sheets/HubSheet.d.ts", "prompt": "components/sheets/HubSheet.prompt.md", "class": "frc-sheet-hub", "transition": "frc-slide-shutter", "note": "The one sheet with no footer rail, and so the one sheet with no FIRST logo zone."},
+    {"name": "ClosingSheet", "group": "sheets", "sourcePath": "components/sheets/ClosingSheet.jsx", "types": "components/sheets/ClosingSheet.d.ts", "prompt": "components/sheets/ClosingSheet.prompt.md", "class": "frc-sheet-closing", "transition": "frc-slide-cut", "note": "External audience adds the sponsor rail."},
+    {"name": "SplitSheet", "group": "sheets", "sourcePath": "components/sheets/SplitSheet.jsx", "types": "components/sheets/SplitSheet.d.ts", "prompt": "components/sheets/SplitSheet.prompt.md", "class": "frc-sheet-split", "transition": "frc-slide-shutter"},
+    {"name": "GallerySheet", "group": "sheets", "sourcePath": "components/sheets/GallerySheet.jsx", "types": "components/sheets/GallerySheet.d.ts", "prompt": "components/sheets/GallerySheet.prompt.md", "class": "frc-sheet-gallery", "transition": "frc-slide-shutter"},
+    {"name": "ProcedureSheet", "group": "sheets", "sourcePath": "components/sheets/ProcedureSheet.jsx", "types": "components/sheets/ProcedureSheet.d.ts", "prompt": "components/sheets/ProcedureSheet.prompt.md", "class": "frc-sheet-procedure", "transition": "frc-slide-shutter"},
+    {"name": "ComparisonSheet", "group": "sheets", "sourcePath": "components/sheets/ComparisonSheet.jsx", "types": "components/sheets/ComparisonSheet.d.ts", "prompt": "components/sheets/ComparisonSheet.prompt.md", "class": "frc-sheet-comparison", "transition": "frc-slide-shutter"},
+    {"name": "DataSheet", "group": "sheets", "sourcePath": "components/sheets/DataSheet.jsx", "types": "components/sheets/DataSheet.d.ts", "prompt": "components/sheets/DataSheet.prompt.md", "class": "frc-sheet-data", "transition": "frc-slide-boot"},
+    {"name": "TimelineSheet", "group": "sheets", "sourcePath": "components/sheets/TimelineSheet.jsx", "types": "components/sheets/TimelineSheet.d.ts", "prompt": "components/sheets/TimelineSheet.prompt.md", "class": "frc-sheet-timeline", "transition": "frc-slide-shutter"},
+    {"name": "ScheduleSheet", "group": "sheets", "sourcePath": "components/sheets/ScheduleSheet.jsx", "types": "components/sheets/ScheduleSheet.d.ts", "prompt": "components/sheets/ScheduleSheet.prompt.md", "class": "frc-sheet-schedule", "transition": "frc-slide-boot"},
+    {"name": "SubteamStatusSheet", "group": "sheets", "sourcePath": "components/sheets/SubteamStatusSheet.jsx", "types": "components/sheets/SubteamStatusSheet.d.ts", "prompt": "components/sheets/SubteamStatusSheet.prompt.md", "class": "frc-sheet-subteam", "transition": "frc-slide-boot", "sub": ["SubteamStatus"]},
+    {"name": "BlockerSheet", "group": "sheets", "sourcePath": "components/sheets/BlockerSheet.jsx", "types": "components/sheets/BlockerSheet.d.ts", "prompt": "components/sheets/BlockerSheet.prompt.md", "class": "frc-sheet-blocker", "transition": "frc-slide-boot", "sub": ["Blocker"]},
+    {"name": "TargetsSheet", "group": "sheets", "sourcePath": "components/sheets/TargetsSheet.jsx", "types": "components/sheets/TargetsSheet.d.ts", "prompt": "components/sheets/TargetsSheet.prompt.md", "class": "frc-sheet-targets", "transition": "frc-slide-boot"},
+    {"name": "SafetySheet", "group": "sheets", "sourcePath": "components/sheets/SafetySheet.jsx", "types": "components/sheets/SafetySheet.d.ts", "prompt": "components/sheets/SafetySheet.prompt.md", "class": "frc-sheet-safety", "transition": "frc-slide-shutter", "note": "Throws without a SafetyNote in slot=\"note\"."},
+    {"name": "RosterSheet", "group": "sheets", "sourcePath": "components/sheets/RosterSheet.jsx", "types": "components/sheets/RosterSheet.d.ts", "prompt": "components/sheets/RosterSheet.prompt.md", "class": "frc-sheet-roster", "transition": "frc-slide-shutter"},
+    {"name": "MatchBreakdownSheet", "group": "sheets", "sourcePath": "components/sheets/MatchBreakdownSheet.jsx", "types": "components/sheets/MatchBreakdownSheet.d.ts", "prompt": "components/sheets/MatchBreakdownSheet.prompt.md", "class": "frc-sheet-match", "transition": "frc-slide-boot", "note": "The FOURTH and last place --alliance-red / --alliance-blue are legal, FIELD ground only."},
+    {"name": "ScoutingSheet", "group": "sheets", "sourcePath": "components/sheets/ScoutingSheet.jsx", "types": "components/sheets/ScoutingSheet.d.ts", "prompt": "components/sheets/ScoutingSheet.prompt.md", "class": "frc-sheet-scouting", "transition": "frc-slide-boot"},
+    {"name": "FieldSheet", "group": "sheets", "sourcePath": "components/sheets/FieldSheet.jsx", "types": "components/sheets/FieldSheet.d.ts", "prompt": "components/sheets/FieldSheet.prompt.md", "class": "frc-sheet-field", "transition": "frc-slide-boot"},
+    {"name": "BOMSheet", "group": "sheets", "sourcePath": "components/sheets/BOMSheet.jsx", "types": "components/sheets/BOMSheet.d.ts", "prompt": "components/sheets/BOMSheet.prompt.md", "class": "frc-sheet-bom", "transition": "frc-slide-boot"},
+    {"name": "AwardSheet", "group": "sheets", "sourcePath": "components/sheets/AwardSheet.jsx", "types": "components/sheets/AwardSheet.d.ts", "prompt": "components/sheets/AwardSheet.prompt.md", "class": "frc-sheet-award", "transition": "frc-slide-banner"},
+    {"name": "SponsorSheet", "group": "sheets", "sourcePath": "components/sheets/SponsorSheet.jsx", "types": "components/sheets/SponsorSheet.d.ts", "prompt": "components/sheets/SponsorSheet.prompt.md", "class": "frc-sheet-sponsor", "transition": "frc-slide-shutter"},
+    {"name": "SeasonSheet", "group": "sheets", "sourcePath": "components/sheets/SeasonSheet.jsx", "types": "components/sheets/SeasonSheet.d.ts", "prompt": "components/sheets/SeasonSheet.prompt.md", "class": "frc-sheet-season", "transition": "frc-slide-banner"}
   ],
   "helpers": [
     { "name": "icons", "sourcePath": "components/core/icons.jsx", "note": "Lucide paths inlined as 24x24 stroked SVG on currentColor" },
     { "name": "AssetSlot", "sourcePath": "components/brand/AssetSlot.jsx", "note": "Internal. The marked empty slot every mark-bearing component renders until its asset lands." },
     { "name": "cx", "sourcePath": "components/cx.js" },
+    { "name": "Sheet", "sourcePath": "components/sheets/Sheet.jsx", "types": "components/sheets/Sheet.d.ts", "note": "Internal. The frame every sheet pattern is built on: transition, ambient layers, footer rail. Decks compose PATTERNS, never this." },
     { "name": "slots", "sourcePath": "components/slots.jsx", "note": "Child-slot helpers. Copy lives in children carrying a plain slot attribute, because a props array is not editable on the canvas." },
     { "name": "assets", "sourcePath": "assets.js", "note": "Expected asset paths, resolved URLs (null until supplied), minimum sizes." }
   ],
@@ -116,10 +144,12 @@
     { "name": "Brand components", "group": "Brand", "path": "components/brand/BrandDemoCard.jsx", "export": "BrandDemoCard", "viewport": { "width": 1920, "height": 2600 }, "subtitle": "Marks, footer rail, program and season lockups, FirstName, HudFrame, PlatePanel, StencilTitle" },
     { "name": "Data components", "group": "Data", "path": "components/data/DataDemoCard.jsx", "export": "DataDemoCard", "viewport": { "width": 1920, "height": 3600 }, "subtitle": "Badges, stats, tables, charts, matrix, timeline, clocks, alliance surfaces" },
     { "name": "Surface components", "group": "Surfaces", "path": "components/surfaces/SurfacesDemoCard.jsx", "export": "SurfacesDemoCard", "viewport": { "width": 1920, "height": 4200 }, "subtitle": "Cards, callouts, safety, image treatments, steps, comparisons, grids, drawings, sponsors, awards" },
-    { "name": "Form controls", "group": "Forms", "path": "components/forms/FormsDemoCard.jsx", "export": "FormsDemoCard", "viewport": { "width": 1920, "height": 1200 }, "subtitle": "Input and Select on every ground" }
+    { "name": "Form controls", "group": "Forms", "path": "components/forms/FormsDemoCard.jsx", "export": "FormsDemoCard", "viewport": { "width": 1920, "height": 1200 }, "subtitle": "Input and Select on every ground" },
+    { "name": "Sheet patterns", "group": "Sheets", "path": "components/sheets/SheetsDemoCard.jsx", "export": "SheetsDemoCard", "viewport": { "width": 1968, "height": 39000 }, "subtitle": "All twenty-six full-sheet patterns, on any ground, in either audience mode", "note": "Takes ground, audience and an `only` filter. /_ds steps one pattern at a time with it." }
   ],
   "templates": [
-    { "name": "Deck", "path": "templates/Deck.dc.html", "copied": true, "aspect": "4:3", "width": 1920, "height": 1440, "note": "The only file anyone copies. Stage, ground class, audience class, footer rail, one blank sheet, deck-stage script." }
+    { "name": "Deck", "path": "templates/Deck.dc.html", "copied": true, "aspect": "4:3", "width": 1920, "height": 1440, "note": "The only file anyone copies. Stage, ground class, audience class, footer rail, one blank sheet, deck-stage script." },
+    { "name": "Specimen", "path": "templates/Specimen.dc.html", "prompt": "templates/Specimen.prompt.md", "copied": false, "aspect": "4:3", "width": 1920, "height": 1440, "sheets": 26, "note": "REFERENCE ONLY, never a starting point. All twenty-six patterns once, across all three grounds and both audience modes. It is a RENDERING of the patterns for Claude Design; components/sheets/ is the source of truth and /_ds mounts the real components." }
   ],
   "startingPoints": [
     { "name": "Deck shell", "path": "templates/Deck.dc.html", "description": "Copy this. Set the ground and audience classes on the root, add sheets, reference everything else." }
@@ -131,10 +161,14 @@
     "guard": "import.meta.env.DEV || import.meta.env.VITE_DS_SPECIMEN === 'true'; the route is not registered in production and renders a 404 element there",
     "mounts": "the real components, never a copy of their markup"
   },
+  "docs": [
+    { "name": "Brand guide", "path": "README.md", "note": "Content fundamentals, visual foundations, the FIRST usage rules, iconography, and the manifest of the bundle." },
+    { "name": "Agent skill", "path": "SKILL.md", "note": "Agent-Skill front matter so the system is usable from Claude Code. Copy or symlink into .claude/skills/frc5669-design-system/." }
+  ],
   "audit": "scripts/design-system/ds-audit.mjs (npm run ds:audit)",
   "pending": {
-    "groups": ["sheets"],
-    "templates": ["templates/Specimen.dc.html"],
+    "groups": [],
+    "templates": [],
     "assets": [
       "assets/team/Mark-Gold.svg", "assets/team/Mark-White.svg", "assets/team/Mark-Black.svg",
       "assets/team/Type-Gold.svg", "assets/team/Type-White.svg", "assets/team/Type-Black.svg",

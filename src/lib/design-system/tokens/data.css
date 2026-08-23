@@ -425,3 +425,16 @@
 .frc-alliance-vs { align-self: center; font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wider); text-transform: uppercase; color: var(--fg-structure); }
 .frc-alliance-side[data-outcome="win"]  .frc-alliance-score { color: var(--ok); }
 .frc-alliance-side[data-outcome="loss"] .frc-alliance-score { color: var(--fg-dim); }
+
+/* ---- MatchBreakdownSheet (components/sheets/MatchBreakdownSheet.jsx) ------- */
+/* THE FOURTH AND LAST place the alliance partition is legal, after
+   AllianceSplit, ScoutTable and FieldDiagram. The scoping lives HERE, with the
+   other three, so tokens/sheets.css can stay free of every ground selector: a
+   sheet pattern inherits its ground and never names one. Same rule as the other
+   three - alliance colors resolve only on FIELD, and the RED / BLUE word
+   carries the meaning everywhere else. */
+.frc-match { --al-red: var(--fg-structure); --al-blue: var(--fg-dim); }
+.frc-ground-field .frc-match { --al-red: var(--alliance-red); --al-blue: var(--alliance-blue); }
+.frc-match-side { border-top: 8px solid var(--side, var(--line)); padding-top: var(--space-3); }
+.frc-match-side[data-alliance="red"]  { --side: var(--al-red); }
+.frc-match-side[data-alliance="blue"] { --side: var(--al-blue); }
