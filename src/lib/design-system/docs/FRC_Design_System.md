@@ -1,5 +1,5 @@
 # FRC Team 5669 Design System
-**Version 1.6 - 2026-08-23**
+**Version 1.7 - 2026-08-23**
 
 The visual identity system for FRC Team 5669 (Techmen) presentations and materials. Covers weekly meetings, training sessions, strategy and match review, kickoff, outreach, sponsor and judge presentations, and awards material.
 
@@ -326,6 +326,10 @@ The shell carried four things. Each is reassigned to an artifact class that actu
 | Stage painting canvas and letterbox from the active ground | `DeckStage`, a component |
 | Footer rail | `DeckFooter`, already a component |
 
+The shell also carried CSS, which is easy to miss when reading it as markup. `.frc-letterbox` and `.frc-thumbs-dock` were declared only in its inline `<style>` block, so when nothing was copied any more the class names survived in the documentation while the rules that made them do anything did not. A deck could set `.frc-letterbox`, pass the audit, and still flash white. Both rules now live in the token layer, where everything that ships belongs.
+
+That is the general lesson from removing a copied artifact: anything it declared inline is orphaned silently, because the names keep working and only the behavior disappears.
+
 The footer rail is the proof of the approach. It survived a generated deck untouched, with the rail, `5669`, deck name, and counter all rendering, because it was a component rather than template markup.
 
 **So nothing is copied. Everything is referenced.** The shell was the last remnant of the template model this system was built to avoid, and losing it makes the architecture more consistent rather than less. A deck now starts from Blank and assembles entirely out of the library.
@@ -451,6 +455,13 @@ Dark-background lockups are only published as EPS and PNG, because the white req
 
 ## Changelog
 
+- **1.7 (2026-08-23)** - Recorded that the shell carried CSS as well as markup.
+  `.frc-letterbox` and `.frc-thumbs-dock` were declared only in its inline style block, so
+  removing the copied artifact orphaned the rules while leaving the class names intact in
+  the documentation: a deck could set the class, satisfy the audit, and still flash white.
+  Both now live in the token layer. The general lesson is that removing a copied artifact
+  orphans anything it declared inline, and it does so silently, because the names keep
+  working and only the behavior disappears.
 - **1.6 (2026-08-23)** - Documented that `DeckStage` scopes document canvas painting behind
   `.frc-letterbox` on the deck root, which declares the deck owns the viewport and keeps an
   embedded deck from repainting its host page. This makes letterbox a required root class on

@@ -1,5 +1,5 @@
 # FRC Claude Design Standards
-**Version 1.5 - 2026-08-23**
+**Version 1.6 - 2026-08-23**
 
 Scoping and prompting rules for every FRC Team 5669 artifact authored in Claude Design against the FRC design system. Presentations are the primary case.
 
@@ -160,6 +160,7 @@ Set on the deck root, explicitly. None of these are inherited from anywhere:
   Aspect: 4:3, 1920 x 1440. The platform default is 16:9 and is wrong here.
   Ground class: .frc-ground-squadron
   Audience class: .frc-audience-internal
+  .frc-letterbox, which declares the deck owns the viewport
   Mount DeckStage once, so canvas and letterbox paint from the active ground.
 
 Output: a single .dc.html deck.
@@ -403,6 +404,9 @@ For any non-deck artifact, motion runs inside a `.frc-run` container and the fou
 
 ## Changelog
 
+- **1.6 (2026-08-23)** - Gave `.frc-letterbox` its own bullet in the routing header. It was
+  named only in prose under the DeckStage bullet while check 43 counts it as a fifth
+  independent item, so the header and the check disagreed on what a deck must carry.
 - **1.5 (2026-08-23)** - Added `.frc-letterbox` to check 43. `DeckStage` scopes document
   canvas painting behind it so an embedded deck does not repaint its host page, which is
   correct and makes it a fourth required root class that nothing can guard: its absence is
