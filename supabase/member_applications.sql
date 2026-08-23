@@ -109,22 +109,27 @@ begin
   -- The canonical subteam vocabulary, shared by all three ranked choices. This
   -- MUST stay byte-identical to src/subteams.js (the one source of truth) and to
   -- supabase/subteams_vocabulary.sql, which re-pinned an already-deployed
-  -- database from the older 8-value taxonomy to these 10 values.
+  -- database from the older 8-value taxonomy to these 12 values ('Strategy and
+  -- Scouting' and 'Management' were appended later by
+  -- supabase/subteams_add_strategy_management.sql).
   if not exists (select 1 from pg_constraint where conname = 'member_applications_subteam_values_chk' and conrelid = 'public.member_applications'::regclass) then
     alter table public.member_applications add constraint member_applications_subteam_values_chk
       check (
         subteam_first in (
           'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
           'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-          'Field & Pit')
+          'Field & Pit',
+          'Strategy and Scouting', 'Management')
         and subteam_second in (
           'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
           'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-          'Field & Pit')
+          'Field & Pit',
+          'Strategy and Scouting', 'Management')
         and (subteam_third is null or subteam_third in (
           'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
           'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-          'Field & Pit'))
+          'Field & Pit',
+          'Strategy and Scouting', 'Management'))
       );
   end if;
 

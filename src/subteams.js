@@ -20,6 +20,8 @@ export const SUBTEAMS = [
   'Drive Team',
   'Robot Construction',
   'Field & Pit',
+  'Strategy and Scouting',
+  'Management',
 ]
 
 // Case-insensitive membership test. Consumers that group or sort by subteam do

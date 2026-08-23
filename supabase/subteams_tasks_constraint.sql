@@ -1,13 +1,17 @@
 -- Close the remaining paths for non-canonical subteam values.
 --
--- src/subteams.js is the single source of truth (the 10 canonical values).
+-- src/subteams.js is the single source of truth (the 12 canonical values).
 -- member_applications was already pinned to it (subteams_vocabulary.sql).
 -- This migration does the same for tasks.subteam, and separately reports
 -- (without touching) profiles.subteams.
 --
--- Canonical 10 values (byte-for-byte):
+-- Canonical 12 values (byte-for-byte):
 --   Mechanical, Electrical, Programming, CAD, Fabrication, Media,
---   Business/Outreach, Drive Team, Robot Construction, Field & Pit
+--   Business/Outreach, Drive Team, Robot Construction, Field & Pit,
+--   Strategy and Scouting, Management
+-- ('Strategy and Scouting' and 'Management' were appended later by
+--  supabase/subteams_add_strategy_management.sql; this file was extended to
+--  match so a re-run cannot silently revert them.)
 --
 -- Run once in the Supabase SQL editor. Read every result grid before deciding
 -- anything about profiles.subteams -- this file deliberately does not touch it.
@@ -24,7 +28,8 @@ select
   (subteam is not null and subteam in (
      'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
      'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-     'Field & Pit')) as is_canonical
+     'Field & Pit',
+     'Strategy and Scouting', 'Management')) as is_canonical
 from public.tasks
 group by subteam
 order by is_canonical, subteam nulls first;
@@ -37,7 +42,8 @@ select
   (value in (
      'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
      'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-     'Field & Pit')) as is_canonical
+     'Field & Pit',
+     'Strategy and Scouting', 'Management')) as is_canonical
 from public.profiles, unnest(subteams) as value
 group by value
 order by is_canonical, value;
@@ -62,7 +68,8 @@ begin
      and subteam not in (
            'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
            'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-           'Field & Pit');
+           'Field & Pit',
+           'Strategy and Scouting', 'Management');
 
   alter table public.tasks
     add constraint tasks_subteam_values_chk
@@ -70,7 +77,8 @@ begin
       subteam is null or subteam in (
         'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
         'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-        'Field & Pit')
+        'Field & Pit',
+        'Strategy and Scouting', 'Management')
     )
     not valid;
 

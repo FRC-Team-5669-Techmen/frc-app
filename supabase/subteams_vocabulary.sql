@@ -6,10 +6,14 @@
 -- that encodes the vocabulary -- member_applications_subteam_values_chk -- to
 -- that canonical list.
 --
--- Canonical 10 values (byte-for-byte; profiles.subteams stores these literals,
+-- Canonical 12 values (byte-for-byte; profiles.subteams stores these literals,
 -- so NEVER rename/recase/repunctuate one without a data migration):
 --   Mechanical, Electrical, Programming, CAD, Fabrication, Media,
---   Business/Outreach, Drive Team, Robot Construction, Field & Pit
+--   Business/Outreach, Drive Team, Robot Construction, Field & Pit,
+--   Strategy and Scouting, Management
+-- ('Strategy and Scouting' and 'Management' were appended later by
+--  supabase/subteams_add_strategy_management.sql; this file was extended to
+--  match so a re-run cannot silently revert them.)
 --
 -- Run once in the Supabase SQL editor BEFORE testing.
 --
@@ -52,15 +56,18 @@ begin
    where subteam_first  not in (
            'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
            'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-           'Field & Pit')
+           'Field & Pit',
+           'Strategy and Scouting', 'Management')
       or subteam_second not in (
            'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
            'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-           'Field & Pit')
+           'Field & Pit',
+           'Strategy and Scouting', 'Management')
       or (subteam_third is not null and subteam_third not in (
            'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
            'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-           'Field & Pit'));
+           'Field & Pit',
+           'Strategy and Scouting', 'Management'));
 
   alter table public.member_applications
     add constraint member_applications_subteam_values_chk
@@ -68,24 +75,27 @@ begin
       subteam_first in (
         'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
         'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-        'Field & Pit')
+        'Field & Pit',
+        'Strategy and Scouting', 'Management')
       and subteam_second in (
         'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
         'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-        'Field & Pit')
+        'Field & Pit',
+        'Strategy and Scouting', 'Management')
       and (subteam_third is null or subteam_third in (
         'Mechanical', 'Electrical', 'Programming', 'CAD', 'Fabrication',
         'Media', 'Business/Outreach', 'Drive Team', 'Robot Construction',
-        'Field & Pit'))
+        'Field & Pit',
+        'Strategy and Scouting', 'Management'))
     )
     not valid;
 
   if legacy_count = 0 then
     alter table public.member_applications
       validate constraint member_applications_subteam_values_chk;
-    raise notice 'subteam CHECK re-pinned to the canonical 10 values and VALIDATED (no legacy rows).';
+    raise notice 'subteam CHECK re-pinned to the canonical 12 values and VALIDATED (no legacy rows).';
   else
-    raise notice 'subteam CHECK re-pinned to the canonical 10 values, left NOT VALID: % existing row(s) use the old taxonomy. New inserts/updates are enforced; see the LEGACY DATA NOTE in this file.', legacy_count;
+    raise notice 'subteam CHECK re-pinned to the canonical 12 values, left NOT VALID: % existing row(s) use the old taxonomy. New inserts/updates are enforced; see the LEGACY DATA NOTE in this file.', legacy_count;
   end if;
 end
 $ck$;
