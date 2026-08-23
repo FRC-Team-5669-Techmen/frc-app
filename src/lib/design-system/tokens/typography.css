@@ -1,0 +1,198 @@
+/* FRC5669DesignSystem — typography
+   Scale for a 1920px projection surface. The brand ratios (Bold 50 / 40 / 25,
+   Regular 17) inform the scale; they are not copied, because the brand page
+   specifies a website. Body copy never renders below an 18pt equivalent (24px).
+
+   Casing: mono labels, eyebrows, badges, buttons and metadata are UPPERCASE
+   with wide tracking. Display headings and body copy are sentence case. */
+
+:where(.frc-deck, .frc-ground-squadron, .frc-ground-field, .frc-ground-paper) {
+  --fs-hero:    160px;   /* hero numerals, cover */
+  --fs-display: 112px;   /* statement sheets */
+  --fs-h1:       84px;   /* sheet title   (brand 50 × 1.68) */
+  --fs-h2:       64px;   /* sub           (brand 40 × 1.6)  */
+  --fs-h3:       40px;   /* sub-sub       (brand 25 × 1.6)  */
+  --fs-body:     28px;   /* running copy  (brand 17 × 1.65) */
+  --fs-body-sm:  24px;   /* the floor: 18pt */
+  --fs-label:    20px;   /* mono chrome, labels, metadata */
+  --fs-micro:    18px;   /* footer rail only */
+
+  --lh-tight:   1.02;
+  --lh-display: 1.08;
+  --lh-heading: 1.16;
+  --lh-body:    1.45;
+
+  --track-tight:  -0.015em;
+  --track-normal:  0;
+  --track-wide:    0.14em;
+  --track-wider:   0.22em;
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-bold:    700;
+}
+
+/* Deck root defaults. Copy color comes from the ground scope (--fg). */
+.frc-deck {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-regular);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  box-sizing: border-box;
+}
+.frc-deck *, .frc-deck *::before, .frc-deck *::after { box-sizing: inherit; }
+
+/* ---- Type classes --------------------------------------------------------- */
+.frc-hero {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-hero);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--track-tight);
+  color: var(--fg-hero);
+  font-variant-numeric: lining-nums tabular-nums;
+  margin: 0;
+}
+.frc-display {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--track-tight);
+  color: var(--fg);
+  margin: 0;
+}
+.frc-h1, .frc-h2, .frc-h3 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--track-tight);
+  color: var(--fg);
+  margin: 0;
+}
+.frc-h1 { font-size: var(--fs-h1); line-height: var(--lh-display); }
+.frc-h2 { font-size: var(--fs-h2); }
+.frc-h3 { font-size: var(--fs-h3); }
+
+.frc-body    { font-family: var(--font-body); font-size: var(--fs-body);    line-height: var(--lh-body); color: var(--fg); margin: 0; }
+.frc-body-sm { font-family: var(--font-body); font-size: var(--fs-body-sm); line-height: var(--lh-body); color: var(--fg); margin: 0; }
+.frc-body-medium { font-weight: var(--fw-medium); }
+.frc-dim { color: var(--fg-dim); }
+
+/* Mono chrome: uppercase, wide tracking. */
+.frc-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--fg-dim);
+  margin: 0;
+}
+.frc-mono { font-family: var(--font-mono); font-variant-numeric: lining-nums tabular-nums; }
+.frc-micro { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; }
+
+/* Hero numerals. Match times M:SS, bare team numbers, season years 2026-27. */
+.frc-numeral {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: var(--track-tight);
+}
+
+/* Roboto quarantine. The ONLY place --font-first is used. */
+.frc-first-block { font-family: var(--font-first); }
+
+/* ---- FirstName (brand/FirstName.jsx) -------------------------------------- */
+/* FIRST is always all caps and italic. Weight is inherited so it is never
+   bolded except inside fully bolded text. */
+.frc-first      { white-space: nowrap; }
+.frc-first-word { text-transform: uppercase; font-style: italic; font-weight: inherit; }
+.frc-first-mark { text-transform: uppercase; font-style: normal; }   /* LEGO */
+.frc-first-reg  { font-size: 0.55em; vertical-align: super; line-height: 0; font-style: normal; margin-left: 0.04em; }
+.frc-first-fault {
+  font-family: var(--font-mono);
+  font-size: 0.6em;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--white);
+  background: var(--fault);
+  border-radius: 2px;
+  padding: 0.1em 0.4em;
+  vertical-align: middle;
+  font-style: normal;
+}
+
+/* ---- Eyebrow (core/Eyebrow.jsx) ------------------------------------------- */
+.frc-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+  color: var(--fg-dim);
+  margin: 0;
+}
+.frc-eyebrow::before { content: ''; display: inline-block; width: 16px; height: 2px; background: currentColor; flex: none; }
+.frc-eyebrow-plain::before { display: none; }
+.frc-eyebrow-accent { color: var(--fg); }
+.frc-eyebrow-accent::before { background: var(--accent); }
+/* LIVE / REC: a pulsing GOLD dot, never a red one. The pulse is a gated loop (motion.css). */
+.frc-eyebrow-live { color: var(--fg); }
+.frc-eyebrow-live::before { width: 12px; height: 12px; border-radius: 50%; background: var(--live); box-shadow: var(--glow-box); }
+
+/* ---- TeamWordmark (core/TeamWordmark.jsx) --------------------------------- */
+/* Typeset wordmark for text contexts. NOT a substitute for the logotype asset. */
+.frc-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.32em;
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h3);
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: var(--fg);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.frc-wordmark-sep    { color: var(--fg-structure); font-weight: var(--fw-regular); }
+.frc-wordmark-number { font-family: var(--font-mono); font-weight: var(--fw-bold); color: var(--accent); letter-spacing: 0.04em; font-variant-numeric: lining-nums tabular-nums; }
+
+/* ---- StencilTitle (brand/StencilTitle.jsx) -------------------------------- */
+/* Gold as a stencil or a struck emblem. Glow is a ground alias: zero on paper. */
+.frc-stencil {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-tight);
+  letter-spacing: 0.02em;
+  color: var(--fg-hero);
+  text-shadow: var(--glow);
+  margin: 0;
+}
+.frc-stencil-display { font-size: var(--fs-display); }
+.frc-stencil-hero    { font-size: var(--fs-hero); }
+.frc-stencil-caps    { text-transform: uppercase; }
+.frc-stencil-flat    { text-shadow: none; }
+/* The stencil bridge: a hairline of the surface cut through the letterforms. */
+.frc-stencil-bridge::after {
+  content: '';
+  position: absolute;
+  left: -0.1em; right: -0.1em;
+  top: 57%;
+  height: 0.04em;
+  background: var(--bg0);
+  pointer-events: none;
+}
+.frc-panel .frc-stencil-bridge::after { background: var(--bg1); }
+.frc-plate .frc-stencil-bridge::after { background: var(--plate); }
+.frc-well  .frc-stencil-bridge::after { background: var(--bg2); }

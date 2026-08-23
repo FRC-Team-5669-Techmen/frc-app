@@ -1,0 +1,104 @@
+/* FRC5669DesignSystem — motion
+   Element entrances, image reveals, ambient loops, and stagger.
+
+   EVERY animation is gated behind prefers-reduced-motion: no-preference
+   INSIDE this library. Do not add a second gate and do not remove this one.
+
+   BASE STYLES ARE THE VISIBLE END STATE. A class alone changes nothing.
+   Nothing runs until the element sits inside [data-deck-active] or a .frc-run
+   container, so print, PDF, reduced-motion and a static render always show
+   complete content. Hide-until-clicked is prohibited.
+
+   Entrances:  frc-in-rise | drop | left | right | fade | blur | tracking | stamp | zoom | strike | flicker   (budget: six per sheet)
+   Reveals:    frc-img-wipe | wipe-down | iris | chamfer | zoom | kenburns
+   Loops:      frc-bg-pan | scanlines | pulse | drift | shimmer   (max one per sheet, not on every sheet)
+   Stagger:    frc-d1 … frc-d8, +0.1s each */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* ---- Element entrances ---- */
+  :where([data-deck-active], .frc-run) .frc-in-rise     { animation: frc-in-rise     var(--dur-in) var(--ease-out) both; }
+  :where([data-deck-active], .frc-run) .frc-in-drop     { animation: frc-in-drop     var(--dur-in) var(--ease-out) both; }
+  :where([data-deck-active], .frc-run) .frc-in-left     { animation: frc-in-left     var(--dur-in) var(--ease-out) both; }
+  :where([data-deck-active], .frc-run) .frc-in-right    { animation: frc-in-right    var(--dur-in) var(--ease-out) both; }
+  :where([data-deck-active], .frc-run) .frc-in-fade     { animation: frc-in-fade     var(--dur-in) var(--ease-out) both; }
+  :where([data-deck-active], .frc-run) .frc-in-blur     { animation: frc-in-blur     0.7s var(--ease-out) both; }
+  :where([data-deck-active], .frc-run) .frc-in-tracking { animation: frc-in-tracking 0.9s var(--ease-out) both; }
+  :where([data-deck-active], .frc-run) .frc-in-stamp    { animation: frc-in-stamp    0.45s var(--ease-snap) both; }
+  :where([data-deck-active], .frc-run) .frc-in-zoom     { animation: frc-in-zoom     var(--dur-in) var(--ease-out) both; }
+  :where([data-deck-active], .frc-run) .frc-in-strike   { animation: frc-in-strike   0.6s var(--ease-in-out) both; }
+  :where([data-deck-active], .frc-run) .frc-in-flicker  { animation: frc-in-flicker  0.7s steps(1, end) both; }
+
+  /* ---- Image reveals ---- */
+  :where([data-deck-active], .frc-run) .frc-img-wipe      { animation: frc-img-wipe      var(--dur-img) var(--ease-in-out) both; }
+  :where([data-deck-active], .frc-run) .frc-img-wipe-down { animation: frc-img-wipe-down var(--dur-img) var(--ease-in-out) both; }
+  :where([data-deck-active], .frc-run) .frc-img-iris      { animation: frc-img-iris      var(--dur-img) var(--ease-in-out) both; }
+  :where([data-deck-active], .frc-run) .frc-img-chamfer   { animation: frc-img-chamfer   var(--dur-img) var(--ease-in-out) both; }
+  :where([data-deck-active], .frc-run) .frc-img-zoom      { animation: frc-img-zoom      1.2s var(--ease-out) both; }
+  :where([data-deck-active], .frc-run) .frc-img-kenburns  { animation: frc-img-kenburns  14s ease-in-out alternate infinite; }
+
+  /* ---- Ambient loops (animate a layer that is already there) ---- */
+  :where([data-deck-active], .frc-run) .frc-bg-pan   { animation: frc-bg-pan 40s linear infinite; }
+  :where([data-deck-active], .frc-run) .frc-pulse    { animation: frc-pulse 1.6s ease-in-out infinite; }
+  :where([data-deck-active], .frc-run) .frc-pulse::before { animation: frc-pulse 1.6s ease-in-out infinite; }
+  :where([data-deck-active], .frc-run) .frc-drift    { animation: frc-drift 24s ease-in-out infinite alternate; }
+  :where([data-deck-active], .frc-run) .frc-scanlines::after { animation: frc-scanlines 6s linear infinite; }
+  :where([data-deck-active], .frc-run) .frc-shimmer::after   { animation: frc-shimmer 5s var(--ease-in-out) infinite; }
+
+  /* ---- Stagger ---- */
+  .frc-d1 { animation-delay: 0.1s; }
+  .frc-d2 { animation-delay: 0.2s; }
+  .frc-d3 { animation-delay: 0.3s; }
+  .frc-d4 { animation-delay: 0.4s; }
+  .frc-d5 { animation-delay: 0.5s; }
+  .frc-d6 { animation-delay: 0.6s; }
+  .frc-d7 { animation-delay: 0.7s; }
+  .frc-d8 { animation-delay: 0.8s; }
+}
+
+/* The loop overlays exist in the base state (static), so the layout of a sheet
+   is identical whether or not motion runs. They carry no motion of their own. */
+.frc-scanlines, .frc-shimmer { position: relative; overflow: hidden; }
+.frc-scanlines::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: -20%;
+  height: 20%;
+  background: linear-gradient(180deg, transparent, var(--tex-hi), transparent);
+  pointer-events: none;
+}
+.frc-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 40%, var(--tex-hi) 50%, transparent 60%);
+  background-size: 300% 100%;
+  background-position: 100% 0;
+  pointer-events: none;
+}
+
+/* Keyframes. A from-only frame ends at the computed value the element already
+   has, which is exactly the base style; explicit `to` frames spell that out. */
+@keyframes frc-in-rise     { from { opacity: 0; transform: translateY(28px); } }
+@keyframes frc-in-drop     { from { opacity: 0; transform: translateY(-28px); } }
+@keyframes frc-in-left     { from { opacity: 0; transform: translateX(-40px); } }
+@keyframes frc-in-right    { from { opacity: 0; transform: translateX(40px); } }
+@keyframes frc-in-fade     { from { opacity: 0; } }
+@keyframes frc-in-blur     { from { opacity: 0; filter: blur(14px); } to { opacity: 1; filter: blur(0); } }
+@keyframes frc-in-tracking { from { opacity: 0; letter-spacing: 0.4em; } }
+@keyframes frc-in-stamp    { from { opacity: 0; transform: scale(1.3); } 70% { opacity: 1; transform: scale(0.98); } to { transform: scale(1); } }
+@keyframes frc-in-zoom     { from { opacity: 0; transform: scale(0.92); } }
+@keyframes frc-in-strike   { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes frc-in-flicker  { 0% { opacity: 0; } 20% { opacity: 1; } 30% { opacity: 0.3; } 45% { opacity: 1; } 55% { opacity: 0.5; } 70% { opacity: 1; } 100% { opacity: 1; } }
+
+@keyframes frc-img-wipe      { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes frc-img-wipe-down { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes frc-img-iris      { from { clip-path: circle(0% at 50% 50%); } to { clip-path: circle(75% at 50% 50%); } }
+@keyframes frc-img-chamfer   { from { clip-path: polygon(0 0, 0 0, -12% 100%, -12% 100%); } to { clip-path: polygon(0 0, 112% 0, 100% 100%, 0 100%); } }
+@keyframes frc-img-zoom      { from { opacity: 0; transform: scale(1.08); } }
+@keyframes frc-img-kenburns  { from { transform: scale(1); } to { transform: scale(1.06); } }
+
+@keyframes frc-bg-pan    { from { background-position: 0 0; } to { background-position: 480px 360px; } }
+@keyframes frc-pulse     { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes frc-drift     { from { transform: translate(0, 0); } to { transform: translate(-24px, 16px); } }
+@keyframes frc-scanlines { from { top: -20%; } to { top: 100%; } }
+@keyframes frc-shimmer   { 0% { background-position: 100% 0; } 60%, 100% { background-position: 0 0; } }

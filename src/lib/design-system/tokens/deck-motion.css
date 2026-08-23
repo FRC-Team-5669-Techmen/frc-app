@@ -1,0 +1,113 @@
+/* FRC5669DesignSystem — deck motion
+   The stage, the sheet visibility contract, and EXACTLY FOUR slide transitions.
+
+     Content, general                      frc-slide-shutter   blade wipe, gold rim riding the leading edge
+     Data, telemetry, match, chart         frc-slide-boot      HUD de-blur
+     Section divider, statement, quote     frc-slide-banner    angled chevron pass
+     Quiet beat, deliberate stillness      frc-slide-cut       0.45s beat on the ground, then a hard cut
+     Build state                           none
+
+   Generic push, zoom, straight wipe and iris are deliberately absent and are
+   not to be reintroduced by hand. Same gate as motion.css; same end-state rule:
+   the base style of the active sheet is fully visible, unclipped, unfiltered. */
+
+/* ---- Stage --------------------------------------------------------------- */
+/* 4:3, 1920 × 1440 by default. 16:9 (1920 × 1080) is an opt-in. */
+.frc-stage {
+  position: relative;
+  width: 1920px;
+  height: 1440px;
+  overflow: hidden;
+  background: var(--bg0);
+  color: var(--fg);
+  flex: none;
+}
+.frc-stage[data-aspect="16:9"] { height: 1080px; }
+
+/* Only the active sheet shows on a live stage. */
+.frc-stage > .frc-sheet { display: none; }
+.frc-stage > .frc-sheet[data-deck-active] { display: block; }
+
+/* Print and PDF: every sheet, complete, one per page, in order. */
+@media print {
+  .frc-stage { height: auto; overflow: visible; }
+  .frc-stage > .frc-sheet { display: block; position: relative; height: 1440px; break-after: page; page-break-after: always; }
+  .frc-stage[data-aspect="16:9"] > .frc-sheet { height: 1080px; }
+}
+
+/* Thumbnail frames follow the active ground (bg0 fill, edge frame) so the rail
+   never shows a neutral white. The Deck.dc.html stage script repaints these
+   from the computed --bg0 / --edge of the active sheet. */
+.frc-thumbs {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: var(--edge);
+  overflow-x: auto;
+}
+.frc-thumb {
+  flex: none;
+  width: 160px;
+  height: 120px;
+  background: var(--bg0);
+  border: 2px solid var(--edge);
+  outline: var(--hair) solid var(--line);
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 8px;
+  cursor: pointer;
+}
+.frc-thumb[data-current] { outline-color: var(--accent); color: var(--fg); }
+
+/* ---- The four transitions (gated) ---------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .frc-sheet.frc-slide-shutter[data-deck-active] { animation: frc-slide-shutter 0.7s var(--ease-in-out) both; }
+  .frc-sheet.frc-slide-shutter[data-deck-active]::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 6px;
+    margin-left: -3px;
+    background: var(--rim);
+    box-shadow: var(--glow-box);
+    z-index: var(--z-rim);
+    pointer-events: none;
+    animation: frc-slide-shutter-rim 0.7s var(--ease-in-out) both;
+  }
+
+  .frc-sheet.frc-slide-boot[data-deck-active] { animation: frc-slide-boot 0.6s var(--ease-out) both; }
+
+  .frc-sheet.frc-slide-banner[data-deck-active] { animation: frc-slide-banner 0.8s var(--ease-in-out) both; }
+  .frc-sheet.frc-slide-banner[data-deck-active]::after {
+    content: '';
+    position: absolute;
+    top: -10%; bottom: -10%;
+    left: 0;
+    width: 220px;
+    background: var(--rim);
+    box-shadow: var(--glow-box);
+    transform: skewX(-14deg) translateX(-140%);
+    z-index: var(--z-rim);
+    pointer-events: none;
+    animation: frc-slide-banner-band 0.8s var(--ease-in-out) both;
+  }
+
+  .frc-sheet.frc-slide-cut[data-deck-active] { animation: frc-slide-cut 0.45s steps(1, end) both; }
+}
+
+@keyframes frc-slide-shutter     { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes frc-slide-shutter-rim { from { left: 0; opacity: 1; } 85% { opacity: 1; } to { left: 100%; opacity: 0; } }
+@keyframes frc-slide-boot {
+  from { opacity: 0; filter: blur(16px) brightness(1.7); transform: scale(1.015); }
+  55%  { opacity: 1; filter: blur(3px) brightness(1.15); }
+  to   { opacity: 1; filter: blur(0) brightness(1); transform: scale(1); }
+}
+@keyframes frc-slide-banner      { from { clip-path: polygon(-30% 0, -10% 0, -30% 100%, -50% 100%); } to { clip-path: polygon(-30% 0, 130% 0, 110% 100%, -50% 100%); } }
+@keyframes frc-slide-banner-band { from { transform: skewX(-14deg) translateX(-140%); opacity: 1; } 90% { opacity: 1; } to { transform: skewX(-14deg) translateX(1000%); opacity: 0; } }
+@keyframes frc-slide-cut         { from { opacity: 0; } to { opacity: 1; } }

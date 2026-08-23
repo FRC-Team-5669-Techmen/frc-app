@@ -1,0 +1,18 @@
+/* FRC5669DesignSystem — fonts
+   Four families, all from Google Fonts (the one external host the system uses).
+   Roboto is QUARANTINED: it is --font-first, used only inside FIRST-attributed
+   blocks (.frc-first-block), and it is never a fallback for Space Grotesk. */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Roboto:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+:where(.frc-deck, .frc-ground-squadron, .frc-ground-field, .frc-ground-paper) {
+  /* Space Grotesk Bold. Hero type, sheet titles, hero numerals, wordmark. */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-display-weight: 700;
+  /* Space Grotesk Regular / Medium. All running copy. */
+  --font-body: 'Space Grotesk', system-ui, sans-serif;
+  /* Space Mono. Chrome, labels, metadata, codes, telemetry, timers.
+     A family match, not a substitution: Space Grotesk was drawn from Space Mono. */
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+  /* Roboto. FIRST-attributed blocks only. */
+  --font-first: 'Roboto', system-ui, sans-serif;
+}

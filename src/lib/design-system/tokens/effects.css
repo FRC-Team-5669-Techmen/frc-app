@@ -1,0 +1,190 @@
+/* FRC5669DesignSystem — effects
+   Radii, hairlines, spacing, icon sizing, easing, z-order, glow classes, and
+   the chrome-bearing component classes (Button, Divider, ChevronRail, HudFrame,
+   ProgramLockup, SeasonLockup). Colors come ONLY from the ground aliases. */
+
+:where(.frc-deck, .frc-ground-squadron, .frc-ground-field, .frc-ground-paper) {
+  /* Radii stay small. Nothing is pill-round except a circular state token. */
+  --radius-chip:    2px;   /* chips, badges */
+  --radius-control: 3px;   /* buttons, inputs */
+  --radius-panel:   4px;   /* cards, panels */
+
+  /* Hairlines separate, plates give depth. */
+  --hair:       1px;   /* at rest */
+  --hair-frame: 2px;   /* framed drawings */
+
+  /* Spacing, 8px grid at 1920. */
+  --space-1:   8px;
+  --space-2:  16px;
+  --space-3:  24px;
+  --space-4:  32px;
+  --space-5:  48px;
+  --space-6:  64px;
+  --space-7:  96px;
+  --space-8: 128px;
+  --sheet-pad-x: 120px;
+  --sheet-pad-y:  96px;
+  --rail-h:       96px;   /* footer rail height; ambient layers are clipped out of it */
+
+  /* Iconography: Lucide, 24x24 stroked, round caps and joins, currentColor. */
+  --icon:        24px;
+  --icon-stroke: 1.6;
+
+  /* Motion curves and budgets. */
+  --ease-out:    cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.6, 0, 0.2, 1);
+  --ease-snap:   cubic-bezier(0.2, 1.2, 0.3, 1);
+  --dur-fast: 0.2s;
+  --dur-in:   0.55s;
+  --dur-img:  0.9s;
+
+  /* Z-order inside a sheet. */
+  --z-ambient: 0;
+  --z-content: 1;
+  --z-chrome:  10;
+  --z-rim:     20;
+}
+
+/* Glow is rationed: hero type and hero numerals only. Zero on paper via the alias. */
+.frc-glow     { text-shadow: var(--glow); }
+.frc-glow-box { box-shadow: var(--glow-box); }
+
+.frc-hairline        { border: var(--hair) solid var(--line); }
+.frc-hairline-strong { border: var(--hair) solid var(--line-strong); }
+.frc-hairline-frame  { border: var(--hair-frame) solid var(--line); }
+
+/* Inline Lucide SVGs carry this class. */
+.frc-icon {
+  width: var(--icon);
+  height: var(--icon);
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: var(--icon-stroke);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: middle;
+}
+
+/* ---- Button (core/Button.jsx) --------------------------------------------- */
+.frc-button {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0;
+  padding: 14px 24px;
+  min-height: 52px;
+  border: var(--hair) solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-regular);
+  line-height: 1;
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+.frc-button-primary   { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.frc-button-secondary { border-color: var(--line-strong); color: var(--fg); }
+.frc-button-ghost     { color: var(--fg-dim); }
+.frc-button-lg        { padding: 18px 32px; min-height: 64px; font-size: var(--fs-body-sm); }
+.frc-button:hover:not([disabled]) { border-color: var(--accent); }
+.frc-button-ghost:hover:not([disabled]) { color: var(--fg); }
+.frc-button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.frc-button[disabled], .frc-button[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+.frc-button .frc-icon { width: 22px; height: 22px; }
+
+/* ---- Divider (core/Divider.jsx) ------------------------------------------- */
+/* Chevrons are the SQUADRON rule element and replace the generic divider there.
+   Divider renders both a hairline and a chevron rail; the ground picks one. */
+.frc-divider { border: 0; margin: var(--space-4) 0; padding: 0; }
+.frc-divider-line   { height: var(--hair); background: var(--line); }
+.frc-divider-strong .frc-divider-line { background: var(--line-strong); }
+.frc-divider-chevron { display: none; }
+.frc-ground-squadron .frc-divider-auto .frc-divider-line    { display: none; }
+.frc-ground-squadron .frc-divider-auto .frc-divider-chevron { display: block; }
+.frc-divider-force-chevron .frc-divider-line    { display: none; }
+.frc-divider-force-chevron .frc-divider-chevron { display: block; }
+.frc-divider-force-line .frc-divider-line       { display: block; }
+.frc-divider-force-line .frc-divider-chevron    { display: none; }
+
+/* ---- ChevronRail (core/ChevronRail.jsx) ----------------------------------- */
+.frc-chevron-rail { display: block; width: 100%; height: 12px; color: var(--accent); line-height: 0; }
+.frc-chevron-rail svg { display: block; width: 100%; height: 100%; }
+.frc-chevron-rail-dim       { color: var(--fg-dim); }
+.frc-chevron-rail-structure { color: var(--fg-structure); }
+
+/* ---- HudFrame (brand/HudFrame.jsx) ---------------------------------------- */
+/* A framed drawing: 2px hairline and four corner brackets in the active hairline. */
+.frc-hud {
+  position: relative;
+  border: var(--hair-frame) solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: var(--space-4);
+  --hud-bracket: 28px;
+  background:
+    linear-gradient(var(--line-strong), var(--line-strong)) top left    / var(--hud-bracket) var(--hair-frame) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) top left    / var(--hair-frame) var(--hud-bracket) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) top right   / var(--hud-bracket) var(--hair-frame) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) top right   / var(--hair-frame) var(--hud-bracket) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) bottom left / var(--hud-bracket) var(--hair-frame) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) bottom left / var(--hair-frame) var(--hud-bracket) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) bottom right/ var(--hud-bracket) var(--hair-frame) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) bottom right/ var(--hair-frame) var(--hud-bracket) no-repeat;
+}
+.frc-hud-label {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  line-height: 1;
+}
+.frc-hud-label::before { content: ''; width: 10px; height: 2px; background: var(--accent); }
+.frc-hud-readout {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  line-height: 1;
+}
+.frc-hud-labelled { padding-top: calc(var(--space-4) + var(--space-3)); }
+
+/* ---- ProgramLockup (brand/ProgramLockup.jsx) ------------------------------ */
+/* --program colors program chrome only: the lockup rail and program badges. */
+.frc-program-lockup {
+  display: inline-grid;
+  grid-auto-flow: row;
+  gap: var(--space-2);
+  align-items: start;
+  justify-items: start;
+}
+.frc-program-rail { width: 100%; height: 4px; background: var(--program); border-radius: var(--radius-chip); }
+.frc-program-team { display: inline-flex; align-items: baseline; gap: 12px; }
+.frc-program-team .frc-numeral { font-size: var(--fs-h3); color: var(--fg); line-height: 1; }
+
+/* ---- SeasonLockup (brand/SeasonLockup.jsx) -------------------------------- */
+.frc-season-lockup { display: inline-grid; grid-template-columns: auto 1fr; gap: var(--space-4); align-items: center; }
+.frc-season-text   { display: grid; gap: var(--space-1); }
+.frc-season-name   { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h2); line-height: var(--lh-tight); letter-spacing: var(--track-tight); color: var(--fg-hero); text-shadow: var(--glow); margin: 0; }
+.frc-season-rule   { height: 6px; width: 120px; background: var(--season); border-radius: var(--radius-chip); }
+.frc-ground-paper .frc-season-rule { background: var(--accent); }   /* gold fallback is illegal on paper */
+.frc-season-years  { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wide); color: var(--fg-dim); font-variant-numeric: lining-nums tabular-nums; }

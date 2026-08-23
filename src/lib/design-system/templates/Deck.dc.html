@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deck — Techmen 5669</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;family=Space+Mono:wght@400;700&amp;family=Roboto:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap">
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    /* FRC5669DesignSystem — Deck shell. THE ONLY FILE THAT IS COPIED.
+       Every token, class and animation comes from ../styles.css (the
+       globalCssPaths entry in _ds_manifest.json). Nothing below is a token.
+       Ground: frc-ground-squadron | frc-ground-field | frc-ground-paper on the root
+       (legal to override on a section). Audience: frc-audience-internal | frc-audience-external.
+       Keys: ArrowLeft/Right, PageUp/Down, Home, End. T toggles the thumbnail rail. */
+    html, body { margin: 0; height: 100%; }
+    body { overflow: hidden; }
+    .frc-letterbox { position: fixed; inset: 0; overflow: hidden; }
+    /* The stage keeps its 1920 × 1440 layout box; the stage script scales it
+       about the top-left corner and translates it to the letterbox center.
+       (A grid cell would grow to the stage and never center it.) */
+    .frc-letterbox > .frc-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+    .frc-thumbs-dock { position: fixed; left: 0; right: 0; bottom: 0; }
+    .frc-thumbs-dock[hidden] { display: none; }
+    a { color: inherit; }
+    a:hover { color: inherit; }
+  </style>
+</helmet>
+<div class="frc-deck frc-ground-squadron frc-audience-internal frc-letterbox" data-deck-root>
+  <div class="frc-stage" data-aspect="4:3">
+    <section class="frc-sheet frc-slide-shutter" data-label="Sheet 1" data-screen-label="Blank sheet" data-deck-active="">
+      <div class="frc-sheet-body"></div>
+      <footer class="frc-footer">
+        <div class="frc-footer-seal"><span class="frc-slot frc-slot-tiny" style="width: 64px; height: 64px;" data-asset="assets/team/5669-Seal.svg"><span class="frc-slot-label">5669-Seal.svg</span></span></div>
+        <div class="frc-footer-team">5669</div>
+        <div class="frc-footer-deck">Deck name<span class="frc-footer-part">Part one</span></div>
+        <div class="frc-footer-first"><span class="frc-slot frc-slot-first" style="width: 200px; height: 60px; min-height: 30px;" data-asset="assets/first/FIRST-Horizontal-Reverse.png"><span class="frc-slot-label">FIRST horizontal, reverse</span></span></div>
+        <div class="frc-footer-sheet">1</div>
+        <ol class="frc-footer-rail"><li data-current=""></li></ol>
+      </footer>
+    </section>
+  </div>
+  <nav class="frc-thumbs frc-thumbs-dock" data-deck-thumbs hidden></nav>
+</div>
+</x-dc>
+<script data-dc-script data-props='{"$preview":{"width":1920,"height":1440}}'>
+/* deck-stage: activates one sheet at a time, drives the keys, and paints the
+   canvas, letterbox and thumbnail frames from the ACTIVE ground --bg0 / --edge
+   so a transition never flashes white. Runs under the Design Components
+   runtime (componentDidMount) or in a plain browser (DOMContentLoaded). */
+function frcDeckStage(doc) {
+  var root = doc.querySelector('[data-deck-root]');
+  if (!root) return;
+  var stage = root.querySelector('.frc-stage');
+  if (!stage) return;
+  var sheets = Array.prototype.filter.call(stage.children, function (el) { return el.classList.contains('frc-sheet'); });
+  if (!sheets.length) return;
+  var thumbs = root.querySelector('[data-deck-thumbs]');
+  var current = 0;
+  sheets.forEach(function (s, i) { if (s.hasAttribute('data-deck-active')) current = i; });
+
+  function paint() {
+    var cs = getComputedStyle(sheets[current]);
+    var bg0 = cs.getPropertyValue('--bg0').trim();
+    var edge = cs.getPropertyValue('--edge').trim();
+    doc.documentElement.style.background = edge;
+    doc.body.style.background = edge;
+    root.style.background = edge;
+    stage.style.background = bg0;
+    if (thumbs) {
+      thumbs.style.background = edge;
+      Array.prototype.forEach.call(thumbs.children, function (t, i) {
+        t.style.background = bg0;
+        t.style.borderColor = edge;
+        if (i === current) t.setAttribute('data-current', ''); else t.removeAttribute('data-current');
+      });
+    }
+  }
+  function fit() {
+    var w = root.clientWidth, h = root.clientHeight;
+    var sw = stage.offsetWidth, sh = stage.offsetHeight;
+    var k = Math.min(w / sw, h / sh);
+    var tx = Math.round((w - sw * k) / 2), ty = Math.round((h - sh * k) / 2);
+    stage.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + k + ')';
+  }
+  function show(n) {
+    n = Math.max(0, Math.min(sheets.length - 1, n));
+    sheets.forEach(function (s, i) { if (i === n) s.setAttribute('data-deck-active', ''); else s.removeAttribute('data-deck-active'); });
+    current = n;
+    paint();
+  }
+  function buildThumbs() {
+    if (!thumbs) return;
+    while (thumbs.firstChild) thumbs.removeChild(thumbs.firstChild);
+    sheets.forEach(function (s, i) {
+      var t = doc.createElement('button');
+      t.type = 'button';
+      t.className = 'frc-thumb';
+      t.textContent = s.getAttribute('data-screen-label') || s.getAttribute('data-label') || ('Sheet ' + (i + 1));
+      t.addEventListener('click', function () { show(i); });
+      thumbs.appendChild(t);
+    });
+  }
+  function editable(t) { return !!t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)); }
+  doc.addEventListener('keydown', function (e) {
+    if (editable(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+    switch (e.key) {
+      case 'ArrowRight': case 'PageDown': show(current + 1); break;
+      case 'ArrowLeft': case 'PageUp': show(current - 1); break;
+      case 'Home': show(0); break;
+      case 'End': show(sheets.length - 1); break;
+      case 't': case 'T': if (thumbs) thumbs.hidden = !thumbs.hidden; break;
+      default: return;
+    }
+    e.preventDefault();
+  });
+  window.addEventListener('resize', fit);
+  buildThumbs();
+  show(current);
+  fit();
+}
+if (typeof DCLogic === 'undefined') {
+  window.DCLogic = function () {};
+  window.addEventListener('DOMContentLoaded', function () { frcDeckStage(document); });
+}
+class Component extends DCLogic {
+  componentDidMount() { frcDeckStage(document); }
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+/* FRC5669DesignSystem — image slots
+   The team mark, logotype and seal SVGs and the FIRST logo PNGs are NOT yet in
+   the repo. Every component that needs one renders a clearly marked EMPTY SLOT
+   sized to the correct minimum dimensions. No substitute mark is drawn, no
+   logo is approximated, nothing resembling either is generated.
+
+   When an asset lands, pass it as `src` (or fill assets.js) and the slot
+   becomes the image, unchanged — the marks are used as supplied. */
+
+.frc-slot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  overflow: hidden;
+  border: var(--hair) dashed var(--line-strong);
+  border-radius: var(--radius-chip);
+  background: transparent;
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.25;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  vertical-align: middle;
+}
+.frc-slot-label { display: block; padding: 6px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.frc-slot-label small { display: block; opacity: 0.7; font-size: 10px; letter-spacing: 0.06em; text-transform: none; }
+.frc-slot-tiny .frc-slot-label { font-size: 0; padding: 0; }
+.frc-slot-tiny .frc-slot-label::before { content: '?'; font-size: 12px; }
+
+/* Filled: the supplied artwork, as supplied. No border, no tint, no shape. */
+.frc-slot[data-filled] { border: 0; background: transparent; }
+.frc-slot > img { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+/* variant="auto" on MarkGlyph / Logotype: the ground picks the published
+   version — Gold on the dark grounds, Black on paper. Gold on paper is illegal. */
+.frc-mark-auto { display: inline-flex; vertical-align: middle; }
+.frc-mark-auto > [data-variant] { display: none; }
+.frc-ground-squadron .frc-mark-auto > [data-variant="gold"],
+.frc-ground-field    .frc-mark-auto > [data-variant="gold"]  { display: inline-flex; }
+.frc-ground-paper    .frc-mark-auto > [data-variant="black"] { display: inline-flex; }
+
+/* A FIRST mark sits on a flat plate and is never recolored. */
+.frc-slot-first { background: var(--chrome-bg); border-style: dashed; }
+
+/* Reveal targets (motion.css frc-img-*) and generic image sizing. */
+.frc-img { display: block; max-width: 100%; height: auto; }
+.frc-img-fill { width: 100%; height: 100%; object-fit: cover; }

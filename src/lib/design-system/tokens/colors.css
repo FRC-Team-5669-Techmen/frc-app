@@ -1,0 +1,207 @@
+/* FRC5669DesignSystem — colors
+   Authored fresh from FRC_Design_System.md v1.1. Never extracted from frc-app CSS.
+
+   THE RULE THIS FILE IS BUILT AROUND
+   Every ground scope below declares its COMPLETE semantic alias set as literal
+   values. Never `var(--something)`. Never an alias declared only in :root.
+   Custom-property substitution resolves where a property is DECLARED, so an
+   alias declared once at the root freezes the root value into every other
+   scope, and a light sheet silently keeps dark-ground values while looking like
+   it themed correctly. scripts/design-system/ds-audit.mjs fails if the three
+   alias sets ever differ in name or contain a var() reference, and the /_ds
+   route proves the computed values in a live browser.
+
+   Root-level tokens are scoped to the deck root (.frc-deck) and to the three
+   ground classes, NOT to :root, so this sheet cannot collide with the host
+   app's own token layer when both are loaded. */
+
+:where(.frc-deck, .frc-ground-squadron, .frc-ground-field, .frc-ground-paper) {
+  /* ---- The five published team colors, roles fixed ------------------------ */
+  --gold:  #FFE629;   /* Techmen Gold. Identity, hero type, hero numerals, LIVE indicator. NEVER body copy. */
+  --black: #000000;   /* Jet Black. SQUADRON page ground. Nothing goes darker. */
+  --space: #53565F;   /* Space Gray. Structure, inactive strokes, plate edges. */
+  --ash:   #94989C;   /* Ash Gray. Metadata, timestamps, secondary labels. */
+  --white: #FFFFFF;   /* Prism White. Body copy. */
+
+  /* ---- SQUADRON ramp (rises above true black) ---------------------------- */
+  --sq-bg0:   #000000;
+  --sq-bg1:   #0B0C0E;
+  --sq-bg2:   #141619;
+  --sq-plate: #1E2126;
+  --sq-edge:  #000000;
+  --sq-line:        rgba(148,152,156,0.22);
+  --sq-line-strong: rgba(255,230,41,0.50);
+
+  /* ---- FIELD ramp (cool graphite) ----------------------------------------- */
+  --fl-bg0:   #0E1013;
+  --fl-bg1:   #16191E;
+  --fl-bg2:   #1E222A;
+  --fl-plate: #272C35;
+  --fl-edge:  #05070A;
+  --fl-line:        rgba(148,152,156,0.20);
+  --fl-line-strong: rgba(0,156,215,0.45);
+
+  /* ---- FIELD PAPER (the light sheet) -------------------------------------- */
+  --fl-paper:    #E9E7E1;
+  --fl-paper-2:  #DCD9D1;
+  --fl-ink:      #14161A;
+  --fl-ink-dim:  #55595F;
+  --fl-line-ink: rgba(20,22,26,0.22);
+  --fl-gold-ink: #7A6300;   /* bronze ink. The ONLY legal accent on paper (~5.2:1). */
+
+  /* ---- The red partition -------------------------------------------------- */
+  --alliance-red:  #ED1C24;   /* FIELD ground only. Alliance data only. Never decoration. */
+  --alliance-blue: #0066B3;   /* FIELD ground only. Alliance data only. Never decoration. */
+  --warn:  #D98C3F;   /* copper. Shop hazard, safety note, approaching deadline. */
+  --fault: #B0503C;   /* rust. Error, failed inspection, blocked. */
+  --ok:    #6FA57B;   /* pass, certified, complete, cleared. */
+
+  /* ---- Program layer (chrome only — never content, never identity) -------- */
+  --program:              #009CD7;   /* default: FIRST Robotics Competition, Process Blue */
+  --program-frc:          #009CD7;
+  --program-ftc:          #F57E25;
+  --program-fll:          #ED1C24;   /* FIRST LEGO League (Challenge) */
+  --program-fll-explore:  #00A651;
+  --program-fll-discover: #662D91;
+  --program-fll-ink:      #231F20;
+
+  /* ---- Season layer ------------------------------------------------------- */
+  /* Reskinned every January. Defaults to gold; set it on the deck root for the season. */
+  --season: #FFE629;
+}
+
+/* =============================================================================
+   GROUND SCOPES — complete literal alias sets. Same 35 names in each block.
+   ========================================================================== */
+
+/* SQUADRON — the default. Team identity. A blued-steel ready room. */
+.frc-ground-squadron {
+  --ground: squadron;
+  --bg0:   #000000;
+  --bg1:   #0B0C0E;
+  --bg2:   #141619;
+  --plate: #1E2126;
+  --edge:  #000000;
+  --line:        rgba(148,152,156,0.22);
+  --line-strong: rgba(255,230,41,0.50);
+  --fg:           #FFFFFF;
+  --fg-dim:       #94989C;
+  --fg-structure: #53565F;
+  --fg-hero:      #FFE629;
+  --accent:      #FFE629;
+  --accent-fg:   #000000;
+  --accent-soft: rgba(255,230,41,0.14);
+  --rim: #FFE629;
+  --glow:          0 0 18px rgba(255,230,41,0.45), 0 0 48px rgba(255,230,41,0.18);
+  --glow-box:      0 0 18px rgba(255,230,41,0.35);
+  --glow-strength: 1;
+  --chrome-bg: #0B0C0E;
+  --chrome-fg: #94989C;
+  --live: #FFE629;
+  --plate-rise:   inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.80), 0 2px 0 #000000, 0 8px 16px rgba(0,0,0,0.60);
+  --well-recess:  inset 0 2px 4px rgba(0,0,0,0.70), inset 0 -1px 0 rgba(148,152,156,0.10);
+  --panel-shadow: inset 0 1px 0 rgba(255,255,255,0.10), inset 0 -1px 0 rgba(0,0,0,0.80), 0 2px 0 #000000, 0 8px 16px rgba(0,0,0,0.60);
+  --focus: #FFE629;
+  --selection-bg: rgba(255,230,41,0.30);
+  --tex-line:   rgba(148,152,156,0.30);
+  --tex-fill:   rgba(148,152,156,0.12);
+  --tex-accent: rgba(255,230,41,0.22);
+  --tex-hazard: rgba(255,230,41,0.50);
+  --tex-led:    rgba(255,230,41,0.22);
+  --tex-bloom:  rgba(255,230,41,0.16);
+  --tex-hi:     rgba(255,255,255,0.08);
+  --tex-shade:  rgba(0,0,0,0.60);
+  color-scheme: dark;
+  background-color: var(--bg0);
+  color: var(--fg);
+}
+
+/* FIELD — data and competition content. The competition floor. */
+.frc-ground-field {
+  --ground: field;
+  --bg0:   #0E1013;
+  --bg1:   #16191E;
+  --bg2:   #1E222A;
+  --plate: #272C35;
+  --edge:  #05070A;
+  --line:        rgba(148,152,156,0.20);
+  --line-strong: rgba(0,156,215,0.45);
+  --fg:           #FFFFFF;
+  --fg-dim:       #94989C;
+  --fg-structure: #53565F;
+  --fg-hero:      #FFE629;
+  --accent:      #FFE629;
+  --accent-fg:   #000000;
+  --accent-soft: rgba(255,230,41,0.12);
+  --rim: #FFE629;
+  --glow:          0 0 18px rgba(255,230,41,0.40), 0 0 48px rgba(255,230,41,0.14);
+  --glow-box:      0 0 18px rgba(255,230,41,0.30);
+  --glow-strength: 1;
+  --chrome-bg: #16191E;
+  --chrome-fg: #94989C;
+  --live: #FFE629;
+  --plate-rise:   inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.70), 0 2px 0 #05070A, 0 8px 16px rgba(0,0,0,0.50);
+  --well-recess:  inset 0 2px 5px rgba(0,0,0,0.70), inset 0 -1px 0 rgba(148,152,156,0.10), inset 1px 0 0 rgba(0,0,0,0.40);
+  --panel-shadow: inset 0 2px 5px rgba(0,0,0,0.70), inset 0 -1px 0 rgba(148,152,156,0.10), inset 1px 0 0 rgba(0,0,0,0.40);
+  --focus: #FFE629;
+  --selection-bg: rgba(0,156,215,0.30);
+  --tex-line:   rgba(148,152,156,0.28);
+  --tex-fill:   rgba(148,152,156,0.10);
+  --tex-accent: rgba(0,156,215,0.22);
+  --tex-hazard: rgba(255,230,41,0.50);
+  --tex-led:    rgba(0,156,215,0.35);
+  --tex-bloom:  rgba(255,230,41,0.12);
+  --tex-hi:     rgba(255,255,255,0.07);
+  --tex-shade:  rgba(0,0,0,0.55);
+  color-scheme: dark;
+  background-color: var(--bg0);
+  color: var(--fg);
+}
+
+/* FIELD PAPER — the light sheet. Techmen Gold (#FFE629) is ILLEGAL here (~1.6:1);
+   the accent is redeclared as bronze ink #7A6300 and every glow is flattened to zero. */
+.frc-ground-paper {
+  --ground: paper;
+  --bg0:   #E9E7E1;
+  --bg1:   #E9E7E1;
+  --bg2:   #DCD9D1;
+  --plate: #E9E7E1;
+  --edge:  #DCD9D1;
+  --line:        rgba(20,22,26,0.22);
+  --line-strong: rgba(122,99,0,0.55);
+  --fg:           #14161A;
+  --fg-dim:       #55595F;
+  --fg-structure: #55595F;
+  --fg-hero:      #7A6300;
+  --accent:      #7A6300;
+  --accent-fg:   #E9E7E1;
+  --accent-soft: rgba(122,99,0,0.12);
+  --rim: #7A6300;
+  --glow:          none;
+  --glow-box:      none;
+  --glow-strength: 0;
+  --chrome-bg: #DCD9D1;
+  --chrome-fg: #55595F;
+  --live: #7A6300;
+  --plate-rise:   inset 0 1px 0 rgba(255,255,255,0.70), inset 0 -1px 0 rgba(20,22,26,0.16), 0 1px 0 rgba(20,22,26,0.22), 0 4px 10px rgba(20,22,26,0.10);
+  --well-recess:  inset 0 2px 3px rgba(20,22,26,0.16), inset 0 -1px 0 rgba(255,255,255,0.50);
+  --panel-shadow: none;
+  --focus: #7A6300;
+  --selection-bg: rgba(122,99,0,0.25);
+  --tex-line:   rgba(20,22,26,0.22);
+  --tex-fill:   rgba(20,22,26,0.08);
+  --tex-accent: rgba(122,99,0,0.22);
+  --tex-hazard: rgba(122,99,0,0.40);
+  --tex-led:    rgba(20,22,26,0.16);
+  --tex-bloom:  rgba(122,99,0,0);
+  --tex-hi:     rgba(255,255,255,0.60);
+  --tex-shade:  rgba(20,22,26,0.14);
+  color-scheme: light;
+  background-color: var(--bg0);
+  color: var(--fg);
+}
+
+/* Selection follows the ground. */
+.frc-ground-squadron ::selection,
+.frc-ground-field ::selection,
+.frc-ground-paper ::selection { background: var(--selection-bg); }

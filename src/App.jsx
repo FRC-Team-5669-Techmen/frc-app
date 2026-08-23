@@ -37,6 +37,12 @@ const MemberApplication  = lazy(() => import('./MemberApplication'))
 const ApplicationsPage   = lazy(() => import('./ApplicationsPage'))
 const ParentResponse     = lazy(() => import('./ParentResponse'))
 
+// Design-system specimen (/_ds). Dev-guarded on Vite's DEV flag: the lazy
+// import only exists in dev, so the bundle is never built into production and
+// the route renders a 404 there. Touches no auth and no Supabase.
+const SpecimenPage = import.meta.env.DEV ? lazy(() => import('./lib/design-system/specimen/SpecimenPage')) : null
+const DsNotFound = () => <div style={{ padding: 32, fontFamily: 'monospace' }}>404 — not found</div>
+
 const Splash = () => (
   <div className="splash">
     <img src="/assets/logos/Mark-Gold.svg" className="splash-mark" alt="" />
@@ -244,6 +250,9 @@ export default function App() {
             Edge Function). Gates nothing; a parent who ignores it costs their
             student nothing. */}
         <Route path="/parent/:token" element={<ParentResponse />} />
+
+        {/* Design-system specimen. Dev only — 404 in production. No auth, no Supabase. */}
+        <Route path="/_ds" element={SpecimenPage ? <SpecimenPage /> : <DsNotFound />} />
 
         {/* ── Protected: shared NavBar via ProtectedLayout ── */}
         <Route element={session ? <ProtectedLayout hasRole={hasRole} session={session} /> : <Navigate to="/login" replace />}>

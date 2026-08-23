@@ -1,0 +1,11 @@
+/* FRC5669DesignSystem — single entry point.
+   This file ONLY imports. It never defines a token. Order is load-bearing:
+   fonts → colors → typography → effects → surfaces → motion → deck-motion → image-slot. */
+@import './tokens/fonts.css';
+@import './tokens/colors.css';
+@import './tokens/typography.css';
+@import './tokens/effects.css';
+@import './tokens/surfaces.css';
+@import './tokens/motion.css';
+@import './tokens/deck-motion.css';
+@import './tokens/image-slot.css';

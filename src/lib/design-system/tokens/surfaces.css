@@ -1,0 +1,264 @@
+/* FRC5669DesignSystem — surfaces
+   Plates, wells, panels, the footer rail, and the AMBIENT TEXTURE LAYERS.
+
+   The ambient layers are a SEPARATE library from the loops in motion.css and
+   are not interchangeable: the layers are what the atmosphere of a sheet is
+   built from; the loops animate a layer that is already there.
+   Static layers stack as <div class="frc-ambient frc-ambient-NAME"> and scale
+   opacity by a --tex knob from 0 to 2 (set --tex on the sheet or the root).
+
+   SQUADRON plates RISE above the black (top highlight, bottom shade, short
+   drop, optional rivet seam). FIELD panels RECESS (inset well). The two grounds
+   read differently by construction, not by hue alone. */
+
+/* ---- Plates, wells, panels ------------------------------------------------ */
+.frc-plate {
+  background: var(--plate);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--plate-rise);
+}
+.frc-well {
+  background: var(--bg2);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--well-recess);
+}
+/* The ground-chosen treatment: rise on SQUADRON, recess on FIELD, flat on paper. */
+.frc-panel {
+  background: var(--bg1);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--panel-shadow);
+}
+.frc-ground-squadron .frc-panel { background: var(--plate); }
+.frc-ground-field    .frc-panel { background: var(--bg2); }
+
+/* Optional rivet seam along the top edge of a plate. */
+.frc-rivets { position: relative; }
+.frc-rivets::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 16px;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, var(--tex-hi) 0 2px, var(--tex-shade) 2.5px 3.5px, transparent 4px) 8px 0 / 40px 16px repeat-x;
+  opacity: 0.9;
+}
+
+/* PlatePanel (brand/PlatePanel.jsx) */
+.frc-plate-panel { position: relative; padding: var(--space-4); }
+.frc-plate-panel-tight { padding: var(--space-3); }
+.frc-plate-panel-loose { padding: var(--space-5); }
+
+/* ---- Sheet scaffolding ---------------------------------------------------- */
+/* The sheet is the positioned parent for ambient layers and the footer rail. */
+.frc-sheet {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg0);
+  color: var(--fg);
+  padding: var(--sheet-pad-y) var(--sheet-pad-x) calc(var(--rail-h) + var(--space-5));
+}
+.frc-sheet > *:not(.frc-ambient) { position: relative; z-index: var(--z-content); }
+.frc-sheet-body { position: relative; z-index: var(--z-content); height: 100%; }
+
+/* ---- Ambient texture layers ----------------------------------------------- */
+.frc-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-ambient);
+  pointer-events: none;
+  opacity: min(1, calc(var(--tex, 1) * var(--tex-base, 1)));
+  /* A FIRST mark may never sit on a busy background: every layer is clipped
+     out of the footer rail band. */
+  clip-path: inset(0 0 var(--rail-h) 0);
+}
+.frc-ambient-hazard { clip-path: none; }
+
+/* SQUADRON: patch (embroidered weave) */
+.frc-ambient-patch {
+  --tex-base: 0.55;
+  background:
+    repeating-linear-gradient( 45deg, var(--tex-line) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(-45deg, var(--tex-line) 0 1px, transparent 1px 4px);
+}
+/* SQUADRON: stencil (plate cutouts with bridges) */
+.frc-ambient-stencil {
+  --tex-base: 0.5;
+  background:
+    repeating-linear-gradient(90deg, var(--bg0) 0 8px, transparent 8px 200px),
+    repeating-linear-gradient(0deg, var(--tex-fill) 0 56px, transparent 56px 72px);
+}
+/* SQUADRON: chevron */
+.frc-ambient-chevron {
+  --tex-base: 0.45;
+  background:
+    linear-gradient(135deg, var(--tex-accent) 25%, transparent 25%) -60px 0,
+    linear-gradient(225deg, var(--tex-accent) 25%, transparent 25%) -60px 0,
+    linear-gradient(315deg, var(--tex-accent) 25%, transparent 25%),
+    linear-gradient( 45deg, var(--tex-accent) 25%, transparent 25%);
+  background-size: 120px 120px;
+}
+/* SQUADRON: stars (very low) */
+.frc-ambient-stars {
+  --tex-base: 0.35;
+  background:
+    radial-gradient(circle, var(--tex-hi) 0 1px, transparent 1.5px) 0 0 / 160px 140px,
+    radial-gradient(circle, var(--tex-line) 0 1px, transparent 1.5px) 70px 90px / 220px 180px,
+    radial-gradient(circle, var(--tex-accent) 0 1px, transparent 1.5px) 130px 40px / 340px 260px;
+}
+/* SQUADRON: rivet (panel seams) */
+.frc-ambient-rivet {
+  --tex-base: 0.7;
+  background:
+    radial-gradient(circle at 24px 8px, var(--tex-hi) 0 2px, var(--tex-shade) 2.5px 3.5px, transparent 4px) 0 0 / 48px 360px repeat,
+    linear-gradient(var(--tex-line), var(--tex-line)) 0 7px / 100% 360px repeat-y,
+    linear-gradient(var(--tex-shade), var(--tex-shade)) 0 8px / 100% 360px repeat-y,
+    repeating-linear-gradient(90deg, var(--tex-line) 0 1px, transparent 1px 480px) 0 0 / 100% 100%;
+  background-size: 48px 360px, 100% 1px, 100% 1px, 100% 100%;
+}
+/* SQUADRON + FIELD: bloom (upper-left halo). Removed on paper — a halo does not exist there. */
+.frc-ambient-bloom {
+  --tex-base: 1;
+  background: radial-gradient(ellipse 55% 45% at 18% 12%, var(--tex-bloom), transparent 70%);
+}
+.frc-ground-paper .frc-ambient-bloom { display: none; }
+
+/* FIELD: extrusion (aluminum channel) */
+.frc-ambient-extrusion {
+  --tex-base: 0.6;
+  background:
+    repeating-linear-gradient(90deg,
+      var(--tex-hi) 0 1px, transparent 1px 10px,
+      var(--tex-shade) 10px 12px, transparent 12px 22px,
+      var(--tex-hi) 22px 23px, transparent 23px 96px);
+}
+/* FIELD: tread plate */
+.frc-ambient-tread {
+  --tex-base: 0.5;
+  background:
+    linear-gradient( 45deg, transparent 42%, var(--tex-hi) 42% 48%, var(--tex-shade) 48% 54%, transparent 54%) 0 0 / 32px 32px,
+    linear-gradient(135deg, transparent 42%, var(--tex-hi) 42% 48%, var(--tex-shade) 48% 54%, transparent 54%) 16px 16px / 32px 32px;
+}
+/* FIELD: hazard (queue and safety tape). A band along the bottom edge, above the rail. */
+.frc-ambient-hazard {
+  --tex-base: 0.7;
+  inset: auto 0 var(--rail-h) 0;
+  height: 40px;
+  background: repeating-linear-gradient(-45deg, var(--tex-hazard) 0 28px, transparent 28px 56px);
+}
+.frc-ambient-hazard-top { inset: 0 0 auto 0; }
+/* FIELD: matrix (LED) */
+.frc-ambient-matrix {
+  --tex-base: 0.6;
+  background: radial-gradient(circle, var(--tex-led) 0 2px, transparent 2.6px) 0 0 / 18px 18px;
+}
+/* FIELD: fieldgrid (top-down) */
+.frc-ambient-fieldgrid {
+  --tex-base: 0.55;
+  background:
+    linear-gradient(var(--tex-line), var(--tex-line)) 0 0 / 100% 1px repeat-y,
+    linear-gradient(var(--tex-line), var(--tex-line)) 0 0 / 1px 100% repeat-x,
+    linear-gradient(var(--tex-fill), var(--tex-fill)) 0 0 / 100% 1px repeat-y,
+    linear-gradient(var(--tex-fill), var(--tex-fill)) 0 0 / 1px 100% repeat-x;
+  background-size: 100% 200px, 200px 100%, 100% 40px, 40px 100%;
+}
+/* FIELD: bracket (corner brackets) */
+.frc-ambient-bracket {
+  --tex-base: 0.9;
+  --bk: 96px;
+  --bk-w: 3px;
+  --bk-in: 48px;
+  background:
+    linear-gradient(var(--tex-accent), var(--tex-accent)) var(--bk-in) var(--bk-in) / var(--bk) var(--bk-w) no-repeat,
+    linear-gradient(var(--tex-accent), var(--tex-accent)) var(--bk-in) var(--bk-in) / var(--bk-w) var(--bk) no-repeat,
+    linear-gradient(var(--tex-accent), var(--tex-accent)) calc(100% - var(--bk-in)) var(--bk-in) / var(--bk) var(--bk-w) no-repeat,
+    linear-gradient(var(--tex-accent), var(--tex-accent)) calc(100% - var(--bk-in)) var(--bk-in) / var(--bk-w) var(--bk) no-repeat,
+    linear-gradient(var(--tex-accent), var(--tex-accent)) var(--bk-in) calc(100% - var(--bk-in) - var(--rail-h)) / var(--bk) var(--bk-w) no-repeat,
+    linear-gradient(var(--tex-accent), var(--tex-accent)) var(--bk-in) calc(100% - var(--bk-in) - var(--rail-h)) / var(--bk-w) var(--bk) no-repeat,
+    linear-gradient(var(--tex-accent), var(--tex-accent)) calc(100% - var(--bk-in)) calc(100% - var(--bk-in) - var(--rail-h)) / var(--bk) var(--bk-w) no-repeat,
+    linear-gradient(var(--tex-accent), var(--tex-accent)) calc(100% - var(--bk-in)) calc(100% - var(--bk-in) - var(--rail-h)) / var(--bk-w) var(--bk) no-repeat;
+}
+
+/* PAPER: grid */
+.frc-ambient-grid {
+  --tex-base: 0.6;
+  background:
+    linear-gradient(var(--tex-line), var(--tex-line)) 0 0 / 100% 1px repeat-y,
+    linear-gradient(var(--tex-line), var(--tex-line)) 0 0 / 1px 100% repeat-x;
+  background-size: 100% 32px, 32px 100%;
+}
+/* PAPER: hatch */
+.frc-ambient-hatch {
+  --tex-base: 0.45;
+  background: repeating-linear-gradient(45deg, var(--tex-line) 0 1px, transparent 1px 7px);
+}
+/* PAPER: foldline (tri-fold creases) */
+.frc-ambient-foldline {
+  --tex-base: 1;
+  background:
+    linear-gradient(180deg, var(--tex-shade), var(--tex-shade)) 0 33.333% / 100% 1px no-repeat,
+    linear-gradient(180deg, var(--tex-hi), transparent) 0 calc(33.333% + 1px) / 100% 6px no-repeat,
+    linear-gradient(180deg, var(--tex-shade), var(--tex-shade)) 0 66.666% / 100% 1px no-repeat,
+    linear-gradient(180deg, var(--tex-hi), transparent) 0 calc(66.666% + 1px) / 100% 6px no-repeat;
+}
+
+/* ---- Footer rail (brand/DeckFooter.jsx + templates/Deck.dc.html) ---------- */
+/* Persistent chrome on every sheet except the hub. Flat plate, no texture. */
+.frc-footer {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: var(--rail-h);
+  z-index: var(--z-chrome);
+  display: grid;
+  grid-template-columns: auto auto 1fr auto auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: 0 var(--space-5) 8px;
+  background: var(--chrome-bg);
+  border-top: var(--hair) solid var(--line);
+  color: var(--chrome-fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  isolation: isolate;
+}
+.frc-footer-seal  { display: flex; align-items: center; }
+.frc-footer-team  { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h3); line-height: 1; color: var(--accent); letter-spacing: var(--track-tight); font-variant-numeric: lining-nums tabular-nums; }
+.frc-footer-deck  { opacity: 0.72; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frc-footer-part::before { content: '·'; margin: 0 10px; opacity: 0.7; }
+.frc-footer-sheet { font-variant-numeric: lining-nums tabular-nums; color: var(--fg); }
+.frc-footer-sheet-total { opacity: 0.6; }
+/* FIRST logo zone: external audience only. Flat plate, minimum-size floor enforced. */
+.frc-footer-first {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 200px;
+  min-height: 60px;
+  height: 60px;
+  background: var(--chrome-bg);
+}
+.frc-footer-first img { display: block; height: 60px; min-height: 30px; width: auto; }
+.frc-audience-external .frc-footer,
+.frc-footer.frc-audience-external { grid-template-columns: auto auto 1fr auto auto auto; }
+.frc-audience-external .frc-footer-first,
+.frc-footer.frc-audience-external .frc-footer-first { display: flex; }
+/* Per-part progress rail along the bottom edge. */
+.frc-footer-rail {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 6px;
+  margin: 0; padding: 0;
+  list-style: none;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+}
+.frc-footer-rail li { background: var(--line); }
+.frc-footer-rail li[data-done]    { background: var(--fg-structure); }
+.frc-footer-rail li[data-current] { background: var(--accent); }
