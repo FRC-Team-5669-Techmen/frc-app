@@ -5,6 +5,7 @@ import NotificationsPanel from './NotificationsPanel'
 import { RoleBadge, ROLE_ORDER } from './roles'
 import { displayName } from './names'
 import { SUBTEAMS } from './subteams'
+import { DISCORD_INVITE } from './discord'
 import './ProfilePage.css'
 
 // Matches the application form's sizes (XS through 3XL) so a size picked there
@@ -305,6 +306,16 @@ export default function ProfilePage({ session, hasRole = () => false }) {
             </button>
           </form>
 
+        </div>
+
+        <p className="profile-section-heading">Team Discord</p>
+        <div className="profile-card profile-discord-card">
+          <p className="profile-cal-intro">
+            Join the team server to keep up with announcements and chat with the team.
+          </p>
+          <a className="profile-cal-subscribe" href={DISCORD_INVITE} target="_blank" rel="noreferrer">
+            Join Discord
+          </a>
         </div>
 
         {calToken && (

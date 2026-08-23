@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { SUBTEAMS } from './subteams'
 import { APPLICATION_SELECT } from './applicationFields'
+import { DISCORD_INVITE } from './discord'
 import './MemberApplication.css'
 
 // ─── Schedule copy ────────────────────────────────────────────────────────────
@@ -26,8 +27,6 @@ export const MEETING_SCHEDULE = [
     detail: 'Fridays 4:30 to 6:00pm and Saturdays 9:00 to 11:00am, weekly unless announced otherwise.',
   },
 ]
-
-const DISCORD_INVITE = 'https://discord.gg/FcJ3BQAVnh'
 
 // ─── Option lists ─────────────────────────────────────────────────────────────
 
