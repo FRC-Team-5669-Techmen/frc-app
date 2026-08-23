@@ -1,0 +1,8 @@
+# Brand assets are used AS SUPPLIED, and their bytes are pinned by sha256 in
+# src/lib/design-system/assets/PROVENANCE.json. Git must not rewrite them:
+# core.autocrlf=true rewrites LF to CRLF on checkout, which changes the hash on
+# Windows and leaves it alone on Linux, so the same commit would pass the audit
+# on one machine and fail it on another. -text disables that translation.
+*.svg -text
+*.png binary
+*.ico binary

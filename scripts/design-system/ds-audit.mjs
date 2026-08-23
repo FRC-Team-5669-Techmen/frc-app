@@ -19,15 +19,17 @@
 // 11. templates/Specimen.dc.html is never a starting point.
 // 12. Zero invariant guard fault markers in any template. A marker is a caught
 //     defect, not an accepted state (standards check 40).
-// 13. Every wired asset still hashes to its recorded provenance, so a silent
-//     recolor of a mark cannot land.
+// 13. Every wired asset, and every mirror of it elsewhere in the repo, still
+//     hashes to its recorded provenance, so a silent recolor of a mark cannot
+//     land in the bundle OR in public/.
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
-const ROOT = path.resolve(HERE, '../../src/lib/design-system')
+const REPO = path.resolve(HERE, '../..')
+const ROOT = path.resolve(REPO, 'src/lib/design-system')
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8')
 const exists = (p) => fs.existsSync(path.join(ROOT, p))
 
@@ -265,6 +267,17 @@ if (exists('assets/PROVENANCE.json')) {
     const sum = crypto.createHash('sha256').update(buf).digest('hex')
     if (sum !== a.sha256) fail(`provenance: ${a.file} sha256 ${sum.slice(0, 16)}… ≠ recorded ${a.sha256.slice(0, 16)}… — an asset changed after it was verified against ${a.source}`)
     if (a.bytes != null && buf.length !== a.bytes) fail(`provenance: ${a.file} is ${buf.length} bytes, recorded ${a.bytes}`)
+    // Mirrors are the same canonical bytes served from elsewhere in the repo
+    // (public/ for the app). A mark that is correct in the bundle and recolored
+    // in public/ is exactly the failure this check exists to catch: the splash
+    // screen shipped a recolored team mark for months because nothing compared
+    // the two.
+    for (const m of a.mirrors ?? []) {
+      const mp = path.resolve(REPO, m)
+      if (!fs.existsSync(mp)) { fail(`provenance: mirror ${m} of ${a.file} is missing`); continue }
+      const msum = crypto.createHash('sha256').update(fs.readFileSync(mp)).digest('hex')
+      if (msum !== a.sha256) fail(`provenance: mirror ${m} sha256 ${msum.slice(0, 16)}… ≠ canonical ${a.sha256.slice(0, 16)}… — the copy served to the app differs from the verified mark`)
+    }
   }
   for (const f of prov.stillEmpty ?? []) {
     if (exists(f)) fail(`provenance: ${f} is listed as still empty but exists — verify it against its canonical source and move it into assets[]`)

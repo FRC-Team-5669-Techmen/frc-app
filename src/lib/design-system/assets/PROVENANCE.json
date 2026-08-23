@@ -1,5 +1,5 @@
 {
-  "note": "Provenance for every asset wired into the bundle. An asset is wired only after its bytes are compared against the canonical source; the marks are used AS SUPPLIED, so a later edit to one of these files is a brand violation rather than a style choice. scripts/design-system/ds-audit.mjs recomputes each sha256 and fails on drift, which is what makes a silent recolor impossible to land.",
+  "note": "Provenance for every asset wired into the bundle. An asset is wired only after its bytes are compared against the canonical source; the marks are used AS SUPPLIED, so a later edit to one of these files is a brand violation rather than a style choice. scripts/design-system/ds-audit.mjs recomputes each sha256 and fails on drift, which is what makes a silent recolor impossible to land. `mirrors` are copies of the same canonical bytes served from elsewhere in the repo; they are hashed against the same value, because a mark that is correct in the bundle and recolored in public/ is the exact failure this file exists to catch.",
   "verifiedOn": "2026-08-23",
   "assets": [
     {
@@ -7,21 +7,61 @@
       "source": "https://frcteam5669.com/assets/logos/marks/svg/Mark-Gold.svg",
       "sha256": "c665f582184eb0acabde39b53b9762cabdf9158d49c8956c81e7931b23ca546d",
       "bytes": 1759,
-      "finding": "The copy already in this repo at public/assets/logos/Mark-Gold.svg is RECOLORED: its fill is #D4AF37 where the canonical file carries #ffe629, the published Techmen Gold. The canonical file is the one wired here. The repo copy was left untouched, since it is an app surface outside this bundle."
+      "mirrors": ["public/assets/logos/Mark-Gold.svg"],
+      "finding": "RESOLVED 2026-08-23. The copy at public/assets/logos/Mark-Gold.svg was RECOLORED: its fill was #D4AF37 where the canonical file carries #ffe629, the published Techmen Gold. It was in use on the app splash, the access gate and the landing page. It has been replaced with the canonical file and now hashes to the value above."
     },
     {
       "file": "assets/team/Mark-White.svg",
       "source": "https://frcteam5669.com/assets/logos/marks/svg/Mark-White.svg",
       "sha256": "02815f247c66f054a8dfebc6acf0bdd9d6594d1c1bc646b2d6f224f987f40e87",
       "bytes": 1756,
-      "finding": "Content-identical to public/assets/logos/Mark-White.svg; the repo copy differs only in line endings (3 CRLF). The canonical file is wired."
+      "mirrors": ["public/assets/logos/Mark-White.svg"],
+      "finding": "RESOLVED 2026-08-23. The copy at public/assets/logos/Mark-White.svg was content-identical but differed in line endings (3 CRLF), so its hash did not match. Replaced with the canonical bytes; no rendered change."
     },
     {
       "file": "assets/team/Mark-Black.svg",
       "source": "https://frcteam5669.com/assets/logos/marks/svg/Mark-Black.svg",
       "sha256": "811da606f5fa8f9ae389406b5049397bc1a0d24e36a8120af6528bcc974c88b1",
       "bytes": 1759,
-      "finding": "Content-identical to public/assets/logos/Mark-Black.svg; the repo copy differs only in line endings (3 CRLF). The canonical file is wired."
+      "mirrors": ["public/assets/logos/Mark-Black.svg"],
+      "finding": "RESOLVED 2026-08-23. Same line-ending mismatch as Mark-White.svg. Replaced with the canonical bytes; no rendered change."
+    }
+  ],
+  "derived": [
+    {
+      "file": "public/favicon.png",
+      "source": "no canonical source published; derived artwork",
+      "note": "32x32. Carries the mark in Techmen Gold: at that size every gold pixel is antialiased against black, and the brightest ones hold the #FFE629 channel ratio (G/R 0.90, B/R 0.16) rather than the #D4AF37 ratio (0.83, 0.26). Not hash-pinned, because there is nothing canonical to hash it against."
+    },
+    {
+      "file": "public/apple-touch-icon.png",
+      "source": "no canonical source published; derived artwork",
+      "note": "180x180. 2.6% of pixels are exactly #FFE629. Correct gold."
+    },
+    {
+      "file": "public/pwa-192x192.png",
+      "source": "no canonical source published; derived artwork",
+      "note": "192x192. 2.7% of pixels are exactly #FFE629. Correct gold."
+    },
+    {
+      "file": "public/pwa-512x512.png",
+      "source": "no canonical source published; derived artwork",
+      "note": "512x512. 3.5% of pixels are exactly #FFE629. Correct gold."
+    },
+    {
+      "file": "public/pwa-512x512-maskable.png",
+      "source": "no canonical source published; derived artwork",
+      "note": "512x512. 1.8% of pixels are exactly #FFE629. Correct gold."
+    }
+  ],
+  "hazards": [
+    {
+      "file": "scripts/gen-icons.js",
+      "note": "npm run gen-icons writes SOLID #005bff squares over public/pwa-192x192.png, public/pwa-512x512.png and public/apple-touch-icon.png. The icons currently on disk are mark artwork in #FFE629 and were NOT produced by this script. Running it would destroy three correct mark-derived icons and replace them with flat blue. Left alone here: this pass is an asset swap, and rewriting or removing the script is a separate call."
+    },
+    {
+      "file": "src/theme.css",
+      "note": "The APP's --gold token is #D4AF37, not the published Techmen Gold #FFE629, and --hr-regular / --hr-build carry it too. After this swap the mark on the splash, the access gate and the landing page renders canonical gold next to app chrome in the older gold; the difference is visible on the landing page, where the mark and the SIGN IN button no longer match. Left alone deliberately: changing it restyles every app surface, which is outside an asset swap."
     }
   ],
   "stillEmpty": [

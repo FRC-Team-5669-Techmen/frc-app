@@ -188,7 +188,7 @@ These come from the FIRST guidelines, which open with "standards are strictly en
 
 **Seal** on covers, closing sheets, and anything printed or worn. **Logotype** in the footer rail — `DeckFooter` defaults to `mark="logotype"`, because the logotype is horizontal and survives rail scale, and because the seal carries `5669` and `TECHMEN` inside its own ring, duplicating the team number the rail already sets in type. `mark="seal"` stays available for a rail on a sheet whose body is not already carrying one. **Mark alone** only where the rail already carries the logotype on the same sheet. None of the three may be edited, distorted, recolored outside the three published versions, or reconfigured.
 
-The three team marks are **wired and provenance-pinned**: their bytes were compared against the canonical files on the team branding page before wiring, and `assets/PROVENANCE.json` records each sha256 so `ds:audit` fails if one ever changes. The copy that was already in this repo at `public/assets/logos/Mark-Gold.svg` is **recolored** — `#D4AF37` where the canonical file carries `#ffe629` — which is why nothing is wired on trust. Every other slot is still empty and marked.
+The three team marks are **wired and provenance-pinned**: their bytes were compared against the canonical files on the team branding page before wiring, and `assets/PROVENANCE.json` records each sha256 so `ds:audit` fails if one ever changes. The copy that was already in this repo at `public/assets/logos/Mark-Gold.svg` was **recolored** — `#D4AF37` where the canonical file carries `#ffe629` — and it was live on the splash screen, the access gate and the landing page. It has been replaced with the canonical file, along with the White and Black copies, which differed only in line endings. All three `public/` copies are now recorded as **mirrors** in `PROVENANCE.json` and hashed against the same value, so a mark that is correct in the bundle and recolored in `public/` fails the audit. Every other slot is still empty and marked.
 
 ### Audience chrome
 
@@ -271,7 +271,7 @@ Importing the entry loads `styles.css`. Put `frc-deck` plus a ground class on th
 - **Every sheet defaults to one of the four transitions**, and there is no fifth.
 - **The specimen is never a starting point** — the audit fails if it is ever listed as one.
 - **Components refuse rather than degrade:** `ImageFrame` on a bled screenshot, `Cutout` on `fit="cover"`, `SponsorTier` on a framed sponsor mark, `SafetySheet` without a `SafetyNote`, `FirstName` on a plural or possessive. **Every guard renders a visible rust fault marker at run time and throws only inside the dev harness** — see below.
-- **A wired asset cannot change silently.** `assets/PROVENANCE.json` pins each one's sha256.
+- **A wired asset cannot change silently**, in the bundle or in `public/`. `assets/PROVENANCE.json` pins each one's sha256 and every mirror of it.
 - **No emoji.** Icons are Lucide, inlined SVG on `currentColor`.
 
 ## Invariant guards

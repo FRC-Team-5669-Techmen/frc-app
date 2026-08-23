@@ -164,7 +164,8 @@
   "assets": {
     "provenance": "assets/PROVENANCE.json",
     "wired": ["assets/team/Mark-Gold.svg", "assets/team/Mark-White.svg", "assets/team/Mark-Black.svg"],
-    "note": "The three team marks are wired after a byte comparison against the canonical files on the team branding page; ds:audit re-checks each sha256, so a silent recolor cannot land. Everything else renders a marked empty slot. FINDING: the copy already in this repo at public/assets/logos/Mark-Gold.svg is recolored (#D4AF37 where the canonical file carries #ffe629); the canonical file is the one wired here and the app copy was left untouched."
+    "mirrors": ["public/assets/logos/Mark-Gold.svg", "public/assets/logos/Mark-White.svg", "public/assets/logos/Mark-Black.svg"],
+    "note": "The three team marks are wired after a byte comparison against the canonical files on the team branding page; ds:audit re-checks each sha256 AND every mirror of it in the repo, so a silent recolor cannot land in the bundle or in public/. Everything else renders a marked empty slot. RESOLVED: public/assets/logos/Mark-Gold.svg was recolored (#D4AF37 against a canonical #ffe629) and live on the splash, the access gate and the landing page; all three public copies have been replaced with the canonical files and are registered as mirrors."
   },
   "capture": {
     "script": "scripts/design-system/ds-capture.mjs (npm run ds:capture)",
