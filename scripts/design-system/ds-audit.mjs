@@ -16,9 +16,13 @@
 //  9. Sheet patterns inherit their ground: no `.frc-ground-*` selector in
 //     tokens/sheets.css and no ground class named in any components/sheets file.
 // 10. Every sheet pattern defaults to one of the four transitions.
-// 11. templates/Specimen.dc.html is never a starting point.
+// 11. NEITHER template is a starting point, and the manifest carries no
+//     startingPoints key — the platform reads templates[] and that key matched
+//     nothing upstream. Both are readable reference for hand-built decks.
 // 12. Zero invariant guard fault markers in any template. A marker is a caught
 //     defect, not an accepted state (standards check 40).
+// 15. DeckStage is registered and its prompt states the mount-once rule, because
+//     a deck author reading only that file needs to know.
 // 14. No alias is reachable in a state where it does not resolve: .frc-deck shares
 //     the SQUADRON block as the fail-safe base, that block stays ahead of field and
 //     paper in source order, and every var() in the token sheets resolves everywhere.
@@ -197,7 +201,7 @@ for (const c of manifest.cards) {
   if (!first.includes('@dsCard')) fail(`card ${c.path}: first line lacks the @dsCard marker`)
 }
 for (const t of manifest.templates) if (!exists(t.path)) fail(`manifest template ${t.path} missing`)
-for (const s of manifest.startingPoints) if (!exists(s.path)) fail(`manifest startingPoint ${s.path} missing`)
+if ('startingPoints' in manifest) fail('manifest still carries startingPoints — the platform reads templates[]; that key matched nothing upstream and described a route into Claude Design that does not exist')
 for (const h of manifest.helpers) if (!exists(h.sourcePath)) fail(`manifest helper ${h.sourcePath} missing`)
 if (!exists(manifest.specimen.sourcePath)) fail('manifest specimen.sourcePath missing')
 if (!exists(manifest.specimen.proofs)) fail('manifest specimen.proofs missing')
@@ -238,12 +242,18 @@ for (const f of sheetFiles) {
   if (!m) fail(`${f} declares no default transition`)
   else if (!SHEET_TRANSITIONS.includes(m[1])) fail(`${f} defaults to "${m[1]}", which is not one of the four transitions`)
 }
-for (const s0 of manifest.startingPoints) {
-  if (/Specimen/.test(s0.path)) fail('manifest startingPoints lists the Specimen — it is reference, never a starting point')
-}
+// The shell stopped being a starting point when it became unreachable: no
+// template can be shipped to Claude Design from a repo-sourced design system, so
+// a deck there starts from Blank and assembles out of the library. Both files
+// stay as readable reference, and neither may claim to be a starting point.
 const specimenTpl = manifest.templates.find((t) => /Specimen/.test(t.path))
 if (!specimenTpl) fail('manifest templates does not list templates/Specimen.dc.html')
-else if (specimenTpl.copied !== false) fail('manifest: templates/Specimen.dc.html must be marked copied: false')
+const deckTpl = manifest.templates.find((t) => /Deck\.dc\.html/.test(t.path))
+if (!deckTpl) fail('manifest templates does not list templates/Deck.dc.html')
+for (const t of manifest.templates) {
+  if (t.copied !== false) fail(`manifest template ${t.path} must be marked copied: false — neither template is a starting point`)
+  if (t.startingPoint !== false) fail(`manifest template ${t.path} must be marked startingPoint: false`)
+}
 
 // ---------- 12. no fault marker in a template ----------
 // Guards render a visible rust marker at run time rather than throwing, because
@@ -355,6 +365,25 @@ if (exists('assets/PROVENANCE.json')) {
       seen.add(prop)
       fail(`tokens/${f}: var(${prop}) has no fallback and ${prop} is declared in no scope — it resolves to nothing in every state`)
     }
+  }
+}
+
+// ---------- 15. DeckStage ----------
+// DeckStage is the one component that is behaviour rather than appearance, and
+// the only one a deck is WRONG to omit — it carries the job the deck shell's
+// stage script used to do. A deck author who reads only its prompt still has to
+// learn the mount-once rule, so the prompt is required to say it.
+{
+  const ds = manifest.components.find((c) => c.name === 'DeckStage')
+  if (!ds) fail('manifest does not list DeckStage — the deck shell stage script has no home without it')
+  else {
+    const prompt = read(ds.prompt)
+    if (!/exactly once/i.test(prompt)) fail('DeckStage.prompt.md does not state that every deck mounts it exactly once')
+    const src = read(ds.sourcePath)
+    for (const token of ['--bg0', '--edge']) {
+      if (!src.includes(token)) fail(`DeckStage does not read ${token} — painting the canvas from the active ground is the whole job`)
+    }
+    if (!/from '\.\.\/guard\.jsx'/.test(src)) fail('DeckStage does not import the shared guard — its refusals must render the same rust marker as every other guard')
   }
 }
 

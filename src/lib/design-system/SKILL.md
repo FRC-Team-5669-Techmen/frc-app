@@ -20,10 +20,14 @@ The visual identity system for FRC Team 5669 (Techmen) decks and materials. Spec
 ## Making a deck
 
 ```
-1. Copy templates/Deck.dc.html.        The ONLY file anyone copies.
-2. Set the ground and audience classes on the deck root.
-3. Add one <section> per sheet, each built from a sheet PATTERN.
-4. Reference everything else. Never copy templates/Specimen.dc.html.
+1. Start from Blank. NOTHING is copied - no template reaches Claude Design.
+2. Set the ground and audience classes on the deck root, and data-aspect on the stage.
+3. Mount <DeckStage /> EXACTLY ONCE. It paints canvas, letterbox and thumbnail
+   frames from the ACTIVE sheet's --bg0 and --edge; without it a transition
+   flashes white. It is the deck shell's stage script, as a component.
+4. Add one <section> per sheet, each built from a sheet PATTERN.
+5. Reference everything else. templates/Deck.dc.html and templates/Specimen.dc.html
+   are READABLE REFERENCE ONLY - read them, never copy them.
 ```
 
 In React (the app, or the `/_ds` route):
@@ -77,7 +81,7 @@ The marker is not a soft landing. `npm run ds:audit` fails on a fault marker in 
 
 ## What the audit fails on
 
-An alias set that differs between grounds, a `var()` in a ground alias, gold on paper, a color outside the published set, an import out of order, an animation outside the reduced-motion gate, a manifest that does not match the disk, an emoji, a sheet pattern naming a ground or taking an audience prop, a sheet defaulting to a fifth transition, the specimen listed as a starting point, a guard fault marker in a template, or a wired asset whose bytes no longer match its recorded provenance.
+An alias set that differs between grounds, a `var()` in a ground alias, gold on paper, a color outside the published set, an import out of order, an animation outside the reduced-motion gate, a manifest that does not match the disk, an emoji, a sheet pattern naming a ground or taking an audience prop, a sheet defaulting to a fifth transition, a template claiming to be a starting point (neither is) or a leftover startingPoints key, a missing or undocumented DeckStage, a guard fault marker in a template, or a wired asset whose bytes no longer match its recorded provenance.
 
 ## The red partition
 

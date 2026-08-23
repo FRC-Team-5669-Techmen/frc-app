@@ -245,3 +245,74 @@ app's own GetFile RPC. Present or absent, each named:
 
 The root-class finding from the first verification is unchanged and consistent: root
 `className` is exactly `frc-deck`, grounds live on the sheets.
+
+## DeckStage, and the shell demoted to reference (2026-08-23)
+The deck shell is no longer a starting point, so its stage script had nowhere to
+live. It is now **`components/brand/DeckStage.jsx`** — the one component in the system
+that is behaviour rather than appearance. Every deck mounts it **exactly once**.
+
+It paints the canvas, the letterbox and the thumbnail frames from the **ACTIVE sheet's**
+`--bg0` and `--edge`, and repaints on every sheet change. `--edge` is the whole job: the
+generated deck rolled its own stage logic and read `--bg0` but never `--edge`, which is
+precisely the white flash a transition exposes. Reading the tones off the active *sheet*
+rather than the deck root is what stops a paper sheet sitting in a black letterbox.
+
+It does not own the deck root. It finds the root by walking up from its own marker node
+and READS what is there; six states trip the guard and render the shared rust marker
+(throwing only under harness mode): no `.frc-deck` ancestor, no `.frc-stage`, no
+`data-aspect`, no ground class, no audience class, a second instance. The middle four are
+exactly what a deck generated from Blank lands in.
+
+**One scoping rule that is not in the brief and was added deliberately:** the DOCUMENT
+canvas is painted only when the deck owns the viewport, which is what `.frc-letterbox` on
+the root declares. Without it a demo card or a proof would repaint the whole host page.
+An embedded deck paints itself and leaves the page alone.
+
+### Verified at /_ds
+A new **DeckStage** section mounts three correct decks (one per ground) and all four
+broken states, and measures rather than asserts. On a clean load: **4 markers, 0 thrown**,
+verdict PASS.
+
+    squadron  --edge rgb(0,0,0)       -> canvas rgb(0,0,0)       match | --bg0 rgb(0,0,0)       -> stage match
+    field     --edge rgb(5,7,10)      -> canvas rgb(5,7,10)      match | --bg0 rgb(14,16,19)    -> stage match
+    paper     --edge rgb(220,217,209) -> canvas rgb(220,217,209) match | --bg0 rgb(233,231,225) -> stage match
+
+FIELD and PAPER are the load-bearing rows: on both, `--edge` differs from `--bg0`, so a
+match proves `--edge` is genuinely read rather than `--bg0` reused. On SQUADRON the two are
+both black, which is why that row alone would prove nothing.
+
+Each broken state showed its marker with the right rule: no `data-aspect`, no ground class,
+no audience class, two instances. Flipping the harness toggle produced **4 throws, 0
+markers**, with the three correct decks still driving — the same component doing both, per
+the Invariant guards rule.
+
+Repaint-on-change was measured live in the Brand demo card's miniature deck: stepping
+squadron -> paper moved the canvas from `rgb(0,0,0)` to `rgb(220,217,209)`, the stage to
+`rgb(233,231,225)`, the thumbnail rail to the paper edge, and the current-thumb marker to
+index 1 — while the host page background stayed `rgb(10,11,13)`, untouched, which is the
+viewport-ownership rule working.
+
+Wiring count is now **93 component roots mounted from source**, DeckStage among them, and
+`DeckStage` roots visibly rendered = **0**.
+
+**A harness-ordering bug was found and fixed rather than worked around.** The harness flag
+is a single module global that `RefusalsSection` also owns. A guard trips inside its own
+layout effect and re-renders before any passive effect of the section around it, so the
+broken decks were throwing on first paint no matter where the flag was set. The section now
+sets the flag in a passive effect (which runs after `RefusalsSection`) and mounts the broken
+decks only once it has settled. Setting it during render was tried first and was not enough —
+that is recorded because the next person will reach for it too.
+
+### Docs corrected
+`_ds_manifest.json` no longer carries **`startingPoints`** at all: the platform reads
+`templates[]`, and that key described a route into Claude Design that does not exist. Both
+templates are now `copied: false` **and** `startingPoint: false`. The headers of
+`templates/Deck.dc.html` and `templates/Specimen.dc.html`, `README.md`, `SKILL.md` and
+`CLAUDE.md` now say the same thing: neither file is a starting point, no template can reach
+Claude Design from a repo-sourced design system, and a deck starts from Blank and assembles
+out of the library.
+
+`ds-audit` follows: check 11 became "neither template is a starting point and the manifest
+carries no startingPoints key", and a new **check 15** requires DeckStage to be registered,
+to read both `--bg0` and `--edge`, to import the shared guard, and requires its prompt to
+state the mount-once rule. Seven negative controls, all caught.

@@ -348,6 +348,15 @@
       "class": "frc-stencil"
     },
     {
+      "name": "DeckStage",
+      "group": "brand",
+      "sourcePath": "components/brand/DeckStage.jsx",
+      "types": "components/brand/DeckStage.d.ts",
+      "prompt": "components/brand/DeckStage.prompt.md",
+      "class": "frc-deck-stage",
+      "note": "Behaviour, not appearance. Mounted exactly once per deck. Renders nothing visible; paints canvas, letterbox and thumbnail frames from the ACTIVE sheet --bg0 and --edge, and repaints on every sheet change. Replaces the stage script that used to live in templates/Deck.dc.html. Guards: no .frc-deck ancestor, no .frc-stage, no data-aspect, no ground class, no audience class, a second instance."
+    },
+    {
       "name": "Badge",
       "group": "data",
       "sourcePath": "components/data/Badge.jsx",
@@ -987,7 +996,7 @@
         "width": 1920,
         "height": 2600
       },
-      "subtitle": "Marks, footer rail, program and season lockups, FirstName, HudFrame, PlatePanel, StencilTitle"
+      "subtitle": "Marks, footer rail, program and season lockups, FirstName, HudFrame, PlatePanel, StencilTitle, DeckStage"
     },
     {
       "name": "Data components",
@@ -1039,11 +1048,12 @@
     {
       "name": "Deck",
       "path": "templates/Deck.dc.html",
-      "copied": true,
+      "copied": false,
       "aspect": "4:3",
       "width": 1920,
       "height": 1440,
-      "note": "The only file anyone copies BY HAND. Stage, ground class, audience class, footer rail, one blank sheet, deck-stage script. NOT reachable from Claude Design: the design-sync converter emits no templates/ directory, so this file has never been uploaded — see templatesNotEmitted below."
+      "note": "READABLE REFERENCE ONLY, never a starting point. The hand-copy shell: stage, ground class, audience class, letterbox, footer rail, one blank sheet. Its stage script is GONE — that job is now the DeckStage component, which a deck mounts once. No template can reach Claude Design from a repo-sourced design system (see templatesNotEmitted), so a deck there starts from Blank and assembles out of the library.",
+      "startingPoint": false
     },
     {
       "name": "Specimen",
@@ -1054,14 +1064,8 @@
       "width": 1920,
       "height": 1440,
       "sheets": 26,
-      "note": "REFERENCE ONLY, never a starting point. All twenty-six patterns once, across all three grounds and both audience modes. It is a RENDERING of the patterns for Claude Design; components/sheets/ is the source of truth and /_ds mounts the real components."
-    }
-  ],
-  "startingPoints": [
-    {
-      "name": "Deck shell",
-      "path": "templates/Deck.dc.html",
-      "description": "Copy this. Set the ground and audience classes on the root, add sheets, reference everything else. LOCAL REGISTRY ONLY — ds-audit reads this key; Claude Design does not. See templatesNotEmitted."
+      "note": "READABLE REFERENCE ONLY, never a starting point. All twenty-six patterns once, across all three grounds and both audience modes. It is a RENDERING of the patterns; components/sheets/ is the source of truth and /_ds mounts the real components.",
+      "startingPoint": false
     }
   ],
   "specimen": {
@@ -1135,11 +1139,13 @@
   },
   "templatesNotEmitted": {
     "status": "confirmed 2026-08-23",
-    "summary": "templates/ never reaches Claude Design, so generated decks start from Blank.",
+    "summary": "No template can reach Claude Design from a repo-sourced design system. Decks there start from Blank and assemble out of the library; templates/ is readable reference for hand-built decks.",
     "converter": "The design-sync converter has no template concept at all — no config key (the full set is shape, pkg, globalName, entry, srcDir, tokensGlob, cssEntry, componentSrcMap, docsMap, docsDir, guidelinesGlob, extraEntries, extraFonts, tokensPkg, overrides, libOverrides, replaces, provider, storyImports, storybookStatic, storybookConfigDir, titleMap, dtsPropsFor, tsconfig) and no emit path.",
     "platformSchema": "Claude Design DOES support templates. Its own compiled _ds_manifest.json carries a templates[] of {name, description, folder, entryPath, thumbnail:{path, kind:\"captured\"}}, one templates/<slug>/ directory each. NOTE the platform reads `templates`, NOT `startingPoints` — startingPoints is empty even in a design system whose templates all work, so the key in THIS file is our own vocabulary and matches nothing upstream.",
     "handUploadTested": "Uploading templates/deck/Deck.dc.html by hand via the DesignSync write path was tested. The file landed, the _ds_needs_recompile fence was consumed (so the self-check DID run), and the recompiled manifest still reported templates: [], startingPoints: [], hasThumbnailHtml: false. No template appeared in the picker or in the design system page nav. The probe file was deleted afterwards.",
     "whatAWorkingTemplateWouldNeed": "A captured .thumbnail per template folder, a root thumbnail.html (hasThumbnailHtml), and a copy of the platform-generated dc-runtime support.js that Deck.dc.html loads — that runtime is emitted per design PROJECT by the platform and is marked \"GENERATED … do not edit\", so shipping it would mean vendoring a platform artifact into this bundle.",
-    "decision": "Not forced. The deck shell stays a hand-copy artifact until the converter supports templates or the platform documents the registration."
+    "decision": "Not forced. The deck shell stays a hand-copy artifact until the converter supports templates or the platform documents the registration.",
+    "startingPointsKeyDropped": "This manifest used to carry a startingPoints[] naming templates/Deck.dc.html. It has been removed: the platform reads templates[], startingPoints matched nothing upstream (it is empty even in a design system whose templates all work), and keeping it described a route into the platform that does not exist.",
+    "stageScriptReassigned": "The Deck.dc.html stage script — paint canvas, letterbox and thumbnail frames from the active sheet --bg0 and --edge — is now components/brand/DeckStage.jsx, mounted once per deck. A deck assembled from Blank gets the behaviour by mounting a component rather than by copying a file it cannot reach."
   }
 }

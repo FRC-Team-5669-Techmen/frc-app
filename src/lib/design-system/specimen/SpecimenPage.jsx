@@ -7,7 +7,7 @@ import { Component, useCallback, useEffect, useLayoutEffect, useRef, useState } 
 import {
   Button, Eyebrow, Divider, TeamWordmark,
   IconPlay, IconRotateCcw,
-  DeckFooter, FirstName, FirstNameScope, HudFrame, PlatePanel, StencilTitle,
+  DeckFooter, DeckStage, FirstName, FirstNameScope, HudFrame, PlatePanel, StencilTitle,
   ImageFrame, Cutout, MatchClock, AllianceSplit, ScoutTable, ScoutRow, SponsorWall, SponsorTier, SafetySheet,
   CoreDemoCard, BrandDemoCard, DataDemoCard, SurfacesDemoCard, FormsDemoCard, SheetsDemoCard, SHEET_PATTERNS, tokens,
 } from '../index.js'
@@ -1142,6 +1142,161 @@ function ChromeSection() {
   )
 }
 
+/* ---------- 8b. DeckStage ---------- */
+
+// The four broken states below are exactly what a deck generated from Blank
+// lands in by default, which is why they are mounted here rather than described.
+// Harness mode is switched OFF for this section so the guard renders its marker
+// instead of throwing; the toggle puts it back, and the SAME component throws.
+const DECKSTAGE_BREAKAGE = [
+  { id: 'no-aspect', label: 'stage declares no data-aspect', root: 'frc-deck frc-ground-squadron frc-audience-internal', aspect: null },
+  { id: 'no-ground', label: 'no ground class on the root', root: 'frc-deck frc-audience-internal', aspect: '4:3' },
+  { id: 'no-audience', label: 'no audience class on the root', root: 'frc-deck frc-ground-squadron', aspect: '4:3' },
+  { id: 'two-instances', label: 'two DeckStage instances on one deck', root: 'frc-deck frc-ground-squadron frc-audience-internal', aspect: '4:3', twice: true },
+]
+
+function MiniDeck({ rootClass, aspect, twice, ground = 'squadron', innerRef, onPaint }) {
+  return (
+    <div ref={innerRef} className={rootClass} data-mini>
+      <DeckStage nav={false} fit={false} thumbs={false} onPaint={onPaint} />
+      {twice ? <DeckStage nav={false} fit={false} thumbs={false} /> : null}
+      <div className="frc-stage" {...(aspect ? { 'data-aspect': aspect } : {})} style={{ width: 320, height: 240, transform: 'none' }}>
+        <section className={cx('frc-sheet', GROUND_CLASSES[ground])} data-deck-active="" style={{ padding: 16 }}>
+          <Eyebrow tone="accent">{ground}</Eyebrow>
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function DeckStageSection() {
+  const [throwing, setThrowing] = useState(false)
+  const [mountKey, setMountKey] = useState(0)
+  const [scan, setScan] = useState(null)
+  const refs = useRef({})
+
+  // The harness flag is a single module global and RefusalsSection also owns it,
+  // so this section cannot simply set it and trust the value: effects run in tree
+  // order, RefusalsSection sits earlier in the page, and its effect sets the flag
+  // back to true after this section has already rendered. So set the flag in a
+  // passive effect (which runs AFTER RefusalsSection) and then REMOUNT the broken
+  // decks with a key bump, so each guard trips against the value this section
+  // wants. Without the remount the decks trip during the first commit, when the
+  // flag still belongs to whoever set it last, and throw instead of marking.
+  useEffect(() => { setHarnessMode(throwing); setMountKey((k) => k + 1) }, [throwing])
+  useEffect(() => () => setHarnessMode(true), [])
+
+  const run = useCallback(() => {
+    const correct = GROUNDS.map((g) => {
+      const el = refs.current[`ok-${g}`]
+      if (!el) return { ground: g, ok: false, note: 'not mounted' }
+      const sheet = el.querySelector('.frc-sheet')
+      const stage = el.querySelector('.frc-stage')
+      const cs = getComputedStyle(sheet)
+      const edge = toRgbString(cs.getPropertyValue('--edge').trim())
+      const bg0 = toRgbString(cs.getPropertyValue('--bg0').trim())
+      const paintedEdge = getComputedStyle(el).backgroundColor
+      const paintedBg0 = getComputedStyle(stage).backgroundColor
+      const fault = el.querySelector('[data-frc-fault]')
+      return {
+        ground: g,
+        edge, paintedEdge, bg0, paintedBg0,
+        edgeOk: norm(paintedEdge) === norm(edge),
+        bg0Ok: norm(paintedBg0) === norm(bg0),
+        fault: Boolean(fault),
+        ok: norm(paintedEdge) === norm(edge) && norm(paintedBg0) === norm(bg0) && !fault,
+      }
+    })
+    const broken = DECKSTAGE_BREAKAGE.map((b) => {
+      const el = refs.current[`bad-${b.id}`]
+      const marker = el ? el.querySelector('[data-frc-fault="DeckStage"]') : null
+      return {
+        id: b.id,
+        label: b.label,
+        marker: Boolean(marker),
+        rule: marker ? (marker.querySelector('.frc-fault-rule')?.textContent ?? '') : '',
+        ok: Boolean(marker),
+      }
+    })
+    setScan({ correct, broken })
+  }, [])
+
+  useEffect(() => { const t = setTimeout(run, 200); return () => clearTimeout(t) }, [run, throwing, mountKey])
+
+  const allOk = scan ? scan.correct.every((c) => c.ok) && scan.broken.every((b) => b.ok) : null
+
+  return (
+    <Section
+      id="deckstage"
+      title="DeckStage"
+      lede="Behaviour, not appearance. Mounted ONCE per deck, it renders nothing and paints the canvas, letterbox and thumbnail frames from the ACTIVE sheet's --bg0 and --edge. --edge is the point: paint only --bg0 and the room sees white through the gap the moment a transition moves the sheet. It replaces the stage script that used to live in templates/Deck.dc.html, which is no longer a starting point — nothing can be copied into Claude Design, so a deck starts from Blank and assembles out of the library."
+    >
+      <div className="ds-tabs">
+        <Button variant={throwing ? 'ghost' : 'primary'} onClick={() => setThrowing(false)} aria-pressed={!throwing}>deck: renders a marker</Button>
+        <Button variant={throwing ? 'primary' : 'ghost'} onClick={() => setThrowing(true)} aria-pressed={throwing}>harness: throws</Button>
+        <Button variant="ghost" onClick={run}>Re-measure</Button>
+      </div>
+
+      <h4 className="ds-sub">Correct root, all three grounds</h4>
+      <div className="ds-row" style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+        {GROUNDS.map((g) => (
+          <Boundary key={g}>
+            <MiniDeck
+              ground={g}
+              rootClass={cx('frc-deck', GROUND_CLASSES[g], 'frc-audience-internal')}
+              aspect="4:3"
+              innerRef={(el) => { refs.current[`ok-${g}`] = el }}
+            />
+          </Boundary>
+        ))}
+      </div>
+
+      <h4 className="ds-sub">Each broken state a deck generated from Blank lands in</h4>
+      <div className="ds-row" style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+        {mountKey === 0 ? <p className="frc-micro">settling the harness flag…</p> : DECKSTAGE_BREAKAGE.map((b) => (
+          <div key={`${b.id}-${mountKey}`} style={{ maxWidth: 360 }}>
+            <p className="frc-micro">{b.label}</p>
+            <Boundary>
+              <MiniDeck
+                rootClass={b.root}
+                aspect={b.aspect}
+                twice={b.twice}
+                innerRef={(el) => { refs.current[`bad-${b.id}`] = el }}
+              />
+            </Boundary>
+          </div>
+        ))}
+      </div>
+
+      <div className="ds-proof" data-proof="deckstage">
+        <div className="ds-proof-head">
+          <Verdict state={allOk}>Paints from --edge on every ground, and every broken state shows the marker</Verdict>
+          <Button variant="ghost" onClick={run}>Re-measure</Button>
+        </div>
+        {scan ? (
+          <table>
+            <tbody>
+              {scan.correct.map((c) => (
+                <tr key={c.ground}>
+                  <td className={c.ok ? 'ds-pass' : 'ds-fail'}>{c.ground}</td>
+                  <td>--edge <code>{c.edge}</code> → canvas <code>{c.paintedEdge}</code> {c.edgeOk ? 'match' : 'MISMATCH'}</td>
+                  <td>--bg0 <code>{c.bg0}</code> → stage <code>{c.paintedBg0}</code> {c.bg0Ok ? 'match' : 'MISMATCH'}</td>
+                </tr>
+              ))}
+              {scan.broken.map((b) => (
+                <tr key={b.id}>
+                  <td className={b.ok ? 'ds-pass' : 'ds-fail'}>{b.label}</td>
+                  <td colSpan={2}>{b.marker ? <code>{b.rule}</code> : 'no marker — the guard did not trip'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : null}
+      </div>
+    </Section>
+  )
+}
+
 /* ---------- 9. Wiring ---------- */
 
 function WiringSection() {
@@ -1150,7 +1305,7 @@ function WiringSection() {
   useEffect(() => { const t = setTimeout(run, 150); return () => clearTimeout(t) }, [run])
   const expected = [
     'Button', 'Eyebrow', 'Divider', 'ChevronRail', 'TeamWordmark',
-    'SealMark', 'MarkGlyph', 'Logotype', 'DeckFooter', 'ProgramLockup', 'SeasonLockup', 'FirstName', 'HudFrame', 'PlatePanel', 'StencilTitle',
+    'SealMark', 'MarkGlyph', 'Logotype', 'DeckFooter', 'ProgramLockup', 'SeasonLockup', 'FirstName', 'HudFrame', 'PlatePanel', 'StencilTitle', 'DeckStage',
     'Badge', 'Chip', 'SubteamBadge', 'Field', 'StatBlock', 'Readout', 'SpecTable', 'SpecRow', 'FocusTable', 'FocusRow',
     'BarChart', 'Bar', 'GanttChart', 'GanttBar', 'DecisionMatrix', 'Timeline', 'TimelineItem', 'MatchClock', 'BuildCountdown',
     'ScoutTable', 'ScoutRow', 'AllianceSplit',
@@ -1252,6 +1407,7 @@ export default function SpecimenPage() {
         <RefusalsSection />
         <section className="ds-section"><ExternalEnforcement /></section>
         <ChromeSection />
+        <DeckStageSection />
         <WiringSection />
       </main>
     </div>

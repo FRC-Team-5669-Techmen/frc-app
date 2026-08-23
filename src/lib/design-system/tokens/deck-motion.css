@@ -24,6 +24,11 @@
 }
 .frc-stage[data-aspect="16:9"] { height: 1080px; }
 
+/* DeckStage is behaviour, not appearance: it renders a marker node so it can
+   find its deck and be counted, and that node is never seen. A tripped guard
+   renders .frc-fault instead, which is deliberately not hidden. */
+.frc-deck-stage { display: none; }
+
 /* Only the active sheet shows on a live stage. */
 .frc-stage > .frc-sheet { display: none; }
 .frc-stage > .frc-sheet[data-deck-active] { display: block; }

@@ -12,18 +12,32 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&amp;family=Space+Mono:wght@400;700&amp;family=Roboto:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap">
   <link rel="stylesheet" href="../styles.css">
   <style>
-    /* FRC5669DesignSystem — Deck shell. THE ONLY FILE THAT IS COPIED, BY HAND.
-       Claude Design never sees this file: the design-sync converter emits no
-       templates/ directory, and a hand-upload of it does not register either
-       (measured — the self-check recompiled and still reported templates: []).
-       A deck generated there starts from Blank and therefore has no ground class
-       on the root, no letterbox, and no deck-stage script. See the
-       templatesNotEmitted block in _ds_manifest.json.
+    /* FRC5669DesignSystem — Deck shell. READABLE REFERENCE. NOT A STARTING POINT.
+
+       NO TEMPLATE CAN REACH CLAUDE DESIGN from a repo-sourced design system. The
+       converter emits no templates/ directory, and a hand-upload does not
+       register either — measured: the file landed, the self-check ran, and the
+       recompiled manifest still reported templates: []. So a deck there starts
+       from BLANK and ASSEMBLES OUT OF THE LIBRARY. See the templatesNotEmitted
+       block in _ds_manifest.json.
+
+       THE STAGE SCRIPT THAT USED TO LIVE HERE IS GONE. Its job — paint the
+       canvas, the letterbox and the thumbnail frames from the ACTIVE sheet's
+       --bg0 and --edge — is now the DeckStage component, which every deck mounts
+       exactly once. Reading --edge is the part that matters: paint only --bg0 and
+       the room sees white through the gap the moment a transition moves the
+       sheet. See components/brand/DeckStage.prompt.md.
+
+       What is left here is a readable picture of the shape a deck takes: the
+       markup below is what the classes and attributes look like assembled. Read
+       it; build the real thing out of the library.
+
        Every token, class and animation comes from ../styles.css (the
        globalCssPaths entry in _ds_manifest.json). Nothing below is a token.
        Ground: frc-ground-squadron | frc-ground-field | frc-ground-paper on the root
        (legal to override on a section). Audience: frc-audience-internal | frc-audience-external.
-       Keys: ArrowLeft/Right, PageUp/Down, Home, End. T toggles the thumbnail rail. */
+       Keys: ArrowLeft/Right, PageUp/Down, Home, End. T toggles the thumbnail rail —
+       all four are DeckStage behaviour now. */
     html, body { margin: 0; height: 100%; }
     body { overflow: hidden; }
     .frc-letterbox { position: fixed; inset: 0; overflow: hidden; }

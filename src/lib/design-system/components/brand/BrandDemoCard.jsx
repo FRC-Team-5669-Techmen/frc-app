@@ -1,4 +1,4 @@
-// @dsCard group="Brand" name="Brand components" subtitle="Marks, footer rail, program and season lockups, FirstName, HudFrame, PlatePanel, StencilTitle"
+// @dsCard group="Brand" name="Brand components" subtitle="Marks, footer rail, program and season lockups, FirstName, HudFrame, PlatePanel, StencilTitle, DeckStage"
 import { GROUND_CLASSES, AUDIENCE_CLASSES } from '../../tokens.js'
 import { cx } from '../cx.js'
 import { Eyebrow } from '../core/Eyebrow.jsx'
@@ -12,6 +12,7 @@ import { FirstName, FirstNameScope } from './FirstName.jsx'
 import { HudFrame } from './HudFrame.jsx'
 import { PlatePanel } from './PlatePanel.jsx'
 import { StencilTitle } from './StencilTitle.jsx'
+import { DeckStage } from './DeckStage.jsx'
 
 const section = { display: 'grid', gap: 20 }
 const row = { display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'center' }
@@ -130,6 +131,35 @@ export function BrandDemoCard({ ground = 'squadron', audience = 'internal', run 
         <StencilTitle>Standing orders</StencilTitle>
         <StencilTitle as="h2" size="display" caps>Muster</StencilTitle>
         <StencilTitle as="h3" bridge={false} glow={false}>No bridge, no glow</StencilTitle>
+      </section>
+
+      <section style={section}>
+        <Eyebrow>DeckStage — behaviour, not appearance</Eyebrow>
+        <p className="frc-body-sm">
+          Mounted ONCE per deck. It renders nothing; it paints the canvas, the letterbox and the
+          thumbnail frames from the ACTIVE sheet&apos;s <code>--bg0</code> and <code>--edge</code>.
+          The miniature below is a real deck root with its own stage, two sheets on different
+          grounds and a thumbnail rail — step it with the rail to watch the frame follow the sheet.
+          It has no <code>.frc-letterbox</code> on its root, so it paints itself and leaves this
+          page alone.
+        </p>
+        <div
+          className={cx('frc-deck', GROUND_CLASSES.squadron, AUDIENCE_CLASSES.internal)}
+          style={{ padding: 12, border: '1px solid var(--line)' }}
+        >
+          <DeckStage nav={false} fit={false} />
+          <div className="frc-stage" data-aspect="4:3" style={{ width: 480, height: 360, transform: 'none' }}>
+            <section className="frc-sheet frc-ground-squadron" data-label="Squadron" data-deck-active style={{ padding: 24 }}>
+              <Eyebrow tone="accent">Sheet 1</Eyebrow>
+              <StencilTitle as="h3" size="h1">Squadron</StencilTitle>
+            </section>
+            <section className="frc-sheet frc-ground-paper" data-label="Paper" style={{ padding: 24 }}>
+              <Eyebrow tone="accent">Sheet 2</Eyebrow>
+              <StencilTitle as="h3" size="h1">Paper</StencilTitle>
+            </section>
+          </div>
+          <nav className="frc-thumbs" data-deck-thumbs />
+        </div>
       </section>
     </div>
   )

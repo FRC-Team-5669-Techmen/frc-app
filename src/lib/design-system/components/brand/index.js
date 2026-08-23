@@ -8,4 +8,5 @@ export { FirstName, FirstNameScope, useFirstNameScope, classifyFirstName } from 
 export { HudFrame } from './HudFrame.jsx'
 export { PlatePanel } from './PlatePanel.jsx'
 export { StencilTitle } from './StencilTitle.jsx'
+export { DeckStage } from './DeckStage.jsx'
 export { BrandDemoCard } from './BrandDemoCard.jsx'
