@@ -6,3 +6,9 @@ dist
 .env.*.local
 .DS_Store
 .claude/
+# ...except the harness launch config, which has to travel with the repo:
+# /_ds must boot from a clean checkout.
+!.claude/
+.claude/*
+!.claude/launch.json
+artifacts/

@@ -138,6 +138,18 @@ image-slot { color: var(--fg-dim); }
 .frc-frame-bleed-bottom .frc-frame-plate { mask-image: linear-gradient(to bottom, var(--bg0) 55%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, var(--bg0) 55%, transparent 100%); }
 
 /* The marked empty state: no artwork yet, no grey wash, still legible. */
+/* A Cutout is sized by its slot, and a sponsor mark's slot is short. The
+   180px floor below is an ImageFrame floor; inside a Cutout it overflows the
+   slot and collides with whatever sits above it — which is what the first
+   capture run showed happening to the sponsor tier name. Inside a Cutout the
+   marker fills the slot it was given and no more. */
+.frc-cutout > .frc-frame-empty {
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  padding: var(--space-1);
+  overflow: hidden;
+}
 .frc-frame-empty {
   display: flex;
   align-items: center;

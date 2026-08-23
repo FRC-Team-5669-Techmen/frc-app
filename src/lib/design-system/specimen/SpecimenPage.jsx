@@ -8,10 +8,11 @@ import {
   Button, Eyebrow, Divider, TeamWordmark,
   IconPlay, IconRotateCcw,
   DeckFooter, FirstName, FirstNameScope, HudFrame, PlatePanel, StencilTitle,
-  ImageFrame, Cutout, MatchClock, AllianceSplit, ScoutTable, ScoutRow, SponsorWall, SponsorTier,
+  ImageFrame, Cutout, MatchClock, AllianceSplit, ScoutTable, ScoutRow, SponsorWall, SponsorTier, SafetySheet,
   CoreDemoCard, BrandDemoCard, DataDemoCard, SurfacesDemoCard, FormsDemoCard, SheetsDemoCard, SHEET_PATTERNS, tokens,
 } from '../index.js'
 import { cx } from '../components/cx.js'
+import { setHarnessMode } from '../components/guard.jsx'
 import {
   proveGrounds, scanForGold, scanForNeutralWhite, auditMotionGate, measureStatic, replay, countMounted,
   scanForAlliance, makeAlphaPng, scanCutoutRectangles, readComputed, definePlatformImageSlot, readSlotFrame,
@@ -830,9 +831,14 @@ function AllianceSection() {
         ) : null}
         {page && page.collisions.length ? (
           <p className="ds-note">
-            Value collision, not a leak: FIRST LEGO League red is published as the same hex as alliance red, so a computed
-            style cannot tell them apart after substitution. {page.collisions.length} declaration(s) inside program chrome
-            ({page.collisions.map((c) => c.owner || 'program rail').join(', ')}) carry that value legitimately.
+            Documented value collision, not a leak: FIRST LEGO League red is published as the same hex as alliance red, so
+            after substitution a computed style cannot tell FLL program chrome from alliance data. The scan resolves it by
+            PROGRAM rather than by color — it reads the --program actually in force on the element — which is why
+            {' '}{page.collisions.length} declaration(s) below are classified as program chrome and not as leaks:
+            {' '}{page.collisions.map((c) => `${c.owner || 'program rail'} (program: ${c.program}, token ${c.programToken})`).join('; ')}.
+            The FLL Robot Game has no alliances, so an FLL deck has no legal alliance use and an FRC deck never sets
+            --program to an FLL value. This is reported rather than silenced: silencing it would hide the next real leak
+            inside a ProgramLockup.
           </p>
         ) : null}
         {page && page.offenders.length ? (
@@ -859,6 +865,24 @@ const REFUSALS = [
     render: () => <Cutout fit="cover" file="gearbox.png" />,
   },
   {
+    id: 'safety-no-note',
+    label: 'A SafetySheet with no SafetyNote',
+    why: 'A safety sheet whose hazard was softened into a normal callout still reads as "safety was covered" from the thumbnail rail.',
+    render: () => (
+      <div className="frc-deck frc-ground-squadron" style={{ position: 'relative', height: 260 }}>
+        <SafetySheet label="Safety" footer={false}>
+          <span slot="title">The mill</span>
+        </SafetySheet>
+      </div>
+    ),
+  },
+  {
+    id: 'first-possessive',
+    label: 'A possessive form of the FIRST name',
+    why: 'The name is never plural or possessive. One guard behaviour now: this used to throw on an external audience and warn otherwise.',
+    render: () => <p className="frc-body"><FirstName>{"FIRST's"}</FirstName> season</p>,
+  },
+  {
     id: 'sponsor-framed',
     label: 'A sponsor mark that is not a floating Cutout',
     why: 'A contact shadow under a corporate logo reads as a rendering error, and a frame fills the alpha region with a backplate.',
@@ -875,12 +899,20 @@ const REFUSALS = [
 
 function RefusalsSection() {
   const [open, setOpen] = useState(null)
+  const [throwing, setThrowing] = useState(true)
+  // The harness flag is what decides throw-vs-marker. Flipping it here is the
+  // proof: the SAME component renders a rust marker in a deck and throws here.
+  useEffect(() => { setHarnessMode(throwing); return () => setHarnessMode(true) }, [throwing])
   return (
     <Section
       id="refusals"
-      title="Enforced refusals"
-      lede="Three rules in this pass are enforced in code rather than written down and hoped for. Mount each one to see it throw in this browser; the message is the rule."
+      title="Invariant guards"
+      lede="Five rules are enforced in code rather than written down and hoped for. Every guard RENDERS A VISIBLE RUST FAULT MARKER at run time and THROWS ONLY INSIDE THE DEV HARNESS — a guard that throws during a presentation takes the deck down in front of the room, on the external decks that matter most. Flip the switch to see the same component do both. The marker is not a soft landing: ds:audit fails on one in a template."
     >
+      <div className="ds-tabs">
+        <Button variant={throwing ? 'primary' : 'ghost'} onClick={() => setThrowing(true)} aria-pressed={throwing}>harness: throws</Button>
+        <Button variant={throwing ? 'ghost' : 'primary'} onClick={() => setThrowing(false)} aria-pressed={!throwing}>deck: renders a marker</Button>
+      </div>
       {REFUSALS.map((r) => (
         <div key={r.id} className="ds-proof" data-proof={`refusal-${r.id}`}>
           <div className="ds-proof-head">
@@ -888,7 +920,7 @@ function RefusalsSection() {
             <Button variant="ghost" onClick={() => setOpen(open === r.id ? null : r.id)}>{open === r.id ? 'Unmount' : 'Mount it'}</Button>
           </div>
           <p className="ds-note">{r.why}</p>
-          {open === r.id ? <Boundary key={r.id}>{r.render()}</Boundary> : null}
+          {open === r.id ? <Boundary key={`${r.id}-${throwing}`}>{r.render()}</Boundary> : null}
         </div>
       ))}
     </Section>
@@ -1142,10 +1174,52 @@ function WiringSection() {
   )
 }
 
+/* ---------- capture mode ---------- */
+
+/**
+ * CaptureView — `/_ds?capture=CoverSheet&ground=field&audience=external`.
+ *
+ * One sheet, one ground, one audience, at the real 1920 x 1440, with no route
+ * chrome around it. `npm run ds:capture` drives this to write a PNG per
+ * pattern per ground per audience, which is the only way a human review pass of
+ * this system is possible at all: DOM measurement confirms an alias resolved,
+ * never that a sheet reads well or that two elements are not colliding.
+ *
+ * Guards do NOT throw here even though this is the harness: a capture run has
+ * to produce the image of a tripped guard, and the audit is what fails on a
+ * fault marker. `?harness=throw` restores throwing for a proof run.
+ */
+function CaptureView({ params }) {
+  const pattern = params.get('capture')
+  const ground = GROUNDS.includes(params.get('ground')) ? params.get('ground') : 'squadron'
+  const audience = params.get('audience') === 'external' ? 'external' : 'internal'
+  const ambient = params.get('ambient') === 'on'
+  const known = SHEET_PATTERNS.includes(pattern)
+  useEffect(() => {
+    document.title = `${pattern} · ${ground} · ${audience}`
+    document.documentElement.setAttribute('data-ds-capture', '')
+  }, [pattern, ground, audience])
+  if (!known) {
+    return <pre className="ds-error" data-capture-error>Unknown pattern: {String(pattern)}</pre>
+  }
+  return (
+    <div className="ds-capture" data-capture={pattern} data-ground={ground} data-audience={audience}>
+      <SheetsDemoCard ground={ground} audience={audience} only={[pattern]} ambient={ambient} />
+    </div>
+  )
+}
+
 /* ---------- page ---------- */
 
 export default function SpecimenPage() {
-  useEffect(() => { document.title = `${NAMESPACE} — specimen` }, [])
+  const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams()
+  const capturing = params.has('capture')
+  // The dev harness: a guard throws here instead of rendering a fault marker,
+  // so a proof run fails loudly rather than quietly producing a rust block.
+  // A capture run needs the image of that block, so it opts out.
+  setHarnessMode(!capturing || params.get('harness') === 'throw')
+  useEffect(() => { if (!capturing) document.title = `${NAMESPACE} — specimen` }, [capturing])
+  if (capturing) return <CaptureView params={params} />
   return (
     <div className="frc-deck frc-ground-squadron frc-audience-internal ds-root" data-ds-root>
       <header className="ds-header">

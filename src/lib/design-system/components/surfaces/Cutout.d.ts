@@ -7,7 +7,7 @@ export interface CutoutProps {
   alt?: string
   /** shadow = resting part, shelf = datum line, none = floating mark (every sponsor logo). */
   ground?: CutoutGround
-  /** Always "contain". Passing "cover" THROWS. */
+  /** Always "contain". Guarded: "cover" is refused. */
   fit?: 'contain'
   width?: number | string
   height?: number | string

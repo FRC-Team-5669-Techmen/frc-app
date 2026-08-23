@@ -73,3 +73,12 @@
 /* Chrome lab */
 .ds-letterbox { background: var(--edge); padding: 48px; display: grid; gap: 24px; }
 .ds-404 { min-height: 100vh; display: grid; place-items: center; font-family: ui-monospace, monospace; }
+
+/* ---- Capture mode (/_ds?capture=...) -------------------------------------- */
+/* One sheet at its real 1920 x 1440, no route chrome, so the PNG is the sheet
+   and nothing else. npm run ds:capture drives this. */
+html[data-ds-capture], html[data-ds-capture] body { margin: 0; padding: 0; background: transparent; }
+.ds-capture { display: block; }
+.ds-capture .frc-demo-card { padding: 0; gap: 0; }
+.ds-capture .frc-sheet-stage { gap: 0; }
+.ds-capture .frc-sheet-stage figcaption { display: none; }

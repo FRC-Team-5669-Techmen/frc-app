@@ -1,5 +1,6 @@
 import { createContext, useContext, useLayoutEffect, useRef, useSyncExternalStore, useMemo } from 'react'
 import { cx } from '../cx.js'
+import { fault } from '../guard.jsx'
 
 /**
  * FirstName — the FIRST name in text, enforced.
@@ -15,9 +16,13 @@ import { cx } from '../cx.js'
  * Usage: <FirstName /> (the bare word), <FirstName>FIRST Robotics Competition</FirstName>,
  * or the shorthand <FirstName program="frc" />. channel="heading" | "body" (default body).
  *
- * Wrap a deck in <FirstNameScope audience="internal|external"> to scope the
- * first-use registry to that deck. External audience makes enforcement
- * mandatory: a refused form throws instead of rendering a fault marker.
+ * Wrap a deck in <FirstNameScope> to scope the first-use registry to that deck.
+ *
+ * A refused form renders a visible rust fault marker and throws only inside the
+ * dev harness — the SAME behaviour as every other guard in the system. There is
+ * no internal/external split any more: two guard behaviours in one system means
+ * nobody can predict what a guard does, and the audience that most needs the
+ * rule is the audience a thrown error hurts most. See components/guard.jsx.
  *
  * The registry is an external store. Each instance claims its terms in a
  * layout effect (after commit, before paint, in document order) against a
@@ -79,6 +84,11 @@ class FirstUseRegistry {
 const defaultRegistry = new FirstUseRegistry()
 const FirstNameContext = createContext({ audience: 'internal', registry: defaultRegistry })
 
+/**
+ * `audience` is carried for the scope's own record (a deck states what it is)
+ * and is available through useFirstNameScope. It no longer changes what a guard
+ * does: enforcement is identical in both modes.
+ */
 export function FirstNameScope({ audience = 'internal', children }) {
   const value = useMemo(() => ({ audience, registry: new FirstUseRegistry() }), [audience])
   return <FirstNameContext.Provider value={value}>{children}</FirstNameContext.Provider>
@@ -89,7 +99,7 @@ export function useFirstNameScope() {
 }
 
 export function FirstName({ program, channel = 'body', className, children, ...rest }) {
-  const { audience, registry } = useContext(FirstNameContext)
+  const { registry } = useContext(FirstNameContext)
   // No program and no children means the bare name: <FirstName /> renders FIRST.
   const childText = typeof children === 'string' ? children : Array.isArray(children) ? children.join('') : ''
   const text = program ? PROGRAM_TEXT[program] ?? program : children == null ? 'FIRST' : childText
@@ -116,13 +126,12 @@ export function FirstName({ program, channel = 'body', className, children, ...r
   }, [registry, channel, termsKey, result.ok])
 
   if (!result.ok) {
-    const message = `FirstName refused "${result.raw}": ${result.reason} form. Use FIRST, FIRST Robotics Competition, FIRST Tech Challenge, or FIRST LEGO League, never plural or possessive.`
-    if (audience === 'external') throw new Error(message)
-    if (typeof console !== 'undefined') console.error(message)
-    return (
-      <span className={cx('frc-first frc-first-refused', className)} data-frc="FirstName" data-refused={result.reason} {...rest}>
-        <span className="frc-first-fault">FIRST name misuse: {result.reason}</span>
-      </span>
+    // Inline: a refused name sits inside a sentence, not in place of a block.
+    return fault(
+      'FirstName',
+      `The FIRST name is never ${result.reason === 'unknown' ? 'improvised' : result.reason}.`,
+      `Refused "${result.raw}".`,
+      { as: 'span', className: 'frc-fault-inline' },
     )
   }
 

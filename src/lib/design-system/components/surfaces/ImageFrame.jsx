@@ -1,5 +1,6 @@
 import { cx } from '../cx.js'
 import { pickSlots, slotted } from '../slots.jsx'
+import { fault } from '../guard.jsx'
 
 /** What the image IS decides the treatment, not where it sits. */
 const SHAPE_FOR_KIND = {
@@ -27,6 +28,9 @@ const SHAPE_FOR_KIND = {
  * rim ring and the corner brackets automatically. It is REFUSED on a
  * screenshot: a feathered interface capture reads as a rendering fault, and the
  * hard edge is what tells the room it is looking at a screen.
+ *
+ * The refusal renders a visible rust fault marker and throws only inside the
+ * dev harness. See components/guard.jsx for why.
  */
 export function ImageFrame({
   src,
@@ -43,7 +47,11 @@ export function ImageFrame({
   ...rest
 }) {
   if (bleed && kind === 'screenshot') {
-    throw new Error('ImageFrame: never bleed a screenshot. The hard edge is what tells the room it is looking at a screen.')
+    return fault(
+      'ImageFrame',
+      'Never bleed a screenshot.',
+      'The hard edge is what tells the room it is looking at a screen. Drop bleed, or set the real kind.',
+    )
   }
   const side = bleed === true ? 'right' : bleed || null
   const form = shape || SHAPE_FOR_KIND[kind] || 'rect'

@@ -5,7 +5,7 @@ description: Build FRC Team 5669 (Techmen) presentation decks and printed materi
 
 # FRC5669DesignSystem
 
-The visual identity system for FRC Team 5669 (Techmen) decks and materials. Specification: `FRC_Design_System.md` v1.1, which is authoritative for every color, token, class and rule. `_ds_manifest.json` is the exported registry and the staleness authority.
+The visual identity system for FRC Team 5669 (Techmen) decks and materials. Specification: `FRC_Design_System.md` v1.2, which is authoritative for every color, token, class and rule. `_ds_manifest.json` is the exported registry and the staleness authority.
 
 **Namespace** `FRC5669DesignSystem` · **class prefix** `frc-` · **root** `src/lib/design-system/`
 
@@ -59,16 +59,25 @@ A ground may be overridden on one section. An external cover over internal worki
 
 Each carries a default transition matching its role — `shutter` general content, `boot` data and telemetry, `banner` dividers and statements, `cut` a quiet beat — overridable per instance. Read the pattern's `.prompt.md` before using it; every one names its slots and the rules it enforces.
 
-## Rules the code refuses to break
+## Invariant guards
 
-These throw or fail rather than being remembered:
+Five rules are enforced in component code rather than remembered:
 
-- `ImageFrame` throws on `bleed` with `kind="screenshot"`. A feathered interface capture reads as a rendering fault.
-- `Cutout` throws on `fit="cover"`. Cover crops the silhouette and makes an alpha image look framed.
-- `SponsorTier` throws on any mark that is not a `Cutout ground="none"`. A contact shadow under a corporate logo reads as an error.
-- `SafetySheet` throws without a `SafetyNote`. A safety sheet that reads as "safety was covered" without a hazard note is worse than none.
-- `FirstName` refuses plural and possessive forms of the FIRST name and tracks first use per heading and body channel.
-- `npm run ds:audit` fails on: an alias set that differs between grounds, a `var()` in a ground alias, gold on paper, a color outside the published set, an import out of order, an animation outside the reduced-motion gate, a manifest that does not match the disk, an emoji, a sheet pattern naming a ground, a sheet defaulting to a fifth transition, or the specimen listed as a starting point.
+- `ImageFrame` refuses `bleed` with `kind="screenshot"`. A feathered interface capture reads as a rendering fault.
+- `Cutout` refuses `fit="cover"`. Cover crops the silhouette and makes an alpha image look framed.
+- `SponsorTier` refuses any mark that is not a `Cutout ground="none"`. A contact shadow under a corporate logo reads as an error.
+- `SafetySheet` refuses a body with no `SafetyNote`. A sheet that reads as "safety was covered" without a hazard note is worse than none.
+- `FirstName` refuses plural and possessive forms of the FIRST name, and tracks first use per heading and body channel.
+
+**Every guard renders a visible rust fault marker at run time and throws only inside the dev harness** (`/_ds`, `ds:capture`, a test). A guard that throws during a presentation takes the whole deck down in front of the room, and it does it on the external decks that matter most — which is the opposite of what the guard is for. A visible marker fails loudly enough to be caught and cheaply enough to be survived.
+
+There is **one** guard behaviour in the system. `FirstName` used to throw on an external audience and warn otherwise; that split is gone, because two behaviours means nobody can predict what a guard does.
+
+The marker is not a soft landing. `npm run ds:audit` fails on a fault marker in a template, and pre-delivery audit check 40 requires zero markers in any deck called finished.
+
+## What the audit fails on
+
+An alias set that differs between grounds, a `var()` in a ground alias, gold on paper, a color outside the published set, an import out of order, an animation outside the reduced-motion gate, a manifest that does not match the disk, an emoji, a sheet pattern naming a ground or taking an audience prop, a sheet defaulting to a fifth transition, the specimen listed as a starting point, a guard fault marker in a template, or a wired asset whose bytes no longer match its recorded provenance.
 
 ## The red partition
 
@@ -88,10 +97,16 @@ The marks are used as supplied — no recoloring, rotating, cropping, containing
 ## Verifying
 
 ```bash
-npm run ds:audit
+npm run ds:audit      # static audit
+npm run ds:dev        # boot the harness (vite --mode dsspec, port 5175)
+npm run ds:capture    # render every sheet pattern to PNG, headless
 ```
 
-Then open `/_ds` in `npm run dev` (dev-guarded; absent from production builds). It mounts the real components and proves in the browser: alias resolution in all three grounds, no gold on paper, all four transitions, every animation gated, static end state, image treatments, the cutout rectangle rule, the match clock states, alliance containment, and every sheet pattern stepped through all three grounds and both audience modes.
+`/_ds` boots from a clean checkout: `.env.dsspec` and `.claude/launch.json` are tracked, and the route is let through both auth gates in dev — scoped to that one path.
+
+`ds:capture` writes `artifacts/ds-capture/<ground>/<audience>/NN-Pattern.png`, 26 patterns x 3 grounds x 2 audiences. Add `--reduced-motion` to emulate the preference and write to `artifacts/ds-capture-reduced-motion/`. **This is how audit check 41 gets satisfied:** DOM measurement confirms an alias resolved, never that a sheet reads well.
+
+Then open `/_ds`. It mounts the real components and proves in the browser: alias resolution in all three grounds, no gold on paper, all four transitions, every animation gated, static end state, image treatments, the cutout rectangle rule, the match clock states, alliance containment, and every sheet pattern stepped through all three grounds and both audience modes.
 
 ## Assets
 

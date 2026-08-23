@@ -113,18 +113,8 @@
 .frc-first-word { text-transform: uppercase; font-style: italic; font-weight: inherit; }
 .frc-first-mark { text-transform: uppercase; font-style: normal; }   /* LEGO */
 .frc-first-reg  { font-size: 0.55em; vertical-align: super; line-height: 0; font-style: normal; margin-left: 0.04em; }
-.frc-first-fault {
-  font-family: var(--font-mono);
-  font-size: 0.6em;
-  text-transform: uppercase;
-  letter-spacing: var(--track-wide);
-  color: var(--white);
-  background: var(--fault);
-  border-radius: 2px;
-  padding: 0.1em 0.4em;
-  vertical-align: middle;
-  font-style: normal;
-}
+/* The refused-name pill moved to the shared guard marker (.frc-fault,
+   tokens/effects.css): one guard behaviour, one marker, one place. */
 
 /* ---- Eyebrow (core/Eyebrow.jsx) ------------------------------------------- */
 .frc-eyebrow {

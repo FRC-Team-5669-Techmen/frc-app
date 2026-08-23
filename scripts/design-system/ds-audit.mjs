@@ -17,8 +17,13 @@
 //     tokens/sheets.css and no ground class named in any components/sheets file.
 // 10. Every sheet pattern defaults to one of the four transitions.
 // 11. templates/Specimen.dc.html is never a starting point.
+// 12. Zero invariant guard fault markers in any template. A marker is a caught
+//     defect, not an accepted state (standards check 40).
+// 13. Every wired asset still hashes to its recorded provenance, so a silent
+//     recolor of a mark cannot land.
 import fs from 'node:fs'
 import path from 'node:path'
+import crypto from 'node:crypto'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
@@ -115,7 +120,10 @@ const allFiles = walk(ROOT).map((p) => path.relative(ROOT, p).replace(/\\/g, '/'
 // find them. It uses no color; it is exempt from the raw-color scan by design.
 const COLOR_EXEMPT = new Set(['tokens/colors.css', 'tokens.js', '_ds_manifest.json', 'specimen/proofs.js'])
 for (const f of allFiles) {
-  if (COLOR_EXEMPT.has(f) || f.endsWith('.md')) continue
+  // assets/ holds SUPPLIED ARTWORK. The marks are used as supplied, so their
+  // colors are not a choice this system gets to make and are not scanned here.
+  // Their bytes are pinned by assets/PROVENANCE.json instead (check 13).
+  if (COLOR_EXEMPT.has(f) || f.endsWith('.md') || f.startsWith('assets/')) continue
   const src = f.endsWith('.css') ? stripComments(read(f)) : read(f).replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '')
   for (const m of src.matchAll(/(?<![\w&])#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b(?!\))/g)) {
     if (f.endsWith('.html') && /^(frc|core|brand|grounds|tokens|type|motion|surfaces|chrome|wiring)/.test(m[1])) continue
@@ -231,6 +239,37 @@ for (const s0 of manifest.startingPoints) {
 const specimenTpl = manifest.templates.find((t) => /Specimen/.test(t.path))
 if (!specimenTpl) fail('manifest templates does not list templates/Specimen.dc.html')
 else if (specimenTpl.copied !== false) fail('manifest: templates/Specimen.dc.html must be marked copied: false')
+
+// ---------- 12. no fault marker in a template ----------
+// Guards render a visible rust marker at run time rather than throwing, because
+// a guard that throws during a presentation takes the deck down in front of the
+// room. The marker is NOT a soft landing: a template carrying one is a defect
+// that shipped, and this is where that is caught.
+const FAULT_MARKS = [/data-frc-fault/, /\bfrc-fault\b/]
+for (const t of manifest.templates) {
+  const src = read(t.path)
+  for (const re of FAULT_MARKS) {
+    if (re.test(src)) fail(`${t.path}: carries an invariant guard fault marker (${re.source}). A marker is a caught defect, not an accepted state.`)
+  }
+}
+
+// ---------- 13. asset provenance ----------
+// The marks are used AS SUPPLIED. Each wired asset was compared against the
+// canonical file on the team branding page before it was wired; this re-checks
+// the bytes, so a later edit to one of them fails the audit instead of shipping.
+if (exists('assets/PROVENANCE.json')) {
+  const prov = JSON.parse(read('assets/PROVENANCE.json'))
+  for (const a of prov.assets ?? []) {
+    if (!exists(a.file)) { fail(`provenance: ${a.file} is recorded as wired but is not on disk`); continue }
+    const buf = fs.readFileSync(path.join(ROOT, a.file))
+    const sum = crypto.createHash('sha256').update(buf).digest('hex')
+    if (sum !== a.sha256) fail(`provenance: ${a.file} sha256 ${sum.slice(0, 16)}… ≠ recorded ${a.sha256.slice(0, 16)}… — an asset changed after it was verified against ${a.source}`)
+    if (a.bytes != null && buf.length !== a.bytes) fail(`provenance: ${a.file} is ${buf.length} bytes, recorded ${a.bytes}`)
+  }
+  for (const f of prov.stillEmpty ?? []) {
+    if (exists(f)) fail(`provenance: ${f} is listed as still empty but exists — verify it against its canonical source and move it into assets[]`)
+  }
+}
 
 // ---------- report ----------
 if (failures.length) {

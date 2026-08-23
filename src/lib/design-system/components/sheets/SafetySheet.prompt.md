@@ -10,11 +10,15 @@ The shop hazard, the rules, and the steps that keep them.
 
 ## Rules
 
-- **It throws without a `SafetyNote`.** A safety sheet whose hazard was softened into a normal callout is worse than no safety sheet: the deck still reads as "safety was covered" to someone scanning the thumbnail rail for exactly that.
+- **It refuses to render without a `SafetyNote`.** A safety sheet whose hazard was softened into a normal callout is worse than no safety sheet: the deck still reads as "safety was covered" to someone scanning the thumbnail rail for exactly that.
 - Copper is the hazard color everywhere in the system. There is no quiet variant of this sheet.
 - PPE belongs in the note as `slot="ppe"` chips, not in prose.
 - Ground and audience are **inherited from the deck**. This pattern takes neither as a prop and has no per-ground variant: it renders on SQUADRON, FIELD and PAPER unchanged.
 - Nothing is hidden at rest. Click targets change emphasis only.
+
+## The guard
+
+This rule is enforced in code. A tripped guard **renders a visible rust fault marker and throws only inside the dev harness** (`/_ds`, the capture script, a test) — a guard that throws during a presentation takes the whole deck down in front of the room, and it does it on the external decks that matter most. The marker is not a soft landing: `npm run ds:audit` fails on a fault marker in a template and pre-delivery audit check 40 requires zero markers in any deck called finished, so the guard's real job is done at audit time and its run-time behaviour only decides how badly a miss hurts.
 
 ## Example
 

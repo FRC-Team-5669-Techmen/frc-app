@@ -205,10 +205,19 @@ export default function App() {
   // application).
   const onParentPath = location.pathname.startsWith('/parent/')
 
+  // The design-system specimen. It exists ONLY where SpecimenPage exists, which
+  // is dev, and it touches no auth and no Supabase, so no gate has anything to
+  // decide about it. Letting it through is what makes the harness reproducible
+  // from a clean checkout: a harness that only runs for an approved member on
+  // one machine is a personal convenience, not a verification mechanism, and
+  // the first person who needs to check a component skips the check instead.
+  // Scoped to this one path and to dev — nothing else is loosened.
+  const onSpecimenPath = SpecimenPage != null && location.pathname === '/_ds'
+
   // Signed in but approval not yet resolved: hold on the splash.
-  if (session && approved === null && !onParentPath) return <Splash />
+  if (session && approved === null && !onParentPath && !onSpecimenPath) return <Splash />
   // Signed in but not approved: show the access gate instead of the app shell.
-  if (session && approved === false && !onParentPath) {
+  if (session && approved === false && !onParentPath && !onSpecimenPath) {
     return (
       <Suspense fallback={<Splash />}>
         <AccessGate session={session} />
@@ -221,7 +230,7 @@ export default function App() {
   // are deliberately let through — they're outside the app shell, and a member
   // mid-session must never be blocked from signing out by a form.
   const onCheckinPath = location.pathname.startsWith('/checkin')
-  if (session && approved === true && !onCheckinPath && !onParentPath) {
+  if (session && approved === true && !onCheckinPath && !onParentPath && !onSpecimenPath) {
     if (appSeason === undefined) return <Splash />
     if (appSeason) {
       return (

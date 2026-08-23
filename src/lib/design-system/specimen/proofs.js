@@ -223,18 +223,27 @@ export function containsAlliance(value) {
  * The red partition, contained: --alliance-red and --alliance-blue may render
  * ONLY inside the four named components.
  *
- * Two deliberate exclusions, both reported rather than hidden:
- *  - The token catalogue (.ds-swatch) is route chrome, not deck content: it
- *    paints every published color as a swatch, which is the whole point of it.
- *    Nothing else on the route is exempt.
- *  - PROGRAM CHROME COLLIDES BY VALUE. FIRST LEGO League red is published as
- *    #ED1C24, the same value as alliance red, so a computed style cannot tell
- *    the two apart after substitution. Program chrome (ProgramLockup, the
- *    program rail) is counted separately as a collision, never as a leak.
+ * THE SCAN IS PROGRAM-AWARE, NOT HEX-ONLY.
+ *
+ * FIRST LEGO League red is published as the same hex as alliance red, so after
+ * substitution a computed style cannot tell FLL program chrome apart from
+ * alliance data. A hex-only scan reports the ProgramLockup rail as a leak, and
+ * that report is a FALSE POSITIVE.
+ *
+ * It is resolved by PROGRAM rather than by color, the way the specification
+ * resolves it: the FLL Robot Game has no alliances, so an FLL deck has no legal
+ * alliance use and an FRC deck never sets --program to an FLL value. For each
+ * painted declaration this reads the program actually in force on that element
+ * — the resolved `--program` custom property and the nearest `data-program` —
+ * and classifies the declaration as program chrome when the painted value is
+ * that program's own token.
+ *
+ * The collision is REPORTED, never silenced: `collisions` comes back with the
+ * program that owns each one, and /_ds prints it on the page as a documented
+ * finding. Silencing it would mean the next real leak inside a ProgramLockup
+ * goes unseen.
  */
 export function scanForAlliance(root, options = {}) {
-  // The spec names FOUR: AllianceSplit, ScoutTable, MatchBreakdownSheet and
-  // FieldDiagram. MatchBreakdownSheet is the fourth and last.
   const allowed = options.allowed || ['AllianceSplit', 'ScoutTable', 'MatchBreakdownSheet', 'FieldDiagram']
   const inside = []
   const offenders = []
@@ -242,9 +251,15 @@ export function scanForAlliance(root, options = {}) {
   let elements = 0
   let skipped = 0
   for (const el of [root, ...root.querySelectorAll('*')]) {
+    // The token catalogue (.ds-swatch) is route chrome, not deck content: it
+    // paints every published color as a swatch, which is the point of it.
     if (!el.closest || el.closest('.ds-swatch')) { skipped++; continue }
     elements++
-    const isProgramChrome = Boolean(el.closest('[data-frc="ProgramLockup"]') || (el.className && String(el.className).includes('frc-program')))
+    const cs0 = getComputedStyle(el)
+    const programValue = norm(cs0.getPropertyValue('--program'))
+    const programRgb = programValue ? toRgbString(programValue) : ''
+    const lockup = el.closest('[data-frc="ProgramLockup"]')
+    const programName = lockup ? lockup.getAttribute('data-program') : el.getAttribute?.('data-program')
     for (const pseudo of [null, '::before', '::after']) {
       const cs = getComputedStyle(el, pseudo)
       if (pseudo && cs.content === 'none') continue
@@ -255,9 +270,16 @@ export function scanForAlliance(root, options = {}) {
         const name = owner ? owner.getAttribute('data-frc') : null
         const host = el.closest(allowed.map((a) => `[data-frc="${a}"]`).join(','))
         const record = { el: describe(el) + (pseudo || ''), prop: p, value: v, owner: name }
-        if (host || allowed.includes(name)) inside.push(record)
-        else if (isProgramChrome) collisions.push(record)
-        else offenders.push(record)
+        if (host || allowed.includes(name)) {
+          inside.push(record)
+          continue
+        }
+        // Program-aware: the painted value IS this element's own program token.
+        if (programRgb && norm(v) === programRgb) {
+          collisions.push({ ...record, program: programName || 'unknown', programToken: programValue })
+          continue
+        }
+        offenders.push(record)
       }
     }
   }

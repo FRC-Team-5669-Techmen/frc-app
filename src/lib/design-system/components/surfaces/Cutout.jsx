@@ -1,5 +1,6 @@
 import { cx } from '../cx.js'
 import { pickSlots, slotted } from '../slots.jsx'
+import { fault } from '../guard.jsx'
 
 /**
  * Cutout - treatment three: anything carrying an ALPHA CHANNEL. A part, a tool,
@@ -18,6 +19,9 @@ import { pickSlots, slotted } from '../slots.jsx'
  * fit is always "contain". cover crops the silhouette against the slot edge,
  * which is the one reliable way to make an alpha image look framed again, so
  * passing it is refused rather than quietly corrected.
+ *
+ * The refusal renders a visible rust fault marker and throws only inside the
+ * dev harness. See components/guard.jsx for why.
  */
 export function Cutout({
   src,
@@ -33,7 +37,11 @@ export function Cutout({
   ...rest
 }) {
   if (fit !== 'contain') {
-    throw new Error('Cutout: fit is always "contain". cover crops the silhouette against the slot edge and makes an alpha image look framed again.')
+    return fault(
+      'Cutout',
+      'fit is always "contain".',
+      'cover crops the silhouette against the slot edge, which is what makes an alpha image look framed again.',
+    )
   }
   const { slots, rest: media } = pickSlots(children)
   const hasMedia = Boolean(src) || media.length > 0

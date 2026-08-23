@@ -1,6 +1,7 @@
 import { Children, isValidElement } from 'react'
 import { cx } from '../cx.js'
 import { pickSlots, slotted } from '../slots.jsx'
+import { fault } from '../guard.jsx'
 import { Cutout } from './Cutout.jsx'
 import { ImageFrame } from './ImageFrame.jsx'
 
@@ -12,6 +13,9 @@ import { ImageFrame } from './ImageFrame.jsx'
  * corporate logo reads as a rendering error to the one person in the room most
  * likely to notice. SponsorTier refuses anything else rather than rendering a
  * quietly wrong wall on the closing sheet of an external deck.
+ *
+ * The refusal renders a visible rust fault marker and throws only inside the
+ * dev harness. See components/guard.jsx for why.
  */
 export function SponsorWall({ as: Tag = 'div', className, children, ...rest }) {
   const { slots, rest: tiers } = pickSlots(children)
@@ -25,15 +29,16 @@ export function SponsorWall({ as: Tag = 'div', className, children, ...rest }) {
 
 export function SponsorTier({ as: Tag = 'section', className, children, ...rest }) {
   const { slots, rest: marks } = pickSlots(children)
+  let bad = null
   Children.forEach(marks, (mark) => {
-    if (!isValidElement(mark)) return
+    if (bad || !isValidElement(mark)) return
     if (mark.type === ImageFrame) {
-      throw new Error('SponsorTier: a sponsor mark is a Cutout with ground="none", never an ImageFrame. The frame fills the alpha region with its backplate.')
-    }
-    if (mark.type === Cutout && mark.props.ground !== 'none') {
-      throw new Error('SponsorTier: sponsor marks use Cutout ground="none". A contact shadow under a corporate logo reads as a rendering error.')
+      bad = 'An ImageFrame fills the alpha region with its backplate. Use Cutout ground="none".'
+    } else if (mark.type === Cutout && mark.props.ground !== 'none') {
+      bad = `A sponsor mark is a floating mark; ground="${mark.props.ground}" puts a contact shadow under a corporate logo.`
     }
   })
+  if (bad) return fault('SponsorTier', 'Every sponsor mark is a Cutout with ground="none".', bad)
   return (
     <Tag className={cx('frc-sponsor-tier', className)} data-frc="SponsorTier" {...rest}>
       <header className="frc-sponsor-tier-head">

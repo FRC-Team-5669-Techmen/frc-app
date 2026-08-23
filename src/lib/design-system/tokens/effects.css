@@ -188,3 +188,59 @@
 .frc-season-rule   { height: 6px; width: 120px; background: var(--season); border-radius: var(--radius-chip); }
 .frc-ground-paper .frc-season-rule { background: var(--accent); }   /* gold fallback is illegal on paper */
 .frc-season-years  { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wide); color: var(--fg-dim); font-variant-numeric: lining-nums tabular-nums; }
+
+/* ---- Invariant guard fault marker (components/guard.jsx) ------------------ */
+/* A tripped guard renders THIS rather than throwing, because a guard that
+   throws during a presentation takes the deck down in front of the room.
+   Rust, mono, uppercase, sized to be read from the back of a shop bay, and
+   carrying the rule it broke. It is not a soft landing: ds:audit fails on a
+   fault marker in a template, and audit check 40 requires zero markers in any
+   deck called finished. */
+.frc-fault {
+  display: grid;
+  gap: 8px;
+  align-content: center;
+  justify-items: start;
+  min-height: 120px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg1);
+  border: var(--hair-frame) solid var(--fault);
+  border-left: 10px solid var(--fault);
+  border-radius: var(--radius-panel);
+  color: var(--fg);
+}
+.frc-fault-tag {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: var(--track-wider);
+  text-transform: uppercase;
+  color: var(--fault);
+}
+.frc-fault-rule {
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body);
+  color: var(--fg);
+}
+.frc-fault-detail {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  color: var(--fg-dim);
+}
+/* Inline contexts — a mark inside a sponsor row, a name inside a sentence. */
+.frc-fault-inline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 0;
+  padding: 2px 8px;
+  border-width: var(--hair);
+  border-left-width: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: var(--track-wide);
+}
+.frc-fault-inline .frc-fault-rule,
+.frc-fault-inline .frc-fault-detail { font-family: var(--font-mono); font-size: 1em; }

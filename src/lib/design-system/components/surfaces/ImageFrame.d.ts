@@ -11,7 +11,7 @@ export interface ImageFrameProps {
   kind?: ImageKind
   /** Override the shape the kind implies. */
   shape?: ImageShape
-  /** Feather one edge into the ground. true means "right". THROWS on a screenshot. */
+  /** Feather one edge into the ground. true means "right". Guarded: refused on a screenshot. */
   bleed?: boolean | BleedSide
   /** CSS aspect-ratio for the plate, e.g. "16 / 10". */
   ratio?: string

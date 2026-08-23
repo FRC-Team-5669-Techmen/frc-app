@@ -36,11 +36,20 @@ export const ASSET_FILES = {
   seasonArt: 'assets/season/season-lockup.png',
 }
 
+// The three team MARKS are wired: their bytes were compared against the
+// canonical files on the team branding page before wiring, and
+// assets/PROVENANCE.json pins each sha256 so a later edit fails the audit.
+// The mark is used AS SUPPLIED — never recolored, rotated, cropped, contained
+// or captioned. Everything else below is still an empty, marked slot.
+import markGoldUrl from './assets/team/Mark-Gold.svg'
+import markWhiteUrl from './assets/team/Mark-White.svg'
+import markBlackUrl from './assets/team/Mark-Black.svg'
+
 /** Resolved URLs. Null until the file lands. */
 export const ASSETS = {
-  markGold: null,
-  markWhite: null,
-  markBlack: null,
+  markGold: markGoldUrl,
+  markWhite: markWhiteUrl,
+  markBlack: markBlackUrl,
   typeGold: null,
   typeWhite: null,
   typeBlack: null,

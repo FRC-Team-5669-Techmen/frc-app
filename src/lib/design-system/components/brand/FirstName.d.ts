@@ -27,7 +27,7 @@ export declare function FirstName(props: FirstNameProps): JSX.Element
 export declare function classifyFirstName(text: unknown): FirstNameClassification
 
 export interface FirstNameScopeProps {
-  /** external makes enforcement mandatory: a refused form throws. */
+  /** Carried for the deck's own record. It does NOT change what the guard does. */
   audience?: 'internal' | 'external'
   children?: ReactNode
 }

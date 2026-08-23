@@ -2,7 +2,7 @@
 
 The visual identity system for FRC Team 5669 (Techmen) presentations and materials: weekly meetings, training sessions, strategy and match review, kickoff, outreach, sponsor and judge presentations, and awards material. Authored as React so Claude Design can source it from GitHub.
 
-Specification: `FRC_Design_System.md` v1.1 (2026-08-22). It is authoritative for every color, token, class and rule; this guide is how the system is used and what is in it. `_ds_manifest.json` is the exported registry and the staleness authority.
+Specification: `FRC_Design_System.md` v1.2 (2026-08-22). It is authoritative for every color, token, class and rule; this guide is how the system is used and what is in it. `_ds_manifest.json` is the exported registry and the staleness authority.
 
 **Built fresh, never extracted.** `frc-app` predates any token layer, so nothing here was derived from the existing app CSS or components. Migrating the app surfaces onto these tokens is separate work with its own prompts and its own risk; it does not block deck production. This bundle shares nothing with IDEA: its own namespace, its own tokens, no shared stylesheet. A deck physically cannot inherit IDEA green.
 
@@ -100,6 +100,8 @@ The alliance pair resolves **only** inside `AllianceSplit`, `ScoutTable`, `Match
 
 **LIVE and REC are a pulsing gold dot, not a red one.** This is the one place the system departs from the convention it inherited.
 
+**Known value collision.** FIRST LEGO League red is published as the same hex as alliance red, so after substitution a computed style cannot tell FLL program chrome from alliance data. It is resolved **by program rather than by color**: the FLL Robot Game has no alliances, so an FLL deck has no legal alliance use, and an FRC deck never sets `--program` to an FLL value. The containment scan in `/_ds` is therefore program-aware — it reads the `--program` in force on the element rather than matching a hex — and it **reports** the collision on the page as a documented finding. Silencing it would hide the next real leak inside a `ProgramLockup`.
+
 ### Program and season layers
 
 `--program` colors program chrome only — the `ProgramLockup`, program-scoped badges, the footer program rail. It never colors content and never competes with gold for identity. One token serves FRC (`#009CD7`), FTC (`#F57E25`) and the FIRST LEGO League divisions, so the FLL teams need no second bundle.
@@ -184,7 +186,9 @@ These come from the FIRST guidelines, which open with "standards are strictly en
 
 ### The marks
 
-**Seal** on covers, closing sheets, and anything printed or worn. **Logotype** in the footer rail. **Mark alone** only where the rail already carries the logotype on the same sheet. None of the three may be edited, distorted, recolored outside the three published versions, or reconfigured.
+**Seal** on covers, closing sheets, and anything printed or worn. **Logotype** in the footer rail — `DeckFooter` defaults to `mark="logotype"`, because the logotype is horizontal and survives rail scale, and because the seal carries `5669` and `TECHMEN` inside its own ring, duplicating the team number the rail already sets in type. `mark="seal"` stays available for a rail on a sheet whose body is not already carrying one. **Mark alone** only where the rail already carries the logotype on the same sheet. None of the three may be edited, distorted, recolored outside the three published versions, or reconfigured.
+
+The three team marks are **wired and provenance-pinned**: their bytes were compared against the canonical files on the team branding page before wiring, and `assets/PROVENANCE.json` records each sha256 so `ds:audit` fails if one ever changes. The copy that was already in this repo at `public/assets/logos/Mark-Gold.svg` is **recolored** — `#D4AF37` where the canonical file carries `#ffe629` — which is why nothing is wired on trust. Every other slot is still empty and marked.
 
 ### Audience chrome
 
@@ -266,12 +270,25 @@ Importing the entry loads `styles.css`. Put `frc-deck` plus a ground class on th
 - **Sheet patterns never name a ground** and never take an audience prop — the audit fails on either.
 - **Every sheet defaults to one of the four transitions**, and there is no fifth.
 - **The specimen is never a starting point** — the audit fails if it is ever listed as one.
-- **Components refuse rather than degrade:** `ImageFrame` on a bled screenshot, `Cutout` on `fit="cover"`, `SponsorTier` on a framed sponsor mark, `SafetySheet` without a `SafetyNote`, `FirstName` on a plural or possessive.
+- **Components refuse rather than degrade:** `ImageFrame` on a bled screenshot, `Cutout` on `fit="cover"`, `SponsorTier` on a framed sponsor mark, `SafetySheet` without a `SafetyNote`, `FirstName` on a plural or possessive. **Every guard renders a visible rust fault marker at run time and throws only inside the dev harness** — see below.
+- **A wired asset cannot change silently.** `assets/PROVENANCE.json` pins each one's sha256.
 - **No emoji.** Icons are Lucide, inlined SVG on `currentColor`.
+
+## Invariant guards
+
+Five rules live in component code: `ImageFrame` refuses `bleed` on a screenshot, `Cutout` refuses `fit="cover"`, `SponsorTier` refuses a mark that is not a floating `Cutout`, `SafetySheet` refuses a body with no `SafetyNote`, and `FirstName` refuses plural and possessive forms.
+
+**Every guard renders a visible rust fault marker at run time and throws only inside the dev harness.** A guard that throws during a presentation takes the whole deck down in front of the room, and it does it on the external decks that matter most — the judge deck, the sponsor deck — which is the opposite of what the guard is for. A visible marker fails loudly enough to be caught and cheaply enough to be survived.
+
+There is **one** guard behaviour. `FirstName` used to throw on an external audience and warn otherwise; that split is gone, because two behaviours in one system means nobody can predict what a guard does.
+
+The marker is not a soft landing: `npm run ds:audit` fails on a fault marker in a template, and pre-delivery audit check 40 requires zero markers in any deck called finished. The guard's real job is done at audit time; its run-time behaviour only decides how badly a miss hurts.
 
 ## Verification
 
-- `npm run ds:audit` — the static audit: alias sets, literal-only values, published colors only, import order, motion gate, manifest accuracy, no emoji, sheet-pattern ground and transition rules, and the specimen's status.
+- `npm run ds:audit` — the static audit: alias sets, literal-only values, published colors only, import order, motion gate, manifest accuracy, no emoji, sheet-pattern ground and transition rules, the specimen's status, **zero guard fault markers in a template**, and **asset provenance**.
+- `npm run ds:dev` then `/_ds` — the harness. It **boots from a clean checkout**: `.env.dsspec` and `.claude/launch.json` are tracked, and the route is let through both auth gates in dev, scoped to that one path. A harness that runs on one machine is a personal convenience, not a verification mechanism.
+- `npm run ds:capture` — **renders every sheet pattern across all three grounds and both audience modes to PNG**, headless, into `artifacts/ds-capture/<ground>/<audience>/`. 26 x 3 x 2 = 156 images. `--reduced-motion` emulates the preference and writes to `artifacts/ds-capture-reduced-motion/`. This exists because DOM measurement is not visual verification: a computed style confirms an alias resolved, never that a sheet reads well or that two elements are not colliding. The first capture run found one: the stencil bridge read as a strikethrough across every hero title, and it is now off by default.
 - `/_ds` in `npm run dev` — the live proofs. It mounts the **real** components, never a copy of their markup, because a harness that re-implements what it measures passes every check forever including after the real surface breaks. It proves alias resolution in all three grounds, no rendered gold on paper, all four transitions, gate coverage, the static end state, deck chrome, the image treatments, the cutout rectangle rule, the match clock states, alliance containment, the enforced refusals, and every sheet pattern stepped through all three grounds and both audience modes with its own ground, audience and ambient switchers.
 
 ## Assets not yet held

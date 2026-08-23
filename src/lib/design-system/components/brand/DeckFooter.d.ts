@@ -16,7 +16,8 @@ export interface DeckFooterProps extends HTMLAttributes<HTMLElement> {
   /** Force the audience on this footer alone; otherwise the deck root / section class decides. */
   audience?: Audience
   /** seal (default) or logotype in the left slot. */
-  mark?: 'seal' | 'logotype'
+  /** The rail mark. Defaults to the logotype; the seal is the opt-in. */
+  mark?: 'logotype' | 'seal'
   sealSrc?: string | null
   /** FIRST horizontal full-color reverse PNG. Null renders the empty zone. */
   firstLogoSrc?: string | null

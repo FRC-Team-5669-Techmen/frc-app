@@ -5,8 +5,15 @@ import { SealMark } from './SealMark.jsx'
 import { Logotype } from './Logotype.jsx'
 
 /**
- * DeckFooter — the persistent footer rail: seal, 5669, deck name (+ part),
- * logical sheet number, and the per-part progress rail along the bottom edge.
+ * DeckFooter — the persistent footer rail: the LOGOTYPE, 5669, deck name
+ * (+ part), logical sheet number, and the per-part progress rail along the
+ * bottom edge.
+ *
+ * THE RAIL MARK IS THE LOGOTYPE, not the seal. It is horizontal, so it survives
+ * rail scale, and it does not duplicate the team number the rail already sets
+ * in type — the seal carries 5669 and TECHMEN inside its own ring. `mark="seal"`
+ * stays available for a rail on a cover or closing sheet whose sheet body is not
+ * already carrying one.
  *
  * On .frc-audience-external (deck root, section, or this footer via the
  * audience prop) it adds the FIRST full-color-reverse horizontal logo zone on
@@ -26,7 +33,7 @@ export function DeckFooter({
   sheet,
   total,
   audience,
-  mark = 'seal',
+  mark = 'logotype',
   sealSrc,
   firstLogoSrc = ASSETS.firstHorizontalReverse,
   className,
@@ -40,7 +47,7 @@ export function DeckFooter({
       {...rest}
     >
       <div className="frc-footer-seal">
-        {mark === 'logotype' ? <Logotype variant="auto" height={32} /> : <SealMark size={64} src={sealSrc} />}
+        {mark === 'seal' ? <SealMark size={64} src={sealSrc} /> : <Logotype variant="auto" height={32} />}
       </div>
       <div className="frc-footer-team" aria-label="Team 5669">5669</div>
       <div className="frc-footer-deck">

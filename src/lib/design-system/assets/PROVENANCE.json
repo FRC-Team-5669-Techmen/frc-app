@@ -1,0 +1,44 @@
+{
+  "note": "Provenance for every asset wired into the bundle. An asset is wired only after its bytes are compared against the canonical source; the marks are used AS SUPPLIED, so a later edit to one of these files is a brand violation rather than a style choice. scripts/design-system/ds-audit.mjs recomputes each sha256 and fails on drift, which is what makes a silent recolor impossible to land.",
+  "verifiedOn": "2026-08-23",
+  "assets": [
+    {
+      "file": "assets/team/Mark-Gold.svg",
+      "source": "https://frcteam5669.com/assets/logos/marks/svg/Mark-Gold.svg",
+      "sha256": "c665f582184eb0acabde39b53b9762cabdf9158d49c8956c81e7931b23ca546d",
+      "bytes": 1759,
+      "finding": "The copy already in this repo at public/assets/logos/Mark-Gold.svg is RECOLORED: its fill is #D4AF37 where the canonical file carries #ffe629, the published Techmen Gold. The canonical file is the one wired here. The repo copy was left untouched, since it is an app surface outside this bundle."
+    },
+    {
+      "file": "assets/team/Mark-White.svg",
+      "source": "https://frcteam5669.com/assets/logos/marks/svg/Mark-White.svg",
+      "sha256": "02815f247c66f054a8dfebc6acf0bdd9d6594d1c1bc646b2d6f224f987f40e87",
+      "bytes": 1756,
+      "finding": "Content-identical to public/assets/logos/Mark-White.svg; the repo copy differs only in line endings (3 CRLF). The canonical file is wired."
+    },
+    {
+      "file": "assets/team/Mark-Black.svg",
+      "source": "https://frcteam5669.com/assets/logos/marks/svg/Mark-Black.svg",
+      "sha256": "811da606f5fa8f9ae389406b5049397bc1a0d24e36a8120af6528bcc974c88b1",
+      "bytes": 1759,
+      "finding": "Content-identical to public/assets/logos/Mark-Black.svg; the repo copy differs only in line endings (3 CRLF). The canonical file is wired."
+    }
+  ],
+  "stillEmpty": [
+    "assets/team/Type-Gold.svg",
+    "assets/team/Type-White.svg",
+    "assets/team/Type-Black.svg",
+    "assets/team/5669-Seal.svg",
+    "assets/team/Mark-Guides.svg",
+    "assets/team/Type-Guides.svg",
+    "assets/first/FIRST-Horizontal-Reverse.png",
+    "assets/first/FIRST-Vertical-Reverse.png",
+    "assets/first/FRC-Icon-Horizontal-Reverse.png",
+    "assets/first/FRC-Icon-Vertical-Reverse.png",
+    "assets/first/FTC-Icon-Horizontal-Reverse.png",
+    "assets/first/FTC-Icon-Vertical-Reverse.png",
+    "assets/first/FLL-Horizontal-Reverse.png",
+    "assets/first/FLL-Vertical-Reverse.png",
+    "assets/season/season-lockup.png"
+  ]
+}

@@ -59,7 +59,7 @@
     { "name": "ChevronRail", "group": "core", "sourcePath": "components/core/ChevronRail.jsx", "types": "components/core/ChevronRail.d.ts", "prompt": "components/core/ChevronRail.prompt.md", "class": "frc-chevron-rail" },
     { "name": "TeamWordmark", "group": "core", "sourcePath": "components/core/TeamWordmark.jsx", "types": "components/core/TeamWordmark.d.ts", "prompt": "components/core/TeamWordmark.prompt.md", "class": "frc-wordmark" },
     { "name": "SealMark", "group": "brand", "sourcePath": "components/brand/SealMark.jsx", "types": "components/brand/SealMark.d.ts", "prompt": "components/brand/SealMark.prompt.md", "class": "frc-seal", "assets": ["assets/team/5669-Seal.svg"] },
-    { "name": "MarkGlyph", "group": "brand", "sourcePath": "components/brand/MarkGlyph.jsx", "types": "components/brand/MarkGlyph.d.ts", "prompt": "components/brand/MarkGlyph.prompt.md", "class": "frc-mark", "assets": ["assets/team/Mark-Gold.svg", "assets/team/Mark-White.svg", "assets/team/Mark-Black.svg"] },
+    { "name": "MarkGlyph", "group": "brand", "sourcePath": "components/brand/MarkGlyph.jsx", "types": "components/brand/MarkGlyph.d.ts", "prompt": "components/brand/MarkGlyph.prompt.md", "class": "frc-mark", "assets": ["assets/team/Mark-Gold.svg", "assets/team/Mark-Black.svg"] },
     { "name": "Logotype", "group": "brand", "sourcePath": "components/brand/Logotype.jsx", "types": "components/brand/Logotype.d.ts", "prompt": "components/brand/Logotype.prompt.md", "class": "frc-logotype", "assets": ["assets/team/Type-Gold.svg", "assets/team/Type-White.svg", "assets/team/Type-Black.svg"] },
     { "name": "DeckFooter", "group": "brand", "sourcePath": "components/brand/DeckFooter.jsx", "types": "components/brand/DeckFooter.d.ts", "prompt": "components/brand/DeckFooter.prompt.md", "class": "frc-footer", "assets": ["assets/team/5669-Seal.svg", "assets/first/FIRST-Horizontal-Reverse.png"] },
     { "name": "ProgramLockup", "group": "brand", "sourcePath": "components/brand/ProgramLockup.jsx", "types": "components/brand/ProgramLockup.d.ts", "prompt": "components/brand/ProgramLockup.prompt.md", "class": "frc-program-lockup", "assets": ["assets/first/FRC-Icon-Horizontal-Reverse.png", "assets/first/FRC-Icon-Vertical-Reverse.png", "assets/first/FTC-Icon-Horizontal-Reverse.png", "assets/first/FTC-Icon-Vertical-Reverse.png", "assets/first/FLL-Horizontal-Reverse.png", "assets/first/FLL-Vertical-Reverse.png"] },
@@ -161,6 +161,25 @@
     "guard": "import.meta.env.DEV || import.meta.env.VITE_DS_SPECIMEN === 'true'; the route is not registered in production and renders a 404 element there",
     "mounts": "the real components, never a copy of their markup"
   },
+  "assets": {
+    "provenance": "assets/PROVENANCE.json",
+    "wired": ["assets/team/Mark-Gold.svg", "assets/team/Mark-White.svg", "assets/team/Mark-Black.svg"],
+    "note": "The three team marks are wired after a byte comparison against the canonical files on the team branding page; ds:audit re-checks each sha256, so a silent recolor cannot land. Everything else renders a marked empty slot. FINDING: the copy already in this repo at public/assets/logos/Mark-Gold.svg is recolored (#D4AF37 where the canonical file carries #ffe629); the canonical file is the one wired here and the app copy was left untouched."
+  },
+  "capture": {
+    "script": "scripts/design-system/ds-capture.mjs (npm run ds:capture)",
+    "route": "/_ds?capture=<Pattern>&ground=<squadron|field|paper>&audience=<internal|external>",
+    "output": "artifacts/ds-capture/<ground>/<audience>/NN-Pattern.png",
+    "reducedMotion": "npm run ds:capture -- --reduced-motion writes artifacts/ds-capture-reduced-motion/",
+    "note": "26 patterns x 3 grounds x 2 audiences = 156 images. Exists because DOM measurement is not visual verification: a computed style confirms an alias resolved, never that a sheet reads well."
+  },
+  "harness": {
+    "route": "/_ds",
+    "env": ".env.dsspec (tracked example)",
+    "launch": ".claude/launch.json (tracked)",
+    "script": "npm run ds:dev",
+    "gate": "App.jsx lets /_ds through both gates in dev only, scoped to that one path, so the harness boots from a clean checkout."
+  },
   "docs": [
     { "name": "Brand guide", "path": "README.md", "note": "Content fundamentals, visual foundations, the FIRST usage rules, iconography, and the manifest of the bundle." },
     { "name": "Agent skill", "path": "SKILL.md", "note": "Agent-Skill front matter so the system is usable from Claude Code. Copy or symlink into .claude/skills/frc5669-design-system/." }
@@ -170,13 +189,20 @@
     "groups": [],
     "templates": [],
     "assets": [
-      "assets/team/Mark-Gold.svg", "assets/team/Mark-White.svg", "assets/team/Mark-Black.svg",
-      "assets/team/Type-Gold.svg", "assets/team/Type-White.svg", "assets/team/Type-Black.svg",
-      "assets/team/5669-Seal.svg", "assets/team/Mark-Guides.svg", "assets/team/Type-Guides.svg",
-      "assets/first/FIRST-Horizontal-Reverse.png", "assets/first/FIRST-Vertical-Reverse.png",
-      "assets/first/FRC-Icon-Horizontal-Reverse.png", "assets/first/FRC-Icon-Vertical-Reverse.png",
-      "assets/first/FTC-Icon-Horizontal-Reverse.png", "assets/first/FTC-Icon-Vertical-Reverse.png",
-      "assets/first/FLL-Horizontal-Reverse.png", "assets/first/FLL-Vertical-Reverse.png",
+      "assets/team/Type-Gold.svg",
+      "assets/team/Type-White.svg",
+      "assets/team/Type-Black.svg",
+      "assets/team/5669-Seal.svg",
+      "assets/team/Mark-Guides.svg",
+      "assets/team/Type-Guides.svg",
+      "assets/first/FIRST-Horizontal-Reverse.png",
+      "assets/first/FIRST-Vertical-Reverse.png",
+      "assets/first/FRC-Icon-Horizontal-Reverse.png",
+      "assets/first/FRC-Icon-Vertical-Reverse.png",
+      "assets/first/FTC-Icon-Horizontal-Reverse.png",
+      "assets/first/FTC-Icon-Vertical-Reverse.png",
+      "assets/first/FLL-Horizontal-Reverse.png",
+      "assets/first/FLL-Vertical-Reverse.png",
       "assets/season/season-lockup.png"
     ]
   }

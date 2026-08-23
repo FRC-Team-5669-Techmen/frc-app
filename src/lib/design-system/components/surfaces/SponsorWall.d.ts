@@ -12,7 +12,7 @@ export interface SponsorTierProps {
   className?: string
   /**
    * slot="name", then the marks. Every mark must be a Cutout with
-   * ground="none"; anything else THROWS.
+   * ground="none"; anything else trips the guard.
    */
   children: ReactNode
 }
