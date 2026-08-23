@@ -1,5 +1,5 @@
 # FRC Claude Design Standards
-**Version 1.7 - 2026-08-23**
+**Version 1.8 - 2026-08-23**
 
 Scoping and prompting rules for every FRC Team 5669 artifact authored in Claude Design against the FRC design system. Presentations are the primary case.
 
@@ -288,6 +288,10 @@ Run against every output before it is called finished. **The audit is a separate
 
 **This is not `ds:audit`.** Two things in this system are called an audit and both carry numbered checks. `ds:audit` is a script in `frc-app` that checks the design system **source**: token completeness, alias literals per scope, import order, manifest accuracy, asset hashes. The numbered checks below are a **manual pass against a generated deck**. The two number independently and must never be cross-referenced by number. When referring to either, name it: "pre-delivery check 43" or "`ds:audit` check 14."
 
+**`ds:audit` green is a precondition for running the pre-delivery pass.** Twelve of the checks below now have source-side counterparts that run every commit, so auditing a generated artifact while the source is failing spends a chat pass finding what a script already reported.
+
+**Editing the inheritance block in section 2 of the prompt skeleton requires repinning `ds:audit`.** That check hashes the block and compares the motion vocabulary it quotes against what the token sheets define, which is what keeps the two from drifting. The coupling is deliberate and the failure is loud, but it reads as a code problem rather than a doc edit, so any change to that block ships with the repin in the same pass.
+
 The split follows from what each can see. A deck's aspect ratio, sheet count, and visual quality exist only in the artifact. A token sheet's alias completeness exists only in the repo. Neither audit can do the other's job, and a check that could live in `ds:audit` should, because a script runs every commit and a chat pass runs when someone remembers. The session that built the artifact does not audit it, because the same reading that produced the mistake produces the check.
 
 **Structure**
@@ -408,6 +412,13 @@ For any non-deck artifact, motion runs inside a `.frc-run` container and the fou
 
 ## Changelog
 
+- **1.8 (2026-08-23)** - Recorded two consequences of mechanizing twelve of the checks below
+  into `ds:audit`. A green `ds:audit` is now a precondition for the pre-delivery pass, since
+  auditing an artifact while the source is failing spends a chat pass on what a script
+  already reported. And editing the inheritance block in the prompt skeleton requires
+  repinning, because `ds:audit` hashes that block and compares the motion vocabulary it
+  quotes against the token sheets; the coupling is what stops the two drifting, but it
+  surfaces as a code failure rather than a doc edit, so the repin ships in the same pass.
 - **1.7 (2026-08-23)** - Distinguished the pre-delivery audit from `ds:audit`. Both are called
   audits and both carry numbered checks, and a Claude Code prompt from this session
   cross-referenced them by number, sending a session looking for a check 43 in a script whose
