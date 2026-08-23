@@ -42,7 +42,9 @@
 //     rail are declared in tokens/, and no template's inline <style> declares an
 //     frc- rule. (pre-delivery 43. THE ONE WITH A SHIPPED REGRESSION BEHIND IT.)
 // 17. Every motion class the standard's inheritance block names has a rule in
-//     the token layer; the block itself is pinned by hash. (pre-delivery 8-11)
+//     the token layer; the vocabulary slice is pinned by hash and located from
+//     the INHERITANCE, NON-NEGOTIABLE anchor, never by a bare first-occurrence
+//     search, because the standard quotes both slice markers. (pre-delivery 8-11)
 // 18. No parallel motion vocabulary: every @keyframes is frc-, every animation
 //     names a declared keyframe, every class is frc-, no component ships CSS.
 //     (pre-delivery 12)
@@ -584,9 +586,20 @@ const MOTION_CLASSES = new Set(MOTION_VOCAB.filter((c) => /^frc-(in|img)-/.test(
 // on internal classes the standard has no reason to name (.frc-ambient-hazard-top).
 {
   const doc = read('docs/FRC_CLAUDE_DESIGN_STANDARDS.md')
-  const from = doc.indexOf('Motion: use only classes defined in the FRC motion tokens.')
-  const to = doc.indexOf('The two ambient systems are separate')
-  if (from < 0 || to < 0) fail('standards: the inheritance block motion section could not be located — check 17 reads its vocabulary from there')
+  // THE SLICE IS ANCHORED INSIDE THE INHERITANCE BLOCK, not taken as the first
+  // occurrence in the file. Both markers are ordinary prose and the standard now
+  // QUOTES them where it describes this check, so each appears twice. A bare
+  // indexOf takes whichever comes first, which means a doc edit ABOVE the block
+  // reslices this check onto text that is not the vocabulary — and it fails
+  // loudly with a message blaming MOTION_VOCAB for a change that never touched
+  // it. Reproduced before it was fixed; ds-audit-controls.mjs holds both the
+  // decoy control (a quote above the block must NOT move the slice) and the
+  // missing-anchor control.
+  const block = doc.indexOf('INHERITANCE, NON-NEGOTIABLE')
+  const from = block < 0 ? -1 : doc.indexOf('Motion: use only classes defined in the FRC motion tokens.', block)
+  const to = from < 0 ? -1 : doc.indexOf('The two ambient systems are separate', from)
+  if (block < 0) fail('standards: INHERITANCE, NON-NEGOTIABLE is not in the document — check 17 anchors its motion-vocabulary slice inside that block, and without the anchor it cannot tell the block from prose quoting it')
+  else if (from < 0 || to < 0) fail('standards: the inheritance block motion section could not be located — check 17 reads its vocabulary from there')
   else {
     const block = doc.slice(from, to).replace(/\s+/g, ' ').trim()
     const sum = crypto.createHash('sha256').update(block).digest('hex')

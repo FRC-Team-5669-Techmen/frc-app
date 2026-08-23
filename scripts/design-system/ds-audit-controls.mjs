@@ -7,6 +7,10 @@
 // has never failed has not been tested, and a check that has silently stopped
 // working is worse than no check, because everyone assumes it is running.
 //
+// A control marked `green: true` is a POSITIVE control: it makes a change that
+// must NOT trip the audit, and fails if the audit goes red. 17c is the one such
+// case — a legal doc edit that used to break check 17 by accident.
+//
 // IT WRITES TO TRACKED SOURCE FILES and restores them in a finally block. It
 // refuses to start on a dirty working tree, so if it is ever killed mid-run the
 // damage is one file and `git checkout` is the whole recovery.
@@ -21,7 +25,8 @@ const DS = `${REPO}/src/lib/design-system`
 const AUDIT = `${REPO}/scripts/design-system/ds-audit.mjs`
 
 // A control is {file, find, replace} or {file, append}, plus the failure text it
-// must produce. `all: true` replaces every occurrence.
+// must produce. `all: true` replaces every occurrence. `green: true` inverts the
+// assertion: the audit must stay green, and `expect` is ignored.
 const CONTROLS = [
   { check: '16a', what: 'the letterbox rule is deleted from the token layer',
     file: `${DS}/tokens/deck-motion.css`,
@@ -49,6 +54,23 @@ const CONTROLS = [
     find: '  Slide transitions: frc-slide-shutter | frc-slide-boot |',
     replace: '  Slide transitions: frc-slide-shutter | frc-slide-boot | frc-slide-iris |',
     expect: /the motion vocabulary in the inheritance block changed/ },
+  // POSITIVE control. Both slice markers are ordinary prose and the standard
+  // quotes them where it describes this check, so each occurs twice. Under a
+  // bare indexOf this exact edit resliced check 17 onto the prose and failed
+  // with "the motion vocabulary in the inheritance block changed" — measured,
+  // not hypothesised. The slice is anchored inside INHERITANCE, NON-NEGOTIABLE
+  // now, so a quote above the block must change nothing.
+  { check: '17c', what: 'prose above the block quotes both slice markers (must NOT move the slice)',
+    file: `${DS}/docs/FRC_CLAUDE_DESIGN_STANDARDS.md`,
+    find: '**Harness reproducibility.**',
+    replace: 'A note above the block quoting both pin markers: the slice runs from `Motion: use only classes defined in the FRC motion tokens.` through to `The two ambient systems are separate`.\n\n**Harness reproducibility.**',
+    green: true,
+    expect: /never used/ },
+  { check: '17d', what: 'the INHERITANCE, NON-NEGOTIABLE anchor is gone',
+    file: `${DS}/docs/FRC_CLAUDE_DESIGN_STANDARDS.md`,
+    find: 'INHERITANCE, NON-NEGOTIABLE',
+    replace: 'INHERITANCE, NON NEGOTIABLE',
+    expect: /INHERITANCE, NON-NEGOTIABLE is not in the document/ },
 
   { check: '18a', what: 'a keyframe is named outside the frc- vocabulary',
     file: `${DS}/tokens/motion.css`,
@@ -212,14 +234,14 @@ for (const c of CONTROLS) {
   fs.writeFileSync(c.file, after)
   let res
   try { res = runAudit() } finally { fs.writeFileSync(c.file, before) }
-  const fired = res.code !== 0 && c.expect.test(res.out)
-  if (fired) pass++
-  results.push([c.check, fired ? 'CAUGHT' : `MISSED (exit ${res.code})`, c.what])
-  if (!fired) console.log(res.out.split('\n').slice(0, 8).join('\n'))
+  const ok = c.green ? res.code === 0 : (res.code !== 0 && c.expect.test(res.out))
+  if (ok) pass++
+  results.push([c.check, ok ? (c.green ? 'HELD' : 'CAUGHT') : `MISSED (exit ${res.code})`, c.what])
+  if (!ok) console.log(res.out.split('\n').slice(0, 8).join('\n'))
 }
 
 for (const [check, verdict, what] of results) console.log(`${verdict.padEnd(22)} ${check}  ${what}`)
-console.log(`\n${pass}/${CONTROLS.length} controls caught`)
+console.log(`\n${pass}/${CONTROLS.length} controls behaved as specified`)
 
 const restored = runAudit()
 console.log(`after restore: ${restored.code === 0 ? 'green' : 'NOT GREEN\n' + restored.out}`)
