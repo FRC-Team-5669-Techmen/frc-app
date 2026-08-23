@@ -278,6 +278,8 @@
       "prompt": "components/brand/DeckFooter.prompt.md",
       "class": "frc-footer",
       "assets": [
+        "assets/team/Type-Gold.svg",
+        "assets/team/Type-Black.svg",
         "assets/team/5669-Seal.svg",
         "assets/first/FIRST-Horizontal-Reverse.png"
       ]
@@ -633,7 +635,7 @@
       "types": "components/surfaces/RoleCard.d.ts",
       "prompt": "components/surfaces/RoleCard.prompt.md",
       "class": "frc-role",
-      "note": "Member with subteams and certifications, shaped like the app skills model. Props and children only; never queries."
+      "note": "Member with subteams and certifications, shaped like the app skills model. Props and children only; never queries. density=\"default\" | \"compact\" - compact is six or more cards on one sheet and sets its own type scale, padding and gaps, so a deck never writes font-size, padding or gap on one. slot=\"media\" (slot=\"portrait\" is the original name and still works) is optional and renders the system's marked empty slot when unfilled. A grid of them goes in a wrapper carrying frc-role-grid, which owns the columns and the gutter."
     },
     {
       "name": "PartCallout",
@@ -1080,14 +1082,20 @@
     "wired": [
       "assets/team/Mark-Gold.svg",
       "assets/team/Mark-White.svg",
-      "assets/team/Mark-Black.svg"
+      "assets/team/Mark-Black.svg",
+      "assets/team/Type-Gold.svg",
+      "assets/team/Type-White.svg",
+      "assets/team/Type-Black.svg"
     ],
     "mirrors": [
       "public/assets/logos/Mark-Gold.svg",
       "public/assets/logos/Mark-White.svg",
       "public/assets/logos/Mark-Black.svg"
     ],
-    "note": "The three team marks are wired after a byte comparison against the canonical files on the team branding page; ds:audit re-checks each sha256 AND every mirror of it in the repo, so a silent recolor cannot land in the bundle or in public/. Everything else renders a marked empty slot. RESOLVED: public/assets/logos/Mark-Gold.svg was recolored (#D4AF37 against a canonical #ffe629) and live on the splash, the access gate and the landing page; all three public copies have been replaced with the canonical files and are registered as mirrors."
+    "note": "The three team marks and the three logotypes are wired after a byte comparison against the canonical files on the team branding page; ds:audit re-checks each sha256 AND every mirror of it in the repo, so a silent recolor cannot land in the bundle or in public/. Everything else renders a marked empty slot. RESOLVED: public/assets/logos/Mark-Gold.svg was recolored (#D4AF37 against a canonical #ffe629) and live on the splash, the access gate and the landing page; all three public copies have been replaced with the canonical files and are registered as mirrors. REFUSED: assets/team/5669-Seal.svg was fetched from the canonical source and NOT adopted - the published seal carries #ffe623 in all 71 of its gold declarations, a near-gold rather than the published Techmen Gold #FFE629 that Mark-Gold.svg and Type-Gold.svg both carry. It stays an empty slot and the refusal is recorded under `rejected` in assets/PROVENANCE.json.",
+    "rejected": [
+      "assets/team/5669-Seal.svg"
+    ]
   },
   "capture": {
     "script": "scripts/design-system/ds-capture.mjs (npm run ds:capture)",
@@ -1120,9 +1128,6 @@
     "groups": [],
     "templates": [],
     "assets": [
-      "assets/team/Type-Gold.svg",
-      "assets/team/Type-White.svg",
-      "assets/team/Type-Black.svg",
       "assets/team/5669-Seal.svg",
       "assets/team/Mark-Guides.svg",
       "assets/team/Type-Guides.svg",

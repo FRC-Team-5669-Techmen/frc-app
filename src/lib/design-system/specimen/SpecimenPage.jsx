@@ -9,6 +9,7 @@ import {
   IconPlay, IconRotateCcw,
   DeckFooter, DeckStage, FirstName, FirstNameScope, HudFrame, PlatePanel, StencilTitle,
   ImageFrame, Cutout, MatchClock, AllianceSplit, ScoutTable, ScoutRow, SponsorWall, SponsorTier, SafetySheet,
+  RoleCard, SubteamBadge,
   CoreDemoCard, BrandDemoCard, DataDemoCard, SurfacesDemoCard, FormsDemoCard, SheetsDemoCard, SHEET_PATTERNS, tokens,
 } from '../index.js'
 import { cx } from '../components/cx.js'
@@ -23,6 +24,20 @@ import './specimen.css'
 
 const { GROUNDS, GROUND_CLASSES, GROUND_ALIASES, AUDIENCE_CLASSES, BRAND, RAMPS, PARTITION, PROGRAM, SEASON_DEFAULT, TYPE_SCALE, FONTS, RADII, MOTION, AMBIENT, VERSION, NAMESPACE } = tokens
 const PARTS = ['Brief', 'Roster', 'Quals', 'Mission', 'Muster']
+
+/* Nine members for the compact grid — the count the generated deck choked on.
+   Names are placeholder, not roster data: nothing in this route queries. */
+const ROLE_ROWS = [
+  { name: 'S. Bakhsh', title: 'Fabrication', subteam: 'Fabrication', cert: 'Lathe', status: 'in_progress', safety: true, file: 'bakhsh-portrait', note: 'No photo on file yet.' },
+  { name: 'D. Okonkwo', title: 'Lead programmer', subteam: 'Programming', cert: 'Auto tuning', status: 'certified', file: 'okonkwo-portrait', note: 'Owns the auto routines.' },
+  { name: 'M. Vargas', title: 'Safety captain', subteam: 'Field & Pit', cert: 'Shop lead', status: 'certified', safety: true, file: 'vargas-portrait', note: 'Signs off the pit before inspection.' },
+  { name: 'T. Nguyen', title: 'Scouting', subteam: 'Strategy and Scouting', cert: 'Scout lead', status: 'certified', file: 'nguyen-portrait', note: 'Runs the stands laptop.' },
+  { name: 'J. Park', title: 'Media', subteam: 'Media', cert: 'Camera', status: 'in_progress', file: 'park-portrait', note: 'Shoots the build log.' },
+  { name: 'R. Silva', title: 'CAD', subteam: 'CAD', cert: 'Onshape', status: 'certified', file: 'silva-portrait', note: 'Keeps the master sketch.' },
+  { name: 'K. Adeyemi', title: 'Electrical', subteam: 'Electrical', cert: 'Crimping', status: 'certified', safety: true, file: 'adeyemi-portrait', note: 'Wires the control board.' },
+  { name: 'L. Chen', title: 'Business', subteam: 'Business/Outreach', cert: 'Sponsor deck', status: 'in_progress', file: 'chen-portrait', note: 'Writes the sponsor asks.' },
+  { name: 'P. Rossi', title: 'Mechanical', subteam: 'Mechanical', cert: 'Bandsaw', status: 'certified', safety: true, file: 'rossi-portrait', note: 'Runs the drivetrain build.' },
+]
 
 /* ---------- small route helpers (chrome only; components are never copied) ---------- */
 
@@ -1297,6 +1312,156 @@ function DeckStageSection() {
   )
 }
 
+/* ---------- 8c. RoleCard density ---------- */
+
+/* The card owns its type scale, padding and gaps; the grid wrapper owns the
+   columns and the gutter. This section MEASURES that rather than asserting it,
+   because the failure it exists to catch is a deck hand-writing the four values
+   back in - which is exactly what a generated deck did with nine RoleCards
+   before `density` existed. Every card below is mounted with NO style prop at
+   all, so any padding, gap, font-size or column count read here came from the
+   stylesheet. */
+
+const ROLE_BOX = ['padding-top', 'row-gap', 'grid-template-columns']
+const DECK_SIDE = ['fontSize', 'padding', 'gap', 'gridTemplateColumns', 'gridTemplateRows']
+
+function trackCount(v) {
+  return v && v !== 'none' ? v.trim().split(/\s+/).length : 0
+}
+
+function RoleDensitySection() {
+  const [ground, setGround] = useState('squadron')
+  const ref = useRef(null)
+  const [report, setReport] = useState(null)
+  const [png, setPng] = useState(null)
+
+  // A real image for the FILLED slot, drawn at runtime in whatever this ground
+  // resolves --fg-structure to, so the route holds no literal color and no team
+  // mark is stood in for a member's photo. Same helper the Cutout proof uses.
+  useEffect(() => {
+    const probe = document.createElement('span')
+    probe.className = cx('frc-deck', GROUND_CLASSES[ground])
+    document.body.appendChild(probe)
+    const ink = getComputedStyle(probe).getPropertyValue('--fg-structure').trim()
+    document.body.removeChild(probe)
+    setPng(makeAlphaPng(ink || 'gray', 240))
+  }, [ground])
+
+  const run = useCallback(() => {
+    const root = ref.current
+    if (!root) return
+    const read = (sel) => {
+      const card = root.querySelector(sel)
+      if (!card) return null
+      const name = card.querySelector('.frc-role-name')
+      return {
+        box: readComputed(card, ROLE_BOX),
+        tracks: trackCount(readComputed(card, ['grid-template-columns'])['grid-template-columns']),
+        nameSize: name ? readComputed(name, ['font-size'])['font-size'] : null,
+      }
+    }
+    const dflt = read('[data-frc="RoleCard"][data-density="default"]')
+    const compact = read('[data-frc="RoleCard"][data-density="compact"]')
+
+    // The empty media slot: the same marked, dashed, transparent affordance the
+    // image treatments proof measures on .frc-frame-empty.
+    const emptyEl = root.querySelector('[data-probe="role-empty"] .frc-role-media > .frc-frame-empty')
+    const emptyStyle = emptyEl ? readComputed(emptyEl, ['border-top-style', 'border-top-width', 'background-color', 'color']) : null
+    const filledSlot = root.querySelector('[data-probe="role-filled"] .frc-role-media')
+    const filledImg = filledSlot ? filledSlot.querySelector('img') : null
+
+    const gridEl = root.querySelector('.frc-role-grid')
+    const gridCols = gridEl ? trackCount(readComputed(gridEl, ['grid-template-columns'])['grid-template-columns']) : 0
+    const gridGap = gridEl ? readComputed(gridEl, ['column-gap'])['column-gap'] : null
+
+    // Nothing inside a card sets one of the four deck-side values inline.
+    const offenders = []
+    for (const card of root.querySelectorAll('[data-frc="RoleCard"]')) {
+      for (const el of [card, ...card.querySelectorAll('*')]) {
+        const hit = DECK_SIDE.filter((k) => el.style && el.style[k])
+        if (hit.length) offenders.push({ el: el.className || el.tagName.toLowerCase(), props: hit.join(', ') })
+      }
+    }
+
+    setReport({
+      dflt,
+      compact,
+      emptyStyle,
+      emptyLegible: Boolean(emptyStyle) && emptyStyle['border-top-style'] === 'dashed' && emptyStyle['border-top-width'] !== '0px' && isTransparent(emptyStyle['background-color']),
+      filled: Boolean(filledImg) && !filledSlot.querySelector('.frc-frame-empty'),
+      radius: readComputed(root.querySelector('[data-frc="RoleCard"]'), ['border-top-left-radius'])['border-top-left-radius'],
+      gridCols,
+      gridGap,
+      offenders,
+    })
+  }, [ground])
+
+  useEffect(() => { const t = setTimeout(run, 150); return () => clearTimeout(t) }, [run, png])
+
+  const scalesDiffer = report && report.dflt && report.compact
+    && report.dflt.nameSize !== report.compact.nameSize
+    && report.dflt.box['padding-top'] !== report.compact.box['padding-top']
+  const stacks = report && report.dflt && report.compact && report.dflt.tracks === 2 && report.compact.tracks === 1
+  const ok = Boolean(report && scalesDiffer && stacks && report.emptyLegible && report.filled && report.gridCols >= 2 && report.offenders.length === 0 && report.radius === '4px')
+
+  return (
+    <Section
+      id="role-density"
+      title="RoleCard density"
+      lede="default puts the media beside the text at the full scale; compact - six or more cards on one sheet - puts it above and drops the whole card to the smaller scale by itself. The wrapper class frc-role-grid carries the columns and the gutter. Every card here is mounted with no style prop, so everything measured below came from the stylesheet."
+    >
+      <GroundTabs value={ground} onChange={setGround} extra={<Button variant="ghost" onClick={run}>Re-measure</Button>} />
+      <div className="ds-proof" data-proof="role-density">
+        <div className="ds-proof-head">
+          <Verdict state={report ? ok : null}>Card owns its scale, padding and columns; the grid owns the gutter; the empty media slot is marked</Verdict>
+        </div>
+        {report ? (
+          <table>
+            <thead><tr><th>measurement</th><th>default</th><th>compact</th></tr></thead>
+            <tbody>
+              <tr><td>.frc-role-name font-size</td><td className={scalesDiffer ? 'ds-okcell' : 'ds-fail'}>{report.dflt?.nameSize}</td><td className={scalesDiffer ? 'ds-okcell' : 'ds-fail'}>{report.compact?.nameSize}</td></tr>
+              <tr><td>.frc-role padding-top</td><td>{report.dflt?.box['padding-top']}</td><td>{report.compact?.box['padding-top']}</td></tr>
+              <tr><td>.frc-role row-gap</td><td>{report.dflt?.box['row-gap']}</td><td>{report.compact?.box['row-gap']}</td></tr>
+              <tr><td>grid tracks (2 = media beside, 1 = media above)</td><td className={stacks ? 'ds-okcell' : 'ds-fail'}>{report.dflt?.tracks}</td><td className={stacks ? 'ds-okcell' : 'ds-fail'}>{report.compact?.tracks}</td></tr>
+              <tr><td>card radius</td><td colSpan={2} className={report.radius === '4px' ? 'ds-okcell' : 'ds-fail'}>{report.radius}</td></tr>
+              <tr><td>.frc-role-grid columns / gutter</td><td colSpan={2} className={report.gridCols >= 2 ? 'ds-okcell' : 'ds-fail'}>{report.gridCols} × {report.gridGap}</td></tr>
+              <tr><td>filled media slot holds an img and no empty marker</td><td colSpan={2} className={report.filled ? 'ds-okcell' : 'ds-fail'}>{String(report.filled)}</td></tr>
+              <tr><td>empty media slot: dashed, transparent, legible</td><td colSpan={2} className={report.emptyLegible ? 'ds-okcell' : 'ds-fail'}>{report.emptyStyle ? `${report.emptyStyle['border-top-style']} ${report.emptyStyle['border-top-width']} on ${report.emptyStyle['background-color']}` : 'absent'}</td></tr>
+              <tr><td>inline font-size / padding / gap / grid-template on a card or its children</td><td colSpan={2} className={report.offenders.length === 0 ? 'ds-okcell' : 'ds-fail'}>{report.offenders.length === 0 ? 'none' : report.offenders.map((o) => `${o.el}: ${o.props}`).join(' · ')}</td></tr>
+            </tbody>
+          </table>
+        ) : null}
+      </div>
+      <div className="ds-frame">
+        <Zoomed width={1920}>
+          <div ref={ref} className={cx('frc-deck', GROUND_CLASSES[ground])} style={{ padding: 48, display: 'grid', gap: 40 }}>
+            <RoleCard data-probe="role-filled" mediaFile="rivera-portrait.png">
+              <Cutout slot="media" ground="none" src={png} alt="" width={160} height={160} />
+              <span slot="name">A. Rivera</span>
+              <span slot="title">Drive coach, class of 2027</span>
+              <SubteamBadge slot="subteam">Drive Team</SubteamBadge>
+              <li slot="cert" data-status="certified" data-safety>Mill</li>
+              <li slot="cert" data-status="in_progress">Lathe</li>
+              <p slot="note">Calls the match and runs the pit checklist before every queue.</p>
+            </RoleCard>
+            <div className="frc-role-grid">
+              {ROLE_ROWS.map((r, i) => (
+                <RoleCard key={r.name} density="compact" data-probe={i === 0 ? 'role-empty' : undefined} mediaFile={`${r.file}.png`}>
+                  <span slot="name">{r.name}</span>
+                  <span slot="title">{r.title}</span>
+                  <SubteamBadge slot="subteam">{r.subteam}</SubteamBadge>
+                  <li slot="cert" data-status={r.status} {...(r.safety ? { 'data-safety': '' } : {})}>{r.cert}</li>
+                  <p slot="note">{r.note}</p>
+                </RoleCard>
+              ))}
+            </div>
+          </div>
+        </Zoomed>
+      </div>
+    </Section>
+  )
+}
+
 /* ---------- 9. Wiring ---------- */
 
 function WiringSection() {
@@ -1385,7 +1550,7 @@ export default function SpecimenPage() {
         <span className="ds-header-title">{NAMESPACE}</span>
         <span>v{VERSION} · /_ds · dev only</span>
         <nav className="ds-nav">
-          {['grounds', 'tokens', 'type', 'motion', 'surfaces', 'core', 'brand', 'data', 'surfaces-group', 'forms', 'images', 'cutout', 'clock', 'alliance', 'sheets', 'refusals', 'chrome', 'wiring'].map((id) => <a key={id} href={`#${id}`}>{id}</a>)}
+          {['grounds', 'tokens', 'type', 'motion', 'surfaces', 'core', 'brand', 'data', 'surfaces-group', 'forms', 'role-density', 'images', 'cutout', 'clock', 'alliance', 'sheets', 'refusals', 'chrome', 'wiring'].map((id) => <a key={id} href={`#${id}`}>{id}</a>)}
         </nav>
       </header>
       <main className="ds-main">
@@ -1399,6 +1564,7 @@ export default function SpecimenPage() {
         <CardSection id="data" title="Data components" lede="Badge, Chip, SubteamBadge, Field, StatBlock, Readout, SpecTable, FocusTable, BarChart, GanttChart, DecisionMatrix, Timeline, MatchClock, BuildCountdown, ScoutTable, AllianceSplit — the components/data demo card, mounted as-is." render={(ground, run) => <DataDemoCard ground={ground} run={run} />} />
         <CardSection id="surfaces-group" title="Surface components" lede="Card, Callout, SafetyNote, ImageFrame, Cutout, StepCard, ProcessPipeline, CompareSplit, SampleGrid, JumpGrid, CalloutDrawing, QuoteBlock, RoleCard, PartCallout, FieldDiagram, SponsorWall, AwardPlate, ResultBanner — the components/surfaces demo card, mounted as-is." render={(ground, run) => <SurfacesDemoCard ground={ground} run={run} />} />
         <CardSection id="forms" title="Form controls" lede="Input and Select — the components/forms demo card, mounted as-is." render={(ground, run) => <FormsDemoCard ground={ground} run={run} />} />
+        <RoleDensitySection />
         <ImageTreatmentSection />
         <CutoutSection />
         <ClockSection />

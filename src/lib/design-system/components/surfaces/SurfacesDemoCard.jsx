@@ -1,4 +1,5 @@
 // @dsCard group="Surfaces" name="Surface components" subtitle="Cards, callouts, safety, image treatments, steps, comparisons, grids, drawings, sponsors, awards"
+import { useLayoutEffect, useRef, useState } from 'react'
 import { GROUND_CLASSES } from '../../tokens.js'
 import { cx } from '../cx.js'
 import { Card } from './Card.jsx'
@@ -28,6 +29,38 @@ import { IconTriangleAlert, IconCheck, IconWrench } from '../core/icons.jsx'
 const section = { display: 'grid', gap: 20 }
 const two = { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'start' }
 
+/**
+ * A generic head-and-shoulders silhouette, drawn at runtime in whatever the
+ * ground resolves --fg-structure to, so the FILLED RoleCard media slot below is
+ * genuinely filled without inventing a color and without standing a team mark
+ * in for a member's photo. Same trick the specimen's alpha-PNG proof uses.
+ */
+function useSilhouette() {
+  const ref = useRef(null)
+  const [src, setSrc] = useState(null)
+  useLayoutEffect(() => {
+    const host = ref.current
+    if (!host) return
+    const ink = getComputedStyle(host).getPropertyValue('--fg-structure').trim()
+    if (!ink) return
+    const size = 240
+    const c = document.createElement('canvas')
+    c.width = size
+    c.height = size
+    const ctx = c.getContext('2d')
+    if (!ctx) return
+    ctx.fillStyle = ink
+    ctx.beginPath()
+    ctx.arc(size / 2, size * 0.36, size * 0.2, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.beginPath()
+    ctx.ellipse(size / 2, size * 0.98, size * 0.32, size * 0.4, 0, 0, Math.PI * 2)
+    ctx.fill()
+    setSrc(c.toDataURL('image/png'))
+  }, [])
+  return [ref, src]
+}
+
 /** Field zone geometry. Structure, not copy: no one reads a point list aloud. */
 const ZONES = [
   { id: 'red-source', alliance: 'red', points: '0,0 300,0 300,300 0,300', at: [9, 19] },
@@ -43,8 +76,10 @@ const ZONES = [
  * part of what this card is showing.
  */
 export function SurfacesDemoCard({ ground = 'squadron', run = false, className, ...rest }) {
+  const [groundRef, portrait] = useSilhouette()
   return (
     <div
+      ref={groundRef}
       className={cx('frc-deck', GROUND_CLASSES[ground] ?? GROUND_CLASSES.squadron, run && 'frc-run', 'frc-demo-card', className)}
       data-card="surfaces"
       data-ground={ground}
@@ -166,8 +201,8 @@ export function SurfacesDemoCard({ ground = 'squadron', run = false, className, 
           <span slot="role">Drive coach</span>
         </QuoteBlock>
         <div style={two}>
-          <RoleCard>
-            <Cutout slot="portrait" ground="none" width={160} height={160} file="member-cutout.png" />
+          <RoleCard mediaFile="rivera-portrait.png">
+            <Cutout slot="media" ground="none" src={portrait} alt="" width={160} height={160} />
             <span slot="name">A. Rivera</span>
             <span slot="title">Drive coach, class of 2027</span>
             <SubteamBadge slot="subteam">Drive Team</SubteamBadge>
@@ -175,6 +210,7 @@ export function SurfacesDemoCard({ ground = 'squadron', run = false, className, 
             <li slot="cert" data-status="certified" data-safety>Mill</li>
             <li slot="cert" data-status="certified">Bandsaw</li>
             <li slot="cert" data-status="in_progress">Lathe</li>
+            <p slot="note">Calls the match and runs the pit checklist before every queue.</p>
           </RoleCard>
           <PartCallout>
             <Cutout slot="media" ground="shelf" width={200} height={160} file="cots-gearbox.png" />
@@ -184,6 +220,65 @@ export function SurfacesDemoCard({ ground = 'squadron', run = false, className, 
             <span slot="price">$74.00</span>
             <span slot="note">Two per drivetrain side. Order the 12 tooth pinion separately.</span>
           </PartCallout>
+        </div>
+      </section>
+
+      <section style={section}>
+        <Eyebrow>RoleCard density, filled and empty media</Eyebrow>
+        {/* density="compact" - six or more on one sheet. The card sets its own
+            type scale, padding and gaps, and frc-role-grid sets the columns and
+            the gutter, so NOTHING here writes font-size, padding, gap or
+            gridTemplateColumns. That is the whole point of the pair: the deck
+            that had to hand-write all four is what this replaces. The first
+            card's media slot is FILLED, the rest are EMPTY and render the
+            system's marked empty slot rather than a collapsed box. */}
+        <div className="frc-role-grid">
+          <RoleCard density="compact" mediaFile="rivera-portrait.png">
+            <Cutout slot="media" ground="none" src={portrait} alt="" width={120} height={120} />
+            <span slot="name">A. Rivera</span>
+            <span slot="title">Drive coach</span>
+            <SubteamBadge slot="subteam">Drive Team</SubteamBadge>
+            <li slot="cert" data-status="certified" data-safety>Mill</li>
+            <li slot="cert" data-status="certified">Bandsaw</li>
+            <p slot="note">Calls the match.</p>
+          </RoleCard>
+          <RoleCard density="compact" mediaFile="okonkwo-portrait.png">
+            <span slot="name">D. Okonkwo</span>
+            <span slot="title">Lead programmer</span>
+            <SubteamBadge slot="subteam">Programming</SubteamBadge>
+            <li slot="cert" data-status="certified">Auto tuning</li>
+            <li slot="cert" data-status="in_progress">Vision</li>
+            <p slot="note">Owns the auto routines.</p>
+          </RoleCard>
+          <RoleCard density="compact" mediaFile="vargas-portrait.png">
+            <span slot="name">M. Vargas</span>
+            <span slot="title">Safety captain</span>
+            <SubteamBadge slot="subteam">Field &amp; Pit</SubteamBadge>
+            <li slot="cert" data-status="certified" data-safety>Shop lead</li>
+            <li slot="cert" data-status="certified">First aid</li>
+            <p slot="note">Signs off the pit before inspection.</p>
+          </RoleCard>
+          <RoleCard density="compact">
+            <span slot="name">S. Bakhsh</span>
+            <span slot="title">Fabrication</span>
+            <SubteamBadge slot="subteam">Fabrication</SubteamBadge>
+            <li slot="cert" data-status="in_progress" data-safety>Lathe</li>
+            <p slot="note">No photo on file yet.</p>
+          </RoleCard>
+          <RoleCard density="compact">
+            <span slot="name">T. Nguyen</span>
+            <span slot="title">Scouting</span>
+            <SubteamBadge slot="subteam">Strategy and Scouting</SubteamBadge>
+            <li slot="cert" data-status="certified">Scout lead</li>
+            <p slot="note">Runs the stands laptop.</p>
+          </RoleCard>
+          <RoleCard density="compact">
+            <span slot="name">J. Park</span>
+            <span slot="title">Media</span>
+            <SubteamBadge slot="subteam">Media</SubteamBadge>
+            <li slot="cert" data-status="in_progress">Camera</li>
+            <p slot="note">Shoots the build log.</p>
+          </RoleCard>
         </div>
       </section>
 

@@ -243,7 +243,17 @@
 /* ---- RoleCard ------------------------------------------------------------- */
 /* A member: subteams and certifications, shaped like the app skills model
    (certified / in progress, safety-critical flagged). Props only — this
-   component never queries anything. */
+   component never queries anything.
+
+   EVERY SIZE IN THIS BLOCK IS THE CARD'S OWN. A deck that writes font-size,
+   padding, gap or grid-template-columns onto a RoleCard or onto anything inside
+   one is reimplementing the component. Two densities are declared here so it
+   never has to: `default` puts the media BESIDE the text at the full scale, and
+   `compact` — six or more cards on one sheet — puts the media ABOVE the text
+   and drops the whole card to the smaller scale by itself.
+
+   .frc-role-grid is the wrapper a grid of them sits in. It owns the columns and
+   the gutter for both densities, which is the one thing a card cannot own. */
 .frc-role {
   display: grid;
   grid-template-columns: 200px 1fr;
@@ -255,6 +265,7 @@
   box-shadow: var(--panel-shadow);
 }
 .frc-ground-squadron .frc-role { background: var(--plate); }
+.frc-role-media,
 .frc-role-portrait { display: flex; align-items: flex-start; justify-content: center; }
 .frc-role-body { display: grid; gap: var(--space-2); align-content: start; }
 .frc-role-name { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h2); line-height: var(--lh-tight); color: var(--fg); margin: 0; }
@@ -267,6 +278,53 @@
 .frc-role-cert[data-status="certified"]::before { background: var(--ok); }
 .frc-role-cert[data-status="in_progress"]::before { background: var(--warn); }
 .frc-role-cert[data-safety]::after { content: 'SAFETY'; color: var(--warn); letter-spacing: var(--track-wider); }
+.frc-role-note { font-family: var(--font-body); font-size: var(--fs-body-sm); line-height: var(--lh-body); color: var(--fg-dim); margin: 0; }
+
+/* The empty media slot. Same marked, dashed, mono affordance every other
+   artwork-bearing component in the system renders, sized to the slot it was
+   given rather than to the 180px ImageFrame floor — the same override a Cutout
+   takes in image-slot.css, for the same reason. */
+.frc-role-media > .frc-frame-empty,
+.frc-role-portrait > .frc-frame-empty {
+  min-height: 0;
+  width: 100%;
+  height: 200px;
+  padding: var(--space-2);
+  overflow: hidden;
+}
+
+/* compact — six or more on a sheet. Media above, smaller scale, tighter box. */
+.frc-role[data-density="compact"] {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+.frc-role[data-density="compact"] .frc-role-body { gap: var(--space-1); }
+.frc-role[data-density="compact"] .frc-role-name { font-size: var(--fs-h3); }
+.frc-role[data-density="compact"] .frc-role-title { font-size: var(--fs-micro); }
+.frc-role[data-density="compact"] .frc-role-tags { gap: 8px; }
+.frc-role[data-density="compact"] .frc-role-certs { gap: 6px; }
+.frc-role[data-density="compact"] .frc-role-cert { gap: 8px; }
+.frc-role[data-density="compact"] .frc-role-cert::before { width: 8px; height: 8px; }
+.frc-role[data-density="compact"] .frc-role-note { font-size: var(--fs-label); }
+.frc-role[data-density="compact"] .frc-role-media,
+.frc-role[data-density="compact"] .frc-role-portrait { justify-content: flex-start; }
+.frc-role[data-density="compact"] .frc-role-media > .frc-frame-empty,
+.frc-role[data-density="compact"] .frc-role-portrait > .frc-frame-empty { height: 120px; padding: var(--space-1); }
+
+/* The wrapper for a grid of cards. It carries the columns and the gutter so no
+   deck writes either. auto-fit off a per-density floor means the column count
+   follows the sheet width instead of being counted by hand. */
+.frc-role-grid {
+  display: grid;
+  align-items: start;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+}
+.frc-role-grid:has(> .frc-role[data-density="compact"]) {
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
 
 /* ---- PartCallout ---------------------------------------------------------- */
 /* A COTS part for a BOM or a training sheet: vendor, part number, price. */

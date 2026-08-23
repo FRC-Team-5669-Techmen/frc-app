@@ -1,4 +1,4 @@
-import { ASSETS, ASSET_FILES, MIN_SIZES } from '../../assets.js'
+import { ASSETS, ASSET_FILES, MIN_SIZES, LOGOTYPE_RATIO } from '../../assets.js'
 import { cx } from '../cx.js'
 import { AssetSlot } from './AssetSlot.jsx'
 
@@ -11,12 +11,13 @@ const VARIANTS = {
 /**
  * Logotype — the mark locked up with the TECHMEN wordmark. Footer rail use.
  * variant: gold | white | black | auto (gold on dark grounds, black on paper).
- * The slot is height-driven; its width is a placeholder until Type-*.svg
- * supplies the real aspect ratio.
+ * The slot is height-driven; its width comes from LOGOTYPE_RATIO, the real
+ * aspect of the supplied Type-*.svg, so the box is the artwork rather than a
+ * wider placeholder with dead space beside it.
  */
 export function Logotype({ variant = 'gold', src, height = 48, width, alt = 'Techmen logotype', className, ...rest }) {
   const h = Math.max(Number(height) || 48, MIN_SIZES.logotype.height)
-  const w = width ?? Math.round(h * 5)
+  const w = width ?? Math.round(h * LOGOTYPE_RATIO)
   if (variant === 'auto') {
     return (
       <span className={cx('frc-mark-auto', className)} data-frc="Logotype" data-variant="auto" {...rest}>

@@ -36,12 +36,31 @@
 .frc-slot > img { display: block; width: 100%; height: 100%; object-fit: contain; }
 
 /* variant="auto" on MarkGlyph / Logotype: the ground picks the published
-   version — Gold on the dark grounds, Black on paper. Gold on paper is illegal. */
+   version — Gold on the dark grounds, Black on paper. Gold on paper is illegal.
+
+   THE SWITCH IS AN INHERITED CUSTOM PROPERTY, NOT A DESCENDANT SELECTOR, and
+   that is the whole point of this block. A deck NESTS grounds: a paper sheet
+   lives inside a squadron deck root. Written as
+   `.frc-ground-squadron .frc-mark-auto > [data-variant="gold"]`, the outer
+   squadron scope matches a mark inside a paper sheet no matter how near the
+   paper scope is, and paper's own rule only switches BLACK on — so both
+   variants showed at once and Techmen Gold painted on paper. It was invisible
+   while every Type-*.svg slot was empty (an empty slot paints no gold, and the
+   gold-on-paper proof reads computed color, which an <img> of a gold SVG does
+   not carry); wiring the logotype made it real on every paper sheet's footer
+   rail. A custom property resolves against the NEAREST declaring ancestor,
+   which is the rule this was always trying to state.
+
+   The fallbacks are the dark-ground answer, so a groundless deck root behaves
+   as SQUADRON — the same fail-safe colors.css takes. `:where()` carries no
+   specificity, so on one element holding both .frc-deck and a ground class the
+   ground wins outright rather than by source order. */
 .frc-mark-auto { display: inline-flex; vertical-align: middle; }
 .frc-mark-auto > [data-variant] { display: none; }
-.frc-ground-squadron .frc-mark-auto > [data-variant="gold"],
-.frc-ground-field    .frc-mark-auto > [data-variant="gold"]  { display: inline-flex; }
-.frc-ground-paper    .frc-mark-auto > [data-variant="black"] { display: inline-flex; }
+:where(.frc-deck, .frc-ground-squadron, .frc-ground-field) { --mark-auto-gold: inline-flex; --mark-auto-black: none; }
+.frc-ground-paper { --mark-auto-gold: none; --mark-auto-black: inline-flex; }
+.frc-mark-auto > [data-variant="gold"]  { display: var(--mark-auto-gold, inline-flex); }
+.frc-mark-auto > [data-variant="black"] { display: var(--mark-auto-black, none); }
 
 /* A FIRST mark sits on a flat plate and is never recolored. */
 .frc-slot-first { background: var(--chrome-bg); border-style: dashed; }

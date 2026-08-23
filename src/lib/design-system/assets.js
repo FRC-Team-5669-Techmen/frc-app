@@ -36,23 +36,34 @@ export const ASSET_FILES = {
   seasonArt: 'assets/season/season-lockup.png',
 }
 
-// The three team MARKS are wired: their bytes were compared against the
-// canonical files on the team branding page before wiring, and
-// assets/PROVENANCE.json pins each sha256 so a later edit fails the audit.
-// The mark is used AS SUPPLIED — never recolored, rotated, cropped, contained
-// or captioned. Everything else below is still an empty, marked slot.
+// The three team MARKS and the three LOGOTYPES are wired: their bytes were
+// compared against the canonical files on the team branding page before
+// wiring, and assets/PROVENANCE.json pins each sha256 so a later edit fails
+// the audit. They are used AS SUPPLIED — never recolored, rotated, cropped,
+// contained or captioned. Everything else below is still an empty, marked slot.
+//
+// THE SEAL IS DELIBERATELY NOT WIRED. The canonical 5669-Seal.svg published at
+// https://frcteam5669.com/assets/logos/seal/svg/5669-Seal.svg carries #ffe623
+// in all 71 of its gold declarations, not the published Techmen Gold #FFE629
+// that Mark-Gold.svg and Type-Gold.svg both carry. That is a near-gold, and a
+// near-gold is exactly what the provenance check exists to refuse, so the file
+// was fetched, checked, and NOT adopted. See the `rejected` block in
+// assets/PROVENANCE.json. SealMark keeps rendering its marked empty slot.
 import markGoldUrl from './assets/team/Mark-Gold.svg'
 import markWhiteUrl from './assets/team/Mark-White.svg'
 import markBlackUrl from './assets/team/Mark-Black.svg'
+import typeGoldUrl from './assets/team/Type-Gold.svg'
+import typeWhiteUrl from './assets/team/Type-White.svg'
+import typeBlackUrl from './assets/team/Type-Black.svg'
 
 /** Resolved URLs. Null until the file lands. */
 export const ASSETS = {
   markGold: markGoldUrl,
   markWhite: markWhiteUrl,
   markBlack: markBlackUrl,
-  typeGold: null,
-  typeWhite: null,
-  typeBlack: null,
+  typeGold: typeGoldUrl,
+  typeWhite: typeWhiteUrl,
+  typeBlack: typeBlackUrl,
   seal: null,
   firstHorizontalReverse: null,
   firstVerticalReverse: null,
@@ -69,6 +80,10 @@ export const ASSETS = {
  * Minimum rendered sizes, in CSS px at 1920.
  * FIRST values are published (Branding & Design Guidelines, digital).
  * Team values are system floors pending Mark-Guides.svg / Type-Guides.svg.
+ *
+ * `logotype` now carries the REAL aspect of Type-*.svg (1049.669 x 287.139,
+ * LOGOTYPE_RATIO below) rather than the 5:1 placeholder that stood in while
+ * the slot was empty. The floor stays 24px tall; its width follows from that.
  */
 export const MIN_SIZES = {
   firstHorizontal: { height: 30 },
@@ -77,8 +92,15 @@ export const MIN_SIZES = {
   programVertical:   { height: 120 },
   seal:     { width: 48,  height: 48 },
   mark:     { width: 24,  height: 24 },
-  logotype: { width: 120, height: 24 },
+  logotype: { width: 88, height: 24 },
 }
+
+/**
+ * Intrinsic aspect of Type-Gold/White/Black.svg, read from their shared
+ * viewBox (all three are byte-identical apart from the fill). A logotype slot
+ * is height-driven, so this is what turns a height into a width.
+ */
+export const LOGOTYPE_RATIO = 1049.669 / 287.139
 
 export function assetFor(key) {
   return ASSETS[key] ?? null

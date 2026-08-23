@@ -1,5 +1,5 @@
 {
-  "note": "Provenance for every asset wired into the bundle. An asset is wired only after its bytes are compared against the canonical source; the marks are used AS SUPPLIED, so a later edit to one of these files is a brand violation rather than a style choice. scripts/design-system/ds-audit.mjs recomputes each sha256 and fails on drift, which is what makes a silent recolor impossible to land. `mirrors` are copies of the same canonical bytes served from elsewhere in the repo; they are hashed against the same value, because a mark that is correct in the bundle and recolored in public/ is the exact failure this file exists to catch.",
+  "note": "Provenance for every asset wired into the bundle. An asset is wired only after its bytes are compared against the canonical source; the marks are used AS SUPPLIED, so a later edit to one of these files is a brand violation rather than a style choice. scripts/design-system/ds-audit.mjs recomputes each sha256 and fails on drift, which is what makes a silent recolor impossible to land. `mirrors` are copies of the same canonical bytes served from elsewhere in the repo; they are hashed against the same value, because a mark that is correct in the bundle and recolored in public/ is the exact failure this file exists to catch. `rejected` records artwork that was fetched from the canonical source and then deliberately NOT wired, with the reason and the hash of exactly what was refused, so the next person does not re-fetch it and adopt it without looking.",
   "verifiedOn": "2026-08-23",
   "assets": [
     {
@@ -7,7 +7,9 @@
       "source": "https://frcteam5669.com/assets/logos/marks/svg/Mark-Gold.svg",
       "sha256": "c665f582184eb0acabde39b53b9762cabdf9158d49c8956c81e7931b23ca546d",
       "bytes": 1759,
-      "mirrors": ["public/assets/logos/Mark-Gold.svg"],
+      "mirrors": [
+        "public/assets/logos/Mark-Gold.svg"
+      ],
       "finding": "RESOLVED 2026-08-23. The copy at public/assets/logos/Mark-Gold.svg was RECOLORED: its fill was #D4AF37 where the canonical file carries #ffe629, the published Techmen Gold. It was in use on the app splash, the access gate and the landing page. It has been replaced with the canonical file and now hashes to the value above."
     },
     {
@@ -15,7 +17,9 @@
       "source": "https://frcteam5669.com/assets/logos/marks/svg/Mark-White.svg",
       "sha256": "02815f247c66f054a8dfebc6acf0bdd9d6594d1c1bc646b2d6f224f987f40e87",
       "bytes": 1756,
-      "mirrors": ["public/assets/logos/Mark-White.svg"],
+      "mirrors": [
+        "public/assets/logos/Mark-White.svg"
+      ],
       "finding": "RESOLVED 2026-08-23. The copy at public/assets/logos/Mark-White.svg was content-identical but differed in line endings (3 CRLF), so its hash did not match. Replaced with the canonical bytes; no rendered change."
     },
     {
@@ -23,8 +27,31 @@
       "source": "https://frcteam5669.com/assets/logos/marks/svg/Mark-Black.svg",
       "sha256": "811da606f5fa8f9ae389406b5049397bc1a0d24e36a8120af6528bcc974c88b1",
       "bytes": 1759,
-      "mirrors": ["public/assets/logos/Mark-Black.svg"],
+      "mirrors": [
+        "public/assets/logos/Mark-Black.svg"
+      ],
       "finding": "RESOLVED 2026-08-23. Same line-ending mismatch as Mark-White.svg. Replaced with the canonical bytes; no rendered change."
+    },
+    {
+      "file": "assets/team/Type-Gold.svg",
+      "source": "https://frcteam5669.com/assets/logos/type/svg/Type-Gold.svg",
+      "sha256": "f2bce2412cbddc1308b5bfc04fb1a12e24b4097119fee4fcf14cc0f5d762b1b8",
+      "bytes": 9705,
+      "finding": "Fetched 2026-08-23 from the team branding page (https://frcteam5669.com/outreach/branding) and adopted AS SUPPLIED. RECOLOR CHECK PASSES: all 16 colour declarations in the file are #ffe629, the published Techmen Gold, identical to the value Mark-Gold.svg carries. No #D4AF37 and no other near-gold anywhere in the file. viewBox 0 0 1049.669 287.139, which is where LOGOTYPE_RATIO in assets.js comes from; the three Type variants are byte-identical apart from the fill, verified by normalising each fill to a placeholder and diffing."
+    },
+    {
+      "file": "assets/team/Type-White.svg",
+      "source": "https://frcteam5669.com/assets/logos/type/svg/Type-White.svg",
+      "sha256": "47763bfff9b4640261d8f116ec6595bf28dce4f30a7baf251ffc68feac8ce1dd",
+      "bytes": 9657,
+      "finding": "Fetched 2026-08-23 and adopted AS SUPPLIED. All 16 colour declarations are #fff. Not gold artwork, so the gold recolor check does not apply; recorded here as checked rather than skipped."
+    },
+    {
+      "file": "assets/team/Type-Black.svg",
+      "source": "https://frcteam5669.com/assets/logos/type/svg/Type-Black.svg",
+      "sha256": "460e2e87b8d06b686da983fd23f7b0cc4dd8eb0540cdebd2685dfbe238eb9853",
+      "bytes": 9705,
+      "finding": "Fetched 2026-08-23 and adopted AS SUPPLIED. All 16 colour declarations are #000000. Not gold artwork, so the gold recolor check does not apply; recorded here as checked rather than skipped."
     }
   ],
   "derived": [
@@ -71,9 +98,6 @@
     }
   ],
   "stillEmpty": [
-    "assets/team/Type-Gold.svg",
-    "assets/team/Type-White.svg",
-    "assets/team/Type-Black.svg",
     "assets/team/5669-Seal.svg",
     "assets/team/Mark-Guides.svg",
     "assets/team/Type-Guides.svg",
@@ -86,5 +110,17 @@
     "assets/first/FLL-Horizontal-Reverse.png",
     "assets/first/FLL-Vertical-Reverse.png",
     "assets/season/season-lockup.png"
+  ],
+  "rejected": [
+    {
+      "file": "assets/team/5669-Seal.svg",
+      "source": "https://frcteam5669.com/assets/logos/seal/svg/5669-Seal.svg",
+      "sha256": "819571c278c0756e8a77ad177cb14ba1dbbc42e29f41623a4abf4038d3065650",
+      "bytes": 25816,
+      "status": "FETCHED, CHECKED, NOT ADOPTED - 2026-08-23",
+      "finding": "RECOLOR CHECK FAILS. The canonical seal carries #ffe623 in all 71 of its gold declarations (41 stroke, 30 fill; the only other colour value anywhere in the file is fill=\"none\"). The published Techmen Gold is #FFE629, which is what Mark-Gold.svg and Type-Gold.svg both carry, byte-for-byte, fetched from the same branding page in the same pass. #ffe623 is a near-gold: it differs only in the blue channel (0x23 = 35 against 0x29 = 41), which is precisely the class of drift this file exists to catch and is invisible to the eye at seal scale. The fetch was repeated from a cold request and both downloads hash identically, so this is the published artwork rather than a transfer fault. The file was NOT copied into assets/team/, ASSETS.seal stays null, and SealMark keeps rendering its marked empty slot.",
+      "consequence": "DeckFooter defaults to mark=\"logotype\", so wiring Type-Gold.svg clears the empty box on the footer rail of every sheet of every deck, which was the blocking symptom. The seal slot still renders empty in the places that ask for it in the sheet BODY - CoverSheet and ClosingSheet - and on a DeckFooter explicitly passed mark=\"seal\".",
+      "toResolve": "Ask the team either for a seal exported at #FFE629, or for an explicit ruling that #ffe623 is the intended seal value. Either answer is a small change: drop the file at assets/team/5669-Seal.svg, import it in assets.js beside the Type imports, set ASSETS.seal, and move this record out of `rejected` and into `assets` so ds:audit hash-pins it like the rest."
+    }
   ]
 }
