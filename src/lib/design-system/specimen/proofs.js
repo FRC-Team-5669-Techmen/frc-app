@@ -412,15 +412,21 @@ export function isTransparent(value) {
  * failure the interaction rule exists to prevent: content lost on PDF export,
  * and a presenter who has to know an unmarked region is clickable.
  *
- * The AUDIENCE CHROME switches are counted separately rather than excused
- * silently. `.frc-audience-only-external`, `-internal` and the footer rail's
- * `.frc-footer-first` logo zone are a deck-level mode on the deck root - the
- * cover program lockup, the closing sponsor rail, the FIRST logo zone the
- * external audience adds - and they are chrome, never a sheet's subject matter.
+ * Two kinds of SWITCH are counted separately rather than excused silently.
+ *
+ * Audience chrome: `.frc-audience-only-external`, `-internal` and the footer
+ * rail's `.frc-footer-first` logo zone are a deck-level mode on the deck root -
+ * the cover program lockup, the closing sponsor rail, the FIRST logo zone the
+ * external audience adds. Chrome, never a sheet's subject matter.
+ *
+ * Mark variants: `.frc-mark-auto` renders the published gold and black artwork
+ * of ONE mark and lets the ground scope pick, because gold on paper is illegal.
+ * The unpicked variant is the same mark, not hidden content.
  */
 export function scanHiddenContent(root) {
   const offenders = []
   let audienceChrome = 0
+  let variantSwitches = 0
   let elements = 0
   for (const el of root.querySelectorAll('*')) {
     const text = (el.textContent || '').trim()
@@ -431,6 +437,10 @@ export function scanHiddenContent(root) {
       if (el.matches(CHROME)) audienceChrome++
       continue
     }
+    if (el.closest('.frc-mark-auto')) {
+      if (el.parentElement && el.parentElement.classList.contains('frc-mark-auto')) variantSwitches++
+      continue
+    }
     const cs = getComputedStyle(el)
     const why = []
     if (cs.display === 'none') why.push('display none')
@@ -438,7 +448,7 @@ export function scanHiddenContent(root) {
     if (parseFloat(cs.opacity) === 0) why.push('opacity 0')
     if (why.length) offenders.push({ el: describe(el), why: why.join(', '), text: text.slice(0, 60) })
   }
-  return { elements, audienceChrome, offenders, ok: offenders.length === 0 }
+  return { elements, audienceChrome, variantSwitches, offenders, ok: offenders.length === 0 }
 }
 
 /**

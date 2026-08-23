@@ -964,7 +964,9 @@ function SheetsSection() {
   const [ground, setGround] = useState('squadron')
   const [audience, setAudience] = useState('internal')
   const [index, setIndex] = useState(0)
-  const [all, setAll] = useState(false)
+  // Defaults to ALL, so a fresh load mounts every pattern and the wiring count
+  // below is the whole registry rather than whichever pattern was on screen.
+  const [all, setAll] = useState(true)
   const [ambient, setAmbient] = useState(false)
   const ref = useRef(null)
   const [report, setReport] = useState(null)
@@ -1066,6 +1068,7 @@ function SheetsSection() {
                   <td className={r.hidden.ok ? 'ds-okcell' : 'ds-fail'}>
                     {r.hidden.ok ? `0 of ${r.hidden.elements} text elements` : r.hidden.offenders.map((o) => `${o.el} ${o.why}`).join('; ')}
                     {r.hidden.audienceChrome ? ` · ${r.hidden.audienceChrome} audience-chrome switch(es)` : ''}
+                    {r.hidden.variantSwitches ? ` · ${r.hidden.variantSwitches} mark-variant switch(es)` : ''}
                   </td>
                   <td className={r.first.ok ? 'ds-okcell' : 'ds-fail'}>
                     {r.first.zone ? `${r.first.layers} ambient layer(s), ${r.first.offenders.length} over the zone` : 'no rail (hub)'}
@@ -1083,7 +1086,8 @@ function SheetsSection() {
         ) : null}
         <p className="ds-note">
           Hidden content counts every element carrying text whose computed style is display:none, visibility:hidden or opacity:0.
-          The audience-chrome switches are counted separately: they are a deck-level mode on the deck root, never a sheet&apos;s subject matter.
+          The audience-chrome switches and the mark-variant switches are counted separately: the first is a deck-level mode on the deck root,
+          the second is one mark shipped in its published gold and black artwork with the ground picking which renders. Neither is a sheet&apos;s subject matter.
           The FIRST zone check is geometric - each ambient layer&apos;s painted box, after its clip-path, must not intersect the logo zone.
           Every measurement here is taken with the sheet transitions suspended, so it measures the guaranteed base state rather than a frame of an entrance.
         </p>
