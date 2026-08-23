@@ -12,3 +12,7 @@ dist
 .claude/*
 !.claude/launch.json
 artifacts/
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/

@@ -1,0 +1,43 @@
+{
+  "shape": "package",
+  "pkg": "frc5669-design-system",
+  "projectId": "0ae827ec-d481-4eb8-a051-772544deb9c4",
+  "globalName": "FRC5669DesignSystem",
+  "entry": "./src/lib/design-system/index.js",
+  "srcDir": "src/lib/design-system",
+  "tokensGlob": "src/lib/design-system/tokens/*.css",
+  "componentSrcMap": {
+    "Button": "src/lib/design-system/components/core/Button.jsx",
+    "Eyebrow": "src/lib/design-system/components/core/Eyebrow.jsx",
+    "Divider": "src/lib/design-system/components/core/Divider.jsx",
+    "ChevronRail": "src/lib/design-system/components/core/ChevronRail.jsx",
+    "TeamWordmark": "src/lib/design-system/components/core/TeamWordmark.jsx",
+    "SealMark": "src/lib/design-system/components/brand/SealMark.jsx",
+    "MarkGlyph": "src/lib/design-system/components/brand/MarkGlyph.jsx",
+    "Logotype": "src/lib/design-system/components/brand/Logotype.jsx",
+    "DeckFooter": "src/lib/design-system/components/brand/DeckFooter.jsx",
+    "ProgramLockup": "src/lib/design-system/components/brand/ProgramLockup.jsx",
+    "SeasonLockup": "src/lib/design-system/components/brand/SeasonLockup.jsx",
+    "FirstName": "src/lib/design-system/components/brand/FirstName.jsx",
+    "HudFrame": "src/lib/design-system/components/brand/HudFrame.jsx",
+    "PlatePanel": "src/lib/design-system/components/brand/PlatePanel.jsx",
+    "StencilTitle": "src/lib/design-system/components/brand/StencilTitle.jsx"
+  },
+  "docsMap": {
+    "Button": "src/lib/design-system/components/core/Button.prompt.md",
+    "Eyebrow": "src/lib/design-system/components/core/Eyebrow.prompt.md",
+    "Divider": "src/lib/design-system/components/core/Divider.prompt.md",
+    "ChevronRail": "src/lib/design-system/components/core/ChevronRail.prompt.md",
+    "TeamWordmark": "src/lib/design-system/components/core/TeamWordmark.prompt.md",
+    "SealMark": "src/lib/design-system/components/brand/SealMark.prompt.md",
+    "MarkGlyph": "src/lib/design-system/components/brand/MarkGlyph.prompt.md",
+    "Logotype": "src/lib/design-system/components/brand/Logotype.prompt.md",
+    "DeckFooter": "src/lib/design-system/components/brand/DeckFooter.prompt.md",
+    "ProgramLockup": "src/lib/design-system/components/brand/ProgramLockup.prompt.md",
+    "SeasonLockup": "src/lib/design-system/components/brand/SeasonLockup.prompt.md",
+    "FirstName": "src/lib/design-system/components/brand/FirstName.prompt.md",
+    "HudFrame": "src/lib/design-system/components/brand/HudFrame.prompt.md",
+    "PlatePanel": "src/lib/design-system/components/brand/PlatePanel.prompt.md",
+    "StencilTitle": "src/lib/design-system/components/brand/StencilTitle.prompt.md"
+  }
+}
