@@ -6,7 +6,7 @@ Specification: `FRC_Design_System.md` v1.2 (2026-08-22). It is authoritative for
 
 **Built fresh, never extracted.** `frc-app` predates any token layer, so nothing here was derived from the existing app CSS or components. Migrating the app surfaces onto these tokens is separate work with its own prompts and its own risk; it does not block deck production. This bundle shares nothing with IDEA: its own namespace, its own tokens, no shared stylesheet. A deck physically cannot inherit IDEA green.
 
-**Only one file is ever copied:** `templates/Deck.dc.html`. Everything else is referenced, so a fix reaches every deck that used it.
+**Only one file is ever copied:** `templates/Deck.dc.html`. Everything else is referenced, so a fix reaches every deck that used it. **This applies to hand-built decks only.** Claude Design cannot use this template — the converter emits no `templates/` directory and a hand-upload does not register — so a deck generated there starts from Blank and loses the 4:3 1920x1440 stage, the letterbox, and the deck-stage script. The footer rail survives, because `DeckFooter` is a component rather than template markup. See `templatesNotEmitted` in `_ds_manifest.json`.
 
 ---
 
@@ -232,7 +232,7 @@ components/surfaces/       Card, Callout, SafetyNote, ImageFrame, Cutout, StepCa
 components/forms/          Input, Select
 components/sheets/         the twenty-six sheet patterns (+ Sheet, the internal frame)
 components/slots.jsx       child-slot helpers — copy lives in children, never in a props array
-templates/Deck.dc.html     the shell — THE ONLY FILE ANYONE COPIES
+templates/Deck.dc.html     the shell — THE ONLY FILE ANYONE COPIES, BY HAND (never reaches Claude Design)
 templates/Specimen.dc.html the reference deck — REFERENCE ONLY, never a starting point
 specimen/                  the /_ds route (dev only) and its browser proofs
 assets/                    marks and logos — NOT in the repo yet; see assets/README.md

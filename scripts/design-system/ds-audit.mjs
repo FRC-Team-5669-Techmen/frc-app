@@ -19,6 +19,9 @@
 // 11. templates/Specimen.dc.html is never a starting point.
 // 12. Zero invariant guard fault markers in any template. A marker is a caught
 //     defect, not an accepted state (standards check 40).
+// 14. No alias is reachable in a state where it does not resolve: .frc-deck shares
+//     the SQUADRON block as the fail-safe base, that block stays ahead of field and
+//     paper in source order, and every var() in the token sheets resolves everywhere.
 // 13. Every wired asset, and every mirror of it elsewhere in the repo, still
 //     hashes to its recorded provenance, so a silent recolor of a mark cannot
 //     land in the bundle OR in public/.
@@ -281,6 +284,77 @@ if (exists('assets/PROVENANCE.json')) {
   }
   for (const f of prov.stillEmpty ?? []) {
     if (exists(f)) fail(`provenance: ${f} is listed as still empty but exists — verify it against its canonical source and move it into assets[]`)
+  }
+}
+
+// ---------- 14. no alias is reachable in a state where it does not resolve ----------
+// The dangerous failure is PARTIAL resolution, not total failure. The raw palette
+// lives on :where(.frc-deck, .frc-ground-*) while the semantic aliases live on the
+// ground classes, so a groundless deck root used to paint gold from the palette and
+// resolve nothing else — it looked almost right, which is worse than looking broken.
+// SQUADRON is the documented default ground, so .frc-deck shares the SQUADRON block
+// and every reachable state resolves the complete set. This check holds that.
+{
+  // (a) .frc-deck must SHARE the squadron block, not carry its own copy of the 36.
+  const sqAt = colors.indexOf('\n.frc-ground-squadron {')
+  const selStart = colors.lastIndexOf('}', sqAt) + 1
+  const sharedSelector = colors.slice(selStart, colors.indexOf('{', sqAt)).trim()
+  if (!/(^|[\s,]) *\.frc-deck *(,|$)/m.test(sharedSelector)) {
+    fail('colors.css: .frc-deck does not share the SQUADRON alias block — a groundless deck root resolves the palette but none of the 36 aliases, which renders partially instead of failing outright')
+  }
+  for (const m of colors.matchAll(/(^|\})\s*([^{}]*\.frc-deck[^{}]*)\{([^{}]*)\}/g)) {
+    const [, , sel, body] = m
+    if (sel.includes('.frc-ground-squadron')) continue
+    const dup = Object.keys(decls(body)).filter((n) => names.includes(n))
+    if (dup.length) fail(`colors.css: selector "${sel.trim()}" re-declares ground alias(es) ${dup.join(', ')} — .frc-deck must SHARE the squadron block, never duplicate its values`)
+  }
+
+  // (b) Source order is load-bearing. On one element carrying .frc-deck AND a ground
+  // class the two selectors tie on specificity, so the later block is what wins.
+  for (const later of ['frc-ground-field', 'frc-ground-paper']) {
+    if (colors.indexOf(`\n.${later} {`) < sqAt) {
+      fail(`colors.css: .${later} is declared BEFORE the shared .frc-deck/.frc-ground-squadron block — equal specificity means source order decides, so an element carrying both classes would resolve as squadron`)
+    }
+  }
+
+  // (c) Enumerate every reachable state and require the full alias set in each.
+  // "deck root" is the state with no ground class at all. Its set is derived from
+  // whether .frc-deck actually shares the squadron block, not assumed — so deleting
+  // .frc-deck from that selector fails here too, naming all 36 unresolved aliases,
+  // rather than only tripping the structural check above.
+  const deckSharesSquadron = /(^|[\s,]) *\.frc-deck *(,|$)/m.test(sharedSelector)
+  const STATES = {
+    'deck root (no ground class)': deckSharesSquadron ? scopes['frc-ground-squadron'] : {},
+    squadron: scopes['frc-ground-squadron'],
+    field: scopes['frc-ground-field'],
+    paper: scopes['frc-ground-paper'],
+  }
+  for (const [state, set] of Object.entries(STATES)) {
+    const unresolved = names.filter((n) => !(n in set) || !set[n])
+    if (unresolved.length) fail(`state "${state}": ${unresolved.length} of ${names.length} alias(es) do not resolve — ${unresolved.join(', ')}`)
+  }
+
+  // (d) Every var(--x) reference in the token sheets must resolve in EVERY state, or
+  // carry a fallback. Declarations are collected across ALL token sheets (typography
+  // declares the type scale that surfaces.css consumes), so this flags only a name no
+  // scope declares at all — a typo, or an alias deleted from under its consumers.
+  // A name declared in some ground scopes but not all is caught by check 1, which
+  // compares the three sets by name.
+  const tokenFiles = fs.readdirSync(path.join(ROOT, 'tokens')).filter((f) => f.endsWith('.css'))
+  const declaredAnywhere = new Set()
+  const sources = {}
+  for (const f of tokenFiles) {
+    const src = stripComments(read(path.join('tokens', f)))
+    sources[f] = src
+    for (const [, prop] of src.matchAll(/(--[\w-]+)\s*:/g)) declaredAnywhere.add(prop)
+  }
+  for (const [f, src] of Object.entries(sources)) {
+    const seen = new Set()
+    for (const [, prop] of src.matchAll(/var\(\s*(--[\w-]+)\s*\)/g)) {
+      if (declaredAnywhere.has(prop) || seen.has(prop)) continue
+      seen.add(prop)
+      fail(`tokens/${f}: var(${prop}) has no fallback and ${prop} is declared in no scope — it resolves to nothing in every state`)
+    }
   }
 }
 

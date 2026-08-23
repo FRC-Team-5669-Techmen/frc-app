@@ -6,7 +6,9 @@
   "root": "src/lib/design-system",
   "entry": "index.js",
   "authoring": "Built fresh from the specification. Never extracted from frc-app CSS. Migrating existing app surfaces onto these tokens is separate work.",
-  "globalCssPaths": ["styles.css"],
+  "globalCssPaths": [
+    "styles.css"
+  ],
   "tokens": {
     "entry": "styles.css",
     "order": [
@@ -24,135 +26,1043 @@
       "tokens/sheets.css"
     ],
     "mirror": "tokens.js",
-    "scope": "Root tokens are declared on .frc-deck and the three ground classes, never on :root.",
-    "brand": { "--gold": "#FFE629", "--black": "#000000", "--space": "#53565F", "--ash": "#94989C", "--white": "#FFFFFF" },
-    "partition": { "--alliance-red": "#ED1C24", "--alliance-blue": "#0066B3", "--warn": "#D98C3F", "--fault": "#B0503C", "--ok": "#6FA57B" },
-    "program": { "--program": "#009CD7", "--program-frc": "#009CD7", "--program-ftc": "#F57E25", "--program-fll": "#ED1C24", "--program-fll-explore": "#00A651", "--program-fll-discover": "#662D91", "--program-fll-ink": "#231F20" },
-    "season": { "--season": "#FFE629" },
+    "scope": "Root tokens are declared on .frc-deck and the three ground classes, never on :root. .frc-deck SHARES the SQUADRON block, so SQUADRON is the fail-safe default: a groundless deck root, or a sheet that omits its ground class, resolves the complete 36-alias set rather than resolving partially.",
+    "brand": {
+      "--gold": "#FFE629",
+      "--black": "#000000",
+      "--space": "#53565F",
+      "--ash": "#94989C",
+      "--white": "#FFFFFF"
+    },
+    "partition": {
+      "--alliance-red": "#ED1C24",
+      "--alliance-blue": "#0066B3",
+      "--warn": "#D98C3F",
+      "--fault": "#B0503C",
+      "--ok": "#6FA57B"
+    },
+    "program": {
+      "--program": "#009CD7",
+      "--program-frc": "#009CD7",
+      "--program-ftc": "#F57E25",
+      "--program-fll": "#ED1C24",
+      "--program-fll-explore": "#00A651",
+      "--program-fll-discover": "#662D91",
+      "--program-fll-ink": "#231F20"
+    },
+    "season": {
+      "--season": "#FFE629"
+    },
     "groundAliases": [
-      "--ground", "--bg0", "--bg1", "--bg2", "--plate", "--surface-viewport", "--edge", "--line", "--line-strong",
-      "--fg", "--fg-dim", "--fg-structure", "--fg-hero", "--accent", "--accent-fg", "--accent-soft", "--rim",
-      "--glow", "--glow-box", "--glow-strength", "--chrome-bg", "--chrome-fg", "--live",
-      "--plate-rise", "--well-recess", "--panel-shadow", "--focus", "--selection-bg",
-      "--tex-line", "--tex-fill", "--tex-accent", "--tex-hazard", "--tex-led", "--tex-bloom", "--tex-hi", "--tex-shade"
+      "--ground",
+      "--bg0",
+      "--bg1",
+      "--bg2",
+      "--plate",
+      "--surface-viewport",
+      "--edge",
+      "--line",
+      "--line-strong",
+      "--fg",
+      "--fg-dim",
+      "--fg-structure",
+      "--fg-hero",
+      "--accent",
+      "--accent-fg",
+      "--accent-soft",
+      "--rim",
+      "--glow",
+      "--glow-box",
+      "--glow-strength",
+      "--chrome-bg",
+      "--chrome-fg",
+      "--live",
+      "--plate-rise",
+      "--well-recess",
+      "--panel-shadow",
+      "--focus",
+      "--selection-bg",
+      "--tex-line",
+      "--tex-fill",
+      "--tex-accent",
+      "--tex-hazard",
+      "--tex-led",
+      "--tex-bloom",
+      "--tex-hi",
+      "--tex-shade"
     ],
-    "typeScale": { "--fs-hero": "160px", "--fs-display": "112px", "--fs-h1": "84px", "--fs-h2": "64px", "--fs-h3": "40px", "--fs-body": "28px", "--fs-body-sm": "24px", "--fs-label": "20px", "--fs-micro": "18px" },
-    "radii": { "--radius-chip": "2px", "--radius-control": "3px", "--radius-panel": "4px" }
+    "typeScale": {
+      "--fs-hero": "160px",
+      "--fs-display": "112px",
+      "--fs-h1": "84px",
+      "--fs-h2": "64px",
+      "--fs-h3": "40px",
+      "--fs-body": "28px",
+      "--fs-body-sm": "24px",
+      "--fs-label": "20px",
+      "--fs-micro": "18px"
+    },
+    "radii": {
+      "--radius-chip": "2px",
+      "--radius-control": "3px",
+      "--radius-panel": "4px"
+    }
   },
   "themes": [
-    { "name": "SQUADRON", "kind": "ground", "class": "frc-ground-squadron", "default": true, "scheme": "dark", "bg0": "#000000", "edge": "#000000", "accent": "#FFE629" },
-    { "name": "FIELD", "kind": "ground", "class": "frc-ground-field", "scheme": "dark", "bg0": "#0E1013", "edge": "#05070A", "accent": "#FFE629" },
-    { "name": "FIELD PAPER", "kind": "ground", "class": "frc-ground-paper", "scheme": "light", "bg0": "#E9E7E1", "edge": "#DCD9D1", "accent": "#7A6300", "note": "Techmen Gold is illegal here; accent is bronze ink, glow is zero." },
-    { "name": "Internal", "kind": "audience", "class": "frc-audience-internal", "default": true },
-    { "name": "External", "kind": "audience", "class": "frc-audience-external", "note": "Adds the FIRST logo zone to the footer rail; FirstName enforcement is mandatory." }
+    {
+      "name": "SQUADRON",
+      "kind": "ground",
+      "class": "frc-ground-squadron",
+      "default": true,
+      "scheme": "dark",
+      "bg0": "#000000",
+      "edge": "#000000",
+      "accent": "#FFE629"
+    },
+    {
+      "name": "FIELD",
+      "kind": "ground",
+      "class": "frc-ground-field",
+      "scheme": "dark",
+      "bg0": "#0E1013",
+      "edge": "#05070A",
+      "accent": "#FFE629"
+    },
+    {
+      "name": "FIELD PAPER",
+      "kind": "ground",
+      "class": "frc-ground-paper",
+      "scheme": "light",
+      "bg0": "#E9E7E1",
+      "edge": "#DCD9D1",
+      "accent": "#7A6300",
+      "note": "Techmen Gold is illegal here; accent is bronze ink, glow is zero."
+    },
+    {
+      "name": "Internal",
+      "kind": "audience",
+      "class": "frc-audience-internal",
+      "default": true
+    },
+    {
+      "name": "External",
+      "kind": "audience",
+      "class": "frc-audience-external",
+      "note": "Adds the FIRST logo zone to the footer rail; FirstName enforcement is mandatory."
+    }
   ],
   "fonts": [
-    { "token": "--font-display", "family": "Space Grotesk", "weights": [700], "source": "https://fonts.googleapis.com", "role": "Hero type, sheet titles, hero numerals, wordmark" },
-    { "token": "--font-body", "family": "Space Grotesk", "weights": [400, 500], "source": "https://fonts.googleapis.com", "role": "All running copy" },
-    { "token": "--font-mono", "family": "Space Mono", "weights": [400, 700], "source": "https://fonts.googleapis.com", "role": "Chrome, labels, metadata, codes, telemetry, timers" },
-    { "token": "--font-first", "family": "Roboto", "weights": [400, 700], "italic": true, "source": "https://fonts.googleapis.com", "role": "FIRST-attributed blocks only. Never a fallback for Space Grotesk." }
+    {
+      "token": "--font-display",
+      "family": "Space Grotesk",
+      "weights": [
+        700
+      ],
+      "source": "https://fonts.googleapis.com",
+      "role": "Hero type, sheet titles, hero numerals, wordmark"
+    },
+    {
+      "token": "--font-body",
+      "family": "Space Grotesk",
+      "weights": [
+        400,
+        500
+      ],
+      "source": "https://fonts.googleapis.com",
+      "role": "All running copy"
+    },
+    {
+      "token": "--font-mono",
+      "family": "Space Mono",
+      "weights": [
+        400,
+        700
+      ],
+      "source": "https://fonts.googleapis.com",
+      "role": "Chrome, labels, metadata, codes, telemetry, timers"
+    },
+    {
+      "token": "--font-first",
+      "family": "Roboto",
+      "weights": [
+        400,
+        700
+      ],
+      "italic": true,
+      "source": "https://fonts.googleapis.com",
+      "role": "FIRST-attributed blocks only. Never a fallback for Space Grotesk."
+    }
   ],
   "components": [
-    { "name": "Button", "group": "core", "sourcePath": "components/core/Button.jsx", "types": "components/core/Button.d.ts", "prompt": "components/core/Button.prompt.md", "class": "frc-button" },
-    { "name": "Eyebrow", "group": "core", "sourcePath": "components/core/Eyebrow.jsx", "types": "components/core/Eyebrow.d.ts", "prompt": "components/core/Eyebrow.prompt.md", "class": "frc-eyebrow" },
-    { "name": "Divider", "group": "core", "sourcePath": "components/core/Divider.jsx", "types": "components/core/Divider.d.ts", "prompt": "components/core/Divider.prompt.md", "class": "frc-divider" },
-    { "name": "ChevronRail", "group": "core", "sourcePath": "components/core/ChevronRail.jsx", "types": "components/core/ChevronRail.d.ts", "prompt": "components/core/ChevronRail.prompt.md", "class": "frc-chevron-rail" },
-    { "name": "TeamWordmark", "group": "core", "sourcePath": "components/core/TeamWordmark.jsx", "types": "components/core/TeamWordmark.d.ts", "prompt": "components/core/TeamWordmark.prompt.md", "class": "frc-wordmark" },
-    { "name": "SealMark", "group": "brand", "sourcePath": "components/brand/SealMark.jsx", "types": "components/brand/SealMark.d.ts", "prompt": "components/brand/SealMark.prompt.md", "class": "frc-seal", "assets": ["assets/team/5669-Seal.svg"] },
-    { "name": "MarkGlyph", "group": "brand", "sourcePath": "components/brand/MarkGlyph.jsx", "types": "components/brand/MarkGlyph.d.ts", "prompt": "components/brand/MarkGlyph.prompt.md", "class": "frc-mark", "assets": ["assets/team/Mark-Gold.svg", "assets/team/Mark-Black.svg"] },
-    { "name": "Logotype", "group": "brand", "sourcePath": "components/brand/Logotype.jsx", "types": "components/brand/Logotype.d.ts", "prompt": "components/brand/Logotype.prompt.md", "class": "frc-logotype", "assets": ["assets/team/Type-Gold.svg", "assets/team/Type-White.svg", "assets/team/Type-Black.svg"] },
-    { "name": "DeckFooter", "group": "brand", "sourcePath": "components/brand/DeckFooter.jsx", "types": "components/brand/DeckFooter.d.ts", "prompt": "components/brand/DeckFooter.prompt.md", "class": "frc-footer", "assets": ["assets/team/5669-Seal.svg", "assets/first/FIRST-Horizontal-Reverse.png"] },
-    { "name": "ProgramLockup", "group": "brand", "sourcePath": "components/brand/ProgramLockup.jsx", "types": "components/brand/ProgramLockup.d.ts", "prompt": "components/brand/ProgramLockup.prompt.md", "class": "frc-program-lockup", "assets": ["assets/first/FRC-Icon-Horizontal-Reverse.png", "assets/first/FRC-Icon-Vertical-Reverse.png", "assets/first/FTC-Icon-Horizontal-Reverse.png", "assets/first/FTC-Icon-Vertical-Reverse.png", "assets/first/FLL-Horizontal-Reverse.png", "assets/first/FLL-Vertical-Reverse.png"] },
-    { "name": "SeasonLockup", "group": "brand", "sourcePath": "components/brand/SeasonLockup.jsx", "types": "components/brand/SeasonLockup.d.ts", "prompt": "components/brand/SeasonLockup.prompt.md", "class": "frc-season-lockup", "assets": ["assets/season/season-lockup.png"] },
-    { "name": "FirstName", "group": "brand", "sourcePath": "components/brand/FirstName.jsx", "types": "components/brand/FirstName.d.ts", "prompt": "components/brand/FirstName.prompt.md", "class": "frc-first", "exports": ["FirstName", "FirstNameScope", "useFirstNameScope", "classifyFirstName"] },
-    { "name": "HudFrame", "group": "brand", "sourcePath": "components/brand/HudFrame.jsx", "types": "components/brand/HudFrame.d.ts", "prompt": "components/brand/HudFrame.prompt.md", "class": "frc-hud" },
-    { "name": "PlatePanel", "group": "brand", "sourcePath": "components/brand/PlatePanel.jsx", "types": "components/brand/PlatePanel.d.ts", "prompt": "components/brand/PlatePanel.prompt.md", "class": "frc-plate-panel" },
-    { "name": "StencilTitle", "group": "brand", "sourcePath": "components/brand/StencilTitle.jsx", "types": "components/brand/StencilTitle.d.ts", "prompt": "components/brand/StencilTitle.prompt.md", "class": "frc-stencil" },
-    {"name": "Badge", "group": "data", "sourcePath": "components/data/Badge.jsx", "types": "components/data/Badge.d.ts", "prompt": "components/data/Badge.prompt.md", "class": "frc-badge"},
-    {"name": "Chip", "group": "data", "sourcePath": "components/data/Chip.jsx", "types": "components/data/Chip.d.ts", "prompt": "components/data/Chip.prompt.md", "class": "frc-chip"},
-    {"name": "Field", "group": "data", "sourcePath": "components/data/Field.jsx", "types": "components/data/Field.d.ts", "prompt": "components/data/Field.prompt.md", "class": "frc-field"},
-    {"name": "StatBlock", "group": "data", "sourcePath": "components/data/StatBlock.jsx", "types": "components/data/StatBlock.d.ts", "prompt": "components/data/StatBlock.prompt.md", "class": "frc-stat"},
-    {"name": "Readout", "group": "data", "sourcePath": "components/data/Readout.jsx", "types": "components/data/Readout.d.ts", "prompt": "components/data/Readout.prompt.md", "class": "frc-readout"},
-    {"name": "SpecTable", "group": "data", "sourcePath": "components/data/SpecTable.jsx", "types": "components/data/SpecTable.d.ts", "prompt": "components/data/SpecTable.prompt.md", "class": "frc-spec", "sub": ["SpecRow"]},
-    {"name": "FocusTable", "group": "data", "sourcePath": "components/data/FocusTable.jsx", "types": "components/data/FocusTable.d.ts", "prompt": "components/data/FocusTable.prompt.md", "class": "frc-focus", "sub": ["FocusRow"], "note": "Click dims siblings. Emphasis only, never reveal."},
-    {"name": "BarChart", "group": "data", "sourcePath": "components/data/BarChart.jsx", "types": "components/data/BarChart.d.ts", "prompt": "components/data/BarChart.prompt.md", "class": "frc-bars", "sub": ["Bar"]},
-    {"name": "GanttChart", "group": "data", "sourcePath": "components/data/GanttChart.jsx", "types": "components/data/GanttChart.d.ts", "prompt": "components/data/GanttChart.prompt.md", "class": "frc-gantt", "sub": ["GanttBar"]},
-    {"name": "DecisionMatrix", "group": "data", "sourcePath": "components/data/DecisionMatrix.jsx", "types": "components/data/DecisionMatrix.d.ts", "prompt": "components/data/DecisionMatrix.prompt.md", "class": "frc-matrix", "note": "weights and scores stay array-only: structure, not copy."},
-    {"name": "Timeline", "group": "data", "sourcePath": "components/data/Timeline.jsx", "types": "components/data/Timeline.d.ts", "prompt": "components/data/Timeline.prompt.md", "class": "frc-timeline", "sub": ["TimelineItem"]},
-    {"name": "MatchClock", "group": "data", "sourcePath": "components/data/MatchClock.jsx", "types": "components/data/MatchClock.d.ts", "prompt": "components/data/MatchClock.prompt.md", "class": "frc-clock", "note": "0:20 auto then 2:20 teleop, M:SS, silent, full duration at rest. Copper at the warning threshold, RUST at zero - never alliance red."},
-    {"name": "BuildCountdown", "group": "data", "sourcePath": "components/data/BuildCountdown.jsx", "types": "components/data/BuildCountdown.d.ts", "prompt": "components/data/BuildCountdown.prompt.md", "class": "frc-countdown"},
-    {"name": "ScoutTable", "group": "data", "sourcePath": "components/data/ScoutTable.jsx", "types": "components/data/ScoutTable.d.ts", "prompt": "components/data/ScoutTable.prompt.md", "class": "frc-scout", "sub": ["ScoutRow"], "note": "May use --alliance-red / --alliance-blue, FIELD ground only."},
-    {"name": "AllianceSplit", "group": "data", "sourcePath": "components/data/AllianceSplit.jsx", "types": "components/data/AllianceSplit.d.ts", "prompt": "components/data/AllianceSplit.prompt.md", "class": "frc-alliance", "note": "May use --alliance-red / --alliance-blue, FIELD ground only."},
-    {"name": "SubteamBadge", "group": "data", "sourcePath": "components/data/SubteamBadge.jsx", "types": "components/data/SubteamBadge.d.ts", "prompt": "components/data/SubteamBadge.prompt.md", "class": "frc-subteam", "note": "Reads the app subteam vocabulary from src/subteams.js. No per-value color map."},
-    {"name": "Card", "group": "surfaces", "sourcePath": "components/surfaces/Card.jsx", "types": "components/surfaces/Card.d.ts", "prompt": "components/surfaces/Card.prompt.md", "class": "frc-card"},
-    {"name": "Callout", "group": "surfaces", "sourcePath": "components/surfaces/Callout.jsx", "types": "components/surfaces/Callout.d.ts", "prompt": "components/surfaces/Callout.prompt.md", "class": "frc-callout"},
-    {"name": "SafetyNote", "group": "surfaces", "sourcePath": "components/surfaces/SafetyNote.jsx", "types": "components/surfaces/SafetyNote.d.ts", "prompt": "components/surfaces/SafetyNote.prompt.md", "class": "frc-safety", "note": "Copper shop-hazard note. A distinct component, not a Callout tone, so a safety scan is a glance."},
-    {"name": "ImageFrame", "group": "surfaces", "sourcePath": "components/surfaces/ImageFrame.jsx", "types": "components/surfaces/ImageFrame.d.ts", "prompt": "components/surfaces/ImageFrame.prompt.md", "class": "frc-frame", "note": "Image treatment 1: opaque, edge to edge. Backplate reads --surface-viewport. bleed drops the rim and brackets and throws on a screenshot."},
-    {"name": "Cutout", "group": "surfaces", "sourcePath": "components/surfaces/Cutout.jsx", "types": "components/surfaces/Cutout.d.ts", "prompt": "components/surfaces/Cutout.prompt.md", "class": "frc-cutout", "note": "Image treatment 3: alpha channel. No backplate, no brackets; grading is a filter chain on the subject. fit is always contain."},
-    {"name": "StepCard", "group": "surfaces", "sourcePath": "components/surfaces/StepCard.jsx", "types": "components/surfaces/StepCard.d.ts", "prompt": "components/surfaces/StepCard.prompt.md", "class": "frc-steps", "sub": ["Step"]},
-    {"name": "ProcessPipeline", "group": "surfaces", "sourcePath": "components/surfaces/ProcessPipeline.jsx", "types": "components/surfaces/ProcessPipeline.d.ts", "prompt": "components/surfaces/ProcessPipeline.prompt.md", "class": "frc-pipeline", "sub": ["PipelineStep"]},
-    {"name": "CompareSplit", "group": "surfaces", "sourcePath": "components/surfaces/CompareSplit.jsx", "types": "components/surfaces/CompareSplit.d.ts", "prompt": "components/surfaces/CompareSplit.prompt.md", "class": "frc-compare", "sub": ["CompareRow"]},
-    {"name": "SampleGrid", "group": "surfaces", "sourcePath": "components/surfaces/SampleGrid.jsx", "types": "components/surfaces/SampleGrid.d.ts", "prompt": "components/surfaces/SampleGrid.prompt.md", "class": "frc-samples", "sub": ["Sample"]},
-    {"name": "JumpGrid", "group": "surfaces", "sourcePath": "components/surfaces/JumpGrid.jsx", "types": "components/surfaces/JumpGrid.d.ts", "prompt": "components/surfaces/JumpGrid.prompt.md", "class": "frc-jumps", "sub": ["JumpCard"]},
-    {"name": "CalloutDrawing", "group": "surfaces", "sourcePath": "components/surfaces/CalloutDrawing.jsx", "types": "components/surfaces/CalloutDrawing.d.ts", "prompt": "components/surfaces/CalloutDrawing.prompt.md", "class": "frc-drawing", "sub": ["CalloutPin"], "note": "Every pin label is drawn at rest; a click raises it."},
-    {"name": "QuoteBlock", "group": "surfaces", "sourcePath": "components/surfaces/QuoteBlock.jsx", "types": "components/surfaces/QuoteBlock.d.ts", "prompt": "components/surfaces/QuoteBlock.prompt.md", "class": "frc-quote"},
-    {"name": "RoleCard", "group": "surfaces", "sourcePath": "components/surfaces/RoleCard.jsx", "types": "components/surfaces/RoleCard.d.ts", "prompt": "components/surfaces/RoleCard.prompt.md", "class": "frc-role", "note": "Member with subteams and certifications, shaped like the app skills model. Props and children only; never queries."},
-    {"name": "PartCallout", "group": "surfaces", "sourcePath": "components/surfaces/PartCallout.jsx", "types": "components/surfaces/PartCallout.d.ts", "prompt": "components/surfaces/PartCallout.prompt.md", "class": "frc-part", "note": "COTS part: vendor, part number, price."},
-    {"name": "FieldDiagram", "group": "surfaces", "sourcePath": "components/surfaces/FieldDiagram.jsx", "types": "components/surfaces/FieldDiagram.d.ts", "prompt": "components/surfaces/FieldDiagram.prompt.md", "class": "frc-field-diagram", "note": "Zone geometry stays an array. May use --alliance-red / --alliance-blue, FIELD ground only."},
-    {"name": "SponsorWall", "group": "surfaces", "sourcePath": "components/surfaces/SponsorWall.jsx", "types": "components/surfaces/SponsorWall.d.ts", "prompt": "components/surfaces/SponsorWall.prompt.md", "class": "frc-sponsors", "sub": ["SponsorTier"], "note": "Every sponsor mark is a Cutout ground=\"none\"; SponsorTier throws on anything else."},
-    {"name": "AwardPlate", "group": "surfaces", "sourcePath": "components/surfaces/AwardPlate.jsx", "types": "components/surfaces/AwardPlate.d.ts", "prompt": "components/surfaces/AwardPlate.prompt.md", "class": "frc-award"},
-    {"name": "ResultBanner", "group": "surfaces", "sourcePath": "components/surfaces/ResultBanner.jsx", "types": "components/surfaces/ResultBanner.d.ts", "prompt": "components/surfaces/ResultBanner.prompt.md", "class": "frc-result"},
-    {"name": "Input", "group": "forms", "sourcePath": "components/forms/Input.jsx", "types": "components/forms/Input.d.ts", "prompt": "components/forms/Input.prompt.md", "class": "frc-input"},
-    {"name": "Select", "group": "forms", "sourcePath": "components/forms/Select.jsx", "types": "components/forms/Select.d.ts", "prompt": "components/forms/Select.prompt.md", "class": "frc-select"},
-    {"name": "CoverSheet", "group": "sheets", "sourcePath": "components/sheets/CoverSheet.jsx", "types": "components/sheets/CoverSheet.d.ts", "prompt": "components/sheets/CoverSheet.prompt.md", "class": "frc-sheet-cover", "transition": "frc-slide-banner", "note": "Seal, title, one line. External audience adds the ProgramLockup."},
-    {"name": "AgendaSheet", "group": "sheets", "sourcePath": "components/sheets/AgendaSheet.jsx", "types": "components/sheets/AgendaSheet.d.ts", "prompt": "components/sheets/AgendaSheet.prompt.md", "class": "frc-sheet-agenda", "transition": "frc-slide-shutter"},
-    {"name": "SectionSheet", "group": "sheets", "sourcePath": "components/sheets/SectionSheet.jsx", "types": "components/sheets/SectionSheet.d.ts", "prompt": "components/sheets/SectionSheet.prompt.md", "class": "frc-sheet-section", "transition": "frc-slide-banner"},
-    {"name": "StatementSheet", "group": "sheets", "sourcePath": "components/sheets/StatementSheet.jsx", "types": "components/sheets/StatementSheet.d.ts", "prompt": "components/sheets/StatementSheet.prompt.md", "class": "frc-sheet-statement", "transition": "frc-slide-banner"},
-    {"name": "QuoteSheet", "group": "sheets", "sourcePath": "components/sheets/QuoteSheet.jsx", "types": "components/sheets/QuoteSheet.d.ts", "prompt": "components/sheets/QuoteSheet.prompt.md", "class": "frc-sheet-quote", "transition": "frc-slide-banner"},
-    {"name": "HubSheet", "group": "sheets", "sourcePath": "components/sheets/HubSheet.jsx", "types": "components/sheets/HubSheet.d.ts", "prompt": "components/sheets/HubSheet.prompt.md", "class": "frc-sheet-hub", "transition": "frc-slide-shutter", "note": "The one sheet with no footer rail, and so the one sheet with no FIRST logo zone."},
-    {"name": "ClosingSheet", "group": "sheets", "sourcePath": "components/sheets/ClosingSheet.jsx", "types": "components/sheets/ClosingSheet.d.ts", "prompt": "components/sheets/ClosingSheet.prompt.md", "class": "frc-sheet-closing", "transition": "frc-slide-cut", "note": "External audience adds the sponsor rail."},
-    {"name": "SplitSheet", "group": "sheets", "sourcePath": "components/sheets/SplitSheet.jsx", "types": "components/sheets/SplitSheet.d.ts", "prompt": "components/sheets/SplitSheet.prompt.md", "class": "frc-sheet-split", "transition": "frc-slide-shutter"},
-    {"name": "GallerySheet", "group": "sheets", "sourcePath": "components/sheets/GallerySheet.jsx", "types": "components/sheets/GallerySheet.d.ts", "prompt": "components/sheets/GallerySheet.prompt.md", "class": "frc-sheet-gallery", "transition": "frc-slide-shutter"},
-    {"name": "ProcedureSheet", "group": "sheets", "sourcePath": "components/sheets/ProcedureSheet.jsx", "types": "components/sheets/ProcedureSheet.d.ts", "prompt": "components/sheets/ProcedureSheet.prompt.md", "class": "frc-sheet-procedure", "transition": "frc-slide-shutter"},
-    {"name": "ComparisonSheet", "group": "sheets", "sourcePath": "components/sheets/ComparisonSheet.jsx", "types": "components/sheets/ComparisonSheet.d.ts", "prompt": "components/sheets/ComparisonSheet.prompt.md", "class": "frc-sheet-comparison", "transition": "frc-slide-shutter"},
-    {"name": "DataSheet", "group": "sheets", "sourcePath": "components/sheets/DataSheet.jsx", "types": "components/sheets/DataSheet.d.ts", "prompt": "components/sheets/DataSheet.prompt.md", "class": "frc-sheet-data", "transition": "frc-slide-boot"},
-    {"name": "TimelineSheet", "group": "sheets", "sourcePath": "components/sheets/TimelineSheet.jsx", "types": "components/sheets/TimelineSheet.d.ts", "prompt": "components/sheets/TimelineSheet.prompt.md", "class": "frc-sheet-timeline", "transition": "frc-slide-shutter"},
-    {"name": "ScheduleSheet", "group": "sheets", "sourcePath": "components/sheets/ScheduleSheet.jsx", "types": "components/sheets/ScheduleSheet.d.ts", "prompt": "components/sheets/ScheduleSheet.prompt.md", "class": "frc-sheet-schedule", "transition": "frc-slide-boot"},
-    {"name": "SubteamStatusSheet", "group": "sheets", "sourcePath": "components/sheets/SubteamStatusSheet.jsx", "types": "components/sheets/SubteamStatusSheet.d.ts", "prompt": "components/sheets/SubteamStatusSheet.prompt.md", "class": "frc-sheet-subteam", "transition": "frc-slide-boot", "sub": ["SubteamStatus"]},
-    {"name": "BlockerSheet", "group": "sheets", "sourcePath": "components/sheets/BlockerSheet.jsx", "types": "components/sheets/BlockerSheet.d.ts", "prompt": "components/sheets/BlockerSheet.prompt.md", "class": "frc-sheet-blocker", "transition": "frc-slide-boot", "sub": ["Blocker"]},
-    {"name": "TargetsSheet", "group": "sheets", "sourcePath": "components/sheets/TargetsSheet.jsx", "types": "components/sheets/TargetsSheet.d.ts", "prompt": "components/sheets/TargetsSheet.prompt.md", "class": "frc-sheet-targets", "transition": "frc-slide-boot"},
-    {"name": "SafetySheet", "group": "sheets", "sourcePath": "components/sheets/SafetySheet.jsx", "types": "components/sheets/SafetySheet.d.ts", "prompt": "components/sheets/SafetySheet.prompt.md", "class": "frc-sheet-safety", "transition": "frc-slide-shutter", "note": "Throws without a SafetyNote in slot=\"note\"."},
-    {"name": "RosterSheet", "group": "sheets", "sourcePath": "components/sheets/RosterSheet.jsx", "types": "components/sheets/RosterSheet.d.ts", "prompt": "components/sheets/RosterSheet.prompt.md", "class": "frc-sheet-roster", "transition": "frc-slide-shutter"},
-    {"name": "MatchBreakdownSheet", "group": "sheets", "sourcePath": "components/sheets/MatchBreakdownSheet.jsx", "types": "components/sheets/MatchBreakdownSheet.d.ts", "prompt": "components/sheets/MatchBreakdownSheet.prompt.md", "class": "frc-sheet-match", "transition": "frc-slide-boot", "note": "The FOURTH and last place --alliance-red / --alliance-blue are legal, FIELD ground only."},
-    {"name": "ScoutingSheet", "group": "sheets", "sourcePath": "components/sheets/ScoutingSheet.jsx", "types": "components/sheets/ScoutingSheet.d.ts", "prompt": "components/sheets/ScoutingSheet.prompt.md", "class": "frc-sheet-scouting", "transition": "frc-slide-boot"},
-    {"name": "FieldSheet", "group": "sheets", "sourcePath": "components/sheets/FieldSheet.jsx", "types": "components/sheets/FieldSheet.d.ts", "prompt": "components/sheets/FieldSheet.prompt.md", "class": "frc-sheet-field", "transition": "frc-slide-boot"},
-    {"name": "BOMSheet", "group": "sheets", "sourcePath": "components/sheets/BOMSheet.jsx", "types": "components/sheets/BOMSheet.d.ts", "prompt": "components/sheets/BOMSheet.prompt.md", "class": "frc-sheet-bom", "transition": "frc-slide-boot"},
-    {"name": "AwardSheet", "group": "sheets", "sourcePath": "components/sheets/AwardSheet.jsx", "types": "components/sheets/AwardSheet.d.ts", "prompt": "components/sheets/AwardSheet.prompt.md", "class": "frc-sheet-award", "transition": "frc-slide-banner"},
-    {"name": "SponsorSheet", "group": "sheets", "sourcePath": "components/sheets/SponsorSheet.jsx", "types": "components/sheets/SponsorSheet.d.ts", "prompt": "components/sheets/SponsorSheet.prompt.md", "class": "frc-sheet-sponsor", "transition": "frc-slide-shutter"},
-    {"name": "SeasonSheet", "group": "sheets", "sourcePath": "components/sheets/SeasonSheet.jsx", "types": "components/sheets/SeasonSheet.d.ts", "prompt": "components/sheets/SeasonSheet.prompt.md", "class": "frc-sheet-season", "transition": "frc-slide-banner"}
+    {
+      "name": "Button",
+      "group": "core",
+      "sourcePath": "components/core/Button.jsx",
+      "types": "components/core/Button.d.ts",
+      "prompt": "components/core/Button.prompt.md",
+      "class": "frc-button"
+    },
+    {
+      "name": "Eyebrow",
+      "group": "core",
+      "sourcePath": "components/core/Eyebrow.jsx",
+      "types": "components/core/Eyebrow.d.ts",
+      "prompt": "components/core/Eyebrow.prompt.md",
+      "class": "frc-eyebrow"
+    },
+    {
+      "name": "Divider",
+      "group": "core",
+      "sourcePath": "components/core/Divider.jsx",
+      "types": "components/core/Divider.d.ts",
+      "prompt": "components/core/Divider.prompt.md",
+      "class": "frc-divider"
+    },
+    {
+      "name": "ChevronRail",
+      "group": "core",
+      "sourcePath": "components/core/ChevronRail.jsx",
+      "types": "components/core/ChevronRail.d.ts",
+      "prompt": "components/core/ChevronRail.prompt.md",
+      "class": "frc-chevron-rail"
+    },
+    {
+      "name": "TeamWordmark",
+      "group": "core",
+      "sourcePath": "components/core/TeamWordmark.jsx",
+      "types": "components/core/TeamWordmark.d.ts",
+      "prompt": "components/core/TeamWordmark.prompt.md",
+      "class": "frc-wordmark"
+    },
+    {
+      "name": "SealMark",
+      "group": "brand",
+      "sourcePath": "components/brand/SealMark.jsx",
+      "types": "components/brand/SealMark.d.ts",
+      "prompt": "components/brand/SealMark.prompt.md",
+      "class": "frc-seal",
+      "assets": [
+        "assets/team/5669-Seal.svg"
+      ]
+    },
+    {
+      "name": "MarkGlyph",
+      "group": "brand",
+      "sourcePath": "components/brand/MarkGlyph.jsx",
+      "types": "components/brand/MarkGlyph.d.ts",
+      "prompt": "components/brand/MarkGlyph.prompt.md",
+      "class": "frc-mark",
+      "assets": [
+        "assets/team/Mark-Gold.svg",
+        "assets/team/Mark-Black.svg"
+      ]
+    },
+    {
+      "name": "Logotype",
+      "group": "brand",
+      "sourcePath": "components/brand/Logotype.jsx",
+      "types": "components/brand/Logotype.d.ts",
+      "prompt": "components/brand/Logotype.prompt.md",
+      "class": "frc-logotype",
+      "assets": [
+        "assets/team/Type-Gold.svg",
+        "assets/team/Type-White.svg",
+        "assets/team/Type-Black.svg"
+      ]
+    },
+    {
+      "name": "DeckFooter",
+      "group": "brand",
+      "sourcePath": "components/brand/DeckFooter.jsx",
+      "types": "components/brand/DeckFooter.d.ts",
+      "prompt": "components/brand/DeckFooter.prompt.md",
+      "class": "frc-footer",
+      "assets": [
+        "assets/team/5669-Seal.svg",
+        "assets/first/FIRST-Horizontal-Reverse.png"
+      ]
+    },
+    {
+      "name": "ProgramLockup",
+      "group": "brand",
+      "sourcePath": "components/brand/ProgramLockup.jsx",
+      "types": "components/brand/ProgramLockup.d.ts",
+      "prompt": "components/brand/ProgramLockup.prompt.md",
+      "class": "frc-program-lockup",
+      "assets": [
+        "assets/first/FRC-Icon-Horizontal-Reverse.png",
+        "assets/first/FRC-Icon-Vertical-Reverse.png",
+        "assets/first/FTC-Icon-Horizontal-Reverse.png",
+        "assets/first/FTC-Icon-Vertical-Reverse.png",
+        "assets/first/FLL-Horizontal-Reverse.png",
+        "assets/first/FLL-Vertical-Reverse.png"
+      ]
+    },
+    {
+      "name": "SeasonLockup",
+      "group": "brand",
+      "sourcePath": "components/brand/SeasonLockup.jsx",
+      "types": "components/brand/SeasonLockup.d.ts",
+      "prompt": "components/brand/SeasonLockup.prompt.md",
+      "class": "frc-season-lockup",
+      "assets": [
+        "assets/season/season-lockup.png"
+      ]
+    },
+    {
+      "name": "FirstName",
+      "group": "brand",
+      "sourcePath": "components/brand/FirstName.jsx",
+      "types": "components/brand/FirstName.d.ts",
+      "prompt": "components/brand/FirstName.prompt.md",
+      "class": "frc-first",
+      "exports": [
+        "FirstName",
+        "FirstNameScope",
+        "useFirstNameScope",
+        "classifyFirstName"
+      ]
+    },
+    {
+      "name": "HudFrame",
+      "group": "brand",
+      "sourcePath": "components/brand/HudFrame.jsx",
+      "types": "components/brand/HudFrame.d.ts",
+      "prompt": "components/brand/HudFrame.prompt.md",
+      "class": "frc-hud"
+    },
+    {
+      "name": "PlatePanel",
+      "group": "brand",
+      "sourcePath": "components/brand/PlatePanel.jsx",
+      "types": "components/brand/PlatePanel.d.ts",
+      "prompt": "components/brand/PlatePanel.prompt.md",
+      "class": "frc-plate-panel"
+    },
+    {
+      "name": "StencilTitle",
+      "group": "brand",
+      "sourcePath": "components/brand/StencilTitle.jsx",
+      "types": "components/brand/StencilTitle.d.ts",
+      "prompt": "components/brand/StencilTitle.prompt.md",
+      "class": "frc-stencil"
+    },
+    {
+      "name": "Badge",
+      "group": "data",
+      "sourcePath": "components/data/Badge.jsx",
+      "types": "components/data/Badge.d.ts",
+      "prompt": "components/data/Badge.prompt.md",
+      "class": "frc-badge"
+    },
+    {
+      "name": "Chip",
+      "group": "data",
+      "sourcePath": "components/data/Chip.jsx",
+      "types": "components/data/Chip.d.ts",
+      "prompt": "components/data/Chip.prompt.md",
+      "class": "frc-chip"
+    },
+    {
+      "name": "Field",
+      "group": "data",
+      "sourcePath": "components/data/Field.jsx",
+      "types": "components/data/Field.d.ts",
+      "prompt": "components/data/Field.prompt.md",
+      "class": "frc-field"
+    },
+    {
+      "name": "StatBlock",
+      "group": "data",
+      "sourcePath": "components/data/StatBlock.jsx",
+      "types": "components/data/StatBlock.d.ts",
+      "prompt": "components/data/StatBlock.prompt.md",
+      "class": "frc-stat"
+    },
+    {
+      "name": "Readout",
+      "group": "data",
+      "sourcePath": "components/data/Readout.jsx",
+      "types": "components/data/Readout.d.ts",
+      "prompt": "components/data/Readout.prompt.md",
+      "class": "frc-readout"
+    },
+    {
+      "name": "SpecTable",
+      "group": "data",
+      "sourcePath": "components/data/SpecTable.jsx",
+      "types": "components/data/SpecTable.d.ts",
+      "prompt": "components/data/SpecTable.prompt.md",
+      "class": "frc-spec",
+      "sub": [
+        "SpecRow"
+      ]
+    },
+    {
+      "name": "FocusTable",
+      "group": "data",
+      "sourcePath": "components/data/FocusTable.jsx",
+      "types": "components/data/FocusTable.d.ts",
+      "prompt": "components/data/FocusTable.prompt.md",
+      "class": "frc-focus",
+      "sub": [
+        "FocusRow"
+      ],
+      "note": "Click dims siblings. Emphasis only, never reveal."
+    },
+    {
+      "name": "BarChart",
+      "group": "data",
+      "sourcePath": "components/data/BarChart.jsx",
+      "types": "components/data/BarChart.d.ts",
+      "prompt": "components/data/BarChart.prompt.md",
+      "class": "frc-bars",
+      "sub": [
+        "Bar"
+      ]
+    },
+    {
+      "name": "GanttChart",
+      "group": "data",
+      "sourcePath": "components/data/GanttChart.jsx",
+      "types": "components/data/GanttChart.d.ts",
+      "prompt": "components/data/GanttChart.prompt.md",
+      "class": "frc-gantt",
+      "sub": [
+        "GanttBar"
+      ]
+    },
+    {
+      "name": "DecisionMatrix",
+      "group": "data",
+      "sourcePath": "components/data/DecisionMatrix.jsx",
+      "types": "components/data/DecisionMatrix.d.ts",
+      "prompt": "components/data/DecisionMatrix.prompt.md",
+      "class": "frc-matrix",
+      "note": "weights and scores stay array-only: structure, not copy."
+    },
+    {
+      "name": "Timeline",
+      "group": "data",
+      "sourcePath": "components/data/Timeline.jsx",
+      "types": "components/data/Timeline.d.ts",
+      "prompt": "components/data/Timeline.prompt.md",
+      "class": "frc-timeline",
+      "sub": [
+        "TimelineItem"
+      ]
+    },
+    {
+      "name": "MatchClock",
+      "group": "data",
+      "sourcePath": "components/data/MatchClock.jsx",
+      "types": "components/data/MatchClock.d.ts",
+      "prompt": "components/data/MatchClock.prompt.md",
+      "class": "frc-clock",
+      "note": "0:20 auto then 2:20 teleop, M:SS, silent, full duration at rest. Copper at the warning threshold, RUST at zero - never alliance red."
+    },
+    {
+      "name": "BuildCountdown",
+      "group": "data",
+      "sourcePath": "components/data/BuildCountdown.jsx",
+      "types": "components/data/BuildCountdown.d.ts",
+      "prompt": "components/data/BuildCountdown.prompt.md",
+      "class": "frc-countdown"
+    },
+    {
+      "name": "ScoutTable",
+      "group": "data",
+      "sourcePath": "components/data/ScoutTable.jsx",
+      "types": "components/data/ScoutTable.d.ts",
+      "prompt": "components/data/ScoutTable.prompt.md",
+      "class": "frc-scout",
+      "sub": [
+        "ScoutRow"
+      ],
+      "note": "May use --alliance-red / --alliance-blue, FIELD ground only."
+    },
+    {
+      "name": "AllianceSplit",
+      "group": "data",
+      "sourcePath": "components/data/AllianceSplit.jsx",
+      "types": "components/data/AllianceSplit.d.ts",
+      "prompt": "components/data/AllianceSplit.prompt.md",
+      "class": "frc-alliance",
+      "note": "May use --alliance-red / --alliance-blue, FIELD ground only."
+    },
+    {
+      "name": "SubteamBadge",
+      "group": "data",
+      "sourcePath": "components/data/SubteamBadge.jsx",
+      "types": "components/data/SubteamBadge.d.ts",
+      "prompt": "components/data/SubteamBadge.prompt.md",
+      "class": "frc-subteam",
+      "note": "Reads the app subteam vocabulary from src/subteams.js. No per-value color map."
+    },
+    {
+      "name": "Card",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/Card.jsx",
+      "types": "components/surfaces/Card.d.ts",
+      "prompt": "components/surfaces/Card.prompt.md",
+      "class": "frc-card"
+    },
+    {
+      "name": "Callout",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/Callout.jsx",
+      "types": "components/surfaces/Callout.d.ts",
+      "prompt": "components/surfaces/Callout.prompt.md",
+      "class": "frc-callout"
+    },
+    {
+      "name": "SafetyNote",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/SafetyNote.jsx",
+      "types": "components/surfaces/SafetyNote.d.ts",
+      "prompt": "components/surfaces/SafetyNote.prompt.md",
+      "class": "frc-safety",
+      "note": "Copper shop-hazard note. A distinct component, not a Callout tone, so a safety scan is a glance."
+    },
+    {
+      "name": "ImageFrame",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/ImageFrame.jsx",
+      "types": "components/surfaces/ImageFrame.d.ts",
+      "prompt": "components/surfaces/ImageFrame.prompt.md",
+      "class": "frc-frame",
+      "note": "Image treatment 1: opaque, edge to edge. Backplate reads --surface-viewport. bleed drops the rim and brackets and throws on a screenshot."
+    },
+    {
+      "name": "Cutout",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/Cutout.jsx",
+      "types": "components/surfaces/Cutout.d.ts",
+      "prompt": "components/surfaces/Cutout.prompt.md",
+      "class": "frc-cutout",
+      "note": "Image treatment 3: alpha channel. No backplate, no brackets; grading is a filter chain on the subject. fit is always contain."
+    },
+    {
+      "name": "StepCard",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/StepCard.jsx",
+      "types": "components/surfaces/StepCard.d.ts",
+      "prompt": "components/surfaces/StepCard.prompt.md",
+      "class": "frc-steps",
+      "sub": [
+        "Step"
+      ]
+    },
+    {
+      "name": "ProcessPipeline",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/ProcessPipeline.jsx",
+      "types": "components/surfaces/ProcessPipeline.d.ts",
+      "prompt": "components/surfaces/ProcessPipeline.prompt.md",
+      "class": "frc-pipeline",
+      "sub": [
+        "PipelineStep"
+      ]
+    },
+    {
+      "name": "CompareSplit",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/CompareSplit.jsx",
+      "types": "components/surfaces/CompareSplit.d.ts",
+      "prompt": "components/surfaces/CompareSplit.prompt.md",
+      "class": "frc-compare",
+      "sub": [
+        "CompareRow"
+      ]
+    },
+    {
+      "name": "SampleGrid",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/SampleGrid.jsx",
+      "types": "components/surfaces/SampleGrid.d.ts",
+      "prompt": "components/surfaces/SampleGrid.prompt.md",
+      "class": "frc-samples",
+      "sub": [
+        "Sample"
+      ]
+    },
+    {
+      "name": "JumpGrid",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/JumpGrid.jsx",
+      "types": "components/surfaces/JumpGrid.d.ts",
+      "prompt": "components/surfaces/JumpGrid.prompt.md",
+      "class": "frc-jumps",
+      "sub": [
+        "JumpCard"
+      ]
+    },
+    {
+      "name": "CalloutDrawing",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/CalloutDrawing.jsx",
+      "types": "components/surfaces/CalloutDrawing.d.ts",
+      "prompt": "components/surfaces/CalloutDrawing.prompt.md",
+      "class": "frc-drawing",
+      "sub": [
+        "CalloutPin"
+      ],
+      "note": "Every pin label is drawn at rest; a click raises it."
+    },
+    {
+      "name": "QuoteBlock",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/QuoteBlock.jsx",
+      "types": "components/surfaces/QuoteBlock.d.ts",
+      "prompt": "components/surfaces/QuoteBlock.prompt.md",
+      "class": "frc-quote"
+    },
+    {
+      "name": "RoleCard",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/RoleCard.jsx",
+      "types": "components/surfaces/RoleCard.d.ts",
+      "prompt": "components/surfaces/RoleCard.prompt.md",
+      "class": "frc-role",
+      "note": "Member with subteams and certifications, shaped like the app skills model. Props and children only; never queries."
+    },
+    {
+      "name": "PartCallout",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/PartCallout.jsx",
+      "types": "components/surfaces/PartCallout.d.ts",
+      "prompt": "components/surfaces/PartCallout.prompt.md",
+      "class": "frc-part",
+      "note": "COTS part: vendor, part number, price."
+    },
+    {
+      "name": "FieldDiagram",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/FieldDiagram.jsx",
+      "types": "components/surfaces/FieldDiagram.d.ts",
+      "prompt": "components/surfaces/FieldDiagram.prompt.md",
+      "class": "frc-field-diagram",
+      "note": "Zone geometry stays an array. May use --alliance-red / --alliance-blue, FIELD ground only."
+    },
+    {
+      "name": "SponsorWall",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/SponsorWall.jsx",
+      "types": "components/surfaces/SponsorWall.d.ts",
+      "prompt": "components/surfaces/SponsorWall.prompt.md",
+      "class": "frc-sponsors",
+      "sub": [
+        "SponsorTier"
+      ],
+      "note": "Every sponsor mark is a Cutout ground=\"none\"; SponsorTier throws on anything else."
+    },
+    {
+      "name": "AwardPlate",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/AwardPlate.jsx",
+      "types": "components/surfaces/AwardPlate.d.ts",
+      "prompt": "components/surfaces/AwardPlate.prompt.md",
+      "class": "frc-award"
+    },
+    {
+      "name": "ResultBanner",
+      "group": "surfaces",
+      "sourcePath": "components/surfaces/ResultBanner.jsx",
+      "types": "components/surfaces/ResultBanner.d.ts",
+      "prompt": "components/surfaces/ResultBanner.prompt.md",
+      "class": "frc-result"
+    },
+    {
+      "name": "Input",
+      "group": "forms",
+      "sourcePath": "components/forms/Input.jsx",
+      "types": "components/forms/Input.d.ts",
+      "prompt": "components/forms/Input.prompt.md",
+      "class": "frc-input"
+    },
+    {
+      "name": "Select",
+      "group": "forms",
+      "sourcePath": "components/forms/Select.jsx",
+      "types": "components/forms/Select.d.ts",
+      "prompt": "components/forms/Select.prompt.md",
+      "class": "frc-select"
+    },
+    {
+      "name": "CoverSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/CoverSheet.jsx",
+      "types": "components/sheets/CoverSheet.d.ts",
+      "prompt": "components/sheets/CoverSheet.prompt.md",
+      "class": "frc-sheet-cover",
+      "transition": "frc-slide-banner",
+      "note": "Seal, title, one line. External audience adds the ProgramLockup."
+    },
+    {
+      "name": "AgendaSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/AgendaSheet.jsx",
+      "types": "components/sheets/AgendaSheet.d.ts",
+      "prompt": "components/sheets/AgendaSheet.prompt.md",
+      "class": "frc-sheet-agenda",
+      "transition": "frc-slide-shutter"
+    },
+    {
+      "name": "SectionSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/SectionSheet.jsx",
+      "types": "components/sheets/SectionSheet.d.ts",
+      "prompt": "components/sheets/SectionSheet.prompt.md",
+      "class": "frc-sheet-section",
+      "transition": "frc-slide-banner"
+    },
+    {
+      "name": "StatementSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/StatementSheet.jsx",
+      "types": "components/sheets/StatementSheet.d.ts",
+      "prompt": "components/sheets/StatementSheet.prompt.md",
+      "class": "frc-sheet-statement",
+      "transition": "frc-slide-banner"
+    },
+    {
+      "name": "QuoteSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/QuoteSheet.jsx",
+      "types": "components/sheets/QuoteSheet.d.ts",
+      "prompt": "components/sheets/QuoteSheet.prompt.md",
+      "class": "frc-sheet-quote",
+      "transition": "frc-slide-banner"
+    },
+    {
+      "name": "HubSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/HubSheet.jsx",
+      "types": "components/sheets/HubSheet.d.ts",
+      "prompt": "components/sheets/HubSheet.prompt.md",
+      "class": "frc-sheet-hub",
+      "transition": "frc-slide-shutter",
+      "note": "The one sheet with no footer rail, and so the one sheet with no FIRST logo zone."
+    },
+    {
+      "name": "ClosingSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/ClosingSheet.jsx",
+      "types": "components/sheets/ClosingSheet.d.ts",
+      "prompt": "components/sheets/ClosingSheet.prompt.md",
+      "class": "frc-sheet-closing",
+      "transition": "frc-slide-cut",
+      "note": "External audience adds the sponsor rail."
+    },
+    {
+      "name": "SplitSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/SplitSheet.jsx",
+      "types": "components/sheets/SplitSheet.d.ts",
+      "prompt": "components/sheets/SplitSheet.prompt.md",
+      "class": "frc-sheet-split",
+      "transition": "frc-slide-shutter"
+    },
+    {
+      "name": "GallerySheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/GallerySheet.jsx",
+      "types": "components/sheets/GallerySheet.d.ts",
+      "prompt": "components/sheets/GallerySheet.prompt.md",
+      "class": "frc-sheet-gallery",
+      "transition": "frc-slide-shutter"
+    },
+    {
+      "name": "ProcedureSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/ProcedureSheet.jsx",
+      "types": "components/sheets/ProcedureSheet.d.ts",
+      "prompt": "components/sheets/ProcedureSheet.prompt.md",
+      "class": "frc-sheet-procedure",
+      "transition": "frc-slide-shutter"
+    },
+    {
+      "name": "ComparisonSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/ComparisonSheet.jsx",
+      "types": "components/sheets/ComparisonSheet.d.ts",
+      "prompt": "components/sheets/ComparisonSheet.prompt.md",
+      "class": "frc-sheet-comparison",
+      "transition": "frc-slide-shutter"
+    },
+    {
+      "name": "DataSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/DataSheet.jsx",
+      "types": "components/sheets/DataSheet.d.ts",
+      "prompt": "components/sheets/DataSheet.prompt.md",
+      "class": "frc-sheet-data",
+      "transition": "frc-slide-boot"
+    },
+    {
+      "name": "TimelineSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/TimelineSheet.jsx",
+      "types": "components/sheets/TimelineSheet.d.ts",
+      "prompt": "components/sheets/TimelineSheet.prompt.md",
+      "class": "frc-sheet-timeline",
+      "transition": "frc-slide-shutter"
+    },
+    {
+      "name": "ScheduleSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/ScheduleSheet.jsx",
+      "types": "components/sheets/ScheduleSheet.d.ts",
+      "prompt": "components/sheets/ScheduleSheet.prompt.md",
+      "class": "frc-sheet-schedule",
+      "transition": "frc-slide-boot"
+    },
+    {
+      "name": "SubteamStatusSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/SubteamStatusSheet.jsx",
+      "types": "components/sheets/SubteamStatusSheet.d.ts",
+      "prompt": "components/sheets/SubteamStatusSheet.prompt.md",
+      "class": "frc-sheet-subteam",
+      "transition": "frc-slide-boot",
+      "sub": [
+        "SubteamStatus"
+      ]
+    },
+    {
+      "name": "BlockerSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/BlockerSheet.jsx",
+      "types": "components/sheets/BlockerSheet.d.ts",
+      "prompt": "components/sheets/BlockerSheet.prompt.md",
+      "class": "frc-sheet-blocker",
+      "transition": "frc-slide-boot",
+      "sub": [
+        "Blocker"
+      ]
+    },
+    {
+      "name": "TargetsSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/TargetsSheet.jsx",
+      "types": "components/sheets/TargetsSheet.d.ts",
+      "prompt": "components/sheets/TargetsSheet.prompt.md",
+      "class": "frc-sheet-targets",
+      "transition": "frc-slide-boot"
+    },
+    {
+      "name": "SafetySheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/SafetySheet.jsx",
+      "types": "components/sheets/SafetySheet.d.ts",
+      "prompt": "components/sheets/SafetySheet.prompt.md",
+      "class": "frc-sheet-safety",
+      "transition": "frc-slide-shutter",
+      "note": "Throws without a SafetyNote in slot=\"note\"."
+    },
+    {
+      "name": "RosterSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/RosterSheet.jsx",
+      "types": "components/sheets/RosterSheet.d.ts",
+      "prompt": "components/sheets/RosterSheet.prompt.md",
+      "class": "frc-sheet-roster",
+      "transition": "frc-slide-shutter"
+    },
+    {
+      "name": "MatchBreakdownSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/MatchBreakdownSheet.jsx",
+      "types": "components/sheets/MatchBreakdownSheet.d.ts",
+      "prompt": "components/sheets/MatchBreakdownSheet.prompt.md",
+      "class": "frc-sheet-match",
+      "transition": "frc-slide-boot",
+      "note": "The FOURTH and last place --alliance-red / --alliance-blue are legal, FIELD ground only."
+    },
+    {
+      "name": "ScoutingSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/ScoutingSheet.jsx",
+      "types": "components/sheets/ScoutingSheet.d.ts",
+      "prompt": "components/sheets/ScoutingSheet.prompt.md",
+      "class": "frc-sheet-scouting",
+      "transition": "frc-slide-boot"
+    },
+    {
+      "name": "FieldSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/FieldSheet.jsx",
+      "types": "components/sheets/FieldSheet.d.ts",
+      "prompt": "components/sheets/FieldSheet.prompt.md",
+      "class": "frc-sheet-field",
+      "transition": "frc-slide-boot"
+    },
+    {
+      "name": "BOMSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/BOMSheet.jsx",
+      "types": "components/sheets/BOMSheet.d.ts",
+      "prompt": "components/sheets/BOMSheet.prompt.md",
+      "class": "frc-sheet-bom",
+      "transition": "frc-slide-boot"
+    },
+    {
+      "name": "AwardSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/AwardSheet.jsx",
+      "types": "components/sheets/AwardSheet.d.ts",
+      "prompt": "components/sheets/AwardSheet.prompt.md",
+      "class": "frc-sheet-award",
+      "transition": "frc-slide-banner"
+    },
+    {
+      "name": "SponsorSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/SponsorSheet.jsx",
+      "types": "components/sheets/SponsorSheet.d.ts",
+      "prompt": "components/sheets/SponsorSheet.prompt.md",
+      "class": "frc-sheet-sponsor",
+      "transition": "frc-slide-shutter"
+    },
+    {
+      "name": "SeasonSheet",
+      "group": "sheets",
+      "sourcePath": "components/sheets/SeasonSheet.jsx",
+      "types": "components/sheets/SeasonSheet.d.ts",
+      "prompt": "components/sheets/SeasonSheet.prompt.md",
+      "class": "frc-sheet-season",
+      "transition": "frc-slide-banner"
+    }
   ],
   "helpers": [
-    { "name": "icons", "sourcePath": "components/core/icons.jsx", "note": "Lucide paths inlined as 24x24 stroked SVG on currentColor" },
-    { "name": "AssetSlot", "sourcePath": "components/brand/AssetSlot.jsx", "note": "Internal. The marked empty slot every mark-bearing component renders until its asset lands." },
-    { "name": "cx", "sourcePath": "components/cx.js" },
-    { "name": "Sheet", "sourcePath": "components/sheets/Sheet.jsx", "types": "components/sheets/Sheet.d.ts", "note": "Internal. The frame every sheet pattern is built on: transition, ambient layers, footer rail. Decks compose PATTERNS, never this." },
-    { "name": "slots", "sourcePath": "components/slots.jsx", "note": "Child-slot helpers. Copy lives in children carrying a plain slot attribute, because a props array is not editable on the canvas." },
-    { "name": "assets", "sourcePath": "assets.js", "note": "Expected asset paths, resolved URLs (null until supplied), minimum sizes." }
+    {
+      "name": "icons",
+      "sourcePath": "components/core/icons.jsx",
+      "note": "Lucide paths inlined as 24x24 stroked SVG on currentColor"
+    },
+    {
+      "name": "AssetSlot",
+      "sourcePath": "components/brand/AssetSlot.jsx",
+      "note": "Internal. The marked empty slot every mark-bearing component renders until its asset lands."
+    },
+    {
+      "name": "cx",
+      "sourcePath": "components/cx.js"
+    },
+    {
+      "name": "Sheet",
+      "sourcePath": "components/sheets/Sheet.jsx",
+      "types": "components/sheets/Sheet.d.ts",
+      "note": "Internal. The frame every sheet pattern is built on: transition, ambient layers, footer rail. Decks compose PATTERNS, never this."
+    },
+    {
+      "name": "slots",
+      "sourcePath": "components/slots.jsx",
+      "note": "Child-slot helpers. Copy lives in children carrying a plain slot attribute, because a props array is not editable on the canvas."
+    },
+    {
+      "name": "assets",
+      "sourcePath": "assets.js",
+      "note": "Expected asset paths, resolved URLs (null until supplied), minimum sizes."
+    }
   ],
   "cards": [
-    { "name": "Core components", "group": "Core", "path": "components/core/CoreDemoCard.jsx", "export": "CoreDemoCard", "viewport": { "width": 1920, "height": 1200 }, "subtitle": "Button, Eyebrow, Divider, ChevronRail, TeamWordmark" },
-    { "name": "Brand components", "group": "Brand", "path": "components/brand/BrandDemoCard.jsx", "export": "BrandDemoCard", "viewport": { "width": 1920, "height": 2600 }, "subtitle": "Marks, footer rail, program and season lockups, FirstName, HudFrame, PlatePanel, StencilTitle" },
-    { "name": "Data components", "group": "Data", "path": "components/data/DataDemoCard.jsx", "export": "DataDemoCard", "viewport": { "width": 1920, "height": 3600 }, "subtitle": "Badges, stats, tables, charts, matrix, timeline, clocks, alliance surfaces" },
-    { "name": "Surface components", "group": "Surfaces", "path": "components/surfaces/SurfacesDemoCard.jsx", "export": "SurfacesDemoCard", "viewport": { "width": 1920, "height": 4200 }, "subtitle": "Cards, callouts, safety, image treatments, steps, comparisons, grids, drawings, sponsors, awards" },
-    { "name": "Form controls", "group": "Forms", "path": "components/forms/FormsDemoCard.jsx", "export": "FormsDemoCard", "viewport": { "width": 1920, "height": 1200 }, "subtitle": "Input and Select on every ground" },
-    { "name": "Sheet patterns", "group": "Sheets", "path": "components/sheets/SheetsDemoCard.jsx", "export": "SheetsDemoCard", "viewport": { "width": 1968, "height": 39000 }, "subtitle": "All twenty-six full-sheet patterns, on any ground, in either audience mode", "note": "Takes ground, audience and an `only` filter. /_ds steps one pattern at a time with it." }
+    {
+      "name": "Core components",
+      "group": "Core",
+      "path": "components/core/CoreDemoCard.jsx",
+      "export": "CoreDemoCard",
+      "viewport": {
+        "width": 1920,
+        "height": 1200
+      },
+      "subtitle": "Button, Eyebrow, Divider, ChevronRail, TeamWordmark"
+    },
+    {
+      "name": "Brand components",
+      "group": "Brand",
+      "path": "components/brand/BrandDemoCard.jsx",
+      "export": "BrandDemoCard",
+      "viewport": {
+        "width": 1920,
+        "height": 2600
+      },
+      "subtitle": "Marks, footer rail, program and season lockups, FirstName, HudFrame, PlatePanel, StencilTitle"
+    },
+    {
+      "name": "Data components",
+      "group": "Data",
+      "path": "components/data/DataDemoCard.jsx",
+      "export": "DataDemoCard",
+      "viewport": {
+        "width": 1920,
+        "height": 3600
+      },
+      "subtitle": "Badges, stats, tables, charts, matrix, timeline, clocks, alliance surfaces"
+    },
+    {
+      "name": "Surface components",
+      "group": "Surfaces",
+      "path": "components/surfaces/SurfacesDemoCard.jsx",
+      "export": "SurfacesDemoCard",
+      "viewport": {
+        "width": 1920,
+        "height": 4200
+      },
+      "subtitle": "Cards, callouts, safety, image treatments, steps, comparisons, grids, drawings, sponsors, awards"
+    },
+    {
+      "name": "Form controls",
+      "group": "Forms",
+      "path": "components/forms/FormsDemoCard.jsx",
+      "export": "FormsDemoCard",
+      "viewport": {
+        "width": 1920,
+        "height": 1200
+      },
+      "subtitle": "Input and Select on every ground"
+    },
+    {
+      "name": "Sheet patterns",
+      "group": "Sheets",
+      "path": "components/sheets/SheetsDemoCard.jsx",
+      "export": "SheetsDemoCard",
+      "viewport": {
+        "width": 1968,
+        "height": 39000
+      },
+      "subtitle": "All twenty-six full-sheet patterns, on any ground, in either audience mode",
+      "note": "Takes ground, audience and an `only` filter. /_ds steps one pattern at a time with it."
+    }
   ],
   "templates": [
-    { "name": "Deck", "path": "templates/Deck.dc.html", "copied": true, "aspect": "4:3", "width": 1920, "height": 1440, "note": "The only file anyone copies. Stage, ground class, audience class, footer rail, one blank sheet, deck-stage script." },
-    { "name": "Specimen", "path": "templates/Specimen.dc.html", "prompt": "templates/Specimen.prompt.md", "copied": false, "aspect": "4:3", "width": 1920, "height": 1440, "sheets": 26, "note": "REFERENCE ONLY, never a starting point. All twenty-six patterns once, across all three grounds and both audience modes. It is a RENDERING of the patterns for Claude Design; components/sheets/ is the source of truth and /_ds mounts the real components." }
+    {
+      "name": "Deck",
+      "path": "templates/Deck.dc.html",
+      "copied": true,
+      "aspect": "4:3",
+      "width": 1920,
+      "height": 1440,
+      "note": "The only file anyone copies BY HAND. Stage, ground class, audience class, footer rail, one blank sheet, deck-stage script. NOT reachable from Claude Design: the design-sync converter emits no templates/ directory, so this file has never been uploaded — see templatesNotEmitted below."
+    },
+    {
+      "name": "Specimen",
+      "path": "templates/Specimen.dc.html",
+      "prompt": "templates/Specimen.prompt.md",
+      "copied": false,
+      "aspect": "4:3",
+      "width": 1920,
+      "height": 1440,
+      "sheets": 26,
+      "note": "REFERENCE ONLY, never a starting point. All twenty-six patterns once, across all three grounds and both audience modes. It is a RENDERING of the patterns for Claude Design; components/sheets/ is the source of truth and /_ds mounts the real components."
+    }
   ],
   "startingPoints": [
-    { "name": "Deck shell", "path": "templates/Deck.dc.html", "description": "Copy this. Set the ground and audience classes on the root, add sheets, reference everything else." }
+    {
+      "name": "Deck shell",
+      "path": "templates/Deck.dc.html",
+      "description": "Copy this. Set the ground and audience classes on the root, add sheets, reference everything else. LOCAL REGISTRY ONLY — ds-audit reads this key; Claude Design does not. See templatesNotEmitted."
+    }
   ],
   "specimen": {
     "route": "/_ds",
@@ -163,8 +1073,16 @@
   },
   "assets": {
     "provenance": "assets/PROVENANCE.json",
-    "wired": ["assets/team/Mark-Gold.svg", "assets/team/Mark-White.svg", "assets/team/Mark-Black.svg"],
-    "mirrors": ["public/assets/logos/Mark-Gold.svg", "public/assets/logos/Mark-White.svg", "public/assets/logos/Mark-Black.svg"],
+    "wired": [
+      "assets/team/Mark-Gold.svg",
+      "assets/team/Mark-White.svg",
+      "assets/team/Mark-Black.svg"
+    ],
+    "mirrors": [
+      "public/assets/logos/Mark-Gold.svg",
+      "public/assets/logos/Mark-White.svg",
+      "public/assets/logos/Mark-Black.svg"
+    ],
     "note": "The three team marks are wired after a byte comparison against the canonical files on the team branding page; ds:audit re-checks each sha256 AND every mirror of it in the repo, so a silent recolor cannot land in the bundle or in public/. Everything else renders a marked empty slot. RESOLVED: public/assets/logos/Mark-Gold.svg was recolored (#D4AF37 against a canonical #ffe629) and live on the splash, the access gate and the landing page; all three public copies have been replaced with the canonical files and are registered as mirrors."
   },
   "capture": {
@@ -182,8 +1100,16 @@
     "gate": "App.jsx lets /_ds through both gates in dev only, scoped to that one path, so the harness boots from a clean checkout."
   },
   "docs": [
-    { "name": "Brand guide", "path": "README.md", "note": "Content fundamentals, visual foundations, the FIRST usage rules, iconography, and the manifest of the bundle." },
-    { "name": "Agent skill", "path": "SKILL.md", "note": "Agent-Skill front matter so the system is usable from Claude Code. Copy or symlink into .claude/skills/frc5669-design-system/." }
+    {
+      "name": "Brand guide",
+      "path": "README.md",
+      "note": "Content fundamentals, visual foundations, the FIRST usage rules, iconography, and the manifest of the bundle."
+    },
+    {
+      "name": "Agent skill",
+      "path": "SKILL.md",
+      "note": "Agent-Skill front matter so the system is usable from Claude Code. Copy or symlink into .claude/skills/frc5669-design-system/."
+    }
   ],
   "audit": "scripts/design-system/ds-audit.mjs (npm run ds:audit)",
   "pending": {
@@ -206,5 +1132,14 @@
       "assets/first/FLL-Vertical-Reverse.png",
       "assets/season/season-lockup.png"
     ]
+  },
+  "templatesNotEmitted": {
+    "status": "confirmed 2026-08-23",
+    "summary": "templates/ never reaches Claude Design, so generated decks start from Blank.",
+    "converter": "The design-sync converter has no template concept at all — no config key (the full set is shape, pkg, globalName, entry, srcDir, tokensGlob, cssEntry, componentSrcMap, docsMap, docsDir, guidelinesGlob, extraEntries, extraFonts, tokensPkg, overrides, libOverrides, replaces, provider, storyImports, storybookStatic, storybookConfigDir, titleMap, dtsPropsFor, tsconfig) and no emit path.",
+    "platformSchema": "Claude Design DOES support templates. Its own compiled _ds_manifest.json carries a templates[] of {name, description, folder, entryPath, thumbnail:{path, kind:\"captured\"}}, one templates/<slug>/ directory each. NOTE the platform reads `templates`, NOT `startingPoints` — startingPoints is empty even in a design system whose templates all work, so the key in THIS file is our own vocabulary and matches nothing upstream.",
+    "handUploadTested": "Uploading templates/deck/Deck.dc.html by hand via the DesignSync write path was tested. The file landed, the _ds_needs_recompile fence was consumed (so the self-check DID run), and the recompiled manifest still reported templates: [], startingPoints: [], hasThumbnailHtml: false. No template appeared in the picker or in the design system page nav. The probe file was deleted afterwards.",
+    "whatAWorkingTemplateWouldNeed": "A captured .thumbnail per template folder, a root thumbnail.html (hasThumbnailHtml), and a copy of the platform-generated dc-runtime support.js that Deck.dc.html loads — that runtime is emitted per design PROJECT by the platform and is marked \"GENERATED … do not edit\", so shipping it would mean vendoring a platform artifact into this bundle.",
+    "decision": "Not forced. The deck shell stays a hand-copy artifact until the converter supports templates or the platform documents the registration."
   }
 }

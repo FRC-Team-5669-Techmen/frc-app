@@ -91,7 +91,7 @@ forms and sheets are deliberately unsynced.
 `.ds-build-meta.json` (the emitter comments say so explicitly), `.render-check.json`,
 `.review.html`, `.stories-map.json`, `_screenshots/`.
 
-**Gap found while verifying, NOT fixed here** — see the deck-shell finding below:
+**Gap found while verifying, now CONFIRMED UNFIXABLE through the pipeline** — see the templates section below:
 the converter emits no `templates/` directory, so the DS's own
 `templates/Deck.dc.html` (registered in `_ds_manifest.json` under `startingPoints`
 as "Deck shell — Copy this") never reached the project. Claude Design therefore offers
@@ -108,8 +108,9 @@ no Techmen starting point and generates decks from Blank.
   still reference undocumented exports on the global; that's fine, just unadvertised.
 - Grades live in `.design-sync/.cache/review/` (gitignored). They are durable now that the
   uploaded `_ds_sync.json` exists.
-- **`templates/` is outside the converter's emit set.** Expanding scope will not fix the
-  missing deck shell on its own — it has to be added to the upload plan by hand.
+- **`templates/` is outside the converter's emit set, and hand-uploading it does NOT
+  register either** (tested — see the templates section below). Expanding component scope
+  will not change this. Treat the deck shell as a hand-copy artifact.
 
 ## First-deck verification (2026-08-23)
 Generated one deck in Claude Design against the uploaded system — project
@@ -157,3 +158,90 @@ itself rather than being scripted from outside. Raw lines it rendered:
 
 `--ink` printed empty in all three grounds — correct, not a failure: this DS has no `--ink`
 token, foreground is `--fg` / `--fg-dim` / `--fg-hero`.
+
+## Fail-safe default ground (2026-08-23)
+`tokens/colors.css` keeps the split it always had — raw palette on
+`:where(.frc-deck, .frc-ground-*)`, the 36 semantic aliases on the ground classes — but
+`.frc-deck` now SHARES the SQUADRON block instead of resolving nothing. One literal
+declaration, not a duplicated set. FIELD and PAPER still override by inheritance.
+
+The bug this closes is partial resolution, which is worse than total failure: a groundless
+root still painted `--gold` from the palette, so it looked almost right.
+
+Source order is load-bearing and is now checked. On a single element carrying `.frc-deck`
+AND a ground class the two selectors tie on specificity, so the later block wins — the
+shared block must stay above field and paper.
+
+**Measured in headless Chrome** (`playwright-core` + the machine's Chrome), comparing every
+computed value against `tokens.js` rather than a hand-typed list. Six states, all PASS:
+content directly in a groundless `.frc-deck` root; a `.frc-sheet` with no ground class; a
+field sheet; a paper sheet; one element carrying `.frc-deck` AND `.frc-ground-paper`; and an
+element nested deep under a paper sheet. All six resolve 36/36 with 0 mismatches.
+**Positive control:** with the `.frc-deck,` line removed, the first two states resolve
+**0/36** while `--gold` still resolves `#FFE629` — exactly the almost-right state.
+
+**ds-audit check 14** enforces it, in four parts: (a) `.frc-deck` shares the squadron block
+and no other selector duplicates the 36; (b) field and paper stay after it in source order;
+(c) each of the four reachable states resolves the full set, with the deck-root state derived
+from the actual selector rather than assumed; (d) every `var(--x)` in the token sheets that
+has no fallback is declared somewhere (declarations collected across all token sheets, since
+typography declares the scale surfaces.css consumes). Four negative controls all caught.
+
+## templates/ cannot be emitted — confirmed, not forced (2026-08-23)
+**The converter has no template concept at all.** Not a missing setting: the complete
+`cfg.*` surface is shape, pkg, globalName, entry, srcDir, tokensGlob, cssEntry,
+componentSrcMap, docsMap, docsDir, guidelinesGlob, extraEntries, extraFonts, tokensPkg,
+overrides, libOverrides, replaces, provider, storyImports, storybookStatic,
+storybookConfigDir, titleMap, dtsPropsFor, tsconfig — and the words "template" and
+"startingPoint" appear nowhere in the build, validate or resync sources.
+
+**The platform does support templates**, and the shape is known from the IDEA design system
+in the same account, whose four templates work: one `templates/<slug>/` directory each,
+holding the entry file, its support scripts, its images and a `.thumbnail`, registered in the
+platform-compiled `_ds_manifest.json` under **`templates[]`** as
+`{name, description, folder, entryPath, thumbnail:{path, kind:"captured"}}`.
+
+**`startingPoints` is not the platform's key.** IDEA's compiled manifest has
+`startingPoints: []` while all four of its templates work. So the `startingPoints` entry in
+our own `_ds_manifest.json` matches nothing upstream — it is our local vocabulary, read only
+by ds-audit. That was the quiet part of this gap.
+
+**Hand-upload was tested and does not register.** `templates/deck/Deck.dc.html` was uploaded
+through the DesignSync write path. The file landed (confirmed by `list_files`), the
+`_ds_needs_recompile` fence was consumed — so the self-check DID run — and the recompiled
+manifest still reported `templates: []`, `startingPoints: []`, `hasThumbnailHtml: false`,
+`source: design-sync-cli`. No template appeared in CHOOSE A TEMPLATE, and the design system
+page grew no Templates nav section (IDEA's has one). The probe file was then deleted.
+
+A working template folder would additionally need a captured `.thumbnail`, a root
+`thumbnail.html`, and a copy of `support.js` — which is the platform's own dc-runtime,
+emitted per design project and marked "GENERATED … do not edit". Vendoring that into the
+bundle is a real decision, not a packaging tweak, so it was not done.
+
+**Docs corrected rather than the pipeline forced**: the `templatesNotEmitted` block in
+`_ds_manifest.json`, the header of `templates/Deck.dc.html`, and both README claims now say
+the deck shell is a hand-copy artifact that Claude Design never sees.
+
+### What the Blank path actually loses
+Measured by reading the generated `Biocore Kickoff.dc.html` source directly through the
+app's own GetFile RPC. Present or absent, each named:
+
+- **4:3 1920x1440 stage — ABSENT.** The generated stage carries `data-aspect="16:9"`; the
+  source contains `1920` and `1080` and no `1440` anywhere.
+- **Letterbox — ABSENT.** The string `letterbox` does not occur in the file: no
+  `.frc-letterbox` class, no fixed-inset rule, no centering wrapper.
+- **Footer rail — PRESENT.** Not from the template: the deck uses the `DeckFooter`
+  *component* on 3 of its 4 sheets, which emits `.frc-footer` at run time. This is why the
+  rail, the 5669, the deck name and the sheet counter all rendered correctly. (The 4th sheet
+  is the DIAGNOSTIC sheet added during verification, which has no footer by design.)
+- **Deck-stage script — ABSENT as written; partially re-created.** `frcDeckStage` is not in
+  the file and neither is `getComputedStyle(sheets[current])`. The deck wrote its own smaller
+  stage logic: it has `keydown` and `resize` handlers, a scale transform, and it does read
+  `--bg0` — but it never reads `--edge`, and with no letterbox there is nothing to paint. So
+  the specific behaviour the template exists for, *painting canvas and letterbox from the
+  active ground so a transition never flashes white*, is absent.
+- Also absent: the audience class (`frc-audience-*` occurs 0 times) and the thumbnail rail
+  (`T` key), which the template ships.
+
+The root-class finding from the first verification is unchanged and consistent: root
+`className` is exactly `frc-deck`, grounds live on the sheets.

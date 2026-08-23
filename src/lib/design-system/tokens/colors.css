@@ -71,10 +71,22 @@
 }
 
 /* =============================================================================
-   GROUND SCOPES — complete literal alias sets. Same 35 names in each block.
+   GROUND SCOPES — complete literal alias sets. Same 36 names in each block.
+   .frc-deck is not a fourth set; it shares the SQUADRON block as the fail-safe base.
    ========================================================================== */
 
-/* SQUADRON — the default. Team identity. A blued-steel ready room. */
+/* SQUADRON — the default ground, and therefore the FAIL-SAFE BASE.
+   .frc-deck shares this ONE literal block rather than duplicating 36 values, so a
+   groundless deck root, or a sheet that forgot its ground class, resolves the
+   complete SQUADRON alias set instead of resolving partially. Partial resolution is
+   the dangerous state: the palette alone still paints gold and looks almost right.
+   FIELD and PAPER override by inheritance, exactly as before — a descendant that
+   declares an alias on itself always beats the value inherited from .frc-deck.
+   ORDER IS LOAD-BEARING: this block must stay ABOVE .frc-ground-field and
+   .frc-ground-paper. On the one element that carries BOTH (say .frc-deck
+   .frc-ground-paper on a single root) the selectors tie on specificity, so the
+   later block is what wins. ds-audit check 14 enforces both the sharing and the order. */
+.frc-deck,
 .frc-ground-squadron {
   --ground: squadron;
   --bg0:   #000000;
