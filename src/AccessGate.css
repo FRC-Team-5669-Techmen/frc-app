@@ -54,12 +54,13 @@
   font-weight: 600;
 }
 
-  /* NO GOLD, at any state. Gold is identity and active state, and a sign-out is
-     neither: it is the way off this screen, not the thing the screen is asking
-     you to do. Carrying it in the identity color gave it equal weight with the
-     submit even as an outline, so it is steel border and ash label — the app's
-     ordinary secondary control — and .gate-submit is left as the only gold on
-     the page besides the mark and the heading. */
+  /* Steel border, ash label — the app's ordinary secondary control. A sign-out
+     is the way off this screen, not the thing the screen is asking you to do,
+     so carrying it in the identity color gave it equal weight with the submit
+     even as an outline. .gate-submit is left as the only gold in the action
+     zone. The keyboard :focus-visible ring is NOT overridden here: that ring is
+     the system saying where the keyboard is, not this control's identity, and a
+     per-control ring color makes the indicator less reliable to follow. */
 .gate-signout {
   margin-top: 0.5rem;
   background: transparent;
@@ -82,12 +83,6 @@
   color: var(--text);
   border-color: var(--border-strong);
 }
-
-/* The app-wide keyboard ring is gold (App.css :focus-visible). This is the one
-   control that opts out of it: no gold at ANY state, focus included. The ring
-   keeps its width and offset, so the affordance is unchanged — only its color
-   moves to steel. */
-.gate-signout:focus-visible { outline-color: var(--steel); }
 
 .gate-contact {
   margin-top: 0.25rem;
