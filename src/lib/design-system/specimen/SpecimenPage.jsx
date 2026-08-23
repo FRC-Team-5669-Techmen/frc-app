@@ -8,13 +8,18 @@ import {
   Button, Eyebrow, Divider, TeamWordmark,
   IconPlay, IconRotateCcw,
   DeckFooter, FirstName, FirstNameScope, HudFrame, PlatePanel, StencilTitle,
-  CoreDemoCard, BrandDemoCard, tokens,
+  ImageFrame, Cutout, MatchClock, AllianceSplit, ScoutTable, ScoutRow, SponsorWall, SponsorTier,
+  CoreDemoCard, BrandDemoCard, DataDemoCard, SurfacesDemoCard, FormsDemoCard, tokens,
 } from '../index.js'
 import { cx } from '../components/cx.js'
-import { proveGrounds, scanForGold, scanForNeutralWhite, auditMotionGate, measureStatic, replay, countMounted } from './proofs.js'
+import {
+  proveGrounds, scanForGold, scanForNeutralWhite, auditMotionGate, measureStatic, replay, countMounted,
+  scanForAlliance, makeAlphaPng, scanCutoutRectangles, readComputed, definePlatformImageSlot, readSlotFrame,
+  PLATFORM_WASH, norm, toRgbString, isTransparent,
+} from './proofs.js'
 import './specimen.css'
 
-const { GROUNDS, GROUND_CLASSES, BRAND, RAMPS, PARTITION, PROGRAM, SEASON_DEFAULT, TYPE_SCALE, FONTS, RADII, MOTION, AMBIENT, VERSION, NAMESPACE } = tokens
+const { GROUNDS, GROUND_CLASSES, GROUND_ALIASES, BRAND, RAMPS, PARTITION, PROGRAM, SEASON_DEFAULT, TYPE_SCALE, FONTS, RADII, MOTION, AMBIENT, VERSION, NAMESPACE } = tokens
 const PARTS = ['Brief', 'Roster', 'Quals', 'Mission', 'Muster']
 
 /* ---------- small route helpers (chrome only; components are never copied) ---------- */
@@ -486,6 +491,409 @@ function ExternalEnforcement() {
   )
 }
 
+/* ---------- 7b. Image treatments ---------- */
+
+const PLATE_PROPS = ['background-color', 'border-top-width', 'border-top-color', 'border-radius']
+
+function ImageTreatmentSection() {
+  const [ground, setGround] = useState('squadron')
+  const ref = useRef(null)
+  const [report, setReport] = useState(null)
+  const [slotReady, setSlotReady] = useState(false)
+
+  useEffect(() => { setSlotReady(definePlatformImageSlot()) }, [])
+
+  const run = useCallback(() => {
+    const root = ref.current
+    if (!root) return
+    const framed = root.querySelector('[data-frc="ImageFrame"][data-probe="framed"] .frc-frame-plate')
+    const bled = root.querySelector('[data-frc="ImageFrame"][data-probe="bleed"] .frc-frame-plate')
+    const brack = root.querySelector('[data-frc="ImageFrame"][data-probe="brackets"] .frc-frame-plate')
+    const empty = root.querySelector('.frc-frame-empty')
+    const slotHost = root.querySelector('image-slot')
+    const expected = norm(GROUND_ALIASES[ground]['--surface-viewport'])
+    const expectedRgb = toRgbString(expected)
+    const plate = framed ? readComputed(framed, PLATE_PROPS) : null
+    const bleedPlate = bled ? readComputed(bled, ['border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width', 'background-color']) : null
+    const bleedAfter = bled ? readComputed(bled, ['display', 'background-image'], '::after') : null
+    const brackAfter = brack ? readComputed(brack, ['display', 'background-image'], '::after') : null
+    const emptyStyle = empty ? readComputed(empty, ['color', 'border-top-style', 'border-top-width', 'background-color']) : null
+    const slot = slotHost ? readSlotFrame(slotHost) : null
+    setReport({
+      ground,
+      expected,
+      expectedRgb,
+      plate,
+      backplateOk: Boolean(plate) && plate['background-color'] === expectedRgb,
+      bleedPlate,
+      bleedAfter,
+      brackAfter,
+      bleedDropsRim: Boolean(bleedPlate) && ['border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width'].every((k) => bleedPlate[k] === '0px'),
+      bleedDropsBrackets: Boolean(bleedAfter) && bleedAfter.display === 'none',
+      bracketsPresent: Boolean(brackAfter) && brackAfter.display !== 'none' && brackAfter['background-image'] !== 'none',
+      emptyStyle,
+      emptyLegible: Boolean(emptyStyle) && emptyStyle['border-top-style'] === 'dashed' && emptyStyle['border-top-width'] !== '0px' && isTransparent(emptyStyle['background-color']),
+      slot,
+    })
+  }, [ground])
+
+  useEffect(() => { const t = setTimeout(run, 120); return () => clearTimeout(t) }, [run, slotReady])
+
+  const ok = report && report.backplateOk && report.bleedDropsRim && report.bleedDropsBrackets && report.bracketsPresent && report.emptyLegible && (!report.slot || report.slot.suppressed)
+
+  return (
+    <Section
+      id="images"
+      title="Image treatments"
+      lede="Three treatments, chosen by what the image IS. ImageFrame is opaque content edge to edge and reads its backplate from --surface-viewport, so a ground retints it. bleed feathers one edge and drops the rim and the brackets. A transparent PNG never comes in here."
+    >
+      <GroundTabs value={ground} onChange={setGround} extra={<Button variant="ghost" onClick={run}>Re-measure</Button>} />
+      <div className="ds-frame">
+        <Zoomed width={1920}>
+          <div ref={ref} className={cx('frc-deck', GROUND_CLASSES[ground])} style={{ padding: 48, display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 40, alignItems: 'start' }}>
+            <ImageFrame data-probe="framed" kind="screenshot" ratio="16 / 10" file="scouting-app.png">
+              <span slot="caption">Screenshot, hard edge</span>
+            </ImageFrame>
+            <ImageFrame data-probe="brackets" kind="render" ratio="4 / 3" file="drivetrain-render.png">
+              <span slot="caption">Render, brackets</span>
+            </ImageFrame>
+            <ImageFrame data-probe="bleed" kind="photo" bleed="right" ratio="4 / 3" file="pit-photo.jpg">
+              <span slot="caption">Photo, bleeding right</span>
+            </ImageFrame>
+            <ImageFrame data-probe="slot" kind="photo" ratio="4 / 3">
+              <image-slot />
+              <span slot="caption">Platform image-slot, wash suppressed</span>
+            </ImageFrame>
+          </div>
+        </Zoomed>
+      </div>
+      <div className="ds-proof" data-proof="images">
+        <div className="ds-proof-head">
+          <Verdict state={report ? ok : null}>Image treatments on {ground}</Verdict>
+          <Button variant="ghost" onClick={run}>Re-measure</Button>
+        </div>
+        {report ? (
+          <table>
+            <thead><tr><th>check</th><th>measured</th><th>expected</th></tr></thead>
+            <tbody>
+              <tr>
+                <td className={report.backplateOk ? 'ds-okcell' : 'ds-fail'}>ImageFrame backplate = --surface-viewport</td>
+                <td><code>{report.plate ? report.plate['background-color'] : '-'}</code></td>
+                <td><code>{report.expectedRgb} ({report.expected})</code></td>
+              </tr>
+              <tr>
+                <td className={report.bracketsPresent ? 'ds-okcell' : 'ds-fail'}>brackets drawn on a render</td>
+                <td><code>{report.brackAfter ? `${report.brackAfter.display}, ${report.brackAfter['background-image'] === 'none' ? 'no image' : 'gradients'}` : '-'}</code></td>
+                <td><code>rendered</code></td>
+              </tr>
+              <tr>
+                <td className={report.bleedDropsRim ? 'ds-okcell' : 'ds-fail'}>bleed drops the rim ring</td>
+                <td><code>{report.bleedPlate ? report.bleedPlate['border-top-width'] : '-'}</code></td>
+                <td><code>0px on all four edges</code></td>
+              </tr>
+              <tr>
+                <td className={report.bleedDropsBrackets ? 'ds-okcell' : 'ds-fail'}>bleed drops the corner brackets</td>
+                <td><code>{report.bleedAfter ? report.bleedAfter.display : '-'}</code></td>
+                <td><code>none</code></td>
+              </tr>
+              <tr>
+                <td className={report.emptyLegible ? 'ds-okcell' : 'ds-fail'}>empty slot legible, no grey wash</td>
+                <td><code>{report.emptyStyle ? `${report.emptyStyle['border-top-style']} ${report.emptyStyle['border-top-width']}, bg ${report.emptyStyle['background-color']}` : '-'}</code></td>
+                <td><code>dashed hairline, transparent</code></td>
+              </tr>
+              <tr>
+                <td className={report.slot && report.slot.suppressed ? 'ds-okcell' : 'ds-fail'}>image-slot::part(frame) wash suppressed</td>
+                <td><code>{report.slot ? report.slot.backgroundColor : 'stub not registered'}</code></td>
+                <td><code>transparent (platform paints {PLATFORM_WASH})</code></td>
+              </tr>
+            </tbody>
+          </table>
+        ) : null}
+        <p className="ds-note">The image-slot element above is a route-only stub of the platform element: same shadow part, same wash. The bundle defines no such element; the stub exists so the override is measured rather than asserted.</p>
+      </div>
+    </Section>
+  )
+}
+
+/* ---------- 7c. Cutout ---------- */
+
+function CutoutSection() {
+  const ref = useRef(null)
+  const [png, setPng] = useState(null)
+  const [scan, setScan] = useState(null)
+  useEffect(() => {
+    const probe = document.createElement('span')
+    probe.className = 'frc-deck frc-ground-squadron'
+    document.body.appendChild(probe)
+    const color = getComputedStyle(probe).getPropertyValue('--fg-structure').trim()
+    document.body.removeChild(probe)
+    setPng(makeAlphaPng(color || 'gray', 240))
+  }, [])
+  const run = useCallback(() => {
+    if (!ref.current) return
+    const subjects = Array.from(ref.current.querySelectorAll('[data-frc="Cutout"]'))
+    const results = subjects.map((el) => ({
+      ground: el.closest('[data-ground]')?.getAttribute('data-ground'),
+      cutoutGround: el.getAttribute('data-ground'),
+      filter: norm(getComputedStyle(el.querySelector('.frc-cutout-subject')).filter),
+      objectFit: norm(getComputedStyle(el.querySelector('img')).objectFit),
+      ...scanCutoutRectangles(el),
+    }))
+    setScan({ results, ok: results.every((r) => r.ok && r.objectFit === 'contain') })
+  }, [])
+  useEffect(() => { const t = setTimeout(run, 160); return () => clearTimeout(t) }, [run, png])
+  return (
+    <Section
+      id="cutout"
+      title="Cutout"
+      lede="Treatment three: an alpha channel. No backplate, no grid, no rectangular overlay, no corner brackets, because a cutout has no rectangle to draw. Every grade is a filter chain on the subject, so each layer follows the silhouette. The image below is a real transparent PNG drawn at runtime."
+    >
+      <div className="ds-frame">
+        <div ref={ref} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+          {GROUNDS.map((g) => (
+            <div key={g} className={cx('frc-deck', GROUND_CLASSES[g])} data-ground={g} style={{ padding: 40, display: 'grid', gap: 28, justifyItems: 'center' }}>
+              <Eyebrow tone="accent">{g}</Eyebrow>
+              <div style={{ display: 'flex', gap: 24, alignItems: 'flex-end' }}>
+                <Cutout ground="shadow" width={150} height={150} src={png || undefined} alt="" />
+                <Cutout ground="shelf" width={150} height={150} src={png || undefined} alt="" />
+                <Cutout ground="none" width={150} height={150} src={png || undefined} alt="" />
+              </div>
+              <p className="frc-label" style={{ textAlign: 'center' }}>shadow · shelf · none</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="ds-proof" data-proof="cutout">
+        <div className="ds-proof-head">
+          <Verdict state={scan ? scan.ok : null}>No rectangle under any cutout, on any ground</Verdict>
+          <Button variant="ghost" onClick={run}>Re-scan</Button>
+        </div>
+        {scan ? (
+          <table>
+            <thead><tr><th>ground</th><th>cutout</th><th>elements</th><th>rectangle offenders</th><th>hairline rules (legal)</th><th>object-fit</th><th>filter chain</th></tr></thead>
+            <tbody>
+              {scan.results.map((r, i) => (
+                <tr key={i}>
+                  <td>{r.ground}</td>
+                  <td>{r.cutoutGround}</td>
+                  <td>{r.elements}</td>
+                  <td className={r.offenders.length ? 'ds-fail' : 'ds-okcell'}>{r.offenders.length ? r.offenders.map((o) => `${o.el} ${o.prop}=${o.value}`).join('; ') : '0'}</td>
+                  <td>{r.rules.length ? r.rules.map((o) => `${o.prop} at ${o.height}`).join('; ') : '0'}</td>
+                  <td className={r.objectFit === 'contain' ? 'ds-okcell' : 'ds-fail'}>{r.objectFit}</td>
+                  <td><code>{r.filter}</code></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : null}
+      </div>
+    </Section>
+  )
+}
+
+/* ---------- 7d. Match clock ---------- */
+
+function ClockSection() {
+  const ref = useRef(null)
+  const [report, setReport] = useState(null)
+  const run = useCallback(() => {
+    if (!ref.current) return
+    const probe = ref.current
+    const cs = getComputedStyle(probe)
+    const warn = norm(cs.getPropertyValue('--warn'))
+    const fault = norm(cs.getPropertyValue('--fault'))
+    const hero = norm(cs.getPropertyValue('--fg-hero'))
+    const rows = Array.from(probe.querySelectorAll('[data-frc="MatchClock"]')).map((el) => {
+      const time = el.querySelector('.frc-clock-time')
+      return {
+        phase: el.getAttribute('data-phase'),
+        state: el.getAttribute('data-state'),
+        text: time.textContent.trim(),
+        color: norm(getComputedStyle(time).color),
+        shadow: norm(getComputedStyle(time).textShadow),
+      }
+    })
+    const rest = rows.filter((r) => r.state === 'rest')
+    const warnRow = rows.find((r) => r.state === 'warn')
+    const zeroRow = rows.find((r) => r.state === 'zero')
+    setReport({
+      rows,
+      warn: toRgbString(warn),
+      fault: toRgbString(fault),
+      hero: toRgbString(hero),
+      fullAtRest: rest.length === 2 && rest.some((r) => r.text === '0:20') && rest.some((r) => r.text === '2:20'),
+      warnCopper: warnRow ? warnRow.color === toRgbString(warn) : false,
+      zeroRust: zeroRow ? zeroRow.color === toRgbString(fault) : false,
+      zeroNotAllianceRed: zeroRow ? scanForAlliance(ref.current.querySelector('[data-frc="MatchClock"][data-state="zero"]'), { allowed: [] }).inside.length === 0 : false,
+    })
+  }, [])
+  useEffect(() => { const t = setTimeout(run, 120); return () => clearTimeout(t) }, [run])
+  const ok = report && report.fullAtRest && report.warnCopper && report.zeroRust && report.zeroNotAllianceRed
+  return (
+    <Section
+      id="clock"
+      title="Match clock"
+      lede="Real FRC timing: 0:20 autonomous, then 2:20 teleop, M:SS, at projection scale and silent. The base state is the FULL duration. Copper at the warning threshold; at zero it uses RUST, never alliance red, because a sheet carrying a match clock also carries alliance colors."
+    >
+      <div className="ds-frame">
+        <Zoomed width={1920}>
+          <div ref={ref} className="frc-deck frc-ground-field" style={{ padding: 48, display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 40 }}>
+            <MatchClock phase="auto"><span slot="note">Autonomous at rest</span></MatchClock>
+            <MatchClock phase="teleop"><span slot="note">Teleop at rest</span></MatchClock>
+            <MatchClock phase="teleop" remaining={22}><span slot="note">Warning window</span></MatchClock>
+            <MatchClock phase="teleop" remaining={0}><span slot="note">Zero</span></MatchClock>
+          </div>
+        </Zoomed>
+      </div>
+      <div className="ds-proof" data-proof="clock">
+        <div className="ds-proof-head">
+          <Verdict state={report ? ok : null}>Full duration at rest, copper at the threshold, rust at zero</Verdict>
+          <Button variant="ghost" onClick={run}>Re-measure</Button>
+        </div>
+        {report ? (
+          <table>
+            <thead><tr><th>phase</th><th>state</th><th>rendered</th><th>color</th><th>glow</th></tr></thead>
+            <tbody>
+              {report.rows.map((r, i) => (
+                <tr key={i}>
+                  <td>{r.phase}</td>
+                  <td>{r.state}</td>
+                  <td className={r.state === 'rest' && (r.text === '0:20' || r.text === '2:20') ? 'ds-okcell' : undefined}>{r.text}</td>
+                  <td className={
+                    (r.state === 'warn' && r.color === report.warn) || (r.state === 'zero' && r.color === report.fault) || (r.state === 'rest' && r.color === report.hero)
+                      ? 'ds-okcell' : 'ds-fail'
+                  }>{r.color}</td>
+                  <td><code>{r.shadow}</code></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : null}
+        {report ? <p className="ds-note">copper --warn {report.warn} · rust --fault {report.fault} · hero {report.hero}. Alliance red never appears in this table.</p> : null}
+      </div>
+    </Section>
+  )
+}
+
+/* ---------- 7e. Alliance containment ---------- */
+
+function AllianceSection() {
+  const ref = useRef(null)
+  const [ground, setGround] = useState('field')
+  const [local, setLocal] = useState(null)
+  const [page, setPage] = useState(null)
+  const run = useCallback(() => {
+    if (ref.current) setLocal(scanForAlliance(ref.current))
+    const root = document.querySelector('[data-ds-root]')
+    if (root) setPage(scanForAlliance(root))
+  }, [])
+  useEffect(() => { const t = setTimeout(run, 300); return () => clearTimeout(t) }, [run, ground])
+  return (
+    <Section
+      id="alliance"
+      title="The red partition, contained"
+      lede="--alliance-red and --alliance-blue are alliance data, never decoration, and only AllianceSplit, ScoutTable and FieldDiagram may reach for them - on the FIELD ground only. Switch the ground below: off FIELD the colors do not resolve at all and the RED / BLUE words carry the meaning."
+    >
+      <GroundTabs value={ground} onChange={setGround} extra={<Button variant="ghost" onClick={run}>Re-scan</Button>} />
+      <div className="ds-frame">
+        <Zoomed width={1920}>
+          <div ref={ref} className={cx('frc-deck', GROUND_CLASSES[ground])} data-ground={ground} style={{ padding: 48, display: 'grid', gap: 40 }}>
+            <AllianceSplit outcome="red">
+              <span slot="red-tag">Red alliance</span>
+              <span slot="red-score">88</span>
+              <span slot="red-teams">5669 · 1678 · 4322</span>
+              <span slot="vs">Qual 42</span>
+              <span slot="blue-tag">Blue alliance</span>
+              <span slot="blue-score">74</span>
+              <span slot="blue-teams">254 · 973 · 1671</span>
+            </AllianceSplit>
+            <ScoutTable>
+              <span slot="col">Team</span><span slot="col">Auto</span><span slot="col">Cycles</span>
+              <ScoutRow id="s1" alliance="red"><span slot="team">5669</span><span slot="cell">12</span><span slot="cell">7</span></ScoutRow>
+              <ScoutRow id="s2" alliance="blue"><span slot="team">254</span><span slot="cell">14</span><span slot="cell">8</span></ScoutRow>
+            </ScoutTable>
+          </div>
+        </Zoomed>
+      </div>
+      <div className="ds-proof" data-proof="alliance">
+        <div className="ds-proof-head">
+          <Verdict state={page ? page.ok : null}>No alliance color outside the three named components, anywhere on this page</Verdict>
+          {page ? <span>{page.elements} deck elements scanned page-wide · {page.inside.length} legal uses · {page.collisions.length} program-chrome value collisions · {page.offenders.length} leaks · {page.skipped} token-catalogue elements skipped</span> : null}
+          <Button variant="ghost" onClick={run}>Re-scan</Button>
+        </div>
+        {local ? (
+          <p className="ds-note">
+            On {ground}: {local.inside.length} alliance-colored declarations inside AllianceSplit / ScoutTable
+            {local.inside.length === 0 ? ' — off FIELD the aliases fall back to structure tones, which is the expected result.' : '.'}
+          </p>
+        ) : null}
+        {page && page.collisions.length ? (
+          <p className="ds-note">
+            Value collision, not a leak: FIRST LEGO League red is published as the same hex as alliance red, so a computed
+            style cannot tell them apart after substitution. {page.collisions.length} declaration(s) inside program chrome
+            ({page.collisions.map((c) => c.owner || 'program rail').join(', ')}) carry that value legitimately.
+          </p>
+        ) : null}
+        {page && page.offenders.length ? (
+          <table><tbody>{page.offenders.map((o, i) => <tr key={i}><td className="ds-fail">{o.el}</td><td>{o.owner || 'no component'}</td><td>{o.prop}</td><td><code>{o.value}</code></td></tr>)}</tbody></table>
+        ) : null}
+      </div>
+    </Section>
+  )
+}
+
+/* ---------- 7f. Enforced refusals ---------- */
+
+const REFUSALS = [
+  {
+    id: 'bleed-screenshot',
+    label: 'ImageFrame bleed on a screenshot',
+    why: 'A feathered interface capture reads as a rendering fault; the hard edge is what tells the room it is a screen.',
+    render: () => <ImageFrame kind="screenshot" bleed="right" file="scouting-app.png" />,
+  },
+  {
+    id: 'cutout-cover',
+    label: 'Cutout with fit="cover"',
+    why: 'cover crops the silhouette against the slot edge, which is the one reliable way to make an alpha image look framed again.',
+    render: () => <Cutout fit="cover" file="gearbox.png" />,
+  },
+  {
+    id: 'sponsor-framed',
+    label: 'A sponsor mark that is not a floating Cutout',
+    why: 'A contact shadow under a corporate logo reads as a rendering error, and a frame fills the alpha region with a backplate.',
+    render: () => (
+      <SponsorWall>
+        <SponsorTier>
+          <span slot="name">Lead sponsors</span>
+          <Cutout ground="shadow" width={200} height={90} file="sponsor-lead-1.png" />
+        </SponsorTier>
+      </SponsorWall>
+    ),
+  },
+]
+
+function RefusalsSection() {
+  const [open, setOpen] = useState(null)
+  return (
+    <Section
+      id="refusals"
+      title="Enforced refusals"
+      lede="Three rules in this pass are enforced in code rather than written down and hoped for. Mount each one to see it throw in this browser; the message is the rule."
+    >
+      {REFUSALS.map((r) => (
+        <div key={r.id} className="ds-proof" data-proof={`refusal-${r.id}`}>
+          <div className="ds-proof-head">
+            <span>{r.label}</span>
+            <Button variant="ghost" onClick={() => setOpen(open === r.id ? null : r.id)}>{open === r.id ? 'Unmount' : 'Mount it'}</Button>
+          </div>
+          <p className="ds-note">{r.why}</p>
+          {open === r.id ? <Boundary key={r.id}>{r.render()}</Boundary> : null}
+        </div>
+      ))}
+    </Section>
+  )
+}
+
 /* ---------- 8. Deck chrome ---------- */
 
 function ChromeSection() {
@@ -538,12 +946,22 @@ function WiringSection() {
   const [counts, setCounts] = useState(null)
   const run = useCallback(() => setCounts(countMounted(document)), [])
   useEffect(() => { const t = setTimeout(run, 150); return () => clearTimeout(t) }, [run])
-  const expected = ['Button', 'Eyebrow', 'Divider', 'ChevronRail', 'TeamWordmark', 'SealMark', 'MarkGlyph', 'Logotype', 'DeckFooter', 'ProgramLockup', 'SeasonLockup', 'FirstName', 'HudFrame', 'PlatePanel', 'StencilTitle']
+  const expected = [
+    'Button', 'Eyebrow', 'Divider', 'ChevronRail', 'TeamWordmark',
+    'SealMark', 'MarkGlyph', 'Logotype', 'DeckFooter', 'ProgramLockup', 'SeasonLockup', 'FirstName', 'HudFrame', 'PlatePanel', 'StencilTitle',
+    'Badge', 'Chip', 'SubteamBadge', 'Field', 'StatBlock', 'Readout', 'SpecTable', 'SpecRow', 'FocusTable', 'FocusRow',
+    'BarChart', 'Bar', 'GanttChart', 'GanttBar', 'DecisionMatrix', 'Timeline', 'TimelineItem', 'MatchClock', 'BuildCountdown',
+    'ScoutTable', 'ScoutRow', 'AllianceSplit',
+    'Card', 'Callout', 'SafetyNote', 'ImageFrame', 'Cutout', 'StepCard', 'Step', 'ProcessPipeline', 'PipelineStep',
+    'CompareSplit', 'CompareRow', 'SampleGrid', 'Sample', 'JumpGrid', 'JumpCard', 'CalloutDrawing', 'CalloutPin',
+    'QuoteBlock', 'RoleCard', 'PartCallout', 'FieldDiagram', 'SponsorWall', 'SponsorTier', 'AwardPlate', 'ResultBanner',
+    'Input', 'Select',
+  ]
   const missing = counts ? expected.filter((n) => !counts[n]) : []
   return (
     <Section id="wiring" title="Wiring" lede="This route mounts the real components. Each component root carries data-frc, so the count below is live DOM, not a list. To prove it: change something observable inside a component file, reload, see it here, restore.">
       <div className="ds-proof" data-proof="wiring">
-        <div className="ds-proof-head"><Verdict state={counts ? missing.length === 0 : null}>All 15 components mounted from source</Verdict><Button variant="ghost" onClick={run}>Recount</Button></div>
+        <div className="ds-proof-head"><Verdict state={counts ? missing.length === 0 : null}>All {expected.length} component roots mounted from source</Verdict><Button variant="ghost" onClick={run}>Recount</Button></div>
         {counts ? (
           <table><thead><tr><th>component</th><th>instances on this page</th></tr></thead><tbody>
             {expected.map((n) => <tr key={n}><td className={counts[n] ? 'ds-okcell' : 'ds-fail'}>{n}</td><td>{counts[n] || 0}</td></tr>)}
@@ -564,7 +982,7 @@ export default function SpecimenPage() {
         <span className="ds-header-title">{NAMESPACE}</span>
         <span>v{VERSION} · /_ds · dev only</span>
         <nav className="ds-nav">
-          {['grounds', 'tokens', 'type', 'motion', 'surfaces', 'core', 'brand', 'chrome', 'wiring'].map((id) => <a key={id} href={`#${id}`}>{id}</a>)}
+          {['grounds', 'tokens', 'type', 'motion', 'surfaces', 'core', 'brand', 'data', 'surfaces-group', 'forms', 'images', 'cutout', 'clock', 'alliance', 'refusals', 'chrome', 'wiring'].map((id) => <a key={id} href={`#${id}`}>{id}</a>)}
         </nav>
       </header>
       <main className="ds-main">
@@ -575,6 +993,14 @@ export default function SpecimenPage() {
         <AmbientSection />
         <CardSection id="core" title="Core components" lede="Button, Eyebrow, Divider, ChevronRail, TeamWordmark — the components/core demo card, mounted as-is." render={(ground, run) => <CoreDemoCard ground={ground} run={run} />} />
         <CardSection id="brand" title="Brand components" lede="SealMark, MarkGlyph, Logotype, DeckFooter, ProgramLockup, SeasonLockup, FirstName, HudFrame, PlatePanel, StencilTitle — the components/brand demo card, mounted as-is. Mark slots stay empty until the SVGs and PNGs land." render={(ground, run) => <BrandDemoCard ground={ground} run={run} />} />
+        <CardSection id="data" title="Data components" lede="Badge, Chip, SubteamBadge, Field, StatBlock, Readout, SpecTable, FocusTable, BarChart, GanttChart, DecisionMatrix, Timeline, MatchClock, BuildCountdown, ScoutTable, AllianceSplit — the components/data demo card, mounted as-is." render={(ground, run) => <DataDemoCard ground={ground} run={run} />} />
+        <CardSection id="surfaces-group" title="Surface components" lede="Card, Callout, SafetyNote, ImageFrame, Cutout, StepCard, ProcessPipeline, CompareSplit, SampleGrid, JumpGrid, CalloutDrawing, QuoteBlock, RoleCard, PartCallout, FieldDiagram, SponsorWall, AwardPlate, ResultBanner — the components/surfaces demo card, mounted as-is." render={(ground, run) => <SurfacesDemoCard ground={ground} run={run} />} />
+        <CardSection id="forms" title="Form controls" lede="Input and Select — the components/forms demo card, mounted as-is." render={(ground, run) => <FormsDemoCard ground={ground} run={run} />} />
+        <ImageTreatmentSection />
+        <CutoutSection />
+        <ClockSection />
+        <AllianceSection />
+        <RefusalsSection />
         <section className="ds-section"><ExternalEnforcement /></section>
         <ChromeSection />
         <WiringSection />

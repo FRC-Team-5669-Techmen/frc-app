@@ -17,7 +17,10 @@
       "tokens/surfaces.css",
       "tokens/motion.css",
       "tokens/deck-motion.css",
-      "tokens/image-slot.css"
+      "tokens/image-slot.css",
+      "tokens/data.css",
+      "tokens/surface-components.css",
+      "tokens/forms.css"
     ],
     "mirror": "tokens.js",
     "scope": "Root tokens are declared on .frc-deck and the three ground classes, never on :root.",
@@ -26,7 +29,7 @@
     "program": { "--program": "#009CD7", "--program-frc": "#009CD7", "--program-ftc": "#F57E25", "--program-fll": "#ED1C24", "--program-fll-explore": "#00A651", "--program-fll-discover": "#662D91", "--program-fll-ink": "#231F20" },
     "season": { "--season": "#FFE629" },
     "groundAliases": [
-      "--ground", "--bg0", "--bg1", "--bg2", "--plate", "--edge", "--line", "--line-strong",
+      "--ground", "--bg0", "--bg1", "--bg2", "--plate", "--surface-viewport", "--edge", "--line", "--line-strong",
       "--fg", "--fg-dim", "--fg-structure", "--fg-hero", "--accent", "--accent-fg", "--accent-soft", "--rim",
       "--glow", "--glow-box", "--glow-strength", "--chrome-bg", "--chrome-fg", "--live",
       "--plate-rise", "--well-recess", "--panel-shadow", "--focus", "--selection-bg",
@@ -63,17 +66,57 @@
     { "name": "FirstName", "group": "brand", "sourcePath": "components/brand/FirstName.jsx", "types": "components/brand/FirstName.d.ts", "prompt": "components/brand/FirstName.prompt.md", "class": "frc-first", "exports": ["FirstName", "FirstNameScope", "useFirstNameScope", "classifyFirstName"] },
     { "name": "HudFrame", "group": "brand", "sourcePath": "components/brand/HudFrame.jsx", "types": "components/brand/HudFrame.d.ts", "prompt": "components/brand/HudFrame.prompt.md", "class": "frc-hud" },
     { "name": "PlatePanel", "group": "brand", "sourcePath": "components/brand/PlatePanel.jsx", "types": "components/brand/PlatePanel.d.ts", "prompt": "components/brand/PlatePanel.prompt.md", "class": "frc-plate-panel" },
-    { "name": "StencilTitle", "group": "brand", "sourcePath": "components/brand/StencilTitle.jsx", "types": "components/brand/StencilTitle.d.ts", "prompt": "components/brand/StencilTitle.prompt.md", "class": "frc-stencil" }
+    { "name": "StencilTitle", "group": "brand", "sourcePath": "components/brand/StencilTitle.jsx", "types": "components/brand/StencilTitle.d.ts", "prompt": "components/brand/StencilTitle.prompt.md", "class": "frc-stencil" },
+    {"name": "Badge", "group": "data", "sourcePath": "components/data/Badge.jsx", "types": "components/data/Badge.d.ts", "prompt": "components/data/Badge.prompt.md", "class": "frc-badge"},
+    {"name": "Chip", "group": "data", "sourcePath": "components/data/Chip.jsx", "types": "components/data/Chip.d.ts", "prompt": "components/data/Chip.prompt.md", "class": "frc-chip"},
+    {"name": "Field", "group": "data", "sourcePath": "components/data/Field.jsx", "types": "components/data/Field.d.ts", "prompt": "components/data/Field.prompt.md", "class": "frc-field"},
+    {"name": "StatBlock", "group": "data", "sourcePath": "components/data/StatBlock.jsx", "types": "components/data/StatBlock.d.ts", "prompt": "components/data/StatBlock.prompt.md", "class": "frc-stat"},
+    {"name": "Readout", "group": "data", "sourcePath": "components/data/Readout.jsx", "types": "components/data/Readout.d.ts", "prompt": "components/data/Readout.prompt.md", "class": "frc-readout"},
+    {"name": "SpecTable", "group": "data", "sourcePath": "components/data/SpecTable.jsx", "types": "components/data/SpecTable.d.ts", "prompt": "components/data/SpecTable.prompt.md", "class": "frc-spec", "sub": ["SpecRow"]},
+    {"name": "FocusTable", "group": "data", "sourcePath": "components/data/FocusTable.jsx", "types": "components/data/FocusTable.d.ts", "prompt": "components/data/FocusTable.prompt.md", "class": "frc-focus", "sub": ["FocusRow"], "note": "Click dims siblings. Emphasis only, never reveal."},
+    {"name": "BarChart", "group": "data", "sourcePath": "components/data/BarChart.jsx", "types": "components/data/BarChart.d.ts", "prompt": "components/data/BarChart.prompt.md", "class": "frc-bars", "sub": ["Bar"]},
+    {"name": "GanttChart", "group": "data", "sourcePath": "components/data/GanttChart.jsx", "types": "components/data/GanttChart.d.ts", "prompt": "components/data/GanttChart.prompt.md", "class": "frc-gantt", "sub": ["GanttBar"]},
+    {"name": "DecisionMatrix", "group": "data", "sourcePath": "components/data/DecisionMatrix.jsx", "types": "components/data/DecisionMatrix.d.ts", "prompt": "components/data/DecisionMatrix.prompt.md", "class": "frc-matrix", "note": "weights and scores stay array-only: structure, not copy."},
+    {"name": "Timeline", "group": "data", "sourcePath": "components/data/Timeline.jsx", "types": "components/data/Timeline.d.ts", "prompt": "components/data/Timeline.prompt.md", "class": "frc-timeline", "sub": ["TimelineItem"]},
+    {"name": "MatchClock", "group": "data", "sourcePath": "components/data/MatchClock.jsx", "types": "components/data/MatchClock.d.ts", "prompt": "components/data/MatchClock.prompt.md", "class": "frc-clock", "note": "0:20 auto then 2:20 teleop, M:SS, silent, full duration at rest. Copper at the warning threshold, RUST at zero - never alliance red."},
+    {"name": "BuildCountdown", "group": "data", "sourcePath": "components/data/BuildCountdown.jsx", "types": "components/data/BuildCountdown.d.ts", "prompt": "components/data/BuildCountdown.prompt.md", "class": "frc-countdown"},
+    {"name": "ScoutTable", "group": "data", "sourcePath": "components/data/ScoutTable.jsx", "types": "components/data/ScoutTable.d.ts", "prompt": "components/data/ScoutTable.prompt.md", "class": "frc-scout", "sub": ["ScoutRow"], "note": "May use --alliance-red / --alliance-blue, FIELD ground only."},
+    {"name": "AllianceSplit", "group": "data", "sourcePath": "components/data/AllianceSplit.jsx", "types": "components/data/AllianceSplit.d.ts", "prompt": "components/data/AllianceSplit.prompt.md", "class": "frc-alliance", "note": "May use --alliance-red / --alliance-blue, FIELD ground only."},
+    {"name": "SubteamBadge", "group": "data", "sourcePath": "components/data/SubteamBadge.jsx", "types": "components/data/SubteamBadge.d.ts", "prompt": "components/data/SubteamBadge.prompt.md", "class": "frc-subteam", "note": "Reads the app subteam vocabulary from src/subteams.js. No per-value color map."},
+    {"name": "Card", "group": "surfaces", "sourcePath": "components/surfaces/Card.jsx", "types": "components/surfaces/Card.d.ts", "prompt": "components/surfaces/Card.prompt.md", "class": "frc-card"},
+    {"name": "Callout", "group": "surfaces", "sourcePath": "components/surfaces/Callout.jsx", "types": "components/surfaces/Callout.d.ts", "prompt": "components/surfaces/Callout.prompt.md", "class": "frc-callout"},
+    {"name": "SafetyNote", "group": "surfaces", "sourcePath": "components/surfaces/SafetyNote.jsx", "types": "components/surfaces/SafetyNote.d.ts", "prompt": "components/surfaces/SafetyNote.prompt.md", "class": "frc-safety", "note": "Copper shop-hazard note. A distinct component, not a Callout tone, so a safety scan is a glance."},
+    {"name": "ImageFrame", "group": "surfaces", "sourcePath": "components/surfaces/ImageFrame.jsx", "types": "components/surfaces/ImageFrame.d.ts", "prompt": "components/surfaces/ImageFrame.prompt.md", "class": "frc-frame", "note": "Image treatment 1: opaque, edge to edge. Backplate reads --surface-viewport. bleed drops the rim and brackets and throws on a screenshot."},
+    {"name": "Cutout", "group": "surfaces", "sourcePath": "components/surfaces/Cutout.jsx", "types": "components/surfaces/Cutout.d.ts", "prompt": "components/surfaces/Cutout.prompt.md", "class": "frc-cutout", "note": "Image treatment 3: alpha channel. No backplate, no brackets; grading is a filter chain on the subject. fit is always contain."},
+    {"name": "StepCard", "group": "surfaces", "sourcePath": "components/surfaces/StepCard.jsx", "types": "components/surfaces/StepCard.d.ts", "prompt": "components/surfaces/StepCard.prompt.md", "class": "frc-steps", "sub": ["Step"]},
+    {"name": "ProcessPipeline", "group": "surfaces", "sourcePath": "components/surfaces/ProcessPipeline.jsx", "types": "components/surfaces/ProcessPipeline.d.ts", "prompt": "components/surfaces/ProcessPipeline.prompt.md", "class": "frc-pipeline", "sub": ["PipelineStep"]},
+    {"name": "CompareSplit", "group": "surfaces", "sourcePath": "components/surfaces/CompareSplit.jsx", "types": "components/surfaces/CompareSplit.d.ts", "prompt": "components/surfaces/CompareSplit.prompt.md", "class": "frc-compare", "sub": ["CompareRow"]},
+    {"name": "SampleGrid", "group": "surfaces", "sourcePath": "components/surfaces/SampleGrid.jsx", "types": "components/surfaces/SampleGrid.d.ts", "prompt": "components/surfaces/SampleGrid.prompt.md", "class": "frc-samples", "sub": ["Sample"]},
+    {"name": "JumpGrid", "group": "surfaces", "sourcePath": "components/surfaces/JumpGrid.jsx", "types": "components/surfaces/JumpGrid.d.ts", "prompt": "components/surfaces/JumpGrid.prompt.md", "class": "frc-jumps", "sub": ["JumpCard"]},
+    {"name": "CalloutDrawing", "group": "surfaces", "sourcePath": "components/surfaces/CalloutDrawing.jsx", "types": "components/surfaces/CalloutDrawing.d.ts", "prompt": "components/surfaces/CalloutDrawing.prompt.md", "class": "frc-drawing", "sub": ["CalloutPin"], "note": "Every pin label is drawn at rest; a click raises it."},
+    {"name": "QuoteBlock", "group": "surfaces", "sourcePath": "components/surfaces/QuoteBlock.jsx", "types": "components/surfaces/QuoteBlock.d.ts", "prompt": "components/surfaces/QuoteBlock.prompt.md", "class": "frc-quote"},
+    {"name": "RoleCard", "group": "surfaces", "sourcePath": "components/surfaces/RoleCard.jsx", "types": "components/surfaces/RoleCard.d.ts", "prompt": "components/surfaces/RoleCard.prompt.md", "class": "frc-role", "note": "Member with subteams and certifications, shaped like the app skills model. Props and children only; never queries."},
+    {"name": "PartCallout", "group": "surfaces", "sourcePath": "components/surfaces/PartCallout.jsx", "types": "components/surfaces/PartCallout.d.ts", "prompt": "components/surfaces/PartCallout.prompt.md", "class": "frc-part", "note": "COTS part: vendor, part number, price."},
+    {"name": "FieldDiagram", "group": "surfaces", "sourcePath": "components/surfaces/FieldDiagram.jsx", "types": "components/surfaces/FieldDiagram.d.ts", "prompt": "components/surfaces/FieldDiagram.prompt.md", "class": "frc-field-diagram", "note": "Zone geometry stays an array. May use --alliance-red / --alliance-blue, FIELD ground only."},
+    {"name": "SponsorWall", "group": "surfaces", "sourcePath": "components/surfaces/SponsorWall.jsx", "types": "components/surfaces/SponsorWall.d.ts", "prompt": "components/surfaces/SponsorWall.prompt.md", "class": "frc-sponsors", "sub": ["SponsorTier"], "note": "Every sponsor mark is a Cutout ground=\"none\"; SponsorTier throws on anything else."},
+    {"name": "AwardPlate", "group": "surfaces", "sourcePath": "components/surfaces/AwardPlate.jsx", "types": "components/surfaces/AwardPlate.d.ts", "prompt": "components/surfaces/AwardPlate.prompt.md", "class": "frc-award"},
+    {"name": "ResultBanner", "group": "surfaces", "sourcePath": "components/surfaces/ResultBanner.jsx", "types": "components/surfaces/ResultBanner.d.ts", "prompt": "components/surfaces/ResultBanner.prompt.md", "class": "frc-result"},
+    {"name": "Input", "group": "forms", "sourcePath": "components/forms/Input.jsx", "types": "components/forms/Input.d.ts", "prompt": "components/forms/Input.prompt.md", "class": "frc-input"},
+    {"name": "Select", "group": "forms", "sourcePath": "components/forms/Select.jsx", "types": "components/forms/Select.d.ts", "prompt": "components/forms/Select.prompt.md", "class": "frc-select"}
   ],
   "helpers": [
     { "name": "icons", "sourcePath": "components/core/icons.jsx", "note": "Lucide paths inlined as 24x24 stroked SVG on currentColor" },
     { "name": "AssetSlot", "sourcePath": "components/brand/AssetSlot.jsx", "note": "Internal. The marked empty slot every mark-bearing component renders until its asset lands." },
     { "name": "cx", "sourcePath": "components/cx.js" },
+    { "name": "slots", "sourcePath": "components/slots.jsx", "note": "Child-slot helpers. Copy lives in children carrying a plain slot attribute, because a props array is not editable on the canvas." },
     { "name": "assets", "sourcePath": "assets.js", "note": "Expected asset paths, resolved URLs (null until supplied), minimum sizes." }
   ],
   "cards": [
     { "name": "Core components", "group": "Core", "path": "components/core/CoreDemoCard.jsx", "export": "CoreDemoCard", "viewport": { "width": 1920, "height": 1200 }, "subtitle": "Button, Eyebrow, Divider, ChevronRail, TeamWordmark" },
-    { "name": "Brand components", "group": "Brand", "path": "components/brand/BrandDemoCard.jsx", "export": "BrandDemoCard", "viewport": { "width": 1920, "height": 2600 }, "subtitle": "Marks, footer rail, program and season lockups, FirstName, HudFrame, PlatePanel, StencilTitle" }
+    { "name": "Brand components", "group": "Brand", "path": "components/brand/BrandDemoCard.jsx", "export": "BrandDemoCard", "viewport": { "width": 1920, "height": 2600 }, "subtitle": "Marks, footer rail, program and season lockups, FirstName, HudFrame, PlatePanel, StencilTitle" },
+    { "name": "Data components", "group": "Data", "path": "components/data/DataDemoCard.jsx", "export": "DataDemoCard", "viewport": { "width": 1920, "height": 3600 }, "subtitle": "Badges, stats, tables, charts, matrix, timeline, clocks, alliance surfaces" },
+    { "name": "Surface components", "group": "Surfaces", "path": "components/surfaces/SurfacesDemoCard.jsx", "export": "SurfacesDemoCard", "viewport": { "width": 1920, "height": 4200 }, "subtitle": "Cards, callouts, safety, image treatments, steps, comparisons, grids, drawings, sponsors, awards" },
+    { "name": "Form controls", "group": "Forms", "path": "components/forms/FormsDemoCard.jsx", "export": "FormsDemoCard", "viewport": { "width": 1920, "height": 1200 }, "subtitle": "Input and Select on every ground" }
   ],
   "templates": [
     { "name": "Deck", "path": "templates/Deck.dc.html", "copied": true, "aspect": "4:3", "width": 1920, "height": 1440, "note": "The only file anyone copies. Stage, ground class, audience class, footer rail, one blank sheet, deck-stage script." }
@@ -90,7 +133,7 @@
   },
   "audit": "scripts/design-system/ds-audit.mjs (npm run ds:audit)",
   "pending": {
-    "groups": ["data", "surfaces", "forms", "sheets"],
+    "groups": ["sheets"],
     "templates": ["templates/Specimen.dc.html"],
     "assets": [
       "assets/team/Mark-Gold.svg", "assets/team/Mark-White.svg", "assets/team/Mark-Black.svg",

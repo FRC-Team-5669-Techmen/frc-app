@@ -1,0 +1,399 @@
+/* FRC5669DesignSystem — surface components
+   The components/surfaces group: cards, callouts, the copper safety note, step
+   and pipeline structures, comparisons, sample and jump grids, callout
+   drawings, quotes, role and part cards, the field diagram, the sponsor wall,
+   the award plate and the result banner.
+
+   The two IMAGE treatments (ImageFrame and Cutout) live in tokens/image-slot.css
+   with the platform backplate suppression, since all three are one subject.
+
+   Colors come ONLY from the ground aliases and the red partition. FieldDiagram
+   is the third and last component allowed to touch --alliance-red /
+   --alliance-blue, and only inside .frc-ground-field. */
+
+/* ---- Card ----------------------------------------------------------------- */
+.frc-card {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  padding: var(--space-4);
+  background: var(--bg1);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--panel-shadow);
+}
+.frc-ground-squadron .frc-card { background: var(--plate); }
+.frc-ground-field    .frc-card { background: var(--bg2); }
+.frc-card-head { display: grid; gap: 8px; }
+.frc-card-title { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h3); line-height: var(--lh-heading); color: var(--fg); margin: 0; }
+.frc-card-meta { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+.frc-card-body { font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg); margin: 0; }
+.frc-card-foot { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; padding-top: var(--space-3); border-top: var(--hair) solid var(--line); }
+.frc-card-flush { padding: 0; overflow: hidden; }
+
+/* ---- Callout -------------------------------------------------------------- */
+.frc-callout {
+  --tone: var(--accent);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg1);
+  border: var(--hair) solid var(--line);
+  border-left: 6px solid var(--tone);
+  border-radius: var(--radius-panel);
+}
+.frc-callout-ok    { --tone: var(--ok); }
+.frc-callout-warn  { --tone: var(--warn); }
+.frc-callout-fault { --tone: var(--fault); }
+.frc-callout-quiet { --tone: var(--fg-structure); }
+.frc-callout-icon { color: var(--tone); display: flex; }
+.frc-callout-body { display: grid; gap: 8px; }
+.frc-callout-title { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--tone); }
+.frc-callout-text { font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg); margin: 0; }
+
+/* ---- SafetyNote ----------------------------------------------------------- */
+/* The copper shop-hazard note. A DISTINCT component, not a Callout variant: it
+   has to be impossible to miss when someone scans a deck to answer whether a
+   training session covered safety. Hazard band, 2px copper frame, mono heading. */
+.frc-safety {
+  display: grid;
+  gap: var(--space-3);
+  padding: 0 0 var(--space-4);
+  background: var(--bg1);
+  border: var(--hair-frame) solid var(--warn);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+}
+.frc-safety-band { height: 18px; background: repeating-linear-gradient(-45deg, var(--warn) 0 20px, transparent 20px 40px); }
+.frc-safety-head { display: flex; align-items: center; gap: 14px; padding: 0 var(--space-4); color: var(--warn); }
+.frc-safety-title { font-family: var(--font-mono); font-size: var(--fs-h3); letter-spacing: var(--track-wider); text-transform: uppercase; color: var(--warn); margin: 0; }
+.frc-safety-body { padding: 0 var(--space-4); font-family: var(--font-body); font-size: var(--fs-body); color: var(--fg); margin: 0; }
+.frc-safety-list { padding: 0 var(--space-4) 0 calc(var(--space-4) + 24px); margin: 0; display: grid; gap: 10px; font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg); }
+.frc-safety-ppe { display: flex; flex-wrap: wrap; gap: 12px; padding: 0 var(--space-4); }
+
+/* ---- StepCard / Step ------------------------------------------------------ */
+.frc-steps { display: grid; gap: var(--space-3); counter-reset: frc-step; }
+.frc-step {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-3);
+  background: var(--bg1);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-panel);
+  counter-increment: frc-step;
+}
+.frc-step-n {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  background: var(--bg2);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-chip);
+  box-shadow: var(--well-recess);
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h3);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--fg-hero);
+}
+.frc-step-n::before { content: counter(frc-step); }
+.frc-step-body { display: grid; gap: 8px; }
+.frc-step-title { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h3); line-height: var(--lh-heading); color: var(--fg); margin: 0; }
+.frc-step-text { font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg); margin: 0; }
+.frc-step[data-state="done"] .frc-step-n { color: var(--ok); border-color: var(--ok); }
+.frc-step[data-state="current"] .frc-step-n { color: var(--accent-fg); background: var(--accent); border-color: var(--accent); }
+
+/* ---- ProcessPipeline / PipelineStep --------------------------------------- */
+.frc-pipeline { display: flex; align-items: stretch; gap: 6px; }
+.frc-pipeline-step {
+  --pipe: var(--fg-structure);
+  flex: 1;
+  display: grid;
+  gap: 8px;
+  align-content: center;
+  min-height: 108px;
+  padding: var(--space-3) calc(var(--space-4) + 12px) var(--space-3) var(--space-3);
+  background: var(--bg2);
+  border-left: 4px solid var(--pipe);
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 0 100%);
+}
+.frc-pipeline-step:last-child { clip-path: none; padding-right: var(--space-3); }
+.frc-pipeline-step[data-state="done"]    { --pipe: var(--ok); }
+.frc-pipeline-step[data-state="current"] { --pipe: var(--accent); background: var(--accent-soft); }
+.frc-pipeline-step[data-state="blocked"] { --pipe: var(--fault); }
+.frc-pipeline-n { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--pipe); }
+.frc-pipeline-title { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-body); line-height: var(--lh-heading); color: var(--fg); margin: 0; }
+.frc-pipeline-note { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+
+/* ---- CompareSplit / CompareRow -------------------------------------------- */
+.frc-compare { display: grid; gap: 0; }
+.frc-compare-head, .frc-compare-row { display: grid; grid-template-columns: 280px 1fr 1fr; gap: var(--space-3); }
+.frc-compare-head { padding-bottom: 12px; border-bottom: var(--hair-frame) solid var(--line); }
+.frc-compare-option { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h3); color: var(--fg); }
+.frc-compare-row { padding: 16px 0; border-bottom: var(--hair) solid var(--line); align-items: baseline; }
+.frc-compare-label { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+.frc-compare-cell { font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg); }
+.frc-compare-row[data-lead="a"] .frc-compare-cell:nth-of-type(1),
+.frc-compare-row[data-lead="b"] .frc-compare-cell:nth-of-type(2) { color: var(--fg-hero); }
+.frc-compare-row[data-lead="a"] .frc-compare-cell:nth-of-type(2),
+.frc-compare-row[data-lead="b"] .frc-compare-cell:nth-of-type(1) { color: var(--fg-dim); }
+
+/* ---- SampleGrid / Sample -------------------------------------------------- */
+.frc-samples { display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: var(--space-4); }
+.frc-sample { display: grid; gap: 10px; align-content: start; }
+.frc-sample-media {
+  aspect-ratio: 4 / 3;
+  background: var(--surface-viewport);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.frc-sample-media > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.frc-sample-name { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg); }
+.frc-sample-note { font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg-dim); }
+
+/* ---- JumpGrid / JumpCard -------------------------------------------------- */
+/* The hub sheet grid. A jump changes which sheet is on screen; it never
+   reveals content that was hidden on this one. */
+.frc-jumps { display: grid; grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: var(--space-3); }
+.frc-jump {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: var(--space-4);
+  background: var(--bg1);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-panel);
+  color: var(--fg);
+  text-decoration: none;
+}
+.frc-jump:hover { border-color: var(--accent); }
+.frc-jump-n { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wider); text-transform: uppercase; color: var(--accent); font-variant-numeric: lining-nums tabular-nums; }
+.frc-jump-title { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h3); line-height: var(--lh-heading); color: var(--fg); margin: 0; }
+.frc-jump-note { font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg-dim); margin: 0; }
+.frc-jump[data-state="done"] .frc-jump-n { color: var(--ok); }
+
+/* ---- CalloutDrawing / CalloutPin ------------------------------------------ */
+/* Pins sit over the drawing at --x / --y percent. Every label is rendered at
+   rest; activating a pin RAISES its label, it does not create it. */
+.frc-drawing { position: relative; display: block; margin: 0; }
+.frc-drawing-media { position: relative; }
+.frc-pin {
+  position: absolute;
+  left: calc(var(--x, 50) * 1%);
+  top: calc(var(--y, 50) * 1%);
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.frc-pin-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: var(--hair-frame) solid var(--accent);
+  background: var(--bg0);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-variant-numeric: lining-nums tabular-nums;
+  flex: none;
+}
+.frc-pin-label {
+  padding: 8px 14px;
+  background: var(--bg1);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-chip);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg);
+  opacity: 0.72;
+  white-space: nowrap;
+}
+.frc-pin[data-active] .frc-pin-label { opacity: 1; border-color: var(--accent); }
+.frc-pin[data-active] .frc-pin-dot { background: var(--accent); color: var(--accent-fg); }
+.frc-pin:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.frc-pin-left { flex-direction: row-reverse; }
+
+/* ---- QuoteBlock ----------------------------------------------------------- */
+.frc-quote { display: grid; gap: var(--space-3); max-width: 1280px; margin: 0; }
+.frc-quote-rule { width: 96px; height: 6px; background: var(--accent); border-radius: var(--radius-chip); }
+.frc-quote-text { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h2); line-height: var(--lh-display); letter-spacing: var(--track-tight); color: var(--fg); margin: 0; }
+.frc-quote-attr { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+.frc-quote-role { color: var(--fg-structure); }
+
+/* ---- RoleCard ------------------------------------------------------------- */
+/* A member: subteams and certifications, shaped like the app skills model
+   (certified / in progress, safety-critical flagged). Props only — this
+   component never queries anything. */
+.frc-role {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--bg1);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--panel-shadow);
+}
+.frc-ground-squadron .frc-role { background: var(--plate); }
+.frc-role-portrait { display: flex; align-items: flex-start; justify-content: center; }
+.frc-role-body { display: grid; gap: var(--space-2); align-content: start; }
+.frc-role-name { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h2); line-height: var(--lh-tight); color: var(--fg); margin: 0; }
+.frc-role-title { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+.frc-role-tags { display: flex; flex-wrap: wrap; gap: 12px; }
+.frc-role-certs { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.frc-role-cert { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+.frc-role-cert::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--fg-structure); flex: none; }
+.frc-role-cert[data-status="certified"] { color: var(--fg); }
+.frc-role-cert[data-status="certified"]::before { background: var(--ok); }
+.frc-role-cert[data-status="in_progress"]::before { background: var(--warn); }
+.frc-role-cert[data-safety]::after { content: 'SAFETY'; color: var(--warn); letter-spacing: var(--track-wider); }
+
+/* ---- PartCallout ---------------------------------------------------------- */
+/* A COTS part for a BOM or a training sheet: vendor, part number, price. */
+.frc-part {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-4);
+  background: var(--bg1);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-panel);
+}
+.frc-part-media { display: flex; align-items: center; justify-content: center; min-height: 160px; }
+.frc-part-body { display: grid; gap: 10px; align-content: start; }
+.frc-part-name { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h3); line-height: var(--lh-heading); color: var(--fg); margin: 0; }
+.frc-part-vendor { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+.frc-part-spec { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.frc-part-pn { font-family: var(--font-mono); font-size: var(--fs-label); color: var(--fg); letter-spacing: var(--track-normal); }
+.frc-part-price { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h3); font-variant-numeric: lining-nums tabular-nums; color: var(--fg-hero); }
+.frc-part-note { font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg-dim); margin: 0; }
+
+/* ---- FieldDiagram --------------------------------------------------------- */
+/* Zone GEOMETRY is structural data and stays an array prop; the zone labels are
+   copy and are children. Alliance colors here are alliance data and appear only
+   on the FIELD ground. */
+.frc-field-diagram {
+  --al-red: var(--fg-structure);
+  --al-blue: var(--fg-dim);
+  position: relative;
+  display: block;
+  margin: 0;
+  background: var(--bg2);
+  border: var(--hair-frame) solid var(--line);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+}
+.frc-ground-field .frc-field-diagram { --al-red: var(--alliance-red); --al-blue: var(--alliance-blue); }
+.frc-fd-stage { position: relative; }
+.frc-field-diagram svg { display: block; width: 100%; height: auto; }
+.frc-fd-grid { stroke: var(--line); stroke-width: 1; fill: none; }
+.frc-fd-zone { fill: var(--fg-structure); fill-opacity: 0.22; stroke: var(--line-strong); stroke-width: 2; cursor: pointer; }
+.frc-fd-zone[data-alliance="red"]  { fill: var(--al-red); }
+.frc-fd-zone[data-alliance="blue"] { fill: var(--al-blue); }
+.frc-fd-zone[data-active] { fill-opacity: 0.45; stroke: var(--accent); }
+.frc-field-diagram[data-focus] .frc-fd-zone:not([data-active]) { fill-opacity: 0.12; }
+/* Zone labels are COPY, so they are HTML children positioned over the drawing
+   (--x / --y from the zone geometry), never SVG <text> baked into the shape. */
+.frc-fd-label {
+  position: absolute;
+  left: calc(var(--x, 50) * 1%);
+  top: calc(var(--y, 50) * 1%);
+  transform: translate(-50%, -50%);
+  padding: 4px 10px;
+  background: var(--bg1);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-chip);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg);
+  opacity: 0.78;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.frc-fd-label[data-active] { opacity: 1; border-color: var(--accent); }
+.frc-fd-legend { display: flex; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-3); border-top: var(--hair) solid var(--line); }
+.frc-fd-key { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+.frc-fd-key::before { content: ''; width: 16px; height: 16px; border-radius: var(--radius-chip); background: var(--key, var(--fg-structure)); }
+.frc-fd-key-red  { --key: var(--al-red); }
+.frc-fd-key-blue { --key: var(--al-blue); }
+
+/* ---- SponsorWall ---------------------------------------------------------- */
+/* Every sponsor mark is a Cutout with ground="none": a floating mark, no
+   contact shadow, because a shadow under a corporate logo reads as an error. */
+.frc-sponsors { display: grid; gap: var(--space-5); }
+.frc-sponsor-tier { display: grid; gap: var(--space-3); }
+.frc-sponsor-tier-head { display: flex; align-items: center; gap: var(--space-3); }
+.frc-sponsor-tier-name { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wider); text-transform: uppercase; color: var(--fg-dim); white-space: nowrap; }
+.frc-sponsor-tier-rule { flex: 1; height: var(--hair); background: var(--line); }
+.frc-sponsor-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5); }
+.frc-sponsor-mark { display: flex; align-items: center; justify-content: center; }
+
+/* ---- AwardPlate ----------------------------------------------------------- */
+.frc-award {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  text-align: center;
+  padding: var(--space-5) var(--space-4);
+  background: var(--plate);
+  border: var(--hair-frame) solid var(--line-strong);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--plate-rise);
+}
+.frc-award-eyebrow { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wider); text-transform: uppercase; color: var(--fg-dim); }
+.frc-award-name {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--track-tight);
+  color: var(--fg-hero);
+  text-shadow: var(--glow);
+  margin: 0;
+}
+.frc-award-event { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg); }
+.frc-award-year { font-family: var(--font-mono); font-size: var(--fs-label); color: var(--fg-dim); font-variant-numeric: lining-nums tabular-nums; }
+
+/* ---- ResultBanner --------------------------------------------------------- */
+.frc-result {
+  --res: var(--accent);
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg1);
+  border: var(--hair) solid var(--line);
+  border-left: 8px solid var(--res);
+  border-radius: var(--radius-panel);
+}
+.frc-result-win  { --res: var(--ok); }
+.frc-result-loss { --res: var(--fault); }
+.frc-result-rank { --res: var(--accent); }
+.frc-result-tag { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wider); text-transform: uppercase; color: var(--res); }
+.frc-result-title { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h3); line-height: var(--lh-heading); color: var(--fg); margin: 0; }
+.frc-result-score { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h2); font-variant-numeric: lining-nums tabular-nums; color: var(--fg); }
+.frc-result-note { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }

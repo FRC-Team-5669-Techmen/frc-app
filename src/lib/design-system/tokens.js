@@ -60,7 +60,7 @@ export const AUDIENCE_CLASSES = {
 
 /**
  * The complete semantic alias set, per ground, exactly as declared in
- * tokens/colors.css. Same 35 names in every ground. Literal strings only.
+ * tokens/colors.css. Same 36 names in every ground. Literal strings only.
  */
 export const GROUND_ALIASES = {
   squadron: {
@@ -69,6 +69,7 @@ export const GROUND_ALIASES = {
     '--bg1': '#0B0C0E',
     '--bg2': '#141619',
     '--plate': '#1E2126',
+    '--surface-viewport': '#141619',
     '--edge': '#000000',
     '--line': 'rgba(148,152,156,0.22)',
     '--line-strong': 'rgba(255,230,41,0.50)',
@@ -106,6 +107,7 @@ export const GROUND_ALIASES = {
     '--bg1': '#16191E',
     '--bg2': '#1E222A',
     '--plate': '#272C35',
+    '--surface-viewport': '#1E222A',
     '--edge': '#05070A',
     '--line': 'rgba(148,152,156,0.20)',
     '--line-strong': 'rgba(0,156,215,0.45)',
@@ -143,6 +145,7 @@ export const GROUND_ALIASES = {
     '--bg1': '#E9E7E1',
     '--bg2': '#DCD9D1',
     '--plate': '#E9E7E1',
+    '--surface-viewport': '#DCD9D1',
     '--edge': '#DCD9D1',
     '--line': 'rgba(20,22,26,0.22)',
     '--line-strong': 'rgba(122,99,0,0.55)',
@@ -180,7 +183,7 @@ export const ALIAS_NAMES = Object.keys(GROUND_ALIASES.squadron)
 
 /** Aliases that MUST differ between a dark ground and paper (a match is the freeze bug). */
 export const PAPER_MUST_DIFFER = [
-  '--ground', '--bg0', '--bg1', '--bg2', '--plate', '--edge', '--fg', '--fg-hero', '--accent', '--accent-fg',
+  '--ground', '--bg0', '--bg1', '--bg2', '--plate', '--surface-viewport', '--edge', '--fg', '--fg-hero', '--accent', '--accent-fg',
   '--rim', '--glow', '--glow-box', '--glow-strength', '--chrome-bg', '--chrome-fg', '--live', '--focus',
 ]
 

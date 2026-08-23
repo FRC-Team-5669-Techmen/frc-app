@@ -1,0 +1,427 @@
+/* FRC5669DesignSystem — data
+   The components/data group: badges, chips, fields, stats, readouts, the four
+   table shapes, the two chart shapes, the decision matrix, the timeline, the
+   two clocks, and the alliance surfaces. Colors come ONLY from the ground
+   aliases and the red partition; nothing here declares a literal.
+
+   THE ALLIANCE RULE
+   --alliance-red and --alliance-blue are alliance DATA, never decoration, and
+   they are legal only on the FIELD ground. Three components may reach for them:
+   AllianceSplit, ScoutTable and FieldDiagram (that last one lives in
+   surface-components.css). Each of the three declares neutral local defaults
+   and only picks up the partition colors inside .frc-ground-field, so a
+   SQUADRON or paper sheet carrying alliance data renders it in structure tones
+   with the RED / BLUE word still spelled out. The word is what carries the
+   meaning off the FIELD ground; the color never has to. */
+
+/* ---- Badge ---------------------------------------------------------------- */
+/* Status is spoken in WORDS on a colored pill. No emoji, ever. The state dot is
+   the one circular token the small-radius rule exempts. */
+.frc-badge {
+  --badge: var(--fg-structure);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px;
+  border: var(--hair) solid var(--badge);
+  border-radius: var(--radius-chip);
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  line-height: 1.2;
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.frc-badge::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--badge); flex: none; }
+.frc-badge-ok      { --badge: var(--ok); }
+.frc-badge-warn    { --badge: var(--warn); }
+.frc-badge-fault   { --badge: var(--fault); }
+.frc-badge-accent  { --badge: var(--accent); }
+.frc-badge-program { --badge: var(--program); }
+.frc-badge-plain::before { display: none; }
+.frc-badge-solid { background: var(--badge); color: var(--bg0); }
+.frc-badge-solid::before { background: var(--bg0); }
+
+/* ---- Chip ----------------------------------------------------------------- */
+/* A tag, not a status. Selection is emphasis; a chip never reveals content. */
+.frc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-chip);
+  background: var(--bg2);
+  color: var(--fg-dim);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  line-height: 1.2;
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.frc-chip[data-selected] { border-color: var(--accent); background: var(--accent-soft); color: var(--fg); }
+.frc-chip-count { color: var(--fg); font-variant-numeric: lining-nums tabular-nums; }
+
+/* ---- SubteamBadge --------------------------------------------------------- */
+/* Takes the app subteam vocabulary (src/subteams.js) as a string. There is
+   deliberately NO color or icon map keyed to that list: the list grows, and a
+   per-value map would silently drop a new subteam into an unstyled default. */
+.frc-subteam {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px 5px 10px;
+  border: var(--hair) solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-chip);
+  background: var(--bg2);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.frc-subteam-unknown { border-left-color: var(--fg-structure); color: var(--fg-dim); }
+.frc-subteam-lead { border-left-width: 6px; }
+
+/* ---- Field (label + value) ------------------------------------------------ */
+.frc-field { display: grid; gap: 6px; align-content: start; }
+.frc-field-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.frc-field-value { font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg); }
+.frc-field-mono .frc-field-value { font-family: var(--font-mono); font-variant-numeric: lining-nums tabular-nums; }
+.frc-field-inline { grid-template-columns: auto 1fr; gap: 16px; align-items: baseline; }
+
+/* ---- StatBlock ------------------------------------------------------------ */
+.frc-stat { display: grid; gap: 8px; align-content: start; }
+.frc-stat-value {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--track-tight);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--fg);
+}
+/* Glow is rationed: only the hero stat gets it, and it is zero on paper. */
+.frc-stat-hero .frc-stat-value { color: var(--fg-hero); text-shadow: var(--glow); }
+.frc-stat-sm .frc-stat-value { font-size: var(--fs-h2); }
+.frc-stat-unit { font-family: var(--font-mono); font-size: var(--fs-h3); color: var(--fg-dim); margin-left: 0.2em; }
+.frc-stat-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.frc-stat-note { font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg-dim); }
+.frc-stat-ok .frc-stat-value    { color: var(--ok); }
+.frc-stat-warn .frc-stat-value  { color: var(--warn); }
+.frc-stat-fault .frc-stat-value { color: var(--fault); }
+
+/* ---- Readout -------------------------------------------------------------- */
+/* Telemetry: key, leader, value. Mono end to end, tabular numerals. */
+.frc-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.frc-readout-leader { flex: 1; border-bottom: var(--hair) dotted var(--line); transform: translateY(-0.25em); min-width: 32px; }
+.frc-readout-value { color: var(--fg); font-variant-numeric: lining-nums tabular-nums; letter-spacing: var(--track-normal); }
+.frc-readout-ok .frc-readout-value    { color: var(--ok); }
+.frc-readout-warn .frc-readout-value  { color: var(--warn); }
+.frc-readout-fault .frc-readout-value { color: var(--fault); }
+.frc-readout-stack { display: grid; gap: 12px; }
+
+/* ---- SpecTable / SpecRow -------------------------------------------------- */
+.frc-spec { display: grid; gap: 0; }
+.frc-spec-caption {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  padding-bottom: var(--space-2);
+}
+.frc-spec-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-4);
+  align-items: baseline;
+  padding: 14px 0;
+  border-bottom: var(--hair) solid var(--line);
+}
+.frc-spec-row:first-of-type { border-top: var(--hair) solid var(--line); }
+.frc-spec-label { font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg); }
+.frc-spec-value { font-family: var(--font-mono); font-size: var(--fs-body-sm); color: var(--fg); font-variant-numeric: lining-nums tabular-nums; }
+.frc-spec-note  { grid-column: 1 / -1; font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg-dim); }
+.frc-spec-row[data-emphasis] .frc-spec-value { color: var(--fg-hero); }
+
+/* ---- FocusTable / FocusRow ------------------------------------------------ */
+/* Click targets may change EMPHASIS. They may never reveal content: every row
+   is fully rendered at rest, and focusing one dims its siblings. */
+.frc-focus { display: grid; gap: 0; }
+.frc-focus-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-3);
+  align-items: baseline;
+  width: 100%;
+  padding: 16px 12px;
+  border: 0;
+  border-bottom: var(--hair) solid var(--line);
+  border-left: 3px solid transparent;
+  background: transparent;
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.frc-focus[data-focus] .frc-focus-row:not([data-active]) { opacity: 0.45; }
+.frc-focus-row[data-active] { border-left-color: var(--accent); background: var(--accent-soft); }
+.frc-focus-row:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.frc-focus-rank { font-family: var(--font-mono); color: var(--fg-dim); font-variant-numeric: lining-nums tabular-nums; }
+.frc-focus-value { font-family: var(--font-mono); color: var(--fg); font-variant-numeric: lining-nums tabular-nums; }
+
+/* ---- BarChart / Bar ------------------------------------------------------- */
+.frc-bars { display: grid; gap: var(--space-2); }
+.frc-bar { --bar: var(--accent); display: grid; grid-template-columns: 260px 1fr auto; gap: var(--space-3); align-items: center; }
+.frc-bar-label { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+.frc-bar-track {
+  position: relative;
+  height: 30px;
+  background: var(--bg2);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-chip);
+  overflow: hidden;
+}
+.frc-bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--pct, 0) * 1%); background: var(--bar); }
+.frc-bar-value { font-family: var(--font-mono); font-size: var(--fs-label); color: var(--fg); font-variant-numeric: lining-nums tabular-nums; min-width: 90px; text-align: right; }
+.frc-bar-ok    { --bar: var(--ok); }
+.frc-bar-warn  { --bar: var(--warn); }
+.frc-bar-fault { --bar: var(--fault); }
+.frc-bar-quiet { --bar: var(--fg-structure); }
+/* A target line the bars are read against. */
+.frc-bar-target { position: absolute; top: 0; bottom: 0; left: calc(var(--target, 0) * 1%); width: var(--hair-frame); background: var(--fg-hero); }
+
+/* ---- GanttChart / GanttBar ------------------------------------------------ */
+.frc-gantt { display: grid; gap: 12px; }
+.frc-gantt-head, .frc-gantt-row { display: grid; grid-template-columns: 280px 1fr; gap: var(--space-3); align-items: center; }
+.frc-gantt-scale { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+.frc-gantt-tick {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  padding-bottom: 6px;
+  border-bottom: var(--hair) solid var(--line);
+}
+.frc-gantt-label { font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg); }
+.frc-gantt-lane {
+  position: relative;
+  height: 44px;
+  background: var(--bg2);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-chip);
+}
+.frc-gantt-lane::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, var(--line) 0 1px, transparent 1px calc(100% / var(--cols, 6)));
+  background-size: calc(100% / var(--cols, 6)) 100%;
+  pointer-events: none;
+}
+.frc-gantt-bar {
+  --gbar: var(--accent);
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: calc(var(--start, 0) * 1%);
+  width: calc(var(--span, 10) * 1%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border-left: 4px solid var(--gbar);
+  border-radius: var(--radius-chip);
+  background: var(--accent-soft);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.frc-gantt-bar-done    { --gbar: var(--ok); }
+.frc-gantt-bar-risk    { --gbar: var(--warn); }
+.frc-gantt-bar-blocked { --gbar: var(--fault); }
+.frc-gantt-today { position: absolute; top: 0; bottom: 0; left: calc(var(--at, 0) * 1%); width: var(--hair-frame); background: var(--fg-hero); }
+
+/* ---- DecisionMatrix ------------------------------------------------------- */
+.frc-matrix { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: var(--fs-label); color: var(--fg); }
+.frc-matrix th, .frc-matrix td { padding: 14px 16px; text-align: right; border-bottom: var(--hair) solid var(--line); font-weight: var(--fw-regular); }
+.frc-matrix th:first-child, .frc-matrix td:first-child { text-align: left; }
+.frc-matrix thead th { color: var(--fg-dim); text-transform: uppercase; letter-spacing: var(--track-wide); font-size: var(--fs-micro); }
+.frc-matrix-weight { display: block; color: var(--fg-structure); }
+.frc-matrix td { font-variant-numeric: lining-nums tabular-nums; }
+.frc-matrix-total { color: var(--fg); font-weight: var(--fw-bold); }
+.frc-matrix tbody tr[data-winner] { background: var(--accent-soft); }
+.frc-matrix tbody tr[data-winner] .frc-matrix-total { color: var(--fg-hero); }
+.frc-matrix-caption { caption-side: bottom; padding-top: var(--space-2); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); text-align: left; }
+
+/* ---- Timeline / TimelineItem ---------------------------------------------- */
+.frc-timeline { position: relative; display: grid; gap: 0; padding-left: 44px; }
+.frc-timeline::before { content: ''; position: absolute; left: 13px; top: 10px; bottom: 10px; width: var(--hair-frame); background: var(--line); }
+.frc-timeline-item { position: relative; display: grid; gap: 6px; padding: 0 0 var(--space-4) 0; }
+.frc-timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -44px;
+  top: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: var(--hair-frame) solid var(--fg-structure);
+  background: var(--bg0);
+}
+.frc-timeline-item[data-state="done"]::before    { background: var(--ok); border-color: var(--ok); }
+.frc-timeline-item[data-state="current"]::before { background: var(--accent); border-color: var(--accent); box-shadow: var(--glow-box); }
+.frc-timeline-item[data-state="risk"]::before    { background: var(--warn); border-color: var(--warn); }
+.frc-timeline-when { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+.frc-timeline-title { font-family: var(--font-display); font-weight: var(--fw-bold); font-size: var(--fs-h3); line-height: var(--lh-heading); color: var(--fg); margin: 0; }
+.frc-timeline-body { font-family: var(--font-body); font-size: var(--fs-body-sm); color: var(--fg-dim); margin: 0; }
+
+/* ---- MatchClock ----------------------------------------------------------- */
+/* Real match timing, at projection scale, SILENT. Full duration at rest.
+   Copper at the warning threshold. Rust at zero — NEVER alliance red, because a
+   sheet carrying a match clock also carries alliance colors and a red zero
+   state is unreadable there. */
+.frc-clock { --clock: var(--fg-hero); display: grid; gap: var(--space-2); justify-items: start; }
+.frc-clock-phase {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: var(--track-wider);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.frc-clock-phase::before { content: ''; width: 14px; height: 14px; border-radius: 50%; background: var(--clock); }
+.frc-clock-time {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-hero);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--track-tight);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--clock);
+  text-shadow: var(--glow);
+}
+.frc-clock[data-state="warn"] { --clock: var(--warn); }
+.frc-clock[data-state="zero"] { --clock: var(--fault); }
+.frc-clock[data-state="warn"] .frc-clock-time,
+.frc-clock[data-state="zero"] .frc-clock-time { text-shadow: none; }
+.frc-clock-track { position: relative; width: 640px; max-width: 100%; height: 12px; background: var(--bg2); border: var(--hair) solid var(--line); border-radius: var(--radius-chip); overflow: hidden; }
+.frc-clock-fill { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--pct, 100) * 1%); background: var(--clock); }
+.frc-clock-note { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+
+/* ---- BuildCountdown ------------------------------------------------------- */
+.frc-countdown { --count: var(--fg-hero); display: grid; gap: 10px; justify-items: start; }
+.frc-countdown-row { display: flex; align-items: baseline; gap: 16px; }
+.frc-countdown-value {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--track-tight);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--count);
+  text-shadow: var(--glow);
+}
+.frc-countdown[data-state="warn"] { --count: var(--warn); }
+.frc-countdown[data-state="due"]  { --count: var(--fault); }
+.frc-countdown[data-state="warn"] .frc-countdown-value,
+.frc-countdown[data-state="due"] .frc-countdown-value { text-shadow: none; }
+.frc-countdown-unit { font-family: var(--font-mono); font-size: var(--fs-h3); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+.frc-countdown-label { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--fg-dim); }
+
+/* ---- ScoutTable / ScoutRow ------------------------------------------------ */
+/* Alliance data. Neutral by default; the partition colors only on FIELD. */
+.frc-scout {
+  --al-red: var(--fg-structure);
+  --al-blue: var(--fg-dim);
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  color: var(--fg);
+}
+.frc-ground-field .frc-scout { --al-red: var(--alliance-red); --al-blue: var(--alliance-blue); }
+.frc-scout th, .frc-scout td { padding: 14px 16px; text-align: right; border-bottom: var(--hair) solid var(--line); font-weight: var(--fw-regular); font-variant-numeric: lining-nums tabular-nums; }
+.frc-scout th:first-child, .frc-scout td:first-child { text-align: left; }
+.frc-scout thead th { color: var(--fg-dim); text-transform: uppercase; letter-spacing: var(--track-wide); font-size: var(--fs-micro); }
+.frc-scout-row { cursor: pointer; }
+.frc-scout-row td:first-child { box-shadow: inset 4px 0 0 var(--side, transparent); }
+.frc-scout-row[data-alliance="red"]  { --side: var(--al-red); }
+.frc-scout-row[data-alliance="blue"] { --side: var(--al-blue); }
+.frc-scout-tag { font-size: var(--fs-micro); letter-spacing: var(--track-wide); text-transform: uppercase; color: var(--side, var(--fg-dim)); margin-left: 12px; }
+.frc-scout-team { color: var(--fg); font-weight: var(--fw-bold); }
+.frc-scout[data-focus] .frc-scout-row:not([data-active]) { opacity: 0.45; }
+.frc-scout-row[data-active] { background: var(--accent-soft); }
+.frc-scout-row:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+
+/* ---- AllianceSplit -------------------------------------------------------- */
+.frc-alliance {
+  --al-red: var(--fg-structure);
+  --al-blue: var(--fg-dim);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--space-4);
+  align-items: stretch;
+}
+.frc-ground-field .frc-alliance { --al-red: var(--alliance-red); --al-blue: var(--alliance-blue); }
+.frc-alliance-side {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-4);
+  background: var(--bg1);
+  border: var(--hair) solid var(--line);
+  border-top: 8px solid var(--side);
+  border-radius: var(--radius-panel);
+}
+.frc-alliance-red  { --side: var(--al-red); }
+.frc-alliance-blue { --side: var(--al-blue); }
+.frc-alliance-tag { font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wider); text-transform: uppercase; color: var(--side); }
+.frc-alliance-score {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-hero);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--track-tight);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--fg);
+}
+.frc-alliance-teams { display: flex; flex-wrap: wrap; gap: 12px; font-family: var(--font-mono); font-size: var(--fs-label); color: var(--fg-dim); font-variant-numeric: lining-nums tabular-nums; }
+.frc-alliance-vs { align-self: center; font-family: var(--font-mono); font-size: var(--fs-label); letter-spacing: var(--track-wider); text-transform: uppercase; color: var(--fg-structure); }
+.frc-alliance-side[data-outcome="win"]  .frc-alliance-score { color: var(--ok); }
+.frc-alliance-side[data-outcome="loss"] .frc-alliance-score { color: var(--fg-dim); }

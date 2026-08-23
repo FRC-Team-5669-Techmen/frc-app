@@ -122,7 +122,7 @@ for (const f of allFiles) {
 }
 
 // ---------- 5. styles.css imports only, in order ----------
-const ORDER = ['fonts', 'colors', 'typography', 'effects', 'surfaces', 'motion', 'deck-motion', 'image-slot']
+const ORDER = ['fonts', 'colors', 'typography', 'effects', 'surfaces', 'motion', 'deck-motion', 'image-slot', 'data', 'surface-components', 'forms']
 const styles = stripComments(read('styles.css')).split('\n').map((l) => l.trim()).filter(Boolean)
 const imports = styles.map((l) => l.match(/^@import\s+'\.\/tokens\/([\w-]+)\.css';$/)?.[1])
 if (styles.some((l) => !l.startsWith('@import'))) fail('styles.css contains something other than @import lines')
@@ -188,7 +188,7 @@ if (!exists(manifest.tokens.mirror)) fail('manifest tokens.mirror missing')
 if (!fs.existsSync(path.resolve(HERE, '../../', manifest.audit.split(' ')[0]))) fail('manifest audit path missing')
 if (manifest.version !== tokens.VERSION) fail(`manifest version ${manifest.version} ≠ tokens.js ${tokens.VERSION}`)
 // every component .jsx on disk is listed
-for (const f of allFiles.filter((p) => /^components\/(core|brand)\/[A-Z]\w+\.jsx$/.test(p) && !/DemoCard|AssetSlot/.test(p))) {
+for (const f of allFiles.filter((p) => /^components\/(core|brand|data|surfaces|forms)\/[A-Z]\w+\.jsx$/.test(p) && !/DemoCard|AssetSlot/.test(p))) {
   if (!manifest.components.some((c) => c.sourcePath === f)) fail(`${f} exists but is not in the manifest`)
 }
 for (const a of manifest.pending.assets) if (exists(a)) fail(`manifest pending asset ${a} exists — move it out of pending`)

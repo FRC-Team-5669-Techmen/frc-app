@@ -1,0 +1,63 @@
+/* FRC5669DesignSystem — forms
+   The components/forms group: Input and Select. A deck rarely collects input,
+   but a training sheet, a pit checklist and a scouting mockup all need a
+   control that looks like this system rather than like the browser default.
+
+   Controls are 3px radius (the control radius), recessed on the FIELD ground
+   like every other well, and never pill-round. Labels are mono UPPERCASE with
+   wide tracking; the value the presenter types is body copy, because it is
+   copy. Colors come only from the ground aliases. */
+
+.frc-control { display: grid; gap: 8px; align-content: start; }
+.frc-control-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.frc-control-req { color: var(--accent); margin-left: 6px; }
+.frc-control-hint { font-family: var(--font-mono); font-size: var(--fs-micro); letter-spacing: var(--track-wide); color: var(--fg-dim); }
+.frc-control[data-invalid] .frc-control-hint { color: var(--fault); text-transform: uppercase; }
+
+.frc-input, .frc-select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--bg2);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-control);
+  box-shadow: var(--well-recess);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: var(--fs-body-sm);
+  line-height: 1.3;
+}
+.frc-input::placeholder { color: var(--fg-structure); }
+.frc-input:hover, .frc-select:hover { border-color: var(--line-strong); }
+.frc-input:focus-visible, .frc-select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-color: var(--accent); }
+.frc-input[disabled], .frc-select[disabled] { opacity: 0.45; cursor: not-allowed; }
+.frc-control[data-invalid] .frc-input,
+.frc-control[data-invalid] .frc-select { border-color: var(--fault); }
+.frc-input-mono { font-family: var(--font-mono); font-variant-numeric: lining-nums tabular-nums; letter-spacing: var(--track-normal); }
+.frc-input-lg { min-height: 72px; font-size: var(--fs-body); }
+textarea.frc-input { min-height: 140px; resize: vertical; }
+
+/* Select: the caret is the mono ▾ from the geometric glyph set, never an image
+   and never an emoji. The wrapper positions it; the control keeps room for it. */
+.frc-select-wrap { position: relative; display: block; }
+.frc-select { padding-right: 56px; }
+.frc-select-caret {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  color: var(--fg-dim);
+}
+.frc-select option { background: var(--bg2); color: var(--fg); }

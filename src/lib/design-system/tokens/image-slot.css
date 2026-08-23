@@ -49,3 +49,163 @@
 /* Reveal targets (motion.css frc-img-*) and generic image sizing. */
 .frc-img { display: block; max-width: 100%; height: auto; }
 .frc-img-fill { width: 100%; height: 100%; object-fit: cover; }
+
+/* =============================================================================
+   THE PLATFORM BACKPLATE SUPPRESSION
+   The deck platform paints its own neutral wash behind EVERY upload — wrapped
+   or bare — as a light grey fill on the image-slot shadow part named "frame"
+   (a 8%-alpha mid grey). Deck chrome never shows a neutral, and a wash behind a
+   cutout draws exactly the rectangle a cutout has no business having.
+   It is suppressed HERE, in the stylesheet, and never by patching image-slot.js
+   inside a deck folder: that file is a copied platform starter, so a re-copy
+   silently reinstates the wash and takes the patch with it.
+   ========================================================================== */
+image-slot::part(frame) {
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
+}
+/* An EMPTY slot still has to be legible: the wash is gone, so the dashed
+   hairline and its label carry it. Both are ground aliases, never a neutral. */
+image-slot::part(placeholder),
+image-slot::part(empty) {
+  color: var(--fg-dim);
+  border-color: var(--line-strong);
+}
+image-slot { color: var(--fg-dim); }
+
+/* =============================================================================
+   TREATMENT 1 — ImageFrame. Opaque content, edge to edge.
+   Photographs, screenshots, CAD renders, drawings. The backplate reads from
+   --surface-viewport so a ground retints it; it is NEVER a literal here, which
+   is the ground-alias freeze bug reappearing one level down.
+   ========================================================================== */
+.frc-frame { position: relative; display: block; margin: 0; }
+.frc-frame-plate {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-viewport);
+  border: var(--hair) solid var(--line);
+  border-radius: var(--radius-panel);
+  min-height: 120px;
+}
+.frc-frame-plate > img,
+.frc-frame-plate > image-slot,
+.frc-frame-plate > .frc-frame-media { display: block; width: 100%; height: 100%; object-fit: cover; }
+.frc-frame-caption {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+/* brackets — equipment and renders. Four corner brackets in the active hairline. */
+.frc-frame-brackets .frc-frame-plate::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  --fb: 40px;
+  --fb-w: 2px;
+  background:
+    linear-gradient(var(--line-strong), var(--line-strong)) top left     / var(--fb) var(--fb-w) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) top left     / var(--fb-w) var(--fb) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) top right    / var(--fb) var(--fb-w) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) top right    / var(--fb-w) var(--fb) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) bottom left  / var(--fb) var(--fb-w) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) bottom left  / var(--fb-w) var(--fb) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) bottom right / var(--fb) var(--fb-w) no-repeat,
+    linear-gradient(var(--line-strong), var(--line-strong)) bottom right / var(--fb-w) var(--fb) no-repeat;
+}
+/* round — portraits only. */
+.frc-frame-round .frc-frame-plate { border-radius: 50%; aspect-ratio: 1 / 1; }
+.frc-frame-round.frc-frame-brackets .frc-frame-plate::after { display: none; }
+
+/* bleed — the frame edge feathers into the ground on the named side.
+   NEVER legal on a screenshot: a feathered interface capture reads as a
+   rendering fault, and the hard edge is what tells the room it is a screen.
+   bleed drops the rim ring and the corner brackets automatically. */
+.frc-frame-bleed .frc-frame-plate {
+  border-width: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.frc-frame-bleed .frc-frame-plate::after { display: none; }
+.frc-frame-bleed-right  .frc-frame-plate { mask-image: linear-gradient(to right,  var(--bg0) 55%, transparent 100%); -webkit-mask-image: linear-gradient(to right,  var(--bg0) 55%, transparent 100%); }
+.frc-frame-bleed-left   .frc-frame-plate { mask-image: linear-gradient(to left,   var(--bg0) 55%, transparent 100%); -webkit-mask-image: linear-gradient(to left,   var(--bg0) 55%, transparent 100%); }
+.frc-frame-bleed-top    .frc-frame-plate { mask-image: linear-gradient(to top,    var(--bg0) 55%, transparent 100%); -webkit-mask-image: linear-gradient(to top,    var(--bg0) 55%, transparent 100%); }
+.frc-frame-bleed-bottom .frc-frame-plate { mask-image: linear-gradient(to bottom, var(--bg0) 55%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, var(--bg0) 55%, transparent 100%); }
+
+/* The marked empty state: no artwork yet, no grey wash, still legible. */
+.frc-frame-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+  border: var(--hair) dashed var(--line-strong);
+  border-radius: var(--radius-panel);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  text-align: center;
+  padding: var(--space-3);
+}
+
+/* =============================================================================
+   TREATMENT 2 — Cutout. Anything carrying an alpha channel.
+   No backplate, no grid, no rectangular overlay, no corner brackets: a cutout
+   has no rectangle to draw. Every grade is a FILTER CHAIN on the subject, so
+   each layer follows the silhouette. fit is always contain — cover crops the
+   silhouette against the slot edge, which is the one reliable way to make an
+   alpha image look framed again.
+   ========================================================================== */
+.frc-cutout {
+  position: relative;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+}
+.frc-cutout-subject {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.frc-cutout-subject > img,
+.frc-cutout-subject > image-slot { display: block; width: 100%; height: 100%; object-fit: contain; background: none; }
+/* ground="shadow" — a resting part. Contact shadow on the silhouette itself. */
+.frc-cutout-shadow .frc-cutout-subject { filter: drop-shadow(0 14px 18px var(--tex-shade)) drop-shadow(0 2px 2px var(--tex-shade)); }
+/* ground="shelf" — a datum line under the part, drawn in the hairline, not a plate. */
+.frc-cutout-shelf .frc-cutout-subject { filter: drop-shadow(0 8px 10px var(--tex-shade)); }
+.frc-cutout-shelf::after {
+  content: '';
+  position: absolute;
+  left: 4%; right: 4%; bottom: 0;
+  height: var(--hair-frame);
+  background: linear-gradient(90deg, transparent, var(--line-strong) 18%, var(--line-strong) 82%, transparent);
+  pointer-events: none;
+}
+/* ground="none" — a floating mark. EVERY sponsor logo is this: a contact shadow
+   under a corporate mark reads as a rendering error. */
+.frc-cutout-none .frc-cutout-subject { filter: none; }
+.frc-cutout-caption {
+  position: absolute;
+  left: 0; right: 0; bottom: calc(-1 * var(--space-4));
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
