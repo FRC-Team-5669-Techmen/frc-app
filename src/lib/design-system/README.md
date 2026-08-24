@@ -295,4 +295,4 @@ The marker is not a soft landing: `npm run ds:audit` fails on a fault marker in 
 
 ## Assets not yet held
 
-See `assets/README.md` for the exact filenames and paths. Until they land, every mark-bearing component renders a clearly marked empty slot at the correct minimum size. No substitute is drawn and nothing resembling a mark is generated.
+See `assets/README.md` for the exact filenames and paths. Until they land, every mark-bearing component renders NOTHING in a deck and a clearly marked empty slot inside `/_ds` and the dev harness, so a missing file is visible on the workbench and never ships as a dashed box into the room. No substitute is drawn and nothing resembling a mark is generated.

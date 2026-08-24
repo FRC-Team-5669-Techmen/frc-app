@@ -15,6 +15,7 @@ import {
 } from '../index.js'
 import { cx } from '../components/cx.js'
 import { setHarnessMode } from '../components/guard.jsx'
+import { AssetSlotPlaceholders } from '../components/brand/AssetSlot.jsx'
 import {
   proveGrounds, scanForGold, scanForNeutralWhite, auditMotionGate, measureStatic, replay, countMounted,
   scanForAlliance, makeAlphaPng, scanCutoutRectangles, readComputed, definePlatformImageSlot, readSlotFrame,
@@ -1696,8 +1697,14 @@ export default function SpecimenPage() {
   // A capture run needs the image of that block, so it opts out.
   setHarnessMode(!capturing || params.get('harness') === 'throw')
   useEffect(() => { if (!capturing) document.title = `${NAMESPACE} — specimen` }, [capturing])
-  if (capturing) return <CaptureView params={params} />
+  // An unfilled AssetSlot renders NOTHING by default, so that a deck never ships
+  // a dashed placeholder box into the room. This route is the one place that
+  // wants the opposite: seeing which files have not landed is the whole point of
+  // the specimen, and of the captured PNGs the review pass reads. The capture
+  // view is wrapped too — it is the same harness, one sheet at a time.
+  if (capturing) return <AssetSlotPlaceholders><CaptureView params={params} /></AssetSlotPlaceholders>
   return (
+    <AssetSlotPlaceholders>
     <div className="frc-deck frc-ground-squadron frc-audience-internal ds-root" data-ds-root>
       <header className="ds-header">
         <span className="ds-header-title">{NAMESPACE}</span>
@@ -1731,5 +1738,6 @@ export default function SpecimenPage() {
         <WiringSection />
       </main>
     </div>
+    </AssetSlotPlaceholders>
   )
 }

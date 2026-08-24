@@ -1,8 +1,9 @@
 // FRC5669DesignSystem — asset registry.
 //
-// NONE of these files are in the repo yet. Every component that needs one
-// renders a clearly marked empty slot at the correct minimum size until the
-// file lands. No substitute mark is drawn and nothing resembling either logo
+// NONE of these files are in the repo yet. Until the file lands, every
+// component that needs one renders NOTHING in a deck and a clearly marked empty
+// slot, at the correct minimum size, inside /_ds and the dev harness — see the
+// discriminator note in components/brand/AssetSlot.jsx. No substitute mark is drawn and nothing resembling either logo
 // is generated. When a file arrives, drop it at the path below and set the
 // matching ASSETS entry to an imported URL, e.g.
 //

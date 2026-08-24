@@ -1,6 +1,6 @@
 # Assets — required and not yet held
 
-None of these files are in the repo. Components render clearly marked empty slots at the correct minimum size until they arrive. Do not draw a substitute, do not approximate either logo, do not generate anything that resembles one. When a file lands, put it at the path below and point the matching `ASSETS` entry in `../assets.js` at its imported URL.
+None of these files are in the repo. Until they arrive, a mark-bearing component renders NOTHING in a deck and a clearly marked empty slot inside `/_ds` and the dev harness — the missing file is visible on the workbench and never ships as a dashed box into the room. Do not draw a substitute, do not approximate either logo, do not generate anything that resembles one. When a file lands, put it at the path below and point the matching `ASSETS` entry in `../assets.js` at its imported URL.
 
 ## Team — from https://frcteam5669.com/outreach/branding
 

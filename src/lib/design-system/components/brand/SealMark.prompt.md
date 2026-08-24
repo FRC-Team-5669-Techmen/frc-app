@@ -6,7 +6,7 @@ The team seal: a faceted helmet with a T faceplate over wide feathered wings ins
 
 ## Asset
 
-Expects `assets/team/5669-Seal.svg`. Until it lands the component renders a clearly marked empty slot at the requested size (floor 48px). **No substitute is drawn.** The mark is never edited, distorted, recolored or reconfigured.
+Expects `assets/team/5669-Seal.svg`. Until it lands the component renders nothing at all in a deck, and a clearly marked empty slot at the requested size (floor 48px) inside `/_ds` and the dev harness. **No substitute is drawn.** The mark is never edited, distorted, recolored or reconfigured.
 
 ## Props (no copy)
 

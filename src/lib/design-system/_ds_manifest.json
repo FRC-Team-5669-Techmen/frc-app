@@ -956,7 +956,7 @@
     {
       "name": "AssetSlot",
       "sourcePath": "components/brand/AssetSlot.jsx",
-      "note": "Internal. The marked empty slot every mark-bearing component renders until its asset lands."
+      "note": "Internal. The empty slot every mark-bearing component renders until its asset lands: NOTHING in a deck, the marked placeholder inside /_ds and the dev harness, which opt in through the AssetSlotPlaceholders context it exports."
     },
     {
       "name": "cx",

@@ -115,7 +115,7 @@ Then open `/_ds`. It mounts the real components and proves in the browser: alias
 
 ## Assets
 
-Team marks, FIRST logos and sponsor art are **not in the repo**. Every mark-bearing component renders a clearly marked empty slot at the correct minimum size until the file lands. No substitute is drawn and nothing resembling a mark is generated. See `assets/README.md` for the exact filenames.
+Team marks, FIRST logos and sponsor art are **not in the repo**. Until the file lands, every mark-bearing component renders NOTHING in a deck and a clearly marked empty slot inside `/_ds` and the dev harness, so a missing file is visible on the workbench and never ships as a dashed box into the room. No substitute is drawn and nothing resembling a mark is generated. See `assets/README.md` for the exact filenames.
 
 ## Enabling this skill
 
