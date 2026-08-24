@@ -156,7 +156,26 @@ Still deliberately empty, and their cards correctly show the system's **marked e
 Those cards are graded `good` on purpose: an empty slot at the correct minimum size IS what
 the component does today, and hiding it would misrepresent the system to the design agent.
 
-## Upload status — DONE (2026-08-23)
+## Upload status — sheets ADDED (2026-08-24)
+
+**131 files written, verified by `list_files`:** `components/sheets/<Name>/` x 26, each with
+`.jsx` `.d.ts` `.html` `.prompt.md` (104), `_preview/<Name>.js` x 26, and `_ds_needs_recompile`.
+Cards index off each card HTML's first-line `@dsCard` marker, so no `register_assets` was
+needed. **Nothing else on the project was touched** — `_ds_bundle.js`, `_ds_bundle.css`,
+`styles.css`, `_vendor/*`, `README.md`, `_ds_sync.json` and `_adherence.oxlintrc.json` are
+byte-unchanged, which is the whole point of the additive plan (see the sheets-pass section).
+
+**All 26 cards were rendered in headless Chromium before upload**, against a bundle built
+from HEAD: every one is the right sheet kind, paints 922 x 691, resolves `--bg0` to the
+squadron literal, carries real copy, shows the footer rail (HubSheet correctly excepted),
+and produces zero guard fault markers and zero console errors. `SafetySheet` renders its
+`SafetyNote` and does not trip its guard.
+
+**The manifest may need one browser visit to recompile.** Same as the first sync: the
+`_ds_needs_recompile` fence is uploaded, but the platform's self-check runs when the project
+page is opened. Open the project once and the 26 sheet cards appear in the pane.
+
+## Upload status — first sync, Core + Brand (2026-08-23)
 The login blocker cleared. Project **FRC 5669 Techmen Design System**,
 `projectId 0ae827ec-d481-4eb8-a051-772544deb9c4` (pinned in config.json).
 **83 files uploaded**, verified by `list_files`: `_ds_bundle.js` / `_ds_bundle.css` /
