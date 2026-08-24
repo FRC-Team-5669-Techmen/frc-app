@@ -9,21 +9,19 @@ app**, not a standalone npm package — there is no separate build, `dist/`, or
 components on `window.FRC5669DesignSystem`) and inlines `styles.css` (tokens + component
 CSS, via its `@import` closure) into `_ds_bundle.css`.
 
-## Scope — 52 of 78 (2026-08-24)
+## Scope — 78 of 78 (2026-08-24)
 
-**Core (5) + Brand (11) + Data (16) + Surfaces (18) + Forms (2) = 52** components carry
-cards, `.d.ts` and `.prompt.md`. The **26 sheet patterns are still unsynced** — they are in
-the JS bundle and usable off `window.FRC5669DesignSystem`, they just have no card or types.
-Expanding to them is the same one-line change as below plus 26 authored previews; the hard
-part is that a sheet is a 1920x1440 surface and a card viewport is not.
+**Core (5) + Brand (11) + Data (16) + Surfaces (18) + Forms (2) + Sheets (26) = 78.** The
+sheet patterns were the last gap and they are the ones that matter most: a deck is assembled
+out of sheets, so until they carried cards the design agent was composing decks from parts
+without ever seeing the layer it was supposed to start from.
 
-**`componentSrcMap` and `docsMap` are now GENERATED, not hand-typed.** They are derived from
-`src/lib/design-system/_ds_manifest.json`, which is the DS's own registry and is already
-enforced by `npm run ds:audit`. That retires the old "they rot silently when a file moves"
-risk. To re-generate (or to widen the scope), filter the manifest by group:
+**`componentSrcMap` and `docsMap` are GENERATED, not hand-typed**, from
+`src/lib/design-system/_ds_manifest.json` — the DS's own registry, already enforced by
+`npm run ds:audit`. To re-generate (or to narrow the scope), filter the manifest by group:
 
 ```python
-GROUPS = ['core','brand','data','surfaces','forms']     # add 'sheets' to go to 78
+GROUPS = ['core','brand','data','surfaces','forms','sheets']   # all 78
 PREFIX = 'src/lib/design-system/'
 src  = {c['name']: PREFIX + c['sourcePath'] for c in man['components'] if c['group'] in GROUPS}
 docs = {c['name']: PREFIX + c['prompt']     for c in man['components'] if c['group'] in GROUPS}
@@ -31,7 +29,64 @@ docs = {c['name']: PREFIX + c['prompt']     for c in man['components'] if c['gro
 
 The generator asserts three things before writing, and all three matter: every path exists,
 no already-synced component changed path, and none is dropped. A silent drop is what would
-orphan a card in the project.
+orphan a card in the project. All three passed on the sheets pass.
+
+## The sheets pass (2026-08-24) — built WITHOUT the converter
+
+**The `/design-sync` skill and `.ds-sync/` were not available in the session that did this.**
+Both are gitignored, so a fresh clone has nothing to run, and the skill is not in every
+session's skill list. Rather than skip the sync, the emit half was reproduced for this one
+group. Three committed scripts, and each says at the top what it is:
+
+- `scripts/design-system/ds-sheet-previews.mjs` — writes the 26 `.tsx` previews by
+  EXTRACTING each composition from `components/sheets/SheetsDemoCard.jsx`. The demo card is
+  the canonical usage of every pattern and already existed; retyping those by hand would
+  have created a second copy that drifts. What the specimen route shows and what the design
+  agent sees on the card are the same markup by construction.
+- `scripts/design-system/ds-sheet-bundle.mjs` — esbuild emit. The SHAPES are not guessed:
+  `components/surfaces/Card/Card.html` and `_preview/Card.js` were fetched off the live
+  project and mirrored (IIFE under `globalName __dsPreview`, a `ds` shim resolving to
+  `window.FRC5669DesignSystem`, a react shim over `window.React`, and the first-line
+  `@dsCard` marker the pane indexes from).
+- `scripts/design-system/ds-sheet-verify.mjs` — serves the build and renders all 26 cards in
+  headless Chromium, because uploading cards nobody looked at is how an empty box ships.
+
+**THE UPLOAD WAS ADDITIVE ON PURPOSE.** `_ds_bundle.js`, `_ds_bundle.css`, `styles.css`,
+`_vendor/*`, `README.md` and `_ds_sync.json` were NOT rewritten. The 52 existing cards work
+against those files, and replacing them with output from a reimplemented pipeline would risk
+52 working cards to add 26. The sheet patterns are already inside the uploaded bundle — the
+converter's entry is `index.js`, which re-exports `components/sheets/` — so the new cards
+resolve against what is already there. Two consequences to know about:
+
+- **`_ds_sync.json` does not know about the 26.** Its `renderHashes` / `sourceKeys` /
+  `sourceHashes` still list 52. The next skill-driven sync will see 26 unknown components and
+  re-verify, which is the behaviour the watch-list below already describes as correct.
+- **The uploaded bundle predates the host-transparency work** (`bundleSha12 346309e60f98`).
+  The sheet cards do not depend on it — no sheet's public API changed — but a deck generated
+  against the project still gets the pre-fix `SafetySheet` guard until someone re-runs the
+  real converter. That is the one thing worth doing next.
+
+### Card geometry — the reason this was left undone
+
+A card cell is under a thousand pixels wide; a sheet is 1920 x 1440. The previews mount the
+real pattern on a real `.frc-stage` at full size and scale the STAGE with a transform, so the
+sheet composes at the size it was drawn for and is then made smaller. Nothing is re-laid-out
+for the card. Scale 0.48 lands it at exactly 922 x 691, which is the declared card viewport,
+so the sheet is full-bleed with no white gutter. `cardMode: "single"` for all 26 — a cell
+border and an uppercase story label around a sheet would read as chrome belonging to it.
+
+### The one real defect the render pass caught
+
+The first captures came out **clipped at 415px with a gold chevron band across the sheet**.
+Cause: the previews mounted each pattern with `active`, so `[data-deck-active]` armed the
+slide transition and the capture froze it mid-wipe. DOM measurement could not see this — the
+sheet measured the right size, the right kind and the right character count throughout.
+
+Fixed at the gate rather than by fighting it: the previews mount the pattern **without
+`active`**, so no transition rule matches at all and the card shows the base state, which
+this system guarantees is the visible end state. Suppressing the animation instead would
+have left the band on the sheet, because its `content` is declared inside the same gated
+block. The card page re-shows the unarmed sheet in one commented line.
 
 ## Key build setup (why the config is shaped this way)
 - **No aggregate `index.d.ts`**, so discovery via exports finds nothing → components are
@@ -190,9 +245,9 @@ wider than a grid cell and need full card width.
 - **`.design-sync/conventions.md` now exists and is the `readmeHeader`.** It is
   human-editable and belongs to its authors: a later sync VALIDATES its names against the
   fresh build and reports drift, and must not rewrite it.
-- **The 26 sheet patterns remain the big outstanding gap.** They are what a deck is actually
-  assembled from, so the design agent is currently composing decks out of parts without
-  seeing the sheet layer.
+- **The 26 sheet patterns are synced as of 2026-08-24** — see the sheets-pass section above.
+  What is still outstanding there is the BUNDLE: it predates the host-transparency work, and
+  refreshing it needs the real converter.
 - **`templates/` still cannot be emitted** — unchanged, see that section below.
 
 ## First-deck verification (2026-08-23)

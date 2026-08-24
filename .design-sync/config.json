@@ -58,7 +58,33 @@
     "AwardPlate": "src/lib/design-system/components/surfaces/AwardPlate.jsx",
     "ResultBanner": "src/lib/design-system/components/surfaces/ResultBanner.jsx",
     "Input": "src/lib/design-system/components/forms/Input.jsx",
-    "Select": "src/lib/design-system/components/forms/Select.jsx"
+    "Select": "src/lib/design-system/components/forms/Select.jsx",
+    "CoverSheet": "src/lib/design-system/components/sheets/CoverSheet.jsx",
+    "AgendaSheet": "src/lib/design-system/components/sheets/AgendaSheet.jsx",
+    "SectionSheet": "src/lib/design-system/components/sheets/SectionSheet.jsx",
+    "StatementSheet": "src/lib/design-system/components/sheets/StatementSheet.jsx",
+    "QuoteSheet": "src/lib/design-system/components/sheets/QuoteSheet.jsx",
+    "HubSheet": "src/lib/design-system/components/sheets/HubSheet.jsx",
+    "ClosingSheet": "src/lib/design-system/components/sheets/ClosingSheet.jsx",
+    "SplitSheet": "src/lib/design-system/components/sheets/SplitSheet.jsx",
+    "GallerySheet": "src/lib/design-system/components/sheets/GallerySheet.jsx",
+    "ProcedureSheet": "src/lib/design-system/components/sheets/ProcedureSheet.jsx",
+    "ComparisonSheet": "src/lib/design-system/components/sheets/ComparisonSheet.jsx",
+    "DataSheet": "src/lib/design-system/components/sheets/DataSheet.jsx",
+    "TimelineSheet": "src/lib/design-system/components/sheets/TimelineSheet.jsx",
+    "ScheduleSheet": "src/lib/design-system/components/sheets/ScheduleSheet.jsx",
+    "SubteamStatusSheet": "src/lib/design-system/components/sheets/SubteamStatusSheet.jsx",
+    "BlockerSheet": "src/lib/design-system/components/sheets/BlockerSheet.jsx",
+    "TargetsSheet": "src/lib/design-system/components/sheets/TargetsSheet.jsx",
+    "SafetySheet": "src/lib/design-system/components/sheets/SafetySheet.jsx",
+    "RosterSheet": "src/lib/design-system/components/sheets/RosterSheet.jsx",
+    "MatchBreakdownSheet": "src/lib/design-system/components/sheets/MatchBreakdownSheet.jsx",
+    "ScoutingSheet": "src/lib/design-system/components/sheets/ScoutingSheet.jsx",
+    "FieldSheet": "src/lib/design-system/components/sheets/FieldSheet.jsx",
+    "BOMSheet": "src/lib/design-system/components/sheets/BOMSheet.jsx",
+    "AwardSheet": "src/lib/design-system/components/sheets/AwardSheet.jsx",
+    "SponsorSheet": "src/lib/design-system/components/sheets/SponsorSheet.jsx",
+    "SeasonSheet": "src/lib/design-system/components/sheets/SeasonSheet.jsx"
   },
   "docsMap": {
     "Button": "src/lib/design-system/components/core/Button.prompt.md",
@@ -112,7 +138,33 @@
     "AwardPlate": "src/lib/design-system/components/surfaces/AwardPlate.prompt.md",
     "ResultBanner": "src/lib/design-system/components/surfaces/ResultBanner.prompt.md",
     "Input": "src/lib/design-system/components/forms/Input.prompt.md",
-    "Select": "src/lib/design-system/components/forms/Select.prompt.md"
+    "Select": "src/lib/design-system/components/forms/Select.prompt.md",
+    "CoverSheet": "src/lib/design-system/components/sheets/CoverSheet.prompt.md",
+    "AgendaSheet": "src/lib/design-system/components/sheets/AgendaSheet.prompt.md",
+    "SectionSheet": "src/lib/design-system/components/sheets/SectionSheet.prompt.md",
+    "StatementSheet": "src/lib/design-system/components/sheets/StatementSheet.prompt.md",
+    "QuoteSheet": "src/lib/design-system/components/sheets/QuoteSheet.prompt.md",
+    "HubSheet": "src/lib/design-system/components/sheets/HubSheet.prompt.md",
+    "ClosingSheet": "src/lib/design-system/components/sheets/ClosingSheet.prompt.md",
+    "SplitSheet": "src/lib/design-system/components/sheets/SplitSheet.prompt.md",
+    "GallerySheet": "src/lib/design-system/components/sheets/GallerySheet.prompt.md",
+    "ProcedureSheet": "src/lib/design-system/components/sheets/ProcedureSheet.prompt.md",
+    "ComparisonSheet": "src/lib/design-system/components/sheets/ComparisonSheet.prompt.md",
+    "DataSheet": "src/lib/design-system/components/sheets/DataSheet.prompt.md",
+    "TimelineSheet": "src/lib/design-system/components/sheets/TimelineSheet.prompt.md",
+    "ScheduleSheet": "src/lib/design-system/components/sheets/ScheduleSheet.prompt.md",
+    "SubteamStatusSheet": "src/lib/design-system/components/sheets/SubteamStatusSheet.prompt.md",
+    "BlockerSheet": "src/lib/design-system/components/sheets/BlockerSheet.prompt.md",
+    "TargetsSheet": "src/lib/design-system/components/sheets/TargetsSheet.prompt.md",
+    "SafetySheet": "src/lib/design-system/components/sheets/SafetySheet.prompt.md",
+    "RosterSheet": "src/lib/design-system/components/sheets/RosterSheet.prompt.md",
+    "MatchBreakdownSheet": "src/lib/design-system/components/sheets/MatchBreakdownSheet.prompt.md",
+    "ScoutingSheet": "src/lib/design-system/components/sheets/ScoutingSheet.prompt.md",
+    "FieldSheet": "src/lib/design-system/components/sheets/FieldSheet.prompt.md",
+    "BOMSheet": "src/lib/design-system/components/sheets/BOMSheet.prompt.md",
+    "AwardSheet": "src/lib/design-system/components/sheets/AwardSheet.prompt.md",
+    "SponsorSheet": "src/lib/design-system/components/sheets/SponsorSheet.prompt.md",
+    "SeasonSheet": "src/lib/design-system/components/sheets/SeasonSheet.prompt.md"
   },
   "overrides": {
     "Button": {
@@ -204,6 +256,84 @@
     },
     "StepCard": {
       "cardMode": "column"
+    },
+    "CoverSheet": {
+      "cardMode": "single"
+    },
+    "AgendaSheet": {
+      "cardMode": "single"
+    },
+    "SectionSheet": {
+      "cardMode": "single"
+    },
+    "StatementSheet": {
+      "cardMode": "single"
+    },
+    "QuoteSheet": {
+      "cardMode": "single"
+    },
+    "HubSheet": {
+      "cardMode": "single"
+    },
+    "ClosingSheet": {
+      "cardMode": "single"
+    },
+    "SplitSheet": {
+      "cardMode": "single"
+    },
+    "GallerySheet": {
+      "cardMode": "single"
+    },
+    "ProcedureSheet": {
+      "cardMode": "single"
+    },
+    "ComparisonSheet": {
+      "cardMode": "single"
+    },
+    "DataSheet": {
+      "cardMode": "single"
+    },
+    "TimelineSheet": {
+      "cardMode": "single"
+    },
+    "ScheduleSheet": {
+      "cardMode": "single"
+    },
+    "SubteamStatusSheet": {
+      "cardMode": "single"
+    },
+    "BlockerSheet": {
+      "cardMode": "single"
+    },
+    "TargetsSheet": {
+      "cardMode": "single"
+    },
+    "SafetySheet": {
+      "cardMode": "single"
+    },
+    "RosterSheet": {
+      "cardMode": "single"
+    },
+    "MatchBreakdownSheet": {
+      "cardMode": "single"
+    },
+    "ScoutingSheet": {
+      "cardMode": "single"
+    },
+    "FieldSheet": {
+      "cardMode": "single"
+    },
+    "BOMSheet": {
+      "cardMode": "single"
+    },
+    "AwardSheet": {
+      "cardMode": "single"
+    },
+    "SponsorSheet": {
+      "cardMode": "single"
+    },
+    "SeasonSheet": {
+      "cardMode": "single"
     }
   },
   "readmeHeader": ".design-sync/conventions.md"
