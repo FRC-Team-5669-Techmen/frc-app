@@ -240,12 +240,20 @@ const CONTROLS = [
     find: 'export function structuralChildren(',
     replace: 'function structuralChildren(',
     expect: /does not export structuralChildren/ },
-  { check: '29b', what: 'the explicit data-frc-host contract is dropped',
+  // 29b MISSED on its first run and the CHECK was wrong, not the control: it
+  // tested the word data-frc-host anywhere in the file, so deleting the contract
+  // from the React face passed on the strength of the DOM face still mentioning
+  // it. The check now reads each face's own body.
+  { check: '29b', what: 'the React face drops the explicit data-frc-host contract',
     file: `${DS}/components/host.jsx`,
     find: "if (props && props['data-frc-host'] !== undefined) return true",
     replace: '',
-    all: true,
-    expect: /carries no explicit data-frc-host contract/ },
+    expect: /isHostElement drops the explicit data-frc-host contract/ },
+  { check: '29h', what: 'the DOM face guesses instead of reading the computed display',
+    file: `${DS}/components/host.jsx`,
+    find: "    try { if (view.getComputedStyle(el).display === 'contents') return true } catch { /* detached */ }",
+    replace: '',
+    expect: /isHostNode drops a computed display test/ },
   { check: '29c', what: 'a guard type-checks a child without reaching the mechanism',
     file: `${DS}/components/surfaces/SponsorWall.jsx`,
     find: "import { throughHost } from '../host.jsx'\n",

@@ -1030,8 +1030,27 @@ const MOTION_CLASSES = new Set(MOTION_VOCAB.filter((c) => /^frc-(in|img)-/.test(
     }
     // A host is identified POSITIVELY. "Not one of ours" would make every
     // author element a host and turn every guard into a rubber stamp.
-    if (!/data-frc-host/.test(src)) fail(`check 29: ${HOST} carries no explicit data-frc-host contract — a runtime whose host is an ordinary element has no way to declare itself`)
-    if (!/display === 'contents'/.test(src)) fail(`check 29: ${HOST} never tests display: contents — that is the one signal the DOM face can read outright`)
+    //
+    // PER FACE, not once for the file. A first pass tested the whole file and a
+    // control that deleted the contract from the React face passed anyway,
+    // because the DOM face still mentioned it — so the check was measuring the
+    // word, not the behaviour.
+    const bodyOf = (name) => {
+      const start = src.indexOf(`export function ${name}(`)
+      if (start < 0) return ''
+      const next = src.indexOf('\nexport ', start + 1)
+      return src.slice(start, next < 0 ? src.length : next)
+    }
+    for (const [face, must] of [
+      ['isHostElement', [[/data-frc-host/, 'the explicit data-frc-host contract, which is the only signal left when a runtime host is an ordinary element made transparent by a stylesheet'], [/'contents'/, 'an inline display: contents test']]],
+      ['isHostNode', [[/data-frc-host/, 'the explicit data-frc-host contract'], [/getComputedStyle/, 'a computed display test — transparency is readable outright in the DOM and guessing there would be a choice, not a limit']]],
+    ]) {
+      const body = bodyOf(face)
+      if (!body) { fail(`check 29: ${HOST} declares no ${face}`); continue }
+      for (const [re, what] of must) {
+        if (!re.test(body)) fail(`check 29: ${HOST} ${face} drops ${what}`)
+      }
+    }
   }
 
   // ---- the JS end -------------------------------------------------------
