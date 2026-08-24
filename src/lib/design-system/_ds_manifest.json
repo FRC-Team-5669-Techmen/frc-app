@@ -280,6 +280,8 @@
       "assets": [
         "assets/team/Type-Gold.svg",
         "assets/team/Type-Black.svg",
+        "assets/team/Mark-Gold.svg",
+        "assets/team/Mark-Black.svg",
         "assets/team/5669-Seal.svg",
         "assets/first/FIRST-Horizontal-Reverse.png"
       ]
@@ -1138,8 +1140,7 @@
       "assets/first/FTC-Icon-Horizontal-Reverse.png",
       "assets/first/FTC-Icon-Vertical-Reverse.png",
       "assets/first/FLL-Horizontal-Reverse.png",
-      "assets/first/FLL-Vertical-Reverse.png",
-      "assets/season/season-lockup.png"
+      "assets/first/FLL-Vertical-Reverse.png"
     ]
   },
   "templatesNotEmitted": {

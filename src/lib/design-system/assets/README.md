@@ -35,10 +35,17 @@ Dark-background lockups are published as EPS and PNG only; pull the PNG.
 
 A gold FIRST logo does not exist and may not be produced. On dark grounds the full-color reverse or one-color reverse artwork is used, on a flat plate, never on a busy background.
 
+## Season — from https://www.firstinspires.org/resources/library/season-brand-downloads
+
+| Path | Used by | Held? |
+|---|---|---|
+| `assets/season/season-lockup.png` | SeasonLockup (replaced every January) | **yes** — FRC 2027, BIOCORE presented by Haas |
+
+The file on disk is the vertical full-color RGB lockup out of `first-biocore-logos.zip`, byte-for-byte, renamed only. It is FIRST artwork: used as supplied, never recolored, rotated, skewed, cropped, bordered, or combined with added text. The artwork carries its own filled plates, so it needs no reverse variant and one file serves all three grounds. Each January, drop the next FRC season logo at this same path and re-hash it in `PROVENANCE.json`.
+
 ## Team-supplied
 
 | Path | Used by |
 |---|---|
-| `assets/season/season-lockup.png` | SeasonLockup (replaced every January) |
 | `assets/sponsors/<sponsor>.png` | SponsorWall / Cutout (later pass) — transparent PNG, one per sponsor, tiered |
 | `assets/photo/…` | ImageFrame (later pass) — robot, field and pit photography per the standing direction |

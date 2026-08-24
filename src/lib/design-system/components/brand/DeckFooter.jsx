@@ -3,6 +3,22 @@ import { cx } from '../cx.js'
 import { AssetSlot } from './AssetSlot.jsx'
 import { SealMark } from './SealMark.jsx'
 import { Logotype } from './Logotype.jsx'
+import { MarkGlyph } from './MarkGlyph.jsx'
+
+/**
+ * Rail mark height, in CSS px on the 1920x1440 stage.
+ *
+ * WAS 32, which is 2.2% of the frame height — right at the usual 1/50
+ * projection floor, and that floor is for plain type, not for artwork with
+ * hairline strokes and tight counters. On a classroom projector the logotype
+ * read as a gold smudge. 56px is 3.9% of the frame, and it still fits the rail
+ * cleanly: the rail is --rail-h 96px with 8px of bottom padding, so 56 leaves
+ * 16px of clearance above and below. It also lands the logotype at 205px wide
+ * (LOGOTYPE_RATIO 3.6556), a near match for the 200px FIRST zone in the same
+ * rail, and stays UNDER that zone's 60px height so the FIRST lockup is never
+ * out-sized by a team mark on an external deck.
+ */
+const RAIL_MARK_H = 56
 
 /**
  * DeckFooter — the persistent footer rail: the LOGOTYPE, 5669, deck name
@@ -13,7 +29,8 @@ import { Logotype } from './Logotype.jsx'
  * rail scale, and it does not duplicate the team number the rail already sets
  * in type — the seal carries 5669 and TECHMEN inside its own ring. `mark="seal"`
  * stays available for a rail on a cover or closing sheet whose sheet body is not
- * already carrying one.
+ * already carrying one, and `mark="mark"` puts the winged helmet alone in the
+ * rail — no lettering — for a sheet whose body already sets the team name.
  *
  * On .frc-audience-external (deck root, section, or this footer via the
  * audience prop) it adds the FIRST full-color-reverse horizontal logo zone on
@@ -47,7 +64,11 @@ export function DeckFooter({
       {...rest}
     >
       <div className="frc-footer-seal">
-        {mark === 'seal' ? <SealMark size={64} src={sealSrc} /> : <Logotype variant="auto" height={32} />}
+        {mark === 'seal'
+          ? <SealMark size={64} src={sealSrc} />
+          : mark === 'mark'
+            ? <MarkGlyph variant="auto" size={RAIL_MARK_H} />
+            : <Logotype variant="auto" height={RAIL_MARK_H} />}
       </div>
       <div className="frc-footer-team" aria-label="Team 5669">5669</div>
       <div className="frc-footer-deck">

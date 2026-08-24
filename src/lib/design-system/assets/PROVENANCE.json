@@ -1,6 +1,6 @@
 {
   "note": "Provenance for every asset wired into the bundle. An asset is wired only after its bytes are compared against the canonical source; the marks are used AS SUPPLIED, so a later edit to one of these files is a brand violation rather than a style choice. scripts/design-system/ds-audit.mjs recomputes each sha256 and fails on drift, which is what makes a silent recolor impossible to land. `mirrors` are copies of the same canonical bytes served from elsewhere in the repo; they are hashed against the same value, because a mark that is correct in the bundle and recolored in public/ is the exact failure this file exists to catch. `rejected` records artwork that was fetched from the canonical source and then deliberately NOT wired, with the reason and the hash of exactly what was refused, so the next person does not re-fetch it and adopt it without looking.",
-  "verifiedOn": "2026-08-23",
+  "verifiedOn": "2026-08-24",
   "assets": [
     {
       "file": "assets/team/Mark-Gold.svg",
@@ -52,6 +52,18 @@
       "sha256": "460e2e87b8d06b686da983fd23f7b0cc4dd8eb0540cdebd2685dfbe238eb9853",
       "bytes": 9705,
       "finding": "Fetched 2026-08-23 and adopted AS SUPPLIED. All 16 colour declarations are #000000. Not gold artwork, so the gold recolor check does not apply; recorded here as checked rather than skipped."
+    },
+    {
+      "file": "assets/season/season-lockup.png",
+      "source": "https://www.firstinspires.org/hubfs/web/brand/season/2027/downloads/first-biocore-logos.zip",
+      "sourcePage": "https://www.firstinspires.org/resources/library/season-brand-downloads",
+      "sourceMember": "Digital RGB/first_canopy_frc_biocore_logo_vertical_rgb_fullcolor.png",
+      "sourceArchiveSha256": "2fdc3a9a1ef1314d675d1026b132f7864c2f55d4eec73bdef27c4209e1e3be0e",
+      "sha256": "e80148c7245f22d490933d341709a85854e877b8af0467dde2060687e0650513",
+      "bytes": 57860,
+      "season": "FIRST Robotics Competition 2027 — BIOCORE presented by Haas",
+      "finding": "Fetched 2026-08-24 from the FIRST season brand downloads page and adopted AS SUPPLIED. The page currently publishes the 2026-2027 season set: FIRST CANOPY (the umbrella season), BIOGLOW (FLL), BIOBUZZ presented by RTX (FTC), and BIOCORE presented by Haas (FRC 2027). BIOCORE is the FRC season, which is this team's program, and it is the coming season rather than a prior one, so no substitution was needed. The file is the vertical, full-color, RGB PNG from the archive's `Digital RGB` folder, 1730x1230, 8-bit RGBA — copied out of the zip byte-for-byte, verified by hashing the archive member and the copy in the bundle to the same sha256. Renamed to season-lockup.png ONLY: the bytes are untouched, and the generic path is what makes replacing this one file the entire annual reskin. THIS IS FIRST ARTWORK AND THE FIRST USAGE RULES APPLY IN FULL — never recolored, rotated, skewed, cropped, bordered, or combined with added text. The slot renders it under object-fit: contain (tokens/image-slot.css), so SeasonLockup's 240x240 default letterboxes it to 240x171 rather than distorting or cropping it; the artwork carries its own filled plates over transparency, so one file serves squadron, field and paper and no reverse variant is required. NOTE FOR THE PAPER GROUND: the artwork contains a yellow element. It is FIRST's yellow, not Techmen Gold, and the no-gold-on-paper rule does not reach it — supplied artwork may not be recolored, so there is nothing to fix here and nobody should try. The /_ds gold-on-paper proof reads computed colour and cannot see inside an <img>, so it will not report this either way.",
+      "toResolve": "Replace this one file each January when FIRST publishes the next FRC season logo, re-hash it here, and update the SeasonLockup name and years in the decks that use it. Nothing else changes."
     }
   ],
   "derived": [
@@ -108,8 +120,7 @@
     "assets/first/FTC-Icon-Horizontal-Reverse.png",
     "assets/first/FTC-Icon-Vertical-Reverse.png",
     "assets/first/FLL-Horizontal-Reverse.png",
-    "assets/first/FLL-Vertical-Reverse.png",
-    "assets/season/season-lockup.png"
+    "assets/first/FLL-Vertical-Reverse.png"
   ],
   "rejected": [
     {

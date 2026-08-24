@@ -32,7 +32,7 @@ export const ASSET_FILES = {
   ftcVerticalReverse:     'assets/first/FTC-Icon-Vertical-Reverse.png',
   fllHorizontalReverse:   'assets/first/FLL-Horizontal-Reverse.png',
   fllVerticalReverse:     'assets/first/FLL-Vertical-Reverse.png',
-  // Season — team-supplied each January
+  // Season — from https://www.firstinspires.org/resources/library/season-brand-downloads, replaced each January
   seasonArt: 'assets/season/season-lockup.png',
 }
 
@@ -56,6 +56,21 @@ import typeGoldUrl from './assets/team/Type-Gold.svg'
 import typeWhiteUrl from './assets/team/Type-White.svg'
 import typeBlackUrl from './assets/team/Type-Black.svg'
 
+// SEASON ARTWORK IS WIRED. assets/season/season-lockup.png is the FIRST
+// Robotics Competition 2027 season logo, BIOCORE presented by Haas, taken
+// byte-for-byte from first-biocore-logos.zip on the FIRST season brand
+// downloads page (the vertical, full-color, RGB lockup). It is FIRST artwork,
+// so the FIRST usage rules apply in full and it is used AS SUPPLIED: never
+// recolored, rotated, skewed, cropped, bordered, or combined with added text.
+// The slot renders it with object-fit: contain (tokens/image-slot.css), so a
+// non-square slot letterboxes it rather than distorting or cropping it. The
+// artwork carries its own filled plates, so one file serves every ground and
+// no reverse variant is needed. sha256 in assets/PROVENANCE.json.
+//
+// The path stays generic on purpose: replacing this one file is the whole
+// annual reskin, exactly as SeasonLockup documents.
+import seasonArtUrl from './assets/season/season-lockup.png'
+
 /** Resolved URLs. Null until the file lands. */
 export const ASSETS = {
   markGold: markGoldUrl,
@@ -73,7 +88,7 @@ export const ASSETS = {
   ftcVerticalReverse: null,
   fllHorizontalReverse: null,
   fllVerticalReverse: null,
-  seasonArt: null,
+  seasonArt: seasonArtUrl,
 }
 
 /**
