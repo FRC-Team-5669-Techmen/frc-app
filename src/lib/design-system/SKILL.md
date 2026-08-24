@@ -26,6 +26,11 @@ The visual identity system for FRC Team 5669 (Techmen) decks and materials. **Go
    frames from the ACTIVE sheet's --bg0 and --edge; without it a transition
    flashes white. It is the deck shell's stage script, as a component.
 4. Add one <section> per sheet, each built from a sheet PATTERN.
+4b. OPTIONAL, for pacing: mount <DeckSteps /> EXACTLY ONCE too, and put
+   data-steps on any sheet whose list should be revealed one item at a time
+   (or data-step-group on the container). Opt-in per sheet: a sheet without
+   it behaves exactly as it does today, and a printed or exported deck is
+   complete either way.
 5. Reference everything else. templates/Deck.dc.html and templates/Specimen.dc.html
    are READABLE REFERENCE ONLY - read them, never copy them.
 ```
@@ -81,7 +86,7 @@ The marker is not a soft landing. `npm run ds:audit` fails on a fault marker in 
 
 ## What the audit fails on
 
-An alias set that differs between grounds, a `var()` in a ground alias, gold on paper, a color outside the published set, an import out of order, an animation outside the reduced-motion gate, a manifest that does not match the disk, an emoji, a sheet pattern naming a ground or taking an audience prop, a sheet defaulting to a fifth transition, a template claiming to be a starting point (neither is) or a leftover startingPoints key, a missing or undocumented DeckStage, a guard fault marker in a template, or a wired asset whose bytes no longer match its recorded provenance.
+An alias set that differs between grounds, a `var()` in a ground alias, gold on paper, a color outside the published set, an import out of order, an animation outside the reduced-motion gate, a manifest that does not match the disk, an emoji, a sheet pattern naming a ground or taking an audience prop, a sheet defaulting to a fifth transition, a template claiming to be a starting point (neither is) or a leftover startingPoints key, a missing or undocumented DeckStage or DeckSteps, a step reveal that hides outside its gate or has no print release, a guard fault marker in a template, or a wired asset whose bytes no longer match its recorded provenance.
 
 ## The red partition
 

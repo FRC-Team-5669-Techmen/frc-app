@@ -7,11 +7,11 @@ import { Component, cloneElement, useCallback, useEffect, useLayoutEffect, useRe
 import {
   Button, Eyebrow, Divider, TeamWordmark,
   IconPlay, IconRotateCcw,
-  DeckFooter, DeckStage, FirstName, FirstNameScope, HudFrame, PlatePanel, StencilTitle,
+  DeckFooter, DeckStage, DeckSteps, FirstName, FirstNameScope, HudFrame, PlatePanel, StencilTitle,
   ImageFrame, Cutout, MatchClock, AllianceSplit, ScoutTable, ScoutRow, SponsorWall, SponsorTier, SafetySheet,
   SafetyNote, Callout, Card, JumpGrid, JumpCard, SectionSheet,
   RoleCard, SubteamBadge,
-  GallerySheet, Sample,
+  GallerySheet, Sample, ProcedureSheet, Step,
   CoreDemoCard, BrandDemoCard, DataDemoCard, SurfacesDemoCard, FormsDemoCard, SheetsDemoCard, SHEET_PATTERNS, tokens,
 } from '../index.js'
 import { cx } from '../components/cx.js'
@@ -1722,6 +1722,263 @@ function DeckStageSection() {
   )
 }
 
+/* ---------- 8d. DeckSteps ---------- */
+
+/* A stepped reveal is MOTION, and motion is what DOM measurement has been wrong
+   about repeatedly on this route, so this section is built to be LOOKED AT
+   first and measured second. The deck below is the one thing on /_ds bound to
+   the arrow keys — deliberately, because the whole mechanism is an interception
+   of a real document listener, and driving the handler directly would prove
+   nothing about whether DeckStage still sees the key.
+
+   Every RoleCard is mounted through a HOST WRAPPER. That is not decoration
+   either: the runtime wraps template children, so the nine cards are not DOM
+   children of .frc-samples, and any count done with :nth-child() would count
+   wrappers. The count is done through host.jsx and the marks are read by
+   containment. */
+
+const STEP_SEQUENCE = [
+  { keys: [], note: 'on mount — the deck opens paced' },
+  { keys: ['ArrowRight'], note: 'one step forward: the SHEET must not change' },
+  { keys: Array(7).fill('ArrowRight'), note: 'to the last item of sheet 1' },
+  { keys: ['ArrowRight'], note: 'forward boundary → sheet 2, entered at step 1' },
+  { keys: ['ArrowLeft'], note: 'BACKWARD boundary → sheet 1 at its LAST step' },
+  { keys: ['ArrowRight', 'ArrowRight', 'ArrowRight'], note: 'forward again, all the way to sheet 2 step 3' },
+  { keys: ['ArrowRight', 'ArrowRight'], note: 'past sheet 2 → sheet 3, which has no step group' },
+  { keys: ['ArrowLeft'], note: 'back into sheet 2 at its LAST step' },
+]
+
+function StepDeck({ innerRef, steps = true, nav = false }) {
+  return (
+    <div ref={innerRef} className="frc-deck frc-ground-squadron frc-audience-internal">
+      <DeckStage nav={nav} fit={false} thumbs={false} />
+      {steps ? <DeckSteps nav={nav} /> : null}
+      <div className="frc-stage" data-aspect="4:3" style={{ transform: 'none' }}>
+        {/* Sheet 1 — the required case: nine compact RoleCards, each behind a
+            REAL host node, opted in by naming the container outright.
+
+            The hosts have to be written HERE, as children of plain markup,
+            because pickSlots does its job: a host handed straight to a
+            component is spliced out of the React tree and never reaches the
+            DOM at all. Measured, not assumed — the first version of this
+            section wrapped the cards as SampleGrid children and rendered zero
+            host nodes, so it proved nothing about the walk it exists to test.
+            A `.frc-role-grid` inside the gallery's single column is also the
+            layout a deck would actually write for nine cards. */}
+        <GallerySheet cols={1} label="Squad" data-deck-active="">
+          <x-host style={{ display: 'contents' }}><span slot="eyebrow">Subteam leads</span></x-host>
+          <x-host style={{ display: 'contents' }}><span slot="title">Who owns what</span></x-host>
+          <div className="frc-role-grid" {...(steps ? { 'data-step-group': '' } : {})}>
+            {ROLE_ROWS.map((r, i) => {
+              const card = (
+                <RoleCard density="compact" mediaFile={`${r.file}.jpg`}>
+                  <span slot="name">{r.name}</span>
+                  <span slot="title">{r.title}</span>
+                  <SubteamBadge slot="subteam">{r.subteam}</SubteamBadge>
+                </RoleCard>
+              )
+              // Three host flavours, three different signals, same as the host
+              // section: an inline-transparent custom element, one transparent
+              // from the stylesheet only, and the explicit contract.
+              if (i % 3 === 0) return <x-host key={r.name} style={{ display: 'contents' }}>{card}</x-host>
+              if (i % 3 === 1) return <dc-host key={r.name}>{card}</dc-host>
+              return <span key={r.name} data-frc-host="" style={{ display: 'contents' }}>{card}</span>
+            })}
+          </div>
+        </GallerySheet>
+
+        {/* Sheet 2 — the OTHER opt-in: data-steps on the sheet, DeckSteps
+            resolves .frc-steps itself from the containers that already exist. */}
+        <ProcedureSheet label="Inspection" {...(steps ? { 'data-steps': '' } : {})}>
+          <x-host style={{ display: 'contents' }}><span slot="title">Pit inspection</span></x-host>
+          {['Bumpers on, numbers legible', 'Battery strapped and tethered', 'Weight and frame perimeter'].map((t) => (
+            <Step key={t}><span slot="title">{t}</span></Step>
+          ))}
+        </ProcedureSheet>
+
+        {/* Sheet 3 — no step group at all. Must be untouched. */}
+        <SectionSheet label="Next" index="03">
+          <x-host style={{ display: 'contents' }}><span slot="title">Match play</span></x-host>
+        </SectionSheet>
+      </div>
+    </div>
+  )
+}
+
+function DeckStepsSection() {
+  const live = useRef(null)
+  const base = useRef(null)
+  const [report, setReport] = useState(null)
+  const [cursor, setCursor] = useState(0)
+
+  const press = useCallback((key) => {
+    const deck = live.current
+    if (!deck) return
+    // Dispatched from INSIDE the deck, never on document itself: at AT_TARGET
+    // the DOM invokes capture and bubble listeners in registration order, so
+    // dispatching on document would decide the DeckSteps/DeckStage race by
+    // mount order instead of by phase, and prove the opposite of the truth.
+    deck.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
+  }, [])
+
+  const snap = useCallback((deck) => {
+    if (!deck) return null
+    const sheets = [...deck.querySelectorAll('.frc-sheet')]
+    const active = deck.querySelector('.frc-sheet[data-deck-active]')
+    const group = active ? active.querySelector('[data-step-group]') : null
+    const items = group ? [...group.querySelectorAll('[data-step-item]')] : []
+    const shown = items.filter((i) => i.hasAttribute('data-step-shown'))
+    const order = shown.map((i) => Number(i.getAttribute('data-step-item')))
+    const pending = items.find((i) => !i.hasAttribute('data-step-shown'))
+    const cs = (el) => (el ? getComputedStyle(el) : null)
+    const pcs = cs(pending)
+    const scs = cs(shown[0])
+    const hosts = group ? [...group.children].filter((c) => getComputedStyle(c).display === 'contents').length : 0
+    return {
+      hosts,
+      sheet: sheets.indexOf(active),
+      label: active ? active.getAttribute('data-label') : '(none)',
+      step: active ? active.getAttribute('data-step') : null,
+      total: items.length,
+      shown: shown.length,
+      order,
+      contiguous: order.every((n, k) => n === k + 1),
+      pendingHidden: pcs ? pcs.visibility === 'hidden' && pcs.opacity === '0' : null,
+      shownVisible: scs ? scs.visibility === 'visible' && scs.opacity === '1' : null,
+    }
+  }, [])
+
+  const run = useCallback(async () => {
+    const deck = live.current
+    if (!deck) return
+    // Re-enter from the top: send the deck home so a re-run starts where the
+    // first run started.
+    const sheets = [...deck.querySelectorAll('.frc-sheet')]
+    sheets.forEach((sh, i) => { if (i === 0) sh.setAttribute('data-deck-active', ''); else sh.removeAttribute('data-deck-active') })
+    // A FRAME, not a synchronous read. Entry state is applied from a
+    // MutationObserver callback, which is a microtask — so it lands before the
+    // browser paints, but AFTER a synchronous read in the same task. The first
+    // version of this proof read synchronously, saw no data-step on a sheet
+    // just entered, and reported the forward boundary broken when it was the
+    // measurement that was early. `beforePaint` below is what actually pins the
+    // guarantee that matters.
+    const frame = () => new Promise((r) => requestAnimationFrame(() => r()))
+    await frame()
+
+    const rows = []
+    let beforePaint = null
+    for (const [i, stage] of STEP_SEQUENCE.entries()) {
+      stage.keys.forEach(press)
+      // The forward boundary is the one that could flash: for the span of one
+      // task the new sheet is active and not yet gated. Read inside rAF, which
+      // runs after microtasks and BEFORE paint — if data-step is already there,
+      // no frame was ever painted ungated.
+      if (i === 3) {
+        await new Promise((r) => requestAnimationFrame(() => {
+          const a = deck.querySelector('.frc-sheet[data-deck-active]')
+          beforePaint = a ? a.getAttribute('data-step') : null
+          r()
+        }))
+      } else {
+        await frame()
+      }
+      rows.push({ note: stage.note, keys: stage.keys.length, ...snap(deck) })
+    }
+
+    // The base-state control: the SAME sheet, in a deck that mounts no
+    // DeckSteps. Nothing may be marked and nothing may be hidden.
+    const b = base.current
+    const bSheet = b ? b.querySelector('.frc-sheet[data-deck-active]') : null
+    const bItems = b ? [...b.querySelectorAll('.frc-role')] : []
+    const bHidden = bItems.filter((el) => getComputedStyle(el).visibility === 'hidden')
+    const baseline = {
+      cards: bItems.length,
+      hidden: bHidden.length,
+      dataStep: bSheet ? bSheet.getAttribute('data-step') : 'no sheet',
+      marks: b ? b.querySelectorAll('[data-step-item]').length : -1,
+    }
+
+    const noGroup = rows[6]
+    const verdicts = {
+      count: Boolean(rows[0] && rows[0].total === 9),
+      hosted: Boolean(rows[0] && rows[0].hosts === 9),
+      order: rows.every((r) => r.contiguous),
+      intercept: Boolean(rows[1] && rows[1].sheet === 0 && rows[1].step === '2'),
+      forward: Boolean(rows[3] && rows[3].sheet === 1 && rows[3].step === '1'),
+      noFlash: beforePaint === '1',
+      backward: Boolean(rows[4] && rows[4].sheet === 0 && rows[4].step === '9'),
+      backwardAgain: Boolean(rows[7] && rows[7].sheet === 1 && rows[7].step === '3'),
+      untouched: Boolean(noGroup && noGroup.sheet === 2 && noGroup.step === null && noGroup.total === 0),
+      painted: Boolean(rows[0] && rows[0].pendingHidden && rows[0].shownVisible),
+      baseComplete: baseline.cards === 9 && baseline.hidden === 0 && baseline.dataStep === null && baseline.marks === 0,
+    }
+    setReport({ rows, baseline, beforePaint, verdicts, ok: Object.values(verdicts).every(Boolean) })
+  }, [press, snap])
+
+  useEffect(() => { const t = setTimeout(run, 320); return () => clearTimeout(t) }, [run])
+
+  // Manual driving, so the reveal can be WATCHED rather than only tabulated.
+  const step = (key) => { press(key); setCursor((c) => c + 1) }
+
+  return (
+    <Section
+      id="decksteps"
+      title="DeckSteps"
+      lede="Behaviour, not appearance, and the second component a deck mounts exactly once. It intercepts next/prev before DeckStage sees them, counts the active sheet's step group through host.jsx, and writes data-step onto the sheet — the only thing the reveal CSS is gated on. Stepping is OPT-IN per sheet (data-steps on the sheet, or data-step-group on a container), because mounting this must never silently re-pace a deck someone already wrote. Note: this deck is bound to the arrow keys, which is the point — the interception is of a real document listener."
+    >
+      <div className="ds-tabs">
+        <Button variant="ghost" onClick={() => step('ArrowLeft')}>◀ prev</Button>
+        <Button variant="ghost" onClick={() => step('ArrowRight')}>next ▶</Button>
+        <Button variant="ghost" icon={<IconRotateCcw />} onClick={() => { setCursor(0); run() }}>Run the sequence</Button>
+        <span className="frc-micro">manual presses: {cursor}</span>
+      </div>
+
+      <h4 className="ds-sub">Live deck — nine compact RoleCards, each through a host wrapper</h4>
+      <div className="ds-frame">
+        <Zoomed width={1920}><StepDeck innerRef={live} steps nav /></Zoomed>
+      </div>
+
+      <h4 className="ds-sub">Base state — the same sheet, in a deck that mounts no DeckSteps</h4>
+      <div className="ds-frame">
+        <Zoomed width={1920}><StepDeck innerRef={base} steps={false} /></Zoomed>
+      </div>
+
+      <div className="ds-proof" data-proof="decksteps">
+        <div className="ds-proof-head">
+          <Verdict state={report ? report.ok : null}>Count, order, both boundaries, an untouched sheet, and a complete base state</Verdict>
+          {report ? <span>{Object.entries(report.verdicts).filter(([, v]) => !v).map(([k]) => k).join(', ') || 'all nine hold'}</span> : null}
+          <Button variant="ghost" onClick={run}>Re-measure</Button>
+        </div>
+        {report ? (
+          <table>
+            <thead><tr><th>keys</th><th>sheet</th><th>step</th><th>shown</th><th>order</th><th>what it proves</th></tr></thead>
+            <tbody>
+              {report.rows.map((r, i) => (
+                <tr key={i}>
+                  <td><code>{r.keys}</code></td>
+                  <td>{r.sheet} · {r.label}</td>
+                  <td className={r.contiguous ? 'ds-okcell' : 'ds-fail'}><code>{r.step ?? '(none)'}</code>{r.total ? ` / ${r.total}` : ''}</td>
+                  <td>{r.shown}</td>
+                  <td><code>{r.order.join(',') || '—'}</code></td>
+                  <td>{r.note}</td>
+                </tr>
+              ))}
+              <tr>
+                <td colSpan={2} className={report.verdicts.baseComplete ? 'ds-pass' : 'ds-fail'}>base state</td>
+                <td colSpan={4}>{report.baseline.cards} cards, {report.baseline.hidden} hidden, data-step <code>{String(report.baseline.dataStep)}</code>, {report.baseline.marks} step marks</td>
+              </tr>
+              <tr>
+                <td colSpan={2} className={report.verdicts.painted ? 'ds-pass' : 'ds-fail'}>painted state</td>
+                <td colSpan={4}>pending item visibility:hidden + opacity:0 · revealed item visible + opacity 1</td>
+              </tr>
+            </tbody>
+          </table>
+        ) : null}
+      </div>
+    </Section>
+  )
+}
+
 /* ---------- 8c. RoleCard density ---------- */
 
 /* The card owns its type scale, padding and gaps; the grid wrapper owns the
@@ -1966,7 +2223,7 @@ export default function SpecimenPage() {
         <span className="ds-header-title">{NAMESPACE}</span>
         <span>v{VERSION} · /_ds · dev only</span>
         <nav className="ds-nav">
-          {['grounds', 'tokens', 'type', 'motion', 'surfaces', 'core', 'brand', 'data', 'surfaces-group', 'forms', 'role-density', 'images', 'cutout', 'clock', 'alliance', 'sheets', 'sheet-fill', 'host', 'refusals', 'chrome', 'wiring'].map((id) => <a key={id} href={`#${id}`}>{id}</a>)}
+          {['grounds', 'tokens', 'type', 'motion', 'surfaces', 'core', 'brand', 'data', 'surfaces-group', 'forms', 'role-density', 'images', 'cutout', 'clock', 'alliance', 'sheets', 'sheet-fill', 'host', 'refusals', 'chrome', 'deckstage', 'decksteps', 'wiring'].map((id) => <a key={id} href={`#${id}`}>{id}</a>)}
         </nav>
       </header>
       <main className="ds-main">
@@ -1992,6 +2249,7 @@ export default function SpecimenPage() {
         <section className="ds-section"><ExternalEnforcement /></section>
         <ChromeSection />
         <DeckStageSection />
+        <DeckStepsSection />
         <WiringSection />
       </main>
     </div>

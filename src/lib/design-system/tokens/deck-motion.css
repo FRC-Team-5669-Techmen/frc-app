@@ -60,11 +60,54 @@
 .frc-stage .frc-sheet { display: none; }
 .frc-stage .frc-sheet[data-deck-active] { display: block; }
 
+/* DeckSteps is behaviour too, and its marker is never seen either. */
+.frc-deck-steps { display: none; }
+
+/* ---- Stepped reveal (components/brand/DeckSteps.jsx) ---------------------- */
+/* Reveal an authored list one item at a time, so nine subteam cards are a
+   pacing decision instead of an accident. THE WHOLE MECHANISM IS GATED BEHIND
+   [data-deck-active][data-step]: `data-step` exists only while a live DeckSteps
+   is driving the deck, so a sheet with no step group, a deck that mounts no
+   DeckSteps, an export, a capture and a static render are all untouched and
+   complete. tokens/motion.css says hide-until-clicked is prohibited; this does
+   not repeal that rule, it scopes it — every escape below is real, and the
+   print reset is the one that matters most.
+
+   COUNTING IS DONE IN JS, NOT HERE, and that is not a convenience. The runtime
+   can wrap each item in a layout-transparent host, so `> :nth-child(n+4)` would
+   count wrappers rather than cards; DeckSteps marks each item through
+   host.jsx's structural walk and the rule below matches the mark by
+   containment. Same argument as check 29, one level further in.
+
+   The PENDING STATE IS UNGATED BY REDUCED MOTION and the transition is not:
+   someone who asked for less motion still gets the pacing, without the fade. */
+.frc-sheet[data-deck-active][data-step] [data-step-item]:not([data-step-shown]) {
+  opacity: 0;
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .frc-sheet[data-deck-active][data-step] [data-step-item] {
+    transition: opacity 0.28s var(--ease-out), transform 0.28s var(--ease-out);
+  }
+  .frc-sheet[data-deck-active][data-step] [data-step-item]:not([data-step-shown]) {
+    transform: translateY(6px);
+  }
+}
+
 /* Print and PDF: every sheet, complete, one per page, in order. */
 @media print {
   .frc-stage { height: auto; overflow: visible; }
   .frc-stage .frc-sheet { display: block; position: relative; height: 1440px; break-after: page; page-break-after: always; }
   .frc-stage[data-aspect="16:9"] .frc-sheet { height: 1080px; }
+  /* A deck printed mid-presentation is still a complete deck. The active sheet
+     is the one that can carry a half-revealed step group, so the gate is
+     released here rather than trusted to be off. */
+  .frc-sheet[data-deck-active][data-step] [data-step-item]:not([data-step-shown]) {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
 }
 
 /* Thumbnail frames follow the active ground (bg0 fill, edge frame) so the rail

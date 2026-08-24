@@ -760,9 +760,22 @@ const MOTION_CLASSES = new Set(MOTION_VOCAB.filter((c) => /^frc-(in|img)-/.test(
 //     a paired-restore requirement was tried first and fires on every one of
 //     those. NOT COVERED, therefore: display: none on a class that carries no
 //     body copy, which the pre-delivery check still has to catch in the artifact.
+// (d) THE STEP GATE IS THE ONE EXEMPTION, and it is granted on the terms this
+//     check names rather than in spite of them. (a)'s whole argument is that a
+//     rule-level hide "hides it in print, in PDF and under reduced motion too" —
+//     so the exemption is shaped to answer exactly that: it applies ONLY to a
+//     selector that is both gated on [data-deck-active][data-step] and subject
+//     to [data-step-item], `data-step` exists only while a live DeckSteps is
+//     driving, hiding under reduced motion is the REQUIREMENT (the reveal still
+//     steps, it just does not animate), and check 30 separately refuses to pass
+//     unless the @media print release exists. Nothing else in the token layer
+//     may hide in a rule, which control 30f proves by moving one of these
+//     declarations outside the gate.
+const STEP_GATE = /\[data-deck-active\]\[data-step\]/
+const stepGated = (sel) => STEP_GATE.test(sel) && /\[data-step-item\]/.test(sel)
 {
   for (const r of TOKEN_RULES) {
-    if (!inKeyframes(r)) {
+    if (!inKeyframes(r) && !stepGated(r.sel)) {
       for (const [prop, value] of props(r.body)) {
         if (prop === 'opacity' && /^0(\.0+)?%?$/.test(value.trim())) fail(`${r.file}: "${r.sel.trim()}" sets opacity: 0 in a rule — only a keyframe from-frame may hide an element, because a rule hides it in print, in PDF and under reduced motion too`)
         if (prop === 'visibility' && value.trim() === 'hidden') fail(`${r.file}: "${r.sel.trim()}" sets visibility: hidden — the base state of every element is visible`)
@@ -827,6 +840,7 @@ const MOTION_CLASSES = new Set(MOTION_VOCAB.filter((c) => /^frc-(in|img)-/.test(
     'components/sheets/SafetySheet.jsx': ['SafetyNote'],
     'components/brand/FirstName.jsx': ['possessive'],
     'components/brand/DeckStage.jsx': ['frc-deck'],
+    'components/brand/DeckSteps.jsx': ['DeckStage', 'frc-deck'],
   }
   for (const [f, keywords] of Object.entries(GUARDS)) {
     if (!exists(f)) { fail(`guard: ${f} is registered as guarded but does not exist`); continue }
@@ -1116,6 +1130,89 @@ const MOTION_CLASSES = new Set(MOTION_VOCAB.filter((c) => /^frc-(in|img)-/.test(
       const m = TOKEN_SRC[f].match(re)
       if (m) fail(`check 29: ${f}: "${m[0].replace(/\s+/g, ' ').trim()}" uses a child combinator across a deck-author boundary (${why}) — the runtime can put a layout-transparent host there and the rule then matches nothing. Match by containment.`)
     }
+  }
+}
+
+// ---------- 30. DeckSteps ----------
+// Shaped like check 15, for the second behaviour component. DeckSteps is the
+// one place in the system where content is deliberately not visible, so the
+// check is mostly about the ESCAPES: every one of them has to still be there.
+{
+  const st = manifest.components.find((c) => c.name === 'DeckSteps')
+  if (!st) fail('manifest does not list DeckSteps — a behaviour component nobody can look up is one nobody mounts')
+  else {
+    const prompt = read(st.prompt)
+    if (!/exactly once/i.test(prompt)) fail('DeckSteps.prompt.md does not state that every deck mounts it exactly once — two steppers consume the same key and the deck skips items')
+    // Comments stripped, the same way check 24 reads a guarded component: the
+    // prose in this file NAMES the things it refuses to do, and a grep that
+    // cannot tell code from the comment explaining it fires on the explanation.
+    const src = codeOf(st.sourcePath)
+
+    // (a) It reaches the shared guard and the shared host traversal. The host
+    // traversal is not decoration: the runtime can wrap each item, so a walk of
+    // group.children counts wrappers and reveals the wrong cards.
+    if (!/from '\.\.\/guard\.jsx'/.test(src)) fail('DeckSteps does not import the shared guard — its refusals must render the same rust marker as every other guard')
+    if (!/structuralChildren[\s\S]*from '\.\.\/host\.jsx'/.test(src)) fail('DeckSteps does not import structuralChildren from host.jsx — counting group.children directly counts the runtime’s host wrappers, not the author’s items')
+    if (/\.children\b/.test(src.replace(/structuralChildren/g, ''))) fail('DeckSteps reads .children directly — every walk goes through host.jsx, which is the whole reason the count is done in JS rather than with :nth-child()')
+
+    // (b) The attributes are the contract between the component and the sheet.
+    for (const attr of ['data-step-group', 'data-step-item', 'data-step-shown', 'data-step']) {
+      if (!src.includes(attr)) fail(`DeckSteps never writes or reads ${attr} — the stylesheet is gated on it and would do nothing`)
+    }
+
+    // (c) The containers it resolves must exist in the token layer. A renamed
+    // container would otherwise make `data-steps` silently resolve nothing, and
+    // the sheet would simply never step — the failure with no symptom.
+    const listed = [...(src.match(/const GROUP_SELECTORS = \[([\s\S]*?)\]/)?.[1] ?? '').matchAll(/'\.([\w-]+)'/g)].map((m) => m[1])
+    if (listed.length < 6) fail(`DeckSteps: GROUP_SELECTORS reads ${listed.length} container(s) — the six containers that already exist are what this component was built to target`)
+    const declaredClasses = new Set(TOKEN_RULES.flatMap((r) => splitTop(r.sel, ',').flatMap((part) => classesIn(part))))
+    for (const cls of listed) {
+      if (!declaredClasses.has(cls)) fail(`DeckSteps: GROUP_SELECTORS names .${cls}, which no rule in the token layer declares — data-steps would resolve nothing on a sheet built from it, silently`)
+    }
+  }
+
+  // ---- the CSS end: the gate, and every escape from it -------------------
+  const stepRules = TOKEN_RULES.filter((r) => /\[data-step-item\]/.test(r.sel))
+  if (!stepRules.length) fail('check 30: the token layer declares no [data-step-item] rule — DeckSteps writes the marks and nothing reads them')
+
+  const HIDES = (r) => props(r.body).some(([prop, value]) => (
+    (prop === 'opacity' && /^0(\.0+)?%?$/.test(value.trim())) ||
+    (prop === 'visibility' && value.trim() === 'hidden') ||
+    (prop === 'display' && value.trim() === 'none')
+  ))
+
+  // (d) NOTHING hides outside the gate. This is the exact complement of the one
+  // exemption check 22 grants, so the two cannot both be loosened by accident.
+  for (const r of stepRules) {
+    if (HIDES(r) && !STEP_GATE.test(r.sel)) {
+      fail(`check 30: ${r.file}: "${r.sel.trim()}" hides a step item without [data-deck-active][data-step] — the base state of a sheet is the complete sheet, and an ungated hide survives export, print and a deck with no DeckSteps`)
+    }
+  }
+
+  // (e) The pending state is NOT inside the reduced-motion gate. Someone who
+  // asked for less motion still gets the pacing; gating the whole feature would
+  // hand them a static sheet, which is the usual mistake and the opposite of
+  // what was asked for.
+  const pending = stepRules.filter((r) => HIDES(r) && STEP_GATE.test(r.sel) && !r.ats.some((a) => a.startsWith('@media print')))
+  if (!pending.length) fail('check 30: no gated rule hides an unrevealed step item — there is a gate and nothing behind it')
+  for (const r of pending) {
+    if (inMotionGate(r)) fail(`check 30: ${r.file}: "${r.sel.trim()}" puts the PENDING state inside @media (prefers-reduced-motion: no-preference) — the reveal still steps under reduced motion, it just does not animate`)
+  }
+
+  // (f) The motion half IS gated, or the system has grown an ungated animation.
+  const moving = stepRules.filter((r) => props(r.body).some(([prop]) => prop === 'transition' || prop === 'animation' || prop === 'animation-name'))
+  if (!moving.length) fail('check 30: the step reveal has no transition at all — a reveal with no motion under no-preference is not the reduced-motion path, it is a missing one')
+  for (const r of moving) {
+    if (!inMotionGate(r)) fail(`check 30: ${r.file}: "${r.sel.trim()}" animates a step reveal outside @media (prefers-reduced-motion: no-preference)`)
+  }
+
+  // (g) THE PRINT RELEASE. This is what check 22(a)'s argument turns on: a
+  // rule-level hide is only acceptable because the printed deck releases it.
+  const printed = stepRules.filter((r) => r.ats.some((a) => a.startsWith('@media print')))
+  if (!printed.length) {
+    fail('check 30: no @media print rule releases the step gate — a deck printed mid-presentation would print the active sheet half revealed, which is the exact failure check 22 refuses rule-level hiding to prevent')
+  } else if (!printed.some((r) => props(r.body).some(([prop, value]) => prop === 'visibility' && value.trim() === 'visible'))) {
+    fail('check 30: the @media print rule for step items does not restore visibility — opacity alone leaves a visibility: hidden item invisible on paper')
   }
 }
 

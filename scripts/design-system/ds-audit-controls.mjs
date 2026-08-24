@@ -279,6 +279,73 @@ const CONTROLS = [
     find: '.frc-frame-plate img,',
     replace: '.frc-frame-plate > img,',
     expect: /uses a child combinator across a deck-author boundary \(ImageFrame/ },
+  // ---- 30. DeckSteps. Mostly controls on the ESCAPES, because the escapes are
+  // what make a rule-level hide acceptable at all, and every one of them is
+  // invisible until the day someone prints the deck or turns off motion.
+  { check: '30a', what: 'DeckSteps stops reaching host.jsx and counts DOM children',
+    file: `${DS}/components/brand/DeckSteps.jsx`,
+    find: "import { structuralChildren } from '../host.jsx'",
+    replace: "const structuralChildren = (el) => [...el.children]",
+    expect: /DeckSteps does not import structuralChildren from host\.jsx/ },
+  { check: '30b', what: 'a container it resolves is renamed out from under it',
+    file: `${DS}/components/brand/DeckSteps.jsx`,
+    find: "  '.frc-role-grid',",
+    replace: "  '.frc-role-cards',",
+    expect: /GROUP_SELECTORS names \.frc-role-cards, which no rule in the token layer declares/ },
+  { check: '30c', what: 'the prompt stops stating the mount-once rule',
+    file: `${DS}/components/brand/DeckSteps.prompt.md`,
+    find: '**Every deck mounts it exactly once**',
+    replace: '**Mount it per deck**',
+    expect: /DeckSteps\.prompt\.md does not state that every deck mounts it exactly once/ },
+  { check: '30d', what: 'the print release is deleted',
+    file: `${DS}/tokens/deck-motion.css`,
+    find: `  .frc-sheet[data-deck-active][data-step] [data-step-item]:not([data-step-shown]) {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }`,
+    replace: '',
+    expect: /no @media print rule releases the step gate/ },
+  { check: '30e', what: 'the print release drops visibility and keeps only opacity',
+    file: `${DS}/tokens/deck-motion.css`,
+    find: `    opacity: 1;
+    visibility: visible;
+    transform: none;`,
+    replace: `    opacity: 1;
+    transform: none;`,
+    expect: /does not restore visibility/ },
+  // THE ONE THAT HOLDS CHECK 22'S EXEMPTION HONEST. Moving the same declaration
+  // out of the gate must still fail — through check 22 now, since it is no
+  // longer step-gated, which is exactly the narrowing working as specified.
+  { check: '30f', what: 'the hide moves out of the [data-deck-active][data-step] gate',
+    file: `${DS}/tokens/deck-motion.css`,
+    find: '.frc-sheet[data-deck-active][data-step] [data-step-item]:not([data-step-shown]) {\n  opacity: 0;\n  visibility: hidden;\n}',
+    replace: '.frc-sheet [data-step-item]:not([data-step-shown]) {\n  opacity: 0;\n  visibility: hidden;\n}',
+    expect: /sets opacity: 0 in a rule/ },
+  { check: '30g', what: 'the pending state is moved inside the reduced-motion gate',
+    file: `${DS}/tokens/deck-motion.css`,
+    find: `.frc-sheet[data-deck-active][data-step] [data-step-item]:not([data-step-shown]) {
+  opacity: 0;
+  visibility: hidden;
+}`,
+    replace: '',
+    expect: /no gated rule hides an unrevealed step item/ },
+  { check: '30h', what: 'the reveal transition escapes the motion gate',
+    file: `${DS}/tokens/deck-motion.css`,
+    find: `@media (prefers-reduced-motion: no-preference) {
+  .frc-sheet[data-deck-active][data-step] [data-step-item] {
+    transition: opacity 0.28s var(--ease-out), transform 0.28s var(--ease-out);
+  }`,
+    replace: `.frc-sheet[data-deck-active][data-step] [data-step-item] {
+    transition: opacity 0.28s var(--ease-out), transform 0.28s var(--ease-out);
+  }
+@media (prefers-reduced-motion: no-preference) {`,
+    expect: /animates a step reveal outside @media \(prefers-reduced-motion/ },
+  { check: '30i', what: 'the guard registry loses DeckSteps',
+    file: `${AUDIT}`,
+    find: "    'components/brand/DeckSteps.jsx': ['DeckStage', 'frc-deck'],\n",
+    replace: '',
+    expect: /DeckSteps\.jsx: trips a guard but is not registered/ },
 ]
 
 function runAudit() {
