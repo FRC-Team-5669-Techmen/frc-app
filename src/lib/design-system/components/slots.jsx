@@ -12,14 +12,29 @@
 // `slot` is a global HTML attribute, so it passes straight through to the DOM
 // and stays visible to the canvas. These helpers pick children apart by it and
 // paint the system class onto whatever element the author wrote.
-import { Children, cloneElement, isValidElement } from 'react'
+//
+// EVERY WALK HERE IS HOST-TRANSPARENT. The Claude Design runtime wraps the
+// template children of an `x-import` in layout-transparent host nodes, so "the
+// element the author wrote" and "the direct child" are not the same node. This
+// module is the funnel almost every component reaches children through, which is
+// why the mechanism lands here rather than in each component. See
+// components/host.jsx for what counts as a host and why looking through one is
+// not the same as accepting anything.
+import { cloneElement, isValidElement } from 'react'
 import { cx } from './cx.js'
+import { cloneThroughHost, hostChildren, isHostElement, throughHost } from './host.jsx'
 
-/** Split children into { slots, rest }. A repeated slot name collects an array. */
+/**
+ * Split children into { slots, rest }. A repeated slot name collects an array.
+ *
+ * Host-transparent: a host with no slot of its own is spliced away so the
+ * slotted child inside it is seen, and a host that CARRIES the slot is kept
+ * whole and filed under it. The runtime may do either, and both arrive here.
+ */
 export function pickSlots(children) {
   const slots = {}
   const rest = []
-  Children.forEach(children, (child) => {
+  hostChildren(children).forEach((child) => {
     if (child === null || child === undefined || child === false || child === '') return
     const name = isValidElement(child) ? child.props?.slot : undefined
     if (typeof name === 'string' && name) {
@@ -36,8 +51,9 @@ export function pickSlots(children) {
 export function pickType(children, types) {
   const want = [].concat(types)
   const out = []
-  Children.forEach(children, (child) => {
-    if (isValidElement(child) && want.includes(child.type)) out.push(child)
+  hostChildren(children).forEach((child) => {
+    const el = throughHost(child)
+    if (isValidElement(el) && want.includes(el.type)) out.push(child)
   })
   return out
 }
@@ -46,9 +62,11 @@ export function pickType(children, types) {
 export function rejectType(children, types) {
   const want = [].concat(types)
   const out = []
-  Children.forEach(children, (child) => {
+  hostChildren(children).forEach((child) => {
     if (child === null || child === undefined || child === false) return
-    if (isValidElement(child) && (want.includes(child.type) || child.props?.slot)) return
+    if (isValidElement(child) && child.props?.slot) return
+    const el = throughHost(child)
+    if (isValidElement(el) && want.includes(el.type)) return
     out.push(child)
   })
   return out
@@ -58,11 +76,21 @@ export function rejectType(children, types) {
  * Render a slot: keep the author's element and add the system class to it, so
  * the copy stays exactly where the author typed it. A bare string is wrapped in
  * `Tag` because there is nothing to paint the class onto.
+ *
+ * The class goes on the element the AUTHOR wrote, never on a host wrapping it:
+ * a host is `display: contents`, so it would still inherit color and font and
+ * silently drop every box property — the failure that looks almost right.
  */
 export function slotted(node, className, Tag = 'span', key) {
   if (node === null || node === undefined || node === false || node === '') return null
   if (Array.isArray(node)) return node.map((n, i) => slotted(n, className, Tag, i))
   if (isValidElement(node)) {
+    if (isHostElement(node)) {
+      const painted = cloneThroughHost(node, (el) => ({ className: cx(className, el.props.className) }))
+      return isValidElement(painted) && painted.key == null && key != null
+        ? cloneElement(painted, { key })
+        : painted
+    }
     return cloneElement(node, { className: cx(className, node.props.className), key: node.key ?? key })
   }
   return <Tag className={className} key={key}>{node}</Tag>

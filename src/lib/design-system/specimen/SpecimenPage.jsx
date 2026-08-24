@@ -3,12 +3,13 @@
 // grounds, the token layer, the type scale, every motion class, the ambient
 // layers, the core and brand demo cards, and the deck chrome, and PROVES the
 // load-bearing rules in the live browser. Touches no auth and no Supabase.
-import { Component, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Component, cloneElement, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   Button, Eyebrow, Divider, TeamWordmark,
   IconPlay, IconRotateCcw,
   DeckFooter, DeckStage, FirstName, FirstNameScope, HudFrame, PlatePanel, StencilTitle,
   ImageFrame, Cutout, MatchClock, AllianceSplit, ScoutTable, ScoutRow, SponsorWall, SponsorTier, SafetySheet,
+  SafetyNote, Callout, Card, JumpGrid, JumpCard, SectionSheet,
   RoleCard, SubteamBadge,
   GallerySheet, Sample,
   CoreDemoCard, BrandDemoCard, DataDemoCard, SurfacesDemoCard, FormsDemoCard, SheetsDemoCard, SHEET_PATTERNS, tokens,
@@ -945,6 +946,261 @@ function RefusalsSection() {
   )
 }
 
+/* ---------- 7h. Host transparency ---------- */
+
+/**
+ * THE RUNTIME MODEL, AND IT IS A MODEL — SAID PLAINLY.
+ *
+ * The Claude Design runtime is not available in this harness, so these three
+ * wrappers stand in for it. They are built from what the runtime is DESCRIBED to
+ * do — wrap the template children of an `x-import` in layout-transparent host
+ * nodes — and each one carries a DIFFERENT signal, so the proof does not rest on
+ * a single guess about the host's shape:
+ *
+ *   x-host   a custom element declaring display: contents INLINE
+ *   dc-host  a custom element made transparent by a STYLESHEET only, with
+ *            nothing readable in its props — the case an inline-style test misses
+ *   span     an ordinary element, transparent, carrying the explicit
+ *            data-frc-host contract — the case a tag-name test misses
+ *
+ * Each is mounted twice over: with `slot` hoisted onto the wrapper and with
+ * `slot` left on the child inside it, because a runtime may do either and the
+ * system must not care which.
+ *
+ * WHAT THIS PROVES AND WHAT IT DOES NOT. It proves the mechanism holds for a
+ * host that declares itself in any of those three ways. It does NOT prove the
+ * real runtime's host is one of those three — nobody here can, and if the real
+ * host turns out to be an ordinary element made transparent by a stylesheet
+ * whose class name we cannot know, `data-frc-host` is the contract that closes
+ * it and this section is where that gets measured.
+ */
+const HOST_KINDS = [
+  { id: 'inline', label: 'x-host, display: contents inline', wrap: (child, slot) => <x-host style={{ display: 'contents' }} slot={slot}>{child}</x-host> },
+  { id: 'sheet', label: 'dc-host, transparent from a stylesheet only', wrap: (child, slot) => <dc-host slot={slot}>{child}</dc-host> },
+  { id: 'contract', label: 'span, data-frc-host contract', wrap: (child, slot) => <span data-frc-host="" style={{ display: 'contents' }} slot={slot}>{child}</span> },
+]
+
+/** slot on the WRAPPER, or slot on the CHILD inside it. */
+const SLOT_PLACEMENTS = [
+  { id: 'on-host', label: 'slot on the host', build: (kind, child) => kind.wrap(child, 'note') },
+  { id: 'on-child', label: 'slot on the child inside', build: (kind, child) => kind.wrap(cloneElement(child, { slot: 'note' }), undefined) },
+]
+
+const safetyNote = () => (
+  <SafetyNote>
+    <span slot="title">Mill</span>
+    <p className="frc-body-sm">Stock walks if it is not clamped.</p>
+    <span slot="rule">Eyes on the cutter, hands on the handles.</span>
+  </SafetyNote>
+)
+
+/**
+ * The cases. `expect: 'pass'` must render the sheet with no fault and no throw;
+ * `expect: 'reject'` must still be refused, because looking through a host is
+ * not the same as accepting anything.
+ */
+function hostCases() {
+  const out = []
+  for (const kind of HOST_KINDS) {
+    for (const place of SLOT_PLACEMENTS) {
+      out.push({
+        id: `${kind.id}-${place.id}`,
+        label: `SafetyNote through ${kind.label} · ${place.label}`,
+        expect: 'pass',
+        node: <SafetySheet label="Safety" footer={false}><span slot="title">The mill</span>{place.build(kind, safetyNote())}</SafetySheet>,
+      })
+    }
+  }
+  out.push({
+    id: 'direct',
+    label: 'SafetyNote as a direct child (the arrangement that already worked)',
+    expect: 'pass',
+    node: <SafetySheet label="Safety" footer={false}><span slot="title">The mill</span><SafetyNote slot="note"><span slot="title">Mill</span><p className="frc-body-sm">Stock walks if it is not clamped.</p></SafetyNote></SafetySheet>,
+  })
+  out.push({
+    id: 'softened',
+    label: 'A Callout through a host — the hazard softened into a normal note',
+    expect: 'reject',
+    node: <SafetySheet label="Safety" footer={false}><span slot="title">The mill</span><x-host style={{ display: 'contents' }} slot="note"><Callout>Mind the mill.</Callout></x-host></SafetySheet>,
+  })
+  out.push({
+    id: 'buried',
+    label: 'A SafetyNote buried inside a Card inside a host — author markup, not a wrapper',
+    expect: 'reject',
+    node: <SafetySheet label="Safety" footer={false}><span slot="title">The mill</span><x-host style={{ display: 'contents' }} slot="note"><Card>{safetyNote()}</Card></x-host></SafetySheet>,
+  })
+  out.push({
+    id: 'empty',
+    label: 'No note at all',
+    expect: 'reject',
+    node: <SafetySheet label="Safety" footer={false}><span slot="title">The mill</span></SafetySheet>,
+  })
+  return out
+}
+
+/** A deck whose sheets sit inside hosts — what DeckStage and the stylesheet meet. */
+function HostedDeck({ probeRef, onPaint }) {
+  return (
+    <div ref={probeRef} className="frc-deck frc-ground-squadron frc-audience-internal" data-hosted-deck style={{ position: 'relative', height: 300, overflow: 'hidden' }}>
+      <DeckStage nav={false} fit={false} thumbs={false} onPaint={onPaint} />
+      <div className="frc-stage" data-aspect="4:3" style={{ transform: 'scale(0.2)', transformOrigin: '0 0' }}>
+        {/* PAPER on the active sheet on purpose: --bg0 and --edge differ there,
+            so a match proves DeckStage read the ACTIVE HOSTED SHEET rather than
+            reusing one tone or reading the squadron deck root. */}
+        <x-host style={{ display: 'contents' }}>
+          <SectionSheet active label="One" className="frc-ground-paper"><span slot="title">One</span></SectionSheet>
+        </x-host>
+        <dc-host>
+          <SectionSheet label="Two"><span slot="title">Two</span></SectionSheet>
+        </dc-host>
+      </div>
+    </div>
+  )
+}
+
+function HostSection() {
+  const [cases] = useState(hostCases)
+  const [report, setReport] = useState(null)
+  const [painted, setPainted] = useState(null)
+  const deckRef = useRef(null)
+  const casesRef = useRef(null)
+  const slotRef = useRef(null)
+  const jumpRef = useRef(null)
+
+  const run = useCallback(() => {
+    const root = casesRef.current
+    const deck = deckRef.current
+    if (!root || !deck) return
+    // Guard outcome per case: a rejection is EITHER a thrown error caught by the
+    // boundary (harness mode) OR a rust fault marker (deck mode). Both count,
+    // and the section does not care which mode the route is in.
+    const guards = cases.map((c) => {
+      const cell = root.querySelector(`[data-host-case="${c.id}"]`)
+      const rejected = Boolean(cell && (cell.querySelector('.ds-error') || cell.querySelector('[data-frc-fault]')))
+      const note = Boolean(cell && cell.querySelector('[data-frc="SafetyNote"]'))
+      return { ...c, rejected, note, ok: c.expect === 'reject' ? rejected : !rejected && note }
+    })
+
+    // The stylesheet end. A hosted sheet under a `>` combinator is not matched
+    // at all, so nothing is hidden and every sheet paints on top of every other.
+    const stage = deck.querySelector('.frc-stage')
+    const sheets = [...stage.querySelectorAll('.frc-sheet')]
+    const displays = sheets.map((s) => ({
+      active: s.hasAttribute('data-deck-active'),
+      display: getComputedStyle(s).display,
+      hosted: s.parentElement !== stage,
+    }))
+    const visibility = displays.every((d) => d.hosted && d.display === (d.active ? 'block' : 'none'))
+
+    // The slotted-copy end: the class must land on the element the author wrote,
+    // never on the transparent wrapper, where every box property is lost.
+    const slotHost = slotRef.current?.querySelector('x-host')
+    const slotInner = slotRef.current?.querySelector('h2')
+    const slotOk = Boolean(slotInner && slotInner.classList.contains('frc-sheet-title') && !(slotHost && slotHost.classList.contains('frc-sheet-title')))
+
+    // Positional numbering through hosts: cloning the wrapper hands `index` to
+    // something that ignores it, and every card reads Part 01.
+    const jumpNums = [...(jumpRef.current?.querySelectorAll('.frc-jump-n') ?? [])].map((n) => n.textContent.trim())
+    const jumpOk = jumpNums.join('|') === 'Part 01|Part 02|Part 03'
+
+    setReport({
+      guards,
+      displays,
+      visibility,
+      slotOk,
+      slotClass: slotInner ? slotInner.className : '(no title element)',
+      jumpNums,
+      jumpOk,
+      hostedSheets: displays.filter((d) => d.hosted).length,
+    })
+  }, [cases])
+
+  useEffect(() => { const t = setTimeout(run, 60); return () => clearTimeout(t) }, [run])
+
+  const guardsOk = report ? report.guards.every((g) => g.ok) : null
+  const stageOk = report ? report.visibility && Boolean(painted) : null
+  const all = report ? guardsOk && stageOk && report.slotOk && report.jumpOk : null
+
+  return (
+    <Section
+      id="host"
+      title="Host transparency"
+      lede="The Claude Design runtime wraps the template children of an x-import in layout-transparent host nodes, so the child an author wrote is not a direct child of the component it was written inside. Everything below is mounted THROUGH a modelled host — never as a direct child — and measured. The three wrappers carry three different signals and each is mounted with the slot on the wrapper and on the child inside it, because a runtime may do either. This is a MODEL of the runtime, not the runtime: it proves the mechanism holds for a host that declares itself in any of those ways, and cannot prove which one the real runtime uses."
+    >
+      <div className="ds-tabs"><Verdict state={all}>Host-transparent everywhere it was assumed</Verdict><Button variant="ghost" onClick={run}>Re-measure</Button></div>
+
+      <div className="ds-proof" data-proof="host-guard">
+        <div className="ds-proof-head">
+          <Verdict state={guardsOk}>The SafetyNote guard passes through a host and still refuses wrong content</Verdict>
+        </div>
+        <p className="ds-note">A note wrapped by the runtime is the note the author wrote. A note softened into a Callout, or buried inside another component, is different content — and every case marked reject below is still refused.</p>
+        <table><tbody>
+          {(report?.guards ?? cases.map((c) => ({ ...c }))).map((g) => (
+            <tr key={g.id}>
+              <td className={g.ok === false ? 'ds-fail' : undefined}>{g.ok == null ? '…' : g.ok ? '✓' : '✗'}</td>
+              <td>{g.label}</td>
+              <td><code>expect {g.expect}</code></td>
+              <td>{g.rejected == null ? '' : g.rejected ? 'refused' : 'rendered'}</td>
+            </tr>
+          ))}
+        </tbody></table>
+        <div ref={casesRef} className="ds-host-cases">
+          {cases.map((c) => (
+            <div key={c.id} data-host-case={c.id} className="ds-host-case">
+              <span className="frc-label">{c.label}</span>
+              <div className="frc-deck frc-ground-squadron" style={{ position: 'relative', height: 220, overflow: 'hidden' }}>
+                <Boundary>{c.node}</Boundary>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="ds-proof" data-proof="host-stage">
+        <div className="ds-proof-head">
+          <Verdict state={stageOk}>DeckStage finds hosted sheets, and the stylesheet still hides the inactive one</Verdict>
+        </div>
+        <p className="ds-note">Both sheets sit inside a host, so neither is a DOM child of the stage. Filtering stage.children returns nothing and DeckStage then paints nothing; a `&gt;` combinator matches nothing and every sheet paints on top of every other.</p>
+        {report ? (
+          <table><tbody>
+            <tr><td>hosted sheets (not DOM children of the stage)</td><td className={report.hostedSheets === 2 ? undefined : 'ds-fail'}>{report.hostedSheets} of {report.displays.length}</td></tr>
+            {report.displays.map((d, i) => <tr key={i}><td>sheet {i + 1}{d.active ? ' (active)' : ''}</td><td><code>display: {d.display}</code></td></tr>)}
+            <tr><td>DeckStage painted from the active sheet</td><td>{painted ? <code>--bg0 {painted.bg0} · --edge {painted.edge}</code> : <span className="ds-fail">never painted</span>}</td></tr>
+          </tbody></table>
+        ) : null}
+        <HostedDeck probeRef={deckRef} onPaint={setPainted} />
+      </div>
+
+      <div className="ds-proof" data-proof="host-slotted">
+        <div className="ds-proof-head">
+          <Verdict state={report ? report.slotOk : null}>Slotted copy is painted on the author's element, not on the wrapper</Verdict>
+        </div>
+        <p className="ds-note">The quiet one. A class on a display: contents host still inherits color and font and silently drops padding, background and border — so the sheet looks nearly right and is not. Measured class: <code>{report?.slotClass ?? '…'}</code></p>
+        <div ref={slotRef} className="frc-deck frc-ground-squadron" style={{ position: 'relative', height: 220, overflow: 'hidden' }}>
+          <GallerySheet label="Slot" footer={false}>
+            <x-host style={{ display: 'contents' }} slot="title"><h2>Title through a host</h2></x-host>
+            <x-host style={{ display: 'contents' }} slot="lede"><p>Lede through a host.</p></x-host>
+          </GallerySheet>
+        </div>
+      </div>
+
+      <div className="ds-proof" data-proof="host-index">
+        <div className="ds-proof-head">
+          <Verdict state={report ? report.jumpOk : null}>Position-derived numbering survives a host</Verdict>
+        </div>
+        <p className="ds-note">Cloning the wrapper hands `index` to something that ignores it, and every card reads Part 01. Measured: <code>{report ? report.jumpNums.join(' · ') : '…'}</code></p>
+        <div ref={jumpRef} className="frc-deck frc-ground-squadron" style={{ padding: 24 }}>
+          <JumpGrid cols={3}>
+            <x-host style={{ display: 'contents' }}><JumpCard><span slot="title">Brief</span></JumpCard></x-host>
+            <dc-host><JumpCard><span slot="title">Roster</span></JumpCard></dc-host>
+            <span data-frc-host="" style={{ display: 'contents' }}><JumpCard><span slot="title">Quals</span></JumpCard></span>
+          </JumpGrid>
+        </div>
+      </div>
+    </Section>
+  )
+}
+
 /* ---------- 7g. Sheet patterns ---------- */
 
 const AUDIENCES = ['internal', 'external']
@@ -1710,7 +1966,7 @@ export default function SpecimenPage() {
         <span className="ds-header-title">{NAMESPACE}</span>
         <span>v{VERSION} · /_ds · dev only</span>
         <nav className="ds-nav">
-          {['grounds', 'tokens', 'type', 'motion', 'surfaces', 'core', 'brand', 'data', 'surfaces-group', 'forms', 'role-density', 'images', 'cutout', 'clock', 'alliance', 'sheets', 'sheet-fill', 'refusals', 'chrome', 'wiring'].map((id) => <a key={id} href={`#${id}`}>{id}</a>)}
+          {['grounds', 'tokens', 'type', 'motion', 'surfaces', 'core', 'brand', 'data', 'surfaces-group', 'forms', 'role-density', 'images', 'cutout', 'clock', 'alliance', 'sheets', 'sheet-fill', 'host', 'refusals', 'chrome', 'wiring'].map((id) => <a key={id} href={`#${id}`}>{id}</a>)}
         </nav>
       </header>
       <main className="ds-main">
@@ -1731,6 +1987,7 @@ export default function SpecimenPage() {
         <AllianceSection />
         <SheetsSection />
         <SheetFillSection />
+        <HostSection />
         <RefusalsSection />
         <section className="ds-section"><ExternalEnforcement /></section>
         <ChromeSection />

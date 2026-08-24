@@ -64,3 +64,7 @@ With the rail off and the deck driving its own keys:
 ```jsx
 <DeckStage nav={false} thumbs={false} />
 ```
+
+## Host transparency
+
+DeckStage finds the sheets on the stage **through any layout-transparent host** — the Claude Design runtime wraps template children, so a sheet placed on the stage is often not a DOM child of it. Filtering `stage.children` returned the hosts, the filter returned nothing, and DeckStage then activated no sheet and never read `--edge`: the exact white flash it exists to prevent, arriving through the one line that looked too simple to be wrong. It reads through `structuralChildren` from `components/host.jsx` now, and `ds:audit` check 29 holds it there.

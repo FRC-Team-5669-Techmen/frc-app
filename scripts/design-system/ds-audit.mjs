@@ -71,6 +71,13 @@
 //     kind actually raises --fill-row, and .frc-sample / .frc-sample-media still
 //     read it. The kind list is derived from the pattern sources, never typed here.
 //     --white is never painted as a surface.
+//
+// 29. HOST TRANSPARENCY, both ends. components/host.jsx ships the one mechanism
+//     and exports its whole surface; every component that walks or type-checks a
+//     child reaches it rather than assuming a direct child; DeckStage reads the
+//     sheets through it; and no token-sheet rule uses a `>` combinator across a
+//     relationship that crosses a deck-author boundary, where the Claude Design
+//     runtime can interpose a layout-transparent host node.
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
@@ -538,7 +545,9 @@ if (BODY_CLASSES.size < 5) fail(`checks 19/22: only ${BODY_CLASSES.size} body-co
 {
   const REQUIRED = [
     ['.frc-letterbox', ['position', 'inset', 'overflow']],
-    ['.frc-letterbox > .frc-stage', ['position']],
+    // Containment, not parentage, since check 29: the runtime can put a host
+    // between the letterbox and the stage, and `>` then matched nothing.
+    ['.frc-letterbox .frc-stage', ['position']],
     ['.frc-thumbs-dock', ['position']],
     ['.frc-stage', ['width', 'height', 'overflow']],
     ['.frc-thumbs', ['background']],
@@ -995,6 +1004,99 @@ const MOTION_CLASSES = new Set(MOTION_VOCAB.filter((c) => /^frc-(in|img)-/.test(
   // the ground scopes; it is the same failure mode one layer down.
   if (!/:where\(\.frc-sheet\)[^{]*\{[^}]*--fill-row:\s*auto/.test(TOKEN_SRC['tokens/sheets.css'])) {
     fail('check 28: the --fill-row default is not declared on :where(.frc-sheet) — a plain .frc-sheet selector ties with .frc-sheet-<kind> and source order decides which wins')
+  }
+}
+
+// ---------- 29. host transparency, both ends ----------
+// The Claude Design runtime wraps the template children of an `x-import` in
+// LAYOUT-TRANSPARENT HOST NODES, so "the child the author wrote" and "the direct
+// child" are not the same node. Assuming they are cost, in order: DeckStage's
+// sheet lookup, the deck-motion direct-child selectors, SafetySheet's note guard
+// twice over, and a permanent helmet rule in every shipped deck hiding hosts
+// that nothing bridged. Each was patched where it hurt. This check is what stops
+// the sixth patch: it holds BOTH ends of the one mechanism, because a traversal
+// that looks through hosts in JS while the stylesheet still demands parentage is
+// half a fix, and the half that is missing is invisible until a deck ships.
+{
+  const HOST = 'components/host.jsx'
+  if (!exists(HOST)) {
+    fail(`check 29: ${HOST} is missing — the host-transparency mechanism is what every walk below is required to reach`)
+  } else {
+    const src = codeOf(HOST)
+    // The whole surface, both faces. A face that quietly stops being exported is
+    // a face every caller silently stops using.
+    for (const name of ['isHostElement', 'hostChildren', 'throughHost', 'hostProps', 'containsType', 'cloneThroughHost', 'isHostNode', 'structuralChildren']) {
+      if (!new RegExp(`export function ${name}\\b`).test(src)) fail(`check 29: ${HOST} does not export ${name} — the mechanism is incomplete`)
+    }
+    // A host is identified POSITIVELY. "Not one of ours" would make every
+    // author element a host and turn every guard into a rubber stamp.
+    if (!/data-frc-host/.test(src)) fail(`check 29: ${HOST} carries no explicit data-frc-host contract — a runtime whose host is an ordinary element has no way to declare itself`)
+    if (!/display === 'contents'/.test(src)) fail(`check 29: ${HOST} never tests display: contents — that is the one signal the DOM face can read outright`)
+  }
+
+  // ---- the JS end -------------------------------------------------------
+  // A file that reaches into a child's identity, props or position must go
+  // through the mechanism. The triggers are the exact expressions that read a
+  // child as if it were a direct child; anything narrower would miss the sites
+  // that actually broke, and anything wider fires on legitimate code and gets
+  // commented out within a month.
+  const TRIGGERS = [
+    [/\bChildren\.(forEach|map)\(/, 'walks children positionally'],
+    [/\bcloneElement\(/, 'clones a child'],
+    [/\.type\s*===|\.type\?\./, 'type-checks a child'],
+    [/\.props\.children\b|\.props\[/, "reads a child's props"],
+  ]
+  // ONE EXEMPTION, and the reason is the check's own definition rather than a
+  // convenience: a demo card clones an element IT built, in the harness, where
+  // there is no author boundary and therefore no host. host.jsx is the
+  // mechanism and cannot reach itself.
+  const EXEMPT = (f) => f === HOST || /DemoCard\.jsx$/.test(f)
+  const WALKERS = allFiles.filter((f) => /^components\/.*\.jsx$/.test(f) && !EXEMPT(f))
+  for (const f of WALKERS) {
+    const src = codeOf(f)
+    const hit = TRIGGERS.find(([re]) => re.test(src))
+    if (!hit) continue
+    if (!/from '\.{1,2}\/host\.jsx'/.test(src)) {
+      fail(`check 29: ${f} ${hit[1]} but imports nothing from components/host.jsx — on a hosted deck it reads the wrapper the runtime inserted, not the child the author wrote`)
+    }
+  }
+
+  // DeckStage is named on its own because its lookup is the one that has already
+  // failed in a shipped deck, and because filtering stage.children reads as
+  // obviously correct right up until a host is in the way.
+  const deckStage = codeOf('components/brand/DeckStage.jsx')
+  if (!/structuralChildren/.test(deckStage)) fail('check 29: DeckStage does not read its sheets through structuralChildren — stage.children returns the hosts on a generated deck and the filter returns nothing')
+  if (/\bstage\.children\b/.test(deckStage)) fail('check 29: DeckStage still reads stage.children directly')
+
+  // ---- the CSS end ------------------------------------------------------
+  // Every relationship a deck author's markup crosses. On each of these the
+  // runtime can interpose a host, so the token layer matches by CONTAINMENT.
+  // That is exact rather than approximate: on all of them the child cannot
+  // legally nest inside itself within that parent (a sheet in a sheet, a stage
+  // in a stage, a role card in a role card are each defects in their own right),
+  // so descendant matching and child matching agree on every legal tree.
+  const AUTHOR_BOUNDARIES = [
+    ['.frc-stage', 'sheets are placed on the stage by the deck'],
+    ['.frc-letterbox', 'the stage is placed in the letterbox by the deck'],
+    ['.frc-frame-plate', "ImageFrame's media is an author child"],
+    ['.frc-cutout-subject', "Cutout's subject is an author child"],
+    ['.frc-sample-media', "a Sample's media is an author child"],
+    ['.frc-role-grid', 'RoleCards are author children of the grid'],
+    ['.frc-sponsor-row', 'sponsor marks are author children of the tier'],
+    ['.frc-jumps', 'JumpCards are author children'],
+    ['.frc-pipeline', 'PipelineSteps are author children'],
+    ['.frc-roster', 'RoleCards are author children'],
+    ['.frc-gallery', 'Samples are author children'],
+    ['.frc-drawing-media', 'CalloutPins are author children'],
+  ]
+  for (const f of TOKEN_FILES) {
+    for (const [cls, why] of AUTHOR_BOUNDARIES) {
+      // `.frc-stage > ` and `:has(> .frc-role…)` alike — the combinator right
+      // after the boundary class, whatever punctuation sits between.
+      const re = new RegExp(`\\${cls}(?![\\w-])[^,{>]*>`)
+      const m = TOKEN_SRC[f].match(re)
+      if (m) fail(`check 29: ${f}: "${m[0].replace(/\s+/g, ' ').trim()}" uses a child combinator across a deck-author boundary (${why}) — the runtime can put a layout-transparent host there and the rule then matches nothing. Match by containment.`)
+    }
   }
 }
 

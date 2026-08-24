@@ -1,6 +1,7 @@
-import { Children, cloneElement, isValidElement } from 'react'
+import { Children, isValidElement } from 'react'
 import { cx } from '../cx.js'
 import { pickSlots, slotted } from '../slots.jsx'
+import { cloneThroughHost, hostProps } from '../host.jsx'
 
 const STATES = { default: null, done: null, current: null, blocked: null }
 
@@ -16,7 +17,8 @@ export function ProcessPipeline({ as: Tag = 'div', className, children, ...rest 
   const numbered = Children.map(steps, (child) => {
     if (!isValidElement(child)) return child
     n += 1
-    return cloneElement(child, { index: child.props.index ?? n })
+    // Through any runtime host — see components/host.jsx.
+    return cloneThroughHost(child, { index: hostProps(child)?.index ?? n })
   })
   return (
     <Tag className={cx('frc-pipeline', className)} data-frc="ProcessPipeline" {...rest}>

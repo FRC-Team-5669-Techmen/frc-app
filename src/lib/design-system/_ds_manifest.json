@@ -969,6 +969,11 @@
       "note": "Internal. The frame every sheet pattern is built on: transition, ambient layers, footer rail. Decks compose PATTERNS, never this."
     },
     {
+      "name": "host",
+      "sourcePath": "components/host.jsx",
+      "note": "HOST TRANSPARENCY. The Claude Design runtime wraps the template children of an x-import in layout-transparent host nodes, so a child the author wrote is not a direct child of the component it was written inside. One mechanism with two faces - a React-element traversal (hostChildren / throughHost / hostProps / containsType / cloneThroughHost) and a DOM traversal (isHostNode / structuralChildren) - reached by slots.jsx, by every guard that type-checks a slotted child, and by DeckStage's sheet lookup. It looks through RUNTIME hosts and through nothing else: content nested inside author markup is different content and every guard that rejected it still rejects it. The CSS face is containment instead of parentage where a host may be interposed; ds:audit check 29 holds both ends."
+    },
+    {
       "name": "slots",
       "sourcePath": "components/slots.jsx",
       "note": "Child-slot helpers. Copy lives in children carrying a plain slot attribute, because a props array is not editable on the canvas."

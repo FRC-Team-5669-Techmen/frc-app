@@ -82,3 +82,17 @@ html[data-ds-capture], html[data-ds-capture] body { margin: 0; padding: 0; backg
 .ds-capture .frc-demo-card { padding: 0; gap: 0; }
 .ds-capture .frc-sheet-stage { gap: 0; }
 .ds-capture .frc-sheet-stage figcaption { display: none; }
+
+/* ---- Host transparency proof ------------------------------------------------
+   THESE THREE RULES MODEL THE CLAUDE DESIGN RUNTIME AND ARE HARNESS-ONLY. They
+   are deliberately NOT in the token layer: the design system does not create
+   hosts, it survives them, and a rule here is what lets the proof mount real
+   components through a wrapper the runtime would have inserted.
+
+   `dc-host` is the load-bearing one. It is transparent from THIS STYLESHEET and
+   declares nothing readable in its props, so it is the case an inline-style test
+   would miss and the detector has to recognise by tag. */
+x-host, dc-host { display: contents; }
+
+.ds-host-cases { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
+.ds-host-case { display: grid; gap: var(--space-1); min-width: 0; }

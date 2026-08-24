@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { cx } from '../cx.js'
 import { pickSlots, slotList } from '../slots.jsx'
+import { hostProps } from '../host.jsx'
 
 /**
  * FieldDiagram - the field from above, with zones a strategy conversation can
@@ -62,19 +63,22 @@ export function FieldDiagram({
           ))}
         </svg>
         {labels.map((l, i) => {
-          const id = l.props ? l.props['data-zone'] : undefined
+          // Read through any runtime host: on a hosted deck `data-zone` is not
+          // on the wrapper, and every zone label was dropped without a word.
+          const lp = hostProps(l)
+          const id = lp ? lp['data-zone'] : undefined
           const zone = zones.find((z) => z.id === id)
           if (!zone || !zone.at) return null
           return (
             <span
               key={id || i}
-              className={cx('frc-fd-label', l.props.className)}
+              className={cx('frc-fd-label', lp.className)}
               style={{ '--x': zone.at[0], '--y': zone.at[1] }}
               data-zone={id}
               data-active={active === id ? '' : undefined}
               slot="zone"
             >
-              {l.props.children}
+              {lp.children}
             </span>
           )
         })}

@@ -1,6 +1,7 @@
-import { Children, cloneElement, createContext, isValidElement, useContext, useId, useState } from 'react'
+import { Children, createContext, isValidElement, useContext, useId, useState } from 'react'
 import { cx } from '../cx.js'
 import { pickSlots, slotted } from '../slots.jsx'
+import { cloneThroughHost, hostProps, throughHost } from '../host.jsx'
 
 const PinCtx = createContext(null)
 
@@ -20,9 +21,11 @@ export function CalloutDrawing({ defaultActive = null, as: Tag = 'figure', class
   const { slots, rest: content } = pickSlots(children)
   let n = 0
   const numbered = Children.map(content, (child) => {
-    if (!isValidElement(child) || child.type?.frcPin !== true) return child
+    // A pin is recognised through any runtime host — see components/host.jsx.
+    const pin = throughHost(child)
+    if (!isValidElement(pin) || pin.type?.frcPin !== true) return child
     n += 1
-    return cloneElement(child, { index: child.props.index ?? n })
+    return cloneThroughHost(child, { index: hostProps(child)?.index ?? n })
   })
   return (
     <PinCtx.Provider value={{ active, setActive }}>

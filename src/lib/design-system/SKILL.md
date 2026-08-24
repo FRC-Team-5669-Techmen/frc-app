@@ -101,8 +101,8 @@ The marks are used as supplied — no recoloring, rotating, cropping, containing
 ## Verifying
 
 ```bash
-npm run ds:audit      # static audit (16-27 are the source-side counterparts of the pre-delivery checks)
-npm run ds:audit:controls  # break each of 16-27, prove it fires, restore
+npm run ds:audit      # static audit (16-27 are the source-side counterparts of the pre-delivery checks; 29 holds host transparency)
+npm run ds:audit:controls  # break each of 16-29, prove it fires, restore
 npm run ds:dev        # boot the harness (vite --mode dsspec, port 5175)
 npm run ds:capture    # render every sheet pattern to PNG, headless
 ```

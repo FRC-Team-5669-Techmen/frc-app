@@ -32,3 +32,9 @@ This rule is enforced in code. A tripped guard **renders a visible rust fault ma
   <Step><span slot="title">Check the vise</span><span slot="text">Jaws clean, stock seated.</span></Step>
 </SafetySheet>
 ```
+
+## Host transparency
+
+The note is found **through any layout-transparent host** the Claude Design runtime put between this sheet and the `SafetyNote` — pass it as ordinary markup and it works whether the runtime hoists `slot` onto the wrapper or leaves it on the child. Nothing extra to write, and no reason to hand-build this sheet in JavaScript to get past the guard.
+
+The guard is unchanged in what it refuses. It looks through a runtime wrapper and through nothing else: a hazard softened into a `Callout`, or a `SafetyNote` buried inside another component, is different content and is still refused. See `components/host.jsx`.

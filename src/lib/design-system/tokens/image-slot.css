@@ -108,9 +108,11 @@ image-slot { color: var(--fg-dim); }
   border-radius: var(--radius-panel);
   min-height: 120px;
 }
-.frc-frame-plate > img,
-.frc-frame-plate > image-slot,
-.frc-frame-plate > .frc-frame-media { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* Containment, not parentage: the media is an author child, so a runtime host
+   can sit between it and the plate. See components/host.jsx. */
+.frc-frame-plate img,
+.frc-frame-plate image-slot,
+.frc-frame-plate .frc-frame-media { display: block; width: 100%; height: 100%; object-fit: cover; }
 .frc-frame-caption {
   margin: var(--space-2) 0 0;
   font-family: var(--font-mono);
@@ -213,8 +215,9 @@ image-slot { color: var(--fg-dim); }
   border: 0;
   box-shadow: none;
 }
-.frc-cutout-subject > img,
-.frc-cutout-subject > image-slot { display: block; width: 100%; height: 100%; object-fit: contain; background: none; }
+/* Containment, not parentage — the subject is an author child. */
+.frc-cutout-subject img,
+.frc-cutout-subject image-slot { display: block; width: 100%; height: 100%; object-fit: contain; background: none; }
 /* ground="shadow" — a resting part. Contact shadow on the silhouette itself. */
 .frc-cutout-shadow .frc-cutout-subject { filter: drop-shadow(0 14px 18px var(--tex-shade)) drop-shadow(0 2px 2px var(--tex-shade)); }
 /* ground="shelf" — a datum line under the part, drawn in the hairline, not a plate. */

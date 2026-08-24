@@ -34,23 +34,37 @@
    Deck.dc.html shell; since nothing is copied any more, it has to ship in the
    token layer or a deck that sets the class gets no letterbox at all — the
    class would be present, read by DeckStage, and functionally inert. */
+/* ---- Host transparency ----------------------------------------------------
+   THE CLAUDE DESIGN RUNTIME WRAPS TEMPLATE CHILDREN IN LAYOUT-TRANSPARENT HOST
+   NODES, so a sheet placed on the stage is not necessarily a DOM child of it.
+   No combinator expresses "child, looking through display: contents", so the
+   system spells the same idea the only way CSS can: WHERE A HOST MAY BE
+   INTERPOSED, MATCH BY CONTAINMENT, NOT BY PARENTAGE. That is exact, not
+   approximate, wherever the child cannot legally nest inside itself within that
+   parent — a sheet inside a sheet, a stage inside a stage — which holds for
+   every relationship here. components/host.jsx carries the reasoning and the
+   matching JS traversal; ds:audit check 29 holds the boundary list, so a new
+   `>` across one of them fails the audit instead of becoming a deck-side patch.
+   -------------------------------------------------------------------------- */
 .frc-letterbox { position: fixed; inset: 0; overflow: hidden; }
-.frc-letterbox > .frc-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.frc-letterbox .frc-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 
 /* DeckStage is behaviour, not appearance: it renders a marker node so it can
    find its deck and be counted, and that node is never seen. A tripped guard
    renders .frc-fault instead, which is deliberately not hidden. */
 .frc-deck-stage { display: none; }
 
-/* Only the active sheet shows on a live stage. */
-.frc-stage > .frc-sheet { display: none; }
-.frc-stage > .frc-sheet[data-deck-active] { display: block; }
+/* Only the active sheet shows on a live stage. Containment, not parentage: a
+   hosted sheet under a `>` is not matched at all, so NOTHING is hidden and every
+   sheet in the deck paints on top of every other. */
+.frc-stage .frc-sheet { display: none; }
+.frc-stage .frc-sheet[data-deck-active] { display: block; }
 
 /* Print and PDF: every sheet, complete, one per page, in order. */
 @media print {
   .frc-stage { height: auto; overflow: visible; }
-  .frc-stage > .frc-sheet { display: block; position: relative; height: 1440px; break-after: page; page-break-after: always; }
-  .frc-stage[data-aspect="16:9"] > .frc-sheet { height: 1080px; }
+  .frc-stage .frc-sheet { display: block; position: relative; height: 1440px; break-after: page; page-break-after: always; }
+  .frc-stage[data-aspect="16:9"] .frc-sheet { height: 1080px; }
 }
 
 /* Thumbnail frames follow the active ground (bg0 fill, edge frame) so the rail

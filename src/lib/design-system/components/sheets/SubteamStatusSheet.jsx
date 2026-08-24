@@ -1,4 +1,5 @@
 import { pickSlots, slotted } from '../slots.jsx'
+import { hostProps } from '../host.jsx'
 import { cx } from '../cx.js'
 import { Sheet, SheetHead } from './Sheet.jsx'
 import { Card } from '../surfaces/Card.jsx'
@@ -37,7 +38,7 @@ export function SubteamStatus({ tone = 'default', progress, max = 100, className
   return (
     <Card className={cx('frc-subteam-card', className)} data-frc="SubteamStatus" {...rest}>
       <div className="frc-subteam-card-head">
-        {slots.subteam ? <SubteamBadge>{slots.subteam.props ? slots.subteam.props.children : slots.subteam}</SubteamBadge> : null}
+        {slots.subteam ? <SubteamBadge>{hostProps(slots.subteam)?.children ?? slots.subteam}</SubteamBadge> : null}
         {slots.status ? <Badge tone={tone}>{slots.status}</Badge> : null}
       </div>
       {progress != null ? (

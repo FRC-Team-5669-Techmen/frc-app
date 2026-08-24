@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// FRC5669DesignSystem — negative controls for ds:audit checks 16-28.
+// FRC5669DesignSystem — negative controls for ds:audit checks 16-29.
 // `npm run ds:audit:controls`. Exit 1 if any control is not caught.
 //
 // Each control breaks the exact thing one check exists to catch, runs the audit,
@@ -231,6 +231,46 @@ const CONTROLS = [
     find: '.frc-sheet-statement .frc-sheet-body { grid-template-rows: 1fr; }',
     replace: '.frc-sheet-statementX .frc-sheet-body { grid-template-rows: 1fr; }',
     expect: /kind "statement"\) renders no \.frc-sheet-content AND owns no/ },
+
+  // ---- 29. host transparency. Both ends, because a JS traversal that looks
+  // through hosts while the stylesheet still demands parentage is half a fix,
+  // and the missing half is invisible until a deck ships.
+  { check: '29a', what: 'the mechanism loses one of its exports',
+    file: `${DS}/components/host.jsx`,
+    find: 'export function structuralChildren(',
+    replace: 'function structuralChildren(',
+    expect: /does not export structuralChildren/ },
+  { check: '29b', what: 'the explicit data-frc-host contract is dropped',
+    file: `${DS}/components/host.jsx`,
+    find: "if (props && props['data-frc-host'] !== undefined) return true",
+    replace: '',
+    all: true,
+    expect: /carries no explicit data-frc-host contract/ },
+  { check: '29c', what: 'a guard type-checks a child without reaching the mechanism',
+    file: `${DS}/components/surfaces/SponsorWall.jsx`,
+    find: "import { throughHost } from '../host.jsx'\n",
+    replace: '',
+    expect: /SponsorWall\.jsx type-checks a child but imports nothing from components\/host\.jsx/ },
+  { check: '29d', what: 'DeckStage goes back to filtering stage.children',
+    file: `${DS}/components/brand/DeckStage.jsx`,
+    find: "return structuralChildren(stage).filter((el) => el.classList.contains('frc-sheet'))",
+    replace: "return Array.prototype.filter.call(stage.children, (el) => el.classList.contains('frc-sheet'))",
+    expect: /DeckStage does not read its sheets through structuralChildren|DeckStage still reads stage\.children/ },
+  { check: '29e', what: 'the sheet visibility rule goes back to a child combinator',
+    file: `${DS}/tokens/deck-motion.css`,
+    find: '.frc-stage .frc-sheet { display: none; }',
+    replace: '.frc-stage > .frc-sheet { display: none; }',
+    expect: /uses a child combinator across a deck-author boundary \(sheets are placed on the stage/ },
+  { check: '29f', what: 'the role grid goes back to :has(> …)',
+    file: `${DS}/tokens/surface-components.css`,
+    find: '.frc-role-grid:has(.frc-role[data-density="compact"])',
+    replace: '.frc-role-grid:has(> .frc-role[data-density="compact"])',
+    expect: /uses a child combinator across a deck-author boundary \(RoleCards are author children/ },
+  { check: '29g', what: "ImageFrame's media sizing goes back to a child combinator",
+    file: `${DS}/tokens/image-slot.css`,
+    find: '.frc-frame-plate img,',
+    replace: '.frc-frame-plate > img,',
+    expect: /uses a child combinator across a deck-author boundary \(ImageFrame/ },
 ]
 
 function runAudit() {

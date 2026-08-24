@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { cx } from '../cx.js'
 import { fault } from '../guard.jsx'
+import { structuralChildren } from '../host.jsx'
 
 /**
  * DeckStage — behaviour, not appearance.
@@ -50,8 +51,15 @@ const AUDIENCES = ['frc-audience-internal', 'frc-audience-external']
 /** One registry of live instances per deck root, so a duplicate is detectable. */
 const MOUNTED = new WeakMap()
 
+/**
+ * The sheets on the stage, read through any transparent HOST the runtime put
+ * between them and it. `stage.children` alone returns the hosts on a generated
+ * deck, the filter returns nothing, and DeckStage then activates no sheet and
+ * never reads --edge — the exact failure it exists to prevent, arriving through
+ * the one line that looked too simple to be wrong. See components/host.jsx.
+ */
 function sheetsOf(stage) {
-  return Array.prototype.filter.call(stage.children, (el) => el.classList.contains('frc-sheet'))
+  return structuralChildren(stage).filter((el) => el.classList.contains('frc-sheet'))
 }
 
 function activeIndex(sheets) {

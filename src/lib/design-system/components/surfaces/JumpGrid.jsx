@@ -1,6 +1,7 @@
-import { Children, cloneElement, isValidElement } from 'react'
+import { Children, isValidElement } from 'react'
 import { cx } from '../cx.js'
 import { pickSlots, slotted } from '../slots.jsx'
+import { cloneThroughHost, hostProps } from '../host.jsx'
 
 /**
  * JumpGrid / JumpCard - the hub sheet. A jump changes which sheet is on screen;
@@ -13,7 +14,9 @@ export function JumpGrid({ cols = 3, as: Tag = 'nav', className, children, ...re
   const numbered = Children.map(cards, (child) => {
     if (!isValidElement(child)) return child
     n += 1
-    return cloneElement(child, { index: child.props.index ?? n })
+    // Through any runtime host: cloning the WRAPPER hands `index` to something
+    // that ignores it, and every card then reads Part 01.
+    return cloneThroughHost(child, { index: hostProps(child)?.index ?? n })
   })
   return (
     <Tag className={cx('frc-jumps', className)} data-frc="JumpGrid" style={{ '--cols': cols }} {...rest}>

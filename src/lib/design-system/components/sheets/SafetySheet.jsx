@@ -1,17 +1,9 @@
-import { Children, isValidElement } from 'react'
 import { pickSlots } from '../slots.jsx'
+import { containsType } from '../host.jsx'
 import { Sheet, SheetHead } from './Sheet.jsx'
 import { SafetyNote } from '../surfaces/SafetyNote.jsx'
 import { fault } from '../guard.jsx'
 import { StepCard } from '../surfaces/StepCard.jsx'
-
-function hasSafetyNote(nodes) {
-  let found = false
-  Children.forEach(nodes, (child) => {
-    if (isValidElement(child) && child.type === SafetyNote) found = true
-  })
-  return found
-}
 
 /**
  * SafetySheet - the shop hazard, the rules, and the steps that keep them.
@@ -24,11 +16,18 @@ function hasSafetyNote(nodes) {
  * The refusal renders a visible rust fault marker and throws only inside the
  * dev harness. See components/guard.jsx for why.
  *
+ * THE CHECK LOOKS THROUGH A RUNTIME HOST AND THROUGH NOTHING ELSE. A note the
+ * Claude Design runtime wrapped in a transparent host is the note the author
+ * wrote, and used to trip this guard — twice, and the second time it cost a
+ * whole sheet, hand-built in JavaScript inside the deck rather than expressed
+ * as markup. A note softened into a Callout, or buried inside another
+ * component, is different content and still fails. See components/host.jsx.
+ *
  * Steps are `Step` children; `slot="aside"` takes the drawing or the PPE list.
  */
 export function SafetySheet({ transition = 'shutter', className, children, ...rest }) {
   const { slots, rest: steps } = pickSlots(children)
-  const missingNote = !hasSafetyNote(slots.note)
+  const missingNote = !containsType(slots.note, SafetyNote)
   const marker = missingNote
     ? fault(
       'SafetySheet',
