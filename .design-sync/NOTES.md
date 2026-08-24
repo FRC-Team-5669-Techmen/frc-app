@@ -9,11 +9,29 @@ app**, not a standalone npm package — there is no separate build, `dist/`, or
 components on `window.FRC5669DesignSystem`) and inlines `styles.css` (tokens + component
 CSS, via its `@import` closure) into `_ds_bundle.css`.
 
-## First-pass scope (this run)
-User chose to **scope to a subset first**: only **Core (5)** and **Brand (10)** = 15
-components. The other groups (data, surfaces, forms, sheets — ~62 more) are in the JS
-bundle but have no cards/.d.ts/.prompt.md emitted yet. Expand on a later sync by adding
-their entries to `componentSrcMap` + `docsMap` in config.json (same pattern).
+## Scope — 52 of 78 (2026-08-24)
+
+**Core (5) + Brand (11) + Data (16) + Surfaces (18) + Forms (2) = 52** components carry
+cards, `.d.ts` and `.prompt.md`. The **26 sheet patterns are still unsynced** — they are in
+the JS bundle and usable off `window.FRC5669DesignSystem`, they just have no card or types.
+Expanding to them is the same one-line change as below plus 26 authored previews; the hard
+part is that a sheet is a 1920x1440 surface and a card viewport is not.
+
+**`componentSrcMap` and `docsMap` are now GENERATED, not hand-typed.** They are derived from
+`src/lib/design-system/_ds_manifest.json`, which is the DS's own registry and is already
+enforced by `npm run ds:audit`. That retires the old "they rot silently when a file moves"
+risk. To re-generate (or to widen the scope), filter the manifest by group:
+
+```python
+GROUPS = ['core','brand','data','surfaces','forms']     # add 'sheets' to go to 78
+PREFIX = 'src/lib/design-system/'
+src  = {c['name']: PREFIX + c['sourcePath'] for c in man['components'] if c['group'] in GROUPS}
+docs = {c['name']: PREFIX + c['prompt']     for c in man['components'] if c['group'] in GROUPS}
+```
+
+The generator asserts three things before writing, and all three matter: every path exists,
+no already-synced component changed path, and none is dropped. A silent drop is what would
+orphan a card in the project.
 
 ## Key build setup (why the config is shaped this way)
 - **No aggregate `index.d.ts`**, so discovery via exports finds nothing → components are
@@ -65,17 +83,23 @@ Committed alongside them: `config.json` and this file. Still ignored: `.design-s
 - `[FONT_REMOTE]` Space Grotesk / Space Mono — expected (remote font host), not a miss.
 
 ## Asset-pending components (IMPORTANT for review)
-The DS deliberately ships only the **3 team marks** wired (`Mark-{Gold,White,Black}.svg`).
-Every other asset (Type/logotype wordmark, 5669 seal, FIRST program logos, season art) is
-intentionally NOT in the repo yet — the components render a **marked empty slot at the
-correct minimum size** until the file lands. So these cards show placeholder boxes, which is
-the components' true current state, not a broken render:
-- **SealMark** — placeholder only (seal SVG pending)
-- **Logotype** — placeholder only (Type-*.svg pending)
-- **DeckFooter** — rail is complete; the logotype/FIRST logo slots are placeholders
-- **ProgramLockup** — program color rules + TEAM 5669 render; FIRST program logo slot is a placeholder
-- **SeasonLockup** — Biocore title renders; season-art slot is a placeholder
-**MarkGlyph** renders the real wired winged mark (the visual hero of the brand group).
+
+Updated 2026-08-24. What is WIRED now: the three team **marks**, the three **logotypes**, and
+the **season artwork** (FRC 2027 BIOCORE, from the FIRST season brand downloads page). So
+MarkGlyph, Logotype, DeckFooter and SeasonLockup all render real artwork; at the previous
+sync three of those were empty boxes.
+
+Still deliberately empty, and their cards correctly show the system's **marked empty slot**:
+
+- **SealMark** — the canonical `5669-Seal.svg` carries `#ffe623`, not the published Techmen
+  Gold `#FFE629`. Fetched, checked, and REFUSED; see the `rejected` block in
+  `assets/PROVENANCE.json`. The empty slot is the true state, not a broken render.
+- **ProgramLockup** and the DeckFooter external zone — no FIRST program artwork in the repo.
+- **ImageFrame / CalloutDrawing** — no photography or drawings in the repo.
+- **SponsorWall / PartCallout / Cutout** — no sponsor marks or part photography.
+
+Those cards are graded `good` on purpose: an empty slot at the correct minimum size IS what
+the component does today, and hiding it would misrepresent the system to the design agent.
 
 ## Upload status — DONE (2026-08-23)
 The login blocker cleared. Project **FRC 5669 Techmen Design System**,
@@ -97,20 +121,79 @@ the converter emits no `templates/` directory, so the DS's own
 as "Deck shell — Copy this") never reached the project. Claude Design therefore offers
 no Techmen starting point and generates decks from Blank.
 
-## Re-sync risks / watch-list
-- **`@types/react` (`--no-save`) and the `.ds-sync` playwright install are gitignored / not
-  in package.json** — a fresh clone must re-do both (see above) before build/validate.
-- **`componentSrcMap` + `docsMap` are hand-enumerated** (15 entries each). Renaming/moving a
-  component file, or expanding scope, means editing both. They rot silently if a path moves.
-- **`_ds_sync.json` anchor is now uploaded**, so the next sync diffs against it instead of
-  re-verifying all 15 from scratch.
-- **The bundle carries all ~77 components but only 15 are documented.** The design agent can
-  still reference undocumented exports on the global; that's fine, just unadvertised.
-- Grades live in `.design-sync/.cache/review/` (gitignored). They are durable now that the
-  uploaded `_ds_sync.json` exists.
-- **`templates/` is outside the converter's emit set, and hand-uploading it does NOT
-  register either** (tested — see the templates section below). Expanding component scope
-  will not change this. Treat the deck shell as a hand-copy artifact.
+## Component findings the sync surfaced (2026-08-24) — NOT yet fixed in the DS
+
+Authoring 36 previews put every component under a narrow viewport for the first time. Three
+real defects fell out. None is a preview problem; each was worked around in the composition
+and the workaround is commented at the top of the preview file.
+
+1. **`SampleGrid` renders `slot="caption"` as a grid CELL.** `SampleGrid` puts
+   `slotted(slots.caption, 'frc-spec-caption')` inside `.frc-samples`, which is the grid
+   itself — so a caption takes cell one, every sample shifts one position, and the last one
+   wraps to a second row. `cols={4}` with four samples became a 3+1 layout. The DS's own
+   `SurfacesDemoCard` never passes a caption, which is why this was never seen. Fix belongs
+   in `SampleGrid.jsx`: the caption needs to sit outside the grid element, the way
+   `SpecTable` and `BarChart` do it.
+2. **`QuoteBlock` runs `attr` and `role` together.** Both land in one `<figcaption>` as
+   adjacent inline spans with nothing between them: "MR. GARZA" + "LEAD MENTOR, ELEVEN
+   SEASONS" reads as one run-on line. `.frc-quote-role` has a colour but no separator and no
+   display rule. Worked around by writing the role as a block element (`<div slot="role">`).
+3. **`ResultBanner` runs `title` and `note` together for the same reason.** The slot helper
+   deliberately KEEPS the author's element and only paints the class onto it, so
+   `<span slot="title">` stays inline and the note follows on the same line —
+   "Qualification 42RED ALLIANCE". Worked around by writing `<h3 slot="title">`.
+
+(2) and (3) share a root cause worth stating plainly: **`slotted()` keeping the author's
+element means the element choice is load-bearing API**, and nothing in the `.prompt.md` files
+says so. Either the components should force a block element for these slots, or the prompts
+should say which slots need one. Until then the previews demonstrate the right choice, which
+is the next best thing since the design agent imitates the previews.
+
+## Authoring previews for THIS DS — the viewport rule
+
+The card capture viewport is far narrower and shorter than the 1920x1440 stage these
+components were drawn for, so the DS's own demo-card compositions do NOT port over verbatim.
+Measured limits, all found by grading and fixing:
+
+- **Stacked items: three.** Four `TimelineItem`s, four `Step`s, five `Callout`s and six
+  compact `RoleCard`s all clipped at the bottom of the cell.
+- **Hero numerals: two per row.** `MatchClock` is `--fs-hero` (160px); four across collided
+  into each other. `StatBlock`/`BuildCountdown` at three across are fine.
+- **`ProcessPipeline`: four steps.** It lays out on one row by design; the fifth crops off
+  the right edge.
+- **`GanttChart` bar copy: two words.** The bar is only as wide as its span, so a phrase
+  truncates. The row label carries the noun.
+- **Empty slots: no caption, and no `file=` on a small slot.** The marker prints
+  `Empty slot - expected <file>` and a long filename is taller than a sponsor tier slot; a
+  caption under a small slot lands ON the marker. Drop `file=` and the marker is the short
+  `Empty cutout slot`.
+- **Never a dash as a numeric placeholder.** An em-dash at `--fs-hero` in the display face
+  renders as a solid bar and reads as a rendering fault. `AllianceSplit` shows a live score
+  with no `outcome` instead.
+
+`cfg.overrides` now carries `cardMode: "column"` for **30** components — every one the
+`[GRID_OVERFLOW]` check flagged. Charts, tables, banners and multi-column grids all render
+wider than a grid cell and need full card width.
+
+## Re-sync risks / watch-list (refreshed 2026-08-24)
+
+- **A bundled-skill update re-verifies everything.** This run found `keyRecipe` had moved
+  5 → 7, so the driver fell back to the render-hash partition and reported 16 changed / 36
+  new / 0 unchanged — i.e. nothing carried forward. That is correct behaviour, not a fault;
+  just budget for a full grading pass whenever `.ds-sync/` is re-staged from a newer skill.
+- **`@types/react` (`npm i --no-save`) and the `.ds-sync` playwright install are still not in
+  package.json.** A fresh clone must re-do both. Chrome is used via `DS_CHROMIUM_PATH`; no
+  chromium is downloaded.
+- **`componentSrcMap`/`docsMap` no longer rot** — regenerate them from `_ds_manifest.json`
+  (recipe in the Scope section). If a component is renamed, ds:audit catches the manifest
+  first, then the regenerate picks it up.
+- **`.design-sync/conventions.md` now exists and is the `readmeHeader`.** It is
+  human-editable and belongs to its authors: a later sync VALIDATES its names against the
+  fresh build and reports drift, and must not rewrite it.
+- **The 26 sheet patterns remain the big outstanding gap.** They are what a deck is actually
+  assembled from, so the design agent is currently composing decks out of parts without
+  seeing the sheet layer.
+- **`templates/` still cannot be emitted** — unchanged, see that section below.
 
 ## First-deck verification (2026-08-23)
 Generated one deck in Claude Design against the uploaded system — project

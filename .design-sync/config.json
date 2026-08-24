@@ -22,7 +22,43 @@
     "FirstName": "src/lib/design-system/components/brand/FirstName.jsx",
     "HudFrame": "src/lib/design-system/components/brand/HudFrame.jsx",
     "PlatePanel": "src/lib/design-system/components/brand/PlatePanel.jsx",
-    "StencilTitle": "src/lib/design-system/components/brand/StencilTitle.jsx"
+    "StencilTitle": "src/lib/design-system/components/brand/StencilTitle.jsx",
+    "Badge": "src/lib/design-system/components/data/Badge.jsx",
+    "Chip": "src/lib/design-system/components/data/Chip.jsx",
+    "Field": "src/lib/design-system/components/data/Field.jsx",
+    "StatBlock": "src/lib/design-system/components/data/StatBlock.jsx",
+    "Readout": "src/lib/design-system/components/data/Readout.jsx",
+    "SpecTable": "src/lib/design-system/components/data/SpecTable.jsx",
+    "FocusTable": "src/lib/design-system/components/data/FocusTable.jsx",
+    "BarChart": "src/lib/design-system/components/data/BarChart.jsx",
+    "GanttChart": "src/lib/design-system/components/data/GanttChart.jsx",
+    "DecisionMatrix": "src/lib/design-system/components/data/DecisionMatrix.jsx",
+    "Timeline": "src/lib/design-system/components/data/Timeline.jsx",
+    "MatchClock": "src/lib/design-system/components/data/MatchClock.jsx",
+    "BuildCountdown": "src/lib/design-system/components/data/BuildCountdown.jsx",
+    "ScoutTable": "src/lib/design-system/components/data/ScoutTable.jsx",
+    "AllianceSplit": "src/lib/design-system/components/data/AllianceSplit.jsx",
+    "SubteamBadge": "src/lib/design-system/components/data/SubteamBadge.jsx",
+    "Card": "src/lib/design-system/components/surfaces/Card.jsx",
+    "Callout": "src/lib/design-system/components/surfaces/Callout.jsx",
+    "SafetyNote": "src/lib/design-system/components/surfaces/SafetyNote.jsx",
+    "ImageFrame": "src/lib/design-system/components/surfaces/ImageFrame.jsx",
+    "Cutout": "src/lib/design-system/components/surfaces/Cutout.jsx",
+    "StepCard": "src/lib/design-system/components/surfaces/StepCard.jsx",
+    "ProcessPipeline": "src/lib/design-system/components/surfaces/ProcessPipeline.jsx",
+    "CompareSplit": "src/lib/design-system/components/surfaces/CompareSplit.jsx",
+    "SampleGrid": "src/lib/design-system/components/surfaces/SampleGrid.jsx",
+    "JumpGrid": "src/lib/design-system/components/surfaces/JumpGrid.jsx",
+    "CalloutDrawing": "src/lib/design-system/components/surfaces/CalloutDrawing.jsx",
+    "QuoteBlock": "src/lib/design-system/components/surfaces/QuoteBlock.jsx",
+    "RoleCard": "src/lib/design-system/components/surfaces/RoleCard.jsx",
+    "PartCallout": "src/lib/design-system/components/surfaces/PartCallout.jsx",
+    "FieldDiagram": "src/lib/design-system/components/surfaces/FieldDiagram.jsx",
+    "SponsorWall": "src/lib/design-system/components/surfaces/SponsorWall.jsx",
+    "AwardPlate": "src/lib/design-system/components/surfaces/AwardPlate.jsx",
+    "ResultBanner": "src/lib/design-system/components/surfaces/ResultBanner.jsx",
+    "Input": "src/lib/design-system/components/forms/Input.jsx",
+    "Select": "src/lib/design-system/components/forms/Select.jsx"
   },
   "docsMap": {
     "Button": "src/lib/design-system/components/core/Button.prompt.md",
@@ -40,6 +76,135 @@
     "FirstName": "src/lib/design-system/components/brand/FirstName.prompt.md",
     "HudFrame": "src/lib/design-system/components/brand/HudFrame.prompt.md",
     "PlatePanel": "src/lib/design-system/components/brand/PlatePanel.prompt.md",
-    "StencilTitle": "src/lib/design-system/components/brand/StencilTitle.prompt.md"
-  }
+    "StencilTitle": "src/lib/design-system/components/brand/StencilTitle.prompt.md",
+    "Badge": "src/lib/design-system/components/data/Badge.prompt.md",
+    "Chip": "src/lib/design-system/components/data/Chip.prompt.md",
+    "Field": "src/lib/design-system/components/data/Field.prompt.md",
+    "StatBlock": "src/lib/design-system/components/data/StatBlock.prompt.md",
+    "Readout": "src/lib/design-system/components/data/Readout.prompt.md",
+    "SpecTable": "src/lib/design-system/components/data/SpecTable.prompt.md",
+    "FocusTable": "src/lib/design-system/components/data/FocusTable.prompt.md",
+    "BarChart": "src/lib/design-system/components/data/BarChart.prompt.md",
+    "GanttChart": "src/lib/design-system/components/data/GanttChart.prompt.md",
+    "DecisionMatrix": "src/lib/design-system/components/data/DecisionMatrix.prompt.md",
+    "Timeline": "src/lib/design-system/components/data/Timeline.prompt.md",
+    "MatchClock": "src/lib/design-system/components/data/MatchClock.prompt.md",
+    "BuildCountdown": "src/lib/design-system/components/data/BuildCountdown.prompt.md",
+    "ScoutTable": "src/lib/design-system/components/data/ScoutTable.prompt.md",
+    "AllianceSplit": "src/lib/design-system/components/data/AllianceSplit.prompt.md",
+    "SubteamBadge": "src/lib/design-system/components/data/SubteamBadge.prompt.md",
+    "Card": "src/lib/design-system/components/surfaces/Card.prompt.md",
+    "Callout": "src/lib/design-system/components/surfaces/Callout.prompt.md",
+    "SafetyNote": "src/lib/design-system/components/surfaces/SafetyNote.prompt.md",
+    "ImageFrame": "src/lib/design-system/components/surfaces/ImageFrame.prompt.md",
+    "Cutout": "src/lib/design-system/components/surfaces/Cutout.prompt.md",
+    "StepCard": "src/lib/design-system/components/surfaces/StepCard.prompt.md",
+    "ProcessPipeline": "src/lib/design-system/components/surfaces/ProcessPipeline.prompt.md",
+    "CompareSplit": "src/lib/design-system/components/surfaces/CompareSplit.prompt.md",
+    "SampleGrid": "src/lib/design-system/components/surfaces/SampleGrid.prompt.md",
+    "JumpGrid": "src/lib/design-system/components/surfaces/JumpGrid.prompt.md",
+    "CalloutDrawing": "src/lib/design-system/components/surfaces/CalloutDrawing.prompt.md",
+    "QuoteBlock": "src/lib/design-system/components/surfaces/QuoteBlock.prompt.md",
+    "RoleCard": "src/lib/design-system/components/surfaces/RoleCard.prompt.md",
+    "PartCallout": "src/lib/design-system/components/surfaces/PartCallout.prompt.md",
+    "FieldDiagram": "src/lib/design-system/components/surfaces/FieldDiagram.prompt.md",
+    "SponsorWall": "src/lib/design-system/components/surfaces/SponsorWall.prompt.md",
+    "AwardPlate": "src/lib/design-system/components/surfaces/AwardPlate.prompt.md",
+    "ResultBanner": "src/lib/design-system/components/surfaces/ResultBanner.prompt.md",
+    "Input": "src/lib/design-system/components/forms/Input.prompt.md",
+    "Select": "src/lib/design-system/components/forms/Select.prompt.md"
+  },
+  "overrides": {
+    "Button": {
+      "cardMode": "column"
+    },
+    "Eyebrow": {
+      "cardMode": "column"
+    },
+    "TeamWordmark": {
+      "cardMode": "column"
+    },
+    "DeckStage": {
+      "cardMode": "column"
+    },
+    "HudFrame": {
+      "cardMode": "column"
+    },
+    "ProgramLockup": {
+      "cardMode": "column"
+    },
+    "StencilTitle": {
+      "cardMode": "column"
+    },
+    "AllianceSplit": {
+      "cardMode": "column"
+    },
+    "Badge": {
+      "cardMode": "column"
+    },
+    "BarChart": {
+      "cardMode": "column"
+    },
+    "BuildCountdown": {
+      "cardMode": "column"
+    },
+    "DecisionMatrix": {
+      "cardMode": "column"
+    },
+    "GanttChart": {
+      "cardMode": "column"
+    },
+    "MatchClock": {
+      "cardMode": "column"
+    },
+    "StatBlock": {
+      "cardMode": "column"
+    },
+    "SubteamBadge": {
+      "cardMode": "column"
+    },
+    "AwardPlate": {
+      "cardMode": "column"
+    },
+    "CalloutDrawing": {
+      "cardMode": "column"
+    },
+    "Card": {
+      "cardMode": "column"
+    },
+    "CompareSplit": {
+      "cardMode": "column"
+    },
+    "Cutout": {
+      "cardMode": "column"
+    },
+    "ImageFrame": {
+      "cardMode": "column"
+    },
+    "JumpGrid": {
+      "cardMode": "column"
+    },
+    "PartCallout": {
+      "cardMode": "column"
+    },
+    "ProcessPipeline": {
+      "cardMode": "column"
+    },
+    "QuoteBlock": {
+      "cardMode": "column"
+    },
+    "ResultBanner": {
+      "cardMode": "column"
+    },
+    "RoleCard": {
+      "cardMode": "column"
+    },
+    "SampleGrid": {
+      "cardMode": "column"
+    },
+    "StepCard": {
+      "cardMode": "column"
+    }
+  },
+  "readmeHeader": ".design-sync/conventions.md"
 }
