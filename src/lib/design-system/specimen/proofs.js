@@ -561,3 +561,87 @@ export function readTransition(sheet) {
   }
   return null
 }
+
+
+/* ---------- the content distribution axis (tokens/sheets.css) --------------- */
+
+/** The kind class on a mounted sheet, derived from the element rather than a list. */
+export function sheetKind(sheet) {
+  for (const c of sheet.classList) {
+    const m = c.match(/^frc-sheet-([a-z]+)$/)
+    // -body, -content, -head and friends are not kinds; a kind class sits on the
+    // sheet root itself, and those never do.
+    if (m && !['body', 'content', 'head', 'title', 'lede', 'note', 'foot', 'stage'].includes(m[1])) return m[1]
+  }
+  return null
+}
+
+/**
+ * measureFill - how much of a sheet's body box the content actually reaches.
+ *
+ * This is the number the shortfall was always about: .frc-sheet-body hands
+ * .frc-sheet-content the leftover height as a 1fr row, and until the axis
+ * existed every kind discarded it with align-content: start, so four gallery
+ * tiles sat in the top third of a 1440 frame with ~600px of ground under them.
+ *
+ * Measured as the lowest PAINTED bottom inside the body's content box, over the
+ * height of that box. Painted means it has a background, a border, an image or
+ * text - an empty positioning wrapper that happens to stretch is not content
+ * reaching the floor, and counting it would let the axis fake its own result.
+ *
+ * Rects are divided back through the route's preview scale, so every number
+ * below is true CSS px on the 1920 x 1440 stage rather than pane px.
+ */
+export function measureFill(sheet) {
+  if (!sheet) return null
+  const body = sheet.querySelector('.frc-sheet-body')
+  if (!body) return null
+  const scale = sheet.getBoundingClientRect().height / (sheet.offsetHeight || 1) || 1
+  const cs = getComputedStyle(body)
+  const box = body.getBoundingClientRect()
+  const top = box.top + parseFloat(cs.paddingTop || '0') * scale
+  const floor = box.bottom - parseFloat(cs.paddingBottom || '0') * scale
+  const height = (floor - top) / scale
+  if (height <= 0) return null
+
+  let lowest = top
+  let counted = 0
+  for (const el of body.querySelectorAll('*')) {
+    const r = el.getBoundingClientRect()
+    if (r.width < 1 || r.height < 1) continue
+    const s = getComputedStyle(el)
+    if (s.display === 'none' || s.visibility === 'hidden' || parseFloat(s.opacity) === 0) continue
+    const paints = !isTransparent(s.backgroundColor)
+      || parseFloat(s.borderTopWidth) > 0 || parseFloat(s.borderBottomWidth) > 0
+      || el.tagName === 'IMG' || el.tagName === 'SVG'
+      || (el.childElementCount === 0 && (el.textContent || '').trim().length > 0)
+    if (!paints) continue
+    counted++
+    if (r.bottom > lowest) lowest = r.bottom
+  }
+  const reached = (Math.min(lowest, floor) - top) / scale
+  const content = sheet.querySelector('.frc-sheet-content')
+  return {
+    bodyHeight: Math.round(height),
+    reached: Math.round(reached),
+    dead: Math.round(height - reached),
+    pct: Math.round((reached / height) * 1000) / 10,
+    counted,
+    align: content ? getComputedStyle(content).alignContent : null,
+    fillRow: getComputedStyle(sheet).getPropertyValue('--fill-row').trim() || null,
+    mediaRatio: getComputedStyle(sheet).getPropertyValue('--fill-media-ratio').trim() || null,
+  }
+}
+
+/** Every sheet pattern mounted anywhere in the document, with its axis and fill. */
+export function measureFillAll(doc = document) {
+  const out = []
+  for (const fig of doc.querySelectorAll('[data-pattern]')) {
+    const sheet = fig.querySelector('.frc-sheet')
+    if (!sheet) continue
+    const fill = measureFill(sheet)
+    if (!fill) continue
+    out.push({ pattern: fig.getAttribute('data-pattern'), kind: sheetKind(sheet), ...fill })
+  }
+  return out
+}

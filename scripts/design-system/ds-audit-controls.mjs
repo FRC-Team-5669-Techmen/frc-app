@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// FRC5669DesignSystem — negative controls for ds:audit checks 16-27.
+// FRC5669DesignSystem — negative controls for ds:audit checks 16-28.
 // `npm run ds:audit:controls`. Exit 1 if any control is not caught.
 //
 // Each control breaks the exact thing one check exists to catch, runs the audit,
@@ -191,6 +191,46 @@ const CONTROLS = [
     file: `${DS}/tokens/surfaces.css`,
     append: '\n.frc-plate-light { background: var(--white); }\n',
     expect: /paints a surface with var\(--white\)/ },
+
+  // 28 — the content distribution axis. The failure this check exists to catch
+  // is silent by construction: an unassigned kind still renders, still gets the
+  // 1fr row, and simply keeps `start` and drops the height, which is exactly the
+  // state every kind was in before the axis existed.
+  { check: '28a', what: 'a kind is dropped from its axis list',
+    file: `${DS}/tokens/sheets.css`,
+    find: '.frc-sheet-comparison, .frc-sheet-bom, .frc-sheet-scouting, .frc-sheet-schedule,',
+    replace: '.frc-sheet-comparison, .frc-sheet-bom, .frc-sheet-scouting,',
+    expect: /kind "schedule"\) renders a content row with no distribution axis/ },
+  { check: '28b', what: 'a kind is named in two axis lists at once',
+    file: `${DS}/tokens/sheets.css`,
+    find: ':where(.frc-sheet-award, .frc-sheet-season, .frc-sheet-sponsor,',
+    replace: ':where(.frc-sheet-gallery, .frc-sheet-award, .frc-sheet-season, .frc-sheet-sponsor,',
+    expect: /assigned two different distribution axes — gallery/ },
+  { check: '28c', what: 'a stretch kind stops raising --fill-row, so its stretch is decorative',
+    file: `${DS}/tokens/sheets.css`,
+    find: ':where(.frc-sheet-gallery, .frc-sheet-roster, .frc-sheet-subteam, .frc-sheet-hub,\n       .frc-sheet-field, .frc-sheet-timeline, .frc-sheet-targets, .frc-sheet-data) {\n  --fill-row:',
+    replace: ':where(.frc-sheet-roster, .frc-sheet-subteam, .frc-sheet-hub,\n       .frc-sheet-field, .frc-sheet-timeline, .frc-sheet-targets, .frc-sheet-data) {\n  --fill-row:',
+    expect: /kind "gallery" is assigned stretch but never sets --fill-row/ },
+  { check: '28d', what: 'the tile stops reading the axis',
+    file: `${DS}/tokens/surface-components.css`,
+    find: 'grid-template-rows: var(--fill-row, auto); }',
+    replace: '}',
+    expect: /\.frc-sample does not read var\(--fill-row\)/ },
+  { check: '28e', what: 'the media well takes its fixed ratio back',
+    file: `${DS}/tokens/surface-components.css`,
+    find: 'aspect-ratio: var(--fill-media-ratio, 4 / 3);',
+    replace: 'aspect-ratio: 4 / 3;',
+    expect: /\.frc-sample-media does not read var\(--fill-media-ratio\)/ },
+  { check: '28f', what: 'the axis default is declared strongly enough to tie with a kind class',
+    file: `${DS}/tokens/sheets.css`,
+    find: ':where(.frc-sheet) { --fill-row: auto;',
+    replace: '.frc-sheet { --fill-row: auto;',
+    expect: /default is not declared on :where\(\.frc-sheet\)/ },
+  { check: '28g', what: 'a kind with no content row loses its own body rule too',
+    file: `${DS}/tokens/sheets.css`,
+    find: '.frc-sheet-statement .frc-sheet-body { grid-template-rows: 1fr; }',
+    replace: '.frc-sheet-statementX .frc-sheet-body { grid-template-rows: 1fr; }',
+    expect: /kind "statement"\) renders no \.frc-sheet-content AND owns no/ },
 ]
 
 function runAudit() {

@@ -146,9 +146,21 @@
 
 /* ---- SampleGrid / Sample -------------------------------------------------- */
 .frc-samples { display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: var(--space-4); }
-.frc-sample { display: grid; gap: 10px; align-content: start; }
+/* --fill-row / --fill-media-ratio are the sheet's content distribution axis
+   (tokens/sheets.css), inherited down to here. Under `start` and `center` they
+   resolve to `auto` and `4 / 3`, which is exactly the behaviour this tile
+   always had. Under `stretch` the media becomes row one of the tile at
+   minmax(0, 1fr) and drops its fixed ratio, so it takes whatever height the
+   stretched row gives it and the name and note follow in implicit auto rows.
+   .frc-sample keeps align-content: start, which is moot once row one is 1fr -
+   there is no free space left for it to pack.
+
+   The fallbacks are the start values, so a .frc-sample mounted outside a sheet
+   (a demo card, a proof) behaves as it did before this axis existed. */
+.frc-sample { display: grid; gap: 10px; align-content: start; grid-template-rows: var(--fill-row, auto); }
 .frc-sample-media {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: var(--fill-media-ratio, 4 / 3);
+  min-height: 120px;
   background: var(--surface-viewport);
   border: var(--hair) solid var(--line);
   border-radius: var(--radius-panel);

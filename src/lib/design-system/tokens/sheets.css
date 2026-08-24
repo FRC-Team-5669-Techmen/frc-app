@@ -51,6 +51,80 @@
 .frc-sheet-content-center { align-content: center; }
 .frc-sheet-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
 
+/* ---- The content distribution axis ----------------------------------------
+   .frc-sheet-body already hands .frc-sheet-content the leftover height as a
+   1fr row. What was missing is what the content DOES with it: align-content
+   was start for every kind, so the height was received and then discarded, and
+   a four-tile gallery left roughly 600px of dead ground under it on a 1440
+   frame.
+
+   THREE VALUES, ASSIGNED PER KIND BELOW. Every kind that renders a content row
+   is named in exactly one of the three lists; ds-audit check 28 fails on a kind
+   that is in none of them, or in more than one, so a new pattern cannot inherit
+   a default nobody chose.
+
+     start    the content has a natural length and that length is the message.
+              A four-step procedure must look like four steps, not like four
+              steps inflated to fill a frame, and a two-row blocker sheet must
+              not read like a full one.
+     center   the content is a fixed composition with nothing to grow. The
+              leftover is split above and below rather than dumped below.
+     stretch  the content is media, a diagram or a chart, where height IS
+              readability and there is no honest reason to leave it on the floor.
+
+   HOW STRETCH REACHES THE CONTENT, which is the part that is easy to get wrong:
+
+   1. `align-content: stretch` alone would grow EVERY auto row equally, which
+      inflates an auxiliary strip sharing the content row - a .frc-sheet-foot,
+      the stats band on a data sheet - along with the main block. So stretch
+      declares ROW ONE as the flexible track and leaves the rest implicit and
+      auto. Where the main block is not the first child it is placed by class.
+   2. The wrapper inside the content row has to pass the height on. Most of
+      these patterns set `align-items: start` on their wrapper so an aside
+      column does not stretch to table height; under stretch that pin is what
+      stops a tile growing, so the stretch kinds relax it - excluding the two
+      auxiliary strips, whose own alignment is deliberate.
+   3. A tile at the bottom of that chain still has to be willing to grow.
+      --fill-row and --fill-media-ratio INHERIT from the sheet, which is how
+      .frc-sample in surface-components.css responds to the axis with no
+      per-kind descendant selector and no pattern prop. Declared with :where()
+      so a kind class beats the default outright rather than by source order -
+      the same reason the mark-auto variant switch is written that way.
+
+   WHAT THIS DOES NOT DO. Relaxing the pin lets a tile fill the row; it does
+   not reach inside a component to redistribute that component's own children.
+   A RoleCard whose plate grows still packs its name, tags and note at the top,
+   because .frc-role-body is the card's business and not the sheet's. */
+:where(.frc-sheet) { --fill-row: auto; --fill-media-ratio: 4 / 3; }
+
+/* start - the length of the list is the message. */
+:where(.frc-sheet-agenda, .frc-sheet-procedure, .frc-sheet-blocker, .frc-sheet-safety,
+       .frc-sheet-comparison, .frc-sheet-bom, .frc-sheet-scouting, .frc-sheet-schedule,
+       .frc-sheet-match) .frc-sheet-content { align-content: start; }
+
+/* center - a fixed composition; the leftover goes above and below. */
+:where(.frc-sheet-award, .frc-sheet-season, .frc-sheet-sponsor,
+       .frc-sheet-split) .frc-sheet-content { align-content: center; }
+
+/* stretch - media, diagram or chart; height is readability. */
+:where(.frc-sheet-gallery, .frc-sheet-roster, .frc-sheet-subteam, .frc-sheet-hub,
+       .frc-sheet-field, .frc-sheet-timeline, .frc-sheet-targets, .frc-sheet-data) {
+  --fill-row: minmax(0, 1fr);
+  --fill-media-ratio: auto;
+}
+:where(.frc-sheet-gallery, .frc-sheet-roster, .frc-sheet-subteam, .frc-sheet-hub,
+       .frc-sheet-field, .frc-sheet-timeline, .frc-sheet-targets, .frc-sheet-data) .frc-sheet-content {
+  align-content: stretch;
+  grid-template-rows: minmax(0, 1fr);
+}
+/* Step 2 above lives at the FOOT of this file - see the note there. */
+/* DataSheet is the one stretch kind whose main block is not the first child -
+   the stats band is optional and sits above it - so both are placed explicitly
+   and the band keeps its own height whether or not it is rendered. */
+.frc-sheet-data .frc-sheet-content { grid-template-rows: auto minmax(0, 1fr); }
+.frc-sheet-data .frc-data-stats { grid-row: 1; }
+.frc-sheet-data .frc-data-main  { grid-row: 2; }
+
 /* ---- Audience chrome ------------------------------------------------------ */
 /* Audience is a class on the deck root (legal to override on one section), so a
    pattern never takes an audience prop and never branches in JS. These two
@@ -83,7 +157,7 @@
 .frc-cover-foot { display: grid; gap: var(--space-3); }
 
 /* ---- AgendaSheet ---------------------------------------------------------- */
-.frc-sheet-agenda .frc-sheet-content { align-content: start; }
+/* Distribution: start, assigned with the rest of the axis above. */
 
 /* ---- SectionSheet --------------------------------------------------------- */
 .frc-sheet-section .frc-sheet-body { grid-template-rows: 1fr; }
@@ -196,3 +270,21 @@
 /* ---- SeasonSheet ---------------------------------------------------------- */
 .frc-season-main { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); align-items: center; min-height: 0; }
 .frc-season-side { display: grid; gap: var(--space-4); align-content: center; }
+
+/* ---- The axis, step 2: relaxing the per-pattern alignment pins --------------
+   This rule is at the END of the file on purpose, and moving it back up breaks
+   it silently.
+
+   Most patterns above set `align-items: start` on their own wrapper so an aside
+   column does not stretch to table height. Under the stretch axis that pin is
+   exactly what stops a tile growing. This relaxes it for the stretch kinds only
+   — and it has to out-order those pins to do it: `.frc-data-main[data-aside]`
+   is a class plus an attribute, which ties with `.frc-sheet-content > :not(...)`
+   on specificity, so source order decides. It was measured losing that tie from
+   the top of the file, which left DataSheet assigned stretch and not stretching.
+
+   The two auxiliary strips keep their own alignment: a foot rail centres its
+   chips on purpose, and the stats band is a fixed-height readout. */
+:where(.frc-sheet-gallery, .frc-sheet-roster, .frc-sheet-subteam, .frc-sheet-hub,
+       .frc-sheet-field, .frc-sheet-timeline, .frc-sheet-targets, .frc-sheet-data)
+  .frc-sheet-content > :not(.frc-sheet-foot, .frc-data-stats) { align-items: stretch; }

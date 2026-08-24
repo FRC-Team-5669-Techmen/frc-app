@@ -10,6 +10,7 @@ import {
   DeckFooter, DeckStage, FirstName, FirstNameScope, HudFrame, PlatePanel, StencilTitle,
   ImageFrame, Cutout, MatchClock, AllianceSplit, ScoutTable, ScoutRow, SponsorWall, SponsorTier, SafetySheet,
   RoleCard, SubteamBadge,
+  GallerySheet, Sample,
   CoreDemoCard, BrandDemoCard, DataDemoCard, SurfacesDemoCard, FormsDemoCard, SheetsDemoCard, SHEET_PATTERNS, tokens,
 } from '../index.js'
 import { cx } from '../components/cx.js'
@@ -19,6 +20,7 @@ import {
   scanForAlliance, makeAlphaPng, scanCutoutRectangles, readComputed, definePlatformImageSlot, readSlotFrame,
   PLATFORM_WASH, norm, toRgbString, isTransparent,
   scanHiddenContent, scanFirstZoneAmbient, checkTeamIdentification, countSlots, scanOverflow, readTransition, withStaticTransitions,
+  sheetKind, measureFill, measureFillAll,
 } from './proofs.js'
 import './specimen.css'
 
@@ -1113,6 +1115,157 @@ function SheetsSection() {
 
 /* ---------- 8. Deck chrome ---------- */
 
+function SheetFillSection() {
+  const [ground, setGround] = useState('squadron')
+  const ref = useRef(null)
+  const [report, setReport] = useState(null)
+  const [png, setPng] = useState(null)
+
+  // A real image for the filled media slot, drawn at runtime in whatever this
+  // ground resolves --fg-structure to, so the route holds no literal color and
+  // no team mark stands in for a member's photo. Same helper the Cutout and
+  // RoleCard density proofs use.
+  useEffect(() => {
+    const probe = document.createElement('span')
+    probe.className = cx('frc-deck', GROUND_CLASSES[ground])
+    document.body.appendChild(probe)
+    const ink = getComputedStyle(probe).getPropertyValue('--fg-structure').trim()
+    document.body.removeChild(probe)
+    setPng(makeAlphaPng(ink || 'gray', 240))
+  }, [ground])
+
+  const run = useCallback(() => {
+    const root = ref.current
+    if (!root) return
+    // Measure the guaranteed base state: the sheets carry entrance animations
+    // and this pane does not composite, so a frame-0 transform would be read as
+    // real layout. Same discipline as the sheet-pattern proof.
+    const local = withStaticTransitions(root, () => {
+      const rows = []
+      for (const fig of root.querySelectorAll('[data-case]')) {
+        const sheet = fig.querySelector('.frc-sheet')
+        if (!sheet) continue
+        rows.push({ case: fig.getAttribute('data-case'), kind: sheetKind(sheet), ...measureFill(sheet) })
+      }
+      return rows
+    })
+    // Every pattern mounted elsewhere on this page - the sheet-pattern section
+    // mounts all 26 by default - so the axis table below is real sheets rather
+    // than synthetic probes. The count is reported, so a partial read can never
+    // pass itself off as the whole set.
+    const all = measureFillAll(document)
+    setReport({ local, all })
+  }, [ground])
+
+  useEffect(() => { const t = setTimeout(run, 300); return () => clearTimeout(t) }, [run, png])
+
+  const gallery = report?.local.find((r) => r.case === 'gallery-rolecards')
+  const AXES = ['start', 'center', 'stretch']
+  // align is null when the sheet renders no content row at all - cover, section,
+  // statement, quote, closing distribute in their own body rule instead. That is
+  // a different state from "assigned nothing", and counting it as a miss is how
+  // the verdict read FAIL on a correct tree the first time this section ran.
+  const unassigned = (report?.all ?? []).filter((r) => r.align != null && !AXES.includes(r.align))
+  const chainOk = Boolean(gallery && gallery.fillRow === 'minmax(0, 1fr)' && gallery.mediaRatio === 'auto' && gallery.align === 'stretch')
+  const ok = Boolean(report && chainOk && gallery.pct >= 90 && unassigned.length === 0 && report.all.length > 0)
+
+  return (
+    <Section
+      id="sheet-fill"
+      title="Sheet content distribution"
+      lede="The sheet body already hands the content row the leftover height as a 1fr track; the axis is what the content does with it. Three values, assigned per kind in tokens/sheets.css - start where the length of the list is the message, center where the content is a fixed composition, stretch where height is readability. Fill below is the lowest PAINTED bottom inside the body box over the height of that box, in true CSS px on the 1920 x 1440 stage: an empty wrapper that happens to stretch is not content reaching the floor."
+    >
+      <GroundTabs value={ground} onChange={setGround} extra={<Button variant="ghost" onClick={run}>Re-measure</Button>} />
+      <div className="ds-proof" data-proof="sheet-fill">
+        <div className="ds-proof-head">
+          <Verdict state={report ? ok : null}>The stretch chain resolves end to end, the gallery case reaches its frame, and every mounted kind carries one of the three axis values</Verdict>
+        </div>
+        {report ? (
+          <>
+            <table>
+              <thead><tr><th>case</th><th>body box</th><th>reached</th><th>dead ground</th><th>fill</th></tr></thead>
+              <tbody>
+                {report.local.map((r) => (
+                  <tr key={r.case}>
+                    <td>{r.case}</td>
+                    <td>{r.bodyHeight}px</td>
+                    <td>{r.reached}px</td>
+                    <td className={r.dead <= r.bodyHeight * 0.1 ? 'ds-okcell' : 'ds-fail'}>{r.dead}px</td>
+                    <td className={r.pct >= 90 ? 'ds-okcell' : 'ds-fail'}>{r.pct}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <table>
+              <thead><tr><th>the stretch chain, on the gallery case</th><th>resolved</th></tr></thead>
+              <tbody>
+                <tr><td>.frc-sheet-content align-content</td><td className={gallery?.align === 'stretch' ? 'ds-okcell' : 'ds-fail'}>{gallery?.align ?? '—'}</td></tr>
+                <tr><td>--fill-row (inherited by .frc-sample)</td><td className={gallery?.fillRow === 'minmax(0, 1fr)' ? 'ds-okcell' : 'ds-fail'}>{gallery?.fillRow ?? '—'}</td></tr>
+                <tr><td>--fill-media-ratio (inherited by .frc-sample-media)</td><td className={gallery?.mediaRatio === 'auto' ? 'ds-okcell' : 'ds-fail'}>{gallery?.mediaRatio ?? '—'}</td></tr>
+              </tbody>
+            </table>
+            <p className="ds-note">{`${report.all.length} sheet pattern(s) mounted elsewhere on this page, measured below. Toggling the sheet-pattern section to "one" measures one; the count is what says which.`}</p>
+            <table>
+              <thead><tr><th>pattern</th><th>kind</th><th>axis</th><th>fill</th><th>dead ground</th></tr></thead>
+              <tbody>
+                {report.all.map((r) => (
+                  <tr key={r.pattern}>
+                    <td>{r.pattern}</td>
+                    <td>{r.kind ?? '—'}</td>
+                    <td className={AXES.includes(r.align) ? 'ds-okcell' : 'ds-fail'}>{r.align}</td>
+                    <td>{r.pct}%</td>
+                    <td>{r.dead}px</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ) : null}
+      </div>
+      <div className="ds-frame">
+        <Zoomed width={1920}>
+          <div ref={ref} className={cx('frc-deck', GROUND_CLASSES[ground], AUDIENCE_CLASSES.internal)}>
+            <figure data-case="gallery-rolecards" style={{ margin: 0, display: 'grid', gap: 12 }}>
+              <figcaption className="frc-label" style={{ paddingLeft: 8 }}>GallerySheet · four filled compact RoleCards</figcaption>
+              <div className="frc-stage" data-aspect="4:3">
+                <GallerySheet active cols={4}>
+                  <span slot="eyebrow">Subteam leads</span>
+                  <h2 slot="title">Who to find in the shop</h2>
+                  {ROLE_ROWS.slice(0, 4).map((r) => (
+                    <RoleCard key={r.name} density="compact" mediaFile={`${r.file}.png`}>
+                      <Cutout slot="media" ground="none" src={png} alt="" width={160} height={160} />
+                      <span slot="name">{r.name}</span>
+                      <span slot="title">{r.title}</span>
+                      <SubteamBadge slot="subteam">{r.subteam}</SubteamBadge>
+                      <li slot="cert" data-status={r.status} {...(r.safety ? { 'data-safety': '' } : {})}>{r.cert}</li>
+                      <p slot="note">{r.note}</p>
+                    </RoleCard>
+                  ))}
+                </GallerySheet>
+              </div>
+            </figure>
+            <figure data-case="gallery-samples" style={{ margin: 0, display: 'grid', gap: 12, marginTop: 40 }}>
+              <figcaption className="frc-label" style={{ paddingLeft: 8 }}>GallerySheet · four Samples, the component-correct composition</figcaption>
+              <div className="frc-stage" data-aspect="4:3">
+                <GallerySheet active cols={4}>
+                  <span slot="eyebrow">Finishes</span>
+                  <h2 slot="title">What came off the mill this week</h2>
+                  {['Bead blast', 'Anodize', 'Powder coat', 'As machined'].map((n) => (
+                    <Sample key={n} src={png} alt="">
+                      <span slot="name">{n}</span>
+                      <span slot="note">6061, 3mm plate</span>
+                    </Sample>
+                  ))}
+                </GallerySheet>
+              </div>
+            </figure>
+          </div>
+        </Zoomed>
+      </div>
+    </Section>
+  )
+}
+
 function ChromeSection() {
   const [ground, setGround] = useState('squadron')
   const ref = useRef(null)
@@ -1550,7 +1703,7 @@ export default function SpecimenPage() {
         <span className="ds-header-title">{NAMESPACE}</span>
         <span>v{VERSION} · /_ds · dev only</span>
         <nav className="ds-nav">
-          {['grounds', 'tokens', 'type', 'motion', 'surfaces', 'core', 'brand', 'data', 'surfaces-group', 'forms', 'role-density', 'images', 'cutout', 'clock', 'alliance', 'sheets', 'refusals', 'chrome', 'wiring'].map((id) => <a key={id} href={`#${id}`}>{id}</a>)}
+          {['grounds', 'tokens', 'type', 'motion', 'surfaces', 'core', 'brand', 'data', 'surfaces-group', 'forms', 'role-density', 'images', 'cutout', 'clock', 'alliance', 'sheets', 'sheet-fill', 'refusals', 'chrome', 'wiring'].map((id) => <a key={id} href={`#${id}`}>{id}</a>)}
         </nav>
       </header>
       <main className="ds-main">
@@ -1570,6 +1723,7 @@ export default function SpecimenPage() {
         <ClockSection />
         <AllianceSection />
         <SheetsSection />
+        <SheetFillSection />
         <RefusalsSection />
         <section className="ds-section"><ExternalEnforcement /></section>
         <ChromeSection />

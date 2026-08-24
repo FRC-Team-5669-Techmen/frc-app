@@ -63,6 +63,13 @@
 //     (pre-delivery 17)
 // 26. Radii stay small: 2 / 3 / 4px from the radius tokens.
 // 27. Deck chrome never shows a neutral white: no surface alias is #FFFFFF and
+//
+// 28. No sheet kind leaves its content row unassigned: every kind that renders
+//     a .frc-sheet-content is named in exactly one of the three distribution-axis
+//     lists (start / center / stretch) in tokens/sheets.css, a kind with no content
+//     row owns its own .frc-sheet-<kind> .frc-sheet-body rule instead, a stretch
+//     kind actually raises --fill-row, and .frc-sample / .frc-sample-media still
+//     read it. The kind list is derived from the pattern sources, never typed here.
 //     --white is never painted as a surface.
 import fs from 'node:fs'
 import path from 'node:path'
@@ -893,6 +900,101 @@ const MOTION_CLASSES = new Set(MOTION_VOCAB.filter((c) => /^frc-(in|img)-/.test(
         fail(`${r.file}: "${r.sel.trim()}" paints a surface with var(--white) (${prop}) — --white is the supplied mark's white, not a surface`)
       }
     }
+  }
+}
+
+// ---------- 28. no sheet kind leaves its content row unassigned ----------
+// .frc-sheet-body hands .frc-sheet-content the leftover height as a 1fr row.
+// Until the distribution axis existed, every kind then threw it away with
+// align-content: start, which is why a four-tile gallery left ~600px of dead
+// ground on a 1440 frame. The axis has three values and this check makes the
+// assignment MANDATORY rather than defaulted: a new pattern cannot quietly
+// inherit `start` because nobody chose for it.
+//
+// The kind vocabulary is DERIVED from the pattern sources, never typed here, so
+// adding a 27th pattern fails this check until its axis is assigned.
+//
+// NARROWING, written down at the check: a kind that renders no .frc-sheet-content
+// is not exempt by omission — it must instead own a `.frc-sheet-<kind> .frc-sheet-body`
+// rule, which is how cover / section / statement / quote / closing distribute for
+// themselves. "No content row" and "forgot the axis" are then different states,
+// which is the whole point of the check.
+{
+  const AXIS = ['start', 'center', 'stretch']
+  const sheetsRules = cssRules(TOKEN_SRC['tokens/sheets.css'])
+
+  // Deriving the vocabulary also keeps `.frc-sheet-content`, `-body`, `-head`
+  // and the rest out of the scan: they share the prefix but are not kinds, and
+  // a bare /\.frc-sheet-(\w+)/ reads `content` as a kind and then reports it
+  // assigned three different axes at once.
+  const KINDS = new Map()
+  for (const f of sheetFiles) {
+    const km = codeOf(f).match(/kind="([a-z]+)"/)
+    if (km) KINDS.set(km[1], f)
+  }
+  if (KINDS.size !== 26) fail(`check 28: read a kind from ${KINDS.size} of 26 pattern files`)
+  const kindsIn = (sel) => [...sel.matchAll(/\.frc-sheet-([a-z-]+)/g)].map((m) => m[1]).filter((k) => KINDS.has(k))
+
+  // kind -> axis value, off every rule that sets align-content ON .frc-sheet-content.
+  const assigned = new Map()
+  const dupes = []
+  for (const r of sheetsRules) {
+    if (!/\.frc-sheet-content\b/.test(r.sel)) continue
+    const raw = Object.fromEntries(props(r.body))['align-content']
+    if (!raw || !AXIS.includes(raw.trim())) continue
+    const value = raw.trim()
+    for (const k of kindsIn(r.sel)) {
+      if (assigned.has(k) && assigned.get(k) !== value) dupes.push(`${k} (${assigned.get(k)} and ${value})`)
+      assigned.set(k, value)
+    }
+  }
+  if (dupes.length) fail(`check 28: sheet kind assigned two different distribution axes — ${dupes.join(', ')}`)
+
+  // Which kinds raise the inherited stretch tokens the tiles read.
+  const stretchTokens = new Set()
+  for (const r of sheetsRules) {
+    const row = Object.fromEntries(props(r.body))['--fill-row']
+    if (!row || row.trim() === 'auto') continue
+    for (const k of kindsIn(r.sel)) stretchTokens.add(k)
+  }
+
+  for (const [kind, f] of KINDS) {
+    const src = codeOf(f)
+    if (!/frc-sheet-content/.test(src)) {
+      const owns = sheetsRules.some((r) => new RegExp(`\\.frc-sheet-${kind}\\b[^,{]*\\.frc-sheet-body\\b`).test(r.sel))
+      if (!owns) fail(`check 28: ${f} (kind "${kind}") renders no .frc-sheet-content AND owns no .frc-sheet-${kind} .frc-sheet-body rule — it distributes nothing, in either place`)
+      if (assigned.has(kind)) fail(`check 28: kind "${kind}" is assigned a content-row axis but renders no content row`)
+      continue
+    }
+    if (!assigned.has(kind)) {
+      fail(`check 28: ${f} (kind "${kind}") renders a content row with no distribution axis — name it in the start, center or stretch list in tokens/sheets.css. The 1fr row is handed to it either way, so an unassigned kind silently keeps start and drops the height.`)
+      continue
+    }
+    // A stretch kind that does not raise --fill-row is a stretch in name only:
+    // the row grows and the tile inside it keeps its fixed 4 / 3 cap.
+    if (assigned.get(kind) === 'stretch' && !stretchTokens.has(kind)) {
+      fail(`check 28: kind "${kind}" is assigned stretch but never sets --fill-row, so a .frc-sample inside it keeps its 4 / 3 cap and the stretched row is decorative`)
+    }
+    if (assigned.get(kind) !== 'stretch' && stretchTokens.has(kind)) {
+      fail(`check 28: kind "${kind}" raises --fill-row without being assigned stretch`)
+    }
+  }
+
+  // The consumer end. The axis is inherited custom properties, so it only does
+  // anything if a tile actually reads them; a rename on one side and not the
+  // other is silent, and this is where that is caught.
+  const surfaces = TOKEN_SRC['tokens/surface-components.css']
+  if (!/\.frc-sample\b[^{]*\{[^}]*grid-template-rows:\s*var\(--fill-row/.test(surfaces)) {
+    fail('check 28: .frc-sample does not read var(--fill-row) — the stretch axis reaches no tile')
+  }
+  if (!/\.frc-sample-media\b[^{]*\{[^}]*aspect-ratio:\s*var\(--fill-media-ratio/.test(surfaces)) {
+    fail('check 28: .frc-sample-media does not read var(--fill-media-ratio) — its fixed ratio still caps tile height under stretch')
+  }
+  // The default must be declared, and declared WEAKLY, so a kind class beats it
+  // outright rather than by source order. Check 14 makes the same argument about
+  // the ground scopes; it is the same failure mode one layer down.
+  if (!/:where\(\.frc-sheet\)[^{]*\{[^}]*--fill-row:\s*auto/.test(TOKEN_SRC['tokens/sheets.css'])) {
+    fail('check 28: the --fill-row default is not declared on :where(.frc-sheet) — a plain .frc-sheet selector ties with .frc-sheet-<kind> and source order decides which wins')
   }
 }
 
