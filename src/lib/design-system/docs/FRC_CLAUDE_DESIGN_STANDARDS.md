@@ -1,5 +1,5 @@
 # FRC Claude Design Standards
-**Version 1.9 - 2026-08-23**
+**Version 2.4 - 2026-08-25**
 
 Scoping and prompting rules for every FRC Team 5669 artifact authored in Claude Design against the FRC design system. Presentations are the primary case.
 
@@ -39,9 +39,15 @@ The variety budget goes to the full path. Spending it where a deck runs once a y
 
 **Harness reproducibility.** The `/_ds` specimen route must boot from a clean checkout. Any environment file, launch configuration, or port setting it needs is committed as a tracked example, and no auth gate stands in front of it. A harness that runs on one machine is not a verification mechanism, it is a personal convenience, and the first time someone else needs to check a component they will skip the check instead.
 
-**Staleness check.** `src/lib/design-system/_ds_manifest.json` at `frc-app` HEAD is the authority. Chat states the registry count from it at the start of a full-path session. The count is the exported registry, not a count of source files: one file exports several components, so a file count and the number Claude Design reports are different numbers, and only one of them moves when a batch adds child components to existing files.
+**Staleness check, and it is a feature probe, not a count.** The Claude Design binding does not refresh on its own. It refreshes when someone runs `/design-sync` in Claude Code against the repo, and nothing in the Design interface says how old the bundle is: the uploaded bundle carries no commit sha anywhere, so it cannot be asked what it holds.
 
-Because the manifest is versioned in the repo, there is no separate digest to regenerate and no upload step that can silently go stale. If Claude Design reports a count that disagrees with HEAD, Claude Design is holding a cached bundle and needs to re-sync from GitHub, which is a different failure from a stale document and is fixed differently.
+Counts do not answer the question either, and reaching for one wastes a turn. `_ds_manifest.json` registers documented components as cards, `ds:audit` counts the exported registry, and neither number moves when a token file changes or a component gains a prop, which is most of what lands in a normal week.
+
+So the probe is behavioral. Before a full-path build, ask the Design session four yes-or-no questions about the newest features to land, newest first, and require four yes. Features ship in order, so if the most recent one is present everything before it is too. The first no tells you where the sync stopped.
+
+A build must not start on a failed probe. A spec written against components the bundle does not have is unbuildable, and an unbuildable spec is how a deck ends up pulling repo source into the Design project and editing components from that side, which happened once and cost a rebuild. **Fork the system and every future repo fix reaches neither copy.**
+
+**One session at a time against one project.** A design-sync run ends in an atomic upload. Two running concurrently means two uploads racing the same project and two branches independently fixing the same defects, which happened and cost a reconciliation pass. Confirm nothing is running before starting one, and if a run fails, report the failure rather than racing another.
 
 ---
 
@@ -135,8 +141,31 @@ Ground per part, not only per deck. Audience per section where it differs from t
 ### Step 5. Motion plan
 One transition per non-build sheet from the four that exist. Entrance budget per sheet, default maximum six. Ambient texture maximum one per sheet and not on every sheet. Stagger via `frc-d1` through `frc-d8` only.
 
+### Step 5b. Fill and copy budget
+**The step that prevents a correct deck from looking empty.** The sheet patterns lay content out in normal flow and do not distribute it vertically, so a spec that names a pattern and some copy will produce a sheet with content in the top half and ground below it. Nothing else in this protocol catches that, because every other step is satisfied.
+
+Two numbers are set before the prompt is written and both go into it.
+
+**Fill floor, and it is kind-aware, not uniform.** `tokens/sheets.css` assigns every sheet kind a distribution axis of start, center or stretch. The floor applies to the stretch and center kinds, where the pattern is built to grow into its row. It does not apply to the start kinds, where a short authored list at 41 to 58% is the correct look and stretching it would be the pattern lying about how much it holds.
+
+A start-kind sheet that reads empty is a content problem, not a distribution problem, and it is fixed with an image, a merge, or fewer sheets. Never by stretching, never by prose, never by enlarging an ambient layer.
+
+Read the current axis assignment from `tokens/sheets.css` before setting a target. Do not assume it; it is chosen per kind and it changes.
+
+For the kinds the floor does apply to: content occupies at least 85% of frame height above the footer rail. Reached by scaling content up and distributing it, or by an image the image plan names. Never by adding prose and never by enlarging an ambient layer, which sits behind content and is never the content. A sheet that cannot reach the floor within the copy budget is reported, not shipped and not padded.
+
+**Copy budget.** 60 words of body per sheet excluding title, eyebrow, table cells and footnotes. 20 words per sentence. One line per card in a grid of four or more. Overflow goes to `data-speaker-notes` as topic bullets. It does not go on the wall.
+
+Both are stated as an acceptance test in the prompt: the build reports its measured fill percentage for every sheet.
+
 ### Step 6. Reveal and interaction plan
 Pacing: which sheets need stepped delivery and how many build states each gets. Interrogation: which sheets carry click targets, what each emphasizes, what the base state shows.
+
+**Sequential reveal is not a decorative build and is not counted against the build budget.** Stepping through an authored list one item at a time, so a gallery of nine cards or a table of five rows arrives in sequence rather than all at once, is a pacing decision about the room. The four-chain budget exists to stop decorative animation from accumulating and was written before this case existed. A deck may put per-item reveal on every multi-item sheet it has.
+
+The distinction is authorship: if the items are content the spec lists, reveal is free. If the states exist to make something appear interesting, the budget applies.
+
+Reveal uses the system's own mechanism. If the patterns do not support per-item stepping, the build stops and reports it, and it is fixed in the repo through Loop A. A hand-rolled click handler in a deck is a defect.
 
 ### Step 7. Image plan
 Every slot listed with id, subject, source, treatment, frame variant, and placeholder text. Sheets carrying **no** visual aid are listed here too, each with a one-line reason. Slot ids follow `s{sheet}-{subject}`. Placeholder text is photography direction, not a label.
@@ -146,9 +175,23 @@ Chat restates every decision compactly. Alejandro confirms. Only then is the pro
 
 ---
 
+## Prompt delivery
+
+**Every Design prompt is delivered as a single pasteable block in the chat response, carrying a `MODEL | EFFORT` routing header.** Identical treatment to a Claude Code prompt. Not as a file to open, not as a link, not as prose to assemble. The rule that large content is written by Claude Code or a container script governs *file deliverables*; a prompt is not one, and a prompt that has to be opened before it can be pasted has added a step for no reason.
+
+**The header sits outside the block, never inside it.** It is an instruction to Alejandro about which tool and which settings to select, not text for the tool to read. Inside the block it is noise the model has to skip past, and it invites the reader to edit the block before pasting, which defeats the point of one-click copy. The block contains the prompt and nothing else.
+
+**The header names its destination first.** `CODE | MODEL | EFFORT` or `DESIGN | MODEL | EFFORT`, then the one-line reason. Adding the model header to Design prompts in v2.0 made the two kinds of block look identical, and a Design addendum was pasted into a Claude Code session within a day of that change: CC read a ten-sheet deck brief it had no context for, correctly refused, and a turn was lost. The destination is not inferable from the body, because a deck spec and a component change both talk about the same sheets and components.
+
+The routing header states the model and effort for the session named, and the reason. High effort is the default for a full-path deck: reading two governing documents at HEAD, holding a ten-sheet spec, and recognising that a required capability is absent and reporting it rather than working around it are all judgment, not transcription. A fast-path recipe fill is medium.
+
 ## The prompt skeleton
 
 Six sections in this order. One, two, and six are near-verbatim boilerplate.
+
+**Boilerplate is referenced, not reprinted, once the governing documents are committed to the repo.** `FRC_Design_System.md` and this file live in `frc-app` at `docs/`, and Claude Design sources that repo, so section 2 is a pointer to both at HEAD plus the specific rules that have actually been violated in recent builds. Forty lines of reprinted inheritance in every prompt is how a prompt becomes unreadable, and an unreadable prompt gets skimmed.
+
+Sections 3 and 4 collapse into one table plus a copy block. Pattern, ground, transition, ambient, reveal count and image slot are columns; the per-sheet section then carries only words. Stating the same fact in a table, a per-sheet paragraph, an image plan and a prohibition list is four places to update and three places to disagree.
 
 ### 1. Routing header
 
@@ -261,6 +304,13 @@ Do not change the aspect ratio.
 Do not use alliance red or blue outside the four named components.
 Do not use a red for status. Warning is copper, error is rust, LIVE is gold.
 Do not recolor, rotate, crop, or add anything to a FIRST mark.
+Do not set font-size, padding, margin, gap, width or grid-template on a
+  component or on a slot inside one.
+Do not copy design system source into the Design project, generate a local
+  bundle of it, or modify a component from the Design side.
+Do not leave a sheet below the fill floor. Report it instead.
+Do not pad a sheet with prose to reach the fill floor.
+Do not hotlink an image the deck depends on. Embed it.
 ```
 
 ---
@@ -357,13 +407,24 @@ The split follows from what each can see. A deck's aspect ratio, sheet count, an
 
 **Guards and visual verification**
 40. Zero invariant guard fault markers anywhere in the deck. A marker is a caught defect, not an accepted state.
-41. **Someone looked at it.** Every sheet was viewed as a rendered image, on every ground the deck uses. DOM measurement is not visual verification: it confirms that an alias resolved, never that a sheet reads well, that two elements are not colliding, or that a layout is worth projecting. An audit run entirely on computed styles states so explicitly and is incomplete until this check is satisfied.
+41. **Someone looked at it. This is a gate, not an aspiration.** Every sheet was viewed as a rendered image, on every ground the deck uses. DOM measurement is not visual verification: it confirms that an alias resolved, never that a sheet reads well, that two elements are not colliding, or that a layout is worth projecting. An audit run entirely on computed styles states so explicitly and is **incomplete**, and incomplete does not ship.
+
+The evidence for promoting this is not an argument, it is a count. Seven distinct failures were caught by looking and missed by every measurement in place at the time: 26 sheet cards that were `display: none` while the stage around them measured exactly the declared viewport and reported it as proof they painted, for two weeks; a card captured mid-wipe that answered every DOM question correctly; `BlockerSheet` rendering bare status chips because its titles and owners were filed into buckets the row never rendered; six `SubteamStatus` notes silently dropped the same way; a dropped-copy detector reporting false positives because it compared against `innerText` while CSS uppercased the source; a probe whose own label rule was hitting the component under test; and a geometry diff keyed on text plus ordinal, so un-nesting shifted the ordinals and innocent elements looked moved.
+
+The pattern in all seven is the same and it is worth stating plainly: **the measurement was working. It was measuring the wrong thing.** A `display: none` element answers every question about itself correctly. That is why a second, different kind of evidence is required rather than a more careful version of the first.
 
 Automated capture settles first: finite animations are run to completion and infinite ambient loops parked at frame 0 before the frame is taken. A capture that fires on load photographs sheets mid-transition, and a wipe still crossing the frame looks enough like a design decision to be reviewed and approved.
 42. Reduced motion checked by actually setting the preference, not only by measuring gate coverage and base state. Gate coverage proves the rule was applied; it does not prove the result is legible.
 
 **Facts**
 39. Every date, match number, team number, part number, dollar figure, sponsor name, award name, and proper name is checked against a source before delivery. Any projected figure is labeled projected on the sheet itself, not only in the notes.
+
+**Fill, styling, and provenance**
+44. Every sheet meets the fill floor **for its kind's axis**. Stretch and center kinds are held to the floor; start kinds are not, and holding them to it forces the two things the standard forbids. The build reports a measured percentage per sheet and the audit reads that report rather than eyeballing it. A sheet below the floor that was reported and accepted is a decision; one that was neither is a defect.
+45. No component or slot inside one carries an inline `font-size`, `padding`, `margin`, `gap`, `width` or `grid-template`. Layout helpers on plain wrapper divs are legal only where declared. A deck restyling a component is the deck compensating for a component that does not do what the sheet needs, which is a Loop A trigger, not a deck fix.
+46. The deck sources from the bound design system bundle. No copy of the repo source, no locally generated bundle, no modified component. If the bundle is stale, it is re-synced from GitHub; a fork of the system into a deck project means every future repo fix reaches neither copy.
+47. Nothing the deck depends on is fetched at display time. QR codes, images and fonts that matter are embedded. A filtered or offline classroom network is the normal case, not the edge case. This is not only a delivery concern: a remote font `@import` in the token layer made every headless render wait 12.4 seconds for a request that was never going to succeed, so a full pass cost seventeen minutes, and every capture in the repo's history showed the fallback stack rather than the real faces. The fallback measured 16% wider than the shipped face, which means every line-break decision in the system had been made against type it does not use.
+48. **A fix written to answer an audit finding is measured like any other change.** It inherits none of the verification that produced the check. One such patch, added after a geometry diff had already run, moved fifty-two boxes on a sheet nobody re-measured. The check found a real gap; the fix for it went unchecked because it arrived after the evidence.
 
 ---
 
@@ -414,6 +475,50 @@ For any non-deck artifact, motion runs inside a `.frc-run` container and the fou
 
 ## Changelog
 
+- **2.4 (2026-08-25)** - Four corrections from a week that took the design system from
+  16 documented components to 79 and produced eleven defects nobody knew existed. **The
+  staleness check is a feature probe, not a count**: the binding refreshes only when someone
+  runs `/design-sync`, the uploaded bundle carries no commit sha, and the two available counts
+  measure different things and neither moves when a prop changes. A build must not start on a
+  failed probe, because a spec written against a bundle that lacks its components is
+  unbuildable, and that is how a deck came to fork the system into its own project.
+  **One session at a time against one project**, after two ran concurrently and both pushed
+  fixes for the same defects. **Check 41 is a gate**: seven failures were caught by looking and
+  missed by measurement, including 26 sheet cards that were `display: none` for two weeks while
+  the stage around them reported the exact declared viewport. **Check 48**: a fix answering an
+  audit finding gets measured like any other change; one such patch moved fifty-two boxes
+  because it arrived after the geometry diff that would have caught it. Check 47 gains the font
+  case, where a remote `@import` cost twelve seconds a card and meant every capture ever taken
+  showed the wrong letterforms.
+- **2.3 (2026-08-24)** - The fill floor is kind-aware. 2.0 set 85% on every sheet; landing the
+  distribution axis in `tokens/sheets.css` showed that the start kinds correctly sit at 41 to
+  58% and that a uniform floor would have the build fight a deliberate decision, winnable only
+  by padding with prose or enlarging ambient, both of which this document forbids. A start-kind
+  sheet that reads empty is a content problem and is fixed with an image, a merge, or fewer
+  sheets.
+- **2.2 (2026-08-24)** - The routing header sits outside the pasteable block. It addresses
+  Alejandro, not the tool, and putting it inside meant the block could not be pasted without
+  first being edited.
+- **2.1 (2026-08-24)** - The routing header names its destination first, `DESIGN |` or
+  `CODE |`. Giving Design prompts a `MODEL | EFFORT` header in 2.0 made both kinds of block
+  indistinguishable on sight, and a deck addendum went to a Claude Code session the same day.
+  The fix costs one word and the failure costs a turn.
+- **2.0 (2026-08-24)** - Five corrections, all of them from the Meeting 01 deck, which took
+  four builds. **Delivery:** every Design prompt now ships as a pasteable block in chat with a
+  `MODEL | EFFORT` routing header, matching Claude Code. It had been going out as a file with
+  no routing, on a misreading of the large-file rule, and a promise to change that made in a
+  chat does not survive the chat. **Step 5b:** the fill floor and copy budget, because three
+  consecutive builds satisfied every step of the protocol and still rendered content in the
+  top half of the frame; nothing here caught it since nothing here asked. **Step 6:**
+  sequential reveal of an authored list is exempt from the build budget, which was written
+  before that case existed and was blocking a legitimate pacing decision. **Skeleton:**
+  boilerplate is referenced rather than reprinted now that both governing docs are committed
+  at `docs/`, and sections 3 and 4 collapse to a table plus a copy block, because the old
+  shape stated each fact in four places. **Checks 44 to 47:** fill measured and reported,
+  no inline restyling of components, no forking the system into a deck project, nothing the
+  deck depends on fetched at display time. Check 46 exists because a build did fork the
+  system and edited three components; check 47 because a build hotlinked the QR codes that
+  were the entire point of the meeting.
 - **1.9 (2026-08-23)** - Corrected the v1.8 description of what `ds:audit`'s inheritance pin
   covers. It hashes the motion vocabulary slice, not the whole inheritance block, so the
   Sheets, Components, Colors, Gold, Alliance, FIRST, Images and Copy paragraphs cannot trip
