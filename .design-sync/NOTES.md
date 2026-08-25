@@ -323,6 +323,76 @@ Measured limits, all found by grading and fixing:
 `[GRID_OVERFLOW]` check flagged. Charts, tables, banners and multi-column grids all render
 wider than a grid cell and need full card width.
 
+## Run 2026-08-25 — 79 uploaded, anchor moved 346309e60f98 -> ea92ff4e4264
+
+One driver run, exit 0, all four stages green, zero warn lines, zero unmerged
+learnings. Partition: **52 verified-by-upload, 0 changed, 27 new, 0 removed**,
+plus **FocusTable as an artifact-churn canary with stable sources**. The 27 are
+the 26 sheet patterns (which the old anchor never recorded) and DeckSteps.
+
+**The font tax is gone and it is worth recording what it was worth.** 79 card
+renders in **50 s**, mean **0.64 s/card**, max gap 1 s, **zero cards >=12 s**.
+The previous run measured ~13 s per card because the remote Google Fonts
+`@import` never let `networkidle` settle. If a card ever takes 12 s again, look
+for a reintroduced remote request before suspecting a flake.
+
+**Every card rendered in real Space Grotesk / Space Mono for the first time.**
+The fallback measured ~16% wider, so the risk was line-break regressions. Two
+mechanical sweeps over all 26 sheets found the real face made things BETTER or
+neutral, never worse:
+
+- Rail collisions / sheet overflow: **1 of 26** (MatchBreakdownSheet, below).
+- Text clipped by its own container: **1 of 26**, and it is the documented
+  SponsorSheet empty-slot marker (21 px), unchanged by the font.
+
+Visible improvements, from looking: CoverSheet's hero now sets on ONE line
+("Build season starts Saturday") where the fallback broke it across two;
+AwardPlate's "Industrial Design Award" went three lines -> two; ClosingSheet's
+lede went two lines -> one; SplitSheet's body three -> two.
+
+### Standing defects, all pre-existing, none introduced by the fonts
+
+1. **MatchBreakdownSheet's bottom Callout overlaps the footer rail.** Measured
+   before: 34 px scaled / ~71 px unscaled. Measured now with real metrics:
+   **36 px scaled / ~75 px unscaled** — marginally WORSE, and its body paints
+   under the rail. It is the only sheet of 26 with any collision. NOT redesigned
+   in this run, by instruction.
+2. **ResultBanner runs `title` into `note`** ("Quarterfinal 2RED ALLIANCE").
+   Visible on AwardSheet. The real face neither fixed nor worsened it.
+3. **QuoteBlock runs `attr` into `role`** ("SENIOR, CLASS OF 2026DRIVE COACH").
+   Visible on QuoteSheet. Same status.
+
+(2) and (3) share the root cause already recorded above: `slotted()` keeps the
+author's element, so the element choice is load-bearing API. They are cosmetic
+run-ons, not dropped copy — distinct from the two defects fixed this pass.
+
+### Confirmed on the PROJECT, not locally
+
+The two cards that had been wrong on the project since the sheets pass:
+
+- **BlockerSheet** — all four rows now read badge + blocker text + owner
+  ("BLOCKED Router table down, four parts queued Fabrication", ...).
+- **SubteamStatusSheet** — all six cards carry their status line.
+
+0 page errors, 0 guard fault markers, computed font `"Space Grotesk"`.
+
+**A LIMIT WORTH KNOWING FOR NEXT TIME:** `_ds_bundle.js` is 372 KiB and
+`_ds_bundle.css` is 488 KiB, both over `DesignSync(get_file)`'s 256 KiB cap, so
+the project's bundle CANNOT be fetched back and re-rendered byte-for-byte. The
+chain actually verified was: the project's own `_ds_sync.json` reports
+`bundleSha12 ea92ff4e4264`; `sha256(local _ds_bundle.js)[:12]` equals that; the
+project's own card HTML and `_preview/*.js` were fetched and carry the fixed
+composition; those render the copy against that bundle. The one unverified link
+is that the project's stored bundle bytes hash to what its own anchor claims.
+
+### Fonts ship INLINED, which is why `fonts/` is empty
+
+The converter inlines the 18 self-hosted woff2 as `url(data:font/woff2;base64,…)`
+inside `_ds_bundle.css` (488 KiB, up from 95 KiB), reachable from `styles.css`.
+So `ds-bundle/fonts/` having zero files is CORRECT, not a miss — and there are
+zero `http` references left anywhere in the shipped CSS. Do not go hunting for a
+`fonts/` directory next run.
+
 ## Re-sync risks / watch-list (refreshed 2026-08-24)
 
 - **A bundled-skill update re-verifies everything.** This run found `keyRecipe` had moved
