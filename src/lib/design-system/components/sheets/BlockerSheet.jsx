@@ -1,4 +1,5 @@
 import { pickSlots } from '../slots.jsx'
+import { cloneThroughHost } from '../host.jsx'
 import { cx } from '../cx.js'
 import { Sheet, SheetHead } from './Sheet.jsx'
 import { FocusTable, FocusRow } from '../data/FocusTable.jsx'
@@ -32,14 +33,23 @@ export function BlockerSheet({ transition = 'boot', className, children, ...rest
 /**
  * Blocker - one blocker. `severity` picks the badge tone: `fault` for blocked,
  * `warn` for at risk, `ok` for cleared. Every string is a child.
+ *
+ * THE SLOT NAMES ARE RE-WRITTEN ON THE WAY DOWN, and that is the whole job of
+ * the two clones below. `Blocker` speaks the caller's vocabulary — state, title,
+ * owner — and `FocusRow` speaks its own — rank, label, value. Passing the
+ * author's `slot="title"` element straight through meant FocusRow's own
+ * `pickSlots` sorted it into a bucket FocusRow does not render, so the title and
+ * the owner were dropped on the floor and every blocker rendered as a bare
+ * badge. Cloning THROUGH the host rather than wrapping keeps the author's own
+ * element, which is what `slotted()` needs to paint a box on.
  */
 export function Blocker({ severity = 'fault', id, className, children, ...rest }) {
   const { slots } = pickSlots(children)
   return (
     <FocusRow id={id} className={cx('frc-blocker', className)} data-frc="Blocker" {...rest}>
       <span slot="rank">{slots.state ? <Badge tone={severity}>{slots.state}</Badge> : null}</span>
-      {slots.title}
-      {slots.owner}
+      {cloneThroughHost(slots.title, { slot: 'label' })}
+      {cloneThroughHost(slots.owner, { slot: 'value' })}
     </FocusRow>
   )
 }

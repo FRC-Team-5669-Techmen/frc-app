@@ -80,18 +80,41 @@ export function rejectType(children, types) {
  * The class goes on the element the AUTHOR wrote, never on a host wrapping it:
  * a host is `display: contents`, so it would still inherit color and font and
  * silently drop every box property — the failure that looks almost right.
+ *
+ * RENDERING A SLOT CONSUMES ITS NAME. `slotted()` is the moment a component says
+ * "I have picked this slot and I am putting it HERE", so the `slot` attribute has
+ * done its work and is stripped on the way out. Leaving it on is not cosmetic: a
+ * painted element frequently lands inside another component that runs its own
+ * `pickSlots`, and that component sorts the still-named element into a bucket of
+ * its OWN vocabulary — one it very likely does not render. The copy is then
+ * dropped silently, with no error and nothing missing from the props.
+ *
+ * That is not hypothetical. `SubteamStatus` paints its note with
+ * `slotted(slots.note, 'frc-card-body', 'p')` and hands it to `Card`; Card
+ * re-picked `slot="note"`, has no `note` slot, and every subteam card on
+ * `SubteamStatusSheet` rendered with its status line missing. The stray
+ * attribute also reached the DOM, where nothing reads it — no rule in the token
+ * sheets selects on `[slot]`.
+ *
+ * A component that genuinely needs to hand a slot DOWN under a different name
+ * says so outright — see `Blocker`, which re-slots title -> label and
+ * owner -> value with `cloneThroughHost` before passing them to `FocusRow`.
  */
 export function slotted(node, className, Tag = 'span', key) {
   if (node === null || node === undefined || node === false || node === '') return null
   if (Array.isArray(node)) return node.map((n, i) => slotted(n, className, Tag, i))
   if (isValidElement(node)) {
     if (isHostElement(node)) {
-      const painted = cloneThroughHost(node, (el) => ({ className: cx(className, el.props.className) }))
-      return isValidElement(painted) && painted.key == null && key != null
-        ? cloneElement(painted, { key })
-        : painted
+      const painted = cloneThroughHost(node, (el) => ({ className: cx(className, el.props.className), slot: undefined }))
+      // The name can be hoisted onto the host as well as sitting on the child,
+      // so it is cleared at both ends — a host that keeps it is re-picked just
+      // the same as an author element that keeps it.
+      const cleared = isValidElement(painted) ? cloneElement(painted, { slot: undefined }) : painted
+      return isValidElement(cleared) && cleared.key == null && key != null
+        ? cloneElement(cleared, { key })
+        : cleared
     }
-    return cloneElement(node, { className: cx(className, node.props.className), key: node.key ?? key })
+    return cloneElement(node, { className: cx(className, node.props.className), slot: undefined, key: node.key ?? key })
   }
   return <Tag className={className} key={key}>{node}</Tag>
 }
