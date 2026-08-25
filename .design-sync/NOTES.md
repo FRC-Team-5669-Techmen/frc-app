@@ -393,6 +393,53 @@ So `ds-bundle/fonts/` having zero files is CORRECT, not a miss — and there are
 zero `http` references left anywhere in the shipped CSS. Do not go hunting for a
 `fonts/` directory next run.
 
+## Run 2026-08-25b — slot-element work uploaded, anchor ea92ff4e4264 -> d74b887ca268
+
+One driver, exit 0, four stages green, zero warn lines, zero unmerged learnings.
+Run **without `--remote`** on purpose: the previous run proved that a healthy
+anchor lets grades carry, and those grades had been minted against the wrong
+fonts. No anchor plus a cleared `.cache/review` means the partition CANNOT
+carry anything — 79 added, **79 pendingGrade**, all re-graded by looking.
+
+Cards: 79 in **50 s**, mean **0.65 s**, max 1 s, **zero >=12 s**. No remote
+import returned.
+
+### The finding this run produced, and it was mine
+
+The geometry sweep against the build I had verified locally came back with
+**52 changed boxes, all in MatchBreakdownSheet** — a ~19px lift of everything
+below the match clock. Cause: after running the before/after diff I patched
+`.frc-clock-phase` into the `:where()` UA reset to satisfy ds:audit check 31,
+and never re-measured. The check caught a real gap; the patch that answered it
+went unmeasured. **Re-run the geometry sweep after ANY late patch, including
+one made to satisfy the audit.**
+
+The movement is correct on the merits and was accepted: `.frc-clock` declares
+`display: grid; gap: var(--space-2)`, so the user-agent `<p>` margin was
+stacking on top of a gap the component already provides, and it only applied
+where the slot fell back to a `<p>` — the same element-dependence being
+removed. Side effect worth recording: MatchBreakdownSheet's standing
+callout/rail overlap improved from **36px to 16px**.
+
+Everything else matched the intended 11-box diff exactly.
+
+### Confirmed on the project
+
+AwardSheet and QuoteSheet were rendered from the project's own preview bytes.
+The uploaded QuoteSheet preview writes `<span slot="attr">` and
+`<span slot="role">` — plain adjacent spans, the exact composition that used to
+run together — and they now render on separate lines (role 14px below attr).
+AwardSheet: title block, note 27px below, on both banners. 0 page errors,
+0 guard faults.
+
+**Same fetch limit as last run:** `_ds_bundle.js` (386 KiB) and
+`_ds_bundle.css` (494 KiB) exceed `get_file`'s 256 KiB cap, and this build emits
+NO separate `tokens/` directory — the 75 pinned display rules and the `:where()`
+reset are inlined into `_ds_bundle.css`. So the project's stylesheet cannot be
+fetched back and re-read. The chain verified: project previews fetched and
+rendered, against the local bundle whose sha256 prefix is `d74b887ca268` and
+which is the exact file this plan uploaded.
+
 ## Re-sync risks / watch-list (refreshed 2026-08-24)
 
 - **A bundled-skill update re-verifies everything.** This run found `keyRecipe` had moved
