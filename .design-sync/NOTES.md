@@ -104,9 +104,14 @@ block. The card page re-shows the unarmed sheet in one commented line.
 - **PKG_DIR resolves to the repo root** (the `--entry` walk stops at frc-app/package.json).
   Harmless because the only `.d.ts` in the repo are the DS's. `globalName` and `tokensGlob`
   are set explicitly so nothing keys off the repo-root name.
-- **Fonts**: the DS loads Space Grotesk / Space Mono / Roboto via a **remote Google Fonts
-  `@import`** (`tokens/fonts.css`). Reported as `[FONT_REMOTE]` — informational, they load
-  at runtime, nothing to ship. This is the DS's one documented external-host exception.
+- **Fonts**: SELF-HOSTED, no external host. `tokens/fonts.css` declares 18 `@font-face` rules
+  against `../assets/fonts/*.woff2` (Space Grotesk 400/500/700, Space Mono 400/700, Roboto
+  400/700 roman + italic; latin + latin-ext). Every file is sha256-pinned in
+  `assets/PROVENANCE.json` and re-checked by `ds:audit`. The converter's esbuild inlines them
+  into `_ds_bundle.css` as `data:font/woff2` URIs, so a rendered design makes ZERO font
+  requests — `_ds_bundle.css` is ~486 KB as a result, which is the deliberate trade. Licenses
+  ship beside the faces (OFL 1.1 for the two Space families, Apache-2.0 for Roboto) because
+  the OFL requires it of any redistributed copy.
 
 ## Previews
 Authored in `.design-sync/previews/<Name>.tsx`, ground-wrapped in
@@ -135,26 +140,17 @@ Committed alongside them: `config.json` and this file. Still ignored: `.design-s
   (ts-morph already validated the `.d.ts` at build). Optional: `npm i typescript` in `.ds-sync`.
 
 ## Known render warns
-- `[FONT_REMOTE]` Space Grotesk / Space Mono — expected (remote font host), not a miss.
-- `[RENDER] <Name>.html: page.goto: Timeout 15000ms exceeded` — **environment, not the DS, and
-  it is a coin-flip.** In a sandbox with no route to `fonts.googleapis.com`, the remote
-  `@import` in `styles.css` hangs and only fails `ERR_CONNECTION_RESET` at **~12.4 s**, and the
-  `load` event waits for it. Profiled: every local asset finishes in 48 ms, so 12.4 s of every
-  page load is that one request. Against validate's 15 s `goto` budget that leaves ~2.5 s of
-  headroom, so a random card loses the race on any given run (it was `SpecTable` on
-  2026-08-25; that card renders fine, 258 chars of real content). Re-run — it is the
-  documented flake, not a component defect. Editing `/etc/hosts` does NOT help: Chromium
-  routes through the proxy, not local DNS.
-- **The goto margin must be RE-APPLIED on every re-sync.** The fix for the timeout above is to
-  give the navigation real headroom, and it lives in the STAGED scripts (`.ds-sync/`), which
-  step 7's `cp -r` overwrites every single run. There is no config key and no CLI flag for it.
-  After staging, raise all five `waitUntil: 'networkidle'` timeouts to `45000`:
-  `package-validate.mjs` lines ~489 and ~762 (`15000`), and `package-capture.mjs` lines ~151,
-  ~189 (`20_000`) and ~215 (`15_000`). 45 s is ~3.5x the measured 12.9 s cost (12.4 s for the
-  font request to give up, plus networkidle's own 500 ms quiet window). Do NOT lower
-  `waitUntil` to `'load'` instead — profiled, `load` fires at 12.47 s too, because it also
-  waits on the stylesheet. This is a margin, not a retry: the 12.4 s is a constant, so headroom
-  is enough and is one line each.
+- `[FONT_REMOTE]` — **RETIRED 2026-08-25. It must never appear again.** All four faces are
+  self-hosted from `assets/fonts/`. If this warn reappears, a remote `@import` has been
+  reintroduced into `tokens/fonts.css` and should be removed, not recorded.
+- `[RENDER] <Name>.html: page.goto: Timeout` — **RESOLVED 2026-08-25 at the cause, and the
+  45 s margin that used to be required here is GONE.** The staged scripts are stock again;
+  do not re-apply it. History, because the number is worth keeping: the remote font `@import`
+  hung and only failed `ERR_CONNECTION_RESET` at ~12.4 s while the `load` event waited on it,
+  so every card cost ~12.4 s against validate's 15 s budget and a random one lost the race
+  each run (it was `SpecTable`). Self-hosting removed the request entirely. Measured after:
+  **548–628 ms per card**, ~20x faster, so the stock 15 s budget now has ~25x headroom rather
+  than 2.5 s. If a goto timeout ever returns, look for a reintroduced remote request first.
 - `[GRID_OVERFLOW]` FocusTable — **RESOLVED 2026-08-25 by applying the remedy**
   (`overrides.FocusTable.cardMode: "column"`), not by recording it. A concurrent session first
   argued this warn was a false alarm on the grounds that `.frc-focus-row` has no intrinsic

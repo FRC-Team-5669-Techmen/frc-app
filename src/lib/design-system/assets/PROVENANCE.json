@@ -64,6 +64,192 @@
       "season": "FIRST Robotics Competition 2027 — BIOCORE presented by Haas",
       "finding": "Fetched 2026-08-24 from the FIRST season brand downloads page and adopted AS SUPPLIED. The page currently publishes the 2026-2027 season set: FIRST CANOPY (the umbrella season), BIOGLOW (FLL), BIOBUZZ presented by RTX (FTC), and BIOCORE presented by Haas (FRC 2027). BIOCORE is the FRC season, which is this team's program, and it is the coming season rather than a prior one, so no substitution was needed. The file is the vertical, full-color, RGB PNG from the archive's `Digital RGB` folder, 1730x1230, 8-bit RGBA — copied out of the zip byte-for-byte, verified by hashing the archive member and the copy in the bundle to the same sha256. Renamed to season-lockup.png ONLY: the bytes are untouched, and the generic path is what makes replacing this one file the entire annual reskin. THIS IS FIRST ARTWORK AND THE FIRST USAGE RULES APPLY IN FULL — never recolored, rotated, skewed, cropped, bordered, or combined with added text. The slot renders it under object-fit: contain (tokens/image-slot.css), so SeasonLockup's 240x240 default letterboxes it to 240x171 rather than distorting or cropping it; the artwork carries its own filled plates over transparency, so one file serves squadron, field and paper and no reverse variant is required. NOTE FOR THE PAPER GROUND: the artwork contains a yellow element. It is FIRST's yellow, not Techmen Gold, and the no-gold-on-paper rule does not reach it — supplied artwork may not be recolored, so there is nothing to fix here and nobody should try. The /_ds gold-on-paper proof reads computed colour and cannot see inside an <img>, so it will not report this either way.",
       "toResolve": "Replace this one file each January when FIRST publishes the next FRC season logo, re-hash it here, and update the SeasonLockup name and years in the decks that use it. Nothing else changes."
+    },
+    {
+      "file": "assets/fonts/Roboto-LICENSE-Apache-2.0.txt",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "bytes": 11357,
+      "source": "https://raw.githubusercontent.com/googlefonts/roboto/main/LICENSE",
+      "license": "Apache-2.0",
+      "note": "License text, redistributed with the faces as the OFL requires of any bundled copy."
+    },
+    {
+      "file": "assets/fonts/SpaceGrotesk-OFL.txt",
+      "sha256": "564ce565c371c5e5bbf286006565a7c9aa55a9f56e7ca58d56e05d649dd61a72",
+      "bytes": 4495,
+      "source": "https://raw.githubusercontent.com/floriankarsten/space-grotesk/master/OFL.txt",
+      "license": "SIL OFL 1.1",
+      "note": "License text, redistributed with the faces as the OFL requires of any bundled copy."
+    },
+    {
+      "file": "assets/fonts/SpaceMono-OFL.txt",
+      "sha256": "8e4ee42b2553e1e01504e61cb0d46d148cd8c9e5eacaa3622a7df2d4f2955b9f",
+      "bytes": 4392,
+      "source": "https://raw.githubusercontent.com/googlefonts/spacemono/main/OFL.txt",
+      "license": "SIL OFL 1.1",
+      "note": "License text, redistributed with the faces as the OFL requires of any bundled copy."
+    },
+    {
+      "file": "assets/fonts/roboto-latin-400-italic.woff2",
+      "sha256": "5d0e978b6560631da2504e1612e91ee1ff959c04adae245eb320ac90cad2ba2f",
+      "bytes": 23672,
+      "source": "npm @fontsource/roboto@5.3.0 (files/roboto-latin-400-italic.woff2)",
+      "upstream": "https://github.com/googlefonts/roboto",
+      "license": "Apache-2.0",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/roboto-latin-400-normal.woff2",
+      "sha256": "425c0713a8176f92273d378599c7eac57de7fafabd4bd0ed457b70eb8f80d371",
+      "bytes": 21884,
+      "source": "npm @fontsource/roboto@5.3.0 (files/roboto-latin-400-normal.woff2)",
+      "upstream": "https://github.com/googlefonts/roboto",
+      "license": "Apache-2.0",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/roboto-latin-700-italic.woff2",
+      "sha256": "cc04783263e416f8ee2a218fde6ffd532d6b81636d3187d30e39e4ad05736d5e",
+      "bytes": 23988,
+      "source": "npm @fontsource/roboto@5.3.0 (files/roboto-latin-700-italic.woff2)",
+      "upstream": "https://github.com/googlefonts/roboto",
+      "license": "Apache-2.0",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/roboto-latin-700-normal.woff2",
+      "sha256": "b9d66d1708156f765ada51939bc24ed259dafa69eb631b36e443680fe9e15879",
+      "bytes": 22240,
+      "source": "npm @fontsource/roboto@5.3.0 (files/roboto-latin-700-normal.woff2)",
+      "upstream": "https://github.com/googlefonts/roboto",
+      "license": "Apache-2.0",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/roboto-latin-ext-400-italic.woff2",
+      "sha256": "ad66d13b1a82df14c8937a7c547809471a3a42e67b0fc06c0aa7955f37b6ece9",
+      "bytes": 16068,
+      "source": "npm @fontsource/roboto@5.3.0 (files/roboto-latin-ext-400-italic.woff2)",
+      "upstream": "https://github.com/googlefonts/roboto",
+      "license": "Apache-2.0",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/roboto-latin-ext-400-normal.woff2",
+      "sha256": "5725eacca97303d8bce26f76cfcaee4393295bbf93c1eb6c3e5e4f260b2da189",
+      "bytes": 15040,
+      "source": "npm @fontsource/roboto@5.3.0 (files/roboto-latin-ext-400-normal.woff2)",
+      "upstream": "https://github.com/googlefonts/roboto",
+      "license": "Apache-2.0",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/roboto-latin-ext-700-italic.woff2",
+      "sha256": "575c2a3fc4c2a726821a49bff46bd19e916bb24e485e3f8e433895ef1073f37f",
+      "bytes": 16384,
+      "source": "npm @fontsource/roboto@5.3.0 (files/roboto-latin-ext-700-italic.woff2)",
+      "upstream": "https://github.com/googlefonts/roboto",
+      "license": "Apache-2.0",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/roboto-latin-ext-700-normal.woff2",
+      "sha256": "7673803a2d402018b1f726dded5bf2dbf2be4307039e8718f4bea654d6eca249",
+      "bytes": 15196,
+      "source": "npm @fontsource/roboto@5.3.0 (files/roboto-latin-ext-700-normal.woff2)",
+      "upstream": "https://github.com/googlefonts/roboto",
+      "license": "Apache-2.0",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/space-grotesk-latin-400-normal.woff2",
+      "sha256": "65fd17fcbd2e2f522940b5f67ead3d23329e02891aa5495e74d11a499c0b0673",
+      "bytes": 13388,
+      "source": "npm @fontsource/space-grotesk@5.3.0 (files/space-grotesk-latin-400-normal.woff2)",
+      "upstream": "https://github.com/floriankarsten/space-grotesk",
+      "license": "SIL OFL 1.1",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/space-grotesk-latin-500-normal.woff2",
+      "sha256": "1b1a8131d9edf975d9decee81e2f2bf504812f7a4f498e5500f28a613e22e64c",
+      "bytes": 13312,
+      "source": "npm @fontsource/space-grotesk@5.3.0 (files/space-grotesk-latin-500-normal.woff2)",
+      "upstream": "https://github.com/floriankarsten/space-grotesk",
+      "license": "SIL OFL 1.1",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/space-grotesk-latin-700-normal.woff2",
+      "sha256": "35f8aec56cfd5cbfdb03cc68733a54a0b05bb3617ffcd5fd332badc0b045ca55",
+      "bytes": 12840,
+      "source": "npm @fontsource/space-grotesk@5.3.0 (files/space-grotesk-latin-700-normal.woff2)",
+      "upstream": "https://github.com/floriankarsten/space-grotesk",
+      "license": "SIL OFL 1.1",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/space-grotesk-latin-ext-400-normal.woff2",
+      "sha256": "a6658ce608a36f9ece7a65842725deebeb5f01df2debeb696b79c8536bf2ddc8",
+      "bytes": 12256,
+      "source": "npm @fontsource/space-grotesk@5.3.0 (files/space-grotesk-latin-ext-400-normal.woff2)",
+      "upstream": "https://github.com/floriankarsten/space-grotesk",
+      "license": "SIL OFL 1.1",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/space-grotesk-latin-ext-500-normal.woff2",
+      "sha256": "ed7e064eda944f88ce2f40101ec20e214004decdf5c0b9ad9219ae21be2dbf13",
+      "bytes": 12272,
+      "source": "npm @fontsource/space-grotesk@5.3.0 (files/space-grotesk-latin-ext-500-normal.woff2)",
+      "upstream": "https://github.com/floriankarsten/space-grotesk",
+      "license": "SIL OFL 1.1",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/space-grotesk-latin-ext-700-normal.woff2",
+      "sha256": "7ce350b706d79c955ebf91314295f39fa82999f980b7e9beee743c2f3580a15e",
+      "bytes": 11992,
+      "source": "npm @fontsource/space-grotesk@5.3.0 (files/space-grotesk-latin-ext-700-normal.woff2)",
+      "upstream": "https://github.com/floriankarsten/space-grotesk",
+      "license": "SIL OFL 1.1",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/space-mono-latin-400-normal.woff2",
+      "sha256": "fb4a81a2d0a893e5c38c394a7e716a1cef0b24610a0af49c96f6d529bd66bf2b",
+      "bytes": 16520,
+      "source": "npm @fontsource/space-mono@5.3.0 (files/space-mono-latin-400-normal.woff2)",
+      "upstream": "https://github.com/googlefonts/spacemono",
+      "license": "SIL OFL 1.1",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/space-mono-latin-700-normal.woff2",
+      "sha256": "2d46bd159b53f55c41167a4f1540a074649464194fd1e416f5b4694a6c0f282c",
+      "bytes": 16724,
+      "source": "npm @fontsource/space-mono@5.3.0 (files/space-mono-latin-700-normal.woff2)",
+      "upstream": "https://github.com/googlefonts/spacemono",
+      "license": "SIL OFL 1.1",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/space-mono-latin-ext-400-normal.woff2",
+      "sha256": "44ad50c760fa8f5b62da3d489edb40adebabaf97988b9b0adbbc3f0be859050a",
+      "bytes": 15832,
+      "source": "npm @fontsource/space-mono@5.3.0 (files/space-mono-latin-ext-400-normal.woff2)",
+      "upstream": "https://github.com/googlefonts/spacemono",
+      "license": "SIL OFL 1.1",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
+    },
+    {
+      "file": "assets/fonts/space-mono-latin-ext-700-normal.woff2",
+      "sha256": "52edd9a8959ec3e68d618e2a4757182c0e61bfeea61679850cad8744a68cadf3",
+      "bytes": 15808,
+      "source": "npm @fontsource/space-mono@5.3.0 (files/space-mono-latin-ext-700-normal.woff2)",
+      "upstream": "https://github.com/googlefonts/spacemono",
+      "license": "SIL OFL 1.1",
+      "note": "Official Google Fonts woff2 build, vendored byte-for-byte. Self-hosted: the system makes NO request to any font host at render time."
     }
   ],
   "derived": [

@@ -265,7 +265,15 @@ for (const a of manifest.pending.assets) if (exists(a)) fail(`manifest pending a
 
 // ---------- 8. no emoji ----------
 const EMOJI = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{26FF}]|\u{FE0F}/u
+// BINARY FILES ARE NOT SOURCE TEXT and must not be scanned as if they were.
+// Decoding a woff2 as UTF-8 yields arbitrary codepoints, and enough of them land
+// in the emoji ranges to fail this check on six of the eighteen self-hosted
+// faces — a false positive that says nothing about the system. Sniffed by NUL
+// byte rather than by an extension list, so the next binary asset type added to
+// assets/ is covered without anyone remembering to extend a list.
+const isBinary = (f) => { try { return fs.readFileSync(path.join(ROOT, f)).includes(0) } catch { return false } }
 for (const f of allFiles) {
+  if (isBinary(f)) continue
   const lines = read(f).split('\n')
   lines.forEach((l, i) => { if (EMOJI.test(l)) fail(`${f}:${i + 1}: emoji`) })
 }

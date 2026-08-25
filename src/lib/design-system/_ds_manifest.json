@@ -158,8 +158,10 @@
       "weights": [
         700
       ],
-      "source": "https://fonts.googleapis.com",
-      "role": "Hero type, sheet titles, hero numerals, wordmark"
+      "source": "self-hosted: assets/fonts/ (woff2, latin + latin-ext)",
+      "role": "Hero type, sheet titles, hero numerals, wordmark",
+      "license": "SIL OFL 1.1",
+      "remote": false
     },
     {
       "token": "--font-body",
@@ -168,8 +170,10 @@
         400,
         500
       ],
-      "source": "https://fonts.googleapis.com",
-      "role": "All running copy"
+      "source": "self-hosted: assets/fonts/ (woff2, latin + latin-ext)",
+      "role": "All running copy",
+      "license": "SIL OFL 1.1",
+      "remote": false
     },
     {
       "token": "--font-mono",
@@ -178,8 +182,10 @@
         400,
         700
       ],
-      "source": "https://fonts.googleapis.com",
-      "role": "Chrome, labels, metadata, codes, telemetry, timers"
+      "source": "self-hosted: assets/fonts/ (woff2, latin + latin-ext)",
+      "role": "Chrome, labels, metadata, codes, telemetry, timers",
+      "license": "SIL OFL 1.1",
+      "remote": false
     },
     {
       "token": "--font-first",
@@ -189,8 +195,10 @@
         700
       ],
       "italic": true,
-      "source": "https://fonts.googleapis.com",
-      "role": "FIRST-attributed blocks only. Never a fallback for Space Grotesk."
+      "source": "self-hosted: assets/fonts/ (woff2, latin + latin-ext)",
+      "role": "FIRST-attributed blocks only. Never a fallback for Space Grotesk.",
+      "license": "Apache-2.0",
+      "remote": false
     }
   ],
   "components": [
@@ -1167,5 +1175,6 @@
     "decision": "Not forced. The deck shell stays a hand-copy artifact until the converter supports templates or the platform documents the registration.",
     "startingPointsKeyDropped": "This manifest used to carry a startingPoints[] naming templates/Deck.dc.html. It has been removed: the platform reads templates[], startingPoints matched nothing upstream (it is empty even in a design system whose templates all work), and keeping it described a route into the platform that does not exist.",
     "stageScriptReassigned": "The Deck.dc.html stage script — paint canvas, letterbox and thumbnail frames from the active sheet --bg0 and --edge — is now components/brand/DeckStage.jsx, mounted once per deck. A deck assembled from Blank gets the behaviour by mounting a component rather than by copying a file it cannot reach."
-  }
+  },
+  "fontsNote": "ALL FOUR FACES ARE SELF-HOSTED. There is no remote font host and no external request at render time: tokens/fonts.css declares every @font-face against ../assets/fonts/*.woff2, and each file is sha256-pinned in assets/PROVENANCE.json. This replaced a Google Fonts @import that cost ~12.4s per render (the request hung and failed ERR_CONNECTION_RESET, and the load event waited on it) and meant a deck on a machine with no network rendered in the fallback stack. Subsets: latin + latin-ext only, which covers every character the system emits."
 }
