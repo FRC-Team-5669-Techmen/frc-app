@@ -136,6 +136,38 @@ Committed alongside them: `config.json` and this file. Still ignored: `.design-s
 
 ## Known render warns
 - `[FONT_REMOTE]` Space Grotesk / Space Mono — expected (remote font host), not a miss.
+- `[RENDER] <Name>.html: page.goto: Timeout 15000ms exceeded` — **environment, not the DS, and
+  it is a coin-flip.** In a sandbox with no route to `fonts.googleapis.com`, the remote
+  `@import` in `styles.css` hangs and only fails `ERR_CONNECTION_RESET` at **~12.4 s**, and the
+  `load` event waits for it. Profiled: every local asset finishes in 48 ms, so 12.4 s of every
+  page load is that one request. Against validate's 15 s `goto` budget that leaves ~2.5 s of
+  headroom, so a random card loses the race on any given run (it was `SpecTable` on
+  2026-08-25; that card renders fine, 258 chars of real content). Re-run — it is the
+  documented flake, not a component defect. Editing `/etc/hosts` does NOT help: Chromium
+  routes through the proxy, not local DNS.
+- `[GRID_OVERFLOW]` FocusTable — **RESOLVED 2026-08-25 by applying the remedy**
+  (`overrides.FocusTable.cardMode: "column"`), not by recording it. A concurrent session first
+  argued this warn was a false alarm on the grounds that `.frc-focus-row` has no intrinsic
+  width and reflows. That reasoning was WRONG and is written down here so nobody re-derives it:
+  the preview sets `maxWidth: 760`, the product's grid cell is narrower than that, so the story
+  really is wider than its cell and really does crop in grid view. The check measured a real
+  thing. `cardMode: "column"` is the tool's own named remedy, presentation-only and free —
+  when the remedy costs nothing, apply it rather than arguing the check down.
+
+### Scanning rendered text — two traps that both produce false positives
+
+Both bit a real dropped-copy scan on 2026-08-25, and each one demands a fix to code that is
+already correct, which is the expensive kind of wrong:
+
+- **Case.** `innerText` returns the RENDERED string, and this system uppercases eyebrows,
+  labels, badges and subteam names in CSS. A case-sensitive `includes()` reports
+  `slot="eyebrow"` "Monday muster" as dropped while "— MONDAY MUSTER" is plainly on screen.
+  Compare case-insensitively.
+- **Audience chrome.** `.frc-audience-only-external` is `display: none` on an internal deck and
+  `display: revert` on external, so `ClosingSheet`'s `slot="name"` ("Lead sponsors") is present
+  and rendered but inside a hidden ancestor. Same trap as `.frc-footer-first`, recorded below.
+  A scan must resolve audience chrome before reporting, or it will demand a "fix" that breaks
+  the audience rule.
 
 ## Asset-pending components (IMPORTANT for review)
 
@@ -194,6 +226,42 @@ the converter emits no `templates/` directory, so the DS's own
 `templates/Deck.dc.html` (registered in `_ds_manifest.json` under `startingPoints`
 as "Deck shell — Copy this") never reached the project. Claude Design therefore offers
 no Techmen starting point and generates decks from Blank.
+
+## Component findings the sync surfaced (2026-08-25) — FIXED in `slots.jsx` + `Blocker`
+
+Grading the 26 sheet patterns for the first time found **copy that never reached the DOM**.
+Two patterns, one root cause, and it is the sharpest form of the `slotted()` hazard recorded
+below: the card looks finished and is not, so no amount of DOM measurement catches it —
+only looking, or diffing authored copy against rendered text, does.
+
+**Root cause: rendering a slot must CONSUME its name.** `slotted()` painted the system class
+onto the author's element and left the `slot` attribute on it. Render that result inside
+another component that runs its own `pickSlots` and the still-named element is sorted into a
+bucket of the INNER component's vocabulary — one it very likely does not render. The copy is
+dropped silently: no error, no empty-slot marker, nothing missing from the props.
+
+- **Fixed generally in `components/slots.jsx`** — `slotted()` now strips `slot` on the way
+  out, at both ends (the author element and a host that hoisted the name). This is the fix
+  that matters: it covers every call site, including the ones nobody has written yet.
+  `SubteamStatus` → `Card` (six subteam notes dropped) needed no edit of its own once this
+  landed.
+- **`Blocker` → `FocusRow`** additionally re-labels on the way down, because that is a real
+  vocabulary translation rather than a leak: `Blocker` speaks state/title/owner, `FocusRow`
+  speaks rank/label/value. It uses `cloneThroughHost(slots.title, { slot: 'label' })`, which
+  keeps the AUTHOR's element — the thing `slotted()` needs to paint a box on. Wrapping in a
+  fresh `<span slot="label">` also renders, but puts the class on the wrapper instead of the
+  author's element, so it would silently lose any box property those classes ever gain.
+
+**The rule for composing one component out of another: RE-LABEL BEFORE FORWARDING, out loud.**
+A slotted child is addressed to exactly one component. Passing it on unchanged is not a
+pass-through, it is a second address that usually does not exist.
+
+**Known residue, deliberately not chased:** a child passed as an ordinary child rather than
+through `slotted()` still carries its `slot` attribute into the DOM (`slot="state"`,
+`slot="eyebrow"`, `slot="aside"`, `slot="status"` are all visible in a rendered sheet). That
+is inert — no rule in the token sheets selects on `[slot]` — and it only becomes a hazard if
+such a child is handed to another `pickSlots` component, which is exactly the `Blocker` case
+above and is why that one re-labels explicitly.
 
 ## Component findings the sync surfaced (2026-08-24) — NOT yet fixed in the DS
 
