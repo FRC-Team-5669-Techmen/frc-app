@@ -40,7 +40,7 @@ export function GanttBar({ start = 0, span = 10, state = 'default', className, c
       {slotted(slots.label, 'frc-gantt-label')}
       <div className="frc-gantt-lane">
         <div className={cx('frc-gantt-bar', STATES[state])} style={{ '--start': start, '--span': span }}>
-          {slotted(slots.bar, null)}
+          {slotted(slots.bar, 'frc-gantt-bar-label')}
         </div>
         {today != null ? <div className="frc-gantt-today" style={{ '--at': today }} /> : null}
       </div>

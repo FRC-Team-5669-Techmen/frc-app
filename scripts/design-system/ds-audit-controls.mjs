@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// FRC5669DesignSystem — negative controls for ds:audit checks 16-29.
+// FRC5669DesignSystem — negative controls for ds:audit checks 16-31.
 // `npm run ds:audit:controls`. Exit 1 if any control is not caught.
 //
 // Each control breaks the exact thing one check exists to catch, runs the audit,
@@ -346,6 +346,45 @@ const CONTROLS = [
     find: "    'components/brand/DeckSteps.jsx': ['DeckStage', 'frc-deck'],\n",
     replace: '',
     expect: /DeckSteps\.jsx: trips a guard but is not registered/ },
+  // ---- 31: a slot cannot silently depend on the author's element ----
+  { check: '31a', what: 'a painted slot class loses its display declaration',
+    file: `${DS}/tokens/slot-display.css`,
+    find: '.frc-result-title { display: block; }',
+    replace: '',
+    expect: /check 31: \.frc-result-title is painted onto a slot but the token layer never declares its display/ },
+  { check: '31b', what: 'the user-agent reset is removed, leaving display pinned alone',
+    file: `${DS}/tokens/slot-display.css`,
+    find: '  font: inherit;',
+    replace: '',
+    expect: /check 31: \..+ pins display but never neutralises the user-agent `font`/ },
+  { check: '31c', what: 'the margin half of the reset is removed',
+    file: `${DS}/tokens/slot-display.css`,
+    find: '  margin: 0;',
+    replace: '',
+    expect: /check 31: \..+ pins display but never neutralises the user-agent `margin`/ },
+  { check: '31d', what: 'a slot goes back to being WRAPPED in StencilTitle',
+    file: `${DS}/components/sheets/SectionSheet.jsx`,
+    find: "{slotted(slots.title, stencilClass({ size: 'display' }), 'h2')}",
+    replace: '{slots.title ? <StencilTitle as="h2" size="display">{slots.title}</StencilTitle> : null}',
+    expect: /check 31: components\/sheets\/SectionSheet\.jsx wraps a slot in <StencilTitle> instead of painting it/ },
+  { check: '31e', what: 'a slot goes back to being WRAPPED in Badge',
+    file: `${DS}/components/sheets/BlockerSheet.jsx`,
+    find: '{slottedWith(slots.state, badgeProps({ tone: severity }))}',
+    replace: '{slots.state ? <Badge tone={severity}>{slots.state}</Badge> : null}',
+    expect: /check 31: components\/sheets\/BlockerSheet\.jsx wraps a slot in <Badge> instead of painting it/ },
+  { check: '31f', what: 'a slot is painted with no class at all',
+    file: `${DS}/components/surfaces/QuoteBlock.jsx`,
+    find: "{slotted(slots.attr, 'frc-quote-name')}",
+    replace: '{slotted(slots.attr, null)}',
+    expect: /check 31: components\/surfaces\/QuoteBlock\.jsx: slotted\(slots\.attr, null\) paints no class/ },
+  // POSITIVE control. Writing a DIFFERENT legal element for a slot is exactly
+  // what the rule makes safe, so it must NOT trip the audit.
+  { check: '31g', green: true, what: 'a preview writes <h2 slot="title"> instead of <span> (must stay green)',
+    file: `${DS}/components/sheets/SectionSheet.jsx`,
+    find: "'h2')}",
+    replace: "'h3')}",
+    expect: /never/ },
+
 ]
 
 function runAudit() {

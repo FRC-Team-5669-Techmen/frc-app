@@ -22,7 +22,7 @@ export function StatBlock({ tone = 'default', size = 'md', as: Tag = 'div', clas
       {...rest}
     >
       <p className="frc-stat-value frc-numeral">
-        {slotted(slots.value, null)}
+        {slotted(slots.value, 'frc-stat-figure')}
         {slotted(slots.unit, 'frc-stat-unit')}
       </p>
       {slotted(slots.label, 'frc-stat-label')}

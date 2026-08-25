@@ -1,0 +1,198 @@
+/* Slot display — what a component pins so a slot cannot depend on the author's
+   element choice.
+
+   THE RULE THIS FILE EXISTS FOR. `slotted()` keeps the element the author wrote,
+   which is what makes copy stay where they typed it and stay editable on the
+   canvas. That is worth keeping. What is NOT acceptable is the component
+   silently depending on which element that was: the same `slot="title"` written
+   as a <span> and as an <h3> laid out differently, and two adjacent inline slots
+   in one container ran together with nothing to separate them. That is how
+   ResultBanner printed "Quarterfinal 2RED ALLIANCE" and QuoteBlock printed
+   "SENIOR, CLASS OF 2026DRIVE COACH" on the sheets that shipped.
+
+   So the element carries SEMANTICS and the component owns PRESENTATION. Every
+   class `slotted()` paints declares its own `display` here, and an author may
+   write any legal element without moving the layout.
+
+   HOW THESE VALUES WERE CHOSEN. Every one was MEASURED off the design system's
+   own canonical compositions with the real Space Grotesk / Space Mono metrics
+   (self-hosted since 9d1a064 — the fallback stack was ~16% wider, so any value
+   derived before that commit was derived against the wrong font). 72 of 74
+   classes rendered ONE display across every card, and that observed value is
+   pinned here unchanged, so nothing moves. Exactly two rendered as BOTH block
+   and inline depending on who wrote the slot — `frc-result-title` and
+   `frc-quote-role` — and that ambiguity is the defect itself, not a value to
+   derive. Those two are decided: block.
+
+   ds:audit check 31 fails when a class reaching `slotted()` has no `display`
+   declaration anywhere in the token layer. Adding a slot without adding its
+   display is the mistake this file makes impossible. */
+
+.frc-alliance-score { display: block; }
+.frc-alliance-tag { display: block; }
+.frc-alliance-vs { display: block; }
+.frc-award-event { display: block; }
+.frc-award-eyebrow { display: block; }
+.frc-award-name { display: block; }
+.frc-award-year { display: block; }
+.frc-bar-label { display: block; }
+.frc-bar-value { display: block; }
+.frc-callout-title { display: block; }
+.frc-card-body { display: block; }
+.frc-card-meta { display: block; }
+.frc-card-title { display: block; }
+.frc-clock-note { display: block; }
+.frc-compare-cell { display: block; }
+.frc-compare-label { display: block; }
+.frc-compare-option { display: block; }
+.frc-control-hint { display: block; }
+.frc-control-label { display: block; }
+.frc-countdown-label { display: block; }
+.frc-cover-sub { display: block; }
+.frc-cutout-caption { display: block; }
+.frc-field-label { display: block; }
+.frc-field-value { display: block; }
+.frc-focus-label { display: block; }
+.frc-focus-rank { display: block; }
+.frc-focus-value { display: block; }
+.frc-frame-caption { display: inline; }
+.frc-gantt-label { display: block; }
+.frc-gantt-tick { display: block; }
+.frc-jump-note { display: block; }
+.frc-jump-title { display: block; }
+.frc-part-name { display: block; }
+.frc-part-note { display: block; }
+.frc-part-pn { display: block; }
+.frc-part-price { display: block; }
+.frc-part-vendor { display: block; }
+.frc-pin-label { display: block; }
+.frc-pipeline-note { display: block; }
+.frc-pipeline-title { display: block; }
+.frc-quote-role { display: block; }  /* decided */
+.frc-quote-text { display: block; }
+.frc-readout-label { display: block; }
+.frc-readout-value { display: block; }
+.frc-result-note { display: inline; }
+.frc-result-score { display: block; }
+.frc-result-tag { display: block; }
+.frc-result-title { display: block; }  /* decided */
+.frc-role-name { display: block; }
+.frc-role-note { display: block; }
+.frc-role-title { display: block; }
+.frc-safety-title { display: block; }
+.frc-sample-name { display: block; }
+.frc-sample-note { display: block; }
+.frc-scout-team { display: inline; }
+.frc-sheet-lede { display: block; }
+.frc-sheet-note { display: block; }
+.frc-sheet-title { display: block; }
+.frc-spec-caption { display: block; }
+.frc-spec-label { display: block; }
+.frc-spec-note { display: block; }
+.frc-spec-value { display: block; }
+.frc-sponsor-tier-name { display: block; }
+.frc-stat-label { display: block; }
+.frc-stat-note { display: block; }
+.frc-stat-unit { display: inline; }
+.frc-step-text { display: block; }
+.frc-step-title { display: block; }
+.frc-timeline-body { display: block; }
+.frc-timeline-title { display: block; }
+.frc-timeline-when { display: block; }
+.frc-stat-figure { display: inline; }  /* new */
+.frc-gantt-bar-label { display: inline; }  /* new */
+.frc-safety-rule { display: list-item; }  /* new */
+.frc-quote-name { display: inline; }  /* new */
+
+/* THE OTHER HALF OF THE SAME RULE, and it was found by measuring rather than by
+   reasoning: pinning `display` alone does NOT make a slot element-independent.
+   A slot written as <h2> still arrived with the user-agent's own font-size,
+   font-weight and margin, so `<h2 slot="attr">` measured 139x26 where
+   `<span slot="attr">` measured 88x17 — same class, same display, different box.
+   The element was still deciding the layout, just through a different property.
+
+   So the user-agent defaults that differ BETWEEN elements are neutralised here.
+   `:where()` gives this zero specificity on purpose: it beats the UA stylesheet
+   (author origin always does) and loses to every component rule, so a component
+   that sets its own font or margin keeps it and nothing in the system moves. */
+:where(.frc-alliance-teams,
+        .frc-clock-phase,
+        .frc-role-cert,
+        .frc-alliance-score,
+        .frc-alliance-tag,
+        .frc-alliance-vs,
+        .frc-award-event,
+        .frc-award-eyebrow,
+        .frc-award-name,
+        .frc-award-year,
+        .frc-bar-label,
+        .frc-bar-value,
+        .frc-callout-title,
+        .frc-card-body,
+        .frc-card-meta,
+        .frc-card-title,
+        .frc-clock-note,
+        .frc-compare-cell,
+        .frc-compare-label,
+        .frc-compare-option,
+        .frc-control-hint,
+        .frc-control-label,
+        .frc-countdown-label,
+        .frc-cover-sub,
+        .frc-cutout-caption,
+        .frc-field-label,
+        .frc-field-value,
+        .frc-focus-label,
+        .frc-focus-rank,
+        .frc-focus-value,
+        .frc-frame-caption,
+        .frc-gantt-label,
+        .frc-gantt-tick,
+        .frc-jump-note,
+        .frc-jump-title,
+        .frc-part-name,
+        .frc-part-note,
+        .frc-part-pn,
+        .frc-part-price,
+        .frc-part-vendor,
+        .frc-pin-label,
+        .frc-pipeline-note,
+        .frc-pipeline-title,
+        .frc-quote-role,
+        .frc-quote-text,
+        .frc-readout-label,
+        .frc-readout-value,
+        .frc-result-note,
+        .frc-result-score,
+        .frc-result-tag,
+        .frc-result-title,
+        .frc-role-name,
+        .frc-role-note,
+        .frc-role-title,
+        .frc-safety-title,
+        .frc-sample-name,
+        .frc-sample-note,
+        .frc-scout-team,
+        .frc-sheet-lede,
+        .frc-sheet-note,
+        .frc-sheet-title,
+        .frc-spec-caption,
+        .frc-spec-label,
+        .frc-spec-note,
+        .frc-spec-value,
+        .frc-sponsor-tier-name,
+        .frc-stat-label,
+        .frc-stat-note,
+        .frc-stat-unit,
+        .frc-step-text,
+        .frc-step-title,
+        .frc-timeline-body,
+        .frc-timeline-title,
+        .frc-timeline-when,
+        .frc-stat-figure,
+        .frc-gantt-bar-label,
+        .frc-safety-rule,
+        .frc-quote-name) {
+  font: inherit;
+  margin: 0;
+}

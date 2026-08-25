@@ -23,7 +23,8 @@
       "tokens/data.css",
       "tokens/surface-components.css",
       "tokens/forms.css",
-      "tokens/sheets.css"
+      "tokens/sheets.css",
+      "tokens/slot-display.css"
     ],
     "mirror": "tokens.js",
     "scope": "Root tokens are declared on .frc-deck and the three ground classes, never on :root. .frc-deck SHARES the SQUADRON block, so SQUADRON is the fail-safe default: a groundless deck root, or a sheet that omits its ground class, resolves the complete 36-alias set rather than resolving partially.",
@@ -1078,7 +1079,7 @@
       "aspect": "4:3",
       "width": 1920,
       "height": 1440,
-      "note": "READABLE REFERENCE ONLY, never a starting point. The hand-copy shell: stage, ground class, audience class, letterbox, footer rail, one blank sheet. Its stage script is GONE — that job is now the DeckStage component, which a deck mounts once. No template can reach Claude Design from a repo-sourced design system (see templatesNotEmitted), so a deck there starts from Blank and assembles out of the library.",
+      "note": "READABLE REFERENCE ONLY, never a starting point. The hand-copy shell: stage, ground class, audience class, letterbox, footer rail, one blank sheet. Its stage script is GONE \u2014 that job is now the DeckStage component, which a deck mounts once. No template can reach Claude Design from a repo-sourced design system (see templatesNotEmitted), so a deck there starts from Blank and assembles out of the library.",
       "startingPoint": false
     },
     {
@@ -1168,13 +1169,13 @@
   "templatesNotEmitted": {
     "status": "confirmed 2026-08-23",
     "summary": "No template can reach Claude Design from a repo-sourced design system. Decks there start from Blank and assemble out of the library; templates/ is readable reference for hand-built decks.",
-    "converter": "The design-sync converter has no template concept at all — no config key (the full set is shape, pkg, globalName, entry, srcDir, tokensGlob, cssEntry, componentSrcMap, docsMap, docsDir, guidelinesGlob, extraEntries, extraFonts, tokensPkg, overrides, libOverrides, replaces, provider, storyImports, storybookStatic, storybookConfigDir, titleMap, dtsPropsFor, tsconfig) and no emit path.",
-    "platformSchema": "Claude Design DOES support templates. Its own compiled _ds_manifest.json carries a templates[] of {name, description, folder, entryPath, thumbnail:{path, kind:\"captured\"}}, one templates/<slug>/ directory each. NOTE the platform reads `templates`, NOT `startingPoints` — startingPoints is empty even in a design system whose templates all work, so the key in THIS file is our own vocabulary and matches nothing upstream.",
+    "converter": "The design-sync converter has no template concept at all \u2014 no config key (the full set is shape, pkg, globalName, entry, srcDir, tokensGlob, cssEntry, componentSrcMap, docsMap, docsDir, guidelinesGlob, extraEntries, extraFonts, tokensPkg, overrides, libOverrides, replaces, provider, storyImports, storybookStatic, storybookConfigDir, titleMap, dtsPropsFor, tsconfig) and no emit path.",
+    "platformSchema": "Claude Design DOES support templates. Its own compiled _ds_manifest.json carries a templates[] of {name, description, folder, entryPath, thumbnail:{path, kind:\"captured\"}}, one templates/<slug>/ directory each. NOTE the platform reads `templates`, NOT `startingPoints` \u2014 startingPoints is empty even in a design system whose templates all work, so the key in THIS file is our own vocabulary and matches nothing upstream.",
     "handUploadTested": "Uploading templates/deck/Deck.dc.html by hand via the DesignSync write path was tested. The file landed, the _ds_needs_recompile fence was consumed (so the self-check DID run), and the recompiled manifest still reported templates: [], startingPoints: [], hasThumbnailHtml: false. No template appeared in the picker or in the design system page nav. The probe file was deleted afterwards.",
-    "whatAWorkingTemplateWouldNeed": "A captured .thumbnail per template folder, a root thumbnail.html (hasThumbnailHtml), and a copy of the platform-generated dc-runtime support.js that Deck.dc.html loads — that runtime is emitted per design PROJECT by the platform and is marked \"GENERATED … do not edit\", so shipping it would mean vendoring a platform artifact into this bundle.",
+    "whatAWorkingTemplateWouldNeed": "A captured .thumbnail per template folder, a root thumbnail.html (hasThumbnailHtml), and a copy of the platform-generated dc-runtime support.js that Deck.dc.html loads \u2014 that runtime is emitted per design PROJECT by the platform and is marked \"GENERATED \u2026 do not edit\", so shipping it would mean vendoring a platform artifact into this bundle.",
     "decision": "Not forced. The deck shell stays a hand-copy artifact until the converter supports templates or the platform documents the registration.",
     "startingPointsKeyDropped": "This manifest used to carry a startingPoints[] naming templates/Deck.dc.html. It has been removed: the platform reads templates[], startingPoints matched nothing upstream (it is empty even in a design system whose templates all work), and keeping it described a route into the platform that does not exist.",
-    "stageScriptReassigned": "The Deck.dc.html stage script — paint canvas, letterbox and thumbnail frames from the active sheet --bg0 and --edge — is now components/brand/DeckStage.jsx, mounted once per deck. A deck assembled from Blank gets the behaviour by mounting a component rather than by copying a file it cannot reach."
+    "stageScriptReassigned": "The Deck.dc.html stage script \u2014 paint canvas, letterbox and thumbnail frames from the active sheet --bg0 and --edge \u2014 is now components/brand/DeckStage.jsx, mounted once per deck. A deck assembled from Blank gets the behaviour by mounting a component rather than by copying a file it cannot reach."
   },
   "fontsNote": "ALL FOUR FACES ARE SELF-HOSTED. There is no remote font host and no external request at render time: tokens/fonts.css declares every @font-face against ../assets/fonts/*.woff2, and each file is sha256-pinned in assets/PROVENANCE.json. This replaced a Google Fonts @import that cost ~12.4s per render (the request hung and failed ERR_CONNECTION_RESET, and the load event waited on it) and meant a deck on a machine with no network rendered in the fallback stack. Subsets: latin + latin-ext only, which covers every character the system emits."
 }

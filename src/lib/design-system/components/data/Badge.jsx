@@ -16,6 +16,16 @@ const TONES = {
  * token the small-radius rule exempts.
  * The label is the child.
  */
+/** The badge contract as PROPS, so a slot can be painted with a badge instead of
+ *  wrapped in one. See `slottedWith` in slots.jsx for why that matters. */
+export function badgeProps({ tone = 'default', solid = false, dot = true, className } = {}) {
+  return {
+    className: cx('frc-badge', TONES[tone], solid && 'frc-badge-solid', !dot && 'frc-badge-plain', className),
+    'data-frc': 'Badge',
+    'data-tone': tone,
+  }
+}
+
 export function Badge({ tone = 'default', solid = false, dot = true, as: Tag = 'span', className, children, ...rest }) {
   return (
     <Tag

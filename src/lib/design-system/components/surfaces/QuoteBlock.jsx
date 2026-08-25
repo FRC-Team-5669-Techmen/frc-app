@@ -14,7 +14,7 @@ export function QuoteBlock({ as: Tag = 'figure', className, children, ...rest })
       <span className="frc-quote-rule" aria-hidden="true" />
       {slotted(slots.text, 'frc-quote-text', 'blockquote')}
       <figcaption className="frc-quote-attr">
-        {slotted(slots.attr, null)}
+        {slotted(slots.attr, 'frc-quote-name')}
         {slotted(slots.role, 'frc-quote-role')}
       </figcaption>
       {extra}

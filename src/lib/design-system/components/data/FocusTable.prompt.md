@@ -22,3 +22,18 @@ A ranked list where clicking a row dims its siblings.
   <FocusRow id="b"><span slot="rank">02</span><span slot="label">1671 Buchanan</span><span slot="value">2.28</span></FocusRow>
 </FocusTable>
 ```
+
+## The element you write is yours
+
+Write any legal element for a slot. `<span slot="title">`, `<h2 slot="title">`
+and `<p slot="title">` all render the same box — the component pins the display,
+font and margin it needs on the class it paints, so the element carries only
+semantics. Pick it for meaning (a heading, a link, an abbreviation), never to get
+a layout.
+
+This is a rule the system enforces, not a convention: `ds:audit` check 31 fails
+if a slot's class has no `display` of its own. It exists because it used to be
+false — `ResultBanner` printed "Quarterfinal 2RED ALLIANCE" and `QuoteBlock`
+printed "SENIOR, CLASS OF 2026DRIVE COACH" when their slots were written as
+adjacent inline spans, and `<h2 slot="title">` raised a DOM nesting error on
+`SectionSheet` while working on `SafetySheet`.

@@ -38,3 +38,18 @@ This rule is enforced in code. A tripped guard **renders a visible rust fault ma
 The note is found **through any layout-transparent host** the Claude Design runtime put between this sheet and the `SafetyNote` — pass it as ordinary markup and it works whether the runtime hoists `slot` onto the wrapper or leaves it on the child. Nothing extra to write, and no reason to hand-build this sheet in JavaScript to get past the guard.
 
 The guard is unchanged in what it refuses. It looks through a runtime wrapper and through nothing else: a hazard softened into a `Callout`, or a `SafetyNote` buried inside another component, is different content and is still refused. See `components/host.jsx`.
+
+## The element you write is yours
+
+Write any legal element for a slot. `<span slot="title">`, `<h2 slot="title">`
+and `<p slot="title">` all render the same box — the component pins the display,
+font and margin it needs on the class it paints, so the element carries only
+semantics. Pick it for meaning (a heading, a link, an abbreviation), never to get
+a layout.
+
+This is a rule the system enforces, not a convention: `ds:audit` check 31 fails
+if a slot's class has no `display` of its own. It exists because it used to be
+false — `ResultBanner` printed "Quarterfinal 2RED ALLIANCE" and `QuoteBlock`
+printed "SENIOR, CLASS OF 2026DRIVE COACH" when their slots were written as
+adjacent inline spans, and `<h2 slot="title">` raised a DOM nesting error on
+`SectionSheet` while working on `SafetySheet`.

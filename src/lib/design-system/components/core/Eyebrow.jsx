@@ -5,6 +5,17 @@ import { cx } from '../cx.js'
  * tone: default (ash) | accent (gold tick, body text) | live (pulsing gold dot) | plain (no tick)
  * Gold is never the text color here: the tick carries it.
  */
+/** The class recipe, exported for the same reason as `stencilClass` — see it. */
+export function eyebrowClass({ tone = 'default', className } = {}) {
+  return cx(
+    'frc-eyebrow',
+    tone === 'accent' && 'frc-eyebrow-accent',
+    tone === 'live' && 'frc-eyebrow-live frc-pulse',
+    tone === 'plain' && 'frc-eyebrow-plain',
+    className,
+  )
+}
+
 export function Eyebrow({ tone = 'default', as: Tag = 'p', className, children, ...rest }) {
   return (
     <Tag

@@ -1,8 +1,8 @@
 import { pickSlots, slotted } from '../slots.jsx'
 import { Sheet } from './Sheet.jsx'
-import { Eyebrow } from '../core/Eyebrow.jsx'
+import { eyebrowClass } from '../core/Eyebrow.jsx'
 import { SealMark } from '../brand/SealMark.jsx'
-import { StencilTitle } from '../brand/StencilTitle.jsx'
+import { stencilClass } from '../brand/StencilTitle.jsx'
 import { FirstName } from '../brand/FirstName.jsx'
 
 /**
@@ -21,9 +21,9 @@ export function ClosingSheet({ transition = 'cut', className, children, ...rest 
       <div className="frc-closing-main">
         <div className="frc-closing-mark">
           <SealMark size={160} />
-          {slots.eyebrow ? <Eyebrow tone="accent">{slots.eyebrow}</Eyebrow> : null}
+          {slotted(slots.eyebrow, eyebrowClass({ tone: 'accent' }), 'p')}
         </div>
-        {slots.title ? <StencilTitle as="h2" size="display">{slots.title}</StencilTitle> : null}
+        {slotted(slots.title, stencilClass({ size: 'display' }), 'h2')}
         {slotted(slots.lede, 'frc-sheet-lede', 'p')}
         {slots.next ? <div className="frc-closing-next">{slots.next}</div> : null}
         {extra}

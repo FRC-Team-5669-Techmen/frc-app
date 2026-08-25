@@ -4,6 +4,12 @@ export type ImageKind = 'photo' | 'screenshot' | 'render' | 'equipment' | 'drawi
 export type ImageShape = 'rect' | 'brackets' | 'round'
 export type BleedSide = 'left' | 'right' | 'top' | 'bottom'
 
+/**
+ * SLOT ELEMENTS: any legal element may be written for a slot. The component pins
+ * the display, font and margin it needs on the class it paints, so `<span>`,
+ * `<h2>` and `<p>` render the same box and the element carries only semantics.
+ * Enforced by `ds:audit` check 31.
+ */
 export interface ImageFrameProps {
   src?: string
   alt?: string

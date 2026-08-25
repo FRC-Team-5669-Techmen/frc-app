@@ -119,6 +119,28 @@ export function slotted(node, className, Tag = 'span', key) {
   return <Tag className={className} key={key}>{node}</Tag>
 }
 
+/**
+ * `slotted()` when the component needs to hand the author's element PROPS as
+ * well as a class — a `title`, a data attribute, an aria role.
+ *
+ * This exists so that "paint, never nest" holds even for the slots whose
+ * component does more than pick a class. `SubteamBadge` has to read the name to
+ * mark one that is not in the team vocabulary; `Badge` carries its tone. Both
+ * used to WRAP the slot, which meant the author's element ended up inside the
+ * badge — legal for a <span>, broken for a <div>, and in every case a second
+ * element nobody asked for. Now the badge is painted onto whatever the author
+ * wrote, and the element stays theirs.
+ *
+ * `className` in `props` is merged with the author's, exactly as `slotted()`
+ * merges it. Everything else overwrites, because it is the component's contract.
+ */
+export function slottedWith(node, props, Tag = 'span', key) {
+  const { className, ...restProps } = props ?? {}
+  const painted = slotted(node, className, Tag, key)
+  if (!isValidElement(painted)) return painted
+  return cloneThroughHost(painted, (el) => ({ ...restProps, className: cx(className, el.props.className) }))
+}
+
 /** Always an array, so a repeated slot and a single one read the same. */
 export function slotList(node) {
   if (node === null || node === undefined || node === false) return []

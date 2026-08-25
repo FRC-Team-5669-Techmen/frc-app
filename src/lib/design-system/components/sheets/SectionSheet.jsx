@@ -1,8 +1,8 @@
 import { pickSlots, slotted } from '../slots.jsx'
 import { Sheet } from './Sheet.jsx'
-import { Eyebrow } from '../core/Eyebrow.jsx'
+import { eyebrowClass } from '../core/Eyebrow.jsx'
 import { ChevronRail } from '../core/ChevronRail.jsx'
-import { StencilTitle } from '../brand/StencilTitle.jsx'
+import { stencilClass } from '../brand/StencilTitle.jsx'
 
 /**
  * SectionSheet - the divider between parts. Transition `banner`.
@@ -18,8 +18,8 @@ export function SectionSheet({ transition = 'banner', index, className, children
     <Sheet kind="section" transition={transition} slots={slots} className={className} data-frc="SectionSheet" {...rest}>
       <div className="frc-section-main">
         {index != null ? <span className="frc-section-index frc-numeral">{`Part ${String(index).padStart(2, '0')}`}</span> : null}
-        {slots.eyebrow ? <Eyebrow>{slots.eyebrow}</Eyebrow> : null}
-        {slots.title ? <StencilTitle as="h2" size="display">{slots.title}</StencilTitle> : null}
+        {slotted(slots.eyebrow, eyebrowClass(), 'p')}
+        {slotted(slots.title, stencilClass({ size: 'display' }), 'h2')}
         <ChevronRail className="frc-section-rail" />
         {slotted(slots.lede, 'frc-sheet-lede', 'p')}
         {extra}

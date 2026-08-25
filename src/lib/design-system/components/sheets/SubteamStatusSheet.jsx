@@ -1,10 +1,10 @@
-import { pickSlots, slotted } from '../slots.jsx'
+import { pickSlots, slotted, slottedWith } from '../slots.jsx'
 import { hostProps } from '../host.jsx'
 import { cx } from '../cx.js'
 import { Sheet, SheetHead } from './Sheet.jsx'
 import { Card } from '../surfaces/Card.jsx'
-import { SubteamBadge } from '../data/SubteamBadge.jsx'
-import { Badge } from '../data/Badge.jsx'
+import { subteamBadgeProps } from '../data/SubteamBadge.jsx'
+import { badgeProps } from '../data/Badge.jsx'
 import { BarChart, Bar } from '../data/BarChart.jsx'
 
 /**
@@ -15,6 +15,14 @@ import { BarChart, Bar } from '../data/BarChart.jsx'
  * or not it has news: a subteam missing from the grid reads as a subteam nobody
  * is tracking, which is the exact failure this sheet is meant to catch.
  */
+/** The subteam name, read through any host the runtime interposed. The badge has
+ *  to see the string to mark a value outside the team vocabulary. */
+function subteamNameOf(node) {
+  if (typeof node === 'string') return node
+  const kids = hostProps(node)?.children
+  return typeof kids === 'string' ? kids : null
+}
+
 export function SubteamStatusSheet({ transition = 'boot', cols = 3, className, children, ...rest }) {
   const { slots, rest: cards } = pickSlots(children)
   return (
@@ -38,8 +46,8 @@ export function SubteamStatus({ tone = 'default', progress, max = 100, className
   return (
     <Card className={cx('frc-subteam-card', className)} data-frc="SubteamStatus" {...rest}>
       <div className="frc-subteam-card-head">
-        {slots.subteam ? <SubteamBadge>{hostProps(slots.subteam)?.children ?? slots.subteam}</SubteamBadge> : null}
-        {slots.status ? <Badge tone={tone}>{slots.status}</Badge> : null}
+        {slottedWith(slots.subteam, subteamBadgeProps(subteamNameOf(slots.subteam)))}
+        {slottedWith(slots.status, badgeProps({ tone }))}
       </div>
       {progress != null ? (
         <BarChart max={max}>

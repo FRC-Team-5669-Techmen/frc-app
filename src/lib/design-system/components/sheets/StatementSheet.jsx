@@ -1,8 +1,8 @@
 import { pickSlots, slotted } from '../slots.jsx'
 import { Sheet } from './Sheet.jsx'
-import { Eyebrow } from '../core/Eyebrow.jsx'
+import { eyebrowClass } from '../core/Eyebrow.jsx'
 import { Divider } from '../core/Divider.jsx'
-import { StencilTitle } from '../brand/StencilTitle.jsx'
+import { stencilClass } from '../brand/StencilTitle.jsx'
 
 /**
  * StatementSheet - one thing, said once. Transition `banner`.
@@ -16,8 +16,8 @@ export function StatementSheet({ transition = 'banner', size = 'display', classN
   return (
     <Sheet kind="statement" transition={transition} slots={slots} className={className} data-frc="StatementSheet" {...rest}>
       <div className="frc-statement-main">
-        {slots.eyebrow ? <Eyebrow tone="accent">{slots.eyebrow}</Eyebrow> : null}
-        {slots.title ? <StencilTitle as="p" size={size}>{slots.title}</StencilTitle> : null}
+        {slotted(slots.eyebrow, eyebrowClass({ tone: 'accent' }), 'p')}
+        {slotted(slots.title, stencilClass({ size }), 'p')}
         {slots.attribution ? <Divider variant="line" /> : null}
         {slotted(slots.attribution, 'frc-sheet-note')}
         {extra}

@@ -1,9 +1,9 @@
-import { pickSlots } from '../slots.jsx'
+import { pickSlots, slottedWith } from '../slots.jsx'
 import { cloneThroughHost } from '../host.jsx'
 import { cx } from '../cx.js'
 import { Sheet, SheetHead } from './Sheet.jsx'
 import { FocusTable, FocusRow } from '../data/FocusTable.jsx'
-import { Badge } from '../data/Badge.jsx'
+import { badgeProps } from '../data/Badge.jsx'
 
 /**
  * BlockerSheet - what is stopping work, who owns it, and what it needs.
@@ -47,7 +47,7 @@ export function Blocker({ severity = 'fault', id, className, children, ...rest }
   const { slots } = pickSlots(children)
   return (
     <FocusRow id={id} className={cx('frc-blocker', className)} data-frc="Blocker" {...rest}>
-      <span slot="rank">{slots.state ? <Badge tone={severity}>{slots.state}</Badge> : null}</span>
+      <span slot="rank">{slottedWith(slots.state, badgeProps({ tone: severity }))}</span>
       {cloneThroughHost(slots.title, { slot: 'label' })}
       {cloneThroughHost(slots.owner, { slot: 'value' })}
     </FocusRow>

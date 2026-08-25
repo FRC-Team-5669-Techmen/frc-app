@@ -1,6 +1,6 @@
 import { cx } from '../cx.js'
 import { slotted } from '../slots.jsx'
-import { Eyebrow } from '../core/Eyebrow.jsx'
+import { eyebrowClass } from '../core/Eyebrow.jsx'
 import { DeckFooter } from '../brand/DeckFooter.jsx'
 
 /** The four transitions. There is no fifth, and a pattern may not invent one. */
@@ -84,7 +84,7 @@ export function SheetHead({ slots = {}, className }) {
   if (!slots.eyebrow && !slots.title && !slots.lede) return null
   return (
     <header className={cx('frc-sheet-head', className)}>
-      {slots.eyebrow ? <Eyebrow tone="accent">{slots.eyebrow}</Eyebrow> : null}
+      {slotted(slots.eyebrow, eyebrowClass({ tone: 'accent' }), 'p')}
       {slotted(slots.title, 'frc-sheet-title', 'h2')}
       {slotted(slots.lede, 'frc-sheet-lede', 'p')}
     </header>

@@ -6,6 +6,12 @@ export type SheetTransition = 'shutter' | 'boot' | 'banner' | 'cut' | 'none'
 export declare const TRANSITIONS: Record<SheetTransition, string | null>
 
 /** Chrome props every pattern accepts. NONE of these is copy. */
+/**
+ * SLOT ELEMENTS: any legal element may be written for a slot. The component pins
+ * the display, font and margin it needs on the class it paints, so `<span>`,
+ * `<h2>` and `<p>` render the same box and the element carries only semantics.
+ * Enforced by `ds:audit` check 31.
+ */
 export interface SheetBaseProps {
   /** Overrides the pattern's default transition for this instance. */
   transition?: SheetTransition

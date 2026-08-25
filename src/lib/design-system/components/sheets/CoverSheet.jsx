@@ -1,8 +1,8 @@
 import { pickSlots, slotted } from '../slots.jsx'
 import { Sheet } from './Sheet.jsx'
-import { Eyebrow } from '../core/Eyebrow.jsx'
+import { eyebrowClass } from '../core/Eyebrow.jsx'
 import { SealMark } from '../brand/SealMark.jsx'
-import { StencilTitle } from '../brand/StencilTitle.jsx'
+import { stencilClass } from '../brand/StencilTitle.jsx'
 import { ProgramLockup } from '../brand/ProgramLockup.jsx'
 import { FirstName } from '../brand/FirstName.jsx'
 
@@ -26,9 +26,9 @@ export function CoverSheet({ transition = 'banner', program = 'frc', className, 
       <div className="frc-cover-main">
         <div className="frc-cover-mark">
           <SealMark size={200} />
-          {slots.eyebrow ? <Eyebrow tone="accent">{slots.eyebrow}</Eyebrow> : null}
+          {slotted(slots.eyebrow, eyebrowClass({ tone: 'accent' }), 'p')}
         </div>
-        {slots.title ? <StencilTitle as="h1" size="display" className="frc-cover-title">{slots.title}</StencilTitle> : null}
+        {slotted(slots.title, stencilClass({ size: 'display', className: 'frc-cover-title' }), 'h1')}
         {slotted(slots.subtitle, 'frc-cover-sub', 'p')}
         {slots.meta ? <div className="frc-cover-meta">{slots.meta}</div> : null}
         {extra}

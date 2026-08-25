@@ -192,7 +192,7 @@ for (const f of allFiles) {
 }
 
 // ---------- 5. styles.css imports only, in order ----------
-const ORDER = ['fonts', 'colors', 'typography', 'effects', 'surfaces', 'motion', 'deck-motion', 'image-slot', 'data', 'surface-components', 'forms', 'sheets']
+const ORDER = ['fonts', 'colors', 'typography', 'effects', 'surfaces', 'motion', 'deck-motion', 'image-slot', 'data', 'surface-components', 'forms', 'sheets', 'slot-display']
 const styles = stripComments(read('styles.css')).split('\n').map((l) => l.trim()).filter(Boolean)
 const imports = styles.map((l) => l.match(/^@import\s+'\.\/tokens\/([\w-]+)\.css';$/)?.[1])
 if (styles.some((l) => !l.startsWith('@import'))) fail('styles.css contains something other than @import lines')
@@ -1221,6 +1221,66 @@ const stepGated = (sel) => STEP_GATE.test(sel) && /\[data-step-item\]/.test(sel)
     fail('check 30: no @media print rule releases the step gate — a deck printed mid-presentation would print the active sheet half revealed, which is the exact failure check 22 refuses rule-level hiding to prevent')
   } else if (!printed.some((r) => props(r.body).some(([prop, value]) => prop === 'visibility' && value.trim() === 'visible'))) {
     fail('check 30: the @media print rule for step items does not restore visibility — opacity alone leaves a visibility: hidden item invisible on paper')
+  }
+}
+
+// ---------- 31. a slot cannot silently depend on the author's element ----------
+// `slotted()` keeps the element the author wrote, which is what keeps the copy
+// where they typed it and editable on the canvas. That is deliberate and stays.
+// What is NOT allowed is the component DEPENDING on which element that was.
+//
+// This check exists because the system shipped three defects of exactly that
+// shape: ResultBanner printed "Quarterfinal 2RED ALLIANCE" and QuoteBlock
+// printed "SENIOR, CLASS OF 2026DRIVE COACH" (two adjacent inline slots with
+// nothing to separate them), and `<h2 slot="title">` raised a DOM nesting error
+// on SectionSheet while working on SafetySheet — same slot name, different
+// required element, and nothing in the system said so.
+//
+// Two halves, because fixing only the first still leaves the element deciding:
+//   (a) every class reaching slotted() declares its own `display`
+//   (b) those classes neutralise the user-agent defaults that differ per element
+{
+  const painted = new Set()
+  const unclassed = []
+  for (const p of COMPONENT_JSX) {
+    const code = codeOf(p)
+    for (const m of code.matchAll(/slotted\(\s*([^,]+?)\s*,\s*(null|'([^']*)')/g)) {
+      const cls = (m[3] ?? '').trim().split(/\s+/).filter(Boolean)
+      if (!cls.length) unclassed.push(`${p}: slotted(${m[1].trim()}, null)`)
+      else painted.add(cls[0])
+    }
+    for (const m of code.matchAll(/slottedWith\(\s*[^,]+?\s*,\s*(\w+)\(/g)) void m
+  }
+  for (const u of unclassed) {
+    fail(`check 31: ${u} paints no class, so nothing can pin its display and the author's element decides the layout — give the slot a class and declare its display`)
+  }
+  // (a) display is declared for every painted class, anywhere in the token layer.
+  const declares = (cls, prop) => TOKEN_RULES.some((r) =>
+    subjects(r.sel).some((c) => classesIn(c).includes(cls)) &&
+    props(r.body).some(([k]) => k === prop))
+  for (const cls of [...painted].sort()) {
+    if (!declares(cls, 'display')) {
+      fail(`check 31: .${cls} is painted onto a slot but the token layer never declares its display — a <span> and an <h2> in that slot would lay out differently, which is how the run-on defects shipped`)
+    }
+  }
+  // (b) the user-agent defaults that differ BETWEEN elements are neutralised.
+  // Measured, not assumed: with display pinned but font left alone, the same
+  // slot written as <h2> still measured 139x26 against a <span>'s 88x17.
+  for (const cls of [...painted].sort()) {
+    for (const prop of ['font', 'margin']) {
+      const ok = TOKEN_RULES.some((r) =>
+        subjects(r.sel).some((c) => classesIn(c).includes(cls)) &&
+        props(r.body).some(([k]) => k === prop || k.startsWith(prop + '-')))
+      if (!ok) fail(`check 31: .${cls} pins display but never neutralises the user-agent \`${prop}\` — an <h2> in that slot still arrives with the browser's own ${prop} and changes the box`)
+    }
+  }
+  // (c) a slot is PAINTED, never WRAPPED. Nesting the author's element inside one
+  // the component renders is what produced <h2><h2></h2></h2> on SectionSheet.
+  for (const p of COMPONENT_JSX) {
+    const code = codeOf(p)
+    for (const m of code.matchAll(/<(StencilTitle|Eyebrow|Badge|SubteamBadge)\b[^>]*>\s*\{\s*slots\./g)) {
+      fail(`check 31: ${p} wraps a slot in <${m[1]}> instead of painting it — the author's element ends up nested inside the component's, which is legal for a <span> and a DOM error for an <h2>. Paint the class recipe with slotted()/slottedWith() instead`)
+    }
   }
 }
 

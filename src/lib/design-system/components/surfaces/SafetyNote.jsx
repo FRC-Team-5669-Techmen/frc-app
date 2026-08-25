@@ -24,7 +24,7 @@ export function SafetyNote({ as: Tag = 'aside', className, children, ...rest }) 
         {slots.title ? slotted(slots.title, 'frc-safety-title', 'h3') : <h3 className="frc-safety-title">Safety</h3>}
       </header>
       {body.length ? <div className="frc-safety-body">{body}</div> : null}
-      {rules.length ? <ul className="frc-safety-list">{rules.map((r, i) => slotted(r, null, 'li', i))}</ul> : null}
+      {rules.length ? <ul className="frc-safety-list">{rules.map((r, i) => slotted(r, 'frc-safety-rule', 'li', i))}</ul> : null}
       {ppe.length ? <div className="frc-safety-ppe">{ppe}</div> : null}
     </Tag>
   )

@@ -1,9 +1,12 @@
 /* FRC5669DesignSystem — single entry point.
    This file ONLY imports. It never defines a token. Order is load-bearing:
    fonts → colors → typography → effects → surfaces → motion → deck-motion → image-slot
-   → data → surface-components → forms → sheets.
+   → data → surface-components → forms → sheets → slot-display.
    The component sheets come last so a component class can rest on a token or a
-   surface class without out-ordering it. */
+   surface class without out-ordering it. slot-display.css is the ONE thing after
+   them: it declares only `display`, for the classes `slotted()` paints, and it
+   goes last so a component can never accidentally leave a slot's display to
+   whichever element the author happened to type. See the header of that file. */
 @import './tokens/fonts.css';
 @import './tokens/colors.css';
 @import './tokens/typography.css';
@@ -16,3 +19,4 @@
 @import './tokens/surface-components.css';
 @import './tokens/forms.css';
 @import './tokens/sheets.css';
+@import './tokens/slot-display.css';
