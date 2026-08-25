@@ -145,6 +145,16 @@ Committed alongside them: `config.json` and this file. Still ignored: `.design-s
   2026-08-25; that card renders fine, 258 chars of real content). Re-run — it is the
   documented flake, not a component defect. Editing `/etc/hosts` does NOT help: Chromium
   routes through the proxy, not local DNS.
+- **The goto margin must be RE-APPLIED on every re-sync.** The fix for the timeout above is to
+  give the navigation real headroom, and it lives in the STAGED scripts (`.ds-sync/`), which
+  step 7's `cp -r` overwrites every single run. There is no config key and no CLI flag for it.
+  After staging, raise all five `waitUntil: 'networkidle'` timeouts to `45000`:
+  `package-validate.mjs` lines ~489 and ~762 (`15000`), and `package-capture.mjs` lines ~151,
+  ~189 (`20_000`) and ~215 (`15_000`). 45 s is ~3.5x the measured 12.9 s cost (12.4 s for the
+  font request to give up, plus networkidle's own 500 ms quiet window). Do NOT lower
+  `waitUntil` to `'load'` instead — profiled, `load` fires at 12.47 s too, because it also
+  waits on the stylesheet. This is a margin, not a retry: the 12.4 s is a constant, so headroom
+  is enough and is one line each.
 - `[GRID_OVERFLOW]` FocusTable — **RESOLVED 2026-08-25 by applying the remedy**
   (`overrides.FocusTable.cardMode: "column"`), not by recording it. A concurrent session first
   argued this warn was a false alarm on the grounds that `.frc-focus-row` has no intrinsic
