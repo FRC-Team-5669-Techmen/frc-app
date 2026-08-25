@@ -882,3 +882,114 @@ mechanism lives.
 patch written to satisfy a check, so there is no second unmeasured edit of the
 kind recorded in the previous run's notes — and the sweep above was run against
 the FINAL tree, after the last edit, not before it.
+
+---
+
+## 2026-08-25 — sync run at 04dd102 (MatchClock margin fix), no remote anchor, review cache cleared
+
+One driver, confirmed nothing running before it started (process scan clear).
+`resync.mjs --config .design-sync/config.json --node-modules ./node_modules --out ./ds-bundle`,
+**no `--remote`** and `.design-sync/.cache/review/` deleted first, so nothing could
+carry a grade forward.
+
+**Verdict `ok: true`.** build / diff / validate / capture all green, `anchor: not_provided`,
+79 added / 0 changed / 0 unchanged (no anchor means everything reads as new),
+`pendingGrade: 79`, capture `79 captured, 0 carried forward, 0 with errors`,
+0 page errors on any card.
+
+### bundleSha12 DID NOT MOVE, and that is correct — write it down
+
+    bundleSha12   d74b887ca268   (before AND after)
+
+`bundleSha12` is `sha256(_ds_bundle.js)` truncated to 12. The MatchClock fix is
+**CSS only** (`tokens/data.css`), so the JS bundle is byte-identical and its hash
+cannot move. **`bundleSha12` is therefore not a usable signal for whether a
+style-only change reached the project.** The hash that does move is `styleSha`,
+a composite over the JS body + `_ds_bundle.css` + `styles.css` + `fonts/` +
+`tokens/` + `_vendor/`:
+
+    styleSha      4e7adc24159d5fd9f21f2dcf9770cae35bab35141375eebecdd586517969da2b
+
+### The 12s tripwire: probed directly, not by wall clock
+
+No card came near it. Six representative cards loaded, fonts settled, in
+**109-159 ms** — and the underlying question was answered outright rather than
+inferred from timing: **the shipped CSS references zero external hosts.** All 18
+`@font-face` sources are inlined `data:font/woff2;base64`. No remote import came
+back. Capture wall clock was 226 s for 86 shots.
+
+### Uploaded
+
+403 files in four `write_files` calls (101 + 101 + 101 + 100), no deletes. The
+two platform-generated files (`_ds_manifest.json`, `_adherence.oxlintrc.json`)
+were deliberately left out of the plan, as were the local-only artifacts
+(`.render-check.json`, `.review.html`, `.stories-map.json`, `.sync-diff.json`,
+`.ds-build-meta.json`, `_screenshots/`).
+
+### THE PLATFORM MANIFEST IS STALE AT 52 — this is what did not carry forward
+
+`_ds_manifest.json`, fetched from the project, reports **52 components and 52
+cards**, and `_ds_needs_recompile` is still present on the project. The listing
+shows all **79** component directories with their four files each, and the
+manifest's own `tokens[]` block contains sheet CSS (`--fill-row` scoped to
+`.frc-sheet-roster`), so it parsed the current stylesheet — but its
+`components[]` is the pre-sheet, pre-DeckSteps 52 (Core 5 + Brand 11 + Data 16 +
+Surfaces 18 + Forms 2; DeckStage present, DeckSteps absent, no `*Sheet`).
+
+The compile is a platform self-check that consumes the `_ds_needs_recompile`
+fence, and it runs when the project page is opened in a browser. **That cannot be
+done from a Claude Code session.** Same condition as the first sync and the
+DeckStage sync; the fix is one page load.
+
+Consequence, stated plainly: the 26 sheet patterns and DeckSteps are on the
+project as files and are usable off the global, but they have no card in the
+Design System pane until someone opens the project once.
+
+### Verified on the project's own bytes, and the limit named
+
+- `_ds_sync.json` fetched back from the project is byte-for-byte the local file:
+  `styleSha 4e7adc24…`, `MatchBreakdownSheet a7d19e260c969e09`,
+  `MatchClock afaf3b3f3ce3dc0e`, `bundleSha12 d74b887ca268`.
+- `_ds_bundle.css` fetched from the project is byte-identical to local across the
+  first 200,000 characters.
+- **`get_file` caps at 256 KiB and the CSS is 503 KB.** The inlined fonts eat the
+  head of the file, so the cap cuts at **local line ~325** while
+  `.frc-clock-time { … margin: 0 }` is at **line 3060**. The rule itself is
+  therefore NOT directly readable from the project. What supports it is the write
+  receipt (403/403) plus `styleSha`, which includes the CSS bytes.
+- One honest gap: no pre-upload `styleSha` was captured this run, so "the value
+  moved *in this upload*" is inferred from the write receipts rather than from a
+  before/after read of the project. Capture the project's `styleSha` BEFORE the
+  first `write_files` next time — it is one cheap call and it closes this.
+
+`renderHash` is deliberately NOT offered as evidence here: it hashes the card
+HTML only, so it says nothing about a CSS-only change.
+
+### Graded by looking — all 79, none carried forward
+
+Contact sheets built from all 86 captures and read, plus the driver's own five
+render-check sheets (79/79 ✓). MatchBreakdownSheet's callout clears the rail with
+room to spare; MatchClock reads as one stack (phase / time / track / note) where
+before the phase sat ~300 px above the numeral and the track ~300 px below it.
+Nothing got worse.
+
+Standing observations, all confirmed PRE-EXISTING by this pass's own geometry
+sweep (each of these cards measured 0 changed boxes):
+
+- `FieldDiagram` is clipped left and right in its card cell — the diagram's fixed
+  aspect is wider than the two-up column.
+- `Input` / `Select` values are clipped in the narrow demo cells ("566…",
+  "Matcl", "Not s").
+- `.frc-clock-track` over-runs its column on the MatchClock card — identical
+  before and after the fix.
+- Empty asset slots throughout (documented, asset-pending).
+
+### FRC_CLAUDE_DESIGN_STANDARDS.md was NOT updated — the file never arrived
+
+The task said a v2.4 would be provided; no file came with the message. Flagging a
+second discrepancy while here: **the repo copy is at v1.9**, not the v2.3 the task
+assumed, and its numbered pre-delivery list ends at 43. Git history shows v1.7,
+v1.8, v1.9 landing here and nothing since, so if a v2.x line exists it has never
+reached the repo — that is three or more versions of drift, not one. The
+governing docs are not part of the sync upload set (`docsMap` covers only
+component `.prompt.md` files), so this blocked nothing in the run above.
