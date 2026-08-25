@@ -764,3 +764,121 @@ All five check-43 items: **PRESENT.**
 This clears the last blocker recorded against syncing the remaining 62 components. Data,
 Surfaces, Forms and Sheets remain unsynced by instruction — nothing beyond Core + Brand was
 touched this session.
+
+---
+
+## 2026-08-25 — MatchBreakdownSheet's callout under the footer rail: diagnosed, then fixed at the component
+
+**Reported:** MatchBreakdownSheet's standing callout paints under the footer rail,
+16px scaled / ~33px unscaled.
+
+**Measured before, all 26 sheet cards:** exactly one collision.
+
+    MatchBreakdownSheet   16.46px scaled / 34.29px unscaled
+                          .frc-callout.frc-callout-ok 16.46 · .frc-callout-body 4.46 · .frc-callout-text 4.46
+    the other 25          0.00px scaled / 0.00px unscaled
+
+### The frame's rail accounting is CORRECT, and general
+
+All 26 sheets measure the same box chain: sheet 1440, padding-top 96,
+padding-bottom 144 (rail 96 + `--space-5` 48), `.frc-sheet-body` 1200,
+`bodyOver: 0`. Nothing about the content area's height accounting is wrong, so
+**no system-wide change was made and none is needed.** This was the sheet asking
+for more height than the frame has.
+
+### Where the height actually went
+
+`.frc-match` is handed 1019.28px and its three rows sum to 1053.56px — an
+overrun of **34.28px**, which is the reported overlap to the pixel.
+`.frc-match { min-height: 0 }` disables the automatic minimum size, so the
+overrun leaves as silent overflow onto the rail instead of a visible box.
+
+The head row was 598.281px, of which `.frc-clock` was all of it (the score
+column beside it is only 326.188px). The clock's own rows:
+
+    29px  /  483.188px  /  12px  /  26.094px   + 3 × 16px gaps  =  598.281px
+
+`483.188` is a `163.188px` line of text. **The other 320px is user-agent
+margin.** `MatchClock` renders the time as `<p className="frc-clock-time">`,
+`.frc-clock-time` never declared `margin`, and the UA `<p>` rule is `margin: 1em 0`
+— at `--fs-hero: 160px` that is 160px above and 160px below. Grid items
+establish their own formatting context, so those margins do not collapse.
+
+**Fix:** `margin: 0` on `.frc-clock-time` in `tokens/data.css`, beside its
+siblings — declared there rather than in `slot-display.css` because this element
+is system markup, not a slot. It is one declaration and it touches one
+component.
+
+**Said plainly:** the fix lives in **MatchClock**, not in MatchBreakdownSheet.
+That is narrower than a sheet fix, but it is not zero-reach — MatchClock's own
+card moves too, and that is in the diff below. Nothing else in the system uses
+`.frc-clock-time`.
+
+### After
+
+    all 26 sheets   0.00px scaled / 0.00px unscaled — ZERO, not smaller
+
+`.frc-match` 1019.28 → 781.47; head row 598.281 → 326.188 (the score column now
+sets it, which is the correct behaviour); the callout ends 114.15px ABOVE the
+content box bottom.
+
+### Geometry sweep, all 79 cards, 2123 painted elements
+
+    moved = 50 (real)   unchanged = 2073   added = 0   removed = 0
+
+Three cards report a delta; only two are real.
+
+    MatchBreakdownSheet   34 boxes moved, 24 unchanged
+    MatchClock            16 boxes moved,  2 unchanged
+    DeckSteps             12 boxes, all |Δ| ≤ 0.02px — CAPTURE NOISE, not this change:
+                          it reproduces identically between two captures of the SAME build
+    the other 76 cards     0 changed  (full list in the task report)
+
+**Not one `dx` and not one `dw` is non-zero across all 50.** Every delta is a
+`dy` shift up or a `dh` shrink. Nothing re-wrapped and nothing re-flowed
+horizontally, which is exactly what removing vertical margin should do.
+
+The arithmetic checks out on both surfaces: MatchClock renders at scale 1 and
+each clock is −320px exactly; MatchBreakdownSheet renders at 0.48 and the clock
+is −153.6 = 320 × 0.48, while everything below it shifts −130.6 = 272.09 × 0.48,
+272.09 being 598.281 − 326.188.
+
+### Looked at it (pre-delivery check 41)
+
+Before: the callout's last line is struck through by the rail plate, and the
+clock reads as three unrelated objects — TELEOP stranded ~300px above the
+numeral, the track and FINAL ~300px below it. After: the callout is clear, and
+the clock is one stack. `.frc-clock-track` over-running its column on the
+MatchClock card is **identical before and after** — pre-existing, unrelated,
+untouched.
+
+### FOUND AND DELIBERATELY NOT FIXED — three more live UA margins
+
+A sweep of every painted element for a non-zero computed margin found this is a
+family, not an instance. Two are declared and intentional (`.frc-body` 8px top,
+`.frc-frame-caption` 16px top on a `<span>`, which has no UA margin at all). The
+rest are the user agent:
+
+    .frc-stat-value  <p>       mt/mb 112px  ×13  on StatBlock, DataSheet, SeasonSheet
+    .frc-sample      <figure>  mt/mb  28px  ×11  on SampleGrid, GallerySheet
+    .frc-hud-labelled <figure> mt/mb  28px  ×1   on HudFrame
+
+None of them collides with anything today. Fixing them is a real change to three
+more components that WOULD move boxes on DataSheet, SeasonSheet and GallerySheet
+— which is the opposite of "the other 25 sheets are unmoved" — so it is reported
+here rather than smuggled into a rail fix. It wants its own pass, its own
+before/after and its own decision about whether the `<figure>` margins are
+load-bearing spacing somebody tuned around.
+
+**No audit check was added for it, on purpose.** The obvious check — "every
+painted class on a UA-margin element declares `margin`" — fails today on those
+three. Adding it would force the widening this pass declined to make. `ds:audit`
+check 31 part 2 still covers the slot classes, which is where the reset
+mechanism lives.
+
+### Nothing here answers an audit finding
+
+`ds:audit` was green before this change and is green after. The fix is not a
+patch written to satisfy a check, so there is no second unmeasured edit of the
+kind recorded in the previous run's notes — and the sweep above was run against
+the FINAL tree, after the last edit, not before it.

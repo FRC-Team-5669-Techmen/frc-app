@@ -335,6 +335,14 @@
   font-variant-numeric: lining-nums tabular-nums;
   color: var(--clock);
   text-shadow: var(--glow);
+  /* MatchClock renders the time as a <p>, so the user-agent `margin: 1em 0`
+     applies at the HERO size — 160px above and 160px below, and a grid item's
+     margins do not collapse. That put 320px of dead space inside .frc-clock,
+     which is why MatchBreakdownSheet's callout painted 34px under the footer
+     rail: the sheet's frame accounting was right and its content was wrong.
+     Declared here rather than in slot-display.css because this element is
+     system markup, not a slot. */
+  margin: 0;
 }
 .frc-clock[data-state="warn"] { --clock: var(--warn); }
 .frc-clock[data-state="zero"] { --clock: var(--fault); }
