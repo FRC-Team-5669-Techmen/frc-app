@@ -18,6 +18,10 @@ Every design must have a root element carrying **three classes**. Tokens are sco
 
 Two more, for full-screen decks only: put `frc-letterbox` on that same root, give the stage element `className="frc-stage" data-aspect="4:3"`, and mount **`<DeckStage />` exactly once** anywhere inside. It renders nothing visible; it paints the canvas and letterbox from the *active sheet's* `--bg0` and `--edge`, which is what stops a white flash between slides. Omit it on an embedded design.
 
+Inside a `.frc-stage`, **only the sheet carrying `data-deck-active` is displayed** — that is the deck's one-sheet-at-a-time rule, and it is why a sheet mounted in a stage without it renders as an empty box. A single-sheet design that is not a deck should simply not use the `.frc-stage` class.
+
+**`<DeckSteps />`** is DeckStage's sibling and the deck's other behaviour component: mount it once, beside DeckStage, to reveal an authored list one item at a time. Stepping is **opt-in per sheet** — `data-steps` on the sheet, or `data-step-group` on a container — and a sheet that says neither is untouched. Never hand-write a hide-until-clicked reveal; this is the supported one, and it releases itself for print and unmount.
+
 ## Style with tokens, never literals
 
 **Never write a hex, `rgb()`, or `hsl()` value.** Every color is a `var(--*)` that re-resolves per ground — a literal freezes and will be wrong on paper.
@@ -58,7 +62,9 @@ Entrances (`frc-in-rise`, `frc-in-fade`, …) and stagger delays (`frc-d1`…`fr
 - Each component's `<Name>.prompt.md` — written by the team, with the rules and examples for that component.
 - `README.md` — the full brand guide, including the *FIRST* usage rules.
 
-**Also on the global, but undocumented in this sync:** the 26 full-sheet patterns (`CoverSheet`, `AgendaSheet`, `GallerySheet`, `RosterSheet`, `ClosingSheet`, …) and the sub-components of the list-shaped ones (`SpecRow`, `Bar`, `TimelineItem`, `Sample`, `JumpCard`, `SponsorTier`, `Step`, `CompareRow`, `PipelineStep`, `CalloutPin`, `ScoutRow`, `FocusRow`, `GanttBar`). They are real exports on `window.FRC5669DesignSystem` and safe to use; they just have no preview card or `.d.ts` yet.
+**Start a deck from the sheet patterns.** All 26 (`CoverSheet`, `AgendaSheet`, `GallerySheet`, `RosterSheet`, `ClosingSheet`, …) now carry a card, a `.d.ts` and a `.prompt.md` — a deck is *assembled out of sheets*, so read those first rather than composing a slide from loose parts. Every pattern inherits its ground and audience from the deck root and takes all copy as children; none takes a ground or audience prop.
+
+**Also on the global, but undocumented in this sync:** the sub-components of the list-shaped patterns (`SpecRow`, `Bar`, `TimelineItem`, `Sample`, `JumpCard`, `SponsorTier`, `Step`, `CompareRow`, `PipelineStep`, `CalloutPin`, `ScoutRow`, `FocusRow`, `GanttBar`). They are real exports on `window.FRC5669DesignSystem` and safe to use; they just have no preview card or `.d.ts` of their own — their parent's `.prompt.md` is where they are documented.
 
 ## A short, real example
 

@@ -17,6 +17,7 @@
     "Logotype": "src/lib/design-system/components/brand/Logotype.jsx",
     "DeckFooter": "src/lib/design-system/components/brand/DeckFooter.jsx",
     "DeckStage": "src/lib/design-system/components/brand/DeckStage.jsx",
+    "DeckSteps": "src/lib/design-system/components/brand/DeckSteps.jsx",
     "ProgramLockup": "src/lib/design-system/components/brand/ProgramLockup.jsx",
     "SeasonLockup": "src/lib/design-system/components/brand/SeasonLockup.jsx",
     "FirstName": "src/lib/design-system/components/brand/FirstName.jsx",
@@ -97,6 +98,7 @@
     "Logotype": "src/lib/design-system/components/brand/Logotype.prompt.md",
     "DeckFooter": "src/lib/design-system/components/brand/DeckFooter.prompt.md",
     "DeckStage": "src/lib/design-system/components/brand/DeckStage.prompt.md",
+    "DeckSteps": "src/lib/design-system/components/brand/DeckSteps.prompt.md",
     "ProgramLockup": "src/lib/design-system/components/brand/ProgramLockup.prompt.md",
     "SeasonLockup": "src/lib/design-system/components/brand/SeasonLockup.prompt.md",
     "FirstName": "src/lib/design-system/components/brand/FirstName.prompt.md",
@@ -334,6 +336,9 @@
     },
     "SeasonSheet": {
       "cardMode": "single"
+    },
+    "DeckSteps": {
+      "cardMode": "column"
     }
   },
   "readmeHeader": ".design-sync/conventions.md"

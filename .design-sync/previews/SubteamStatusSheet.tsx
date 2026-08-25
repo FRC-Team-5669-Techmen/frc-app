@@ -2,16 +2,21 @@
 // The composition is extracted from components/sheets/SheetsDemoCard.jsx, so the
 // specimen card and this preview show the same markup by construction.
 //
-// The pattern is mounted at its real 1920 x 1440 on a real .frc-stage and the
-// STAGE is scaled down to fit the card. Nothing is re-laid-out for the cell.
-// Ground and audience are set once on the deck root, never on the pattern.
+// The pattern is mounted UNARMED at its real 1920 x 1440 and the stage-shaped
+// box around it is scaled down to fit the card. Nothing is re-laid-out for the
+// cell. Ground and audience are set once on the deck root, never on the pattern.
+//
+// The box is NOT .frc-stage: that class carries the deck's one-sheet-at-a-time
+// rule (.frc-stage .frc-sheet { display: none } unless [data-deck-active]), and
+// an unarmed sheet inside one renders an empty card. It reproduces the stage's
+// box instead — same position, size and clip — so the sheet lays out identically.
 import { SubteamStatus, SubteamStatusSheet } from 'frc5669-design-system'
 const S = 0.48
 
 const Stage = ({ children }: any) => (
   <div className="frc-deck frc-ground-squadron frc-audience-internal" style={{ display: 'inline-grid' }}>
     <div style={{ width: Math.round(1920 * S), height: Math.round(1440 * S), overflow: 'hidden' }}>
-      <div className="frc-stage" data-aspect="4:3" style={{ transform: `scale(${S})`, transformOrigin: '0 0' }}>
+      <div style={{ position: 'relative', width: 1920, height: 1440, overflow: 'hidden', transform: `scale(${S})`, transformOrigin: '0 0' }}>
         {children}
       </div>
     </div>
