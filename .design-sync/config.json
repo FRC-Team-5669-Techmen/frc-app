@@ -339,6 +339,9 @@
     },
     "DeckSteps": {
       "cardMode": "column"
+    },
+    "FocusTable": {
+      "cardMode": "column"
     }
   },
   "readmeHeader": ".design-sync/conventions.md"
