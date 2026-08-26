@@ -146,8 +146,13 @@ const event = (over = {}) => ({
   ...over,
 })
 
-const run = (supabase, discord, config = {}) =>
-  runCalendarSync({ supabase, discord, now: NOW, config: { ...baseConfig, ...config } })
+const run = (supabase, discord, config = {}, now = NOW) =>
+  runCalendarSync({ supabase, discord, now, config: { ...baseConfig, ...config } })
+
+// Same run, at a chosen instant. Reminder scheduling is entirely a function of
+// (now, starts_at), so walking the clock across a fixture event is how the
+// reminder windows are proved rather than asserted.
+const runAt = (supabase, discord, now, config = {}) => run(supabase, discord, config, now)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests
@@ -228,20 +233,58 @@ test('cancellation is idempotent — a second sweep does not re-edit', async () 
   assert.equal(dc.calls.edited.length, edits)
 })
 
-test('24h reminder fires inside the window, once, into #announcements', async () => {
+test('reminder_24h is retired: an event inside 24h never creates one', async () => {
+  // 20h out is squarely inside the old 24h lead. This is the exact fixture
+  // that used to post a 24h reminder. Nothing may reach #announcements now,
+  // and no reminder_24h tracking row may be reserved (reserving one would burn
+  // the dedupe key and block a restore from ever firing).
   const ev = event({ starts_at: iso(NOW, 20 * HOUR), ends_at: iso(NOW, 23 * HOUR) })
   const sb = fakeSupabase({ events: [ev] })
   const dc = fakeDiscord()
   await run(sb, dc)
-  const reminders = dc.calls.created.filter(c => c.channelId === 'chan-ann')
-  assert.equal(reminders.length, 1)
-  assert.equal(sb._db.discord_calendar_posts.find(r => r.post_kind === 'reminder_24h').status, 'posted')
 
-  await run(sb, dc)
-  assert.equal(dc.calls.created.filter(c => c.channelId === 'chan-ann').length, 1, 'no repeat')
+  assert.equal(dc.calls.created.filter(c => c.channelId === 'chan-ann').length, 0, 'no reminder inside 24h')
+  assert.equal(sb._db.discord_calendar_posts.some(r => r.post_kind === 'reminder_24h'), false, 'no 24h row at all')
+  assert.equal(sb._db.discord_calendar_posts.some(r => r.post_kind === 'calendar'), true, 'the #calendar embed is unaffected')
 })
 
-test('2h reminder fires and the 24h slot is closed, not fired late', async () => {
+test('retiring 24h does not skip, delay or double-fire the 2h reminder', async () => {
+  // One fixture event walked across the whole window on the real engine.
+  const start = 20 * HOUR
+  const ev = event({ starts_at: iso(NOW, start), ends_at: iso(NOW, start + 3 * HOUR) })
+  const sb = fakeSupabase({ events: [ev] })
+  const dc = fakeDiscord()
+  const annCount = () => dc.calls.created.filter(c => c.channelId === 'chan-ann').length
+  const at = ms => new Date(NOW.getTime() + ms)
+
+  // t-20h and t-3h: still outside the 2h lead, so nothing fires.
+  await runAt(sb, dc, at(0))
+  assert.equal(annCount(), 0, 't-20h: silent')
+  await runAt(sb, dc, at(start - 3 * HOUR))
+  assert.equal(annCount(), 0, 't-3h: silent')
+
+  // t-119m: first tick inside the 2h lead. It fires here, not later: retiring
+  // the longer lead must not push the surviving one back.
+  await runAt(sb, dc, at(start - 119 * 60_000))
+  assert.equal(annCount(), 1, 't-119m: the 2h reminder fires on the first tick inside its window')
+  const row = sb._db.discord_calendar_posts.find(r => r.post_kind === 'reminder_2h')
+  assert.equal(row.status, 'posted')
+
+  // Every later tick before the event: still exactly one. The unique
+  // (event_id, post_kind) constraint is what guarantees this, and it is
+  // untouched by the retirement.
+  await runAt(sb, dc, at(start - 90 * 60_000))
+  await runAt(sb, dc, at(start - 10 * 60_000))
+  assert.equal(annCount(), 1, 'no double-fire across later ticks')
+
+  // And nothing ever opened a 24h slot along the way.
+  assert.equal(sb._db.discord_calendar_posts.some(r => r.post_kind === 'reminder_24h'), false)
+})
+
+test('2h reminder fires; no 24h slot is opened or superseded', async () => {
+  // Previously this produced a superseded reminder_24h alongside the posted
+  // reminder_2h. With the lead retired the slot is never opened in the first
+  // place, so there is nothing to close.
   const ev = event({ starts_at: iso(NOW, 90 * 60_000), ends_at: iso(NOW, 4 * HOUR) })
   const sb = fakeSupabase({ events: [ev] })
   const dc = fakeDiscord()
@@ -249,13 +292,14 @@ test('2h reminder fires and the 24h slot is closed, not fired late', async () =>
   const kinds = sb._db.discord_calendar_posts.map(r => [r.post_kind, r.status])
   assert.deepEqual(
     Object.fromEntries(kinds),
-    { calendar: 'posted', reminder_24h: 'superseded', reminder_2h: 'posted' },
+    { calendar: 'posted', reminder_2h: 'posted' },
   )
   assert.equal(dc.calls.created.filter(c => c.channelId === 'chan-ann').length, 1)
 })
 
 test('an event naming a subteam pings that role, and only that role', async () => {
-  const ev = event({ title: 'Programming sprint', starts_at: iso(NOW, 20 * HOUR), ends_at: iso(NOW, 23 * HOUR) })
+  // Inside the 2h lead: the surviving reminder is the one that carries the ping.
+  const ev = event({ title: 'Programming sprint', starts_at: iso(NOW, 90 * 60_000), ends_at: iso(NOW, 4 * HOUR) })
   const sb = fakeSupabase({ events: [ev] })
   const dc = fakeDiscord()
   await run(sb, dc)
@@ -265,7 +309,7 @@ test('an event naming a subteam pings that role, and only that role', async () =
 })
 
 test('an event naming no subteam pings nobody', async () => {
-  const ev = event({ title: 'Team meeting', notes: 'all hands', starts_at: iso(NOW, 20 * HOUR), ends_at: iso(NOW, 23 * HOUR) })
+  const ev = event({ title: 'Team meeting', notes: 'all hands', starts_at: iso(NOW, 90 * 60_000), ends_at: iso(NOW, 4 * HOUR) })
   const sb = fakeSupabase({ events: [ev] })
   const dc = fakeDiscord()
   await run(sb, dc)

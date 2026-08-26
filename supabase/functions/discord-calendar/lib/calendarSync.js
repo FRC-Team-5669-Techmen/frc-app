@@ -27,10 +27,28 @@ const HOUR = 60 * 60 * 1000
 const DAY = 24 * HOUR
 
 // Lead times, longest first. `kind` is the post_kind stored on the tracking row.
+//
+// reminder_24h was retired on 2026-08-26. The Sunday week-ahead digest already
+// tells the team what is happening tomorrow, so the 24h reminder was the one
+// duplicated post that also pings a role. The 2h reminder is same-day and
+// nothing else covers it, so it stays.
+//
+// Retired by removing the entry from this array and nothing else. The rendering
+// path (reminderMessage with lead '24h'), the existing dedupe rows in
+// discord_calendar_posts and the existing discord_calendar_log rows are all
+// deliberately left intact: already-posted 24h messages are still edited on a
+// change and still struck through on a cancellation, because the cancellation
+// sweep walks the tracking table rather than this array. Restoring the single
+// commented line below brings the reminder back with no other edit.
 export const REMINDERS = [
-  { kind: 'reminder_24h', lead: '24h', leadMs: 24 * HOUR },
+  // { kind: 'reminder_24h', lead: '24h', leadMs: 24 * HOUR },
   { kind: 'reminder_2h',  lead: '2h',  leadMs: 2 * HOUR },
 ]
+
+// The shortest lead still in service. Derived from REMINDERS rather than indexed
+// into it, so adding or removing an entry above cannot leave this reading the
+// wrong element (or undefined).
+const SHORTEST_LEAD_MS = Math.min(...REMINDERS.map(r => r.leadMs))
 
 // How far back to keep looking at events. An event that already ended is still
 // loaded briefly so a late edit (a mentor fixing the location afterwards) still
@@ -183,7 +201,7 @@ export async function runCalendarSync({ supabase, discord, config, now = new Dat
 
         // A 24h reminder that first becomes visible when the event is already
         // inside 2h is late, not a 24h reminder. Close it and let the 2h fire.
-        if (r.kind === 'reminder_24h' && msUntil <= REMINDERS[1].leadMs) {
+        if (r.kind === 'reminder_24h' && msUntil <= SHORTEST_LEAD_MS) {
           await markSuperseded({ supabase, config, log, summary, event, postKind: r.kind, channel: announceChannel, payload, reason: 'inside_2h_window' })
           continue
         }
