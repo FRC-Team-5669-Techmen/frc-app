@@ -1,0 +1,39 @@
+# Per-function config for functions invoked without a user JWT.
+#
+# These functions authenticate callers with their own shared secret (a custom
+# header checked against a function secret) or an unguessable capability
+# token in the URL, not a signed-in user's JWT. The Supabase API gateway's
+# default JWT verification would reject every one of those calls before the
+# function body ever runs, so verify_jwt = false here is load-bearing, not
+# optional — without it, a deploy that forgets `--no-verify-jwt` silently
+# breaks the pg_cron jobs and capability links that depend on these functions.
+#
+# Functions NOT listed here (invite-member, send-approval-email,
+# send-parent-request) are invoked with the signed-in user's JWT and must
+# keep default JWT verification on.
+
+[functions.cron-notify]
+# Invoked by pg_cron via pg_net with a shared secret in the x-push-secret
+# header (checked against the PUSH_SECRET function secret) — not a user JWT.
+verify_jwt = false
+
+[functions.send-push]
+# Invoked by pg_cron/database triggers via pg_net with a shared secret in the
+# x-push-secret header (checked against PUSH_SECRET) — not a user JWT.
+verify_jwt = false
+
+[functions.discord-calendar]
+# Invoked by pg_cron via pg_net with a shared secret in the x-cron-secret
+# header (checked against the DISCORD_CRON_SECRET function secret), supplied
+# from private.discord_calendar_config.hook_secret — not a user JWT.
+verify_jwt = false
+
+[functions.calendar-feed]
+# A capability URL: authenticated by the unguessable ?token= query param
+# (a member's profiles.calendar_token), not a JWT. There is no sign-in step.
+verify_jwt = false
+
+[functions.parent-response]
+# A capability URL, same pattern as calendar-feed: authenticated by the
+# unguessable member_applications.parent_token, not a JWT. No sign-in step.
+verify_jwt = false
