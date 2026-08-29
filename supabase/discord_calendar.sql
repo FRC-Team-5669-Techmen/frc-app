@@ -72,7 +72,22 @@ create index if not exists dcp_ends_idx   on public.discord_calendar_posts (even
 -- need a migration):
 --   run_start, run_end, resolve, plan_create, plan_edit, plan_cancel,
 --   created, edited, cancelled, superseded, archived, skipped,
---   rate_limited, message_missing, error
+--   rate_limited, message_missing, auth_retry, reminder_missed, error
+--
+-- Two of those are diagnostics rather than actions taken:
+--   auth_retry      one bounded retry of a READ that PostgREST rejected with a
+--                   transient JWT error (clock skew between the Edge runtime
+--                   and the database). Two of these in a row on one phase means
+--                   the retry was exhausted.
+--   reminder_missed an event started with no reminder row for it, so nobody was
+--                   told. Written once per (event, kind), carrying the event id:
+--                     select event_id, post_kind, detail
+--                       from public.discord_calendar_log
+--                      where action = 'reminder_missed'
+--                      order by created_at desc;
+--
+-- Note also that `error` details now carry `fatal` true or false. A false one
+-- is a phase that failed without stopping the run (today: cancellation_sweep).
 -- ─────────────────────────────────────────────────────────────────────────────
 create table if not exists public.discord_calendar_log (
   id         bigint generated always as identity primary key,

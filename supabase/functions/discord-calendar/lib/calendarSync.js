@@ -50,6 +50,11 @@ export const REMINDERS = [
 // wrong element (or undefined).
 const SHORTEST_LEAD_MS = Math.min(...REMINDERS.map(r => r.leadMs))
 
+// Backoff for the auth-shaped read retry (see readWithRetry). Two retries,
+// short waits: the failure this exists for is clock skew between the Edge
+// runtime and PostgREST, which resolves itself in well under a second.
+const AUTH_RETRY_BACKOFF_MS = [250, 750]
+
 // How far back to keep looking at events. An event that already ended is still
 // loaded briefly so a late edit (a mentor fixing the location afterwards) still
 // reaches the posted message.
@@ -119,24 +124,46 @@ export async function runCalendarSync({ supabase, discord, config, now = new Dat
     // row. So "cancelled" is detected as: we posted about this event, and the
     // event no longer exists. The tracking row deliberately has no FK, which is
     // the only reason the evidence survives the delete.
-    await cancellationSweep({ supabase, discord, config, now, log, summary })
+    // NON-FATAL. The sweep only EDITS messages that were already posted, so
+    // its worst failure costs one hour of a cancellation notice. It used to
+    // abort the entire run, and because it holds the run's first PostgREST
+    // call it aborted before a single post was even considered: nine runs in
+    // one week died here on `JWT issued at future` and wrote no run_end.
+    // Nothing this sweep does can create a post, so nothing it fails at can
+    // justify suppressing one.
+    try {
+      await cancellationSweep({ supabase, discord, config, now, log, summary })
+    } catch (err) {
+      summary.errors += 1
+      summary.sweep_error = err.message
+      log('error', {
+        fatal: false,
+        phase: 'cancellation_sweep',
+        message: err.message,
+        status: err.status ?? null,
+      })
+    }
 
     // ── 3. Load the event window ─────────────────────────────────────────────
     const windowStart = new Date(now.getTime() - LOOKBACK_MS).toISOString()
     const windowEnd = new Date(now.getTime() + config.horizonDays * DAY).toISOString()
 
-    const { data: events, error: evErr } = await supabase
+    // Retried but still FATAL on exhaustion. See readWithRetry for why a retry
+    // here cannot double-post. It stays fatal because this is the run's entire
+    // input: a failed load is indistinguishable from "no events scheduled", so
+    // continuing would silently report a healthy no-op run while every reminder
+    // due this hour goes unsent.
+    const events = await readWithRetry('loading events', config, log, () => supabase
       .from('events')
       .select('id, title, kind, starts_at, ends_at, location, notes, updated_at')
       .gte('starts_at', windowStart)
       .lte('starts_at', windowEnd)
-      .order('starts_at', { ascending: true })
-    if (evErr) throw new Error(`loading events: ${evErr.message}`)
+      .order('starts_at', { ascending: true }))
 
     summary.events_considered = events?.length || 0
 
     const ids = (events || []).map(e => e.id)
-    const tracking = await loadTracking(supabase, ids)
+    const tracking = await loadTracking(supabase, ids, config, log)
     const keyOf = (eventId, kind) => `${eventId}:${kind}`
 
     // ── 4. #calendar posts ───────────────────────────────────────────────────
@@ -194,6 +221,23 @@ export async function runCalendarSync({ supabase, discord, config, now = new Dat
             // Event already started and this reminder never fired (the cron was
             // down, or the event was created late). Firing now is noise, so the
             // slot is closed permanently rather than left to fire next hour.
+            //
+            // Closing it silently is how a missed reminder became invisible.
+            // markSuperseded logs the action `superseded`, which is also the
+            // routine planned close, so nothing in the log distinguished "we
+            // decided not to send this" from "nobody was told". This does.
+            //
+            // Written exactly once per (event, kind): the supersede row created
+            // immediately below means every later run takes the `existing`
+            // branch above and never reaches here again. No late reminder is
+            // posted, and no Discord call is made.
+            log('reminder_missed', {
+              eventId: event.id,
+              postKind: r.kind,
+              lead: r.lead,
+              event_starts_at: event.starts_at,
+              minutes_late: Math.round(-msUntil / 60000),
+            })
             await markSuperseded({ supabase, config, log, summary, event, postKind: r.kind, channel: announceChannel, payload, reason: 'event_already_started' })
           }
           continue
@@ -227,20 +271,78 @@ export async function runCalendarSync({ supabase, discord, config, now = new Dat
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Transient auth failures
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Is this a TRANSIENT auth/JWT rejection from PostgREST rather than a real one?
+ *
+ * The production failure is `JWT issued at future`: the Edge runtime clock
+ * drifted ahead of the database clock, so the service-role token `iat` claim
+ * looks future-dated and PostgREST refuses it. It clears by itself within a
+ * second, which is exactly what a bounded retry is for. A permission failure
+ * (42501, insufficient_privilege) is NOT in this set: retrying it would just
+ * waste the backoff and hide a real misconfiguration.
+ *
+ * A DiscordError can never reach here by construction, because only supabase
+ * reads are retried. It is rejected explicitly anyway so that widening the call
+ * sites later cannot quietly start retrying a Discord write.
+ */
+function isAuthShaped(error) {
+  if (!error || error instanceof DiscordError) return false
+  const code = String(error.code ?? '')
+  // PGRST301 = JWT expired / not yet valid. PGRST302 = anonymous access denied.
+  if (code === 'PGRST301' || code === 'PGRST302') return true
+  const text = [error.message, error.hint, error.details]
+    .filter(Boolean).join(' ').toLowerCase()
+  return text.includes('jwt') || text.includes('issued at') || text.includes('invalid claim')
+}
+
+/**
+ * Run a READ-ONLY supabase query, retrying at most twice on an auth-shaped
+ * failure. `query` is a thunk because a supabase query builder is single-use.
+ *
+ * WHY THIS CANNOT DOUBLE-POST. Everything passed to this is a SELECT. A SELECT
+ * cannot insert a tracking row and cannot call Discord, so no number of
+ * attempts here touches the unique (event_id, post_kind) constraint or the
+ * Discord REST client. The reserve-then-send path in upsertPost is deliberately
+ * NOT wrapped, and must never be: its whole design is that an ambiguous write
+ * is left reserved and never auto-retried. Only reads go through here.
+ */
+async function readWithRetry(label, config, log, query) {
+  const sleep = config.sleep ?? (ms => new Promise(r => setTimeout(r, ms)))
+  for (let attempt = 0; ; attempt++) {
+    const { data, error } = await query()
+    if (!error) return data
+    if (attempt >= AUTH_RETRY_BACKOFF_MS.length || !isAuthShaped(error)) {
+      throw new Error(`${label}: ${error.message}`)
+    }
+    log('auth_retry', { phase: label, attempt: attempt + 1, message: error.message })
+    await sleep(AUTH_RETRY_BACKOFF_MS[attempt])
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tracking rows
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function loadTracking(supabase, eventIds) {
+async function loadTracking(supabase, eventIds, config, log) {
   const map = new Map()
   if (!eventIds.length) return map
   // Chunked so a long horizon cannot blow the URL length on the `in` filter.
   for (let i = 0; i < eventIds.length; i += 200) {
     const chunk = eventIds.slice(i, i + 200)
-    const { data, error } = await supabase
+    // Retried but still FATAL on exhaustion. This map IS the answer to "what
+    // have we already posted?", and a run that proceeded without it would send
+    // every already-posted event down the CREATE branch. The unique constraint
+    // would still catch each one, so no duplicate message would reach Discord,
+    // but the run would stop editing changed messages and would fill the log
+    // with false already_reserved skips. This is the read whose failure is
+    // duplicate-shaped, so it stays fatal.
+    const data = await readWithRetry('loading tracking rows', config, log, () => supabase
       .from('discord_calendar_posts')
       .select('*')
-      .in('event_id', chunk)
-    if (error) throw new Error(`loading tracking rows: ${error.message}`)
+      .in('event_id', chunk))
     for (const row of data || []) map.set(`${row.event_id}:${row.post_kind}`, row)
   }
   return map
@@ -411,20 +513,19 @@ async function cancellationSweep({ supabase, discord, config, now, log, summary 
   // Candidates: live messages about events that have not finished yet. An event
   // deleted after it already ended is not a cancellation, it is housekeeping —
   // those rows fall outside this filter and are simply left alone.
-  const { data: candidates, error } = await supabase
+  const candidates = await readWithRetry('loading cancellation candidates', config, log, () => supabase
     .from('discord_calendar_posts')
     .select('*')
     .eq('status', 'posted')
-    .gte('event_ends_at', now.toISOString())
-  if (error) throw new Error(`loading cancellation candidates: ${error.message}`)
+    .gte('event_ends_at', now.toISOString()))
   if (!candidates?.length) return
 
   const eventIds = [...new Set(candidates.map(r => r.event_id))]
   const alive = new Set()
   for (let i = 0; i < eventIds.length; i += 200) {
     const chunk = eventIds.slice(i, i + 200)
-    const { data, error: aErr } = await supabase.from('events').select('id').in('id', chunk)
-    if (aErr) throw new Error(`checking event existence: ${aErr.message}`)
+    const data = await readWithRetry('checking event existence', config, log, () =>
+      supabase.from('events').select('id').in('id', chunk))
     for (const e of data || []) alive.add(e.id)
   }
 

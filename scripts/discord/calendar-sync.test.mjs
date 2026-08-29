@@ -20,23 +20,37 @@ import { runCalendarSync } from '../../supabase/functions/discord-calendar/lib/c
 // Fakes
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Chainable stand-in for the slice of supabase-js the engine uses. */
-function fakeSupabase(tables) {
+/**
+ * Chainable stand-in for the slice of supabase-js the engine uses.
+ *
+ * `failSelect(table, ops)` lets a test fail one specific read. `ops` is the
+ * ordered list of [method, column] calls made on the builder, which is how a
+ * test tells the two reads of discord_calendar_posts apart: the cancellation
+ * sweep filters eq('status') + gte('event_ends_at'), loadTracking filters
+ * in('event_id'). Returning an error object makes that read resolve to it;
+ * returning nothing lets it through.
+ */
+function fakeSupabase(tables, { failSelect = null } = {}) {
   const db = { events: [], discord_calendar_posts: [], discord_calendar_log: [], ...tables }
   let seq = 0
 
   const makeQuery = table => {
     const filters = []
+    const ops = []
     const q = {
       _rows: () => db[table].filter(r => filters.every(f => f(r))),
       select() { return q },
       order() { return q },
-      eq(col, val) { filters.push(r => r[col] === val); return q },
-      gte(col, val) { filters.push(r => String(r[col]) >= String(val)); return q },
-      lte(col, val) { filters.push(r => String(r[col]) <= String(val)); return q },
-      in(col, vals) { const s = new Set(vals); filters.push(r => s.has(r[col])); return q },
+      eq(col, val) { ops.push(['eq', col]); filters.push(r => r[col] === val); return q },
+      gte(col, val) { ops.push(['gte', col]); filters.push(r => String(r[col]) >= String(val)); return q },
+      lte(col, val) { ops.push(['lte', col]); filters.push(r => String(r[col]) <= String(val)); return q },
+      in(col, vals) { ops.push(['in', col]); const s = new Set(vals); filters.push(r => s.has(r[col])); return q },
       single() { return q },
-      then(resolve) { resolve({ data: q._rows(), error: null }) },
+      then(resolve) {
+        const error = failSelect ? failSelect(table, ops) : null
+        if (error) return resolve({ data: null, error })
+        resolve({ data: q._rows(), error: null })
+      },
     }
     return q
   }
@@ -132,6 +146,9 @@ const baseConfig = {
   announceChannel: 'announcements',
   horizonDays: 14,
   reportOnly: false,
+  // Injected so the bounded auth retry does not put real backoff into the
+  // suite. The engine defaults to a real timer when this is absent.
+  sleep: async () => {},
 }
 
 const event = (over = {}) => ({
@@ -334,6 +351,154 @@ test('a 4xx on create releases the reservation; an ambiguous failure keeps it', 
   const s = await run(sb2, fakeDiscord())
   assert.equal(s.created, 0)
   assert.ok(sb2._db.discord_calendar_log.some(l => l.detail?.reason === 'pending_stale'))
+})
+
+// ── Failure isolation: the cancellation sweep ────────────────────────────────
+// Nine production runs in one week died on `JWT issued at future` inside the
+// sweep, which holds the first PostgREST call of the run, so every one of them
+// aborted before considering a single post and never wrote run_end.
+
+// Matches only the sweep read: eq(status) + gte(event_ends_at) on the tracking
+// table. loadTracking hits the same table with in(event_id) and must be left
+// alone, or the test would be proving something else.
+const sweepRead = (table, ops) =>
+  table === 'discord_calendar_posts' && ops.some(([m, c]) => m === 'eq' && c === 'status')
+
+const JWT_ERR = { code: 'PGRST301', message: 'JWT issued at future' }
+
+test('a failing cancellation sweep no longer stops reminders from posting', async () => {
+  // The exact production shape: the sweep read fails with the JWT error on
+  // every attempt, so the bounded retry is exhausted and the sweep genuinely
+  // cannot run. The reminder must still go out.
+  const ev = event({ starts_at: iso(NOW, 90 * 60_000), ends_at: iso(NOW, 4 * HOUR) })
+  const sb = fakeSupabase({ events: [ev] }, { failSelect: (t, o) => (sweepRead(t, o) ? JWT_ERR : null) })
+  const dc = fakeDiscord()
+  const s = await run(sb, dc)
+
+  assert.equal(s.fatal, undefined, 'the run must not be fatal')
+  assert.equal(dc.calls.created.filter(c => c.channelId === 'chan-ann').length, 1, 'the 2h reminder still posts')
+  assert.equal(dc.calls.created.filter(c => c.channelId === 'chan-cal').length, 1, 'the #calendar embed still posts')
+  assert.equal(s.created, 2)
+
+  const log = sb._db.discord_calendar_log
+  assert.ok(log.some(l => l.action === 'run_end'), 'run_end must still be written')
+  const err = log.find(l => l.action === 'error' && l.detail?.phase === 'cancellation_sweep')
+  assert.ok(err, 'the sweep failure is still recorded')
+  assert.equal(err.detail.fatal, false, 'recorded as non-fatal')
+  assert.equal(err.detail.status, null, 'same detail shape as before')
+  assert.match(err.detail.message, /loading cancellation candidates: JWT issued at future/)
+})
+
+test('a JWT failure is retried at most twice, and a recoverable one succeeds', async () => {
+  // Fails once then clears, which is what clock skew actually does.
+  let n = 0
+  const sb = fakeSupabase({ events: [event()] }, {
+    failSelect: (t, o) => (sweepRead(t, o) && n++ === 0 ? JWT_ERR : null),
+  })
+  const dc = fakeDiscord()
+  await run(sb, dc)
+  sb._db.events = []                        // staff deleted the event = cancelled
+  n = 0                                     // arm one more failure for the sweep
+  sb._db.discord_calendar_log = []          // count this run only
+  const s = await run(sb, dc)
+
+  assert.equal(s.cancelled, 1, 'the retry let the sweep complete')
+  assert.equal(s.sweep_error, undefined)
+  const retries = sb._db.discord_calendar_log.filter(l => l.action === 'auth_retry')
+  assert.equal(retries.length, 1, 'exactly one retry was needed')
+  assert.equal(retries[0].detail.phase, 'loading cancellation candidates')
+
+  // And the bound holds when it never clears: 1 attempt + 2 retries, no more.
+  const sb2 = fakeSupabase({ events: [event()] }, { failSelect: (t, o) => (sweepRead(t, o) ? JWT_ERR : null) })
+  await run(sb2, fakeDiscord())
+  assert.equal(sb2._db.discord_calendar_log.filter(l => l.action === 'auth_retry').length, 2, 'at most two retries')
+})
+
+test('a retried run cannot create a second row or a second Discord message', async () => {
+  // The dedupe guarantee under retry. Run 1 is clean and posts both messages.
+  // Run 2 exercises the retry path on every read the engine makes, so if a
+  // retry could re-enter the posting path at all, this is where a second row
+  // and a second message would appear.
+  const ev = event({ starts_at: iso(NOW, 90 * 60_000), ends_at: iso(NOW, 4 * HOUR) })
+  const sb = fakeSupabase({ events: [ev] })
+  const dc = fakeDiscord()
+  await run(sb, dc)
+
+  const rowsAfterFirst = sb._db.discord_calendar_posts.map(r => `${r.event_id}:${r.post_kind}`).sort()
+  assert.deepEqual(rowsAfterFirst, ['ev-1:calendar', 'ev-1:reminder_2h'])
+  assert.equal(dc.calls.created.length, 2)
+
+  // Every read fails once with the JWT error, then succeeds: four reads, four
+  // retries, one full run.
+  const seen = new Set()
+  sb._db.__unused = null
+  const sb2 = fakeSupabase(sb._db, {
+    failSelect: (t, o) => {
+      const key = `${t}:${o.map(x => x.join('.')).join(',')}`
+      if (seen.has(key)) return null
+      seen.add(key)
+      return JWT_ERR
+    },
+  })
+  const s = await run(sb2, dc)
+
+  assert.ok(sb2._db.discord_calendar_log.filter(l => l.action === 'auth_retry').length >= 2, 'retries did happen')
+  assert.equal(s.created, 0, 'no new post')
+  assert.equal(dc.calls.created.length, 2, 'no second Discord message')
+  assert.deepEqual(
+    sb2._db.discord_calendar_posts.map(r => `${r.event_id}:${r.post_kind}`).sort(),
+    rowsAfterFirst,
+    'no second row for the same (event_id, post_kind)',
+  )
+})
+
+test('only auth-shaped failures are retried, never anything else', async () => {
+  // A plain database error must fail straight through with no backoff at all.
+  const dbErr = { code: '57014', message: 'canceling statement due to statement timeout' }
+  const sb = fakeSupabase({ events: [event()] }, { failSelect: (t, o) => (sweepRead(t, o) ? dbErr : null) })
+  const s = await run(sb, fakeDiscord())
+  assert.equal(sb._db.discord_calendar_log.filter(l => l.action === 'auth_retry').length, 0, 'not retried')
+  assert.match(s.sweep_error, /statement timeout/)
+  assert.equal(s.created, 1, 'and the run still posted')
+
+  // A Discord failure is never routed through the retry either: it is raised by
+  // the REST client inside the posting path, which is deliberately not wrapped.
+  const { DiscordError } = await import('../../supabase/functions/discord-calendar/lib/discord.js')
+  const sb2 = fakeSupabase({ events: [event()] })
+  await run(sb2, fakeDiscord({ failCreate: new DiscordError('service unavailable', { status: 503 }) }))
+  assert.equal(sb2._db.discord_calendar_log.filter(l => l.action === 'auth_retry').length, 0, 'no retry on a Discord error')
+})
+
+// ── Silent loss ──────────────────────────────────────────────────────────────
+
+test('a 2h reminder that was never sent is logged as reminder_missed, once', async () => {
+  // The event started 30 minutes ago and no reminder_2h row exists: nobody was
+  // told, and until now the only trace was a `superseded` row indistinguishable
+  // from the routine planned close.
+  const ev = event({ starts_at: iso(NOW, -30 * 60_000), ends_at: iso(NOW, 90 * 60_000) })
+  const sb = fakeSupabase({ events: [ev] })
+  const dc = fakeDiscord()
+  await run(sb, dc)
+
+  const missed = sb._db.discord_calendar_log.filter(l => l.action === 'reminder_missed')
+  assert.equal(missed.length, 1)
+  assert.equal(missed[0].event_id, 'ev-1', 'the event id is queryable')
+  assert.equal(missed[0].post_kind, 'reminder_2h')
+  assert.equal(missed[0].detail.minutes_late, 30)
+  assert.equal(dc.calls.created.filter(c => c.channelId === 'chan-ann').length, 0, 'no late reminder is posted')
+
+  // Written once, not every hour: the supersede row closes the slot.
+  await run(sb, dc)
+  assert.equal(sb._db.discord_calendar_log.filter(l => l.action === 'reminder_missed').length, 1)
+})
+
+test('a reminder that fired normally is never logged as missed', async () => {
+  const ev = event({ starts_at: iso(NOW, 90 * 60_000), ends_at: iso(NOW, 4 * HOUR) })
+  const sb = fakeSupabase({ events: [ev] })
+  const dc = fakeDiscord()
+  await run(sb, dc)                                   // posts the 2h reminder
+  await runAt(sb, dc, new Date(NOW.getTime() + 3 * HOUR))   // now well past the start
+  assert.equal(sb._db.discord_calendar_log.some(l => l.action === 'reminder_missed'), false)
 })
 
 test('every run is logged', async () => {
