@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
 import { CATEGORIES, categoryLabel, categoryColor, sessionsFromEvents, fmtHours } from './hoursUtils'
@@ -11,6 +11,31 @@ import './MemberHoursAdmin.css'
 // labeled signed hour_adjustments. Every mutation goes through a SECURITY DEFINER
 // RPC (admin_hours_management.sql); RLS would silently drop a direct client write.
 
+// The Attendance Anomalies list on this same page deep-links in here via
+// `initialMemberId` + `focusEventIds`, which skip the search step and highlight
+// the flagged event row. No timestamp is ever pre-filled by that path.
+
+// IN events with no check-out before the next check-in (or before the end of the
+// ledger) — the same sequential pairing detectAnomalies uses. These are the rows
+// an anomaly Resolve lands on and the only rows offered a missing-check-out
+// field. sessionsFromEvents cannot answer this: it overwrites an open IN when a
+// second IN arrives, so the orphaned first IN produces no session at all.
+function unclosedInIds(events) {
+  const sorted = [...events].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
+  const ids = new Set()
+  let openIn = null
+  for (const e of sorted) {
+    if (e.type === 'in') {
+      if (openIn) ids.add(openIn.id)
+      openIn = e
+    } else if (e.type === 'out') {
+      openIn = null
+    }
+  }
+  if (openIn) ids.add(openIn.id)
+  return ids
+}
+
 const todayStr = () => new Date().toISOString().slice(0, 10)
 const fmtDate = s => new Date(s + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 const fmtDT = iso => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
@@ -20,18 +45,28 @@ const toLocalInput = iso => {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
 }
 
-export default function MemberHoursAdmin() {
+export default function MemberHoursAdmin({ initialMemberId = null, focusEventIds = null }) {
   const [profiles,    setProfiles]    = useState([])
   const [q,           setQ]           = useState('')
-  const [sel,         setSel]         = useState(null)
+  const [sel,         setSel]         = useState(initialMemberId ? { id: initialMemberId } : null)
   const [logged,      setLogged]      = useState(null)
   const [events,      setEvents]      = useState(null)
   const [adjustments, setAdjustments] = useState(null)
+  const [highlightId, setHighlightId] = useState(null)
+  const listRef = useRef(null)
 
   useEffect(() => {
     supabase.from('profiles').select('id, full_name, nickname')
       .then(({ data }) => setProfiles((data ?? []).map(p => ({ ...p, name: displayName(p) }))))
   }, [])
+
+  // Deep-linked entry: load the member straight away rather than waiting on the
+  // roster query, so the panel is populated by the time the name resolves.
+  useEffect(() => {
+    if (!initialMemberId) return
+    setLogged(null); setEvents(null); setAdjustments(null)
+    loadMember(initialMemberId)
+  }, [initialMemberId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadMember(id) {
     const [{ data: lh }, { data: ae }, { data: adj }] = await Promise.all([
@@ -58,12 +93,34 @@ export default function MemberHoursAdmin() {
   const sessions = events ? sessionsFromEvents(events) : []
   const sessionMs = sessions.reduce((s, x) => s + x.ms, 0)
 
+  // The event row an anomaly Resolve points at: the first id the anomaly listed
+  // that is actually in this member's ledger. Derived rather than stored so the
+  // row mounts already knowing it is the target (a post-mount effect would set
+  // it one render too late for EventRow's initial edit state).
+  const focusTargetId = (events && focusEventIds?.length)
+    ? (focusEventIds.find(id => events.some(e => e.id === id)) ?? null)
+    : null
+  // Only an unclosed IN gets the missing-check-out field. A capped session that
+  // already has an OUT is fixed by editing that OUT's real stored time.
+  const openIns = events ? unclosedInIds(events) : new Set()
+
+  useEffect(() => {
+    if (!focusTargetId) return
+    setHighlightId(focusTargetId)
+    listRef.current?.querySelector(`[data-event-id="${focusTargetId}"]`)
+      ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    const t = setTimeout(() => setHighlightId(null), 2000)
+    return () => clearTimeout(t)
+  }, [focusTargetId])
+
+  const selName = sel ? (profiles.find(p => p.id === sel.id)?.name ?? sel.name ?? 'Loading…') : ''
+
   return (
     <div className="mha">
       <div className="mha-picker">
         {sel ? (
           <div className="mha-selected">
-            <span className="mha-selected-name">{sel.name}</span>
+            <span className="mha-selected-name">{selName}</span>
             <button className="mha-change" onClick={() => { setSel(null); setLogged(null); setEvents(null); setAdjustments(null) }}>Change member</button>
           </div>
         ) : (
@@ -114,8 +171,17 @@ export default function MemberHoursAdmin() {
             {events.length === 0 ? (
               <p className="mha-empty">No attendance events.</p>
             ) : (
-              <div className="mha-list">
-                {events.map(ev => <EventRow key={ev.id} ev={ev} onDone={reload} />)}
+              <div className="mha-list" ref={listRef}>
+                {events.map(ev => (
+                  <EventRow
+                    key={ev.id}
+                    ev={ev}
+                    memberId={sel.id}
+                    onDone={reload}
+                    autoFocusEmpty={ev.id === focusTargetId && openIns.has(ev.id)}
+                    highlight={ev.id === highlightId}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -217,14 +283,29 @@ function LoggedRow({ row, onDone }) {
 }
 
 // ── Attendance event row: edit (type/time/category, reason) or delete (reason) ──
-function EventRow({ ev, onDone }) {
-  const [edit, setEdit] = useState(false)
+// `autoFocusEmpty` is set only by the anomaly Resolve path, and only on an IN
+// that has no check-out (a stale capped session, or the orphaned IN of a
+// double_in). It opens the row in its existing edit mode and adds one extra
+// field: the missing check-out time.
+//
+// THAT FIELD IS ALWAYS EMPTY. It is never seeded with the session's capped
+// effectiveOut, with the auto-close cutoff, or with any other computed or
+// guessed instant — a written-down hours ledger must record what a staff member
+// actually knows, and a pre-filled plausible time is the fastest way to get a
+// wrong one saved. The capped value stays a read-only display elsewhere.
+function EventRow({ ev, memberId, onDone, autoFocusEmpty = false, highlight = false }) {
+  const [edit, setEdit] = useState(autoFocusEmpty)
   const [type, setType] = useState(ev.type)
   const [time, setTime] = useState(toLocalInput(ev.event_time))
   const [cat, setCat] = useState(ev.category ?? 'build')
   const [reason, setReason] = useState('')
+  const [outTime, setOutTime] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const outRef = useRef(null)
+
+  useEffect(() => { if (autoFocusEmpty) setEdit(true) }, [autoFocusEmpty])
+  useEffect(() => { if (autoFocusEmpty && edit) outRef.current?.focus() }, [autoFocusEmpty, edit])
 
   async function save() {
     if (!reason.trim()) { setErr('A reason is required.'); return }
@@ -245,10 +326,24 @@ function EventRow({ ev, onDone }) {
     if (error) { setErr(error.message); return }
     onDone()
   }
+  // Supply the check-out this IN never got. Same staff_add_event RPC the
+  // "+ Add event" form uses — no new write path.
+  async function addCheckout() {
+    if (!reason.trim()) { setErr('A reason is required.'); return }
+    if (!outTime) { setErr('Enter the real check-out time.'); return }
+    setBusy(true); setErr('')
+    const { error } = await supabase.rpc('staff_add_event', {
+      p_member: memberId, p_type: 'out', p_event_time: new Date(outTime).toISOString(),
+      p_category: cat, p_reason: reason.trim(),
+    })
+    setBusy(false)
+    if (error) { setErr(error.message); return }
+    setEdit(false); setReason(''); setOutTime(''); onDone()
+  }
 
   if (edit) {
     return (
-      <div className="mha-row mha-row-edit mha-row-edit-col">
+      <div className={`mha-row mha-row-edit mha-row-edit-col${highlight ? ' mha-row-focus' : ''}`} data-event-id={ev.id}>
         <div className="mha-edit-fields">
           <select className="mha-input mha-input-sm" value={type} onChange={e => setType(e.target.value)}>
             <option value="in">in</option>
@@ -259,6 +354,24 @@ function EventRow({ ev, onDone }) {
             {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select>
         </div>
+        {autoFocusEmpty && (
+          <div className="mha-fix">
+            <span className="mha-fix-label">This check-in has no check-out</span>
+            <div className="mha-edit-fields">
+              <input
+                ref={outRef}
+                className="mha-input"
+                type="datetime-local"
+                value={outTime}
+                onChange={e => setOutTime(e.target.value)}
+              />
+              <button className="mha-btn mha-btn-go" onClick={addCheckout} disabled={busy}>
+                {busy ? '…' : 'Add check-out'}
+              </button>
+            </div>
+            <p className="mha-hint">Blank on purpose — enter the real check-out time. Nothing is guessed or pre-filled.</p>
+          </div>
+        )}
         <input className="mha-input" type="text" maxLength={300} placeholder="Reason (required)…" value={reason} onChange={e => setReason(e.target.value)} />
         {err && <span className="mha-err">{err}</span>}
         <div className="mha-row-actions">
@@ -271,7 +384,7 @@ function EventRow({ ev, onDone }) {
   }
 
   return (
-    <div className="mha-row">
+    <div className={`mha-row${highlight ? ' mha-row-focus' : ''}`} data-event-id={ev.id}>
       <span className={`mha-evt-type mha-evt-${ev.type}`}>{ev.type}</span>
       <span className="mha-row-main">{fmtDT(ev.event_time)} · {categoryLabel(ev.category)}{ev.manual_entry ? ' · manual' : ''}</span>
       <div className="mha-row-actions">
