@@ -37,6 +37,7 @@ const CONTEXT_TAGS = [
   ['/roster',      'ROSTER'],
   ['/access-requests', 'ACCESS'],
   ['/applications', 'APPS'],
+  ['/feedback',    'FEEDBACK'],
   ['/verify-hours','HRS//VERIFY'],
   ['/reports',     'REPORTS'],
   ['/certify',     'CERTIFY'],
@@ -89,7 +90,7 @@ function Dropdown({ label, paths = [], tourId, align = 'left', badge = 0, childr
   )
 }
 
-function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false, isParent = false, pendingAccess = 0 }) {
+function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false, isParent = false, pendingAccess = 0, openFeedback = 0 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -128,6 +129,14 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
             <>
               <div className="nav-dropdown-divider" />
               <NavLink to="/readiness" className={itemClass}>Readiness</NavLink>
+              {/* Admin-only, not staff-wide: a report can quote whatever the
+                  member had on screen, and the table's RLS is is_admin(). */}
+              {isAdmin && (
+                <NavLink to="/feedback" className={itemClass}>
+                  Feedback
+                  {openFeedback > 0 && <span className="nav-badge">{openFeedback}</span>}
+                </NavLink>
+              )}
 
               <span className="nav-dropdown-section">People</span>
               {isAdmin && <NavLink to="/roster" className={itemClass}>Roster</NavLink>}
@@ -187,6 +196,19 @@ export default function NavBar({ hasRole = () => false, session = null }) {
     return () => { active = false }
   }, [isStaff, pathname])
 
+  // Open-feedback count for the admin menu badge. Admin-gated on the client for
+  // the same reason the query is cheap to skip -- the feedback select policy is
+  // is_admin(), so a non-admin would get 0 anyway.
+  const [openFeedback, setOpenFeedback] = useState(0)
+  useEffect(() => {
+    if (!isAdmin) return
+    let active = true
+    supabase.from('feedback')
+      .select('id', { count: 'exact', head: true }).eq('status', 'open')
+      .then(({ count }) => { if (active) setOpenFeedback(count ?? 0) })
+    return () => { active = false }
+  }, [isAdmin, pathname])
+
   return (
     <nav className="navbar">
       <div className="navbar-shell">
@@ -239,7 +261,7 @@ export default function NavBar({ hasRole = () => false, session = null }) {
         </div>
 
         <div className="navbar-account">
-          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isAdmin={isAdmin} isParent={isParent} pendingAccess={pendingAccess} />
+          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isAdmin={isAdmin} isParent={isParent} pendingAccess={pendingAccess} openFeedback={openFeedback} />
         </div>
       </div>
     </nav>

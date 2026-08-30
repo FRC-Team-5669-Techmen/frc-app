@@ -1,0 +1,388 @@
+/* Feedback inbox (/feedback). Theme tokens only -- no raw hex (src/theme.css).
+   Class prefix is fbp- throughout so it cannot collide with the global widget's
+   fb- classes; both stylesheets are loaded at once on this page. */
+
+.fbp-wrap {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}
+
+.fbp-head { margin-bottom: 1rem; }
+
+.fbp-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.fbp-sub {
+  margin: 0.35rem 0 0;
+  max-width: 44rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--steel);
+}
+
+.fbp-muted {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.fbp-error {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--fault);
+}
+
+/* ── Controls ── */
+.fbp-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+
+.fbp-input {
+  padding: 0.4rem 0.55rem;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.fbp-input:focus { outline: none; border-color: var(--gold-dim); }
+.fbp-search { flex: 1; min-width: 12rem; }
+
+.fbp-refresh {
+  padding: 0.4rem 0.7rem;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--steel);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.fbp-refresh:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── Bulk bar ── */
+.fbp-bulkbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  margin-bottom: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.fbp-selectall {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--steel);
+  cursor: pointer;
+}
+
+.fbp-bulkcopy {
+  margin-left: auto;
+  padding: 0.35rem 0.7rem;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gold);
+  background: transparent;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.fbp-bulkcopy:hover:not(:disabled) { background: var(--gold); color: var(--bg); }
+
+/* ── List ── */
+.fbp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.fbp-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.fbp-item:hover { border-color: var(--gold-a24); }
+
+.fbp-check { margin-top: 0.2rem; cursor: pointer; }
+
+.fbp-item-main { flex: 1; min-width: 0; }
+
+.fbp-item-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+/* Category is a small filled chip -- small-area color IS the label here. */
+.fbp-cat {
+  padding: 0.05rem 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bg);
+  border-radius: var(--radius-sm);
+}
+.fbp-cat-bug      { background: var(--fault); color: var(--text); }
+.fbp-cat-idea     { background: var(--hr-outreach); color: var(--bg); }
+.fbp-cat-feedback { background: var(--steel); color: var(--bg); }
+
+.fbp-author {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.fbp-route,
+.fbp-when {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--muted);
+}
+.fbp-when { margin-left: auto; }
+
+.fbp-preview {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--steel);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.fbp-strip { display: flex; gap: 0.3rem; margin-top: 0.4rem; }
+
+.fbp-strip-img {
+  width: 2.6rem;
+  height: 2.6rem;
+  object-fit: cover;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  display: block;
+}
+.fbp-strip-pending { background: var(--surface-2); }
+
+.fbp-rowcopy {
+  flex: none;
+  padding: 0.25rem 0.55rem;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--steel);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.fbp-rowcopy:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── Status pill ── */
+.fbp-status {
+  padding: 0.05rem 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-sm);
+}
+.fbp-status-open      { color: var(--gold); }
+.fbp-status-reviewed  { color: var(--hr-volunteer); }
+.fbp-status-dismissed { color: var(--muted); }
+
+/* ── Detail modal (same shape as ApplicationsPage's ap-modal-*) ── */
+.fbp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+  z-index: 60;
+}
+
+.fbp-modal {
+  width: 100%;
+  max-width: 36rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.fbp-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.fbp-modal-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.fbp-modal-sub {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.fbp-close {
+  background: none;
+  border: none;
+  color: var(--steel);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+.fbp-close:hover { color: var(--gold); }
+
+.fbp-modal-body {
+  padding: 0.9rem 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* The report itself, verbatim and wrapped -- members paste stack traces and
+   URLs into it, so long unbroken tokens must not blow out the modal. */
+.fbp-message {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.fbp-section {
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+  margin-top: 0.8rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.fbp-kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.28rem 0;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--steel);
+  border-bottom: 1px solid var(--border);
+}
+
+.fbp-mono {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.fbp-ua { max-width: 22rem; color: var(--muted); }
+
+.fbp-shots { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+
+/* min-height + a plate so an image that fails to load -- an expired signed URL,
+   most likely -- shows an empty frame instead of collapsing to nothing. Found
+   by looking at the rendered page, not by reading it. */
+.fbp-shot {
+  display: block;
+  max-width: 10rem;
+  min-width: 6rem;
+  min-height: 4rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.fbp-shot img { width: 100%; height: auto; display: block; }
+.fbp-shot-pending {
+  width: 10rem;
+  height: 6rem;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  font-family: var(--font-mono);
+  color: var(--muted);
+}
+
+.fbp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.fbp-copy {
+  padding: 0.4rem 0.7rem;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gold);
+  background: transparent;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.fbp-copy:hover:not(:disabled) { background: var(--gold); color: var(--bg); }
+
+.fbp-act {
+  padding: 0.4rem 0.7rem;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--steel);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.fbp-act:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+.fbp-act:disabled { opacity: 0.5; cursor: not-allowed; }

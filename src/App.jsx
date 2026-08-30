@@ -36,6 +36,11 @@ const ReportsPage      = lazy(() => import('./ReportsPage'))
 const MemberApplication  = lazy(() => import('./MemberApplication'))
 const ApplicationsPage   = lazy(() => import('./ApplicationsPage'))
 const ParentResponse     = lazy(() => import('./ParentResponse'))
+const FeedbackPage       = lazy(() => import('./FeedbackPage'))
+// Mounted in ProtectedLayout, so it is on every authenticated page. Lazy with
+// its OWN Suspense boundary and a null fallback: sharing the app-level
+// boundary would put the whole shell back on the splash while it loads.
+const FeedbackWidget     = lazy(() => import('./FeedbackWidget'))
 
 // Design-system specimen (/_ds). Dev-guarded on Vite's DEV flag: the lazy
 // import only exists in dev, so the bundle is never built into production and
@@ -54,6 +59,9 @@ function ProtectedLayout({ hasRole, session }) {
     <div className="app-layout">
       <NavBar hasRole={hasRole} session={session} />
       <Outlet />
+      <Suspense fallback={null}>
+        <FeedbackWidget session={session} />
+      </Suspense>
     </div>
   )
 }
@@ -285,6 +293,7 @@ export default function App() {
           <Route path="/squad"       element={<SquadPage session={session} hasRole={hasRole} />} />
           <Route path="/access-requests" element={<AccessRequestsPage hasRole={hasRole} />} />
           <Route path="/applications"    element={<ApplicationsPage hasRole={hasRole} />} />
+          <Route path="/feedback"        element={<FeedbackPage session={session} hasRole={hasRole} />} />
           {/* Display lives inside the layout so the nav + profile stay visible. */}
           <Route path="/display" element={<PresenceBoard />} />
         </Route>
