@@ -44,6 +44,19 @@ const toLocalInput = iso => {
   const d = new Date(iso)
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
 }
+const toLocalInputMs = ms => toLocalInput(new Date(ms).toISOString())
+const fmtSpan = mins => {
+  const h = Math.floor(mins / 60), m = mins % 60
+  return h && m ? `${h}h ${m}m` : h ? `${h}h` : `${m}m`
+}
+const fmtClock = ms => new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+const fmtDayShort = ms => new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+const sameLocalDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString()
+
+// Default reason offered by the anomaly block's void button. A static sentence
+// about why staff voided the row — never a claim about the student's session,
+// which is why it may be pre-filled where a timestamp may not.
+const VOID_REASON = 'Anomaly resolve: no reliable check-out time, session voided'
 
 export default function MemberHoursAdmin({ initialMemberId = null, focusEventIds = null }) {
   const [profiles,    setProfiles]    = useState([])
@@ -293,6 +306,13 @@ function LoggedRow({ row, onDone }) {
 // guessed instant — a written-down hours ledger must record what a staff member
 // actually knows, and a pre-filled plausible time is the fastest way to get a
 // wrong one saved. The capped value stays a read-only display elsewhere.
+//
+// What that field costs is precision nobody has: picking an exact minute for a
+// session months old. So the block offers two ways out that do not require one.
+// A half-hour STEPPER builds the check-out as an offset from the check-in,
+// starting from nothing entered — the offset only ever moves because someone
+// clicked. And a one-click VOID, for when no honest check-out exists at all.
+// Both are additive to this block; the normal edit path for a row is unchanged.
 function EventRow({ ev, memberId, onDone, autoFocusEmpty = false, highlight = false }) {
   const [edit, setEdit] = useState(autoFocusEmpty)
   const [type, setType] = useState(ev.type)
@@ -300,9 +320,33 @@ function EventRow({ ev, memberId, onDone, autoFocusEmpty = false, highlight = fa
   const [cat, setCat] = useState(ev.category ?? 'build')
   const [reason, setReason] = useState('')
   const [outTime, setOutTime] = useState('')
+  const [voidArmed, setVoidArmed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const outRef = useRef(null)
+
+  const inMs = new Date(ev.event_time).getTime()
+  const outMs = outTime ? new Date(outTime).getTime() : null
+
+  // Half-hour stepper for the missing check-out. `outTime` stays the single
+  // source of truth, so a stepper click and a direct edit of the datetime field
+  // can never disagree: a step reads whatever is in the field right now (the
+  // check-in itself while it is still empty), so typing a time becomes the
+  // baseline the next click adjusts from. The low end is clamped at the
+  // check-in — stepping down to or past it clears the field rather than
+  // producing a zero-length or negative session, which is also how the
+  // nothing-entered starting state is restored. The high end is not clamped:
+  // an implausibly long session is still a thing that can have happened.
+  function stepOut(deltaMin) {
+    const next = (outMs ?? inMs) + deltaMin * 60000
+    if (next <= inMs) { setOutTime(''); return }
+    setOutTime(toLocalInputMs(next))
+  }
+
+  const readout = outMs === null
+    ? 'No check-out entered'
+    : `Session length: ${fmtSpan(Math.round((outMs - inMs) / 60000))} — ending ${fmtClock(outMs)}`
+      + (sameLocalDay(outMs, inMs) ? '' : `, ${fmtDayShort(outMs)}`)
 
   useEffect(() => { if (autoFocusEmpty) setEdit(true) }, [autoFocusEmpty])
   useEffect(() => { if (autoFocusEmpty && edit) outRef.current?.focus() }, [autoFocusEmpty, edit])
@@ -340,6 +384,20 @@ function EventRow({ ev, memberId, onDone, autoFocusEmpty = false, highlight = fa
     if (error) { setErr(error.message); return }
     setEdit(false); setReason(''); setOutTime(''); onDone()
   }
+  // No honest check-out exists for this IN, so record none: void the check-in.
+  // Same staff_void_event RPC the row's own Delete button already calls — no new
+  // write path, no schema change. The first click fills the shared reason field
+  // with a default instead of voiding, so that required field is the
+  // confirmation step, exactly as it already is for Delete, rather than a second
+  // dialog on top of it. The default is editable before it is submitted.
+  async function voidSession() {
+    if (!reason.trim()) { setReason(VOID_REASON); setVoidArmed(true); setErr(''); return }
+    setBusy(true); setErr('')
+    const { error } = await supabase.rpc('staff_void_event', { p_event: ev.id, p_reason: reason.trim() })
+    setBusy(false)
+    if (error) { setErr(error.message); return }
+    onDone()
+  }
 
   if (edit) {
     return (
@@ -357,6 +415,11 @@ function EventRow({ ev, memberId, onDone, autoFocusEmpty = false, highlight = fa
         {autoFocusEmpty && (
           <div className="mha-fix">
             <span className="mha-fix-label">This check-in has no check-out</span>
+            <div className="mha-step">
+              <button className="mha-btn" onClick={() => stepOut(-30)} disabled={busy || !outTime}>&minus;30m</button>
+              <button className="mha-btn" onClick={() => stepOut(30)} disabled={busy}>+30m</button>
+              <span className="mha-readout">{readout}</span>
+            </div>
             <div className="mha-edit-fields">
               <input
                 ref={outRef}
@@ -369,13 +432,26 @@ function EventRow({ ev, memberId, onDone, autoFocusEmpty = false, highlight = fa
                 {busy ? '…' : 'Add check-out'}
               </button>
             </div>
-            <p className="mha-hint">Blank on purpose — enter the real check-out time. Nothing is guessed or pre-filled.</p>
+            <p className="mha-hint">
+              Blank on purpose — nothing is guessed or pre-filled. Step in half hours from the
+              check-in, or type the exact time in if it is actually known.
+            </p>
+            <div className="mha-fix-void">
+              <button className="mha-btn mha-btn-danger" onClick={voidSession} disabled={busy}>
+                {busy ? '…' : 'Cancel — don\u2019t count this session'}
+              </button>
+              <span className="mha-hint">
+                {voidArmed
+                  ? 'Reason filled in below — edit it if you like, then click again to void this check-in.'
+                  : 'Voids the check-in when no reliable check-out time exists.'}
+              </span>
+            </div>
           </div>
         )}
         <input className="mha-input" type="text" maxLength={300} placeholder="Reason (required)…" value={reason} onChange={e => setReason(e.target.value)} />
         {err && <span className="mha-err">{err}</span>}
         <div className="mha-row-actions">
-          <button className="mha-btn" onClick={() => { setEdit(false); setErr(''); setReason('') }} disabled={busy}>Cancel</button>
+          <button className="mha-btn" onClick={() => { setEdit(false); setErr(''); setReason(''); setVoidArmed(false) }} disabled={busy}>Cancel</button>
           <button className="mha-btn mha-btn-danger" onClick={del} disabled={busy}>{busy ? '…' : 'Delete'}</button>
           <button className="mha-btn mha-btn-go" onClick={save} disabled={busy}>{busy ? '…' : 'Save'}</button>
         </div>

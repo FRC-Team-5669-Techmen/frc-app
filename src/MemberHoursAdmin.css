@@ -144,3 +144,12 @@
   font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.1em; color: var(--gold);
 }
+
+/* Half-hour stepper + its live readout, and the void escape hatch under it. */
+.mha-step { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.mha-readout { font-family: var(--font-mono); font-size: 0.76rem; color: var(--steel); }
+.mha-fix-void {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  border-top: 1px solid var(--border); padding-top: 0.45rem;
+}
+.mha-fix-void .mha-hint { flex: 1 1 12rem; }
