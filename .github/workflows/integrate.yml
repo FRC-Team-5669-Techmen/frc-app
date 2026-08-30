@@ -1,0 +1,84 @@
+# Integrate a green Claude branch into main.
+#
+# On every push to claude/**: install, build, and if the build is green, merge
+# the branch into main and delete it. If the build is red, do nothing else --
+# the branch is LEFT STANDING on purpose, because a standing claude/** branch
+# is the signal that something needs a look. There is no failure notification
+# to wire up and nothing to go and read: the branch list is the report.
+#
+# NOTHING HERE EVER FORCE-PUSHES. The merge is a real merge onto main and the
+# only branch ever deleted is the claude/** branch that was just merged.
+#
+# A NOTE ON WHAT main DOES NOT GET FROM THIS WORKFLOW:
+# pushes made with the default GITHUB_TOKEN do NOT trigger further Actions
+# runs -- GitHub suppresses them deliberately, to stop a workflow that pushes
+# from re-triggering itself forever. So the merge commit this job creates on
+# main starts no workflow run of its own, and `main` therefore receives NO CI
+# run from this file. The build that gated the merge is the one run that ever
+# happens for that code, and it ran on the branch, before the merge. If main
+# ever needs CI in its own right, it needs either a separate workflow with a
+# `push: branches: [main]` trigger (which will still not fire for merges made
+# here) or a personal access token / GitHub App credential in place of
+# GITHUB_TOKEN, which is what lifts the suppression.
+
+name: Integrate claude branches
+
+on:
+  push:
+    branches:
+      - 'claude/**'
+
+concurrency:
+  # One run per branch. A second push while the first is still merging would
+  # otherwise race on the same merge into main.
+  group: integrate-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # The whole history: the merge below needs main's commits, and a
+          # shallow clone has no merge base to work from.
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # Everything past this point runs only on a green build. A red build
+      # fails the job here and the branch stays exactly where it is.
+      - name: Merge into main and delete the branch
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin main "$BRANCH"
+          git checkout -B main origin/main
+          git merge --no-ff "origin/$BRANCH" \
+            -m "Merge $BRANCH into main (build green)"
+
+          # Plain pushes, never --force and never --force-with-lease. If main
+          # moved while this ran, the push is REJECTED and the job fails with
+          # the branch still standing -- which is the same signal a red build
+          # gives, and the right one: a rejected push means somebody else's
+          # work is on main and this merge needs redoing against it.
+          git push origin main
+          git push origin --delete "$BRANCH"
