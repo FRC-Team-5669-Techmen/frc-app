@@ -1,0 +1,371 @@
+/* Weekly survey, mentor side (/surveys). Theme tokens only -- no raw hex
+   (src/theme.css). Class prefix sa-. */
+
+.sa-wrap {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}
+
+.sa-head { margin-bottom: 1rem; }
+
+.sa-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.sa-sub {
+  margin: 0.35rem 0 0;
+  max-width: 44rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: var(--steel);
+}
+
+.sa-muted {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.sa-error {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--fault);
+}
+
+.sa-note {
+  display: block;
+  margin-top: 0.2rem;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+/* ── Inputs ── */
+.sa-input {
+  padding: 0.45rem 0.55rem;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-sizing: border-box;
+}
+.sa-input:focus { outline: none; border-color: var(--gold); }
+.sa-area { width: 100%; resize: vertical; font-family: var(--font-mono); }
+.sa-num  { width: 5rem; }
+
+.sa-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.65rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sa-label-inline { margin-bottom: 0; }
+
+.sa-row { display: flex; gap: 0.75rem; }
+
+.sa-check {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--steel);
+  cursor: pointer;
+}
+.sa-check-off { color: var(--muted); cursor: default; }
+
+/* ── Buttons ── */
+.sa-btn {
+  min-height: 2.25rem;
+  padding: 0 0.8rem;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--steel);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sa-btn:disabled { color: var(--muted); cursor: default; }
+.sa-btn-go:not(:disabled)     { color: var(--gold); border-color: var(--gold-a24); }
+.sa-btn-go:hover:not(:disabled) { background: var(--gold-a08); }
+.sa-btn-danger:not(:disabled) { color: var(--fault); border-color: var(--fault); }
+.sa-btn-danger:hover:not(:disabled) { background: var(--fault-a10); }
+
+.sa-mini {
+  width: 1.9rem;
+  height: 1.9rem;
+  font-family: var(--font-mono);
+  color: var(--steel);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.sa-mini:disabled { color: var(--muted); cursor: default; }
+
+/* ── New survey form ── */
+.sa-new {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+  margin: 0.9rem 0 1.1rem;
+  padding: 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.sa-new > .sa-input { flex: 1 1 14rem; }
+
+/* ── Survey list ── */
+.sa-list { list-style: none; margin: 0 0 1.25rem; padding: 0; }
+
+.sa-item {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.4rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.sa-item-on { border-color: var(--gold-a24); }
+
+.sa-item-btn {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sa-pill {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  padding: 0.12rem 0.35rem;
+  color: var(--muted);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.sa-pill-open { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+
+.sa-item-title {
+  font-family: var(--font-ui);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.sa-item-meta {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+/* ── Detail ── */
+.sa-detail {
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--border-strong);
+}
+
+.sa-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.9rem; }
+.sa-tab {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.75rem;
+  color: var(--steel);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.sa-tab-on { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+
+/* ── Question editor ── */
+.sa-qs { list-style: none; margin: 0 0 0.75rem; padding: 0; }
+
+.sa-q {
+  margin-bottom: 0.4rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.sa-q-bar {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+}
+
+.sa-q-num { font-family: var(--font-mono); font-size: 0.7rem; color: var(--gold-dim); }
+
+.sa-q-open {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.sa-q-prompt { font-family: var(--font-ui); font-size: 0.9rem; font-weight: 600; color: var(--text); }
+.sa-q-kind {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sa-q-move { display: flex; gap: 0.25rem; }
+
+.sa-q-edit {
+  padding: 0.75rem 0.6rem 0.8rem;
+  border-top: 1px solid var(--border-strong);
+}
+
+.sa-kinds { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.65rem; }
+.sa-chip {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  color: var(--steel);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.sa-chip-on { color: var(--text); background: var(--gold-a14); border-color: var(--gold); }
+
+.sa-q-actions { display: flex; gap: 0.5rem; margin-top: 0.7rem; }
+
+/* ── Results ── */
+.sa-results-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+.sa-count {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--gold);
+}
+.sa-attr { color: var(--steel); }
+
+.sa-res {
+  margin-bottom: 1.1rem;
+  padding: 0.8rem 0.75rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.sa-res-prompt {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.sa-res-meta {
+  margin: 0.2rem 0 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sa-bars { list-style: none; margin: 0; padding: 0; }
+.sa-bar { margin-bottom: 0.55rem; }
+.sa-bar-head {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.2rem;
+}
+.sa-bar-label { font-family: var(--font-ui); font-size: 0.85rem; color: var(--text); }
+.sa-bar-n     { font-family: var(--font-mono); font-size: 0.72rem; color: var(--steel); }
+.sa-unlisted  { font-family: var(--font-mono); font-size: 0.62rem; color: var(--gold-dim); }
+
+.sa-bar-track {
+  height: 0.45rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+/* Small-area gold IS the active state: a progress bar is a per-row control,
+   so it fills rather than outlines. */
+.sa-bar-fill { height: 100%; background: var(--gold); }
+
+.sa-bar-who {
+  margin: 0.25rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+.sa-texts { list-style: none; margin: 0; padding: 0; }
+.sa-textrow {
+  padding: 0.5rem 0.55rem;
+  margin-bottom: 0.35rem;
+  background: var(--surface-2);
+  border-left: 2px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.sa-who {
+  display: block;
+  margin-bottom: 0.15rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold-dim);
+}
+.sa-said {
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--text);
+  white-space: pre-wrap;
+}
