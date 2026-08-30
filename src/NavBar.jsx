@@ -38,6 +38,8 @@ const CONTEXT_TAGS = [
   ['/access-requests', 'ACCESS'],
   ['/applications', 'APPS'],
   ['/feedback',    'FEEDBACK'],
+  ['/surveys',     'SURVEYS'],
+  ['/survey',      'SURVEY'],
   ['/verify-hours','HRS//VERIFY'],
   ['/reports',     'REPORTS'],
   ['/certify',     'CERTIFY'],
@@ -123,6 +125,12 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
           {!isParent && (
             <NavLink to="/study" data-tour="nav-study" className={itemClass}>Study</NavLink>
           )}
+          {/* Weekly survey. Sits beside Study because it is the same audience
+              -- a member tool, not staff chrome -- and because a sixth item in
+              the primary row does not survive a phone. */}
+          {!isParent && (
+            <NavLink to="/survey" className={itemClass}>Weekly Survey</NavLink>
+          )}
           <button className="nav-dropdown-item" onClick={replayTour}>Replay tour</button>
 
           {isStaff && (
@@ -137,6 +145,8 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
                   {openFeedback > 0 && <span className="nav-badge">{openFeedback}</span>}
                 </NavLink>
               )}
+
+              <NavLink to="/surveys" className={itemClass}>Surveys</NavLink>
 
               <span className="nav-dropdown-section">People</span>
               {isAdmin && <NavLink to="/roster" className={itemClass}>Roster</NavLink>}

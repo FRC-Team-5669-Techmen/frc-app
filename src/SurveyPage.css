@@ -1,0 +1,318 @@
+/* Weekly survey, member side (/survey). Theme tokens only -- no raw hex
+   (src/theme.css). Class prefix sv-.
+
+   MOBILE FIRST in the literal sense: every rule below is written for a phone
+   held in one hand in the shop, and the only media query WIDENS things for a
+   desktop. Tap targets are full-width rows at 48px minimum, which is why there
+   is not a <select> anywhere in the page. */
+
+.sv-wrap {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 1rem 0.9rem 4rem;
+}
+
+.sv-head { margin-bottom: 1.25rem; }
+
+.sv-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.sv-lede {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--steel);
+}
+
+.sv-stamp,
+.sv-muted {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.sv-error {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--fault);
+}
+
+/* ── Cards for the non-form states ── */
+.sv-card {
+  padding: 1.5rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  text-align: center;
+}
+.sv-card-done { border-color: var(--gold-a24); }
+.sv-card-quiet { text-align: left; }
+
+.sv-check {
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 0.9rem;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  color: var(--gold);
+  border: 2px solid var(--gold);
+  border-radius: 50%;
+}
+
+.sv-retry {
+  margin-top: 1rem;
+  min-height: 2.75rem;
+  padding: 0 1.2rem;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gold);
+  background: transparent;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.sv-retry:hover { background: var(--gold-a08); }
+
+/* ── One question, one card ── */
+.sv-q {
+  margin-bottom: 1rem;
+  padding: 1rem 0.9rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+/* An unanswered required question after a submit attempt. --fault is reserved
+   for genuine faults, and a blocked submission is one. */
+.sv-q-flagged { border-color: var(--fault); }
+
+.sv-q-head {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+
+.sv-q-num {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--gold-dim);
+}
+
+.sv-q-prompt {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.sv-q-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.35rem 0 0.85rem 1.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sv-req      { color: var(--gold-dim); }
+.sv-optional { color: var(--muted); }
+.sv-hint     { color: var(--muted); }
+
+.sv-unconfigured {
+  margin: 0;
+  padding: 0.7rem 0.75rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+/* ── Tappable options. Never a dropdown. ── */
+.sv-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sv-opt {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--steel);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.sv-opt:hover { border-color: var(--gold-a24); }
+
+/* Small-area gold IS the active state -- see the branding note in CLAUDE.md.
+   These are per-row controls, so they fill rather than outline. */
+.sv-opt-on {
+  color: var(--text);
+  background: var(--gold-a08);
+  border-color: var(--gold);
+}
+
+.sv-mark {
+  flex: 0 0 auto;
+  width: 1.3rem;
+  height: 1.3rem;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  color: var(--bg);
+  border: 1px solid var(--border-strong);
+  background: transparent;
+}
+.sv-mark-single { border-radius: 50%; }
+.sv-mark-multi  { border-radius: var(--radius-sm); }
+.sv-opt-on .sv-mark { background: var(--gold); border-color: var(--gold); }
+
+.sv-opt-label { flex: 1 1 auto; }
+
+/* ── Scale ── */
+.sv-scale {
+  display: flex;
+  gap: 0.4rem;
+}
+.sv-tick {
+  flex: 1 1 0;
+  min-height: 3rem;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--steel);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.sv-tick-on {
+  color: var(--text);
+  background: var(--gold-a14);
+  border-color: var(--gold);
+}
+.sv-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+/* ── Free text ── */
+.sv-text {
+  width: 100%;
+  padding: 0.65rem 0.7rem;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;   /* >=16px equivalent avoids iOS zoom-on-focus */
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  resize: vertical;
+  box-sizing: border-box;
+}
+.sv-text:focus { outline: none; border-color: var(--gold); }
+
+/* ── Footer ── */
+/* The plate is OPAQUE, and it runs edge to edge -- the negative margin cancels
+   .sv-wrap's padding so nothing scrolls past uncovered in the gutters.
+   FOUND BY LOOKING AT IT: the first version faded the whole 100px band with
+   `linear-gradient(transparent, var(--bg) 22%)`, which put the answered counter
+   in the still-transparent part, painted over whatever textarea border happened
+   to be behind it. Unreadable on a phone, and invisible to any measurement that
+   only asks whether the element is on screen. */
+.sv-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin: 1.25rem -0.9rem 0;
+  padding: 0.6rem 0.9rem 0.9rem;
+  background: var(--bg);
+}
+
+/* A short fade ABOVE the plate, so content passing under it is not cut by a
+   hard line. Purely decorative: it sits outside the plate and catches no taps. */
+.sv-footer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 1.4rem;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+  pointer-events: none;
+}
+
+.sv-count {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Full-width hero action: gold LABEL and gold BORDER on the dark plate, with
+   the fill kept for hover and focus. A gold slab at this size out-shouts the
+   team mark -- the same rule the landing CTA and the access-gate submit follow. */
+.sv-submit {
+  width: 100%;
+  min-height: 3.25rem;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: transparent;
+  border: 2px solid var(--gold);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.sv-submit:hover:not(:disabled),
+.sv-submit:focus-visible:not(:disabled) {
+  color: var(--bg);
+  background: var(--gold);
+}
+.sv-submit:disabled {
+  color: var(--muted);
+  border-color: var(--border-strong);
+  cursor: default;
+}
+
+@media (min-width: 40rem) {
+  .sv-wrap   { padding: 1.5rem 1rem 4rem; }
+  .sv-q      { padding: 1.15rem 1.1rem 1.25rem; }
+  /* The wrap's side padding changes here, so the plate's cancel must too. */
+  .sv-footer { margin: 1.25rem -1rem 0; padding: 0.6rem 1rem 0.9rem; }
+}
