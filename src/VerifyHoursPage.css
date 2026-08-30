@@ -382,3 +382,17 @@
   font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em;
   border: 1px solid currentColor; border-radius: var(--radius); padding: 0.05rem 0.4rem;
 }
+
+/* ── Anomaly resolve panel (replaces the list while one item is being fixed) ── */
+.vh-resolve {
+  display: flex; flex-direction: column; gap: 0.75rem;
+  border: 1px solid var(--border-strong); border-radius: var(--radius);
+  padding: 0.9rem;
+}
+.vh-resolve-head {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+}
+.vh-resolve-who {
+  font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.06em;
+}

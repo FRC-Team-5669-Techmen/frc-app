@@ -127,3 +127,20 @@
 .mha-adj-date { color: var(--muted); font-family: var(--font-mono); font-size: 0.72rem; margin-left: auto; }
 
 .mha-err { color: var(--fault); font-size: 0.78rem; font-family: var(--font-mono); width: 100%; }
+
+/* ── Anomaly Resolve target ──
+   The row jumped to from the Attendance Anomalies list. Same gold lift the
+   .mha-add-toggle hover already uses; it fades out after ~2s so the highlight
+   marks the row without becoming a permanent state on it. */
+.mha-row { transition: border-color 0.5s, background 0.5s; }
+.mha-row-focus { border-color: var(--gold); background: var(--gold-a14); }
+
+/* Missing-check-out field, shown only on an anomaly-flagged unclosed IN. */
+.mha-fix {
+  display: flex; flex-direction: column; gap: 0.35rem;
+  border-left: 2px solid var(--gold-dim); padding-left: 0.6rem;
+}
+.mha-fix-label {
+  font-family: var(--font-ui); font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--gold);
+}

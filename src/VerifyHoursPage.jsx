@@ -34,6 +34,14 @@ const ANOMALY_META = {
   geofence:  { short: 'Geofence',  color: 'var(--hr-outreach)' },
 }
 
+// Anomalies whose fix is "this check-in is missing its check-out", which the
+// per-member events panel can be pointed straight at. `overlap` and `geofence`
+// are deliberately NOT here: an overlap needs a judgement about which of two
+// sessions is wrong, and a geofence flag is about where a member was, not about
+// a malformed pair — neither resolves by editing one row, so neither gets a
+// button that implies it does.
+const RESOLVABLE_KINDS = new Set(['capped', 'double_in'])
+
 function fmtDuration(ms) {
   if (!ms || ms < 0) return '—'
   const totalMins = Math.round(ms / 60000)
@@ -185,6 +193,10 @@ export default function VerifyHoursPage({ session, hasRole }) {
 
   // Advisory attendance anomalies
   const [anomalies, setAnomalies] = useState(null)
+  // The anomaly currently being resolved: swaps the list out for a member-scoped
+  // MemberHoursAdmin. Nothing about it is persisted — going back re-runs the
+  // detection, so a genuinely fixed item simply stops being reported.
+  const [resolving, setResolving] = useState(null)
 
   useEffect(() => {
     if (!isStaff) return
@@ -209,6 +221,14 @@ export default function VerifyHoursPage({ session, hasRole }) {
       .order('created_at', { ascending: true })
       .then(({ data }) => setEntries(data ?? []))
   }, [isStaff]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Anomaly resolve ─────────────────────────────────────────────────────────
+
+  function backToAnomalies() {
+    setResolving(null)
+    setAnomalies(null)
+    fetchAnomalies().then(rows => setAnomalies(rows))
+  }
 
   // ── Missed-checkout actions ─────────────────────────────────────────────────
 
@@ -498,10 +518,27 @@ export default function VerifyHoursPage({ session, hasRole }) {
           {anomalies?.length > 0 && <span className="vh-badge">{anomalies.length}</span>}
         </div>
         <p className="vh-anom-note">
-          Advisory review only — nothing is auto-deleted. Fix via Team Hours → a member's sessions (edit / void / manual entry).
+          Advisory review only — nothing is auto-deleted or auto-corrected. Capped and
+          double-check-in items carry a <strong>Resolve</strong> button that opens that
+          member's attendance events with the flagged row highlighted; you still enter
+          every value by hand. Overlaps and geofence flags, and anything else, are fixed
+          via Team Hours → a member's sessions (edit / void / manual entry).
         </p>
 
-        {anomalies === null ? (
+        {resolving ? (
+          <div className="vh-resolve">
+            <div className="vh-resolve-head">
+              <button className="vh-btn vh-reject" onClick={backToAnomalies}>← Back to anomalies</button>
+              <span className="vh-resolve-who">{resolving.name} · {resolving.label}</span>
+            </div>
+            {/* Keyed so a second Resolve on the same member remounts and re-focuses. */}
+            <MemberHoursAdmin
+              key={`${resolving.memberId}:${resolving.eventIds.join(',')}`}
+              initialMemberId={resolving.memberId}
+              focusEventIds={resolving.eventIds}
+            />
+          </div>
+        ) : anomalies === null ? (
           <div className="vh-loading"><div className="vh-spinner" /></div>
         ) : anomalies.length === 0 ? (
           <div className="vh-empty">
@@ -512,6 +549,7 @@ export default function VerifyHoursPage({ session, hasRole }) {
           <div className="vh-list">
             {anomalies.map((a, i) => {
               const meta = ANOMALY_META[a.kind] ?? { short: a.kind, color: 'var(--steel)' }
+              const canResolve = RESOLVABLE_KINDS.has(a.kind) && a.member?.id && a.eventIds?.length
               return (
                 <div key={i} className="vh-card vh-anom-card">
                   <div className="vh-card-top">
@@ -523,6 +561,21 @@ export default function VerifyHoursPage({ session, hasRole }) {
                     <span className="vh-time-label">{a.label}</span>
                     <span className="vh-time-val">{fmtDateTime(a.at)}</span>
                   </div>
+                  {canResolve && (
+                    <div className="vh-actions">
+                      <button
+                        className="vh-btn vh-approve"
+                        onClick={() => setResolving({
+                          memberId: a.member.id,
+                          eventIds: a.eventIds,
+                          name:     displayName(a.member),
+                          label:    meta.short,
+                        })}
+                      >
+                        Resolve
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             })}
