@@ -177,7 +177,14 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
 }
+/* Small-area gold IS the active state, per the branding rules in CLAUDE.md --
+   a pill is exactly the size where a gold fill reads as "this is the live one".
+   EXPIRED and SCHEDULED stay outlined: the switch is on but nothing is live,
+   so a filled pill would say the opposite of what is true. Neither is a fault,
+   so neither is --fault red. */
 .sa-pill-open { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+.sa-pill-expired   { color: var(--steel); border-color: var(--steel); }
+.sa-pill-scheduled { color: var(--gold-dim); border-color: var(--gold-a24); }
 
 .sa-item-title {
   font-family: var(--font-ui);
@@ -189,6 +196,11 @@
   font-family: var(--font-mono);
   font-size: 0.68rem;
   color: var(--muted);
+}
+.sa-item-counts {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--steel);
 }
 
 /* ── Detail ── */
@@ -368,4 +380,56 @@
   line-height: 1.45;
   color: var(--text);
   white-space: pre-wrap;
+}
+
+/* ── Manage (Settings tab) ── */
+.sa-note-line {
+  margin: 0 0 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--gold-dim);
+}
+.sa-export-note {
+  margin: -0.4rem 0 0.9rem;
+  font-size: 0.72rem;
+}
+.sa-results-head { flex-wrap: wrap; }
+
+.sa-settings { display: grid; gap: 1.1rem; }
+.sa-meta { display: grid; gap: 0.7rem; justify-items: start; }
+.sa-meta .sa-input { min-width: 0; }
+
+.sa-manage {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+.sa-manage-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.sa-manage-danger { border-color: var(--fault); }
+.sa-manage-row > div { flex: 1 1 16rem; }
+.sa-manage-title {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.sa-manage-row .sa-muted { margin: 0; font-size: 0.76rem; line-height: 1.45; }
+.sa-confirm {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--fault);
 }

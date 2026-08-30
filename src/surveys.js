@@ -210,3 +210,109 @@ export function scaleTicks(question) {
   for (let i = min; i <= max; i++) out.push(i)
   return out
 }
+
+// ── Survey state ─────────────────────────────────────────────────────────────
+// The management list needs a word for each survey, and "open" alone is a lie
+// in two directions. is_open is a switch a mentor throws; the window is what
+// decides whether throwing it did anything. Both are read here so the list
+// never shows OPEN for a survey the member surface refuses to serve -- which is
+// exactly the defect the seeded survey hit when opens_at was a day in the
+// future (see the opens_at comment in supabase/weekly_surveys.sql).
+//
+//   closed    -> is_open false. Nothing else matters.
+//   expired   -> is_open true but closes_at has passed. Live switch, dead window.
+//   scheduled -> is_open true but opens_at has not arrived yet.
+//   open      -> is_open true and inside the window. THE one resolveOpenSurvey
+//                returns, and at most one row can be in this state at a time.
+export function surveyState(survey, now = Date.now()) {
+  const t = now instanceof Date ? now.getTime() : now
+  if (!survey?.is_open) return 'closed'
+  if (survey.closes_at && new Date(survey.closes_at).getTime() <= t) return 'expired'
+  if (survey.opens_at  && new Date(survey.opens_at).getTime()  >  t) return 'scheduled'
+  return 'open'
+}
+
+export const SURVEY_STATE_LABEL = {
+  closed:    'CLOSED',
+  expired:   'EXPIRED',
+  scheduled: 'SCHEDULED',
+  open:      'OPEN',
+}
+
+// ── Duplicate ────────────────────────────────────────────────────────────────
+// The weekly cadence is: duplicate last week, swap the rotating question, open.
+// The title has to be distinct enough that the list is readable on a Sunday
+// night, so the copy is suffixed and the suffix counts up rather than colliding.
+export function duplicateTitle(title, existing = []) {
+  const taken = new Set((existing ?? []).map(t => String(t)))
+  const base = String(title ?? '').replace(/\s*\(copy(?: \d+)?\)\s*$/, '').trim() || 'Untitled'
+  let candidate = `${base} (copy)`
+  let n = 2
+  while (taken.has(candidate)) candidate = `${base} (copy ${n++})`
+  return candidate
+}
+
+// The question rows for a copy: everything that defines the question, and
+// nothing that ties it to the survey it came from. Positions are RENUMBERED
+// from the sorted order rather than copied, so a source survey whose rows share
+// a position (the index is not unique -- see the migration) lands as a clean
+// 1..n in the copy.
+export function duplicateQuestionRows(surveyId, questions) {
+  return sortQuestions(questions).map((q, i) => ({
+    survey_id: surveyId,
+    position:  i + 1,
+    kind:      q.kind,
+    prompt:    q.prompt,
+    options:   q.options ?? [],
+    required:  !!q.required,
+  }))
+}
+
+// ── CSV export ───────────────────────────────────────────────────────────────
+// One row per response, one column per question, plus submitted_at.
+function csvCell(v) {
+  const s = v === undefined || v === null ? '' : String(v)
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
+
+// How one stored answer reads in a spreadsheet cell. Multi is joined rather
+// than exploded into one column per option: the column is the QUESTION, and a
+// mentor filtering a sheet wants one cell to read as one person's answer.
+export function answerCsvValue(kind, value) {
+  if (value === undefined || value === null) return ''
+  if (kind === 'multi') return Array.isArray(value) ? value.map(String).join('; ') : String(value)
+  return String(value)
+}
+
+// `attributed` is the SAME toggle that governs the on-screen names, and it is
+// wired to the export on purpose: a CSV is the easiest way for an anonymous
+// aggregate to quietly become a named one, so the export can only carry names
+// while the surface is already showing them. The Member column is always
+// present so the sheet's shape does not change under the mentor -- it is the
+// VALUES that are withheld.
+//
+// submitted_at is emitted as the stored ISO instant rather than a formatted
+// local time: it is the record, it sorts correctly in every spreadsheet, and a
+// reformatted timestamp is the kind of thing that silently loses a zone.
+export function buildResultsCsv({ questions, responses, answers, attributed = false, nameOf }) {
+  const qs = sortQuestions(questions)
+  const byResponse = new Map()
+  for (const a of answers ?? []) {
+    if (!byResponse.has(a.response_id)) byResponse.set(a.response_id, new Map())
+    byResponse.get(a.response_id).set(a.question_id, a.value)
+  }
+
+  const header = ['Member', 'Submitted at', ...qs.map(q => q.prompt)]
+  const lines = [header.map(csvCell).join(',')]
+
+  for (const r of responses ?? []) {
+    const cells = byResponse.get(r.id) ?? new Map()
+    lines.push([
+      attributed ? (nameOf ? nameOf(r) : (r.member_id ?? '')) : '',
+      r.submitted_at ?? '',
+      ...qs.map(q => answerCsvValue(q.kind, cells.get(q.id))),
+    ].map(csvCell).join(','))
+  }
+
+  return lines.join('\r\n')
+}

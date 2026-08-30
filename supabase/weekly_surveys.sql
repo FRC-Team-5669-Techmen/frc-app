@@ -59,6 +59,15 @@ create table if not exists public.surveys (
 -- first and then opens the new one, as two writes -- see SurveysAdmin.jsx. If
 -- two mentors race, the index is what decides, and the loser gets an error
 -- instead of a second open survey.
+--
+-- DUPLICATING A SURVEY WHILE ANOTHER IS OPEN IS SAFE, and it is this WHERE
+-- clause that makes it so: a row with is_open false is not in the index at all,
+-- so it cannot collide. SurveysAdmin.jsx's duplicate therefore always writes
+-- is_open false and leaves opening as a separate click. Measured against this
+-- index, not assumed: with the seeded survey open, inserting a closed copy
+-- succeeds and leaves `select count(*) from surveys where is_open` at 1, while
+-- inserting the same copy with is_open true raises
+-- "duplicate key value violates unique constraint surveys_one_open_idx".
 create unique index if not exists surveys_one_open_idx
   on public.surveys ((true)) where (is_open);
 
@@ -233,6 +242,35 @@ grant select, insert                 on public.survey_answers   to authenticated
 -- revokes an update or delete on a submitted answer is blocked only by the
 -- absence of a policy, which fails SILENTLY at 0 rows -- the same class of bug
 -- the roster role edits hit. Revoking makes it raise 42501 instead.
+--
+-- THESE REVOKES DO NOT BLOCK THE ON DELETE CASCADE, and that was MEASURED
+-- rather than reasoned about, because the whole management surface in
+-- SurveysAdmin.jsx rests on it: deleting a survey is what removes its
+-- questions, responses and answers, and if the revoke reached the cascade the
+-- delete would fail halfway with a foreign-key violation.
+--
+-- Run against a real PostgreSQL 16 with these exact grants and revokes in
+-- force, calling as a staff member under the `authenticated` role:
+--
+--   direct  delete from public.survey_answers    -> ERROR 42501 permission denied
+--   direct  delete from public.survey_responses  -> ERROR 42501 permission denied
+--   delete from public.surveys where id = ...    -> surveys 1->0, questions 5->0,
+--                                                   responses 2->0, answers 3->0
+--
+-- The two direct deletes are the control: they are what makes the third line
+-- mean something rather than just "authenticated could delete these anyway".
+--
+-- WHY: PostgreSQL implements a cascade as an internal referential-integrity
+-- trigger that runs as the OWNER of the referencing table (and with row
+-- security not forced), so the caller's table-level grants and the RLS
+-- policies are not consulted for the rows the cascade removes. Only the
+-- initiating `delete from public.surveys` is checked against the caller, and
+-- that one is granted here and gated by the "surveys write staff" policy --
+-- verified too: the same delete as a NON-staff member removes nothing.
+--
+-- So do NOT "fix" this by granting delete on the child tables. The grant is
+-- not needed, and adding it would hand every member a direct delete on other
+-- people's submitted answers, which is the one thing this block exists to stop.
 revoke update, delete, truncate on public.survey_responses from authenticated;
 revoke update, delete, truncate on public.survey_answers   from authenticated;
 revoke truncate on public.surveys          from authenticated;

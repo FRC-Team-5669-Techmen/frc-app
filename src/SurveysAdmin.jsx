@@ -3,7 +3,8 @@ import { supabase } from './supabase'
 import { displayName } from './names'
 import {
   QUESTION_KINDS, KIND_LABEL, sortQuestions, optionsOf, scaleOf,
-  aggregate, resolveOpenSurvey,
+  aggregate, resolveOpenSurvey, surveyState, SURVEY_STATE_LABEL,
+  duplicateTitle, duplicateQuestionRows, buildResultsCsv,
 } from './surveys'
 import './SurveysAdmin.css'
 
@@ -12,8 +13,14 @@ import './SurveysAdmin.css'
 // of an empty list; the "write staff" policies in supabase/weekly_surveys.sql
 // are what actually enforce it.
 //
-// Three jobs: author a survey and its questions (with reorder), open and close
-// it, and read the results.
+// Four jobs: author a survey and its questions (with reorder), open and close
+// it, read the results, and MANAGE the set of surveys -- rename, re-window,
+// duplicate, export and delete.
+//
+// Duplicate is the one that makes the weekly cadence survivable, and it is why
+// the rest exists: the normal week is "duplicate last week, swap the rotating
+// question, open". Without it every week is a re-author from an empty form,
+// which is how a weekly survey quietly becomes a monthly one.
 
 function fmtDateTime(iso) {
   if (!iso) return '—'
@@ -161,12 +168,34 @@ function QuestionRow({ q, index, count, onSave, onDelete, onMove, busy }) {
 }
 
 // ── Results ──────────────────────────────────────────────────────────────────
-function Results({ questions, answers, responses, attributed, onAttributed }) {
+function Results({ survey, questions, answers, responses, attributed, onAttributed }) {
   const rows = useMemo(() => aggregate(questions, answers), [questions, answers])
   const nameOf = useCallback(id => {
     const r = responses.find(x => x.member_id === id)
     return r?.author ? displayName(r.author) : 'Member'
   }, [responses])
+
+  // The export and the on-screen names are ONE decision, deliberately: a CSV is
+  // the easiest way for an anonymous aggregate to quietly become a named one,
+  // so the Member column only fills in while the surface is already showing
+  // names. The column itself is always there, so the sheet's shape does not
+  // change under the mentor -- it is the values that are withheld.
+  function exportCsv() {
+    const csv = buildResultsCsv({
+      questions, responses, answers, attributed,
+      nameOf: r => (r.author ? displayName(r.author) : 'Member'),
+    })
+    const slug = String(survey?.title ?? 'survey')
+      .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'survey'
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${slug}-results.csv`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="sa-results">
@@ -181,7 +210,15 @@ function Results({ questions, answers, responses, attributed, onAttributed }) {
           <input type="checkbox" checked={attributed} onChange={e => onAttributed(e.target.checked)} />
           Show who said what
         </label>
+        <button type="button" className="sa-btn" data-test="export-csv" onClick={exportCsv}>
+          Export CSV
+        </button>
       </div>
+      <p className="sa-muted sa-export-note">
+        {attributed
+          ? 'The export will name who said what, because attribution is on.'
+          : 'The export leaves the Member column empty while attribution is off.'}
+      </p>
 
       {!responses.length && <p className="sa-muted">Nobody has answered yet.</p>}
 
@@ -262,13 +299,42 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
   const [newOpens, setNewOpens]   = useState('')
   const [newCloses, setNewCloses] = useState('')
 
+  // Per-survey counts for the list. NOT lazy and not behind a click: the
+  // response count is the number that makes a delete safe to press, and a
+  // count you have to go looking for is a count nobody looks at.
+  const [counts, setCounts] = useState({})   // { [surveyId]: { questions, responses } }
+
+  // Delete is two clicks. The first arms it; the second, which names the exact
+  // number of responses and answers about to go, is the one that destroys.
+  const [armed, setArmed] = useState(null)
+
+  const [editTitle, setEditTitle]   = useState('')
+  const [editOpens, setEditOpens]   = useState('')
+  const [editCloses, setEditCloses] = useState('')
+  const [note, setNote]             = useState('')
+
   const loadSurveys = useCallback(async () => {
     setLoading(true)
-    const { data, error: e } = await supabase
-      .from('surveys')
-      .select('id, title, opens_at, closes_at, is_open, created_at')
-      .order('created_at', { ascending: false })
+    // Three reads rather than a PostgREST count embed: the counts are wanted
+    // for EVERY row, and ids alone are small. Both child tables are staff-
+    // readable, so this is one round trip each rather than N.
+    const [{ data, error: e }, { data: qrows }, { data: rrows }] = await Promise.all([
+      supabase.from('surveys')
+        .select('id, title, opens_at, closes_at, is_open, created_at')
+        .order('created_at', { ascending: false }),
+      supabase.from('survey_questions').select('id, survey_id'),
+      supabase.from('survey_responses').select('id, survey_id'),
+    ])
     if (e) setError(e.message)
+    const tally = {}
+    const bump = (id, key) => {
+      if (!id) return
+      tally[id] = tally[id] ?? { questions: 0, responses: 0 }
+      tally[id][key] += 1
+    }
+    for (const q of qrows ?? []) bump(q.survey_id, 'questions')
+    for (const r of rrows ?? []) bump(r.survey_id, 'responses')
+    setCounts(tally)
     setSurveys(data ?? [])
     setLoading(false)
     return data ?? []
@@ -307,10 +373,36 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
     setSelected(id)
     setTab('questions')
     setAttributed(false)
+    setArmed(null)
+    setNote('')
     loadDetail(id)
   }
 
   const survey = surveys.find(s => s.id === selected) ?? null
+
+  // The settings form is seeded from the selected survey rather than kept in
+  // sync with it: a mentor mid-edit must not have their typing overwritten by
+  // a background reload.
+  // The note is a confirmation of something that just happened, so it expires.
+  // FOUND BY LOOKING at the rendered page rather than by measuring it: after a
+  // delete the page kept "Deleted." pinned at the top while the mentor went on
+  // to open a different survey's settings, where it read as a statement about
+  // THAT survey.
+  useEffect(() => {
+    if (!note) return
+    const t = setTimeout(() => setNote(''), 6000)
+    return () => clearTimeout(t)
+  }, [note])
+
+  // Keyed on the survey's id, NOT on `selected`: the row arrives one render
+  // after the id does, and seeding on `selected` alone would fill the form
+  // from a survey that is still null and then never re-seed.
+  useEffect(() => {
+    if (!survey) return
+    setEditTitle(survey.title ?? '')
+    setEditOpens(toLocalInput(survey.opens_at))
+    setEditCloses(toLocalInput(survey.closes_at))
+  }, [survey?.id])  // eslint-disable-line react-hooks/exhaustive-deps
 
   async function createSurvey(e) {
     e.preventDefault()
@@ -350,6 +442,85 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
     setBusy(false)
     if (e2) { setError(e2.message); return }
     await loadSurveys()
+  }
+
+  // ── Manage ─────────────────────────────────────────────────────────────────
+  // Title and window, after creation. Nothing here touches is_open: opening is
+  // its own two-write dance because of surveys_one_open_idx (see setOpen), and
+  // folding it into a general save would hide that.
+  async function saveSurveyMeta(e) {
+    e.preventDefault()
+    if (!survey || !editTitle.trim() || busy) return
+    setBusy(true); setError(''); setNote('')
+    const { error: e2 } = await supabase.from('surveys').update({
+      title: editTitle.trim(),
+      opens_at: fromLocalInput(editOpens),
+      closes_at: fromLocalInput(editCloses),
+    }).eq('id', survey.id)
+    setBusy(false)
+    if (e2) { setError(e2.message); return }
+    setNote('Saved.')
+    await loadSurveys()
+  }
+
+  // Copies title (suffixed), questions, positions and options. Copies NO
+  // responses -- there is no path that could, and there should not be: a
+  // response is a record of one person answering one survey.
+  //
+  // THE COPY LANDS CLOSED, which is also what keeps this safe to press while
+  // another survey is open: surveys_one_open_idx is a partial unique index on
+  // ((true)) where is_open, so a row with is_open false is not in the index at
+  // all and cannot collide with the live one. Opening the copy is a separate,
+  // deliberate click that goes through setOpen's close-then-open.
+  async function duplicateSurvey() {
+    if (!survey || busy) return
+    setBusy(true); setError(''); setNote('')
+
+    const title = duplicateTitle(survey.title, surveys.map(s => s.title))
+    const { data: created, error: e1 } = await supabase.from('surveys').insert({
+      title,
+      opens_at: null,
+      closes_at: null,
+      is_open: false,
+      created_by: session?.user?.id ?? null,
+    }).select('id').single()
+    if (e1) { setBusy(false); setError(e1.message); return }
+
+    // The copy's questions come from the SELECTED survey's already-loaded rows,
+    // which is the same list the mentor is looking at.
+    const rows = duplicateQuestionRows(created.id, questions)
+    if (rows.length) {
+      const { error: e2 } = await supabase.from('survey_questions').insert(rows)
+      if (e2) { setBusy(false); setError(e2.message); return }
+    }
+
+    setBusy(false)
+    await loadSurveys()
+    pick(created.id)
+    setNote(`Duplicated as "${title}" — closed, with ${rows.length} ${rows.length === 1 ? 'question' : 'questions'} and no responses.`)
+  }
+
+  // The delete itself. The arming and the count-naming live in the render; by
+  // the time this runs the mentor has read the numbers and clicked twice.
+  //
+  // survey_questions, survey_responses and survey_answers all go with it
+  // through ON DELETE CASCADE. The `revoke delete ... from authenticated` in
+  // the migration does NOT block that: a cascade runs as the referencing
+  // table's owner, so it is not subject to the caller's table grants -- see the
+  // note at the revokes in supabase/weekly_surveys.sql, which records the test.
+  async function deleteSurvey(id) {
+    setBusy(true); setError(''); setNote('')
+    const { error: e } = await supabase.from('surveys').delete().eq('id', id)
+    setBusy(false)
+    if (e) { setError(e.message); return }
+    setArmed(null)
+    setSelected(null)
+    setQuestions([]); setResponses([]); setAnswers([])
+    const list = await loadSurveys()
+    // pick() clears the note, so the note is set after it, not before.
+    const next = resolveOpenSurvey(list) ?? list[0] ?? null
+    if (next) pick(next.id)
+    setNote('Deleted.')
   }
 
   async function addQuestion() {
@@ -424,6 +595,7 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
       </header>
 
       {error && <p className="sa-error">{error}</p>}
+      {note && <p className="sa-note-line" data-test="note">{note}</p>}
 
       <form className="sa-new" onSubmit={createSurvey}>
         <input className="sa-input" placeholder="New survey title, e.g. Week of Sep 7"
@@ -444,17 +616,31 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
       {loading && <p className="sa-muted">Loading…</p>}
 
       <ul className="sa-list">
-        {surveys.map(s => (
-          <li key={s.id} className={`sa-item${s.id === selected ? ' sa-item-on' : ''}`}>
+        {surveys.map(s => {
+          const state = surveyState(s)
+          const c = counts[s.id] ?? { questions: 0, responses: 0 }
+          return (
+          <li key={s.id} className={`sa-item${s.id === selected ? ' sa-item-on' : ''}`}
+              data-test="survey-row" data-title={s.title}>
             <button type="button" className="sa-item-btn" onClick={() => pick(s.id)}>
-              <span className={`sa-pill${s.is_open ? ' sa-pill-open' : ''}`}>
-                {s.is_open ? 'OPEN' : 'CLOSED'}
+              {/* OPEN is not simply is_open: a survey whose window has passed
+                  reads EXPIRED and one whose window has not started reads
+                  SCHEDULED, because in both cases the switch is on and the
+                  member surface still shows nothing. Calling those OPEN is the
+                  exact confusion the seeded survey caused. */}
+              <span className={`sa-pill sa-pill-${state}`} data-test="state">
+                {SURVEY_STATE_LABEL[state]}
               </span>
               <span className="sa-item-title">{s.title}</span>
               <span className="sa-item-meta">
                 {s.opens_at ? fmtDateTime(s.opens_at) : 'no start'}
                 {' → '}
                 {s.closes_at ? fmtDateTime(s.closes_at) : 'no end'}
+              </span>
+              <span className="sa-item-counts">
+                <span data-test="qcount">{c.questions} {c.questions === 1 ? 'question' : 'questions'}</span>
+                {' · '}
+                <span data-test="rcount">{c.responses} {c.responses === 1 ? 'response' : 'responses'}</span>
               </span>
             </button>
             {/* Close is NOT --fault red: closing a survey destroys nothing and
@@ -468,7 +654,8 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
               {s.is_open ? 'Close' : 'Open'}
             </button>
           </li>
-        ))}
+          )
+        })}
         {!loading && !surveys.length && <p className="sa-muted">No surveys yet.</p>}
       </ul>
 
@@ -479,9 +666,99 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
                     onClick={() => setTab('questions')}>Questions</button>
             <button type="button" className={`sa-tab${tab === 'results' ? ' sa-tab-on' : ''}`}
                     onClick={() => setTab('results')}>Results</button>
+            <button type="button" className={`sa-tab${tab === 'settings' ? ' sa-tab-on' : ''}`}
+                    data-test="tab-settings"
+                    onClick={() => { setTab('settings'); setArmed(null) }}>Settings</button>
           </div>
 
-          {tab === 'questions' ? (
+          {tab === 'settings' ? (
+            <div className="sa-settings">
+              <form className="sa-meta" onSubmit={saveSurveyMeta}>
+                <label className="sa-label">Title
+                  <input className="sa-input" data-test="edit-title" value={editTitle}
+                         onChange={e => setEditTitle(e.target.value)} />
+                </label>
+                <div className="sa-row">
+                  <label className="sa-label">Opens
+                    <input className="sa-input" type="datetime-local" data-test="edit-opens"
+                           value={editOpens} onChange={e => setEditOpens(e.target.value)} />
+                  </label>
+                  <label className="sa-label">Closes
+                    <input className="sa-input" type="datetime-local" data-test="edit-closes"
+                           value={editCloses} onChange={e => setEditCloses(e.target.value)} />
+                  </label>
+                </div>
+                <button type="submit" className="sa-btn sa-btn-go" data-test="save-meta"
+                        disabled={busy || !editTitle.trim()}>
+                  Save changes
+                </button>
+              </form>
+
+              <div className="sa-manage">
+                <div className="sa-manage-row">
+                  <div>
+                    <p className="sa-manage-title">Duplicate</p>
+                    <p className="sa-muted">
+                      Copies the {questions.length} {questions.length === 1 ? 'question' : 'questions'},
+                      their order and their options. No responses are copied and
+                      the copy lands closed, so this is safe to press while
+                      another survey is open.
+                    </p>
+                  </div>
+                  <button type="button" className="sa-btn sa-btn-go" data-test="duplicate"
+                          onClick={duplicateSurvey} disabled={busy}>
+                    Duplicate
+                  </button>
+                </div>
+
+                {/* Delete is the one red control here, and it is two clicks.
+                    The second one names what is about to be destroyed BY
+                    NUMBER -- a bare "are you sure" tells a mentor nothing about
+                    whether they are throwing away an empty draft or a week of
+                    answers, which is the only thing they need to know. */}
+                <div className="sa-manage-row sa-manage-danger">
+                  <div>
+                    <p className="sa-manage-title">Delete</p>
+                    {armed === survey.id ? (
+                      <p className="sa-confirm" data-test="delete-confirm">
+                        Delete “{survey.title}”? {responses.length}{' '}
+                        {responses.length === 1 ? 'response' : 'responses'} and {answers.length}{' '}
+                        {answers.length === 1 ? 'answer' : 'answers'} will be deleted.
+                        {/* ALSO FOUND BY LOOKING: the counts are true but they
+                            do not say the one thing that separates deleting a
+                            spent draft from deleting the form students have
+                            open on their phones right now. */}
+                        {surveyState(survey) === 'open' &&
+                          ' This is the survey that is live right now — anyone part-way through it loses the form.'}
+                      </p>
+                    ) : (
+                      <p className="sa-muted">
+                        Permanent. The questions, every response and every answer
+                        go with it.
+                      </p>
+                    )}
+                  </div>
+                  {armed === survey.id ? (
+                    <div className="sa-row">
+                      <button type="button" className="sa-btn sa-btn-danger" data-test="delete-confirm-btn"
+                              onClick={() => deleteSurvey(survey.id)} disabled={busy}>
+                        Delete permanently
+                      </button>
+                      <button type="button" className="sa-btn" data-test="delete-cancel"
+                              onClick={() => setArmed(null)} disabled={busy}>
+                        Keep it
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" className="sa-btn sa-btn-danger" data-test="delete-arm"
+                            onClick={() => setArmed(survey.id)} disabled={busy}>
+                      Delete survey
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : tab === 'questions' ? (
             <>
               <ul className="sa-qs">
                 {questions.map((q, i) => (
@@ -495,7 +772,7 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
               </button>
             </>
           ) : (
-            <Results questions={questions} answers={answers} responses={responses}
+            <Results survey={survey} questions={questions} answers={answers} responses={responses}
                      attributed={attributed} onAttributed={setAttributed} />
           )}
         </section>
