@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 import { displayName } from './names'
 import { CATEGORIES, categoryLabel } from './categories'
 import { detectAnomalies } from './accountability'
+import { DURATION_PRESETS, STEP_MINUTES, fmtSpanMins, stepMinutes, setPreset, endInstantMs, resolveReadout } from './hoursResolve'
 import MemberHoursAdmin from './MemberHoursAdmin'
 import './VerifyHoursPage.css'
 
@@ -41,6 +42,37 @@ const ANOMALY_META = {
 // a malformed pair — neither resolves by editing one row, so neither gets a
 // button that implies it does.
 const RESOLVABLE_KINDS = new Set(['capped', 'double_in'])
+
+// The default offered by a void button when the shared reason is still empty. A
+// static sentence about why staff voided the row — never a claim about the
+// student's session, which is why it may be pre-filled where a duration may not.
+// Same wording the per-member panel uses.
+const VOID_REASON = 'Anomaly resolve: no reliable check-out time, session voided'
+
+// Of those, the ones an INLINE card can finish without leaving this list. The
+// split is a property of detectAnomalies' eventIds, verified against
+// accountability.js and hoursUtils.js rather than assumed:
+//   double_in  → always [orphanIn.id, nextIn.id]; eventIds[0] is the orphaned IN
+//                and there is no OUT for it anywhere. Always inline-resolvable.
+//   capped     → [s.inId, s.outId].filter(Boolean).
+//                LENGTH 1 means sessionsFromEvents produced a trailing OPEN
+//                session (outId null) that has since run past MAX_SESSION_MS —
+//                the true missed-checkout case, and `a.at` is its check-in.
+//                LENGTH 2 means a real OUT event exists and the pair is simply
+//                longer than the cap. Adding a second OUT would not fix that;
+//                it is an EDIT of an existing event, so it keeps today's route
+//                into MemberHoursAdmin.
+// Either way eventIds[0] is the check-in to act on, and `a.at` is its time.
+function inlineResolvable(a) {
+  if (!a.member?.id || !a.eventIds?.length) return false
+  if (a.kind === 'double_in') return true
+  if (a.kind === 'capped') return a.eventIds.length === 1
+  return false
+}
+
+// Stable identity for a card across local removals — the render index is not,
+// once a resolved item is spliced out of the array.
+const anomalyKey = a => `${a.member?.id ?? '?'}:${a.kind}:${a.eventIds.join(',')}`
 
 function fmtDuration(ms) {
   if (!ms || ms < 0) return '—'
@@ -150,18 +182,22 @@ async function fetchLoggedCorrections() {
 // accurate, then flattens detectAnomalies output with member names attached.
 async function fetchAnomalies() {
   const [{ data: ev }, { data: profs }] = await Promise.all([
-    supabase.from('attendance_events').select('id, user_id, type, event_time, geo_ok').order('event_time'),
+    // `category` is pulled so an inline-added check-out can carry the category of
+    // the check-in it closes, rather than the RPC's 'build' default standing in.
+    supabase.from('attendance_events').select('id, user_id, type, event_time, geo_ok, category').order('event_time'),
     supabase.from('profiles').select('id, full_name, nickname, geofence_exempt'),
   ])
   const byMember = {}
   for (const e of ev ?? []) (byMember[e.user_id] ??= []).push(e)
   const profMap = Object.fromEntries((profs ?? []).map(p => [p.id, p]))
+  const catById = Object.fromEntries((ev ?? []).map(e => [e.id, e.category ?? null]))
 
   const out = []
   for (const [uid, events] of Object.entries(byMember)) {
     const exempt = profMap[uid]?.geofence_exempt === true
     for (const a of detectAnomalies(events, { exempt })) {
-      out.push({ ...a, member: profMap[uid] })
+      const row = { ...a, member: profMap[uid], category: catById[a.eventIds[0]] ?? null }
+      out.push({ ...row, key: anomalyKey(row) })
     }
   }
   return out.sort((a, b) => new Date(b.at) - new Date(a.at))
@@ -193,10 +229,33 @@ export default function VerifyHoursPage({ session, hasRole }) {
 
   // Advisory attendance anomalies
   const [anomalies, setAnomalies] = useState(null)
-  // The anomaly currently being resolved: swaps the list out for a member-scoped
-  // MemberHoursAdmin. Nothing about it is persisted — going back re-runs the
-  // detection, so a genuinely fixed item simply stops being reported.
+  // The anomaly currently being resolved IN THE HEAVY PANEL: swaps the list out
+  // for a member-scoped MemberHoursAdmin. Only capped-with-a-real-check-out
+  // still routes here — everything else resolves inline below. Nothing about it
+  // is persisted; going back re-runs the detection.
   const [resolving, setResolving] = useState(null)
+
+  // ── Inline anomaly resolution ──
+  // One card expands at a time. `resolveMins` is the duration offset for the
+  // expanded card and is reset to null on every expand, so no card ever inherits
+  // another's number and nothing is entered until a preset or fine-adjust click.
+  const [expandedKey,  setExpandedKey]  = useState(null)
+  const [resolveMins,  setResolveMins]  = useState(null)
+  const [voidArmedKey, setVoidArmedKey] = useState(null)
+  // The reason text is SHARED across every resolve action for this page load —
+  // single and bulk alike — so a mentor clearing a backlog with one explanation
+  // types it once. It is a convenience default on TEXT only: it carries no time
+  // and no claim about a student, so it does not touch the no-pre-filled-
+  // timestamp rule. Nothing persists it; a reload starts empty.
+  const [reason, setReason] = useState('')
+  const [itemErrors, setItemErrors] = useState({})
+
+  // ── Bulk resolution ──
+  const [selected,   setSelected]   = useState(() => new Set())
+  const [bulkMins,   setBulkMins]   = useState(null)
+  const [bulkVoidArmed, setBulkVoidArmed] = useState(false)
+  const [bulkBusy,   setBulkBusy]   = useState(null)   // { done, total, verb } while running
+  const [bulkNote,   setBulkNote]   = useState('')
 
   useEffect(() => {
     if (!isStaff) return
@@ -226,8 +285,98 @@ export default function VerifyHoursPage({ session, hasRole }) {
 
   function backToAnomalies() {
     setResolving(null)
+    reloadAnomalies()
+  }
+
+  function reloadAnomalies() {
     setAnomalies(null)
+    setExpandedKey(null); setResolveMins(null); setVoidArmedKey(null)
+    setSelected(new Set()); setBulkMins(null); setBulkVoidArmed(false)
+    setItemErrors({}); setBulkNote('')
     fetchAnomalies().then(rows => setAnomalies(rows))
+  }
+
+  function expandCard(key) {
+    const next = expandedKey === key ? null : key
+    setExpandedKey(next)
+    setResolveMins(null)          // never inherit another card's duration
+    setVoidArmedKey(null)
+    setItemErrors(e => ({ ...e, [key]: undefined }))
+  }
+
+  function toggleSelect(key) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+    setBulkVoidArmed(false)
+  }
+
+  // Drop a resolved item from the local list rather than refetching every
+  // member's ledger — the item is provably gone, and the mentor's next click
+  // should be the next card, not a reload.
+  function dropAnomaly(key) {
+    setAnomalies(list => (list ?? []).filter(a => a.key !== key))
+    setSelected(prev => {
+      if (!prev.has(key)) return prev
+      const next = new Set(prev); next.delete(key); return next
+    })
+    if (expandedKey === key) { setExpandedKey(null); setResolveMins(null) }
+  }
+
+  // The two write paths. Both act on eventIds[0] — the check-in — and neither
+  // is a new RPC: these are the same staff_add_event / staff_void_event calls
+  // the per-member panel already makes.
+  function addCheckoutRpc(a, mins, text) {
+    return supabase.rpc('staff_add_event', {
+      p_member:     a.member.id,
+      p_type:       'out',
+      p_event_time: new Date(endInstantMs(new Date(a.at).getTime(), mins)).toISOString(),
+      p_category:   a.category,
+      p_reason:     text,
+    })
+  }
+  const voidRpc = (a, text) => supabase.rpc('staff_void_event', { p_event: a.eventIds[0], p_reason: text })
+
+  async function runSingle(a, fn) {
+    const text = reason.trim()
+    if (!text) { setItemErrors(e => ({ ...e, [a.key]: 'A reason is required.' })); return }
+    setBulkBusy({ done: 0, total: 1, verb: 'Working' })
+    const { error } = await fn(text)
+    setBulkBusy(null)
+    if (error) { setItemErrors(e => ({ ...e, [a.key]: error.message })); return }
+    setItemErrors(e => ({ ...e, [a.key]: undefined }))
+    dropAnomaly(a.key)
+  }
+
+  // Bulk runs the SAME single-event RPCs in a sequential loop — there is no
+  // batched endpoint and this deliberately does not add one. Sequential rather
+  // than Promise.all: each call writes an attendance_audit row, and firing
+  // dozens at once is both the shape most likely to trip a rate limit and the
+  // one whose partial failure is hardest to report honestly. A few dozen
+  // round trips is a few seconds, which the progress counter makes visible.
+  async function runBulk(items, verb, fn) {
+    const text = reason.trim()
+    if (!text) { setBulkNote('A reason is required.'); return }
+    setBulkNote(''); setBulkBusy({ done: 0, total: items.length, verb })
+    let ok = 0
+    const errs = {}
+    for (const [i, a] of items.entries()) {
+      const { error } = await fn(a, text)
+      if (error) errs[a.key] = error.message
+      else { ok++; dropAnomaly(a.key) }
+      setBulkBusy({ done: i + 1, total: items.length, verb })
+    }
+    setBulkBusy(null)
+    setItemErrors(e => ({ ...e, ...errs }))
+    const failed = items.length - ok
+    // A failed item is NOT silently counted as done: it stays in the list
+    // carrying its own error, and the count says so.
+    setBulkNote(failed === 0
+      ? `${ok} resolved.`
+      : `${ok} resolved, ${failed} failed — the failed item${failed === 1 ? '' : 's'} stayed in the list with the error shown.`)
+    setBulkVoidArmed(false)
   }
 
   // ── Missed-checkout actions ─────────────────────────────────────────────────
@@ -518,11 +667,13 @@ export default function VerifyHoursPage({ session, hasRole }) {
           {anomalies?.length > 0 && <span className="vh-badge">{anomalies.length}</span>}
         </div>
         <p className="vh-anom-note">
-          Advisory review only — nothing is auto-deleted or auto-corrected. Capped and
-          double-check-in items carry a <strong>Resolve</strong> button that opens that
-          member's attendance events with the flagged row highlighted; you still enter
-          every value by hand. Overlaps and geofence flags, and anything else, are fixed
-          via Team Hours → a member's sessions (edit / void / manual entry).
+          Advisory review only — nothing is auto-deleted or auto-corrected. A check-in with
+          no check-out carries a <strong>Resolve</strong> button that expands in place: pick
+          a duration or void the session without leaving this list. A capped session that
+          already HAS a check-out is an edit, not an addition, so it still opens that
+          member's full attendance events. Overlaps and geofence flags are fixed via Team
+          Hours → a member's sessions (edit / void / manual entry). You still enter every
+          value by hand — no duration is ever filled in for you.
         </p>
 
         {resolving ? (
@@ -545,14 +696,122 @@ export default function VerifyHoursPage({ session, hasRole }) {
             <span className="vh-empty-mark">✓</span>
             <p className="vh-empty-text">No anomalies detected.</p>
           </div>
-        ) : (
+        ) : (() => {
+          const inlineItems = anomalies.filter(inlineResolvable)
+          const selectedItems = inlineItems.filter(a => selected.has(a.key))
+          const allSelected = inlineItems.length > 0 && selectedItems.length === inlineItems.length
+          const running = bulkBusy !== null
+          return (
           <div className="vh-list">
-            {anomalies.map((a, i) => {
+
+            {/* Select-all is scoped to the inline-resolvable cards only — the
+                ones a bulk action can actually finish. */}
+            {inlineItems.length > 0 && (
+              <div className="vh-anom-tools">
+                <label className="vh-anom-check">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={() => setSelected(allSelected ? new Set() : new Set(inlineItems.map(a => a.key)))}
+                    disabled={running}
+                  />
+                  <span>Select all {inlineItems.length} resolvable inline</span>
+                </label>
+                <button className="vh-btn vh-reject vh-btn-sm" onClick={reloadAnomalies} disabled={running}>
+                  Re-scan
+                </button>
+              </div>
+            )}
+
+            {selectedItems.length > 0 && (
+              <div className="vh-bulk">
+                <div className="vh-bulk-head">
+                  <span className="vh-bulk-count">{selectedItems.length} selected</span>
+                  <button className="vh-btn vh-reject vh-btn-sm" onClick={() => setSelected(new Set())} disabled={running}>
+                    Clear
+                  </button>
+                </div>
+
+                {/* Applied as a LENGTH, measured from each item's own check-in —
+                    never as one shared clock time, which would be wrong for
+                    every item but the first. */}
+                <DurationPicker
+                  mins={bulkMins}
+                  onChange={setBulkMins}
+                  disabled={running}
+                  readoutOverride={bulkMins == null
+                    ? 'No duration set — each session keeps its own check-in as the start'
+                    : `Each of the ${selectedItems.length} sessions set to ${fmtSpanMins(bulkMins)} from its own check-in`}
+                />
+
+                <input
+                  className="vh-corr-input"
+                  type="text"
+                  maxLength={300}
+                  placeholder="Reason (required, shared by every action)…"
+                  value={reason}
+                  onChange={e => setReason(e.target.value)}
+                  disabled={running}
+                />
+
+                <div className="vh-bulk-actions">
+                  <button
+                    className="vh-btn vh-reject vh-danger"
+                    disabled={running}
+                    onClick={() => {
+                      if (!bulkVoidArmed) { setBulkVoidArmed(true); if (!reason.trim()) setReason(VOID_REASON); return }
+                      runBulk(selectedItems, 'Voiding', (a, t) => voidRpc(a, t))
+                    }}
+                  >
+                    {bulkVoidArmed ? `Confirm — void ${selectedItems.length}` : `Void ${selectedItems.length} selected`}
+                  </button>
+                  <button
+                    className="vh-btn vh-approve"
+                    disabled={running || bulkMins == null}
+                    onClick={() => runBulk(selectedItems, 'Adding check-outs', (a, t) => addCheckoutRpc(a, bulkMins, t))}
+                  >
+                    {bulkMins == null
+                      ? 'Set duration above'
+                      : `Set ${selectedItems.length} to ${fmtSpanMins(bulkMins)}`}
+                  </button>
+                </div>
+
+              </div>
+            )}
+
+            {/* Progress and the result line live OUTSIDE the bulk bar on purpose:
+                a successful bulk action removes every selected item, which empties
+                the selection and unmounts the bar — so a note rendered inside it
+                would vanish at the exact moment it had something to say. */}
+            {running && (
+              <p className="vh-bulk-note">{bulkBusy.verb} {bulkBusy.done} of {bulkBusy.total}…</p>
+            )}
+            {!running && bulkNote && (
+              <p className="vh-bulk-note vh-bulk-note-done">
+                {bulkNote}
+                <button className="vh-btn vh-reject vh-btn-sm" onClick={() => setBulkNote('')}>Dismiss</button>
+              </p>
+            )}
+
+            {anomalies.map(a => {
               const meta = ANOMALY_META[a.kind] ?? { short: a.kind, color: 'var(--steel)' }
-              const canResolve = RESOLVABLE_KINDS.has(a.kind) && a.member?.id && a.eventIds?.length
+              const inline = inlineResolvable(a)
+              const heavy = !inline && RESOLVABLE_KINDS.has(a.kind) && a.member?.id && a.eventIds?.length
+              const open = expandedKey === a.key
+              const err = itemErrors[a.key]
               return (
-                <div key={i} className="vh-card vh-anom-card">
+                <div key={a.key} className="vh-card vh-anom-card">
                   <div className="vh-card-top">
+                    {inline && (
+                      <input
+                        className="vh-anom-select"
+                        type="checkbox"
+                        checked={selected.has(a.key)}
+                        onChange={() => toggleSelect(a.key)}
+                        disabled={running}
+                        aria-label={`Select ${displayName(a.member)} ${meta.short}`}
+                      />
+                    )}
                     <span className="vh-member-name">{displayName(a.member)}</span>
                     <span className="vh-anom-kind" style={{ color: meta.color, borderColor: meta.color }}>{meta.short}</span>
                   </div>
@@ -561,27 +820,125 @@ export default function VerifyHoursPage({ session, hasRole }) {
                     <span className="vh-time-label">{a.label}</span>
                     <span className="vh-time-val">{fmtDateTime(a.at)}</span>
                   </div>
-                  {canResolve && (
+
+                  {heavy && (
+                    <>
+                      <p className="vh-anom-hint">
+                        This session already has a check-out — it just runs past the cap. That is an
+                        edit of an existing event, so it opens the member's full attendance events.
+                      </p>
+                      <div className="vh-actions">
+                        <button
+                          className="vh-btn vh-reject"
+                          onClick={() => setResolving({
+                            memberId: a.member.id,
+                            eventIds: a.eventIds,
+                            name:     displayName(a.member),
+                            label:    meta.short,
+                          })}
+                        >
+                          Open member events →
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {inline && !open && (
                     <div className="vh-actions">
-                      <button
-                        className="vh-btn vh-approve"
-                        onClick={() => setResolving({
-                          memberId: a.member.id,
-                          eventIds: a.eventIds,
-                          name:     displayName(a.member),
-                          label:    meta.short,
-                        })}
-                      >
+                      <button className="vh-btn vh-approve" onClick={() => expandCard(a.key)} disabled={running}>
                         Resolve
                       </button>
                     </div>
                   )}
+
+                  {inline && open && (
+                    <div className="vh-anom-fix">
+                      <span className="vh-anom-fix-label">This check-in has no check-out</span>
+                      <DurationPicker mins={resolveMins} onChange={setResolveMins} disabled={running}
+                        inMs={new Date(a.at).getTime()} />
+                      <input
+                        className="vh-corr-input"
+                        type="text"
+                        maxLength={300}
+                        placeholder="Reason (required)…"
+                        value={reason}
+                        onChange={e => setReason(e.target.value)}
+                        disabled={running}
+                      />
+                      <p className="vh-anom-hint">
+                        No duration is filled in for you — every value here comes from a click.
+                      </p>
+                      {err && <p className="vh-corr-error">{err}</p>}
+                      <div className="vh-actions">
+                        <button className="vh-btn vh-reject" onClick={() => expandCard(a.key)} disabled={running}>
+                          Cancel
+                        </button>
+                        <button
+                          className="vh-btn vh-reject vh-danger"
+                          disabled={running}
+                          onClick={() => {
+                            if (voidArmedKey !== a.key) {
+                              setVoidArmedKey(a.key)
+                              if (!reason.trim()) setReason(VOID_REASON)
+                              return
+                            }
+                            runSingle(a, t => voidRpc(a, t))
+                          }}
+                        >
+                          {voidArmedKey === a.key ? 'Confirm — void it' : "Don't count this session"}
+                        </button>
+                        <button
+                          className="vh-btn vh-approve"
+                          disabled={running || resolveMins == null}
+                          onClick={() => runSingle(a, t => addCheckoutRpc(a, resolveMins, t))}
+                        >
+                          Add check-out
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {!open && err && <p className="vh-corr-error">{err}</p>}
                 </div>
               )
             })}
           </div>
-        )}
+          )
+        })()}
 
+      </div>
+    </div>
+  )
+}
+
+// The duration control shared by the single-card and bulk resolve paths: the
+// one-click presets, the half-hour fine adjust, and the live readout. All of the
+// math lives in hoursResolve.js, which MemberHoursAdmin's EventRow calls too.
+//
+// `mins` is null until a click — that is the no-pre-filled-timestamp rule made
+// structural. A preset REPLACES the offset rather than adding to it, so clicking
+// "1h" after three +30m clicks gives an hour, the same as typing would.
+function DurationPicker({ mins, onChange, disabled = false, inMs = null, readoutOverride = null }) {
+  return (
+    <div className="vh-dur">
+      <div className="vh-dur-row">
+        {DURATION_PRESETS.map(m => (
+          <button
+            key={m}
+            className={`vh-dur-btn${mins === m ? ' vh-dur-on' : ''}`}
+            onClick={() => onChange(setPreset(m))}
+            disabled={disabled}
+          >{fmtSpanMins(m)}</button>
+        ))}
+      </div>
+      <div className="vh-dur-row">
+        <button className="vh-dur-btn" onClick={() => onChange(stepMinutes(mins, -STEP_MINUTES))} disabled={disabled || mins == null}>&minus;30m</button>
+        <button className="vh-dur-btn" onClick={() => onChange(stepMinutes(mins, STEP_MINUTES))} disabled={disabled}>+30m</button>
+        <span className="vh-dur-readout">
+          {readoutOverride ?? (inMs == null
+            ? (mins == null ? 'No check-out entered' : `Session length: ${fmtSpanMins(mins)}`)
+            : resolveReadout(inMs, mins))}
+        </span>
       </div>
     </div>
   )

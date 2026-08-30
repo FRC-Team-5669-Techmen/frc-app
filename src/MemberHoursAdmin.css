@@ -153,3 +153,11 @@
   border-top: 1px solid var(--border); padding-top: 0.45rem;
 }
 .mha-fix-void .mha-hint { flex: 1 1 12rem; }
+
+/* A chosen duration preset. Its own class, NOT .mha-btn-go: that one means
+   "primary action" (Save, Add check-out) everywhere else in this panel, and
+   overloading it to also mean "selected" made two different buttons in the same
+   block indistinguishable. Filled gold because a small control is exactly where
+   the brand puts gold for an active state. */
+.mha-btn-on { background: var(--gold); border-color: var(--gold); color: #0A0B0D; }
+.mha-btn-on:hover:not(:disabled) { background: var(--gold-bright); color: #0A0B0D; }

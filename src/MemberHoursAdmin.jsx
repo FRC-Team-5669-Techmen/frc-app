@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
 import { CATEGORIES, categoryLabel, categoryColor, sessionsFromEvents, fmtHours } from './hoursUtils'
+import { DURATION_PRESETS, STEP_MINUTES, fmtSpanMins, stepMinutes, setPreset, endInstantMs, minutesFromInstant, resolveReadout } from './hoursResolve'
 import './MemberHoursAdmin.css'
 
 // Per-member admin hours management, embedded in the staff VerifyHoursPage (the
@@ -45,13 +46,6 @@ const toLocalInput = iso => {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
 }
 const toLocalInputMs = ms => toLocalInput(new Date(ms).toISOString())
-const fmtSpan = mins => {
-  const h = Math.floor(mins / 60), m = mins % 60
-  return h && m ? `${h}h ${m}m` : h ? `${h}h` : `${m}m`
-}
-const fmtClock = ms => new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-const fmtDayShort = ms => new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-const sameLocalDay = (a, b) => new Date(a).toDateString() === new Date(b).toDateString()
 
 // Default reason offered by the anomaly block's void button. A static sentence
 // about why staff voided the row — never a claim about the student's session,
@@ -328,25 +322,18 @@ function EventRow({ ev, memberId, onDone, autoFocusEmpty = false, highlight = fa
   const inMs = new Date(ev.event_time).getTime()
   const outMs = outTime ? new Date(outTime).getTime() : null
 
-  // Half-hour stepper for the missing check-out. `outTime` stays the single
-  // source of truth, so a stepper click and a direct edit of the datetime field
-  // can never disagree: a step reads whatever is in the field right now (the
-  // check-in itself while it is still empty), so typing a time becomes the
-  // baseline the next click adjusts from. The low end is clamped at the
-  // check-in — stepping down to or past it clears the field rather than
-  // producing a zero-length or negative session, which is also how the
-  // nothing-entered starting state is restored. The high end is not clamped:
-  // an implausibly long session is still a thing that can have happened.
-  function stepOut(deltaMin) {
-    const next = (outMs ?? inMs) + deltaMin * 60000
-    if (next <= inMs) { setOutTime(''); return }
-    setOutTime(toLocalInputMs(next))
-  }
-
-  const readout = outMs === null
-    ? 'No check-out entered'
-    : `Session length: ${fmtSpan(Math.round((outMs - inMs) / 60000))} — ending ${fmtClock(outMs)}`
-      + (sameLocalDay(outMs, inMs) ? '' : `, ${fmtDayShort(outMs)}`)
+  // Duration controls for the missing check-out. The math and the readout live
+  // in hoursResolve.js, shared with the inline anomaly cards on
+  // /verify-hours so the two surfaces cannot drift apart.
+  //
+  // `outTime` stays the single source of truth HERE, because this surface also
+  // keeps a datetime-local fallback: the offset is re-derived from the field on
+  // every render, so a click and a direct edit can never disagree — typing a
+  // time simply becomes the baseline the next click adjusts from. A null offset
+  // means the field is empty, which is the state it mounts in.
+  const outMins = minutesFromInstant(inMs, outMs)
+  const applyMins = mins => setOutTime(mins == null ? '' : toLocalInputMs(endInstantMs(inMs, mins)))
+  const readout = resolveReadout(inMs, outMins)
 
   useEffect(() => { if (autoFocusEmpty) setEdit(true) }, [autoFocusEmpty])
   useEffect(() => { if (autoFocusEmpty && edit) outRef.current?.focus() }, [autoFocusEmpty, edit])
@@ -416,8 +403,18 @@ function EventRow({ ev, memberId, onDone, autoFocusEmpty = false, highlight = fa
           <div className="mha-fix">
             <span className="mha-fix-label">This check-in has no check-out</span>
             <div className="mha-step">
-              <button className="mha-btn" onClick={() => stepOut(-30)} disabled={busy || !outTime}>&minus;30m</button>
-              <button className="mha-btn" onClick={() => stepOut(30)} disabled={busy}>+30m</button>
+              {DURATION_PRESETS.map(m => (
+                <button
+                  key={m}
+                  className={`mha-btn${outMins === m ? ' mha-btn-on' : ''}`}
+                  onClick={() => applyMins(setPreset(m))}
+                  disabled={busy}
+                >{fmtSpanMins(m)}</button>
+              ))}
+            </div>
+            <div className="mha-step">
+              <button className="mha-btn" onClick={() => applyMins(stepMinutes(outMins, -STEP_MINUTES))} disabled={busy || !outTime}>&minus;30m</button>
+              <button className="mha-btn" onClick={() => applyMins(stepMinutes(outMins, STEP_MINUTES))} disabled={busy}>+30m</button>
               <span className="mha-readout">{readout}</span>
             </div>
             <div className="mha-edit-fields">

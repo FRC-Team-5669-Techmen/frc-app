@@ -396,3 +396,66 @@
   font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted);
   text-transform: uppercase; letter-spacing: 0.06em;
 }
+
+/* ── Inline anomaly resolve + bulk actions ──
+   Resolving a missing check-out happens in the card, so a backlog is worked
+   top-to-bottom without a panel swap and a "Back" click between each item. */
+.vh-anom-tools {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.75rem; flex-wrap: wrap; padding-bottom: 0.25rem;
+}
+.vh-anom-check {
+  display: flex; align-items: center; gap: 0.45rem; cursor: pointer;
+  font-family: var(--font-ui); font-size: 0.82rem; color: var(--steel);
+}
+.vh-anom-check input, .vh-anom-select { accent-color: var(--gold); cursor: pointer; }
+.vh-anom-select { margin-right: 0.15rem; flex: 0 0 auto; }
+.vh-btn-sm {
+  padding: 0.25rem 0.7rem; font-size: 0.7rem;
+}
+
+.vh-bulk {
+  display: flex; flex-direction: column; gap: 0.6rem;
+  background: var(--surface-2); border: 1px solid var(--gold-dim);
+  border-radius: var(--radius); padding: 0.8rem;
+}
+.vh-bulk-head { display: flex; align-items: center; gap: 0.75rem; }
+.vh-bulk-count {
+  font-family: var(--font-mono); font-size: 0.8rem; color: var(--gold);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-right: auto;
+}
+.vh-bulk-actions { display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; }
+.vh-bulk-note { margin: 0; font-family: var(--font-mono); font-size: 0.76rem; color: var(--steel); }
+
+/* Duration control: one-click presets over a half-hour fine adjust. */
+.vh-dur { display: flex; flex-direction: column; gap: 0.35rem; }
+.vh-dur-row { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+.vh-dur-btn {
+  background: transparent; border: 1px solid var(--border-strong); border-radius: var(--radius);
+  color: var(--steel); font-family: var(--font-ui); font-size: 0.72rem; font-weight: 600;
+  padding: 0.25rem 0.6rem; cursor: pointer; transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.vh-dur-btn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+.vh-dur-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.vh-dur-on { background: var(--gold); border-color: var(--gold); color: #0A0B0D; }
+.vh-dur-readout { font-family: var(--font-mono); font-size: 0.76rem; color: var(--steel); }
+
+/* The expanded per-card fix block. */
+.vh-anom-fix {
+  display: flex; flex-direction: column; gap: 0.5rem;
+  border-left: 2px solid var(--gold-dim); padding-left: 0.7rem; margin-top: 0.5rem;
+}
+.vh-anom-fix-label {
+  font-family: var(--font-ui); font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--gold);
+}
+.vh-anom-hint { margin: 0; font-size: 0.74rem; color: var(--muted); }
+.vh-bulk-note-done {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  border: 1px solid var(--border-strong); border-radius: var(--radius);
+  padding: 0.5rem 0.7rem; color: var(--text);
+}
+
+/* A void deletes an attendance row, so it never sits at the same visual weight
+   as the Cancel beside it — same rule the per-member panel's danger button uses. */
+.vh-danger { border-color: var(--fault); color: var(--fault); }
