@@ -216,7 +216,19 @@ interpolation, since every summary step in this repo uses one. **Verified by
 restoring the real defect and watching the suite go red, then restoring the file
 byte-identically (md5 confirmed).**
 
-**The workflows are otherwise untested until CI completes on this branch.** A
+**CI has now run green on this branch, twice, on a real runner.** Run 1
+(`7ee4234`) and run 2 (`fb0705b`) both succeeded with all five gates —
+`npm run build`, `npm test`, `ds:audit`, `discord:calendar:test`,
+`history:verify` — which is the first time any check has run in CI in this
+repository. `main` is untouched at `abf7182` throughout, and `integrate.yml`
+correctly did not fire: it is `workflow_run`-triggered now, and the old
+push-triggered copy on `main` does not govern a branch that carries its own.
+
+What a correct first run looks like from here: once this branch reaches `main`,
+the next green `claude/**` branch is merged by `integrate.yml` into a newly
+created `integration` — which will be the first thing it has ever merged.
+`deploy.yml` cannot be exercised at all until it is on `main`, since
+`workflow_dispatch` only offers workflows present on the default branch. A
 correct first run is: CI goes green on this branch; `integrate.yml` does NOT
 fire for it (the copy on `main` is still the old one, and it only reacts to a
 `push`, which this branch's own copy governs); and once the new `integrate.yml`
