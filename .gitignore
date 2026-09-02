@@ -16,3 +16,6 @@ artifacts/
 ds-bundle/
 .design-sync/.cache/
 .design-sync/learnings/
+
+# The history index is GENERATED (npm run history:index), never committed.
+docs/history/_generated/

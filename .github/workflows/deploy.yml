@@ -1,0 +1,175 @@
+name: Deploy
+
+# THE ONE PLACE `main` MOVES BY MACHINE, AND IT ONLY EVER MOVES WHEN A PERSON
+# PRESSES IT AND TYPES A SENTENCE.
+#
+# `integrate.yml` collects green session branches onto `integration` and is
+# forbidden from touching `main`. This is the other half: it merges
+# `integration` into `main` with `--no-ff`, on demand, after a typed
+# confirmation and after re-checking that CI is green on `integration`'s current
+# tip.
+#
+# WHY A TYPED CONFIRMATION RATHER THAN A BUTTON. A button is pressed by muscle
+# memory; a sentence has to be read. And the sentence is not "are you sure" --
+# it is the one fact no check in this repository can establish:
+#
+#   EVERY SQL FILE THIS DEPLOY DEPENDS ON HAS ALREADY BEEN RUN IN THE
+#   SUPABASE SQL EDITOR.
+#
+# That is this repo's actual apply path. Nothing records applied state (there is
+# no `supabase_migrations` history table in play here), CI reads no credential,
+# and nearly every file under `supabase/` opens with "Run once in the Supabase
+# SQL editor, BEFORE testing the UI". So a deploy of code whose SQL has not been
+# pasted ships an app that calls a table or an RPC the database does not have --
+# and it ships it to students who are checking in on their phones. The person
+# typing the sentence is the only instrument that can answer it.
+#
+# WHAT A DEPLOY DOES, downstream of this job: every push to `main` triggers a
+# Vercel build of frc-app-liard.vercel.app through a GitHub App webhook, not
+# through Actions. This workflow therefore does not deploy anything itself; it
+# moves the branch that Vercel watches.
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: >-
+          Type DEPLOY to confirm that every SQL file this deploy depends on has
+          already been run in the Supabase SQL editor, and that you mean to
+          update the live app for everyone using it right now.
+        required: true
+        type: string
+      source:
+        description: 'Branch to merge into main.'
+        required: true
+        default: integration
+        type: string
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the typed confirmation
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          set -euo pipefail
+          # Read through env, never interpolated into the script body: a
+          # dispatch input is text a person types and `${{ }}` pastes it into
+          # the shell before bash sees a quote.
+          if [ "$CONFIRM" != "DEPLOY" ]; then
+            echo "::error::confirmation was \"$CONFIRM\", not DEPLOY. Nothing was merged."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Require CI green on the source branch's CURRENT tip
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE: ${{ inputs.source }}
+          CI_WORKFLOW_FILE: ci.yml
+        run: |
+          set -euo pipefail
+          git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'
+
+          if ! git rev-parse --verify --quiet "refs/remotes/origin/$SOURCE" >/dev/null; then
+            echo "::error::origin/$SOURCE does not exist."
+            exit 1
+          fi
+          SHA="$(git rev-parse "origin/$SOURCE")"
+          echo "SOURCE_SHA=$SHA" >> "$GITHUB_ENV"
+
+          # THE TIP, NOT THE BRANCH. A branch that was green two commits ago is
+          # not green. `integration` in particular gets no push-triggered CI run
+          # of its own (a GITHUB_TOKEN push does not start another workflow), so
+          # the run this finds is normally the DAILY SCHEDULED one from ci.yml --
+          # which is exactly why that schedule exists. If the last scheduled run
+          # predates the newest merge, there is no run for this sha and this step
+          # fails closed. Press "Run workflow" on CI against the branch first.
+          runs="$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/workflows/$CI_WORKFLOW_FILE/runs" \
+                    -f branch="$SOURCE" -f status=completed -f per_page=50 \
+                    2>/dev/null || echo '{"workflow_runs":[]}')"
+          conclusion="$(printf '%s' "$runs" \
+            | jq -r --arg sha "$SHA" \
+                '[.workflow_runs[] | select(.head_sha == $sha)]
+                   | sort_by(.run_number) | last | .conclusion // "no run for this commit"')"
+
+          echo "origin/$SOURCE is at ${SHA:0:7}; newest completed CI conclusion for that exact commit: $conclusion"
+          if [ "$conclusion" != success ]; then
+            echo "::error::CI on ${SHA:0:7} is \"$conclusion\". Run CI on $SOURCE (workflow_dispatch on the CI workflow) and try again. Nothing was merged."
+            exit 1
+          fi
+
+      - name: Merge into main, no fast-forward, never forced
+        env:
+          SOURCE: ${{ inputs.source }}
+        run: |
+          set -euo pipefail
+          git checkout -B main origin/main
+          BEFORE="$(git rev-parse HEAD)"
+
+          if git merge-base --is-ancestor "origin/$SOURCE" HEAD; then
+            echo "::notice::main already contains origin/$SOURCE. Nothing to deploy."
+            echo "MERGED=no" >> "$GITHUB_ENV"
+            echo "MAIN_SHA=$BEFORE" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          # --no-ff so a deploy is one revertible commit, which is the repo's
+          # own merge convention and the thing you want at 7am on a school day.
+          if ! git merge --no-ff --no-edit -m "Deploy $SOURCE into main" "origin/$SOURCE"; then
+            git merge --abort || true
+            echo "::error::$SOURCE conflicts with main. Resolve it on $SOURCE by hand; nothing was merged or pushed."
+            exit 1
+          fi
+
+          # A PLAIN PUSH. NEVER --force, NEVER --force-with-lease, and no retry.
+          # A rejected push means main moved under this run; the honest response
+          # is to fail with main untouched rather than to decide whose work wins.
+          if ! git push origin main; then
+            echo "::error::push to main was rejected -- it moved during this run. Nothing was deployed; re-run this workflow."
+            exit 1
+          fi
+          echo "MERGED=yes" >> "$GITHUB_ENV"
+          echo "MAIN_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Say what just happened, and what happens next
+        if: always()
+        env:
+          SOURCE: ${{ inputs.source }}
+        run: |
+          {
+            echo "## Deploy"
+            echo
+            if [ "${MERGED:-no}" = yes ]; then
+              echo "Merged \`$SOURCE\` (\`${SOURCE_SHA:0:7}\`) into \`main\` as \`${MAIN_SHA:0:7}\`, with \`--no-ff\`."
+            else
+              echo "Nothing was merged."
+            fi
+            echo
+            echo "### What this does downstream"
+            echo
+            echo "- **Vercel builds and deploys \`main\`** to frc-app-liard.vercel.app, through a GitHub App webhook rather than through Actions. This workflow does not deploy; it moves the branch Vercel watches."
+            echo "- **The service worker serves the PREVIOUS build to an already-open tab until a reload.** This app is a PWA in \`injectManifest\` mode with \`autoUpdate\`, so a phone that is mid-check-in keeps the version it loaded with. Someone reporting that a fix \"did not ship\" has almost always got a cached copy -- an incognito window shows the true current version. That is the first thing to check, not the last."
+            echo "- **\`main\` gets no CI run from this push.** A push made with the default \`GITHUB_TOKEN\` does not trigger another workflow run. The run that gated this deploy ran on \`$SOURCE\`, before the merge."
+            echo
+            echo "### What was confirmed, and by whom"
+            echo
+            echo "The person who ran this typed \`DEPLOY\`, which asserts that **every SQL file this deploy depends on has already been run in the Supabase SQL editor**. No check in this repository can establish that: CI reads no credential and nothing records applied state. See \`supabase/migrations/README.md\`."
+          } >> "$GITHUB_STEP_SUMMARY"

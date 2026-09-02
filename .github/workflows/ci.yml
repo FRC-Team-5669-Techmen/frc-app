@@ -1,0 +1,160 @@
+name: CI
+
+# Every check that can run without a credential, on every push.
+#
+# NOTHING HERE TOUCHES THE LIVE SUPABASE PROJECT, and nothing here can: no
+# secret is read, no `.env` is written, and the two placeholder values below
+# point at a port nothing listens on. That is not a limitation to work around --
+# it is the property that makes this workflow safe to run on any push, and the
+# reason `integrate.yml` may still never merge to `main` on the strength of it
+# (see that file's header).
+#
+# THERE IS NO `svelte-check` HERE, AND NO TYPE CHECK OF ANY OTHER KIND, because
+# this repo has neither. It is React + Vite with plain `.jsx`, no `tsconfig.json`
+# and no lint config; `npm run build` is the type gate, in the only sense one
+# exists -- it fails on a syntax error, an unresolved import, or a module that
+# throws at load. A `.d.ts` sweep does run, but only over the design system's own
+# declaration files, and only inside `npm run ds:audit`.
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+  # A DAILY RUN AGAINST `integration`, at 04:30 UTC (roughly 9:30pm Pacific).
+  #
+  # Not redundant with the per-push runs, and this is the gap it closes: a push
+  # made by `integrate.yml` with the default GITHUB_TOKEN does NOT trigger
+  # another workflow run -- GitHub suppresses it to stop a workflow that pushes
+  # from re-triggering itself forever. So `integration` accumulates merges and
+  # never gets a CI run of its own. Every commit on it was green on its source
+  # branch, but the MERGE RESULT is a tree no run has ever seen, and two
+  # independently green branches can conflict semantically without conflicting
+  # textually. This run is the only thing that looks at that tree before a
+  # person deploys it.
+  schedule:
+    - cron: '30 4 * * *'
+
+  # For a person: check `integration` on demand, before deploying.
+  workflow_dispatch:
+
+env:
+  # PLACEHOLDER VALUES, COMMITTED HERE ON PURPOSE -- never a real credential.
+  #
+  # `src/supabase.js` calls `createClient(import.meta.env.VITE_SUPABASE_URL, ...)`
+  # at module load. The build does not need the values to be real (Vite inlines
+  # whatever is there), but several tools boot the app shell and a client
+  # constructed from `undefined` throws at import time. These match the tracked
+  # `.env.dsspec`, which documents the same choice: the URL is loopback on a
+  # port nothing listens on, so nothing can reach a real project by accident.
+  VITE_SUPABASE_URL: 'http://127.0.0.1:54329'
+  VITE_SUPABASE_ANON_KEY: 'ci-placeholder-anon-key'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # 22 is what the container this was written in runs (v22.22.2) and
+          # what vitest 4 supports (^20 || ^22 || >=24). Pinned rather than
+          # `lts/*` so a Node release cannot change what CI means overnight.
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # EVERY STEP BELOW RUNS EVEN IF AN EARLIER ONE FAILED, so one push reports
+      # every failure rather than only the first. The final step is what fails
+      # the job. A run that stops at the first red step costs a whole
+      # push/wait/read cycle per problem.
+
+      - name: Build
+        id: build
+        if: always()
+        continue-on-error: true
+        run: npm run build
+
+      - name: Test suite
+        id: test
+        if: always()
+        continue-on-error: true
+        run: npm test
+
+      # The design system's own static audit: 30 numbered checks over
+      # src/lib/design-system (token completeness, alias literals per ground
+      # scope, import order, manifest accuracy, asset provenance hashes).
+      # It reads the repo and nothing else.
+      #
+      # `ds:audit:controls` is deliberately NOT run here: it breaks a file,
+      # asserts the audit catches it, and restores it, and it REFUSES to run on
+      # a dirty tree. That is a local instrument, not a gate.
+      - name: Design system audit
+        id: ds-audit
+        if: always()
+        continue-on-error: true
+        run: npm run ds:audit
+
+      # The Discord calendar sync engine's own 19-case suite. It is also driven
+      # by `npm test` (tests/legacy-suites.test.js runs it as a child process
+      # and asserts the pass count), and it is named separately here so a
+      # failure says which suite rather than only which wrapper.
+      - name: Discord calendar sync suite
+        id: discord
+        if: always()
+        continue-on-error: true
+        run: npm run discord:calendar:test
+
+      # Reassembles docs/history/ and compares against the frozen copy of the
+      # CLAUDE.md paragraph it was split from. Fast (no network, no browser) and
+      # deterministic: it reads only committed files and hashes them. The only
+      # way it goes red is a genuinely malformed or drifted entry -- a broken
+      # record_order, a missing title, an edited frozen source -- which is
+      # exactly what it exists to catch before a bad entry reaches `main`.
+      - name: History record check
+        id: history
+        if: always()
+        continue-on-error: true
+        run: npm run history:verify
+
+      # `npm run verify:browser` is NOT here, and that is a decision rather than
+      # an omission. It boots a vite dev server and drives a real Chromium, so
+      # it needs a browser binary this workflow would have to resolve on the
+      # runner rather than at the container path it finds locally; and it is a
+      # MEASURING instrument whose default exit code is 0 even with findings.
+      # Wiring it as a gate would mean choosing thresholds for numbers that
+      # legitimately drift. It stays a local pass, run and reported by hand.
+      # `npm run ds:capture` is likewise absent: it launches with
+      # `channel: 'chrome'`, the machine's installed Google Chrome.
+
+      - name: Fail the job if any step failed
+        if: always()
+        run: |
+          echo "build:           ${{ steps.build.outcome }}"
+          echo "test:            ${{ steps.test.outcome }}"
+          echo "ds-audit:        ${{ steps.ds-audit.outcome }}"
+          echo "discord:         ${{ steps.discord.outcome }}"
+          echo "history:         ${{ steps.history.outcome }}"
+          {
+            echo "## CI"
+            echo
+            echo "| step | outcome |"
+            echo "| --- | --- |"
+            echo "| build | ${{ steps.build.outcome }} |"
+            echo "| test | ${{ steps.test.outcome }} |"
+            echo "| ds:audit | ${{ steps.ds-audit.outcome }} |"
+            echo "| discord:calendar:test | ${{ steps.discord.outcome }} |"
+            echo "| history:verify | ${{ steps.history.outcome }} |"
+            echo
+            echo "No credential is read by this workflow, so a green run says nothing about whether this branch's SQL has been applied to the live database. See \`supabase/migrations/README.md\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.build.outcome }}" != "success" ] \
+            || [ "${{ steps.test.outcome }}" != "success" ] \
+            || [ "${{ steps.ds-audit.outcome }}" != "success" ] \
+            || [ "${{ steps.discord.outcome }}" != "success" ] \
+            || [ "${{ steps.history.outcome }}" != "success" ]; then
+            exit 1
+          fi

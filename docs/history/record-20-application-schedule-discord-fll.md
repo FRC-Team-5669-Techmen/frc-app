@@ -1,0 +1,11 @@
+---
+title: "Member application: year-round schedule, Discord invite, FLL interest field"
+date: 2026-08-18
+branches: []
+commits: ["1230fa1"]
+migrations: ["member_applications_fll_interest.sql"]
+subsystems: ["Member application"]
+record_order: 31
+---
+
+ Earlier — Member application — year-round schedule + Discord invite + FLL interest field. MEETING_SCHEDULE in src/MemberApplication.jsx replaced entirely: the old offseason/build-season split was wrong (one year-round schedule), so the placeholder Build season entry and its BUILD_SEASON_SCHEDULED conditional are gone; the commitment-step acknowledgment checkbox is unconditional now (matches conduct_acknowledged) and reworded to name exactly what it covers — Monday lunch, Tuesday/Friday, the two-hour weekly minimum — not the optional IDEA days or FLL volunteering. No CHECK constraint was re-added on build_season_acknowledged (deliberately, per the existing comment — enforcement stays in the UI). The Discord step now renders the invite link (https://discord.gg/FcJ3BQAVnh, opens in a new tab) above the username field with an instruction to set the server nickname to first+last name — previously the form asked for a Discord username with no link to the server at all. NEW supabase/member_applications_fll_interest.sql adds member_applications.fll_volunteering_interest (nullable text, Yes/No/Maybe, no CHECK — same optionality pattern as the other single-selects) as a targeted column+grant addition rather than a full re-run of parent_responses.sql's column-grant regeneration; src/applicationFields.js's APPLICATION_SELECT and both /applications surfaces (detail modal row, CSV column) were updated to match. Verified end-to-end against the LIVE database (not just a clean build): ran the exact row shape submit() sends through the `authenticated` role with RLS enforced (SET LOCAL request.jwt.claims impersonating a real member), insert succeeded and returned the new column correctly, confirmed column-level SELECT+INSERT grants for authenticated, then deleted the test row. Run supabase/member_applications_fll_interest.sql before relying on the new field.
