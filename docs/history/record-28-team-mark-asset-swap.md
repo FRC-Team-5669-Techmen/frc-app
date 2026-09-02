@@ -1,0 +1,11 @@
+---
+title: "Team mark asset swap: canonical Mark-{Gold,White,Black}.svg, provenance pinned"
+date: 2026-08-22
+branches: []
+commits: ["6707455"]
+migrations: []
+subsystems: ["Design system", "Theme"]
+record_order: 23
+---
+
+ Earlier the same day — Team mark ASSET SWAP against FRC_Design_System.md v1.3, whose rewritten Assets section codifies canonical fetch + hash provenance. public/assets/logos/Mark-Gold.svg was recolored #D4AF37 against a canonical #FFE629 and was live on the splash (App.jsx), the access gate (AccessGate.jsx, 4 uses) and the landing page (LandingPage.jsx). All three public marks were replaced with the canonical bytes already fetched and hashed in the design system; White and Black had differed only by 3 CRLF each. PROVENANCE.json gained `mirrors`, and ds:audit check 13 now hashes them from the repo root — verified by simulating a recolor of the public copy, which the audit caught, then restoring. FULL SWEEP of every image in public/ and src/ (11 files): the 3 marks were the only hash mismatches; the 5 PNG icons carry exactly #FFE629 (verified by decoding each PNG and building a colour histogram, not by eye) but have no canonical source to hash against, so they are recorded as `derived`; no FIRST mark is held anywhere in the repo; no inline reproduction of the mark path exists in any jsx/css/html. TWO HAZARDS RECORDED, NOT FIXED, both outside an asset swap: src/theme.css sets the app's --gold to #D4AF37 so the swapped mark now sits beside older-gold chrome (visible on the landing page, where the mark and the SIGN IN button no longer match), and scripts/gen-icons.js would overwrite three correct icons with solid #005bff squares if anyone ran it. VERIFIED IN A BROWSER: the splash was held open by seeding a session and holding claim_profile() so App.jsx sits on its splash branch, then measured — img loaded, natural 287x287, rendered 80x80, filter none, and the mark's painted pixels are a single colour, #FFE629. The access gate (72x72) and landing page (36x36) were rendered too, both loading the same file unfiltered. No surface was restyled.

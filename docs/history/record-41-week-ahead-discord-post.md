@@ -1,0 +1,11 @@
+---
+title: "Week-ahead Discord schedule post (Vercel cron)"
+date: 2026-08-26
+branches: []
+commits: ["46cbedc", "0030564"]
+migrations: []
+subsystems: ["Discord"]
+record_order: 10
+---
+
+ Earlier the same day - Week-ahead Discord schedule post. See the bullet in Built so far. AUDIT FIRST and it decided the build: public.events is the one schedule table (id, title, kind, starts_at, ends_at, location, notes, created_by, created_at, updated_at, plus series_id, rsvp_enabled, capacity, mandatory added by later migrations), there is no second candidate and no disagreement, and the subteam vocabulary is the same 12 strings in src/subteams.js and in all three live CHECK sites, so the halt condition did not fire. TWO REAL DEFECTS WERE FOUND BY RUNNING THE DRY RUN RATHER THAN BY READING THE CODE, which is the whole argument for showing the output: (1) matching the full subteam vocabulary over notes prose attributed a build session to Management because the notes read 'Electrical runs wire management' - a false attribution in a broadcast post is worse than an omission, so matching narrowed to the title with an explicit 'Subteams:' declaration as the escape hatch; (2) that declaration then dropped the last name in the list, because the capture runs to end of line and 'CAD, Media.' carries the sentence period. VERIFIED BY RUNNING: both 401s over HTTP, the non-Sunday no-op, the dry render against seeded rows in the real column shape, the empty-window post, the live POST path with the process clock pinned to a Sunday (webhook received allowed_mentions {"parse":[]} with @everyone, @here and a raw role mention passing through as literal text), scrub() against a webhook echoing all three secrets back (0 survive), and the cron/DST math (01:00 UTC lands Sunday evening LA in both PST and PDT; the fall-back week correctly spans 169 hours with both boundaries at true LA midnight). UNVERIFIED, and it needs production secrets: nothing ran against the live Supabase project or the real Discord webhook - no credentials exist in this environment.
