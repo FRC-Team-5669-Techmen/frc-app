@@ -8,7 +8,8 @@
 - Migration permitted: no. Highest in supabase/migrations/ at issue: none (the directory
   did not exist; every SQL file in the repo is unnumbered under `supabase/` and `sql/`)
 - Status: pushed
-- Branch: `claude/repo-standards-conformance-uk5er7`
+- Branch: `claude/repo-standards-conformance-uk5er7` (two commits: `ad98f03` the ledger
+  and the integrate rewrite, `e1972d9` the rest)
 - Notes: The first entry in this ledger, and the prompt that creates the directory it is
   recorded in. The prompt asked for this entry to be committed and pushed before anything
   else was built. It was, with ONE addition forced by the tree: the `.github/workflows/`
