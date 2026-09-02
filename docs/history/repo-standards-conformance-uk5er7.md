@@ -85,7 +85,7 @@ by the pinned hash. Exit code 1 on a broken split, 0 restored.
 
 ## The test suite
 
-`npm test` is vitest, 89 tests in 6 files, all passing. It is seeded from the
+`npm test` is vitest, 112 tests in 7 files, all passing. It is seeded from the
 pure logic that already had assertions written somewhere — and every one was
 **rebuilt rather than referenced**, because the harnesses that originally ran
 them were deleted.
@@ -101,6 +101,8 @@ them were deleted.
   against the real engine that deploys.
 - `vocabulary-drift.test.js` (12) — `src/subteams.js` and `src/categories.js`
   against the CHECK constraints in the SQL files.
+- `workflows.test.js` (23) — the workflow files, checked for what a YAML parser
+  cannot see. Written after the push described below, not before it.
 - `legacy-suites.test.js` (5) — runs the untouched
   `scripts/discord/calendar-sync.test.mjs` as a child process and asserts its
   pass count, so the pre-existing 19-case suite is gated by `npm test` too.
@@ -187,8 +189,34 @@ also states that the service worker serves the previous build to an already-open
 tab until a reload, because that is the first thing to check when somebody says
 a fix did not ship.
 
-**The workflows are untested until this branch is pushed.** All three parse
-under PyYAML, and that is the whole of what has been verified about them. A
+**Parsing is not validation, and pushing proved it.** All three workflows parsed
+under PyYAML, were committed, and were pushed. GitHub then produced a run named
+`.github/workflows/deploy.yml` -- **the file's path, not its `name:`** --
+triggered by `push`, on a workflow that declares only `workflow_dispatch`,
+completed as `failure`, with no job and no log. That is what an invalid workflow
+file looks like from outside, and none of those signals says "invalid" in words.
+
+The cause was a shell comment inside a `run:` block containing an **empty
+expression interpolation**, written to illustrate the injection risk it was
+warning about. GitHub evaluates expressions inside `run:` regardless of the `#`
+in front of them, an empty one does not parse, and the file was rejected whole.
+The identical sentence in `integrate.yml` sits in a YAML comment rather than in
+shell text, never reaches the expression parser, and was fine -- which is
+exactly the distinction a person re-reading their own diff does not make.
+
+`tests/workflows.test.js` now catches it, along with the invariants these
+workflows have to hold: `integrate.yml` can never write to the deploy branch and
+keys on a CI file that exists whose `name:` its `workflow_run` trigger waits on;
+`deploy.yml` is dispatch-only with a required confirmation; no workflow
+force-pushes; `ci.yml` runs five gates that are all real npm scripts and fails
+the job on each one's `outcome`. 23 tests, six of them positive controls that
+drive the scanner over synthetic workflows carrying the defects it claims to
+find -- including a check that a shell `${VAR:-default}` is NOT mistaken for an
+interpolation, since every summary step in this repo uses one. **Verified by
+restoring the real defect and watching the suite go red, then restoring the file
+byte-identically (md5 confirmed).**
+
+**The workflows are otherwise untested until CI completes on this branch.** A
 correct first run is: CI goes green on this branch; `integrate.yml` does NOT
 fire for it (the copy on `main` is still the old one, and it only reacts to a
 `push`, which this branch's own copy governs); and once the new `integrate.yml`

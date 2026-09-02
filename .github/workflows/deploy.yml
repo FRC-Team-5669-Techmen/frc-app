@@ -63,8 +63,17 @@ jobs:
         run: |
           set -euo pipefail
           # Read through env, never interpolated into the script body: a
-          # dispatch input is text a person types and `${{ }}` pastes it into
-          # the shell before bash sees a quote.
+          # dispatch input is text a person types, and an expression
+          # interpolation pastes it there before bash ever sees a quote.
+          #
+          # This comment used to demonstrate that by writing the empty
+          # interpolation out in full. GitHub evaluates expressions inside a
+          # `run:` block REGARDLESS of the shell `#` in front of them, an
+          # empty one does not parse, and the whole workflow file was
+          # therefore invalid -- which surfaces as a run named after the
+          # file's PATH, triggered by `push` on a workflow that declares only
+          # `workflow_dispatch`, with no job and no log. PyYAML parses that
+          # file perfectly happily; tests/workflows.test.js now catches it.
           if [ "$CONFIRM" != "DEPLOY" ]; then
             echo "::error::confirmation was \"$CONFIRM\", not DEPLOY. Nothing was merged."
             exit 1
