@@ -56,6 +56,7 @@ const OUT = ensureDir(path.join(REPO, 'artifacts', 'e2e'));
 // Fixture personas (src/dev/fixture/personas.js).
 const STUDENT = '00000000-0000-0000-0000-0000000000c1';
 const EXEMPT = '00000000-0000-0000-0000-0000000000c3';
+const MENTOR = '00000000-0000-0000-0000-0000000000b1';
 
 // Geofence centres from src/geo.js. 0.018 deg of latitude is about 2.0 km.
 const SHOP = { latitude: 34.04155, longitude: -118.086826, accuracy: 10 };
@@ -190,7 +191,30 @@ async function runViewport(browser, origin, vp) {
     permission: { name: 'geolocation' }, setting, origin, browserContextId: targetInfo.browserContextId,
   });
 
-  const shot = (name, tab = page) => tab.screenshot({ path: path.join(OUT, `${vp.name}-${name}.png`), fullPage: true }).catch(() => {});
+  // A fullPage screenshot of a touch-emulated page DROPS the emulation for
+  // the rest of that page (measured, playwright-core 1.62.1 / Chromium 141:
+  // (pointer: coarse) and maxTouchPoints 1 before it, fine and 0 after, across
+  // reloads), so a later 375 step on the same tab would tap the desktop
+  // layout. After every shot touch is put back through a CDP session kept
+  // open per page (an Emulation override lives only as long as the session
+  // that set it) and the pointer is read again; touchShots is reported as
+  // z-touch at the end of the viewport.
+  const touchCdp = new WeakMap();
+  const touchShots = [];
+  const shot = async (name, tab = page) => {
+    await tab.screenshot({ path: path.join(OUT, `${vp.name}-${name}.png`), fullPage: true }).catch(() => {});
+    if (!vp.hasTouch || tab.isClosed()) return;
+    try {
+      const dropped = !(await tab.evaluate(() => matchMedia('(pointer: coarse)').matches));
+      let session = touchCdp.get(tab);
+      if (!session) { session = await context.newCDPSession(tab); touchCdp.set(tab, session); }
+      await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
+      const after = await tab.evaluate(() => ({ coarse: matchMedia('(pointer: coarse)').matches, points: navigator.maxTouchPoints }));
+      touchShots.push({ name, dropped, ...after });
+    } catch (e) {
+      touchShots.push({ name, dropped: null, coarse: false, points: null, error: e.message });
+    }
+  };
   const press = async (locator) => (vp.hasTouch ? locator.tap() : locator.click());
 
   // ── helpers bound to the tab in front ────────────────────────────────────
@@ -719,6 +743,83 @@ async function runViewport(browser, origin, vp) {
     return `boot claims ${claims.join(', ')}: CHECKED OUT, 1 OUT, no gate; a real "no" first: the gate, 0 writes`;
   });
 
+  // R10. The same resume re-reads member_roles. A transient error there used
+  //      to set roles to [], so a mentor (no member_applications row: staff
+  //      are never asked) was read as the member track and the application
+  //      form replaced the dashboard, Check Out and all. Now the roles held
+  //      for that member stand (src/claimApproval.js nextRoles). Control in
+  //      the same step: a real empty answer DOES show the form, so the step
+  //      can see it; the real roles after it bring the dashboard back, and the
+  //      mentor checks out with one tap. On /dashboard App.jsx is the only
+  //      member_roles reader, so an answer queued here is App's.
+  await step('R10-resume-roles-error', 'a checked-in mentor: a member_roles error as the tab comes back keeps the dashboard and Check Out (no form); a real empty answer shows the form; then 1 OUT', async () => {
+    const rolesAnswer = (tab, answer) => tab.evaluate((ans) => {
+      const sb = window.__fx.supabase;
+      if (!sb.__e2eRoles) {
+        const from = sb.from;
+        sb.__e2eRoles = { queue: [], served: 0 };
+        sb.from = (table) => {
+          const next = table === 'member_roles' ? sb.__e2eRoles.queue.shift() : undefined;
+          if (!next) return from(table);
+          sb.__e2eRoles.served += 1;
+          const result = { data: next.data ?? null, error: next.error ?? null, count: null, status: next.error ? 0 : 200 };
+          const q = { then: (res, rej) => new Promise((r) => setTimeout(r, 25)).then(() => result).then(res, rej) };
+          for (const m of ['select', 'eq', 'in', 'order', 'limit', 'single', 'maybeSingle']) q[m] = () => q;
+          return q;
+        };
+      }
+      sb.__e2eRoles.queue.push(ans);
+      return sb.__e2eRoles.served;
+    }, answer);
+    const served = (tab, n) => tab.waitForFunction((k) => window.__fx.supabase.__e2eRoles.served > k, n, { timeout: 15_000 })
+      .catch(() => { throw new Error('the tab did not re-read member_roles when it came back'); });
+    const checkOut = (tab) => tab.locator('button.mb-checkout[data-tour=checkout]');
+    try {
+      await tick();
+      await newTab('/_fixture?__fx=persona:mentor');
+      const pre = await page.evaluate((uid) => {
+        window.__fx.insert('attendance_events', { user_id: uid, type: 'in', event_time: new Date(Date.now() - 30 * 60_000).toISOString(), location: 'shop-main', method: 'nfc', category: 'build', geo_ok: true });
+        return { apps: window.__fx.rows('member_applications').filter((r) => r.member_id === uid).length, roles: window.__fx.rows('member_roles').filter((r) => r.member_id === uid).map((r) => r.role) };
+      }, MENTOR);
+      assert(pre.apps === 0 && pre.roles.join() === 'mentor', `precondition: the mentor holds ${pre.apps} application(s) and roles ${pre.roles.join(',')}`);
+      const a = await newTab('/dashboard');
+      await checkOut(a).waitFor({ timeout: 15_000 });
+      const base = await count(MENTOR);
+
+      // A transient error: the dashboard and its Check Out stay.
+      let n = await rolesAnswer(a, { error: { message: 'TypeError: Failed to fetch', code: '' } });
+      await away(a);
+      await served(a, n);
+      await settle();
+      await settle();
+      assert((await a.locator('.ma-wrap').count()) === 0, 'a member_roles error as the tab came back put the mentor behind the application form');
+      assert((await checkOut(a).count()) === 1 && (await a.locator('.mb-status').textContent())?.trim() === 'Checked in', 'the dashboard lost "Checked in" or its Check Out after a member_roles error');
+      await shot('R10-resume-roles-error-held', a);
+
+      // Control: a real empty answer is a member with no roles, and the form shows.
+      n = await rolesAnswer(a, { data: [] });
+      await away(a);
+      await served(a, n);
+      await a.waitForSelector('.ma-wrap', { timeout: 15_000 })
+        .catch(() => { throw new Error('control: a real empty member_roles answer did not show the application form'); });
+      await shot('R10-resume-roles-error-form', a);
+
+      // The real roles again: the dashboard is back, nothing was written, one tap checks out.
+      await away(a);
+      await checkOut(a).waitFor({ timeout: 15_000 });
+      assert((await count(MENTOR)) === base, `the form and the re-mount wrote ${(await count(MENTOR)) - base}`);
+      await press(checkOut(a));
+      await a.waitForFunction(() => document.querySelector('.mb-status')?.textContent.trim() === 'Not checked in', null, { timeout: 15_000 });
+      await settle();
+      const added = (await events(MENTOR)).slice(base);
+      assert(added.length === 1 && added[0].type === 'out', `Check Out wrote ${JSON.stringify(added.map((e) => e.type))}`);
+      return 'error on resume: dashboard and Check Out up, no form; a real empty answer: the form; the real roles: back, 0 writes, then 1 OUT';
+    } finally {
+      // Every later step taps as the student.
+      await newTab('/_fixture?__fx=persona:student');
+    }
+  });
+
   // ── V: the volunteer tag's switch and revisit ────────────────────────────
 
   // V1. The FLL tag over an open BUILD session offers the switch and writes
@@ -820,6 +921,25 @@ async function runViewport(browser, origin, vp) {
     assert(cleared === null, 'pendingCheckin was not consumed after sign-in');
     return `bounced to /login with pendingCheckin=${pending}; signing in returned to it (0 writes while signed out)`;
   });
+
+  // Every full-page shot at the phone width left its tab with a coarse
+  // pointer and one touch point, so the steps after it tapped the phone
+  // layout. `dropped` counts the shots that had lost touch before the restore:
+  // the trap is real wherever it is above 0, and the restore is what put it back.
+  if (vp.hasTouch) {
+    const bad = touchShots.filter((t) => !(t.coarse && t.points === 1));
+    const droppedOn = touchShots.filter((t) => t.dropped).map((t) => t.name);
+    const dropped = droppedOn.length;
+    results.push({
+      vp: vp.name,
+      id: 'z-touch',
+      name: 'every full-page shot leaves the phone tab with a coarse pointer',
+      ok: touchShots.length > 0 && bad.length === 0,
+      detail: bad.length
+        ? bad.slice(0, 5).map((t) => `${t.name}: pointer ${t.coarse ? 'coarse' : 'fine'}, maxTouchPoints ${t.points}${t.error ? ` (${t.error})` : ''}`).join(' | ')
+        : `${touchShots.length} shots: ${dropped} of ${touchShots.length} had dropped to a fine pointer${dropped ? ` (${droppedOn.slice(0, 6).join(', ')})` : ''}, all ${touchShots.length} coarse with 1 touch point after the restore`,
+    });
+  }
 
   // Zero unexpected console errors across the whole viewport run, every tab.
   const unexpected = consoleErrors.filter((e) => !EXPECTED_CONSOLE.some((re) => re.test(e.text)));
