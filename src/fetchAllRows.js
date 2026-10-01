@@ -20,6 +20,9 @@
 // so a project whose max-rows is lower than `pageSize` is still read in full
 // (each page advances by what actually arrived). Rows are de-duplicated by
 // `id`, and a builder that ignores `.range()` -- or has none -- is read once.
+// `maxPages` only stops a runaway loop: running out of pages before the empty
+// one is an ERROR, never the rows so far, because those are the oldest part of
+// the ledger and handing them back is the short read this exists to prevent.
 
 /**
  * @param {() => object} makeQuery - returns a NEW, fully ordered query builder
@@ -39,7 +42,7 @@ export async function fetchAllRows(makeQuery, { pageSize = 1000, maxPages = 200 
     }
     const { data, error } = await query.range(from, from + pageSize - 1)
     if (error) return { data: null, error }
-    if (!data?.length) break
+    if (!data?.length) return { data: rows, error: null }
     let added = 0
     for (const row of data) {
       if (row.id != null) {
@@ -49,8 +52,11 @@ export async function fetchAllRows(makeQuery, { pageSize = 1000, maxPages = 200 
       rows.push(row)
       added++
     }
-    if (added === 0) break          // the range was ignored: the same rows again
+    if (added === 0) return { data: rows, error: null }   // the range was ignored: the same rows again
     from += data.length
   }
-  return { data: rows, error: null }
+  return {
+    data: null,
+    error: { code: 'PAGE_LIMIT', message: `Read stopped after ${maxPages} pages without reaching the end of the table.` },
+  }
 }
