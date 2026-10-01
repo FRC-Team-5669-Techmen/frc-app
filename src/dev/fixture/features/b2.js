@@ -15,6 +15,17 @@
 
 const HOUR = 60 * 60 * 1000
 
+// Fixed row ids. attendance_events.id is a uuid column, so a readable label
+// such as 'b2-s1-in-open' is a row Postgres refuses (22P02) and a seed problem
+// on /_fixture. Exported so tests/checkout-path.test.js can name a row.
+export const B2_IDS = Object.freeze({
+  s1InOld: 'b2b2b2b2-0000-4000-8000-000000000001',
+  s1OutOld: 'b2b2b2b2-0000-4000-8000-000000000002',
+  s1InOpen: 'b2b2b2b2-0000-4000-8000-000000000003',
+  s2InStale: 'b2b2b2b2-0000-4000-8000-000000000004',
+  s2InMidnight: 'b2b2b2b2-0000-4000-8000-000000000005',
+})
+
 // PostgREST returns timestamptz with microseconds and a +00:00 offset; the
 // seeds use the same shape so the pages parse what production sends them.
 const pg = (ms) => new Date(ms).toISOString().replace('Z', '000+00:00')
@@ -43,19 +54,19 @@ export default {
 
     const rows = [
       // student: a closed session two days ago (so Season hours are non-zero) ...
-      ev('b2-s1-in-old', student, 'in', nowMs - 50 * HOUR),
-      ev('b2-s1-out-old', student, 'out', nowMs - 47 * HOUR),
+      ev(B2_IDS.s1InOld, student, 'in', nowMs - 50 * HOUR),
+      ev(B2_IDS.s1OutOld, student, 'out', nowMs - 47 * HOUR),
       // ... and the open session the report is about: checked in 2h45m ago.
-      ev('b2-s1-in-open', student, 'in', nowMs - 2.75 * HOUR),
+      ev(B2_IDS.s1InOpen, student, 'in', nowMs - 2.75 * HOUR),
     ]
 
     if (student2) {
       // A forgotten check-out two days ago: stale, so NOT checked in.
-      rows.push(ev('b2-s2-in-stale', student2, 'in', nowMs - 49 * HOUR))
+      rows.push(ev(B2_IDS.s2InStale, student2, 'in', nowMs - 49 * HOUR))
       // Opened 20 minutes before LA midnight, if that is still inside the cap.
       const crossMidnight = laMidnightBefore(nowMs) - 20 * 60 * 1000
       if (nowMs - crossMidnight <= 10 * HOUR) {
-        rows.push(ev('b2-s2-in-midnight', student2, 'in', crossMidnight))
+        rows.push(ev(B2_IDS.s2InMidnight, student2, 'in', crossMidnight))
       }
     }
     return { attendance_events: rows }

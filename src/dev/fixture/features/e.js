@@ -25,6 +25,13 @@ const ROLE_ROWS = [
   ['Student', '100000000000000011', 90, 'Not mentionable in Discord; kept off on purpose.', false],
 ]
 
+// Row ids. Both tables' `id` is uuid (0003), so a label such as 'fx-da-1' is a
+// row Postgres refuses (22P02). The engine cannot see that for a table a
+// migration creates (schema.js holds only the frozen catalog);
+// tests/fixture-seed.test.js reads 0003's CREATE TABLE and checks it.
+const roleId = (n) => `0e0e0e0e-0000-4000-8000-0000000a${String(n).padStart(4, '0')}`
+const announcementId = (n) => `0e0e0e0e-0000-4000-8000-0000000b${String(n).padStart(4, '0')}`
+
 function clockMs(now) {
   if (now instanceof Date) return now.getTime()
   if (typeof now === 'number') return now
@@ -47,7 +54,7 @@ export default {
 
     return {
       discord_announce_roles: ROLE_ROWS.map(([name, role_id, sort_order, notes, active], i) => ({
-        id: `fx-dar-${i + 1}`,
+        id: roleId(i + 1),
         name,
         role_id,
         active,
@@ -60,7 +67,7 @@ export default {
 
       discord_announcements: [
         {
-          id: 'fx-da-1',
+          id: announcementId(1),
           request_id: '00000000-0000-4000-8000-00000000e001',
           sent_by: admin,
           sender_name: 'Ada',
@@ -79,7 +86,7 @@ export default {
           sent_at: ago(60 * 26),
         },
         {
-          id: 'fx-da-2',
+          id: announcementId(2),
           request_id: '00000000-0000-4000-8000-00000000e002',
           sent_by: admin,
           sender_name: 'Ada',
@@ -98,7 +105,7 @@ export default {
           sent_at: null,
         },
         {
-          id: 'fx-da-3',
+          id: announcementId(3),
           request_id: '00000000-0000-4000-8000-00000000e003',
           sent_by: admin,
           sender_name: 'Ada',

@@ -19,7 +19,7 @@ import {
   DASHBOARD_CHECKOUT_ROW, checkOutFromDashboard, checkoutFailureText, dashboardCheckoutRow,
 } from '../src/attendanceCheckout.js'
 import { currentStatus, nextNfcAction } from '../src/attendanceState.js'
-import b2Fixture from '../src/dev/fixture/features/b2.js'
+import b2Fixture, { B2_IDS } from '../src/dev/fixture/features/b2.js'
 
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8')
 
@@ -182,7 +182,7 @@ describe('src/dev/fixture/features/b2.js', () => {
     expect(currentStatus(rows, now).checkedIn).toBe(true)
     expect(nextNfcAction(rows, now).action).toBe('check_out')
     // positive control: the same seed minus its open IN is not checked in
-    expect(currentStatus(rows.filter(r => r.id !== 'b2-s1-in-open'), now).checkedIn).toBe(false)
+    expect(currentStatus(rows.filter(r => r.id !== B2_IDS.s1InOpen), now).checkedIn).toBe(false)
   })
 
   test('student2: checked in across midnight when the clock allows, else stale and NOT checked in', () => {
@@ -190,9 +190,9 @@ describe('src/dev/fixture/features/b2.js', () => {
     const late = Date.parse('2026-10-01T22:15:00Z')  // 3:15 PM in Los Angeles
     const a = rowsFor(early, 'stu-2')
     const b = rowsFor(late, 'stu-2')
-    expect(a.some(r => r.id === 'b2-s2-in-midnight')).toBe(true)
+    expect(a.some(r => r.id === B2_IDS.s2InMidnight)).toBe(true)
     expect(currentStatus(a, early).checkedIn).toBe(true)
-    expect(b.some(r => r.id === 'b2-s2-in-midnight')).toBe(false)
+    expect(b.some(r => r.id === B2_IDS.s2InMidnight)).toBe(false)
     expect(currentStatus(b, late)).toMatchObject({ checkedIn: false, stale: true })
   })
 

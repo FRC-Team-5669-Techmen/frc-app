@@ -16,6 +16,17 @@
 const H = 3600_000
 const D = 24 * H
 
+// Fixed row ids, one per short key. attendance_events.id, session_reviews.id
+// and its checkin_id / checkout_id are uuid columns, so a readable label such
+// as 'fx-d-a-in' is a row Postgres refuses (22P02) and a seed problem on
+// /_fixture.
+const KEYS = ['a-in', 'a-out', 'b-in', 'b-out', 'c-in', 'c-out', 'd-in', 'd-out', 'e-in', 'e-out', 'f-in', 'f-out', 'review']
+const fxId = (key) => {
+  const n = KEYS.indexOf(key) + 1
+  if (n === 0) throw new Error(`fixture d: no id for ${key}`)
+  return `0d0d0d0d-0000-4000-8000-${String(n).padStart(12, '0')}`
+}
+
 export default {
   migration: null,
   creates: {},
@@ -25,9 +36,13 @@ export default {
     if (!who || !Number.isFinite(t0)) return {}
 
     const at = (daysAgo, hoursEarlier) => new Date(t0 - daysAgo * D - hoursEarlier * H).toISOString()
-    const ev = (id, type, time, over = {}) => ({
-      id: `fx-d-${id}`, user_id: who, type, event_time: time,
-      method: type === 'in' ? 'nfc' : null, location: null, category: null,
+    // No category key unless a row names one: attendance_events.category is
+    // NOT NULL DEFAULT 'build', and an explicit null never takes the default
+    // (23502, in Postgres and in the fixture). An OUT leaves it to the default;
+    // the hours math attributes a session by its IN.
+    const ev = (key, type, time, over = {}) => ({
+      id: fxId(key), user_id: who, type, event_time: time,
+      method: type === 'in' ? 'nfc' : null, location: null,
       manual_entry: false, geo_ok: null, ...over,
     })
 
@@ -57,7 +72,7 @@ export default {
         ev('f-out', 'out', at(9, 6 - 40 / 60)),
       ],
       session_reviews: [
-        { id: 'fx-d-review', user_id: who, checkin_id: 'fx-d-d-in', checkout_id: 'fx-d-d-out', status: 'pending', created_at: at(5, 1.5) },
+        { id: fxId('review'), user_id: who, checkin_id: fxId('d-in'), checkout_id: fxId('d-out'), status: 'pending', created_at: at(5, 1.5) },
       ],
     }
   },
