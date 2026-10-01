@@ -998,17 +998,23 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
     }
     select(columns = '*') { this.columns = columns; return this }
     then(resolve, reject) {
+      // A function call is one transaction: when it raises, every write it
+      // made is undone, as Postgres undoes a plpgsql function that raises
+      // part-way. Without this a handler that wrote, then failed, left its
+      // partial writes in the store for the next save to persist.
+      let snapshot = null
+      const rollback = () => { if (snapshot != null) store.db = JSON.parse(snapshot) }
       const run = async () => {
         try {
           const { handler } = resolveRpc(this.rpcName, this.args)
           const c = ctx()
+          snapshot = handler ? JSON.stringify(store.db) : null
           let out = handler
             ? await handler({ args: this.args, db: db(), store, user: c.user ?? null, persona: c.persona ?? null, now: now(), error: (code, message) => ({ data: null, error: { code, message, details: null, hint: null } }), from: (t) => new Query(t), uuid, engine: api })
             : { data: null, error: null }
           if (out == null) out = { data: null, error: null }
           if (!('data' in out) && !('error' in out)) out = { data: out, error: null }
-          if (out.error) return { data: null, error: out.error, count: null, status: 400, statusText: 'Error' }
-          onWrite()
+          if (out.error) { rollback(); return { data: null, error: out.error, count: null, status: 400, statusText: 'Error' } }
           let data = out.data ?? null
           if (Array.isArray(data)) {
             if (this.filters.length) data = data.filter((r) => this.filters.every((f) => testTree(null, r, f)))
@@ -1022,8 +1028,12 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
               else throw pgError('PGRST116', 'JSON object requested, multiple (or no) rows returned', { status: 406 })
             }
           }
+          // Persist only once the call has fully succeeded: PostgREST rolls a
+          // call back when its singular-object check fails, too.
+          onWrite()
           return { data: this.head ? null : clone(data), error: null, count: this.countMode && Array.isArray(out.data) ? out.data.length : null, status: 200, statusText: 'OK' }
         } catch (e) {
+          rollback()
           if (e instanceof FixtureError) return { data: null, error: e.toJSON(), count: null, status: e.status, statusText: 'Error' }
           console.error('[fixture] rpc fault', this.rpcName, e)
           return { data: null, error: { code: 'FIXTURE', message: String(e?.message ?? e), details: null, hint: null }, count: null, status: 500, statusText: 'Fixture fault' }

@@ -463,6 +463,20 @@ describe('rpc', () => {
     expect(mentor.error).toBeNull()
     expect(mentor.data.live_presence.length).toBeGreaterThan(0)
   })
+  it('a call that fails part-way leaves nothing behind, as a raising plpgsql function does', async () => {
+    // staff_add_manual_session writes the IN, then the unparseable OUT fails.
+    f.ctx.persona = 'mentor'
+    const mine = () => f.db().attendance_events.filter((e) => e.user_id === IDS.student).length
+    const before = mine()
+    const args = { p_member: IDS.student, p_in: '2026-09-30T15:00:00Z', p_category: 'build', p_reason: 'forgot to tap' }
+    const bad = await f.engine.rpc('staff_add_manual_session', { ...args, p_out: 'not-a-time' })
+    expect(bad.error.code).toBe('22007')
+    expect(mine()).toBe(before)
+    // Positive control: the same call with a real check-out writes the pair.
+    const good = await f.engine.rpc('staff_add_manual_session', { ...args, p_out: '2026-09-30T17:00:00Z' })
+    expect(good.error).toBeNull()
+    expect(mine()).toBe(before + 2)
+  })
   it('signed-out callers read nothing (every policy is to authenticated)', async () => {
     f.ctx.persona = 'signedout'
     expect((await f.engine.from('events').select('id')).data).toEqual([])
