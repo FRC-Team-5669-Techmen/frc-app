@@ -82,6 +82,7 @@ export default function VolunteerCheckinPage({ session }) {
   const started = useRef(false)
   const busy = useRef(false)
   const hiddenAt = useRef(null)
+  const mounted = useRef(false)
 
   const memberName = session?.user?.user_metadata?.full_name
     || session?.user?.email?.split('@')[0]
@@ -210,6 +211,10 @@ export default function VolunteerCheckinPage({ session }) {
         localTap: readLocalTap(deviceStore(), session.user.id),
       })
 
+      // The member left this page while it was reading: act on nothing (see
+      // CheckinPage).
+      if (!mounted.current) return
+
       if (next.action === 'unknown') {
         console.error(readErr)
         setStatus('unknown')
@@ -251,6 +256,11 @@ export default function VolunteerCheckinPage({ session }) {
       busy.current = false
     }
   }
+
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
 
   // Act on the arrival once, and only when the page is in front of the member.
   useEffect(() => {
