@@ -323,7 +323,7 @@
   .sv-opt, .sv-tick, .sv-submit, .sv-retry,
   .msh-btn, .msp-certify-btn, .ph-link-btn, .pr-choice, .pr-submit,
   .fb-cat, .fb-submit,
-  .gate-submit, .gate-signout, .landing-cta, .landing-nav-link, :where(.login-card) button[type='submit'],
+  .gate-submit, .gate-signout, .landing-cta, .landing-nav-link,
   .ma-chip, .ma-check, .ma-submit, .ma-back, .eb-btn,
   .ar-approve, .ar-deny, .activity-btn, .an-btn, .an-chip, .ap-export, .ap-row-resend, .ap-resend,
   .fbp-export-btn, .fbp-part, .fbp-tab, .fbp-refresh, .fbp-undo, .fbp-move, .fbp-bulkcopy, .fbp-rowcopy, .fbp-act,
@@ -383,7 +383,7 @@
   .mb-checkout, .mb-rsvp-btn, .sch-new-btn, .sch-save, .sch-cancel, .sch-edit, .sch-del, .sch-rsvp-btn, .sch-past-toggle, .sch-nav-btn, .sch-today-btn,
   .jobs-add-btn, .jobs-save-btn, .jobs-cancel-btn, .jobs-btn, .jobs-sort-btn, .lh-submit, .lh-delete-btn, .lh-corr-btn, .mh-session-flagbtn, .mh-modal-submit,
   .board-tab, .board-export, .profile-save, .np-btn, .study-log-btn, .study-goal-btn, .sv-opt, .sv-tick, .sv-submit, .fb-cat, .fb-submit,
-  .gate-submit, .gate-signout, .landing-cta, :where(.login-card) button[type='submit'], .pr-choice, .pr-submit, .checkin-cat, .profile-subteam-chip, .jobs-skill-chip
+  .gate-submit, .gate-signout, .landing-cta, .pr-choice, .pr-submit, .checkin-cat, .profile-subteam-chip, .jobs-skill-chip
 ):active:not(:disabled) {
   box-shadow:
     inset 0 3px 4px 0 var(--tm-press),
@@ -401,7 +401,7 @@
   .board-tab, .board-export, .board-adjust-btn, .board-mini-btn, .board-adjust-cancel, .board-adjust-save,
   .profile-save, .profile-cal-copy, .profile-cal-regen, .np-btn, .study-log-btn, .study-goal-btn,
   .sv-opt, .sv-tick, .sv-submit, .sv-retry, .msh-btn, .msp-certify-btn, .ph-link-btn, .pr-choice, .pr-submit, .fb-cat, .fb-submit,
-  .gate-submit, .gate-signout, :where(.login-card) button[type='submit'], .ma-chip, .ma-check, .ma-submit, .ma-back, .eb-btn,
+  .gate-submit, .gate-signout, .ma-chip, .ma-check, .ma-submit, .ma-back, .eb-btn,
   .ar-approve, .ar-deny, .activity-btn, .an-btn, .an-chip, .ap-export, .ap-row-resend, .ap-resend,
   .fbp-export-btn, .fbp-part, .fbp-tab, .fbp-refresh, .fbp-undo, .fbp-move, .fbp-bulkcopy, .fbp-rowcopy, .fbp-act,
   .mha-change, .mha-btn, .mha-add-toggle, .rd-refresh, .rp-btn, .rp-catchip,
@@ -409,6 +409,35 @@
   .sc-add-btn, .sc-cancel-btn, .sc-save-btn, .sc-reorder-btn, .sc-edit-btn, .sc-delete-btn, .squad-add-btn, .squad-cancel-btn, .squad-save-btn, .squad-assign-btn,
   .sa-btn, .sa-mini, .sa-tab, .sa-chip, .vh-cutoff-save, .vh-btn, .vh-dur-btn, .board-goal-cat, .jobs-skill-chip, .profile-subteam-chip, .checkin-cat
 ):disabled {
+  background-image: none;
+  box-shadow: inset 0 -2px 2px -1px var(--tm-foot);
+}
+
+/* THE LOGIN KEY has its own rules, and that is not style. The login page
+   styles its submit as `.login-card button[type='submit']`, (0,2,1); written
+   into the shared key list, that one compound entry raised the WHOLE list to
+   (0,3,1) and the small-key radius below, (0,3,0), lost to it on every
+   per-row key in the app (measured: the catalog's EDIT keys came out 11px
+   round instead of 5). IDEA's plate records the same trap. */
+:root.tm-plate .login-card button[type='submit'] {
+  border-radius: var(--tm-r-control);
+  background-image: linear-gradient(to bottom, var(--tm-face-hi), var(--tm-face-lo));
+  box-shadow:
+    inset 0 0 0 1px var(--tm-bezel),
+    inset 0 2px 0 -1px var(--tm-bezel-hi),
+    inset 0 -2px 2px -1px var(--tm-foot),
+    0 0 0 1px var(--tm-rim-out),
+    0 2px 3px 0 var(--tm-drop),
+    0 6px 10px -5px var(--tm-drop-far);
+}
+:root.tm-plate .login-card button[type='submit']:active:not(:disabled) {
+  box-shadow:
+    inset 0 3px 4px 0 var(--tm-press),
+    inset 0 1px 1px 0 var(--tm-press),
+    inset 0 -1px 0 0 var(--tm-bezel-hi),
+    0 0 0 1px var(--tm-rim-out);
+}
+:root.tm-plate .login-card button[type='submit']:disabled {
   background-image: none;
   box-shadow: inset 0 -2px 2px -1px var(--tm-foot);
 }
