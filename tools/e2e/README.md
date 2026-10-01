@@ -42,57 +42,96 @@ today's attendance for the two personas it drives (Sam and Casey), because a
 feature fixture may seed them a session (the check-out lane seeds Sam checked
 in 2h45m ago); the run prints how many rows that took with `--verbose`.
 
-The clock is Playwright's, installed at a fixed Thursday afternoon in LA
-(2026-10-01 4:00 PM PDT, the shop open) and fast-forwarded 61 s between taps,
-past the 60 s duplicate window. The context runs in `America/Los_Angeles`.
+**A tag tap is a NEW TAB.** An NFC tag hands the phone's browser a URL, which
+opens as a fresh navigation with no history state. The tag routes key on that:
+a history entry already carrying their marker is the page shown AGAIN (a back
+gesture, a reload, a restored tab) and must never write on its own, because
+the silent write on re-show was the 2026-09-08 check-out bug
+(`src/attendanceState.js`, `isRevisit`). The first version of this file tapped
+with `page.goto()` in the same tab; Chromium turns a same-URL navigation into a
+reload that KEEPS `history.state`, so every repeat "tap" was a revisit and the
+run read 8/24 against a correct app. Fresh taps now open a new tab in the same
+context, which shares localStorage (the fixture store and the device's
+last-tap record) as a phone's browser does; sessionStorage is per tab, which is
+why the signed-out bounce (g) stays in one tab. The earlier tab is closed
+unless a step keeps it, because this headless Chromium cannot put a tab in the
+background (below). The revisit paths have their own steps, R7 included (the
+same tab reused for a repeat tap), so neither model can change silently.
+
+The clock is Playwright's, installed on the context (every tab shares it) at a
+fixed Thursday afternoon in LA (2026-10-01 4:00 PM PDT, the shop open) and
+fast-forwarded 61 s between taps, past the 60 s duplicate window. The context
+runs in `America/Los_Angeles`. Rows are read from the persisted store
+(`localStorage.__fx_db`), which every tab writes through. Every step that
+writes waits 400 ms before counting, so a second write (StrictMode runs every
+effect twice in dev) has time to land and fail the "exactly one" assertion.
 
 | step | what is driven | asserted on screen | asserted in the store |
 | --- | --- | --- | --- |
-| a | `/checkin?loc=shop-main` at the shop (34.041550, -118.086826, accuracy 10), tap Confirm | `CHECKED IN` | exactly 1 new `in`, category `build`, `geo_ok` true, location `shop-main`, method `nfc` |
-| b | `/dashboard`, tap Check Out | tile `Checked in` with a Check Out button, then `Not checked in`, button gone | exactly 1 new `out` |
-| c1 | `/checkin` again the same day, confirm | `CHECKED IN` | exactly 1 new `in` |
-| c2 | `/checkin` again (the open check-out bug report) | `CHECKED OUT`, never the check-in confirm screen | exactly 1 new `out`; today reads `in,out,in,out` |
-| d | `/checkin` inside 60 s | `ALREADY OUT` | 0 writes, **against** c2's write by the same page outside the window |
+| a | new tab `/checkin?loc=shop-main` at the shop (34.041550, -118.086826, accuracy 10), tap Confirm | `CHECKED IN` | exactly 1 new `in`, category `build`, `geo_ok` true, location `shop-main`, method `nfc` |
+| b | new tab `/dashboard`, tap Check Out | tile `Checked in` with a Check Out button, then `Not checked in`, button gone | exactly 1 new `out` |
+| c1 | new tab `/checkin` again the same day, confirm | `CHECKED IN` | exactly 1 new `in` |
+| c2 | new tab `/checkin` again (the open check-out bug report) | `CHECKED OUT`, never the check-in confirm screen | exactly 1 new `out`; today reads `in,out,in,out` |
+| d | new tab `/checkin` inside 60 s | `ALREADY OUT` | 0 writes, **against** c2's write by the same tag outside the window |
 | e1 | 2 km north of the shop, confirm; then back at the shop, confirm again | `Not at the shop`, then `CHECKED IN` | 0 writes, **against** 1 `in` from the same screen in range |
 | e2 | location permission denied, confirm; then granted, confirm again | `Location denied`, then `CHECKED IN` | 0 writes, **against** 1 `in` once granted |
 | e3 | the `exempt` persona with location denied | `CHECKED IN` | 1 `in` with `geo_ok` false, **against** the non-exempt student refused (0 writes) in the same context |
-| f1 | `/checkin-volunteer?loc=fll-room` at the FLL room (34.042134, -118.086326) | `VOLUNTEER · CHECKED IN` | exactly 1 `in`, category `volunteer`, `geo_ok` true |
-| f2 | `/checkin-volunteer` again, later | `VOLUNTEER · CHECKED OUT` | exactly 1 `out` |
-| g | signed out, `/checkin?loc=shop-main` | lands on `/login` | `sessionStorage.pendingCheckin` = `/checkin?loc=shop-main`, 0 writes, **against** signing in returning the visitor to that exact check-in |
-| z | the whole run | -- | 0 unexpected console errors |
+| f1 | new tab `/checkin-volunteer?loc=fll-room` at the FLL room (34.042134, -118.086326) | `VOLUNTEER · CHECKED IN` | exactly 1 `in`, category `volunteer`, `geo_ok` true |
+| f2 | new tab `/checkin-volunteer` again, later | `VOLUNTEER · CHECKED OUT` | exactly 1 `out` |
+| R1 | check in, tap VIEW STATUS, wait for the dashboard, 61 s, `goBack()` (the reported back-swipe) | `Checked in since <the IN's time>` and a Check out button, never `CHECKED OUT` | 0 writes, **against** 1 `out` from that Check out tap |
+| R2 | `reload()` of a check-in receipt inside 60 s, then after 61 s | `ALREADY IN`, then `Checked in since` | 0 writes both times, **against** 1 `out` from a fresh tap in a new tab from the same state |
+| R3 | a `CHECKED OUT` receipt hidden 2 min, then shown | still `CHECKED OUT`, never the check-in prompt | 0 writes and at least 1 re-read; **control** in the same step: another tab checks in, the receipt hidden 2 min again now shows `Checked in since` (0 writes by it) |
+| R5 | a `CHECKED IN` receipt hidden 2 min, then shown | still `CHECKED IN` | 0 writes and at least 1 re-read |
+| R6 | R5's control: tab A shows `CHECKED IN`, a fresh tap in tab B checks out, A hidden 2 min then shown | B `CHECKED OUT`; A `Tap to confirm your check-in` | B: 1 `out`; A: 0 writes |
+| R7 | the same URL again in the SAME tab (a browser that reuses the tab for a repeat tap) | `Checked in since`, never `CHECKED OUT` | 0 writes, **against** 1 `out` from one tap: the known cost of the fix (one tap instead of zero on such a phone), pinned so it cannot change silently |
+| V1 | the FLL tag over an open BUILD session | `Tap to switch to volunteer hours`, `You have a normal session open`; after the tap `VOLUNTEER · CHECKED IN` and `Switched from a normal session to volunteer.` | arrival: 0 writes; the tap: an `out` then an `in` (category `volunteer`, `geo_ok` true) |
+| V2 | `reload()` of V1's volunteer receipt after 61 s | `Volunteering since` and a Check out button | 0 writes, **against** 1 `out` (category `volunteer`) from that tap |
+| V3 | volunteer check-in, VIEW STATUS, `goBack()` | `Volunteering since` | 0 writes, **against** 1 `out` from a fresh volunteer tap in a new tab, no confirm |
+| g | signed out, `/checkin?loc=shop-main` (one tab throughout) | lands on `/login` | `sessionStorage.pendingCheckin` = `/checkin?loc=shop-main`, 0 writes, **against** signing in returning the visitor to that exact check-in |
+| M | its own context at **12:30 AM** LA: Sam's only recent event is an IN at 11:40 PM; then the same row moved to 1:40 PM the day before | tile `Checked in`, Sam `pb-present` on `/display` (as the mentor), the Team pulse count; then `Not checked in`, `pb-absent` | the board and the glance counts each move by exactly 1 between the two (the board and the glance read from `presenceSinceISO()`; from local midnight they dropped Sam while his tile said Checked in) |
+| z | the whole run, every tab | -- | 0 unexpected console errors |
 
 It prints exactly one summary line, `checkin e2e: N/N passed (375 and 1440)`,
 exits non-zero on any failure, and writes one screenshot per step (and per
 refusal) to `artifacts/e2e/<width>-<step>.png` plus `artifacts/e2e/checkin-results.json`.
 
+**Mutation proof (2026-10-01).** Each group of steps was run against a mutant
+and went red, then the file was restored from a copy and checked by sha256:
+both tag pages passing `revisit: false` (the pre-fix behaviour) fails R1, R2,
+R3, R7, V2 and V3 at both widths, every one by checking the member out with no
+tap; `PresenceBoard.jsx` reading attendance from `startOfTodayISO()` fails M
+("the board shows Sam absent while the tile reads Checked in"); `useGlance.js`
+reading it from `todayISO` fails M ("the glance count moved by 0").
+
 Things learned getting it to measure, each a trap for the next harness:
 
+- **A tab cannot be put in the background in this headless Chromium.** Measured
+  on Chromium 141: a second tab in the same window (`Target.createTarget`,
+  foreground or background), a minimized window (`Browser.setWindowBounds`), a
+  frozen page (`Page.setWebLifecycleState`) and focus emulation all leave every
+  tab reading `visible` with no event, and the protocol has no visibility
+  override. `lib.mjs` `setTabVisibility` therefore shadows
+  `document.visibilityState` / `document.hidden` on the page and dispatches
+  `visibilitychange`, which is exactly what the app reads; it does not model
+  Chrome throttling the hidden tab's timers.
+- **Wait for the destination, not its URL.** React Router moves the URL first
+  and renders a lazy route inside a transition, keeping the old page MOUNTED
+  until the chunk arrives; a `goBack()` before then returns to a page that
+  never left (measured on V3: the receipt simply stayed, 0 writes).
+- **Every fixture tab holds its own copy of the store.** `client.js` follows
+  the `storage` event so a write in one tab reaches the others, as one database
+  would; without it, a tab left open re-reads its own stale copy.
 - **Location permission goes through CDP, scoped to the context.**
   `context.clearPermissions()` leaves the next `getCurrentPosition` pending
   forever (a prompt nobody can answer headless), and every later request then
   times out; `Browser.setPermission` without the context id lands on the
   default context and changes nothing. With the id, `denied` answers
   `PERMISSION_DENIED` at once, which is what a student who tapped Block gets.
+  The session is browser-level, so it outlives the tabs.
 - **Every "writes nothing" row has its positive control in the same step**, so
   a page that stopped writing altogether cannot pass the refusal rows.
 - **Text is read from `textContent`**, never `innerText`: the check-in screens
   uppercase with CSS in places and with literal capitals in others.
-
-### Known failures, as of this file
-
-**c2 and f2 fail in this harness, at both widths: one NFC tap writes TWO
-`out` events.** Measured (`__fx.calls`): two `profiles` upserts, two
-`attendance_events` selects and two inserts, all within ~5 ms of one page load.
-`CheckinPage`'s and `VolunteerCheckinPage`'s on-load `useEffect` decides "the
-last event today is an IN, so check out" and inserts, with no guard against
-running twice; React StrictMode (`main.jsx`) runs every effect twice in
-development, both runs read the same last event before either insert lands,
-and both insert. A production bundle runs the effect once, so this does not
-reach students today -- but the effect is not idempotent, which is the exact
-property StrictMode exists to flag (two near-simultaneous loads of the page,
-say a double NFC read, would race the same way). The usual fix is an `active` flag set false in the effect's cleanup and
-checked before the insert. Those files belong to the check-in lane; the
-assertion stays strict here.
 
 ## `shoot.mjs` -- screenshots for any later workstream
 

@@ -167,6 +167,46 @@ export function watchConsole(page) {
   return errors;
 }
 
+/**
+ * The same, for every tab a context ever opens (a test that models each tag
+ * tap as a new tab would otherwise miss the errors of all but the first).
+ */
+export function watchContextConsole(context) {
+  const errors = [];
+  const watch = (page) => {
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') errors.push({ type: 'console', text: msg.text(), url: page.url() });
+    });
+    page.on('pageerror', (err) => errors.push({ type: 'pageerror', text: `${err.name}: ${err.message}`, url: page.url() }));
+  };
+  for (const p of context.pages()) watch(p);
+  context.on('page', watch);
+  return errors;
+}
+
+/**
+ * Put a tab in the background ('hidden') or bring it back ('visible'), as the
+ * page sees it: document.visibilityState and document.hidden read the new
+ * value and a visibilitychange event fires on the document.
+ *
+ * This shadows the two getters on the document object; it is NOT the browser
+ * hiding the tab. Measured on this container's Chromium 141 headless: a second
+ * tab in the same window (Target.createTarget, newWindow false, foreground or
+ * background), a minimized window (Browser.setWindowBounds), a frozen page
+ * (Page.setWebLifecycleState) and focus emulation all leave every tab reading
+ * 'visible' with no event, and the protocol has no visibility override. What
+ * the app reads is exactly these two properties and that one event, so this is
+ * the most faithful hide the harness can make; what it does NOT model is
+ * Chrome throttling or freezing the hidden tab's timers.
+ */
+export async function setTabVisibility(page, state) {
+  await page.evaluate((s) => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => s });
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => s === 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, state);
+}
+
 export function ensureDir(dir) {
   mkdirSync(dir, { recursive: true });
   return dir;
