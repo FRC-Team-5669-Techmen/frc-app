@@ -463,6 +463,22 @@ describe('rpc', () => {
     expect(mentor.error).toBeNull()
     expect(mentor.data.live_presence.length).toBeGreaterThan(0)
   })
+  it('a migration that re-creates a core function with no handler of its own still answers through core', async () => {
+    // A new signature (p_new_arg) listed in creates.rpcs, no handler supplied.
+    const resig = { name: 'test-resig', migration: '0097', creates: { rpcs: ['readiness_summary', 'fx_new_fn'] } }
+    const on = setup({ persona: 'mentor', migrations: ['0097'], plugins: [core, resig] })
+    const r = await on.engine.rpc('readiness_summary', { p_new_arg: 1 })
+    expect(r.error).toBeNull()
+    expect(r.data.live_presence.length).toBeGreaterThan(0)
+    // A brand-new function with no handler exists (answers null), it is not missing.
+    expect(await on.engine.rpc('fx_new_fn')).toMatchObject({ data: null, error: null })
+    // Control: not applied, the deployed signature refuses the new argument,
+    // and the new function is missing.
+    const off = setup({ persona: 'mentor', migrations: 'none', plugins: [core, resig] })
+    expect((await off.engine.rpc('readiness_summary', { p_new_arg: 1 })).error.code).toBe('PGRST202')
+    expect((await off.engine.rpc('fx_new_fn')).error.code).toBe('PGRST202')
+    expect((await off.engine.rpc('readiness_summary')).data.live_presence.length).toBeGreaterThan(0)
+  })
   it('a call that fails part-way leaves nothing behind, as a raising plpgsql function does', async () => {
     // staff_add_manual_session writes the IN, then the unparseable OUT fails.
     f.ctx.persona = 'mentor'

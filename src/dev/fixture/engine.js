@@ -970,7 +970,15 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
   function resolveRpc(name, args) {
     const claims = rpcClaims.get(name) ?? []
     const live = claims.filter((c) => !c.core && applied(c.migration))
-    if (live.length) return { handler: live.at(-1).handler, owner: live.at(-1).plugin, checkArgs: false }
+    if (live.length) {
+      // A migration that re-creates an existing function (a new signature)
+      // may list it in creates.rpcs with no handler of its own: core's handler
+      // still answers, without the old signature's argument check, rather
+      // than the call silently answering null.
+      const own = live.filter((c) => c.handler).at(-1)
+      const core = claims.find((c) => c.core && c.handler)
+      return { handler: own?.handler ?? core?.handler ?? null, owner: own?.plugin ?? (core ? 'core' : live.at(-1).plugin), checkArgs: false }
+    }
     const overloads = coreFunctions[name]
     if (!overloads) {
       throw pgError('PGRST202', `Could not find the function public.${name}(${Object.keys(args).sort().join(', ')}) in the schema cache`, {
