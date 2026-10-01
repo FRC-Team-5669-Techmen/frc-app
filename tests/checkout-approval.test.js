@@ -13,7 +13,7 @@
 
 import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
-import { nextApproval } from '../src/claimApproval.js'
+import { nextApproval, nextOnboardedAt, nextRoles } from '../src/claimApproval.js'
 
 const transient = { data: null, error: { code: 'PGRST301', message: 'JWT expired' } }
 const network = { data: null, error: { message: 'TypeError: Failed to fetch' } }
@@ -45,6 +45,47 @@ describe('nextApproval', () => {
   })
 })
 
+// The two reads after the claim, on the same SIGNED_IN: member_roles and
+// profiles.onboarded_at. An error used to answer [] (staff nav gone, a mentor
+// or parent put behind the student application) and null (the onboarding tour
+// started over /dashboard).
+const MENTOR = { data: [{ role: 'mentor' }], error: null }
+
+describe('nextRoles', () => {
+  test('an error keeps the roles held for this member', () => {
+    expect(nextRoles(['mentor'], transient)).toEqual(['mentor'])
+    expect(nextRoles(['parent'], network)).toEqual(['parent'])
+  })
+
+  test('positive control: a real answer decides, including a real "no roles"', () => {
+    expect(nextRoles(['mentor'], { data: [], error: null })).toEqual([])
+    expect(nextRoles(['mentor'], { data: null, error: null })).toEqual([])
+    expect(nextRoles(null, MENTOR)).toEqual(['mentor'])
+    expect(nextRoles(['student'], { data: [{ role: 'student' }, { role: 'lead' }], error: null })).toEqual(['student', 'lead'])
+  })
+
+  test('an error with nothing held is UNKNOWN (null), never "no roles" ([])', () => {
+    expect(nextRoles(null, transient)).toBeNull()
+    expect(nextRoles(undefined, network)).toBeNull()
+    // and the held empty list is a real answer held, kept as it is
+    expect(nextRoles([], transient)).toEqual([])
+  })
+})
+
+describe('nextOnboardedAt', () => {
+  const DONE = '2026-06-03T23:00:00.000Z'
+  test('an error keeps what is held: never null, so never "start the tour"', () => {
+    expect(nextOnboardedAt(DONE, transient)).toBe(DONE)
+    expect(nextOnboardedAt(undefined, network)).toBeUndefined()
+  })
+
+  test('positive control: a real answer decides, including a real "never onboarded"', () => {
+    expect(nextOnboardedAt(undefined, { data: { onboarded_at: DONE }, error: null })).toBe(DONE)
+    expect(nextOnboardedAt(DONE, { data: { onboarded_at: null }, error: null })).toBeNull()
+    expect(nextOnboardedAt(undefined, { data: { onboarded_at: null }, error: null })).toBeNull()
+  })
+})
+
 // App.jsx's wiring, read from source (no DOM here; see vitest.config.js).
 // Each check holds on the shipped file and fails on a mutant of it.
 describe('App.jsx claimAndLoad', () => {
@@ -70,6 +111,21 @@ describe('App.jsx claimAndLoad', () => {
       (b) => !/setApproved\(claimed === true\)/.test(b) && /setApproved\(isApproved\)/.test(b),
     'the application gate gets the same decision':
       (b) => /loadApplicationState\(userId, isApproved, roleList\)/.test(b),
+    'roles: decided through nextRoles with the read and what is held for this member':
+      (b) => /const roleList = nextRoles\(heldRoles, rolesRead\)/.test(b)
+        && /rolesRef\.current\?\.userId === userId \? rolesRef\.current\.roles : null/.test(b),
+    'roles: what is held is read only after the answer arrives':
+      (b) => {
+        const call = b.indexOf('const rolesRead = await supabase')
+        const read = b.indexOf('const heldRoles =')
+        return call >= 0 && read > call
+      },
+    'roles: never set straight from the raw read, and unknown shows as none':
+      (b) => !/setRoles\(roleList\)/.test(b) && !/data\?\.map\(r => r\.role\) \?\? \[\]/.test(b) && /setRoles\(roleList \?\? \[\]\)/.test(b),
+    'roles: only a known list is held':
+      (b) => /if \(roleList\) rolesRef\.current = \{ userId, roles: roleList \}/.test(b),
+    'onboarded_at: set only through nextOnboardedAt, from what is held':
+      (b) => /setOnboardedAt\(prev => nextOnboardedAt\(prev, profRead\)\)/.test(b) && !/setOnboardedAt\(prof\?\.onboarded_at/.test(b),
   }
   const MUTANTS = {
     'decides through nextApproval with the rpc answer':
@@ -82,6 +138,18 @@ describe('App.jsx claimAndLoad', () => {
       (b) => b.replace('setApproved(isApproved)', 'setApproved(claimed === true)'),
     'the application gate gets the same decision':
       (b) => b.replace('loadApplicationState(userId, isApproved, roleList)', 'loadApplicationState(userId, claimed === true, roleList)'),
+    // The shipped bug, each half: an error read as [] ...
+    'roles: decided through nextRoles with the read and what is held for this member':
+      (b) => b.replace('const roleList = nextRoles(heldRoles, rolesRead)', 'const roleList = rolesRead.data?.map(r => r.role) ?? []'),
+    'roles: what is held is read only after the answer arrives':
+      (b) => b.replace(/(\s*)const rolesRead = await supabase\n([^]*?)\n(\s*const heldRoles = [^\n]*\n)/, '\n$3$1const rolesRead = await supabase\n$2\n'),
+    'roles: never set straight from the raw read, and unknown shows as none':
+      (b) => b.replace('setRoles(roleList ?? [])', 'setRoles(roleList)'),
+    'roles: only a known list is held':
+      (b) => b.replace('if (roleList) rolesRef.current = { userId, roles: roleList }', 'rolesRef.current = { userId, roles: roleList ?? [] }'),
+    // ... and an error read as "never onboarded".
+    'onboarded_at: set only through nextOnboardedAt, from what is held':
+      (b) => b.replace('setOnboardedAt(prev => nextOnboardedAt(prev, profRead))', 'setOnboardedAt(profRead.data?.onboarded_at ?? null)'),
   }
 
   test('the function body was found', () => {
@@ -98,5 +166,36 @@ describe('App.jsx claimAndLoad', () => {
 
   test('signing out drops the held approval', () => {
     expect(src).toMatch(/approvedRef\.current = null\n\s*setApproved\(null\)/)
+  })
+
+  test('signing out drops the held roles', () => {
+    expect(src).toMatch(/setRoles\(\[\]\)\n\s*rolesRef\.current = null/)
+  })
+})
+
+// The application gate, read from source: unknown roles fail OPEN, the way an
+// application read error already does, and known roles still decide.
+describe('App.jsx loadApplicationState', () => {
+  const src = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const start = src.indexOf('async function loadApplicationState(')
+  const body = src.slice(start, src.indexOf('supabase.auth.getSession()', start))
+  const failsOpen = (b) => {
+    const guard = b.indexOf('if (roleList === null) { setAppSeason(null); return }')
+    const use = b.indexOf('roleList.some(')
+    return guard >= 0 && use > guard
+  }
+
+  test('unknown roles (null) fail open before the roles are read as a track', () => {
+    expect(body.length).toBeGreaterThan(100)
+    expect(failsOpen(body)).toBe(true)
+    const mutant = body.replace('if (roleList === null) { setAppSeason(null); return }\n', '')
+    expect(mutant).not.toBe(body)
+    expect(failsOpen(mutant)).toBe(false)
+  })
+
+  test('positive control: known roles still decide (staff and parent skip, the member track is asked)', () => {
+    expect(body).toMatch(/const staff {2}= roleList\.some\(r => \['mentor', 'lead', 'admin'\]\.includes\(r\)\)/)
+    expect(body).toMatch(/if \(!isApproved \|\| staff \|\| parent\) \{ setAppSeason\(null\); return \}/)
+    expect(body).toMatch(/setAppSeason\(existing \? null : season\)/)
   })
 })

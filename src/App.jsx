@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabase'
 import { resolveCurrentSeason } from './seasons'
-import { nextApproval } from './claimApproval'
+import { nextApproval, nextRoles, nextOnboardedAt } from './claimApproval'
 import NavBar from './NavBar'
 import ErrorBoundary from './ErrorBoundary'
 import './App.css'
@@ -92,6 +92,8 @@ export default function App() {
   // The same value and the member it belongs to, readable inside claimAndLoad,
   // which runs from auth events and so cannot see a later render's state.
   const approvedRef = useRef(null) // { userId, approved } | null
+  // The roles this tab holds, per member, on the same terms (claimApproval.js).
+  const rolesRef = useRef(null) // { userId, roles } | null
   const [onboardedAt, setOnboardedAt] = useState(undefined)
   // Current season this member still owes an application for. undefined = not
   // resolved yet, null = nothing owed (already applied, or not a member track).
@@ -116,18 +118,25 @@ export default function App() {
       const isApproved = nextApproval(held, claim)
       approvedRef.current = { userId, approved: isApproved }
       setApproved(isApproved)
-      const { data } = await supabase
+      // A failed roles read keeps the roles held for this member, read once the
+      // answer is back for the same reason as the approval; with nothing held
+      // it is UNKNOWN (null), never "no roles" (claimApproval.js nextRoles).
+      const rolesRead = await supabase
         .from('member_roles')
         .select('role')
         .eq('member_id', userId)
-      const roleList = data?.map(r => r.role) ?? []
-      setRoles(roleList)
-      const { data: prof } = await supabase
+      const heldRoles = rolesRef.current?.userId === userId ? rolesRef.current.roles : null
+      const roleList = nextRoles(heldRoles, rolesRead)
+      if (roleList) rolesRef.current = { userId, roles: roleList }
+      setRoles(roleList ?? [])
+      // Only a read that answered sets onboarded_at: a failed one keeps what is
+      // held, so it never reads as "not onboarded" and starts the tour.
+      const profRead = await supabase
         .from('profiles')
         .select('onboarded_at')
         .eq('id', userId)
         .single()
-      setOnboardedAt(prof?.onboarded_at ?? null)
+      setOnboardedAt(prev => nextOnboardedAt(prev, profRead))
       await loadApplicationState(userId, isApproved, roleList)
     }
 
@@ -136,6 +145,10 @@ export default function App() {
     // form (pathway, parent contact, build-season commitment), and gating them
     // would lock mentors and parents out of the app behind it.
     async function loadApplicationState(userId, isApproved, roleList) {
+      // Roles unknown (their read failed with nothing held): fail OPEN, as for
+      // an application read error below, rather than read a mentor or a parent
+      // as the member track and put them behind a student form.
+      if (roleList === null) { setAppSeason(null); return }
       const staff  = roleList.some(r => ['mentor', 'lead', 'admin'].includes(r))
       const parent = roleList.includes('parent') && !staff
       if (!isApproved || staff || parent) { setAppSeason(null); return }
@@ -180,6 +193,7 @@ export default function App() {
         }
       } else {
         setRoles([])
+        rolesRef.current = null
         approvedRef.current = null
         setApproved(null)
         setOnboardedAt(undefined)
