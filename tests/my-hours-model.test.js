@@ -240,6 +240,19 @@ describe('the open session and the goal read the same rows', () => {
     const b = model({ goals: [{ ...goals[0], categories: ['build'] }] })
     expect(b.goalProgress.hours).toBeCloseTo(2.5 + 1.25 + 1 / 3, 6)
   })
+
+  test('the goal card picks the active season by the Los Angeles date of the clock', () => {
+    // 6 PM PST on 2027-01-06, the last day of Offseason 2026, is already
+    // 2027-01-07 in UTC. A goal exists only for Offseason 2026, so a UTC
+    // "today" would find Biocore 2027 active, no goal, and hide the card.
+    const goals = [{ member_id: null, season_id: 'off26', target_hours: 20, categories: null }]
+    const lastEvening = model({ goals, now: Date.parse('2027-01-07T02:00:00Z') })
+    expect(lastEvening.goalProgress?.season.id).toBe('off26')
+    // POSITIVE CONTROL: the same wall time one day later is Biocore 2027, which
+    // has no goal, so the card is gone.
+    const nextEvening = model({ goals, now: Date.parse('2027-01-08T02:00:00Z') })
+    expect(nextEvening.goalProgress).toBe(null)
+  })
 })
 
 describe('the two date helpers, across both 2026 DST transitions', () => {
