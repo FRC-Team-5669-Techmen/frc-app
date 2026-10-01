@@ -22,7 +22,8 @@
     "ds:dev": "vite --mode dsspec --port 5175 --strictPort",
     "ds:capture": "node scripts/design-system/ds-capture.mjs",
     "dev:fixture": "vite --mode fixture",
-    "test:checkin": "node tools/e2e/checkin.mjs"
+    "test:checkin": "node tools/e2e/checkin.mjs",
+    "test:features": "node tools/e2e/features.mjs"
   },
   "dependencies": {
     "@fontsource/chakra-petch": "^5.2.7",
