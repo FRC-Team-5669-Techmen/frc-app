@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
-import { CATEGORIES, categoryLabel, categoryColor, sessionsFromEvents, fmtHours } from './hoursUtils'
+import { CATEGORIES, categoryLabel, categoryColor, sessionsFromEvents, fmtHours, laDateKey } from './hoursUtils'
 import { DURATION_PRESETS, STEP_MINUTES, fmtSpanMins, stepMinutes, setPreset, endInstantMs, minutesFromInstant, resolveReadout } from './hoursResolve'
 import { fetchAllRows } from './fetchAllRows'
 import './MemberHoursAdmin.css'
@@ -38,7 +38,10 @@ function unclosedInIds(events) {
   return ids
 }
 
-const todayStr = () => new Date().toISOString().slice(0, 10)
+// Today in the shop's zone. Both uses are calendar dates a person reads -- the
+// latest date a logged-hours entry may carry, and the day a new event's time
+// field starts on -- and after 5 PM PDT the UTC date is already tomorrow.
+const todayStr = () => laDateKey(Date.now())
 const fmtDate = s => new Date(s + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 const fmtDT = iso => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 const toLocalInput = iso => {
@@ -212,7 +215,7 @@ export default function MemberHoursAdmin({ initialMemberId = null, focusEventIds
                       {a.hours >= 0 ? '+' : '−'}{fmtHours(Math.abs(a.hours))}
                     </span>
                     <span className="mha-adj-reason">{a.reason}</span>
-                    <span className="mha-adj-date">{fmtDate(a.created_at.slice(0, 10))}</span>
+                    <span className="mha-adj-date">{fmtDate(laDateKey(a.created_at))}</span>
                   </div>
                 ))}
               </div>

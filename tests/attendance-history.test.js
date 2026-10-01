@@ -15,7 +15,7 @@
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
 import {
   STAFF_ROLES, canOpenHistory, defaultHistorySeason, seasonRange,
-  sessionDayKey, dayInRange, historyByDay, historyTotals, fmtSessionTime, fmtDayKey,
+  sessionDayKey, dayInRange, historyByDay, hoursByDay, historyTotals, fmtSessionTime, fmtDayKey,
 } from '../src/attendanceHistory.js'
 import { sessionsFromEvents } from '../src/hoursUtils.js'
 
@@ -189,17 +189,71 @@ describe('grouping sessions by day', () => {
 })
 
 describe('the day a session files under', () => {
-  test('is the IN instant\'s UTC date -- the key the Team Hours matrix uses', () => {
-    // A check-in at 6:30 PM PDT on Mon Sep 28 is 01:30Z on the 29th. The matrix
-    // (attendanceHoursByDate) files it under event_time.slice(0, 10), so the
-    // history must too, or a matrix cell click would open an empty day. If this
-    // is ever moved to an America/Los_Angeles day, move the matrix with it.
-    const evening = [ev('e', 'in', '2026-09-29T01:30:00.000Z'), ev('eo', 'out', '2026-09-29T03:00:00.000Z')]
+  test('is the IN instant\'s Los Angeles date, not its UTC date', () => {
+    // An 8:00 PM PDT check-in on Wed Sep 30 is 03:00Z on Thu Oct 1. It happened
+    // on Sep 30 and files there; the UTC date (what this used to read) is the
+    // next day.
+    const evening = [ev('e', 'in', '2026-10-01T03:00:00.000Z'), ev('eo', 'out', '2026-10-01T04:30:00.000Z')]
     const [s] = sessionsFromEvents(evening)
-    expect(sessionDayKey(s)).toBe(evening[0].event_time.slice(0, 10))
-    expect(sessionDayKey(s)).toBe('2026-09-29')
-    expect(days(historyByDay(evening, { day: '2026-09-29' }))).toEqual(['2026-09-29'])
-    expect(historyByDay(evening, { day: '2026-09-28' })).toEqual([])
+    expect(sessionDayKey(s)).toBe('2026-09-30')
+    expect(days(historyByDay(evening, { day: '2026-09-30' }))).toEqual(['2026-09-30'])
+    expect(historyByDay(evening, { day: '2026-10-01' })).toEqual([])
+    // Positive control: this instant's UTC date really is Oct 1, so the test
+    // tells the two rules apart, and a morning check-in has one date in both.
+    expect(evening[0].event_time.slice(0, 10)).toBe('2026-10-01')
+    const morning = [ev('m', 'in', '2026-09-30T16:00:00.000Z'), ev('mo', 'out', '2026-09-30T18:00:00.000Z')]
+    expect(sessionDayKey(sessionsFromEvents(morning)[0])).toBe('2026-09-30')
+    expect(days(historyByDay(morning, { day: '2026-09-30' }))).toEqual(['2026-09-30'])
+  })
+
+  test('a session running past 5 PM PDT (00:00 UTC) stays one session on its check-in day', () => {
+    // 3:30 PM to 6:30 PM PDT on Mon Sep 28: 22:30Z on the 28th to 01:30Z on the 29th.
+    const after = [ev('a', 'in', '2026-09-28T22:30:00.000Z', { category: 'build' }), ev('ao', 'out', '2026-09-29T01:30:00.000Z')]
+    const g = historyByDay(after)
+    expect(days(g)).toEqual(['2026-09-28'])
+    expect(g[0].sessions).toHaveLength(1)
+    expect(historyTotals(g).total).toBeCloseTo(3, 10)
+    expect(hoursByDay(after)).toEqual({ '2026-09-28': 3 })
+  })
+
+  test('both edges of a Los Angeles day, in PDT and in PST', () => {
+    const key = (t) => sessionDayKey(sessionsFromEvents([ev('k', 'in', t)])[0])
+    expect(key('2026-09-30T06:59:59.000Z')).toBe('2026-09-29')   // 11:59:59 PM PDT
+    expect(key('2026-09-30T07:00:00.000Z')).toBe('2026-09-30')   // midnight PDT
+    expect(key('2026-12-02T07:59:59.000Z')).toBe('2026-12-01')   // 11:59:59 PM PST
+    expect(key('2026-12-02T08:00:00.000Z')).toBe('2026-12-02')   // midnight PST
+  })
+})
+
+describe('the matrix\'s hours per day (hoursByDay)', () => {
+  test('puts every counted session on the day historyByDay files it under', () => {
+    // The agreement a matrix cell click depends on: for every day, the cell's
+    // hours are the total of the sessions the drill-down opens for that day.
+    const perDay = hoursByDay(EVENTS, REVIEWED)
+    const groups = historyByDay(EVENTS, { excluded: REVIEWED })
+    // A day whose only session is under review is in the history (flagged) and
+    // has no hours; every other day is in both.
+    expect(Object.keys(perDay).sort()).toEqual(days(groups).filter(d => d !== '2026-09-25').sort())
+    for (const g of groups) {
+      expect(perDay[g.day] ?? 0, g.day).toBeCloseTo(historyTotals([g]).total, 10)
+    }
+    expect(Object.keys(perDay)).toHaveLength(7)                   // not vacuous
+  })
+
+  test('counts an open session to now and leaves a reviewed one out', () => {
+    const perDay = hoursByDay(EVENTS, REVIEWED)
+    expect(perDay['2026-10-01']).toBeCloseTo(2, 10)               // i7, open since 21:00Z
+    expect(perDay['2026-09-25']).toBe(undefined)                  // i4, under review
+    // Positive control: nothing under review puts i4's 6.5h back on its day.
+    expect(hoursByDay(EVENTS)['2026-09-25']).toBeCloseTo(6.5, 10)
+    expect(hoursByDay(EVENTS, new Set())['2026-09-25']).toBeCloseTo(6.5, 10)
+  })
+
+  test('an empty ledger has no days', () => {
+    expect(hoursByDay([])).toEqual({})
+    expect(hoursByDay(undefined)).toEqual({})
+    // Positive control: one session is one day.
+    expect(Object.keys(hoursByDay(EVENTS.slice(0, 2)))).toEqual(['2026-08-20'])
   })
 })
 

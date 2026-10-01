@@ -47,7 +47,7 @@ export function cappedSession(inTime, outTime, { maxMs = MAX_SESSION_MS, eventEn
 // the entrance/exit used (attendance_events.location); null when absent. ms is
 // the CAPPED duration (see cappedSession); wasCapped flags a clamped session.
 // category is the IN event's attendance_events.category, normalized to one of
-// the six categories (legacy 'normal'/null → 'build'). manual mirrors the IN
+// the four categories (legacy 'normal'/null → 'build'). manual mirrors the IN
 // event's manual_entry. An unmatched trailing 'in' is an open session counted up
 // to now (still live + uncapped while under the cap).
 export function sessionsFromEvents(events) {
@@ -134,20 +134,37 @@ function sidFor(dateStr, seasons) {
   return seasons.find(s => dateStr >= s.start_date && dateStr <= s.end_date)?.id ?? 'other'
 }
 
-// The America/Los_Angeles calendar date ('YYYY-MM-DD') of an instant. A stored
-// timestamptz arrives from PostgREST as "2026-09-15T22:30:00+00:00", so
-// `event_time.slice(0, 10)` is the UTC date, which is the NEXT day for anything
-// after 5 PM PDT / 4 PM PST. Seasons, goals and the session list are all in
-// shop-local dates, so every date an instant is bucketed by comes from here.
-// Same result as `laDateKey` in src/reporting.js (which should re-export this
-// one rather than keep its own). One cached formatter, read by parts: a
-// `toLocaleDateString` with options builds a formatter per call, ~15x slower,
-// and Team Hours calls this once per session for the whole roster.
+// THE DAY RULE. The America/Los_Angeles calendar date ('YYYY-MM-DD') of an
+// instant. A stored timestamptz arrives from PostgREST as
+// "2026-09-15T22:30:00+00:00", so `event_time.slice(0, 10)` is the UTC date,
+// which is the NEXT day for anything after 5 PM PDT / 4 PM PST, and so is
+// `new Date().toISOString().slice(0, 10)` as "today". Seasons, goals, the
+// session list, the Team Hours matrix and its drill-down, days present and the
+// reports are all in shop-local dates, so every date an instant is bucketed by,
+// and every "today", comes from here -- whatever zone the viewing device is in.
+// src/reporting.js re-exports this one rather than keeping its own. One cached
+// formatter, read by parts: a `toLocaleDateString` with options builds a
+// formatter per call, ~15x slower, and Team Hours calls this once per session
+// for the whole roster.
 const LA_DATE = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' })
 export function laDateKey(t) {
   const p = {}
   for (const { type, value } of LA_DATE.formatToParts(new Date(t))) p[type] = value
   return `${p.year}-${p.month}-${p.day}`
+}
+
+// The instant (ms) a Los Angeles calendar date begins: midnight is 07:00Z in
+// PDT, 08:00Z in PST, and on both 2026 transition days midnight is still on
+// the old offset (DST moves at 2 AM). The inverse of laDateKey at the start of
+// a day, for "since the start of today" reads and for placing a dated row
+// (logged hours carry a date, not a time) on the timeline.
+export function laMidnightMs(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  for (const hourUtc of [7, 8]) {
+    const t = Date.UTC(y, m - 1, d, hourUtc)
+    if (laDateKey(t) === dateStr && laDateKey(t - 1) !== dateStr) return t
+  }
+  return Date.UTC(y, m - 1, d, 8)
 }
 
 // Whether a derived session counts toward official hours: every session except

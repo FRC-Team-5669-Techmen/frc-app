@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
-import { CATEGORIES, categoryLabel, fmtHours } from './hoursUtils'
+import { CATEGORIES, categoryLabel, fmtHours, laDateKey } from './hoursUtils'
 import { fetchAllRows } from './fetchAllRows'
 import {
   buildRows, filterRows, rollupByEvent, rowsToCsv, totalsByCategory,
@@ -10,7 +10,10 @@ import {
 import './ReportsPage.css'
 
 const TEAM = { name: 'Techmen — FRC Team 5669', org: 'Don Bosco Technical Institute' }
-const today = () => new Date().toISOString().slice(0, 10)
+// Today's date in the shop's zone: the letter's default "to" date and the date
+// in a download's filename are calendar dates a person reads, and after 5 PM
+// PDT the UTC date is already tomorrow.
+const today = () => laDateKey(Date.now())
 
 // Open a print window with self-contained HTML and trigger the print dialog
 // (the user picks "Save as PDF"). No deps, offline, nothing written server-side.
