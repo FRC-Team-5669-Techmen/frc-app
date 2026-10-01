@@ -30,6 +30,13 @@
  * that quicker mode for a look, never for the proof.
  *
  * `--extras false` skips the persona-only pages and the states.
+ * `--routes none` skips the route table; `--states all|none|review|<names>`
+ * picks the states (`review` is REVIEW_STATES, the views the first visual
+ * review opened by hand); `--persona-pages false` skips the persona pages.
+ * That is how a base set is extended by exactly the states added since it
+ * was shot:
+ *
+ *   node tools/e2e/plate/shots.mjs --url http://127.0.0.1:5413 --set base --routes none --states review --persona-pages false
  */
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -37,7 +44,7 @@ import {
   REPO, flag, ensureDir, launchBrowser, watchConsole, ROUTES, APP_PLATE, SHOP, CLOCK,
   server, pinnedContext, fxUrl, settlePage, plateOn, setPlate, fullShot, slug, frames,
 } from './common.mjs';
-import { PERSONA_PAGES, STATES } from './states.mjs';
+import { PERSONA_PAGES, STATES, REVIEW_STATES } from './states.mjs';
 
 const args = process.argv.slice(2);
 const set = String(flag(args, 'set', 'both'));
@@ -59,7 +66,18 @@ const LANES = set !== 'both'
 
 const routeList = routesArg === 'all' || routesArg === true
   ? ROUTES.map((r) => r.url)
-  : String(routesArg).split(',').map((r) => r.trim()).filter(Boolean);
+  : routesArg === 'none'
+    ? []
+    : String(routesArg).split(',').map((r) => r.trim()).filter(Boolean);
+const statesArg = String(flag(args, 'states', 'all'));
+const stateList = statesArg === 'all'
+  ? STATES
+  : statesArg === 'none'
+    ? []
+    : statesArg === 'review'
+      ? REVIEW_STATES
+      : STATES.filter((st) => statesArg.split(',').includes(st.name));
+const personaPages = extras && String(flag(args, 'persona-pages', 'true')) !== 'false';
 
 const report = [];
 
@@ -106,7 +124,7 @@ async function main() {
             await capture(page, lane, { persona, width, name: slug(url), url, errors });
           }
           if (extras) {
-            for (const st of STATES.filter((s) => s.personas.includes(persona))) {
+            for (const st of stateList.filter((x) => x.personas.includes(persona))) {
               const own = st.fresh ? await ctx(width, lane) : null;
               const p = own ? own.page : page;
               const errs = own ? watchConsole(p) : errors;
@@ -122,7 +140,7 @@ async function main() {
           }
           await context.close();
         }
-        if (extras) {
+        if (personaPages) {
           for (const pp of PERSONA_PAGES) {
             const { context, page } = await ctx(width, lane);
             const errors = watchConsole(page);

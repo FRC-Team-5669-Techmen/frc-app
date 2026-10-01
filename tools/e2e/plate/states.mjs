@@ -4,7 +4,7 @@
  * states a screenshot of a freshly loaded route never shows. Shared by
  * shots.mjs and measure.mjs so both look at the same things.
  */
-import { STUDENT_ID } from './common.mjs';
+import { STUDENT_ID, fxUrl } from './common.mjs';
 
 // Pages that only exist for one persona, shot once each (not per admin/student).
 export const PERSONA_PAGES = [
@@ -108,6 +108,85 @@ export const STATES = [
     },
   },
 ];
+
+// The views the four visual reviewers opened by hand on the first pass
+// (docs/SHAPES.md, "The review"): each found a defect the route set could not
+// show, so each is now a state every later run photographs and measures.
+// Kept in a list of their own so the identity proof can shoot the base for
+// exactly these (`shots.mjs --routes none --states review`).
+export const REVIEW_STATES = [
+  {
+    // A duplicate tap: /checkin, then /checkin-volunteer inside the 60 s tap
+    // window, which lands on the amber "ALREADY OUT" readout panel (the one
+    // chamfered panel in the app). A fresh context, like the other check-in
+    // states, so no earlier route's tap receipt decides what it shows.
+    name: 'state-checkin-duplicate', personas: ['student'], url: '/_fixture', fresh: true,
+    run: async (page, origin) => {
+      await page.goto(fxUrl(origin, '/checkin', 'student'));
+      await page.waitForFunction(() => (document.body.textContent || '').includes('CHECKED OUT'), null, { timeout: 15_000 });
+      await page.goto(fxUrl(origin, '/checkin-volunteer', 'student'));
+      await page.waitForSelector('.checkin-panel', { timeout: 15_000 });
+    },
+  },
+  {
+    name: 'state-skills-coverage', personas: ['student'], url: '/skills',
+    run: async (page) => {
+      await page.locator('.msh-toggle-btn', { hasText: 'Team coverage' }).first().click();
+      await page.waitForSelector('.cm-toggle-label', { timeout: 10_000 });
+    },
+  },
+  {
+    name: 'state-jobs-new', personas: ['student', 'admin'], url: '/jobs',
+    run: async (page) => {
+      await page.locator('.jobs-add-btn').first().click();
+      await page.waitForSelector('.jobs-form-card', { timeout: 10_000 });
+    },
+  },
+  {
+    name: 'state-cert-open', personas: ['student'], url: '/certifications',
+    run: async (page) => {
+      await page.locator('.ic-cert-btn').first().click();
+      await page.waitForSelector('.ic-facts', { timeout: 10_000 });
+    },
+  },
+  {
+    name: 'state-roster-expand', personas: ['admin'], url: '/roster',
+    run: async (page) => {
+      await page.locator('.roster-member-head').first().click();
+      await page.waitForSelector('.roster-member-detail', { timeout: 10_000 });
+    },
+  },
+  {
+    name: 'state-surveys-settings', personas: ['admin'], url: '/surveys',
+    run: async (page) => {
+      await page.locator('.sa-tab', { hasText: 'Settings' }).first().click();
+      await page.waitForSelector('.sa-manage-row', { timeout: 10_000 });
+    },
+  },
+  {
+    name: 'state-certify-member', personas: ['admin'], url: '/certify',
+    run: async (page) => {
+      const value = await page.locator('.cp-picker-select option').nth(1).getAttribute('value');
+      await page.locator('.cp-picker-select').selectOption(value);
+      await page.waitForSelector('.cp-category', { timeout: 10_000 });
+    },
+  },
+  {
+    name: 'state-catalog-open', personas: ['admin'], url: '/skills',
+    run: async (page) => {
+      await page.locator('.sc-cat-header').first().click();
+      await page.waitForSelector('.sc-table-wrap', { timeout: 10_000 });
+    },
+  },
+  {
+    name: 'state-feedback-detail', personas: ['admin'], url: '/feedback',
+    run: async (page) => {
+      await page.locator('.fbp-item').first().click();
+      await page.waitForSelector('.fbp-modal', { timeout: 10_000 });
+    },
+  },
+];
+STATES.push(...REVIEW_STATES);
 
 export async function clearToday(page) {
   await page.evaluate(({ id, since }) => {

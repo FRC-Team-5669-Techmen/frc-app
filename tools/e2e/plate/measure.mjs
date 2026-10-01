@@ -7,7 +7,13 @@
  *   node tools/e2e/plate/measure.mjs --port 5413 [--widths 375] [--personas student] [--json out.json]
  *
  * TARGETS. Every visible button, link, field, select, textarea, summary and
- * role=button/tab. A checkbox or radio inside a <label> is measured as the
+ * role=button/tab, AND every other element that declares `cursor: pointer`
+ * outermost (its parent does not): a div or li with an onClick, a sortable
+ * table head, a label acting as a toggle. The first sweep took only the
+ * element types, and missed exactly those (a skill row a student taps, a jobs
+ * row, Team Hours' sort heads, the coverage view's toggle label); the cursor
+ * is what the app itself uses to say "this is a control", so it is what the
+ * sweep reads. A checkbox or radio inside a <label> is measured as the
  * label, because the label is what a thumb hits. An <a> that is running text
  * (display inline, no border, no background, no shadow, inside a paragraph)
  * is a text link, not a control: it is counted and listed separately, never
@@ -67,6 +73,20 @@ function sweep() {
   };
   const hasDrop = (el) => shadows(getComputedStyle(el).boxShadow).some((s) => !s.inset && (s.blur > 0 || s.y >= 2));
 
+  // A control may widen its hit area with an absolutely positioned pseudo-
+  // element instead of growing its box (the Team Hours history's close does,
+  // so its glyph and focus ring keep their place). That area is what a thumb
+  // hits, so it is what is measured; the row records the box as well.
+  const pseudoHit = (el, r) => {
+    let w = r.width; let h = r.height; let by = null;
+    for (const p of ['::before', '::after']) {
+      const ps = getComputedStyle(el, p);
+      if (ps.content === 'none' || ps.content === 'normal' || ps.position !== 'absolute' || ps.display === 'none') continue;
+      const pw = parseFloat(ps.width) || 0; const ph = parseFloat(ps.height) || 0;
+      if (pw > w || ph > h) { w = Math.max(w, pw); h = Math.max(h, ph); by = p; }
+    }
+    return { w, h, by };
+  };
   const targets = []; const textLinks = [];
   const seen = new Set();
   for (const el of document.querySelectorAll('button, a[href], input:not([type="hidden"]), select, textarea, summary, [role="button"], [role="tab"]')) {
@@ -80,10 +100,29 @@ function sweep() {
     seen.add(t);
     const cs = getComputedStyle(t);
     const r = t.getBoundingClientRect();
-    const row = { key: key(t), text: (t.textContent || t.getAttribute('aria-label') || t.getAttribute('placeholder') || '').replace(/\s+/g, ' ').trim().slice(0, 40), w: Math.round(r.width * 10) / 10, h: Math.round(r.height * 10) / 10 };
+    const hit = pseudoHit(t, r);
+    const row = { key: key(t), text: (t.textContent || t.getAttribute('aria-label') || t.getAttribute('placeholder') || '').replace(/\s+/g, ' ').trim().slice(0, 40), w: Math.round(hit.w * 10) / 10, h: Math.round(hit.h * 10) / 10, ...(hit.by ? { hit: hit.by, box: [Math.round(r.width), Math.round(r.height)] } : {}) };
     const boxless = cs.borderTopWidth === '0px' && cs.borderBottomWidth === '0px' && cs.backgroundColor === 'rgba(0, 0, 0, 0)' && cs.boxShadow === 'none';
-    if (t.tagName === 'A' && cs.display === 'inline' && boxless && t.closest('p, li, td, span, small')) { textLinks.push(row); continue; }
+    // Not td: a link in a table cell is a row's control (the coverage
+    // matrix's member names), not a sentence's.
+    if (t.tagName === 'A' && cs.display === 'inline' && boxless && t.closest('p, li, span, small')) { textLinks.push(row); continue; }
     targets.push(row);
+  }
+  // Controls that are not control elements: the outermost element declaring
+  // a pointer cursor (cursor is inherited, so a child of a clickable row is
+  // the row's, not a control of its own), not inside a target already taken.
+  const taken = [...seen];
+  for (const el of document.querySelectorAll('body *')) {
+    if (seen.has(el) || el.closest('.frc-deck')) continue;
+    const cs = getComputedStyle(el);
+    if (cs.cursor !== 'pointer') continue;
+    if (el.parentElement && getComputedStyle(el.parentElement).cursor === 'pointer') continue;
+    if (taken.some((t) => t.contains(el) || el.contains(t) && el.matches('label'))) continue;
+    if (el.matches('input, option, img, svg, path')) continue;
+    if (hidden(el)) continue;
+    const r = el.getBoundingClientRect();
+    seen.add(el);
+    targets.push({ key: key(el), text: (el.textContent || el.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim().slice(0, 40), w: Math.round(r.width * 10) / 10, h: Math.round(r.height * 10) / 10, by: 'cursor' });
   }
 
   const chips = []; const keys = [];
@@ -151,10 +190,12 @@ async function main() {
   for (const width of widths) {
     const pages = report.pages.filter((p) => p.width === width);
     const under = []; const underOff = new Set();
-    let targets = 0; let textLinks = 0; let chips = 0; let chipDrops = 0; let chipPointers = 0; let keys = 0; let keyDrops = 0;
+    let targets = 0; let textLinks = 0; let chips = 0; let chipDrops = 0; let chipPointers = 0; let keys = 0; let keyDrops = 0; let byCursor = 0; let byCursorUnderOff = 0;
     for (const p of pages) {
       for (const t of p.off.targets) if (t.h < 44) underOff.add(`${p.name}|${t.key}|${t.text}`);
+      for (const t of p.off.targets) if (t.by === 'cursor' && t.h < 44) byCursorUnderOff++;
       targets += p.on.targets.length; textLinks += p.on.textLinks.length;
+      byCursor += p.on.targets.filter((t) => t.by === 'cursor').length;
       for (const t of p.on.targets) if (t.h < 44) under.push({ page: p.name, ...t });
       for (const c of p.on.chips) { chips++; if (c.drop) { chipDrops++; console.log(`CHIP DROP  [${width}] ${p.name}  ${c.key} "${c.text}"`); } if (c.pointer) { chipPointers++; console.log(`CHIP POINTER [${width}] ${p.name}  ${c.key} "${c.text}"`); } }
       for (const k of p.on.keys) { keys++; if (k.drop) keyDrops++; }
@@ -162,6 +203,7 @@ async function main() {
     for (const u of under) console.log(`UNDER 44  [${width}] ${u.page.padEnd(26)} ${u.key.slice(0, 60).padEnd(60)} ${String(u.w).padStart(6)} x ${u.h}  "${u.text}"${underOff.has(`${u.page}|${u.key}|${u.text}`) ? '' : '  (NEW: not under with the class off)'}`);
     const uniqueOn = new Set(under.map((u) => u.key));
     console.log(`measure [${width}]: ${pages.length} pages, ${targets} targets, ${under.length} under 44px (${uniqueOn.size} distinct selectors; ${underOff.size} under with the class off), ${textLinks} text links exempt`);
+    console.log(`measure [${width}]: ${byCursor} of those targets found by their pointer cursor alone (not a control element); positive control: ${byCursorUnderOff} of them are under 44px with the class off`);
     console.log(`measure [${width}]: chips ${chips}, with a drop shadow ${chipDrops}, with a pointer cursor ${chipPointers}; positive control: keys ${keys}, with a drop shadow ${keyDrops}`);
     failures += under.length + chipDrops;
   }
