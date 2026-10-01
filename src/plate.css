@@ -783,7 +783,7 @@
 /* Keys a student presses. */
 :root.tm-plate :is(
   .mb-checkout, .mb-rsvp-btn,
-  .sch-new-btn, .sch-save, .sch-cancel, .sch-rsvp-btn, .sch-past-toggle, .sch-today-btn, .sch-weekday, .sch-scope-opt, .sch-viewtab,
+  .sch-new-btn, .sch-save, .sch-cancel, .sch-edit, .sch-del, .sch-rsvp-btn, .sch-past-toggle, .sch-today-btn, .sch-weekday, .sch-scope-opt, .sch-viewtab,
   .jobs-add-btn, .jobs-save-btn, .jobs-cancel-btn, .jobs-btn, .jobs-sort-btn, .jobs-group-header, .jobs-link-remove, .jobs-link-add, .jobs-claimtype-opt, .jobs-skill-chip,
   .lh-submit, .lh-delete-btn, .lh-corr-btn, .lh-modal-cancel,
   .mh-session-flagbtn, .mh-modal-cancel, .mh-modal-submit,
@@ -802,7 +802,7 @@
   align-items: center;
   min-height: var(--tm-target);
 }
-:root.tm-plate :is(.mb-next-body, .sch-myonly-toggle, .np-master, .np-cat) {
+:root.tm-plate :is(.mb-next-body, .sch-myonly-toggle, .sch-toggle, .np-master, .np-cat, .pr-check) {
   min-height: var(--tm-target);
 }
 :root.tm-plate .np-cat {
