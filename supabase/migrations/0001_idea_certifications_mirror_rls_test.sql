@@ -416,12 +416,19 @@ do $readers$
 declare
   cat  text; hold text; logn text; mine text; other text; keyn text;
   cat2 text; hold2 text; logn2 text; keyn2 text;
+  ra_member boolean; ra_staff boolean; ra_parent boolean; ra_nobody boolean;
 begin
+  -- The fixtures were chosen from member_roles and profiles directly (above),
+  -- never through idea_cert_reads_all(): that helper is UNDER TEST, so a guard
+  -- built on it would turn a broken helper into a "harness broken" abort that
+  -- blames the fixture. Its answers are recorded as a check of their own (7b).
+  --
   -- 7. An ordinary approved member reads the whole catalog and every holder.
   perform pg_temp.act_as('authenticated', current_setting('test.student')::uuid);
-  if public.is_staff() or not public.idea_cert_reads_all() then
-    raise exception 'Harness broken: the member fixture resolves as staff, or is not an approved non-parent';
+  if public.is_staff() then
+    raise exception 'Harness broken: the member fixture resolves as staff';
   end if;
+  ra_member := public.idea_cert_reads_all();
   cat  := pg_temp.try_count('select 1 from public.idea_cert_catalog');
   hold := pg_temp.try_count('select 1 from public.idea_cert_holders');
   logn := pg_temp.try_count('select 1 from public.idea_cert_sync_log');
@@ -435,6 +442,7 @@ begin
   if not public.is_staff() then
     raise exception 'Harness broken: the staff fixture does not resolve is_staff()';
   end if;
+  ra_staff := public.idea_cert_reads_all();
   cat2  := pg_temp.try_count('select 1 from public.idea_cert_catalog');
   hold2 := pg_temp.try_count('select 1 from public.idea_cert_holders');
   logn2 := pg_temp.try_count('select 1 from public.idea_cert_sync_log');
@@ -458,9 +466,10 @@ begin
 
   -- 11. A parent-only account reads ONLY their linked student's rows.
   perform pg_temp.act_as('authenticated', current_setting('test.parent')::uuid);
-  if public.idea_cert_reads_all() then
-    raise exception 'Harness broken: the parent fixture resolves as a full reader (staff, or not a parent)';
+  if public.is_staff() then
+    raise exception 'Harness broken: the parent fixture resolves as staff';
   end if;
+  ra_parent := public.idea_cert_reads_all();
   cat   := pg_temp.try_count('select 1 from public.idea_cert_catalog');
   mine  := pg_temp.try_count(format('select 1 from public.idea_cert_holders where email = %L', current_setting('test.email')));
   other := pg_temp.try_count(format('select 1 from public.idea_cert_holders where email <> %L', current_setting('test.email')));
@@ -475,6 +484,7 @@ begin
 
   -- 12. A signed-in account with no approved profile reads nothing.
   perform pg_temp.act_as('authenticated', current_setting('test.nobody')::uuid);
+  ra_nobody := public.idea_cert_reads_all();
   cat  := pg_temp.try_count('select 1 from public.idea_cert_catalog');
   hold := pg_temp.try_count('select 1 from public.idea_cert_holders');
   logn := pg_temp.try_count('select 1 from public.idea_cert_sync_log');
@@ -482,6 +492,13 @@ begin
   perform pg_temp.rec('account with no approved profile reads nothing',
     cat = '0' and hold = '0' and logn = '0',
     format('catalog %s, holders %s, log %s (members above read 3 and 4)', cat, hold, logn));
+
+  -- 7b. The full-read helper itself, one answer per fixture. Both directions:
+  --     true for the member and staff, false for the parent-only account and
+  --     for an account with no approved profile.
+  perform pg_temp.rec('full-read helper: member and staff yes, parent-only and no profile no',
+    ra_member is true and ra_staff is true and ra_parent is false and ra_nobody is false,
+    format('member %s, staff %s, parent-only %s, no profile %s', ra_member, ra_staff, ra_parent, ra_nobody));
 
   -- 13. anon reads nothing: no table privilege at all.
   perform pg_temp.act_as('anon', null);
