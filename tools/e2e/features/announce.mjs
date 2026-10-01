@@ -94,7 +94,7 @@ export default {
     await t.page.fill('section[aria-label="Compose"] textarea', '@everyone hello');
     await tick(t, 'Mechanical');
     const msg = await t.text('.an-msg-text');
-    t.check('@everyone renders with a zero-width space, never as a literal mass ping', !!msg && !msg.includes('@everyone') && msg.includes('@​everyone hello') && msg.startsWith('@Mechanical'),
+    t.check('@everyone renders with a zero-width space, never as a literal mass ping', !!msg && !msg.includes('@everyone') && msg.includes('@\u200Beveryone hello') && msg.startsWith('@Mechanical'),
       JSON.stringify(msg));
     let p = await payload(t);
     t.check('payload: parse [] and roles exactly the one ticked id', !!p && JSON.stringify(p.allowed_mentions) === JSON.stringify({ parse: [], roles: [MECH] }),
