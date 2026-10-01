@@ -302,7 +302,12 @@ export function identitiesText(rows) {
       out.add(s)
       for (const w of s.split(/\s+/)) if (w.length >= 3) out.add(w)
     }
-    for (const id of [...uuidsIn(r.member_id), ...uuidsIn(r.route)]) out.add(id)
+    // Both spellings: the sweep is case-sensitive (so a name part does not fire
+    // on a lowercase word), and a route can hold a uuid typed in capitals.
+    for (const id of [...uuidsIn(r.member_id), ...uuidsIn(r.route)]) {
+      out.add(id)
+      out.add(id.toUpperCase())
+    }
   }
   return [...out].sort((a, b) => a.localeCompare(b)).join('\n') + '\n'
 }

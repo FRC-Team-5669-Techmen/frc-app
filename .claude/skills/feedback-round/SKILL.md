@@ -173,8 +173,8 @@ him before it is built.
    `-w` matches whole words and the match is case-sensitive, so a name part such as
    "Sam" does not fire on "same", and a surname that is also a word ("Young", "Student")
    does not fire on the lowercase word. `identities.txt` also lists every member id the
-   export carries (each reporter's, and any id inside a route), so a member id quoted
-   into a committed file is a hit too; report ids are not in it. Without an `identities.txt` the export withheld names; sweep for any name you saw in
+   export carries (each reporter's, and any id inside a route), in lowercase and in
+   capitals, so a member id quoted into a committed file is a hit too; report ids are not in it. Without an `identities.txt` the export withheld names; sweep for any name you saw in
    a screenshot instead. A hit is fixed by rewording to a role, never by trimming the
    sweep list.
 3. Write `docs/history/<branch slug>.md` (format in `docs/history/README.md`).
