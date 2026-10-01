@@ -53,7 +53,17 @@ describe('App.jsx claimAndLoad', () => {
 
   const CHECKS = {
     'decides through nextApproval with the rpc answer':
-      (b) => /nextApproval\(held, await supabase\.rpc\('claim_profile'\)\)/.test(b),
+      (b) => /const claim = await supabase\.rpc\('claim_profile'\)/.test(b) && /nextApproval\(held, claim\)/.test(b),
+    // Two claims run at once on every boot (getSession and INITIAL_SESSION). The
+    // held value is read once the answer is back, so an error on one keeps what
+    // the other decided while it was in flight; read before the call, the
+    // error would see nothing held and revoke an approval the tab now holds.
+    'reads what is held only after the answer arrives':
+      (b) => {
+        const call = b.indexOf("await supabase.rpc('claim_profile')")
+        const read = b.indexOf('approvedRef.current?.userId === userId')
+        return call >= 0 && read > call
+      },
     'holds the approval per member, so another member starts from nothing':
       (b) => /approvedRef\.current\?\.userId === userId \? approvedRef\.current\.approved : null/.test(b),
     'never sets approval straight from the raw answer':
@@ -63,7 +73,9 @@ describe('App.jsx claimAndLoad', () => {
   }
   const MUTANTS = {
     'decides through nextApproval with the rpc answer':
-      (b) => b.replace(/const isApproved = nextApproval\([^\n]*\n/, "const { data: claimed } = await supabase.rpc('claim_profile')\n      const isApproved = claimed === true\n"),
+      (b) => b.replace(/const isApproved = nextApproval\([^\n]*\n/, "const { data: claimed } = claim\n      const isApproved = claimed === true\n"),
+    'reads what is held only after the answer arrives':
+      (b) => b.replace(/(\s*)const claim = await supabase\.rpc\('claim_profile'\)\n(\s*const held = [^\n]*\n)/, '\n$2$1const claim = await supabase.rpc(\'claim_profile\')\n'),
     'holds the approval per member, so another member starts from nothing':
       (b) => b.replace(/approvedRef\.current\?\.userId === userId \? approvedRef\.current\.approved : null/, 'approvedRef.current?.approved ?? null'),
     'never sets approval straight from the raw answer':

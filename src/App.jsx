@@ -108,9 +108,12 @@ export default function App() {
       // transient error on a tab resume would otherwise swap the whole tree
       // for AccessGate mid check-out (claimApproval.js).
       // Only THIS member's approval is held: a sign-in as somebody else starts
-      // from nothing.
+      // from nothing. Read once the answer is back, not before the call: two
+      // claims run at once on every boot (getSession and INITIAL_SESSION), and
+      // an error on one must keep what the other has just decided meanwhile.
+      const claim = await supabase.rpc('claim_profile')
       const held = approvedRef.current?.userId === userId ? approvedRef.current.approved : null
-      const isApproved = nextApproval(held, await supabase.rpc('claim_profile'))
+      const isApproved = nextApproval(held, claim)
       approvedRef.current = { userId, approved: isApproved }
       setApproved(isApproved)
       const { data } = await supabase
