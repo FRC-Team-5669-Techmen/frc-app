@@ -85,10 +85,12 @@ export default {
           // avoids its own sessions) put Riley's ordinary sessions INSIDE lane
           // d's 12.5h and auto-closed ones; paired in time order the core IN
           // won, and CAPPED and REVIEW never formed. features/d.js now seeds
-          // its own member, whom the core seed never touches, so this removes
-          // 0 rows; it stays so a seed that interleaves again is repaired here
-          // and NAMED in the measurement rather than failing three checks
-          // below. Lane d's member is FOUND, not assumed: the owner of the one
+          // its own member, whom the core seed never touches, so this must
+          // remove 0 rows, and that is asserted: a seed that interleaves again
+          // FAILS here, by name, and is still repaired so the checks below
+          // keep measuring the dialog rather than the seed (the positive half
+          // is those checks finding CAPPED and REVIEW on the same member).
+          // Lane d's member is FOUND, not assumed: the owner of the one
           // OUT at 'side-door' (the "Shop -> Side Door" session the dialog
           // must show; the core seed's side exit is 'shop-side').
           const pre = await t.evaluate(() => {
@@ -118,6 +120,8 @@ export default {
           t.as('precondition');
           t.check('lane d\'s member found by its side-door session, with 6 sessions of its own', !!pre?.name && pre.windows === 6,
             pre ? `${pre.name}: ${pre.windows} sessions; removed ${pre.gone.length} core row(s) inside them${pre.gone.length ? ` (features/d.js vs the core generator): ${pre.gone.join(', ')}` : ''}` : 'no OUT at side-door in the store');
+          t.check('no core row sits inside lane d\'s sessions on the seed as shipped (features/d.js seeds its own member)', !!pre && pre.gone.length === 0,
+            pre ? `${pre.gone.length} core row(s) inside ${pre.name}'s ${pre.windows} sessions${pre.gone.length ? `: ${pre.gone.join(', ')}` : ''}` : 'no OUT at side-door in the store');
           member = pre?.name ?? member;
           exact = new RegExp(`^${member.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
           t.as(`display · mig ${mig} · ${who}`);
