@@ -460,10 +460,12 @@
   border: 1.5px solid var(--tm-accent);
   border-radius: calc(var(--tm-r-control) - var(--tm-ring-inset) + 2px);
   pointer-events: none;
+  /* A mask reads alpha only, so the opaque stops are a theme token rather
+     than a literal: the file holds no raw colour at all. */
   mask:
-    linear-gradient(118deg, #000 calc(100% - 4px), transparent calc(100% - 3.5px)) right 8px top 0 / 22px 4px no-repeat,
-    linear-gradient(118deg, #000 calc(100% - 4px), transparent calc(100% - 3.5px)) left 8px bottom 0 / 12px 4px no-repeat,
-    linear-gradient(#000, #000);
+    linear-gradient(118deg, var(--bg) calc(100% - 4px), transparent calc(100% - 3.5px)) right 8px top 0 / 22px 4px no-repeat,
+    linear-gradient(118deg, var(--bg) calc(100% - 4px), transparent calc(100% - 3.5px)) left 8px bottom 0 / 12px 4px no-repeat,
+    linear-gradient(var(--bg), var(--bg));
   mask-composite: exclude;
 }
 :root.tm-plate :is(.jobs-sort-btn, .roster-sort-btn).active::before {
