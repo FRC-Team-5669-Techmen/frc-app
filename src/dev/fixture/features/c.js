@@ -15,6 +15,12 @@
 //   untyped report saves with category null on the first retry instead of
 //   taking the third rung to 'feedback'. That rung is covered by
 //   tests/feedback-model.test.js against a fake that refuses with 23502.
+//   Nor can it model 0002's BEFORE INSERT trigger (section 6: a non-admin's
+//   report is filed New, unstamped, created now): the contract has no insert
+//   hook. Nothing a browser does differs for it -- the widget sends none of
+//   status / reviewed_by / reviewed_at / created_at, so the engine's defaults
+//   are what the trigger would produce. The trigger is proved by checks 20-24
+//   of 0002_feedback_console_rls_test.sql.
 //
 // The seed is shared by both migration states, so every row carries a status
 // from the PRE-0002 vocabulary (open / reviewed / dismissed). That is a real

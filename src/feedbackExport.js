@@ -27,7 +27,8 @@
 import { buildZip } from './feedbackZip.js'
 import {
   STATUS_LABEL, TYPE_LABEL, exportStamp, fmtLA, imagePathsOf,
-  laMinute, laParts, normStatus, reporterName, summarizeUserAgent, typeOf,
+  laMinute, laParts, normStatus, redactRoute, reporterName, summarizeUserAgent,
+  typeOf, uuidsIn,
 } from './feedbackModel.js'
 
 // ── Sizes ────────────────────────────────────────────────────────────────────
@@ -115,7 +116,8 @@ export function reportMarkdown({ row, rid }, opts = {}) {
   const { names = true, roleOf = null, screenshotNote = null } = opts
   const type = TYPE_LABEL[typeOf(row)]
   const status = normStatus(row.status)
-  const lines = [`### ${rid} · ${type} · ${row.route || '(no route recorded)'}`, '']
+  const route = names ? row.route : redactRoute(row.route)
+  const lines = [`### ${rid} · ${type} · ${route || '(no route recorded)'}`, '']
   const facts = [
     `Status: ${STATUS_LABEL[status] ?? row.status}`,
     `Filed: ${fmtLA(row.created_at)} (Los Angeles)`,
@@ -199,16 +201,23 @@ export function markdownParts(rows, opts = {}) {
 // One paste that moves every report in this export that is STILL New to Seen,
 // so the next export of New holds only reports nobody has looked at. It writes
 // directly, because feedback_set_status needs a signed-in admin and the SQL
-// editor has no session; it writes the same three columns that function writes.
+// editor has no session.
+//
+// IT NAMES NO MEMBER, and that is the point of its shape. A feedback round
+// copies this file unchanged into docs/feedback/<date>/ in a PUBLIC repository
+// (.claude/skills/feedback-round/SKILL.md, step 8), so it sets status and
+// reviewed_at and leaves reviewed_by alone -- a report still New has no
+// reviewer to keep, and the console shows a Seen report with no reviewer as a
+// time alone. It used to stamp the exporting admin's member id; that put a
+// member id into the repository on every round. Report ids are not identities.
 //
 // Before 0002 the CHECK admits only the old vocabulary, so the console writes
 // 'reviewed' (which reads as Seen, and which 0002 maps to 'seen' when it is
 // applied). The WHERE matches both spellings of New either way.
-export function markSeenSql(numbered, { migrated = true, adminId = null, exportedAt = null } = {}) {
+export function markSeenSql(numbered, { migrated = true, exportedAt = null } = {}) {
   const ids = numbered.map(n => n.row.id)
   const stillNew = numbered.filter(n => normStatus(n.row.status) === 'new').length
   const target = migrated ? 'seen' : 'reviewed'
-  const by = adminId && /^[0-9a-f-]{36}$/i.test(adminId) ? `'${adminId}'` : 'null'
   const lines = [
     `-- MARK_SEEN.sql, written by the /feedback console export${exportedAt ? ` of ${laMinute(exportedAt)} (Los Angeles)` : ''}.`,
     `-- Moves the reports in this export that are still New to ${migrated ? 'Seen' : "Seen (stored as 'reviewed', the pre-0002 spelling)"}, so the`,
@@ -218,11 +227,11 @@ export function markSeenSql(numbered, { migrated = true, adminId = null, exporte
     '--',
     '-- Paste ONCE in the Supabase SQL editor. It writes directly because the',
     '-- console\'s feedback_set_status RPC needs a signed-in admin and the editor',
-    '-- has none; it sets the same three columns that function sets.',
+    '-- has none. It sets status and reviewed_at; it names no member.',
     '--',
     '-- Undo: run the update below with the ids this statement RETURNS, setting',
-    "--   status = 'new', reviewed_by = null, reviewed_at = null.",
-    '-- Report ids are not identities; nothing here names a reporter.',
+    "--   status = 'new', reviewed_at = null.",
+    '-- Report ids are not identities; nothing here names a reporter or an admin.',
   ]
   if (!ids.length) {
     lines.push('', '-- This export held no reports, so there is nothing to mark.', 'select 0 as reports_marked;')
@@ -230,7 +239,7 @@ export function markSeenSql(numbered, { migrated = true, adminId = null, exporte
   }
   lines.push(
     'update public.feedback',
-    `   set status = '${target}', reviewed_by = ${by}, reviewed_at = now()`,
+    `   set status = '${target}', reviewed_at = now()`,
     " where status in ('new', 'open')",
     '   and id in (',
     ids.map(id => `     '${id}'`).join(',\n'),
@@ -245,8 +254,11 @@ export function markSeenSql(numbered, { migrated = true, adminId = null, exporte
 // The text a feedback round works from. Every reporter is named by ROLE and
 // never by name, whatever the export's names setting, because this is the file
 // a session quotes from while writing docs that are committed to a public
-// repository. It does NOT scrub a name somebody typed inside their message;
-// the round's sweep (SKILL.md) is what catches those.
+// repository. For the same reason its routes are ALWAYS redacted
+// (/members/<uuid> reads /members/:id): a member id quoted out of here into
+// TRIAGE.md is a member id in the public repo, and a name sweep cannot see
+// one. It does NOT scrub a name somebody typed inside their message; the
+// round's sweep (SKILL.md) is what catches those.
 export function digestText(numbered, { roleOf = null, files = null } = {}) {
   return numbered.map(({ row, rid }) => {
     const role = roleOf?.(row.member_id) ?? null
@@ -254,7 +266,7 @@ export function digestText(numbered, { roleOf = null, files = null } = {}) {
       rid,
       `[${typeOf(row)}]`,
       `status=${normStatus(row.status)}`,
-      `route=${row.route || '-'}`,
+      `route=${redactRoute(row.route) || '-'}`,
       `by=${role ?? 'member'}`,
       `filed=${laMinute(row.created_at)} PT`,
       `viewport=${row.viewport || '-'}`,
@@ -275,6 +287,12 @@ export function digestText(numbered, { roleOf = null, files = null } = {}) {
 // Every reporter name in the export, for the round's sweep of its committed
 // files. Written only when names travel with the export: a withheld export
 // carries no names to sweep for, and a list of them would undo the withholding.
+//
+// It also lists every MEMBER ID the export carries -- each reporter's, and any
+// uuid inside a route (the profile that was open) -- because a names-included
+// export holds them in reports.json and reports.md, and a member id quoted
+// into a committed file is as identifying as a name. Report ids are not
+// listed: they are not identities, and MARK_SEEN.sql is made of them.
 export function identitiesText(rows) {
   const out = new Set()
   for (const r of rows ?? []) {
@@ -284,6 +302,7 @@ export function identitiesText(rows) {
       out.add(s)
       for (const w of s.split(/\s+/)) if (w.length >= 3) out.add(w)
     }
+    for (const id of [...uuidsIn(r.member_id), ...uuidsIn(r.route)]) out.add(id)
   }
   return [...out].sort((a, b) => a.localeCompare(b)).join('\n') + '\n'
 }
@@ -300,7 +319,8 @@ function jsonReport({ row, rid }, { names, roleOf, files }) {
     status_stored: row.status,
     created_at: row.created_at,
     created_la: laMinute(row.created_at),
-    route: row.route ?? null,
+    // Withheld means withheld: /members/<uuid> names whose profile was open.
+    route: (names ? row.route : redactRoute(row.route)) ?? null,
     viewport: row.viewport ?? null,
     user_agent: row.user_agent ?? null,
     build: row.build ?? null,
@@ -373,7 +393,7 @@ export function archiveReadme({ count, images, missing, names, filterText, expor
     '- `reports/<R..>-<id>/report.md` and `screenshot-N.<ext>` -- one folder per report, the image beside the report it was filed with.',
     '- `reports.json` -- every report as stored, plus where its files are in this archive.',
     '- `digest.txt` -- one entry per report, reporter named by ROLE only. The text a feedback round works from (`.claude/skills/feedback-round/SKILL.md`).',
-    '- `MARK_SEEN.sql` -- one paste for the Supabase SQL editor that moves the reports in this export that are still New to Seen, so the next export of New holds only new reports.',
+    '- `MARK_SEEN.sql` -- one paste for the Supabase SQL editor that moves the reports in this export that are still New to Seen, so the next export of New holds only new reports. It names no member, only report ids.',
   )
   if (names) lines.push('- `identities.txt` -- every reporter name in this export, for a round to sweep its committed files against. Never commit it.')
   lines.push(
@@ -382,7 +402,7 @@ export function archiveReadme({ count, images, missing, names, filterText, expor
     '',
     names
       ? 'Names: INCLUDED. These are student records, and the frc-app repository is public: never commit this archive, identities.txt, or any text copied out of reports.md. digest.txt names reporters by role only.'
-      : 'Names: WITHHELD at export. No reporter name appears in this archive; reporters are described by role. A name a reporter typed inside their own message is still there.',
+      : 'Names: WITHHELD at export. No reporter name or member id is written into this archive; reporters are described by role, and a route that held a member id reads :id in its place. Anything a reporter typed inside their own message is still there.',
   )
   if (missing.length) {
     const over = missing.filter(m => m.reason === 'over-budget').length
@@ -403,7 +423,7 @@ export function archiveReadme({ count, images, missing, names, filterText, expor
 export async function buildArchive(rows, fetchImage, opts = {}) {
   const {
     names = true, roleOf = null, filterText = '', exportedAt = new Date().toISOString(),
-    build = null, migrated = true, adminId = null, budget = IMAGE_BUDGET, onProgress = null,
+    build = null, migrated = true, budget = IMAGE_BUDGET, onProgress = null,
   } = opts
   const numbered = numberReports(rows)
   const root = archiveRoot(exportedAt)
@@ -475,7 +495,7 @@ export async function buildArchive(rows, fetchImage, opts = {}) {
     { path: `${root}/reports.md`, data: all.parts[0].text },
     { path: `${root}/reports.json`, data: reportsJson(numbered, { names, roleOf, files, filterText, exportedAt, build, migrated }) },
     { path: `${root}/digest.txt`, data: digestText(numbered, { roleOf, files }) },
-    { path: `${root}/MARK_SEEN.sql`, data: markSeenSql(numbered, { migrated, adminId, exportedAt }) },
+    { path: `${root}/MARK_SEEN.sql`, data: markSeenSql(numbered, { migrated, exportedAt }) },
   ]
   if (names) entries.push({ path: `${root}/identities.txt`, data: identitiesText(rows) })
   for (const t of text) entries.push({ path: `${root}/${t.path}`, data: t.data })

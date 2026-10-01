@@ -13,6 +13,7 @@ import {
   markdownParts, numberReports, quoteText, reportFolder, reportMarkdown,
 } from '../src/feedbackExport.js'
 import { crc32 } from '../src/feedbackZip.js'
+import { uuidsIn } from '../src/feedbackModel.js'
 
 const dec = new TextDecoder()
 
@@ -170,8 +171,8 @@ describe('MARK_SEEN.sql', () => {
   const admin = '00000000-0000-0000-0000-0000000000a1'
 
   test('after 0002: moves only rows still New (either spelling) to seen, and returns them', () => {
-    const sql = markSeenSql(n, { migrated: true, adminId: admin })
-    expect(sql).toContain(`set status = 'seen', reviewed_by = '${admin}', reviewed_at = now()`)
+    const sql = markSeenSql(n, { migrated: true })
+    expect(sql).toContain("set status = 'seen', reviewed_at = now()")
     expect(sql).toContain("where status in ('new', 'open')")
     for (const { row } of n) expect(sql).toContain(`'${row.id}'`)
     expect(sql).toContain('returning id, status, route;')
@@ -179,13 +180,22 @@ describe('MARK_SEEN.sql', () => {
   })
 
   test('before 0002 it writes the legacy spelling the old CHECK admits', () => {
-    expect(markSeenSql(n, { migrated: false, adminId: admin })).toContain("set status = 'reviewed'")
+    expect(markSeenSql(n, { migrated: false })).toContain("set status = 'reviewed', reviewed_at = now()")
   })
 
-  test('an admin id that is not a uuid is never interpolated', () => {
-    const sql = markSeenSql(n, { adminId: "x'; drop table feedback; --" })
-    expect(sql).toContain('reviewed_by = null')
-    expect(sql).not.toContain('drop table')
+  // A round copies this file into docs/feedback/<date>/ in a PUBLIC repo, so
+  // it may carry report ids and nothing else that is an id.
+  test('names no member: no reviewed_by, and an adminId a caller still passes is ignored', () => {
+    for (const migrated of [true, false]) {
+      const sql = markSeenSql(n, { migrated, adminId: admin })
+      expect(sql).not.toContain('reviewed_by')
+      expect(sql).not.toContain(admin)
+      // Positive control: the uuid scan is not vacuous -- every uuid in the
+      // file is a report id, and every report id is there.
+      expect(uuidsIn(sql).sort()).toEqual(n.map(x => x.row.id).sort())
+    }
+    const hostile = markSeenSql(n, { adminId: "x'; drop table feedback; --" })
+    expect(hostile).not.toContain('drop table')
   })
 
   test('an empty export changes nothing and says so', () => {
@@ -292,5 +302,86 @@ describe('buildArchive', () => {
     const offText = [...off.entries()].filter(([k]) => !/screenshot-/.test(k)).map(([, v]) => dec.decode(v)).join('\n')
     for (const name of ['Sam', 'Ada', 'Student', 'm1']) expect(offText).not.toContain(name)
     expect(offText).toContain('Names: WITHHELD at export.')
+  })
+})
+
+// ── Member ids ────────────────────────────────────────────────────────────────
+// A member id is a uuid, and a feedback round commits text quoted out of an
+// export into a PUBLIC repo. A name sweep cannot see a uuid, so the export
+// itself must not hand one over: not in MARK_SEEN.sql (always committed), not
+// in digest.txt (always quoted from), and not anywhere when names are
+// withheld. The fixture plants member ids in every place a row carries one:
+// member_id, image paths (report/<member id>/...), and a route on somebody's
+// profile page. Report ids are uuids too and MUST still be there -- they are
+// the positive control that the scan can see a uuid at all.
+describe('member ids never reach the committed side of an export', () => {
+  const ALEX = 'aaaaaaaa-1111-4111-8111-00000000000a'   // reporter
+  const BLAIR = 'bbbbbbbb-2222-4222-8222-00000000000b'  // reporter
+  const VIEWED = 'cccccccc-3333-4333-8333-00000000000c' // whose profile was open
+  const EXPORTER = 'dddddddd-4444-4444-8444-00000000000d'
+  const MEMBER_IDS = [ALEX, BLAIR, VIEWED, EXPORTER]
+  const roles = { [ALEX]: 'student', [BLAIR]: 'mentor' }
+  const roleOfId = id => roles[id] ?? null
+  const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3, 4])
+  const rows = [
+    mk(1, { member_id: ALEX, route: `/members/${VIEWED}`, image_paths: [`report/${ALEX}/shot.png`] }),
+    mk(2, { member_id: BLAIR, author: ADA, route: `/members/${VIEWED.toUpperCase()}/hours` }),
+    mk(3, { member_id: ALEX, route: '/schedule' }),
+  ]
+  const reportIds = rows.map(r => r.id)
+  const fetchImage = async () => ({ bytes: PNG, contentType: 'image/png' })
+  const opts = {
+    roleOf: roleOfId, exportedAt: '2026-10-01T21:05:00Z', build: 'abc1234',
+    adminId: EXPORTER, filterText: `status any; route /members/${VIEWED}`,
+  }
+  const textFiles = files => [...files.entries()].filter(([k]) => !/screenshot-/.test(k)).map(([k, v]) => [k, dec.decode(v)])
+  const memberIdsIn = text => uuidsIn(text).filter(u => MEMBER_IDS.includes(u))
+
+  test('names withheld: no member id in ANY file, report ids in every index (positive control)', async () => {
+    const a = await buildArchive(rows, fetchImage, { ...opts, names: false, filterText: 'status any; route /members/:id' })
+    const files = unzip(a.bytes)
+    const leaks = textFiles(files).flatMap(([k, t]) => memberIdsIn(t).map(u => `${k}: ${u}`))
+    expect(leaks).toEqual([])
+    for (const f of ['reports.md', 'reports.json', 'digest.txt', 'MARK_SEEN.sql']) {
+      const t = dec.decode(files.get(`${a.root}/${f}`))
+      for (const id of reportIds) expect(t).toContain(id)
+    }
+    const md = dec.decode(files.get(`${a.root}/reports.md`))
+    expect(md).toContain('· /members/:id\n')
+    expect(md).toContain('· /members/:id/hours\n')
+    const json = JSON.parse(dec.decode(files.get(`${a.root}/reports.json`)))
+    expect(json.reports.map(r => r.route)).toEqual(['/members/:id', '/members/:id/hours', '/schedule'])
+  })
+
+  test('names included: the full route travels (positive control), but MARK_SEEN and the digest still carry no member id', async () => {
+    const a = await buildArchive(rows, fetchImage, { ...opts, names: true })
+    const files = unzip(a.bytes)
+    const md = dec.decode(files.get(`${a.root}/reports.md`))
+    expect(md).toContain(`/members/${VIEWED}`)
+    const json = dec.decode(files.get(`${a.root}/reports.json`))
+    expect(memberIdsIn(json).sort()).toEqual([ALEX, BLAIR, VIEWED].sort())
+    for (const f of ['MARK_SEEN.sql', 'digest.txt']) {
+      expect(memberIdsIn(dec.decode(files.get(`${a.root}/${f}`)))).toEqual([])
+    }
+    // Nothing anywhere names the exporting admin; buildArchive no longer takes one.
+    expect(textFiles(files).filter(([, t]) => t.toLowerCase().includes(EXPORTER))).toEqual([])
+  })
+
+  test('the digest redacts a route whatever the names setting, and keeps the page', () => {
+    const d = digestText(numberReports(rows), { roleOf: roleOfId })
+    expect(d).toContain('R01 [bug] status=new route=/members/:id by=student')
+    expect(d).toContain('R02 [bug] status=new route=/members/:id/hours by=mentor')
+    expect(d).toContain('route=/schedule by=student')
+    expect(memberIdsIn(d)).toEqual([])
+    for (const id of reportIds) expect(d).toContain(`id=${id}`)
+  })
+
+  test('identities.txt lists every member id the export carries, for the sweep, and no report id', () => {
+    const lines = identitiesText(rows).trim().split('\n')
+    for (const id of [ALEX, BLAIR, VIEWED]) expect(lines).toContain(id)
+    for (const id of reportIds) expect(lines).not.toContain(id)
+    // The names are still there, as before.
+    expect(lines).toContain('Sam Student')
+    expect(lines).toContain('Ada Admin')
   })
 })

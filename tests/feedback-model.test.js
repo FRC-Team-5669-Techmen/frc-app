@@ -15,8 +15,8 @@ import {
   BUILD_MAX, DEFAULT_FILTER, LEGACY_STATUSES, LEGACY_TO_STATUS, STATUSES, STATUS_TO_LEGACY,
   STORED_STATUSES, TRIED_MAX, applyMove, applyRestore, buildReport, describeFilter,
   facetOptions, filterReports, foldIntoMessage, laMinute, exportStamp, moveSummary,
-  nextAttempt, normStatus, statusCounts, statusesFor, submitReport, summarizeUserAgent,
-  typeOf, undoFrom, undoLabel, undoSummary,
+  nextAttempt, normStatus, redactRoute, statusCounts, statusesFor, submitReport, summarizeUserAgent,
+  typeOf, undoFrom, undoLabel, undoSummary, uuidsIn,
 } from '../src/feedbackModel.js'
 
 const SAM = { full_name: 'Sam Student', nickname: null }
@@ -230,6 +230,44 @@ describe('filters', () => {
     expect(withheld).toContain('a text search (its words withheld with names)')
     // Positive control: with names on, the search is stated as typed.
     expect(describeFilter(f, { names: true })).toContain('search "Sam Student"')
+  })
+
+  test('a route filter on somebody\'s profile names the page, not the member, when names are withheld', () => {
+    const member = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d'
+    const f = { ...DEFAULT_FILTER, status: 'all', route: `/members/${member}` }
+    const withheld = describeFilter(f, { names: false })
+    expect(withheld).toContain('route /members/:id')
+    expect(withheld).not.toContain(member)
+    // Positive control: names on, the route is stated as stored.
+    expect(describeFilter(f, { names: true })).toContain(`route /members/${member}`)
+    // ...and a route with no id in it reads the same either way.
+    const plain = { ...DEFAULT_FILTER, status: 'all', route: '/schedule' }
+    expect(describeFilter(plain, { names: false })).toContain('route /schedule')
+  })
+})
+
+describe('member ids in routes', () => {
+  const ID = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d'
+
+  test('every uuid in a route becomes :id, any case, anywhere in the path', () => {
+    expect(redactRoute(`/members/${ID}`)).toBe('/members/:id')
+    expect(redactRoute(`/members/${ID.toUpperCase()}/hours`)).toBe('/members/:id/hours')
+    expect(redactRoute(`/a/${ID}/b/${ID}`)).toBe('/a/:id/b/:id')
+  })
+
+  test('positive control: a route with no uuid is returned untouched, and empty stays empty', () => {
+    for (const r of ['/schedule', '/members/abc', '/hours/2026-10-01', '/members/0a1b2c3d-4e5f']) {
+      expect(redactRoute(r)).toBe(r)
+    }
+    expect(redactRoute(null)).toBe(null)
+    expect(redactRoute(undefined)).toBe(undefined)
+    expect(redactRoute('')).toBe('')
+  })
+
+  test('uuidsIn finds each uuid once, lowercased, and nothing else', () => {
+    expect(uuidsIn(`x ${ID} y ${ID.toUpperCase()} z`)).toEqual([ID])
+    expect(uuidsIn('no ids here, 2026-10-01')).toEqual([])
+    expect(uuidsIn(null)).toEqual([])
   })
 })
 
