@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { supabase } from './supabase'
-import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, laDateKey, CATEGORIES, DEFAULT_CATEGORY, categoryLabel, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
+import { fmtHours, buildBreakdown, sumBreakdown, sessionsFromEvents, fmtLocation, laDateKey, CATEGORIES, DEFAULT_CATEGORY, categoryLabel, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
+import { currentStatus } from './attendanceState'
 import { daysPresent, effectiveGoal, goalCategoryKeys, hoursTowardGoal } from './accountability'
 import { displayName } from './names'
 import AttendanceHistory from './AttendanceHistory'
@@ -166,7 +167,9 @@ export default function HoursBoard({ hasRole = () => false }) {
     return profiles.map(p => ({
       id:        p.id,
       name:      displayName(p),
-      checkedIn: isCheckedIn(eventMap[p.id] ?? []),
+      // The shared rule (attendanceState.js): an IN left open from two days ago
+      // is a forgotten check-out, not In, as on the member's own tile.
+      checkedIn: currentStatus(eventMap[p.id] ?? []).checkedIn,
       events:    eventMap[p.id] ?? [],
       breakdown: buildBreakdown(seasons, eventMap[p.id] ?? [], loggedMap[p.id] ?? [], excluded[p.id] ?? null, adjustMap[p.id] ?? []),
     }))
