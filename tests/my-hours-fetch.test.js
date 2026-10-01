@@ -72,6 +72,20 @@ describe('fetchAllRows', () => {
     expect(error.code).toBe('57014')
   })
 
+  test('running out of pages before the end is an error, never the rows so far', async () => {
+    // 2,500 rows take three pages of data and an empty fourth that says "done".
+    // Two pages is the oldest 2,000: exactly the short ledger this prevents.
+    const short = fakeTable(2500)
+    const cut = await fetchAllRows(short.makeQuery, { maxPages: 2 })
+    expect(cut.data).toBe(null)
+    expect(cut.error.code).toBe('PAGE_LIMIT')
+    expect(short.calls).toHaveLength(2)
+    // Positive control: the same table with the four pages it needs is whole.
+    const enough = await fetchAllRows(fakeTable(2500).makeQuery, { maxPages: 4 })
+    expect(enough.error).toBe(null)
+    expect(enough.data).toHaveLength(2500)
+  })
+
   test('a builder that ignores .range() is read once and the repeat is recognised', async () => {
     const t = fakeTable(300, { ignoreRange: true })
     const { data } = await fetchAllRows(t.makeQuery)
