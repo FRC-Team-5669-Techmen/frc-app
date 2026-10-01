@@ -48,6 +48,24 @@
 --   19  a report already in the target under its OLD spelling (a 'reviewed'
 --       row moved to Seen) is left alone, stamp included  (with a positive
 --       control: the same row does move to a status it is not in)
+--   20  a member's direct insert that sets status done / spam / in_progress,
+--       reviewed_by (the admin's id), reviewed_at and a backdated created_at
+--       is filed New, unstamped and created now          (0002 section 6)
+--   21  the admin's own direct insert of the same shape keeps every value it
+--       set (positive control: the read-back CAN see a triaged, backdated
+--       row, and the clamp is not applied to everyone)
+--   22  the widget's exact insert (member_id, category, message, image_paths,
+--       route, viewport, user_agent, tried, build) still succeeds for a
+--       member and is filed New, created now             (positive: no regression)
+--   23  the trigger itself: BEFORE INSERT FOR EACH ROW on public.feedback,
+--       enabled, an INVOKER function with search_path pinned, executable by
+--       nobody (a definer trigger would see its owner and clamp nobody)
+--   24  the table owner (the SQL editor) and the service role keep what they
+--       set: the triaged fixture rows seeded below, and a service-role insert
+--       (positive: the clamp is scoped to the API roles)
+--
+-- Remove the trigger on purpose (drop trigger feedback_member_insert_defaults
+-- on public.feedback, or make its IF never true) and check 20 must turn FAIL.
 -- ============================================================================
 
 begin;
@@ -116,6 +134,18 @@ $pre$;
 select set_config('fb0002.r1', gen_random_uuid()::text, true),
        set_config('fb0002.r2', gen_random_uuid()::text, true),
        set_config('fb0002.r3', gen_random_uuid()::text, true);
+-- Rows the checks for section 6 insert, named up front so the owner can read
+-- them back (a member cannot read any report, their own included):
+--   f1 f2 f3  member A's forged inserts (done / spam / in_progress)
+--   f4        member A's widget-shaped insert
+--   fa        the admin's own forged-shape insert (positive control)
+--   fs        a service-role insert of the same shape      (positive control)
+select set_config('fb0002.f1', gen_random_uuid()::text, true),
+       set_config('fb0002.f2', gen_random_uuid()::text, true),
+       set_config('fb0002.f3', gen_random_uuid()::text, true),
+       set_config('fb0002.f4', gen_random_uuid()::text, true),
+       set_config('fb0002.fa', gen_random_uuid()::text, true),
+       set_config('fb0002.fs', gen_random_uuid()::text, true);
 
 insert into public.feedback (id, member_id, category, message, route, user_agent, status, reviewed_by, reviewed_at)
 values
@@ -127,6 +157,58 @@ values
   (current_setting('fb0002.r3')::uuid, current_setting('fb0002.member_b')::uuid, 'bug',
    '0002 fixture three', '/hours', '0002-rls-test', 'done',
    current_setting('fb0002.admin')::uuid, '2026-09-06 18:00:00+00');
+
+-- ── 24: the owner and the service role keep what they set ───────────────────
+-- Read straight after the seed, before any check moves a fixture. The seed
+-- above ran as the table owner, the role the SQL editor runs as; if the
+-- section 6 clamp reached it, r2 and r3 would read New and unstamped here (and
+-- 11-13 would fail for a reason that has nothing to do with the RPCs).
+do $c24$
+declare
+  v_owner int;
+  v_svc text;
+  v_err text;
+  v_kept boolean := false;
+begin
+  select count(*) into v_owner from public.feedback
+   where (id = current_setting('fb0002.r2')::uuid and status = 'seen'
+          and reviewed_by = current_setting('fb0002.admin')::uuid
+          and reviewed_at = '2026-09-05 18:00:00+00'::timestamptz)
+      or (id = current_setting('fb0002.r3')::uuid and status = 'done'
+          and reviewed_by = current_setting('fb0002.admin')::uuid
+          and reviewed_at = '2026-09-06 18:00:00+00'::timestamptz);
+
+  -- The service role, when this session may become it (the harness and the
+  -- Supabase SQL editor both can; anything else says so in the detail).
+  if pg_has_role(current_user, 'service_role', 'MEMBER') then
+    perform set_config('role', 'service_role', true);
+    begin
+      insert into public.feedback (id, member_id, category, message, user_agent, status, reviewed_by, reviewed_at, created_at)
+      values (current_setting('fb0002.fs')::uuid, current_setting('fb0002.member_b')::uuid, 'bug',
+              '0002 service-role import', '0002-rls-test', 'done',
+              current_setting('fb0002.admin')::uuid, '2026-09-07 18:00:00+00', '2020-01-01 00:00:00+00');
+    exception when others then
+      v_err := sqlstate || ' ' || sqlerrm;
+    end;
+    reset role;
+    select status = 'done' and reviewed_by = current_setting('fb0002.admin')::uuid
+           and reviewed_at = '2026-09-07 18:00:00+00'::timestamptz
+           and created_at = '2020-01-01 00:00:00+00'::timestamptz
+      into v_kept
+      from public.feedback where id = current_setting('fb0002.fs')::uuid;
+    v_svc := case when v_err is not null then 'service-role insert refused: ' || v_err
+                  when coalesce(v_kept, false) then 'service-role insert kept done, its stamp and its 2020 created_at'
+                  else 'service-role insert was rewritten' end;
+  else
+    v_kept := true;
+    v_svc := 'service_role cannot be assumed from this session, so only the owner half ran';
+  end if;
+
+  insert into fb0002_results values (24, 'the table owner and the service role keep what they set (positive control)',
+    case when v_owner = 2 and v_err is null and coalesce(v_kept, false) then 'PASS' else 'FAIL' end,
+    format('owner-seeded triaged fixtures intact: %s of 2; %s', v_owner, v_svc));
+end
+$c24$;
 
 -- ── 01, 02: the schema, as the owner ────────────────────────────────────────
 do $c01$
@@ -217,6 +299,38 @@ begin
     case when v_code = '42501' then 'PASS' else 'FAIL' end,
     case when v_code is null then 'a report was filed under another member''s id'
          else 'refused with ' || v_code end);
+
+  -- 20 (written here, judged by the owner below): a hand-rolled insert that
+  -- tries to file a report already triaged, stamped by the admin, and
+  -- backdated. Each must SUCCEED -- refusing it would also be safe, but the
+  -- rule is "filed New", and a refusal here would mean the widget's own path
+  -- had broken -- and land New, unstamped, created now.
+  v_err := null;
+  begin
+    insert into public.feedback (id, member_id, category, message, user_agent, status, reviewed_by, reviewed_at, created_at)
+    values
+      (current_setting('fb0002.f1')::uuid, auth.uid(), 'bug', '0002 forged done', '0002-rls-test', 'done',
+       current_setting('fb0002.admin')::uuid, '2026-09-08 18:00:00+00', '2020-01-01 00:00:00+00'),
+      (current_setting('fb0002.f2')::uuid, auth.uid(), 'idea', '0002 forged spam', '0002-rls-test', 'spam',
+       current_setting('fb0002.admin')::uuid, '2026-09-08 18:00:00+00', '2020-01-01 00:00:00+00'),
+      (current_setting('fb0002.f3')::uuid, auth.uid(), null, '0002 forged in progress', '0002-rls-test', 'in_progress',
+       current_setting('fb0002.admin')::uuid, '2026-09-08 18:00:00+00', '2020-01-01 00:00:00+00');
+  exception when others then
+    v_err := sqlstate || ' ' || sqlerrm;
+  end;
+  perform set_config('fb0002.forged_err', coalesce(v_err, ''), true);
+
+  -- 22 (judged below): the widget's own insert, column for column as
+  -- src/feedbackModel.js buildReport() sends it after 0002.
+  v_err := null;
+  begin
+    insert into public.feedback (id, member_id, category, message, image_paths, route, viewport, user_agent, tried, build)
+    values (current_setting('fb0002.f4')::uuid, auth.uid(), 'bug', '0002 widget-shaped report', '[]'::jsonb,
+            '/schedule', '390x844', '0002-rls-test', 'reloaded the page', 'abc1234');
+  exception when others then
+    v_err := sqlstate || ' ' || sqlerrm;
+  end;
+  perform set_config('fb0002.widget_err', coalesce(v_err, ''), true);
 
   -- 05: reads nothing, own report included.
   select count(*) into v_n from public.feedback;
@@ -436,6 +550,17 @@ begin
     format('move of a ''reviewed'' report to seen changed %s (want 0), stamp kept %s of 1; positive control: move to wont_do returned %s',
            v_n, v_kept, coalesce(v_items::text, 'nothing')));
 
+  -- 21 (judged below): the admin's own direct insert of the forged shape.
+  v_err := null;
+  begin
+    insert into public.feedback (id, member_id, category, message, user_agent, status, reviewed_by, reviewed_at, created_at)
+    values (current_setting('fb0002.fa')::uuid, auth.uid(), 'bug', '0002 admin-filed, already done', '0002-rls-test', 'done',
+            auth.uid(), '2026-09-09 18:00:00+00', '2020-01-02 00:00:00+00');
+  exception when others then
+    v_err := sqlstate || ' ' || sqlerrm;
+  end;
+  perform set_config('fb0002.admin_err', coalesce(v_err, ''), true);
+
   -- 17: delete stays impossible, admin included.
   v_code := null;
   begin
@@ -485,7 +610,91 @@ begin
 end
 $c16$;
 
--- The verdicts. Nineteen rows; every one should read PASS.
+-- ── 20-23: section 6, read back as the owner ─────────────────────────────────
+reset role;
+do $c20$
+declare
+  v_err text;
+  v_n int;
+  v_bad text;
+  r record;
+begin
+  -- 20: the three forged member inserts.
+  v_err := nullif(current_setting('fb0002.forged_err'), '');
+  select count(*) filter (where status = 'new' and reviewed_by is null and reviewed_at is null
+                            and created_at > now() - interval '1 minute'),
+         string_agg(format('%s/%s/%s', status, coalesce(reviewed_by::text, 'null'), created_at::date), ', ' order by message)
+    into v_n, v_bad
+    from public.feedback
+   where id in (current_setting('fb0002.f1')::uuid, current_setting('fb0002.f2')::uuid, current_setting('fb0002.f3')::uuid);
+  insert into fb0002_results values (20, 'a member cannot file a report already triaged, stamped or backdated',
+    case when v_err is null and v_n = 3 then 'PASS' else 'FAIL' end,
+    case when v_err is not null then 'the forged insert was refused, so nothing was judged: ' || v_err
+         else format('%s of 3 forged inserts (done, spam, in_progress; reviewed_by the admin; created 2020) landed new / unstamped / created now. Stored: %s',
+                     v_n, coalesce(v_bad, 'no rows')) end);
+
+  -- 21: the admin's own insert of the same shape, kept as written.
+  v_err := nullif(current_setting('fb0002.admin_err'), '');
+  select * into r from public.feedback where id = current_setting('fb0002.fa')::uuid;
+  insert into fb0002_results values (21, 'an admin''s own direct insert keeps the status, stamp and date it set (positive control)',
+    case when v_err is null and r.status = 'done' and r.reviewed_by = current_setting('fb0002.admin')::uuid
+              and r.reviewed_at = '2026-09-09 18:00:00+00'::timestamptz
+              and r.created_at = '2020-01-02 00:00:00+00'::timestamptz then 'PASS' else 'FAIL' end,
+    coalesce('refused: ' || v_err,
+             format('stored %s, reviewed_by is the admin: %s, reviewed_at %s, created_at %s',
+                    r.status, r.reviewed_by = current_setting('fb0002.admin')::uuid, r.reviewed_at, r.created_at)));
+
+  -- 22: the widget's insert, unchanged in outcome.
+  v_err := nullif(current_setting('fb0002.widget_err'), '');
+  select * into r from public.feedback where id = current_setting('fb0002.f4')::uuid;
+  insert into fb0002_results values (22, 'the widget''s exact insert still succeeds for a member, filed New (positive control)',
+    case when v_err is null and r.status = 'new' and r.reviewed_by is null and r.reviewed_at is null
+              and r.created_at > now() - interval '1 minute'
+              and r.tried = 'reloaded the page' and r.build = 'abc1234' and r.category = 'bug' then 'PASS' else 'FAIL' end,
+    coalesce('refused: ' || v_err,
+             format('stored status %s, category %s, tried and build kept: %s, created now: %s',
+                    r.status, r.category, r.tried = 'reloaded the page' and r.build = 'abc1234',
+                    r.created_at > now() - interval '1 minute')));
+
+  -- 23: the trigger's own properties, which the behaviour above cannot show
+  -- (a disabled trigger and a missing one look the same from 20; a definer
+  -- function looks like a missing trigger).
+  v_bad := '';
+  if not exists (
+    select 1 from pg_trigger t
+     where t.tgrelid = 'public.feedback'::regclass
+       and t.tgname = 'feedback_member_insert_defaults'
+       and not t.tgisinternal
+       and t.tgfoid = to_regprocedure('public.feedback_member_insert_defaults()')
+       and (t.tgtype & 7) = 7 and (t.tgtype & 56) = 0) then
+    v_bad := v_bad || 'no BEFORE INSERT FOR EACH ROW trigger feedback_member_insert_defaults; ';
+  elsif exists (select 1 from pg_trigger t where t.tgrelid = 'public.feedback'::regclass
+                   and t.tgname = 'feedback_member_insert_defaults' and t.tgenabled = 'D') then
+    v_bad := v_bad || 'the trigger is DISABLED; ';
+  end if;
+  if to_regprocedure('public.feedback_member_insert_defaults()') is null then
+    v_bad := v_bad || 'the trigger function is missing; ';
+  else
+    if (select prosecdef from pg_proc where oid = 'public.feedback_member_insert_defaults()'::regprocedure) then
+      v_bad := v_bad || 'the function is SECURITY DEFINER (current_user would be its owner); ';
+    end if;
+    if not coalesce((select proconfig from pg_proc where oid = 'public.feedback_member_insert_defaults()'::regprocedure), '{}')
+           @> array['search_path=public'] then
+      v_bad := v_bad || 'search_path is not pinned; ';
+    end if;
+    if has_function_privilege('anon', 'public.feedback_member_insert_defaults()', 'execute')
+       or has_function_privilege('authenticated', 'public.feedback_member_insert_defaults()', 'execute') then
+      v_bad := v_bad || 'anon or authenticated holds EXECUTE; ';
+    end if;
+  end if;
+  insert into fb0002_results values (23, 'the insert trigger: before insert, row-level, enabled, invoker, search_path pinned',
+    case when v_bad = '' then 'PASS' else 'FAIL' end,
+    case when v_bad = '' then 'feedback_member_insert_defaults: BEFORE INSERT FOR EACH ROW, enabled, SECURITY INVOKER, search_path=public, no EXECUTE for anon or authenticated'
+         else v_bad end);
+end
+$c20$;
+
+-- The verdicts. Twenty-four rows; every one should read PASS.
 select n as "#", "check", result, detail
   from fb0002_results
  order by n;
