@@ -16,17 +16,22 @@
  * SEED NOTE (a fixture defect, reported, not an app defect): features/a.js
  * keys the student personas' holder rows by fallback emails
  * (student@fixture.techmen.test) because the engine passes no persona emails,
- * so on the seed as shipped "Your certifications" reads 0 held for Sam. That
- * is asserted below as the NEGATIVE half of the email-matching claim; the
- * spec then re-keys those rows to the personas' real sign-in emails (the
- * test owning its precondition, as checkin.mjs does) and asserts the
- * positive half.
+ * so on the seed as shipped "Your certifications" reads 0 held for Sam. The
+ * spec does not lean on that defect: it moves Sam's rows (by serial) under
+ * another email for the NEGATIVE half of the email-matching claim, then keys
+ * both personas' rows by their real sign-in emails (the test owning its
+ * precondition, as checkin.mjs does) for the positive half. Fixing a.js
+ * changes the precondition's measurement and nothing it asserts.
  */
 import { P } from './_util.mjs';
 
 const NOT_SYNCED_LINE = 'Certifications are awarded in IDEA Classroom. None have synced to this app yet.';
 const PERSONAS = ['student', 'student2', 'mentor', 'admin', 'parent'];
 const SEED_EMAIL = { student: 'student@fixture.techmen.test', student2: 'student2@fixture.techmen.test' };
+// features/a.js's rows per persona, by serial (the mirror's key).
+const SAM_SERIALS = ['IDEA-FX-0001', 'IDEA-FX-0002', 'IDEA-FX-0003', 'IDEA-FX-0004'];
+const RILEY_SERIALS = ['IDEA-FX-0005', 'IDEA-FX-0006', 'IDEA-FX-0007'];
+const ELSEWHERE = 'not.sam@fixture.techmen.test';
 
 // Held = status active and not past its expiry, at `now` (ms).
 function oracleCounts(holders, now) {
@@ -89,23 +94,32 @@ export default {
       }
     }
 
-    // ── migration 0001 applied, the seed as shipped ────────────────────────
-    t.as('mig all · student · seed emails');
+    // ── migration 0001 applied: rows are "yours" by sign-in email ──────────
+    // Both halves of the email-matching claim are driven from the SERIALS,
+    // whatever emails the seed used, so this holds before and after
+    // features/a.js is fixed: Sam's four rows first under another email (not
+    // yours: 0 held), then under Sam's sign-in email (yours: 2 held).
+    t.as('mig all · student · rows under another email');
     await t.open('/certifications', { persona: 'student', mig: 'all', ready: '[data-testid=ic-catalog]' });
-    const seedMine = await t.text('[data-testid=ic-mine] .ic-section-count');
-    const seedRows = await t.count('[data-testid=ic-mine] .ic-holder');
-    const seedKeyedElsewhere = (await t.rows('idea_cert_holders')).filter((h) => h.email === SEED_EMAIL.student).length;
+    const keyRows = (serials, email) => t.evaluate(({ serials, email }) => serials
+      .reduce((n, serial) => n + window.__fx.patch('idea_cert_holders', { serial }, { email }), 0), { serials, email });
+    const seedKeys = [...new Set((await t.rows('idea_cert_holders')).filter((h) => SAM_SERIALS.includes(h.serial)).map((h) => h.email))];
+    const movedAway = await keyRows(SAM_SERIALS, ELSEWHERE);
+    await t.open('/certifications', { persona: 'student', mig: 'all', ready: '[data-testid=ic-catalog]' });
+    const awayMine = await t.text('[data-testid=ic-mine] .ic-section-count');
+    const awayRows = await t.count('[data-testid=ic-mine] .ic-holder');
     t.check('a holder row under ANOTHER email is not "yours" (negative half of email matching)',
-      seedMine === '0 held' && seedRows === 0 && seedKeyedElsewhere === 4,
-      `"${seedMine}", ${seedRows} rows, while ${seedKeyedElsewhere} rows sit under ${SEED_EMAIL.student} (features/a.js fallback, not Sam's ${P.student.email})`);
+      movedAway === 4 && awayMine === '0 held' && awayRows === 0,
+      `"${awayMine}", ${awayRows} rows, while ${movedAway} of Sam's rows sit under ${ELSEWHERE}`);
 
-    // Re-key the two student personas' rows to their real sign-in emails.
-    const rekeyed = await t.evaluate(({ map }) => {
-      let n = 0;
-      for (const [from, to] of map) n += window.__fx.patch('idea_cert_holders', { email: from }, { email: to });
-      return n;
-    }, { map: [[SEED_EMAIL.student, P.student.email], [SEED_EMAIL.student2, P.student2.email]] });
-    t.eq('precondition: 7 holder rows re-keyed to the personas\' sign-in emails', rekeyed, 7);
+    // Key the two student personas' rows by their real sign-in emails. On the
+    // seed as shipped they sat under features/a.js's fallback emails (a
+    // fixture defect, reported); once a.js is fixed this only moves them back.
+    const keyedSam = await keyRows(SAM_SERIALS, P.student.email);
+    const keyedRiley = await keyRows(RILEY_SERIALS, P.student2.email);
+    const keyedNow = (await t.rows('idea_cert_holders')).filter((h) => h.email === P.student.email || h.email === P.student2.email).length;
+    t.check('precondition: the 7 persona holder rows sit under the personas\' sign-in emails', keyedSam === 4 && keyedRiley === 3 && keyedNow === 7,
+      `${keyedNow} rows keyed; the seed had Sam's under ${seedKeys.join(', ')}${seedKeys.includes(SEED_EMAIL.student) ? ' (features/a.js fallback)' : ''}`);
 
     const holders = await t.rows('idea_cert_holders');
     const catalog = await t.rows('idea_cert_catalog');

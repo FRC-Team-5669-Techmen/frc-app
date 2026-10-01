@@ -53,6 +53,13 @@ feedback widget is absent from them (as a checked-out member, writing nothing).
 - **The test owns its precondition.** Where the merged seed breaks a lane's
   fixture (the defects below), the spec repairs exactly that in the store,
   says so in a `precondition` line, and the defect is reported, not hidden.
+  A precondition asserts the STATE it needs, never that the defect is still
+  there: fixing the fixture must change its measurement and nothing it
+  asserts. (Measured: a first version asserted "7 rows re-keyed" and "more
+  than 0 rows removed", and went 330/336 the moment `a.js` and `d.js` were
+  fixed the way this file asks.) Where a seed's subject can move, the spec
+  finds it rather than assuming it -- lane d's member is the owner of the
+  one OUT at `side-door`.
 - **textContent, raw.** `t.text()` collapses whitespace; read raw
   `textContent` when whitespace is the claim (the announce payload JSON).
 - **No `waitForTimeout` as a wait for the app.** `t.settle()` waits until the
@@ -91,6 +98,8 @@ feedback widget is absent from them (as a checked-out member, writing nothing).
    generator also uses. Fix: seed lane d's history on a member the core
    generator does not touch (a fictional active student profile added by
    `d.js` itself), or offset each session to an hour no core session uses.
+   Either way keep the one OUT at `side-door`: `display-history.mjs` finds
+   lane d's member by it, and passes before and after the fix.
 4. `features/e.js` declares no `discord-announce` stand-in, so the fixture's
    generic `{ ok: true, skipped: true }` answers and the page reads "answered
    but did not say it is ready". Fix: `functions: { 'discord-announce': () =>

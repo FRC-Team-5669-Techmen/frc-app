@@ -69,6 +69,9 @@ export default {
   async run(t) {
     const boards = {};
     let mentorButtons = null;
+    // Lane d's member and an exact-match for their name (set by the precondition).
+    let member = 'Riley';
+    let exact = /^Riley$/;
 
     for (const mig of ['all', 'none']) {
       // ════ /display, staff ══════════════════════════════════════════════
@@ -77,26 +80,46 @@ export default {
         await t.open('/display', { persona: who, mig, reset: mig === 'all' && who === 'mentor', ready: '.pb-row' });
         if (mig === 'all' && who === 'mentor') {
           // PRECONDITION (a fixture defect, reported): the core seed generates
-          // Riley's ordinary build sessions without knowing lane d's rows, and
-          // on the merged fixture three of them land INSIDE lane d's sessions.
-          // Paired in time order, a core IN inside lane d's 12.5h session and
-          // inside its auto-closed one overwrites lane d's IN, so the CAPPED
-          // and REVIEW sessions never form. The spec removes exactly the core
-          // rows that fall inside a lane d session window, then reloads.
-          const removed = await t.evaluate(() => {
+          // lane d's member's ordinary build sessions without knowing lane d's
+          // rows, and on the merged fixture some of them land INSIDE lane d's
+          // sessions. Paired in time order, a core IN inside lane d's 12.5h
+          // session and inside its auto-closed one overwrites lane d's IN, so
+          // the CAPPED and REVIEW sessions never form. The spec removes exactly
+          // the core rows (ids 50000000-...) that fall inside a lane d session,
+          // then reloads. Lane d's member is FOUND, not assumed: the owner of
+          // the one OUT at 'side-door' (the "Shop -> Side Door" session the
+          // dialog must show; the core seed's side exit is 'shop-side'). So
+          // once features/d.js stops interleaving -- moving its hours, or its
+          // member -- this removes 0 rows and every check below still holds.
+          const pre = await t.evaluate(() => {
             const db = window.__fx.db;
-            const riley = '00000000-0000-0000-0000-0000000000c2';
-            const d = db.attendance_events.filter((e) => e.user_id === riley && String(e.id).startsWith('fx-d-'));
-            const windows = d.filter((e) => e.type === 'in').map((i) => [Date.parse(i.event_time), Date.parse(d.find((o) => o.id === i.id.replace(/-in$/, '-out'))?.event_time)]);
-            const inside = (e) => e.user_id === riley && !String(e.id).startsWith('fx-d-')
+            const sig = db.attendance_events.find((e) => e.type === 'out' && e.location === 'side-door');
+            if (!sig) return null;
+            const uid = sig.user_id;
+            const core = (e) => String(e.id).startsWith('50000000-');
+            // Lane d's sessions: the member's non-core rows, paired in time order
+            // (lane b2's open INs for the same member pair with nothing).
+            const theirs = db.attendance_events.filter((e) => e.user_id === uid && !core(e))
+              .sort((a, b) => a.event_time.localeCompare(b.event_time));
+            const windows = [];
+            let open = null;
+            for (const e of theirs) {
+              if (e.type === 'in') open = e;
+              else if (open) { windows.push([Date.parse(open.event_time), Date.parse(e.event_time)]); open = null; }
+            }
+            const inside = (e) => e.user_id === uid && core(e)
               && windows.some(([a, b]) => Date.parse(e.event_time) >= a && Date.parse(e.event_time) <= b);
             const gone = db.attendance_events.filter(inside).map((e) => `${e.type}@${e.event_time}`);
             db.attendance_events = db.attendance_events.filter((e) => !inside(e));
             window.__fx.save();
-            return gone;
+            const p = (db.profiles || []).find((x) => x.id === uid);
+            return { uid, name: (p?.nickname || '').trim() || (p?.full_name || '').trim() || null, windows: windows.length, gone };
           });
           t.as('precondition');
-          t.check('removed the core rows that sit inside lane d\'s Riley sessions (features/d.js vs the core generator)', removed.length > 0, `${removed.length} rows: ${removed.join(', ')}`);
+          t.check('lane d\'s member found by its side-door session, with 6 sessions of its own', !!pre?.name && pre.windows === 6,
+            pre ? `${pre.name}: ${pre.windows} sessions; removed ${pre.gone.length} core row(s) inside them${pre.gone.length ? ` (features/d.js vs the core generator): ${pre.gone.join(', ')}` : ''}` : 'no OUT at side-door in the store');
+          member = pre?.name ?? member;
+          exact = new RegExp(`^${member.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
           t.as(`display · mig ${mig} · ${who}`);
           await t.open('/display', { persona: who, mig, ready: '.pb-row' });
         }
@@ -123,7 +146,7 @@ export default {
           t.check('Tab reaches a name button: :focus-visible, solid 2px rgb(255, 230, 41), opacity 1', !!ring && ring.focusVisible && ring.outline === 'solid 2px rgb(255, 230, 41)' && ring.opacity === '1',
             ring ? `${ring.tabs} tabs: ${ring.outline}, opacity ${ring.opacity}` : 'no name button reached in 80 tabs');
         }
-        const riley = t.page.locator('.pb-name-btn', { hasText: /^Riley$/ });
+        const riley = t.page.locator('.pb-name-btn', { hasText: exact });
         await t.evaluate(() => document.querySelectorAll('[data-e2e-opener]').forEach((n) => n.removeAttribute('data-e2e-opener')));
         await riley.evaluate((n) => n.setAttribute('data-e2e-opener', '1'));
         const callsBefore = (await t.calls()).length;
@@ -131,7 +154,7 @@ export default {
         await waitHistory(t);
         const h = await readHistory(t);
         const reads = (await t.calls()).slice(callsBefore).filter((c) => c.kind === 'select').map((c) => c.table).sort();
-        t.eq('the dialog is labelled by an h2 naming Riley', h?.title, 'Riley');
+        t.eq(`the dialog is labelled by an h2 naming ${member}`, h?.title, member);
         t.eq('subtitle names the season spanning today', h?.sub, 'Sessions by day · Offseason 2026');
         t.check('at least 6 days, with MANUAL, CAPPED and REVIEW rows and the Shop → Side Door session (textContent: shop → side door)',
           h && h.days >= 6 && ['MANUAL', 'CAPPED', 'REVIEW'].every((s) => h.text.includes(s)) && h.text.includes('shop → side door'),
@@ -142,7 +165,7 @@ export default {
         t.check('chips Build, Outreach, Volunteer, Competition and Total; Total is the sum of the four (to the rounding of each)',
           chipH.every((x) => x != null) && totalH != null && Math.abs(Math.round(totalH * 60) - Math.round(chipH.reduce((a, x) => a + x, 0) * 60)) <= 2,
           JSON.stringify(h?.chips));
-        t.check('lane d\'s own 17h 40m of Riley sessions is inside the total (the core seed adds more)', totalH != null && totalH >= 17 + 40 / 60 - 1 / 60, `Total ${h?.chips?.Total}`);
+        t.check('lane d\'s own 17h 40m of sessions is inside the total (the core seed adds more)', totalH != null && totalH >= 17 + 40 / 60 - 1 / 60, `Total ${h?.chips?.Total}`);
         t.eq('read-only: exactly one button in the dialog, Close (no + Manual session, Edit or Void)', h?.buttons, ['Close']);
         t.check('the history read is this one member\'s: seasons, attendance_events, session_reviews', ['attendance_events', 'seasons', 'session_reviews'].every((x) => reads.includes(x)), reads.join(', '));
         const histCols = (await t.calls()).slice(callsBefore).filter((c) => c.table === 'attendance_events').map((c) => c.columns);
@@ -174,7 +197,7 @@ export default {
           `${b.buttons} buttons, ${b.tabindex} tabindex, ${b.spans}/${b.rows.length} spans`);
         t.eq('a name\'s cursor is auto', await t.evaluate(() => getComputedStyle(document.querySelector('.pb-name')).cursor), 'auto');
         const before = (await t.calls()).length;
-        await t.press(t.page.locator('.pb-name', { hasText: /^Riley$/ }));
+        await t.press(t.page.locator('.pb-name', { hasText: exact }));
         await t.page.waitForTimeout(400);
         const after = (await t.calls()).slice(before);
         t.eq('clicking a name opens nothing and reads nothing', { dialogs: await t.count('[role=dialog]'), reads: after.filter((c) => c.kind === 'select').length }, { dialogs: 0, reads: 0 });
@@ -189,7 +212,7 @@ export default {
       // ════ /hours drill-down ════════════════════════════════════════════
       t.as(`hours · mig ${mig} · mentor`);
       await t.open('/hours', { persona: 'mentor', mig, ready: '.board-row-click' });
-      await t.press(t.page.locator('.board-row-click', { has: t.page.locator('.board-member-link', { hasText: /^Riley$/ }) }));
+      await t.press(t.page.locator('.board-row-click', { has: t.page.locator('.board-member-link', { hasText: exact }) }));
       await t.waitFor('.ah-dialog .ah-day');
       const mh = await t.evaluate(() => {
         const d = document.querySelector('.ah-dialog');
@@ -205,7 +228,7 @@ export default {
         mh.backdrop && mh.old === 0 && mh.manual === 1 && mh.rows > 0 && mh.edit === mh.rows, JSON.stringify(mh));
       await t.press(t.page.locator('.ah-dialog .board-adjust-btn'));
       await t.waitFor('.board-adjust');
-      t.eq('"+ Manual session" opens the adjust panel for Riley', await t.text('.board-adjust .board-detail-title'), 'Add manual session — Riley');
+      t.eq(`"+ Manual session" opens the adjust panel for ${member}`, await t.text('.board-adjust .board-detail-title'), `Add manual session — ${member}`);
       await t.page.keyboard.press('Escape');
       await t.page.waitForTimeout(250);
       t.eq('Escape with the panel open keeps both the history and the panel', { history: await t.count('.ah-dialog'), panel: await t.count('.board-adjust') }, { history: 1, panel: 1 });
@@ -216,7 +239,7 @@ export default {
       t.eq('Cancel, then Escape, closes the history', await t.count('.ah-dialog'), 0);
       await t.press(t.page.locator('.board-viewbtn', { hasText: 'Matrix' }));
       await t.waitFor('.board-matrix-cell-click');
-      await t.press(t.page.locator('tr', { has: t.page.locator('.board-matrix-name', { hasText: /^Riley$/ }) }).locator('.board-matrix-cell-click').first());
+      await t.press(t.page.locator('tr', { has: t.page.locator('.board-matrix-name', { hasText: exact }) }).locator('.board-matrix-cell-click').first());
       await t.waitFor('.ah-dialog .ah-day');
       const one = await readHistory(t);
       t.check('a matrix cell opens ONE day: no day heads, subtitle the day ("Thu, Oct 1" form)', one && one.dayheads === 0 && one.days === 1 && /^[A-Z][a-z]{2}, [A-Z][a-z]{2} \d{1,2}$/.test(one.sub), one && `${one.days} day, ${one.dayheads} heads, "${one.sub}"`);
@@ -224,7 +247,7 @@ export default {
 
       t.as(`hours · mig ${mig} · student`);
       await t.open('/hours', { persona: 'student', mig, ready: '.board-row-click' });
-      await t.press(t.page.locator('.board-row-click', { has: t.page.locator('.board-member-link', { hasText: /^Riley$/ }) }));
+      await t.press(t.page.locator('.board-row-click', { has: t.page.locator('.board-member-link', { hasText: exact }) }));
       await t.waitFor('.ah-dialog .ah-day');
       const sh = await t.evaluate(() => ({
         manual: document.querySelectorAll('.ah-dialog .board-adjust-btn').length,
