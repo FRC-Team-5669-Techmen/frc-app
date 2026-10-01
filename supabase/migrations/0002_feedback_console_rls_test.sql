@@ -30,7 +30,8 @@
 --   05  a member still reads 0 reports, own included       (select policy kept)
 --   06  the deployed console's direct update with a legacy status still works
 --       for an admin                                        (positive: no regression)
---   07  a non-admin's feedback_set_status is refused by the database
+--   07  a non-admin's feedback_set_status is refused by the database, called
+--       by a mentor/lead when one exists (the caller is named in the detail)
 --   08  a non-admin's feedback_restore_status is refused by the database
 --   09  anon's feedback_set_status is refused
 --   10  anon's feedback_restore_status is refused
@@ -62,12 +63,26 @@ grant select, insert on fb0002_results to authenticated, anon;
 
 -- ── Fixtures ────────────────────────────────────────────────────────────────
 -- Member A is deliberately NOT an admin: an admin would make every refusal
--- check pass for the wrong reason. A mentor is fine (feedback is narrower than
--- staff). Member B is anybody else. The admin is the positive control.
+-- check pass for the wrong reason. Member A is a non-admin STAFF member
+-- (mentor or lead) whenever one exists, because the realistic way this
+-- boundary breaks is a body check written as is_staff() instead of is_admin(),
+-- and only a staff caller sees that. Picking "the first non-admin by id"
+-- instead let an is_staff() mutant pass every check on a database
+-- whose lowest id happened to be a student -- which, with random uuids and a
+-- roster that is mostly students, is the likely case on the live project.
+-- Member B is anybody else. The admin is the positive control.
 select set_config('fb0002.member_a', coalesce((
   select p.id::text from public.profiles p
    where not exists (select 1 from public.member_roles r where r.member_id = p.id and r.role = 'admin')
-   order by p.id limit 1), ''), true);
+   order by exists (select 1 from public.member_roles r
+                     where r.member_id = p.id and r.role in ('mentor', 'lead')) desc,
+            p.id
+   limit 1), ''), true);
+select set_config('fb0002.member_a_kind', case when exists (
+  select 1 from public.member_roles r
+   where r.member_id::text = current_setting('fb0002.member_a') and r.role in ('mentor', 'lead'))
+  then 'a mentor/lead (staff, not admin)'
+  else 'a non-staff member (no mentor or lead exists to test with)' end, true);
 select set_config('fb0002.member_b', coalesce((
   select p.id::text from public.profiles p
    where p.id::text <> current_setting('fb0002.member_a')
@@ -219,6 +234,7 @@ begin
   end;
   insert into fb0002_results values (7, 'non-admin feedback_set_status is refused',
     case when v_code = '42501' then 'PASS' else 'FAIL' end,
+    'as ' || current_setting('fb0002.member_a_kind') || ': ' ||
     case when v_code is null then format('a non-admin moved %s report(s) to spam', v_n)
          else v_code || ' ' || v_err end);
 
@@ -232,6 +248,7 @@ begin
   end;
   insert into fb0002_results values (8, 'non-admin feedback_restore_status is refused',
     case when v_code = '42501' then 'PASS' else 'FAIL' end,
+    'as ' || current_setting('fb0002.member_a_kind') || ': ' ||
     case when v_code is null then format('a non-admin restored %s report(s)', v_n)
          else v_code || ' ' || v_err end);
 end
