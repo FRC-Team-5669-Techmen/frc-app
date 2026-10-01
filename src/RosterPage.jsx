@@ -4,6 +4,7 @@ import { supabase } from './supabase'
 import { computeHoursMs, fmtHours } from './hoursUtils'
 import { RoleBadge, roleColor } from './roles'
 import { displayName } from './names'
+import { CAPABILITIES, isStaffRoles, loadAllGrants, setCapability } from './permissions'
 import './RosterPage.css'
 
 const ALL_ROLES    = ['student', 'mentor', 'lead', 'admin', 'parent']
@@ -38,8 +39,36 @@ export default function RosterPage() {
   const [delTarget, setDelTarget] = useState(null)      // member being deleted, or null
   const [delConfirm, setDelConfirm] = useState('')      // typed full-name confirmation
   const [deleting, setDeleting]   = useState(false)
+  // Per-member capabilities (supabase/migrations/0004_member_permissions.sql).
+  // grantState: 'loading' | 'ok' | 'missing' (0004 not applied yet) | 'error'
+  const [grants, setGrants]       = useState({})        // member_id -> capability keys
+  const [grantState, setGrantState] = useState('loading')
+  const [grantError, setGrantError] = useState('')
 
-  useEffect(() => { load(); loadDomains(); loadLinks(); loadHours() }, [])
+  useEffect(() => { load(); loadDomains(); loadLinks(); loadHours(); loadGrants() }, [])
+
+  async function loadGrants() {
+    const r = await loadAllGrants(supabase)
+    setGrants(r.byMember)
+    setGrantState(r.state)
+    setGrantError(r.state === 'error' ? (r.error?.message ?? 'Could not load permissions') : '')
+  }
+
+  // Grant / revoke through the admin RPCs, never a direct write: writes on
+  // member_permissions are revoked, and the RPC checks is_admin() itself, so a
+  // refusal raises instead of "saving" 0 rows the way member_roles used to.
+  async function toggleCapability(memberId, key, has) {
+    const sk = `${memberId}_cap_${key}`
+    setSaving(s => ({ ...s, [sk]: true }))
+    const r = await setCapability(supabase, memberId, key, !has)
+    setSaving(s => { const n = { ...s }; delete n[sk]; return n })
+    if (r.state === 'missing') { setGrantState('missing'); return }
+    if (!r.ok) { setPageError(r.error?.message ?? 'Could not change the permission'); return }
+    setGrants(g => {
+      const cur = g[memberId] ?? []
+      return { ...g, [memberId]: has ? cur.filter(k => k !== key) : [...new Set([...cur, key])].sort() }
+    })
+  }
 
   async function loadLinks() {
     const { data } = await supabase.from('guardian_links').select('parent_id, student_id')
@@ -343,6 +372,9 @@ export default function RosterPage() {
                   <span className="roster-member-email">{m.email}</span>
                   <span className="roster-member-tags">
                     {!m.approved && <span className="roster-pending-tag">Pending</span>}
+                    {grantState === 'ok' && CAPABILITIES
+                      .filter(c => (grants[m.id] ?? []).includes(c.key))
+                      .map(c => <span key={c.key} className="roster-perm-tag" title={c.label}>{c.short}</span>)}
                     {role && <RoleBadge role={role} />}
                     <span
                       className={`roster-status-dot status-dot-${m.status ?? 'active'}`}
@@ -388,6 +420,39 @@ export default function RosterPage() {
                           )
                         })}
                       </div>
+                    </div>
+                    <div className="roster-detail-row">
+                      <span className="roster-detail-label">Permissions</span>
+                      {grantState === 'missing' ? (
+                        <span className="roster-detail-none roster-perm-unset">
+                          Not set up yet. Apply supabase/migrations/0004_member_permissions.sql to grant these.
+                        </span>
+                      ) : grantState === 'loading' ? (
+                        <span className="roster-detail-none">Loading…</span>
+                      ) : grantState === 'error' ? (
+                        <span className="roster-detail-none">Could not load permissions: {grantError}</span>
+                      ) : (
+                        <div className="roster-perms">
+                          {CAPABILITIES.map(c => {
+                            const on  = (grants[m.id] ?? []).includes(c.key)
+                            const key = `${m.id}_cap_${c.key}`
+                            return (
+                              <button
+                                key={c.key}
+                                type="button"
+                                className={`roster-perm-toggle${on ? ' on' : ''}`}
+                                aria-pressed={on}
+                                title={c.hint}
+                                disabled={!!saving[key]}
+                                onClick={() => toggleCapability(m.id, c.key, on)}
+                              >{c.label}</button>
+                            )
+                          })}
+                          {isStaffRoles(m.roles) && (
+                            <span className="roster-perm-note">Their staff role already allows this.</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="roster-detail-row">
                       <span className="roster-detail-label">Status</span>
