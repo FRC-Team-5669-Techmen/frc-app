@@ -4,6 +4,7 @@ import {
   normEmail, effectiveStatus, isHeld, statusLabel, viewModeFor,
   resolvePageState, groupCatalog, holderCounts, holdersFor,
   ownCertifications, groupByHolder, syncSummary, fmtDate, fmtDateTime,
+  readAllPages, pageOf, PAGE_ROWS,
 } from '../src/ideaCerts.js'
 
 // The fixed instant every test evaluates at: 2026-10-01 12:00 in Los Angeles.
@@ -257,5 +258,105 @@ describe('dates render in America/Los_Angeles', () => {
     expect(fmtDate(null)).toBe('')
     expect(fmtDate('not a date')).toBe('')
     expect(fmtDateTime(undefined)).toBe('')
+  })
+})
+
+// A stand-in for one supabase-js table that ENFORCES PostgREST's row cap: any
+// one response holds at most `cap` rows, and the truncation comes back with no
+// error, exactly as the real server answers. It records the shape of every
+// request so a test can see which builder calls went out.
+function cappedTable(rows, { cap = 1000, failOnRequest = null } = {}) {
+  const requests = []
+  const query = () => {
+    const q = { orderBy: null, offset: 0, limit: null, ops: [] }
+    const b = {
+      order(col) { q.orderBy = col; q.ops.push('order'); return b },
+      limit(n) { q.limit = n; q.ops.push('limit'); return b },
+      range(from, to) { q.offset = from; q.limit = to - from + 1; q.ops.push('range'); return b },
+      then(resolve, reject) {
+        requests.push({ ...q, ops: [...q.ops] })
+        if (failOnRequest === requests.length) {
+          return Promise.resolve({ data: null, error: { code: '08006', message: 'connection lost' } }).then(resolve, reject)
+        }
+        let out = [...rows]
+        if (q.orderBy) out.sort((a, z) => (a[q.orderBy] < z[q.orderBy] ? -1 : a[q.orderBy] > z[q.orderBy] ? 1 : 0))
+        out = out.slice(q.offset).slice(0, Math.min(q.limit ?? Infinity, cap))
+        return Promise.resolve({ data: out, error: null }).then(resolve, reject)
+      },
+    }
+    return b
+  }
+  return { query, requests }
+}
+
+const pad = (n) => String(n).padStart(5, '0')
+// 2,345 holder rows; the member we look for sorts PAST the first 1000.
+const MANY = Array.from({ length: 2345 }, (_, i) =>
+  holder(`IDEA-${pad(i + 1)}`, `student${i % 800}@boscotech.edu`, i % 2 ? 'SAFE-1' : 'MECH-1', 'active'))
+const LATE = holder('IDEA-90000', 'late.student@boscotech.edu', 'WELD-2', 'active')
+const ROWS = [...MANY, LATE]
+
+const readPaged = (table) =>
+  readAllPages((from, size) => pageOf(table.query().order('serial'), from, size), 'serial')
+
+describe('readAllPages: a mirror longer than one response is read whole', () => {
+  it('positive control: the unpaged read really is truncated at 1000 with no error', async () => {
+    const t = cappedTable(ROWS)
+    const { data, error } = await t.query().order('serial')
+    expect(error).toBeNull()
+    expect(data).toHaveLength(1000)
+    expect(ownCertifications(data, 'late.student@boscotech.edu', NOW)).toEqual([])
+  })
+
+  it('the paged read returns every row exactly once, and a late row is found', async () => {
+    const t = cappedTable(ROWS)
+    const { data, error } = await readPaged(t)
+    expect(error).toBeNull()
+    expect(data).toHaveLength(ROWS.length)
+    expect(new Set(data.map(r => r.serial)).size).toBe(ROWS.length)
+    expect(ownCertifications(data, 'late.student@boscotech.edu', NOW).map(r => r.serial)).toEqual(['IDEA-90000'])
+    expect(holderCounts(data, NOW).get('WELD-2')).toBe(1)
+    // Three requests: the first a plain limit, the later ones a range.
+    expect(t.requests.map(r => r.ops.at(-1))).toEqual(['limit', 'range', 'range'])
+    expect(t.requests.map(r => r.offset)).toEqual([0, PAGE_ROWS, 2 * PAGE_ROWS])
+  })
+
+  it('a table that fits in one page is asked for once, with .order().limit() only', async () => {
+    const t = cappedTable(MANY.slice(0, 10))
+    const { data } = await readPaged(t)
+    expect(data).toHaveLength(10)
+    expect(t.requests).toHaveLength(1)
+    expect(t.requests[0].ops).toEqual(['order', 'limit'])
+  })
+
+  it('a failed later page fails the whole read rather than returning a partial list', async () => {
+    const failing = await readPaged(cappedTable(ROWS, { failOnRequest: 2 }))
+    expect(failing.data).toBeNull()
+    expect(failing.error.code).toBe('08006')
+    // Positive control: the same table without the failure reads whole.
+    const fine = await readPaged(cappedTable(ROWS))
+    expect(fine.error).toBeNull()
+    expect(fine.data).toHaveLength(ROWS.length)
+  })
+
+  it('a row repeated across a page boundary (a sync landed mid-read) is kept once', async () => {
+    const pages = [MANY.slice(0, 3), MANY.slice(2, 5)]
+    let i = 0
+    const { data } = await readAllPages(async () => ({ data: pages[i++] ?? [], error: null }), 'serial', { pageRows: 3 })
+    expect(data.map(r => r.serial)).toEqual(MANY.slice(0, 5).map(r => r.serial))
+  })
+
+  it('an endless source stops at the page bound with an error, never a partial list', async () => {
+    const endless = async (from, size) => ({ data: MANY.slice(0, size).map((r, k) => ({ ...r, serial: `X-${from + k}` })), error: null })
+    const { data, error } = await readAllPages(endless, 'serial', { pageRows: 5, maxPages: 3 })
+    expect(data).toBeNull()
+    expect(error.code).toBe('TOO_MANY_PAGES')
+    // Positive control: the same source with room for its rows ends normally
+    // once a page comes back short.
+    let calls = 0
+    const finite = async (from, size) => ({ data: calls++ < 2 ? MANY.slice(from, from + size) : MANY.slice(from, from + 2), error: null })
+    const ok = await readAllPages(finite, 'serial', { pageRows: 5, maxPages: 3 })
+    expect(ok.error).toBeNull()
+    expect(ok.data).toHaveLength(12)
   })
 })

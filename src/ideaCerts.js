@@ -41,6 +41,43 @@ export const HOLDER_SELECT =
 export const SYNC_LOG_SELECT =
   'id, received_at, source_revision, catalog_count, holder_count, ok, error'
 
+// EVERY MIRROR READ IS PAGED. PostgREST caps one response at the project's
+// max_rows (1000 by default on Supabase) and answers the truncated set with NO
+// error. These certifications are open to every Bosco Tech student, so the
+// holder list can cross 1000 rows, and a truncated list undercounts holders
+// and can leave a student's own certification off "Your certifications" with
+// nothing on screen saying so. readAllPages() orders on the table's own key so
+// no row repeats or is skipped, a short page ends it, rows are deduplicated on
+// the key (a sync landing mid-read shifts every offset), and ANY failed page
+// fails the whole read: a partial list here would be a wrong count presented
+// as a right one. The page size assumes the default cap; a project configured
+// below 1000 would end on its first short page.
+export const PAGE_ROWS = 1000
+export const MAX_PAGES = 200
+
+// One page of an ordered supabase-js query. The first page is a plain
+// .limit(); only a later page needs .range() for its offset, so a table that
+// fits in one page is asked for exactly the way the rest of the app asks.
+export function pageOf(query, from, size = PAGE_ROWS) {
+  return from === 0 ? query.limit(size) : query.range(from, from + size - 1)
+}
+
+// fetchPage(from, size) -> { data, error }. Resolves { data, error } for the
+// whole table: every row once, or data null and the first error.
+export async function readAllPages(fetchPage, key, { pageRows = PAGE_ROWS, maxPages = MAX_PAGES } = {}) {
+  const byKey = new Map()
+  let from = 0
+  for (let page = 0; page < maxPages; page++) {
+    const { data, error } = await fetchPage(from, pageRows)
+    if (error) return { data: null, error }
+    const rows = data ?? []
+    for (const r of rows) byKey.set(r[key], r)
+    if (rows.length < pageRows) return { data: [...byKey.values()], error: null }
+    from += rows.length
+  }
+  return { data: null, error: { code: 'TOO_MANY_PAGES', message: `more than ${maxPages * pageRows} rows` } }
+}
+
 // The plain line for both "the migration is not applied" and "applied, but no
 // sync has arrived". To a member those are the same fact.
 export const NOT_SYNCED_LINE =
