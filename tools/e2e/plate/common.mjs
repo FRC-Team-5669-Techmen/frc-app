@@ -73,9 +73,17 @@ export async function server(args) {
 }
 
 /** A context with the pinned clock, randomness and motion described above. */
-export async function pinnedContext(browser, width, { geolocation = SHOP, permissions = ['geolocation'] } = {}) {
+export async function pinnedContext(browser, width, { geolocation = SHOP, permissions = ['geolocation'], suppressPlate = false } = {}) {
   const vp = viewportFor(width);
   const { context, blocked } = await newContext(browser, vp, { geolocation, permissions });
+  // The plate OFF from the first frame: main.jsx's `classList.add(APP_PLATE)`
+  // still runs and adds nothing, exactly as if the constant were ''.
+  if (suppressPlate && APP_PLATE) {
+    await context.addInitScript((cls) => {
+      const add = DOMTokenList.prototype.add;
+      DOMTokenList.prototype.add = function plateSuppressedAdd(...tokens) { return add.apply(this, tokens.filter((t) => t !== cls)); };
+    }, APP_PLATE);
+  }
   await context.clock.setFixedTime(CLOCK);
   await context.addInitScript(() => {
     let s = 0x2545f491;

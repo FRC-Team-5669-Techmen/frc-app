@@ -2,7 +2,7 @@
 /**
  * The 44px sweep and the "a chip must not look pressable" check, on every
  * student-reachable route and state, with the plate class ON (and, for the
- * comparison, OFF in the same page load).
+ * comparison, OFF: a second fresh load with the class suppressed).
  *
  *   node tools/e2e/plate/measure.mjs --port 5413 [--widths 375] [--personas student] [--json out.json]
  *
@@ -26,7 +26,7 @@
  */
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { REPO, flag, ensureDir, launchBrowser, ROUTES, server, pinnedContext, fxUrl, settlePage, setPlate, plateOn, slug, frames } from './common.mjs';
+import { REPO, flag, ensureDir, launchBrowser, ROUTES, server, pinnedContext, fxUrl, settlePage, plateOn, slug, frames } from './common.mjs';
 import { PERSONA_PAGES, STATES } from './states.mjs';
 
 const args = process.argv.slice(2);
@@ -124,17 +124,21 @@ async function main() {
           ...PERSONA_PAGES.filter((p) => p.persona !== 'parent').map((p) => ({ name: `${p.persona}-${p.name}`, url: p.url, persona: p.persona })),
         ];
         for (const pg of pages) {
-          const { context, page } = await pinnedContext(browser, width);
-          await page.goto(fxUrl(srv.origin, pg.url, pg.persona));
-          await settlePage(page);
-          if (pg.state) { await pg.state.run(page, srv.origin); await settlePage(page); await frames(page); }
-          const on = await plateOn(page);
-          const measuredOn = await page.evaluate(sweep);
-          await setPlate(page, false);
-          const measuredOff = await page.evaluate(sweep);
-          await setPlate(page, true);
-          report.pages.push({ width, persona: pg.persona, name: pg.name, url: pg.url, classOn: on, on: measuredOn, off: measuredOff });
-          await context.close();
+          // ON and OFF are two fresh loads; OFF suppresses the class from the
+          // first frame (common.mjs), so OFF is the app as it is today.
+          const load = async (suppressPlate) => {
+            const { context, page } = await pinnedContext(browser, width, { suppressPlate });
+            await page.goto(fxUrl(srv.origin, pg.url, pg.persona));
+            await settlePage(page);
+            if (pg.state) { await pg.state.run(page, srv.origin); await settlePage(page); await frames(page); }
+            const cls = await plateOn(page);
+            const m = await page.evaluate(sweep);
+            await context.close();
+            return { cls, m };
+          };
+          const on = await load(false);
+          const off = await load(true);
+          report.pages.push({ width, persona: pg.persona, name: pg.name, url: pg.url, classOn: on.cls, classOffWasOff: !off.cls, on: on.m, off: off.m });
         }
       }
     }
