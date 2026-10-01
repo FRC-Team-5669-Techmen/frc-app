@@ -12,6 +12,16 @@
 -- Then run supabase/migrations/0002_feedback_console_rls_test.sql in the same
 -- editor. It rolls itself back and returns one PASS/FAIL row per check.
 --
+-- PASTE IT AFTER THE NEW CONSOLE IS LIVE, not before. The console and widget
+-- shipped with this file work with or without it (they detect it by error
+-- code), but the console deployed BEFORE it reads only 'open' / 'reviewed' /
+-- 'dismissed'. The in-place mapping in section 3 turns every 'open' into
+-- 'new', so pasted while that older console is still deployed, its default
+-- Open view and the avatar-menu badge (which counts status = 'open') read 0
+-- until the new client ships. Nothing is lost either way -- every report is
+-- still there under "All statuses" -- but an inbox that looks empty is the
+-- one failure this console exists to prevent.
+--
 -- ----------------------------------------------------------------------------
 -- WHAT IT ASSUMES IS ALREADY THERE
 --   supabase/feedback.sql, applied: the table public.feedback with the CHECK
