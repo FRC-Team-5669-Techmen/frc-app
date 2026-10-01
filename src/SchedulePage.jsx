@@ -229,7 +229,8 @@ export default function SchedulePage({ session, hasRole }) {
       setSaving(false)
       const failed = results.find(r => r.error)
       if (failed) { setError(eventWriteMessage(failed.error)); return }
-      if (results.some(silentlyRefused)) { setError(REFUSED_MSG); setEditing(null); load(); return }
+      // Set AFTER the reload: a successful load() clears the banner.
+      if (results.some(silentlyRefused)) { setEditing(null); await load(); setError(REFUSED_MSG); return }
       setEditing(null); load()
       return
     }
@@ -243,7 +244,7 @@ export default function SchedulePage({ session, hasRole }) {
       : await upd()
     setSaving(false)
     if (res.error) { setError(eventWriteMessage(res.error)); return }
-    if (silentlyRefused(res)) { setError(REFUSED_MSG); setEditing(null); load(); return }
+    if (silentlyRefused(res)) { setEditing(null); await load(); setError(REFUSED_MSG); return }
     setEditing(null); load()
   }
 
@@ -256,8 +257,8 @@ export default function SchedulePage({ session, hasRole }) {
     const res = await (isStaff ? q : q.select('id'))
     setConfirmDel(null)
     if (res.error) { setError(eventWriteMessage(res.error)); return }
-    if (silentlyRefused(res)) setError(REFUSED_MSG)
-    load()
+    await load()
+    if (silentlyRefused(res)) setError(REFUSED_MSG) // after load(), which clears the banner
   }
 
   if (events === null) {
