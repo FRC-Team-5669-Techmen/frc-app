@@ -38,6 +38,7 @@ const MemberApplication  = lazy(() => import('./MemberApplication'))
 const ApplicationsPage   = lazy(() => import('./ApplicationsPage'))
 const ParentResponse     = lazy(() => import('./ParentResponse'))
 const FeedbackPage       = lazy(() => import('./FeedbackPage'))
+const AnnouncePage       = lazy(() => import('./AnnouncePage'))
 const SurveyPage         = lazy(() => import('./SurveyPage'))
 const SurveysAdmin       = lazy(() => import('./SurveysAdmin'))
 // Mounted in ProtectedLayout, so it is on every authenticated page. Lazy with
@@ -301,6 +302,9 @@ export default function App() {
           <Route path="/access-requests" element={<AccessRequestsPage hasRole={hasRole} />} />
           <Route path="/applications"    element={<ApplicationsPage hasRole={hasRole} />} />
           <Route path="/feedback"        element={<FeedbackPage session={session} hasRole={hasRole} />} />
+          {/* Discord announcements composer (migration 0003 + the discord-announce
+              Edge Function). The page gates itself on hasRole('admin'). */}
+          <Route path="/announce"        element={<AnnouncePage hasRole={hasRole} />} />
           {/* Weekly survey. The member route resolves whatever survey is open;
               the mentor route authors them and reads results. */}
           <Route path="/survey"          element={<SurveyPage session={session} />} />
