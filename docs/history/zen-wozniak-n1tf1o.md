@@ -404,7 +404,7 @@ From the prompt and the lane briefs written from it, checked against the tree:
   nobody had named.
 - The rebase rule produced the `integration` conflict above.
 
-`CLAUDE.md` claims found false, and corrected in the closing commits:
+`CLAUDE.md` claims, and one README, found false and corrected in the closing commits:
 - the SQL counts;
 - the `/checkin` category picker, which does not exist;
 - `/display` as a staff-only screen;
@@ -420,13 +420,14 @@ From the prompt and the lane briefs written from it, checked against the tree:
 - two older contradictions inside `CLAUDE.md`, also corrected by the closing
   review: the Discord calendar suite given as both 19 and 13 tests (it is 19),
   and the parent-dashboard bullet counting two pending-request kinds where the
-  NavBar counts three.
+  NavBar counts three;
+- `supabase/migrations/README.md`, corrected by the closing review: it said the
+  directory was empty of SQL, that `supabase/*.sql` held 57 files and that
+  three of fifty-eight SQL files had a test.
 
-Found and NOT corrected here, because each needs its own decision or files this
-session did not own:
+Found and NOT corrected here, because it needs its own decision:
 - No SQL file creates `profiles.geofence_exempt` or the Offseason 2026 and
   Biocore 2027 season rows (decision 26).
-- `supabase/migrations/README.md` still says that directory is empty of SQL.
 
 ## Decision defaults this session ran under
 

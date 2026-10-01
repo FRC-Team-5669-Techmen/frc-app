@@ -1,8 +1,9 @@
 # `supabase/migrations/` -- numbered migrations, from 2026-09-02 forward
 
-**This directory is empty of SQL on purpose.** It is the shape the next SQL file
-lands in, established by the conformance bundle on 2026-09-02, and nothing was
-renumbered or moved to create it.
+**This directory holds the numbered migrations.** It was established empty by
+the conformance bundle on 2026-09-02, and nothing was renumbered or moved to
+create it. The first four, `0001` to `0004`, landed on 2026-10-01, each with its
+`_rls_test.sql`; none had been applied to the live project when written.
 
 ## The three rules
 
@@ -26,7 +27,7 @@ both permit a migration at the same time, whatever files they otherwise own.
 
 ### 2. The existing SQL is FROZEN WHERE IT IS
 
-`supabase/*.sql` (57 files) and `sql/forgotten_checkout.sql` are **not
+`supabase/*.sql` (56 files) and `sql/forgotten_checkout.sql` are **not
 renumbered, not renamed, and not moved into this directory.** Ever.
 
 Every one of them has already been pasted into the Supabase SQL editor against
@@ -59,8 +60,9 @@ controls were run against it and the first version caught only six -- an UPDATE
 has to FIND its rows, and row lookup goes through the SELECT policy, so a test
 that thought it was checking UPDATE was checking SELECT again.
 
-Three of the fifty-eight SQL files in this repo have a test sibling. That is the
-number this rule exists to move.
+Three of the frozen SQL files have a test sibling; every numbered migration has
+had one since `0001`, which made seven on 2026-10-01. That is the number this
+rule exists to move.
 
 ## How SQL actually reaches this database
 
