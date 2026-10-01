@@ -119,10 +119,11 @@
 }
 
 .pb-row {
+  --pb-row-pad-y: clamp(0.5rem, 1vw, 0.8rem);
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: clamp(0.5rem, 1vw, 0.8rem) clamp(0.6rem, 1vw, 1rem);
+  padding: var(--pb-row-pad-y) clamp(0.6rem, 1vw, 1rem);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -161,6 +162,33 @@
 }
 .pb-present .pb-name { color: var(--text); }
 .pb-absent  .pb-name { color: var(--muted); opacity: 0.55; }
+
+/* Staff only: the name is a button that opens the member's attendance history.
+   It looks like the plain name until hovered or focused, and reaches into the
+   row's vertical padding so the touch target is at least 44px tall without
+   making a wall-sized row any taller than it already is. */
+.pb-name-btn {
+  display: block;
+  align-self: stretch;
+  min-width: 0;
+  min-height: 44px;
+  margin: calc(-1 * var(--pb-row-pad-y)) 0;
+  padding: var(--pb-row-pad-y) 0;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.pb-name-btn:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--gold-dim);
+  text-underline-offset: 0.2em;
+}
+/* The global gold focus ring, at full strength even on a dimmed absent row. */
+.pb-name-btn:focus-visible { opacity: 1; }
 
 .pb-meta {
   flex-shrink: 0;
