@@ -78,6 +78,34 @@ function walk(css) {
   return { rules, atRules };
 }
 
+// The `:is()` groups at the top level of a selector, as argument lists.
+function isGroups(sel) {
+  const out = [];
+  let i = sel.indexOf(':is(');
+  while (i >= 0) {
+    let d = 0; let j = i + 3;
+    for (; j < sel.length; j++) {
+      if (sel[j] === '(') d++;
+      else if (sel[j] === ')') { d--; if (d === 0) break; }
+    }
+    out.push(splitTop(sel.slice(i + 4, j)));
+    i = sel.indexOf(':is(', j);
+  }
+  return out;
+}
+
+// An argument that outweighs a list of plain classes raises the WHOLE list
+// (`:is()` takes its heaviest argument's specificity), which is how the
+// login key's (0,2,1) once out-ranked the small-key radius everywhere.
+// Weight outside :where(): classes, attributes and pseudo-classes, and any
+// element name.
+function heavy(arg) {
+  const s = arg.replace(/:where\((?:[^()]|\([^()]*\))*\)/g, '');
+  const classes = (s.match(/\.[\w-]+|\[[^\]]+\]|:(?!not\(|is\(|where\()[\w-]+/g) || []).length;
+  const element = /(^|[\s>+~(,])[a-z][a-z0-9-]*(?=[.:[\s>+~)]|$)/i.test(s.replace(/\[[^\]]+\]|\.[\w-]+|:[\w-]+/g, ' '));
+  return classes > 1 || element;
+}
+
 function check(cssText) {
   const css = stripComments(cssText);
   const problems = [];
@@ -86,6 +114,10 @@ function check(cssText) {
     for (const sel of splitTop(r.prelude)) {
       const ok = sel === KEY || (sel.startsWith(KEY) && /^[\s.:[>+~]/.test(sel.slice(KEY.length)));
       if (!ok) problems.push(`unkeyed selector: ${sel.slice(0, 90)}`);
+      for (const args of isGroups(sel)) {
+        if (args.length < 5 || !args[0].startsWith('.')) continue;
+        for (const a of args) if (heavy(a)) problems.push(`a heavy argument raises a whole :is() list: ${a}`);
+      }
     }
     const body = r.body.replace(/url\("[^"]*"\)|url\('[^']*'\)|url\([^)]*\)/g, 'url()');
     const hex = body.match(/#[0-9a-fA-F]{3,8}\b/g);
@@ -111,6 +143,7 @@ const controls = [
   ['a raw hex', `${real}\n:root.tm-plate .mb-tile { border-color: #123456; }`],
   ['a raw rgba()', `${real}\n:root.tm-plate .mb-tile { box-shadow: 0 1px 0 rgba(0, 0, 0, 0.5); }`],
   ['an @import', `@import './x.css';\n${real}`],
+  ['a heavy argument in a class list', `${real}\n:root.tm-plate :is(.a, .b, .c, .d, :where(.login-card) button[type='submit']) { border-radius: 2px; }`],
 ];
 let controlsCaught = 0;
 for (const [name, text] of controls) {

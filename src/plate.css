@@ -367,7 +367,7 @@
 /* ACCENT keys are the one flat gold face (gradients on greys only): the
    material without the sheen. */
 :root.tm-plate :is(
-  .mb-checkout:not(.mb-retry), .sch-new-btn, .sch-save, .jobs-add-btn, .jobs-save-btn, .lh-submit, .mh-modal-submit, .board-adjust-save,
+  .mb-checkout:not(:where(.mb-retry)), .sch-new-btn, .sch-save, .jobs-add-btn, .jobs-save-btn, .lh-submit, .mh-modal-submit, .board-adjust-save,
   .profile-save, .np-btn, .study-log-btn, .study-goal-btn, .msh-btn, .ph-link-btn, .eb-btn,
   .ar-approve, .activity-btn, .ap-export, .roster-approve-btn, .roster-domain-btn, .roster-guardian-btn,
   .sc-add-btn, .sc-save-btn, .squad-add-btn, .squad-save-btn, .squad-assign-btn, .vh-cutoff-save, :where(.vh-btn).vh-approve,
