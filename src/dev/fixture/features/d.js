@@ -53,7 +53,7 @@ export default {
         ev('f-out', 'out', at(9, 6 - 40 / 60)),
       ],
       session_reviews: [
-        { id: 'fx-d-review', user_id: who, checkout_id: 'fx-d-d-out', status: 'pending', created_at: at(5, 1.5) },
+        { id: 'fx-d-review', user_id: who, checkin_id: 'fx-d-d-in', checkout_id: 'fx-d-d-out', status: 'pending', created_at: at(5, 1.5) },
       ],
     }
   },
