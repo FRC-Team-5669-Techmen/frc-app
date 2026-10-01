@@ -176,6 +176,10 @@ export default {
     t.check('a valid id adds the role, and its chip appears', (await chipTexts(t)).includes('@Pit Crew') && (await t.rows('discord_announce_roles')).length === 9 && (await t.count('#announce-roles [role=alert]')) === 0,
       `${(await chipTexts(t)).join(', ')}`);
     const pitRow = t.page.locator('#announce-roles .an-role', { has: t.page.locator('.an-role-name', { hasText: /^Pit Crew$/ }) });
+    const pitStored = (await t.rows('discord_announce_roles')).find((r) => r.name === 'Pit Crew');
+    t.check('the new role\'s own row agrees with its chip: not Inactive, toggle reads Deactivate', (await pitRow.locator('.an-pill').count()) === 0
+      && ((await pitRow.locator('.an-btn').first().textContent()) ?? '').trim() === 'Deactivate',
+      `pill ${await pitRow.locator('.an-pill').count()}, toggle "${((await pitRow.locator('.an-btn').first().textContent()) ?? '').trim()}"; stored active ${JSON.stringify(pitStored?.active)}${pitStored?.active === undefined ? ' (FIXTURE: features/e.js gives the new table no column defaults; the live column is not null default true)' : ''}`);
     await t.press(pitRow.getByRole('button', { name: 'Delete' }));
     const armed = await pitRow.locator('.an-btn-danger').textContent();
     t.check('Delete arms first and names what it deletes', armed?.trim() === 'Delete Pit Crew? Past posts keep their copy.', armed);

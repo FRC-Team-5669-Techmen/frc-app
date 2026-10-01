@@ -95,6 +95,12 @@ feedback widget is absent from them (as a checked-out member, writing nothing).
    generic `{ ok: true, skipped: true }` answers and the page reads "answered
    but did not say it is ready". Fix: `functions: { 'discord-announce': () =>
    ({ data: null, error: null, status: 404 }) }` (not deployed).
+5. `features/e.js` gives `discord_announce_roles` no column defaults, so a role
+   added through the editor is stored with no `active` at all (the live column
+   is `not null default true`). Fix: declare the table's columns with their
+   defaults in `creates.columns` (`id` uuid, `active: { default: true, type:
+   'boolean' }`, `sort_order: { default: 0 }`, `created_at` now, and the rest),
+   which also makes the table strict.
 
 ## Adding a spec
 

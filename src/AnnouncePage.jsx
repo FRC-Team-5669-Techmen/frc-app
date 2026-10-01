@@ -244,8 +244,13 @@ function RoleEditor({ roles, onChanged }) {
 
       {roles.length > 0 && (
         <ul className="an-roles">
-          {sortRoles(roles).map(r => (
-            <li key={r.id} className={`an-role${r.active ? '' : ' an-role-off'}`}>
+          {sortRoles(roles).map(r => {
+            // Off means active === false, the same reading activeRoles() gives
+            // the chips: a row whose active is missing must not be offered as
+            // a chip while its own row says Inactive.
+            const off = r.active === false
+            return (
+            <li key={r.id} className={`an-role${off ? ' an-role-off' : ''}`}>
               {editing === r.id ? (
                 <div className="an-role-edit">
                   <input className="an-input" value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} aria-label="Role name" />
@@ -262,13 +267,13 @@ function RoleEditor({ roles, onChanged }) {
                   <div className="an-role-main">
                     <span className="an-role-name">{r.name}</span>
                     <span className="an-mono an-role-id">{r.role_id}</span>
-                    {!r.active && <span className="an-pill">Inactive</span>}
+                    {off && <span className="an-pill">Inactive</span>}
                     {r.notes && <span className="an-role-notes">{r.notes}</span>}
                   </div>
                   <div className="an-row-actions">
                     <button type="button" className="an-btn" disabled={busy}
-                      onClick={() => write(supabase.from('discord_announce_roles').update({ active: !r.active }).eq('id', r.id))}>
-                      {r.active ? 'Deactivate' : 'Activate'}
+                      onClick={() => write(supabase.from('discord_announce_roles').update({ active: off }).eq('id', r.id))}>
+                      {off ? 'Activate' : 'Deactivate'}
                     </button>
                     <button type="button" className="an-btn" disabled={busy}
                       onClick={() => { setEditing(r.id); setArmed(null); setMsg(''); setEdit({ name: r.name, role_id: r.role_id, notes: r.notes ?? '', sort_order: String(r.sort_order ?? 0) }) }}>
@@ -286,7 +291,8 @@ function RoleEditor({ roles, onChanged }) {
                 </>
               )}
             </li>
-          ))}
+            )
+          })}
         </ul>
       )}
 
