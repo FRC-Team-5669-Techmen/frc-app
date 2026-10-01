@@ -220,6 +220,17 @@ describe('filters', () => {
     expect(withheld).toContain('one reporter (name withheld)')
     expect(withheld).not.toContain('Sam')
   })
+
+  test('the search box searches member names, so its text is withheld with names too', () => {
+    // The search placeholder invites a member's name, and the filter line is
+    // the header of every export (reports.md, README.md, reports.json).
+    const f = { ...DEFAULT_FILTER, status: 'all', q: 'Sam Student' }
+    const withheld = describeFilter(f, { names: false })
+    expect(withheld).not.toContain('Sam')
+    expect(withheld).toContain('a text search (its words withheld with names)')
+    // Positive control: with names on, the search is stated as typed.
+    expect(describeFilter(f, { names: true })).toContain('search "Sam Student"')
+  })
 })
 
 describe('bulk move and undo', () => {

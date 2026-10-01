@@ -327,7 +327,11 @@ export function describeFilter(filter, { reporterLabel, names = true } = {}) {
     parts.push('reporter any')
   }
   if (f.shots !== 'any') parts.push(f.shots === 'with' ? 'with screenshots' : 'without screenshots')
-  if ((f.q ?? '').trim()) parts.push(`search "${f.q.trim()}"`)
+  // The search box matches reporter names too, and a name is the likeliest
+  // thing typed into it, so its words are withheld exactly when names are.
+  if ((f.q ?? '').trim()) {
+    parts.push(names ? `search "${f.q.trim()}"` : 'a text search (its words withheld with names)')
+  }
   return parts.join('; ')
 }
 
