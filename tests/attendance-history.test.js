@@ -245,6 +245,10 @@ describe('review flags and totals', () => {
 
 describe('formatting', () => {
   const ws = (s) => s.replace(/\s/g, ' ')   // ICU may put U+202F before AM/PM
+  // Put TZ back exactly as found. Assigning undefined to process.env stores the
+  // STRING 'undefined', which would leave every later test in this file running
+  // in a zone named 'undefined' rather than the runner's own.
+  const restoreTz = (prior) => { if (prior === undefined) delete process.env.TZ; else process.env.TZ = prior }
 
   test('times read in the shop\'s zone whatever zone the device is in', () => {
     const prior = process.env.TZ
@@ -258,9 +262,10 @@ describe('formatting', () => {
       process.env.TZ = 'UTC'
       expect(ws(new Date('2026-09-28T22:30:00.000Z').toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }))).toBe('10:30 PM')
     } finally {
-      process.env.TZ = prior
+      restoreTz(prior)
     }
     expect(fmtSessionTime(null)).toBe('—')
+    expect(process.env.TZ).toBe(prior)
   })
 
   test('a day key names its own calendar date in any zone', () => {
@@ -272,7 +277,7 @@ describe('formatting', () => {
         expect(fmtDayKey('2026-09-28')).toBe('Mon, Sep 28')
       }
     } finally {
-      process.env.TZ = prior
+      restoreTz(prior)
     }
   })
 })
