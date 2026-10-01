@@ -1230,8 +1230,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
   weaknesses (CLAUDE.md:54 and `:147`), and this file and tonight's closing docs record more.
   `docs/feedback` keeps student names out because the repo is public, but no rule covers security
   detail.
-- **Why it matters:** the app holds minors' names, attendance and hours, and email sign-in
-  creates an account for any address.
+- **Why it matters:** the app holds minors' names, attendance and hours.
 - **Size:** S. **Decision 04.** This file follows its default strictly: the unfixed
   security items are stubs.
 

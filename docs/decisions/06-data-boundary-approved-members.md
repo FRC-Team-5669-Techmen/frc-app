@@ -15,8 +15,6 @@
   delivered to Mr. Pina privately on 2026-10-01 (decision 04).
 - The base member policies, and `has_role()`, live in `platform_migration.sql`
   at the repository root, not under `supabase/` (audit item 25).
-- Email-code sign-in creates an account for any address. That is deliberate:
-  the access-request form needs a signed-in account to write its row.
 - Tonight's migrations already read approval in their own helpers (0001's
   mirror reads, 0004's capability check), so they inherit whatever the
   approval column is worth.
