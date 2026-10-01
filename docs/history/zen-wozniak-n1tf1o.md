@@ -404,7 +404,7 @@ From the prompt and the lane briefs written from it, checked against the tree:
   nobody had named.
 - The rebase rule produced the `integration` conflict above.
 
-`CLAUDE.md` claims found false, and corrected in the same closing commit:
+`CLAUDE.md` claims found false, and corrected in the closing commits:
 - the SQL counts;
 - the `/checkin` category picker, which does not exist;
 - `/display` as a staff-only screen;
@@ -412,15 +412,20 @@ From the prompt and the lane briefs written from it, checked against the tree:
 - `GlanceCard.jsx` imported by `HomePage`;
 - `attendanceHoursByDate`;
 - the feedback widget's required category and "no commit-sha telemetry";
-- the CI bullet describing the retired workflow.
+- the CI bullet describing the retired workflow;
+- the member application bullet's "8-value subteam taxonomy" (the CHECK has 12
+  values) and "both acknowledgments unstorable-as-false" (the build-season
+  CHECK was dropped), the two rows of audit item 24's table the first closing
+  commit missed, corrected by the closing review;
+- two older contradictions inside `CLAUDE.md`, also corrected by the closing
+  review: the Discord calendar suite given as both 19 and 13 tests (it is 19),
+  and the parent-dashboard bullet counting two pending-request kinds where the
+  NavBar counts three.
 
 Found and NOT corrected here, because each needs its own decision or files this
 session did not own:
 - No SQL file creates `profiles.geofence_exempt` or the Offseason 2026 and
   Biocore 2027 season rows (decision 26).
-- `CLAUDE.md` gives the Discord calendar suite as both 19 and 13 tests.
-- The parent-dashboard bullet counts two pending-request kinds where the NavBar
-  counts three.
 - `supabase/migrations/README.md` still says that directory is empty of SQL.
 
 ## Decision defaults this session ran under

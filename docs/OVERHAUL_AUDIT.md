@@ -562,8 +562,11 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 
 #### 24. CLAUDE.md contradicts the tree in 16 places and carries none of tonight's rules
 - **Dimension:** documentation, testing-ci. **Severity:** high. **Size:** M.
-- **Status at `e652b01`:** open. `CLAUDE.md` is edited separately in the closing
-  docs of 2026-10-01; re-check the 16 against that edit.
+- **Status at `e652b01`:** open. PARTLY FIXED by the closing docs of 2026-10-01: all ten
+  rows shown below are corrected in `CLAUDE.md`, which now also names
+  `src/attendanceState.js` and `fetchAllRows`, and its Commands block carries `dev:fixture`
+  and `test:checkin`. The withheld row stands (decision 04). The other five of the 16 were
+  not re-checked.
 - **What is wrong:** examples of the 16, each claim against the tree (one row is withheld under
   decision 04):
 
