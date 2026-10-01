@@ -127,6 +127,9 @@ export default {
       t.eq('All Time equals the total computed from the store', pg.stats['All Time'], fmtHours(o.all));
       const week = parseHours(pg.stats['This Week']);
       t.check('This Week is never more than All Time', week != null && week <= parseHours(pg.stats['All Time']), `This Week ${pg.stats['This Week']}, All Time ${pg.stats['All Time']}`);
+      // Lane b1's number for a Thursday-afternoon clock (its seed is relative
+      // to the clock, and the clock here is fixed).
+      t.eq('This Week reads lane b1\'s 7h at the fixed clock', pg.stats['This Week'], '7h');
       t.eq('pending notice: 1 session (6h)', pg.pending, '1 session (6h) pending mentor review — not counted in your totals yet.');
       t.check('the oracle agrees: 1 pending session of 6h', o.pendingCount === 1 && fmtHours(o.pendingH) === '6h', `${o.pendingCount} / ${fmtHours(o.pendingH)}`);
       t.eq('one hour adjustment: Outreach +1h with its reason', pg.adj, [{ cat: 'Outreach', amt: '+1h', reason: 'Booth setup before the check-in tag was posted' }]);

@@ -226,8 +226,14 @@ export default {
       });
       t.check('the drill-down is the shared .ah-dialog with one "+ Manual session" and Edit/Void on every session row',
         mh.backdrop && mh.old === 0 && mh.manual === 1 && mh.rows > 0 && mh.edit === mh.rows, JSON.stringify(mh));
-      await t.press(t.page.locator('.ah-dialog .board-adjust-btn'));
+      // The lane d reviewer's case: a press 1.5px inside the button's right
+      // edge opens the panel and must not reach the backdrop's close handler.
+      const box = await t.page.locator('.ah-dialog .board-adjust-btn').boundingBox();
+      const edge = { x: box.x + box.width - 1.5, y: box.y + box.height / 2 };
+      if (t.isPhone) await t.page.touchscreen.tap(edge.x, edge.y);
+      else await t.page.mouse.click(edge.x, edge.y);
       await t.waitFor('.board-adjust');
+      t.eq('a press 1.5px inside the right edge of "+ Manual session" opens the panel and keeps the history', { history: await t.count('.ah-dialog'), panel: await t.count('.board-adjust') }, { history: 1, panel: 1 });
       t.eq(`"+ Manual session" opens the adjust panel for ${member}`, await t.text('.board-adjust .board-detail-title'), `Add manual session — ${member}`);
       await t.page.keyboard.press('Escape');
       await t.page.waitForTimeout(250);
