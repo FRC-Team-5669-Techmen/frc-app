@@ -388,11 +388,20 @@ export default function AnnouncePage({ hasRole = () => false }) {
   // Any edit invalidates a dry run that described the old draft.
   useEffect(() => { setDry(null) }, [draft])
 
+  // A dry run is tagged with the payload it was asked about, and only shown
+  // while the preview still IS that payload. Without the tag, an answer that
+  // arrived after an edit (or after a role reload reordered the pings) was
+  // compared against the NEW preview and reported a server mismatch nobody
+  // caused, telling the admin not to send and to report it.
+  const payloadJson = useMemo(() => JSON.stringify(payload), [payload])
+
   const fnReady = fn.kind === 'ok' && fn.body?.ready === true
 
   async function checkWithServer() {
-    setDry({ loading: true })
-    setDry(await invokeAnnounce({ action: 'preview', draft }))
+    const asked = payloadJson
+    setDry({ loading: true, asked })
+    const r = await invokeAnnounce({ action: 'preview', draft })
+    setDry({ ...r, asked })
   }
 
   function review() {
@@ -579,7 +588,7 @@ export default function AnnouncePage({ hasRole = () => false }) {
                   Review and send
                 </button>
               </div>
-              <DryRun result={dry} localPayload={payload} />
+              <DryRun result={dry?.asked === payloadJson ? dry : null} localPayload={payload} />
             </section>
           )}
 
