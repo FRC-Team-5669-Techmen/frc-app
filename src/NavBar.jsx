@@ -43,6 +43,7 @@ const CONTEXT_TAGS = [
   ['/verify-hours','HRS//VERIFY'],
   ['/reports',     'REPORTS'],
   ['/certify',     'CERTIFY'],
+  ['/certifications', 'CERTS'],
   ['/coverage',    'COVERAGE'],
 ]
 function contextTag(pathname) {
@@ -122,6 +123,7 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
           </div>
           <div className="nav-dropdown-divider" />
           <NavLink to="/profile" className={itemClass}>My Profile</NavLink>
+          <NavLink to="/certifications" className={itemClass}>Certifications</NavLink>
           {!isParent && (
             <NavLink to="/study" data-tour="nav-study" className={itemClass}>Study</NavLink>
           )}
