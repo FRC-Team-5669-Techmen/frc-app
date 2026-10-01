@@ -19,7 +19,8 @@ import {
   DASHBOARD_CHECKOUT_ROW, checkOutFromDashboard, checkoutFailureText, dashboardCheckoutRow,
 } from '../src/attendanceCheckout.js'
 import { currentStatus, nextNfcAction } from '../src/attendanceState.js'
-import b2Fixture from '../src/dev/fixture/features/b2.js'
+import { isCheckedIn } from '../src/hoursUtils.js'
+import b2Fixture, { B2_IDS } from '../src/dev/fixture/features/b2.js'
 
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8')
 
@@ -104,6 +105,13 @@ const LEGACY = {
     ['status read that discards its error', /const \{ data: recent \} = await supabase/,
       'const { data: recent } = await supabase'],
   ],
+  // Team Hours' In/Out pill read hoursUtils.isCheckedIn (the last event, ever)
+  // until 9543e90, so an IN left open two days ago read In there and Not
+  // checked in on the member's own tile.
+  'HoursBoard.jsx': [
+    ['In/Out pill from hoursUtils.isCheckedIn', /isCheckedIn\(/,
+      'checkedIn: isCheckedIn(eventMap[p.id] ?? []),'],
+  ],
   'HomePage.jsx': [
     ['isIn from the last event since midnight', /const isIn = lastToday\?\.type === 'in'/,
       "const isIn = lastToday?.type === 'in'"],
@@ -130,6 +138,21 @@ describe('every surface reads the shared rule', () => {
     expect(src('CheckinPage.jsx')).toMatch(/nextNfcAction\(/)
     expect(src('VolunteerCheckinPage.jsx')).toMatch(/nextNfcAction\(/)
     expect(src('HomePage.jsx')).toMatch(/currentStatus\(/)
+  })
+
+  test("Team Hours' In/Out pill reads currentStatus, and that changes what it shows", () => {
+    expect(src('HoursBoard.jsx')).toMatch(/from '\.\/attendanceState'/)
+    expect(src('HoursBoard.jsx')).toMatch(/checkedIn: currentStatus\(eventMap\[p\.id\] \?\? \[\]\)\.checkedIn/)
+    // The difference, on rows: a two-day-old IN left open is In to the old
+    // rule and a forgotten check-out to the shared one ...
+    const now = Date.parse('2026-10-01T16:00:00-07:00')
+    const stale = [{ type: 'in', event_time: new Date(now - 49 * 3600_000).toISOString() }]
+    expect(isCheckedIn(stale)).toBe(true)
+    expect(currentStatus(stale, now).checkedIn).toBe(false)
+    // ... and positive control: an IN from an hour ago is In to both.
+    const fresh = [{ type: 'in', event_time: new Date(now - 3600_000).toISOString() }]
+    expect(isCheckedIn(fresh)).toBe(true)
+    expect(currentStatus(fresh, now).checkedIn).toBe(true)
   })
 
   test('presence.js delegates to currentStatus', () => {
@@ -182,7 +205,7 @@ describe('src/dev/fixture/features/b2.js', () => {
     expect(currentStatus(rows, now).checkedIn).toBe(true)
     expect(nextNfcAction(rows, now).action).toBe('check_out')
     // positive control: the same seed minus its open IN is not checked in
-    expect(currentStatus(rows.filter(r => r.id !== 'b2-s1-in-open'), now).checkedIn).toBe(false)
+    expect(currentStatus(rows.filter(r => r.id !== B2_IDS.s1InOpen), now).checkedIn).toBe(false)
   })
 
   test('student2: checked in across midnight when the clock allows, else stale and NOT checked in', () => {
@@ -190,9 +213,9 @@ describe('src/dev/fixture/features/b2.js', () => {
     const late = Date.parse('2026-10-01T22:15:00Z')  // 3:15 PM in Los Angeles
     const a = rowsFor(early, 'stu-2')
     const b = rowsFor(late, 'stu-2')
-    expect(a.some(r => r.id === 'b2-s2-in-midnight')).toBe(true)
+    expect(a.some(r => r.id === B2_IDS.s2InMidnight)).toBe(true)
     expect(currentStatus(a, early).checkedIn).toBe(true)
-    expect(b.some(r => r.id === 'b2-s2-in-midnight')).toBe(false)
+    expect(b.some(r => r.id === B2_IDS.s2InMidnight)).toBe(false)
     expect(currentStatus(b, late)).toMatchObject({ checkedIn: false, stale: true })
   })
 

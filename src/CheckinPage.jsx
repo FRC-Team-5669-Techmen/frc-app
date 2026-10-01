@@ -76,6 +76,9 @@ export default function CheckinPage({ session }) {
   const [geoReason, setGeoReason] = useState(null)
   const [acting, setActing] = useState(false)
   const [exempt, setExempt] = useState(false)  // staff-granted geofence exemption
+  // The code (or message) of the error behind a 'System fault', shown on that
+  // screen so a student has something specific to tell a mentor.
+  const [fault, setFault] = useState(null)
   // True once this history entry has acted on its arrival. Starts true when the
   // entry already carries the marker: a reload, a back/forward, a restored tab.
   const handled = useRef(isRevisit(location.state))
@@ -128,6 +131,7 @@ export default function CheckinPage({ session }) {
       await insertEvent('out')
     } catch (err) {
       console.error(err)
+      setFault(err?.code || err?.message || null)
       setStatus('error')
     } finally {
       setActing(false)
@@ -156,6 +160,7 @@ export default function CheckinPage({ session }) {
       await insertEvent('in', !exempt)
     } catch (err) {
       console.error(err)
+      setFault(err?.code || err?.message || null)
       setStatus('error')
     } finally {
       setActing(false)
@@ -236,6 +241,7 @@ export default function CheckinPage({ session }) {
       }
     } catch (err) {
       console.error(err)
+      setFault(err?.code || err?.message || null)
       setStatus('error')
     } finally {
       busy.current = false
@@ -303,13 +309,13 @@ export default function CheckinPage({ session }) {
       ? (GEO_MESSAGES[geoReason] ?? GEO_MESSAGES.error)
       : status === 'unknown'
         ? { heading: 'Status unavailable', detail: 'Could not read your check-in status, so nothing was recorded. Check your connection and try again.' }
-        : { heading: 'System fault', detail: 'Could not record your attendance. Try again.' }
+        : { heading: 'System fault', detail: `Could not record your attendance${fault ? ` (${fault})` : ''}. Try again. If it happens again, show this screen to a mentor.` }
     return (
       <div className="checkin-wrap checkin-fault">
         <CheckinHeader tag="FAULT" />
-        <div className="checkin-mark checkin-mark-fault">✗</div>
+        <div className="checkin-mark checkin-mark-fault" aria-hidden="true">✗</div>
         <h1>{msg.heading}</h1>
-        <p className="checkin-status">{msg.detail}</p>
+        <p className="checkin-status" role="alert">{msg.detail}</p>
         {status === 'geo' ? (
           <button
             onClick={confirmCheckin}
@@ -324,7 +330,7 @@ export default function CheckinPage({ session }) {
           // than writing again on its own.
           <button onClick={() => arrive()} style={CONFIRM_BTN_STYLE}>Try again</button>
         )}
-        <footer className="checkin-footer checkin-footer-fault">STATUS // FAULT</footer>
+        <footer className="checkin-footer checkin-footer-fault" aria-hidden="true">STATUS // FAULT</footer>
       </div>
     )
   }
@@ -378,12 +384,12 @@ export default function CheckinPage({ session }) {
       <div className="checkin-wrap checkin-duplicate">
         <CheckinHeader />
         <div className="checkin-panel checkin-panel-amber">
-          <div className="checkin-bang">!</div>
+          <div className="checkin-bang" aria-hidden="true">!</div>
           <h1 className="checkin-name">{memberName}</h1>
-          <p className="checkin-status">ALREADY {verb} · {timeStr}</p>
+          <p className="checkin-status" role="alert">ALREADY {verb} · {timeStr}</p>
           <p className="checkin-loc">{locDisplay}</p>
         </div>
-        <footer className="checkin-footer checkin-footer-amber">STATUS // NO DUPLICATE</footer>
+        <footer className="checkin-footer checkin-footer-amber" aria-hidden="true">STATUS // NO DUPLICATE</footer>
         <Link to="/dashboard" className="checkin-home-link">VIEW STATUS →</Link>
       </div>
     )
@@ -394,11 +400,11 @@ export default function CheckinPage({ session }) {
   return (
     <div className={`checkin-wrap ${isIn ? 'checkin-success' : 'checkin-checkout'}`}>
       <CheckinHeader tag={isIn ? 'ON DECK' : 'CHECK-OUT'} dark={isIn} />
-      <div className="checkin-mark">✓</div>
+      <div className="checkin-mark" aria-hidden="true">✓</div>
       <h1 className="checkin-name">{memberName}</h1>
-      <p className="checkin-status">CHECKED {verb} · {timeStr}</p>
+      <p className="checkin-status" role="alert">CHECKED {verb} · {timeStr}</p>
       <p className="checkin-loc">{locDisplay}</p>
-      <footer className="checkin-footer">STATUS // {isIn ? 'ON DECK' : 'CLEAR'}</footer>
+      <footer className="checkin-footer" aria-hidden="true">STATUS // {isIn ? 'ON DECK' : 'CLEAR'}</footer>
       <Link to="/dashboard" className="checkin-home-link">VIEW STATUS →</Link>
     </div>
   )

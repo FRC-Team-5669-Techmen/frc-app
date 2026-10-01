@@ -72,15 +72,16 @@ function Dropdown({ label, paths = [], tourId, align = 'left', badge = 0, childr
   useOutsideClick(ref, () => setOpen(false))
 
   return (
-    <div className="nav-dropdown" ref={ref}>
+    <div className="nav-dropdown" ref={ref} onKeyDown={e => { if (e.key === 'Escape') setOpen(false) }}>
       <button
         className={`nav-link nav-dropdown-trigger${active ? ' active' : ''}`}
         data-tour={tourId}
+        aria-expanded={open}
         onClick={() => setOpen(o => !o)}
       >
         {label}
         {badge > 0 && <span className="nav-badge nav-badge-trigger">{badge}</span>}
-        <span className={`nav-chevron${open ? ' nav-chevron-up' : ''}`}>▾</span>
+        <span className={`nav-chevron${open ? ' nav-chevron-up' : ''}`} aria-hidden="true">▾</span>
       </button>
       {open && (
         <div
@@ -108,8 +109,15 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
   const itemClass = ({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`
 
   return (
-    <div className="nav-avatar-wrap" ref={ref}>
-      <button className="nav-avatar-btn" data-tour="nav-profile" onClick={() => setOpen(o => !o)} aria-label="Account menu">
+    <div className="nav-avatar-wrap" ref={ref} onKeyDown={e => { if (e.key === 'Escape') setOpen(false) }}>
+      {/* The pending dot is aria-hidden, so the count is in the button's name. */}
+      <button
+        className="nav-avatar-btn"
+        data-tour="nav-profile"
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        aria-label={isStaff && pendingAccess > 0 ? `Account menu, ${pendingAccess} pending request${pendingAccess === 1 ? '' : 's'}` : 'Account menu'}
+      >
         {avatarUrl
           ? <img src={avatarUrl} className="navbar-avatar" alt={name} />
           : <div className="navbar-avatar navbar-avatar-init">{initials}</div>

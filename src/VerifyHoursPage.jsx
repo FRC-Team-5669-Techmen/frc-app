@@ -387,12 +387,15 @@ export default function VerifyHoursPage({ session, hasRole }) {
 
   async function handleMissed(id, newStatus) {
     setMissedActing(a => ({ ...a, [id]: newStatus }))
-    await supabase.from('session_reviews').update({
+    const { error } = await supabase.from('session_reviews').update({
       status:      newStatus,
       reviewed_by: session.user.id,
       reviewed_at: new Date().toISOString(),
     }).eq('id', id)
     setMissedActing(a => { const n = { ...a }; delete n[id]; return n })
+    // A failed write keeps the card: removing it would read as resolved while
+    // the session stays uncounted.
+    if (error) { window.alert(`Not saved: ${error.message}`); return }
     setMissed(prev => prev.filter(r => r.id !== id))
   }
 
@@ -401,11 +404,20 @@ export default function VerifyHoursPage({ session, hasRole }) {
   async function saveCutoff() {
     if (!cutoff || cutoff === cutoffSaved) return
     setCutoffBusy(true)
-    await supabase.from('app_settings')
-      .update({ value: cutoff, updated_at: new Date().toISOString() })
+    // No updated_at: where study_sessions.sql created app_settings first the
+    // column does not exist and the write raised 42703, and nothing reads it.
+    // .select() so a write that matched no row (no auto_close_cutoff row, or
+    // a caller the UPDATE policies refuse: forgotten_checkout.sql lets
+    // mentor/lead/admin update, study_sessions.sql adds admin) is seen as not
+    // saved, instead of marking the new value saved while the old cutoff stays
+    // in force. A failure leaves Save enabled to try again.
+    const { data, error } = await supabase.from('app_settings')
+      .update({ value: cutoff })
       .eq('key', 'auto_close_cutoff')
-    setCutoffSaved(cutoff)
+      .select('key')
     setCutoffBusy(false)
+    if (error || !data?.length) { window.alert(`Cutoff not saved: ${error?.message ?? 'no row updated'}`); return }
+    setCutoffSaved(cutoff)
   }
 
   // ── Logged-hours actions ────────────────────────────────────────────────────

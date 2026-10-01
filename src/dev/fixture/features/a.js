@@ -10,12 +10,15 @@
 //
 // Fictional people throughout. Holder rows are keyed by lowercased email, the
 // same way the real mirror is, so the student persona's rows must carry the
-// student persona's sign-in email. That email comes from the engine when it
-// passes one (see emailFor); the defaults are only a fallback.
+// student persona's sign-in email. The engine passes no emails to a seed
+// (README: `({ ids, now, uuid })`), so DEFAULT_EMAILS IS what the seed uses:
+// the personas' sign-in emails, copied from src/dev/fixture/personas.js
+// because a plugin imports nothing. tests/fixture-fin.test.js holds the two
+// equal. emailFor still prefers an email the engine passes, should it ever.
 
 const DEFAULT_EMAILS = {
-  student: 'student@fixture.techmen.test',
-  student2: 'student2@fixture.techmen.test',
+  student: 'student.one@boscotech.edu',
+  student2: 'student.two@boscotech.edu',
 }
 
 function emailFor(key, ctx) {

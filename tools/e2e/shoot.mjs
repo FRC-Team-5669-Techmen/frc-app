@@ -5,12 +5,18 @@
  *   node tools/e2e/shoot.mjs --persona admin --mig all --widths 375,1440 \
  *     --routes /dashboard,/hours --out artifacts/shots/<name> \
  *     [--url http://127.0.0.1:PORT] [--port 5401] [--root-class NAME] [--no-reset]
+ *     [--plate on|off]
  *
  * --routes all (or omitting --routes) shoots every route in
  * src/dev/fixture/routes.js, which tests/fixture-routes.test.js holds equal
  * to App.jsx's route table. --url reuses a running fixture server; otherwise
  * one is booted on --port and stopped afterwards. --root-class adds a class to
  * <html> before each shot (for comparing a styling switch on and off).
+ * --plate on|off photographs the app's plate (src/plate.js) on or off: `on`
+ * asserts main.jsx put the class on <html> (the tool never adds it, so a
+ * broken switch fails here), `off` removes it before each shot. Without the
+ * flag the page is photographed as it loads. tools/e2e/plate/ is the full
+ * on/off/base harness; this flag is the one-route quick look.
  *
  * Per route it prints, and writes to <out>/shots.json: the final path (a
  * redirect is a finding, not a pass), console errors, the error answers the
@@ -26,16 +32,21 @@ import path from 'node:path';
 import { REPO, flag, viewportFor, startFixtureServer, launchBrowser, newContext, watchConsole, ensureDir, waitForFixture } from './lib.mjs';
 import { waitForApp } from '../browser-verify/browser.mjs';
 import { ROUTES } from '../../src/dev/fixture/routes.js';
+import { APP_PLATE } from '../../src/plate.js';
 
 const args = process.argv.slice(2);
 const persona = String(flag(args, 'persona', 'admin'));
 const mig = String(flag(args, 'mig', 'all'));
-const widths = String(flag(args, 'widths', '375,1440')).split(',').map((w) => Number(w.trim())).filter(Boolean);
+// A width is a preset (375, 1440) or an exact WxH such as 342x673 or 384x692,
+// the phone sizes in tonight's reports; lib.mjs viewportFor reads both.
+const widths = String(flag(args, 'widths', '375,1440')).split(',').map((w) => w.trim()).filter(Boolean);
 const routesArg = flag(args, 'routes', 'all');
 const urlArg = flag(args, 'url', null);
 const port = Number(flag(args, 'port', process.env.FIXTURE_PORT || 5401));
 const rootClass = flag(args, 'root-class', null);
 const reset = !flag(args, 'no-reset', false);
+const plate = flag(args, 'plate', null);
+if (plate !== null && plate !== 'on' && plate !== 'off') throw new Error(`--plate takes on or off, not ${plate}`);
 const out = ensureDir(path.resolve(REPO, String(flag(args, 'out', path.join('artifacts', 'shots', `${persona}-${mig}`)))));
 
 const routes = routesArg === 'all' || routesArg === true
@@ -60,6 +71,12 @@ async function main() {
         }, String(rootClass));
       }
       const page = await context.newPage();
+      // A fullPage screenshot drops Playwright's touch emulation for the rest
+      // of the page (pointer turns fine, maxTouchPoints 0), so every later 375
+      // shot would render the desktop side of (pointer: coarse) rules. Restore
+      // it after each shot through a CDP session kept open: the override dies
+      // when the session detaches. Same fix as checkin.mjs's shot helper.
+      const touchCdp = vp.hasTouch ? await context.newCDPSession(page) : null;
       const errors = watchConsole(page);
       const controls = [`persona:${persona}`, `mig:${mig}`, reset ? 'reset' : null].filter(Boolean).join(',');
       await page.goto(`${server.origin}/_fixture?__fx=${controls}`);
@@ -74,6 +91,13 @@ async function main() {
         const isFixture = await page.evaluate(() => !!window.__fx).catch(() => false);
         await page.waitForTimeout(300);
         if (rootClass) await page.evaluate((cls) => document.documentElement.classList.add(cls), String(rootClass));
+        if (plate === 'on' && APP_PLATE && !(await page.evaluate((cls) => document.documentElement.classList.contains(cls), APP_PLATE))) {
+          throw new Error(`--plate on: <html> does not carry "${APP_PLATE}" on ${url}; src/main.jsx did not set it`);
+        }
+        if (plate === 'off' && APP_PLATE) {
+          await page.evaluate((cls) => document.documentElement.classList.remove(cls), APP_PLATE);
+          await page.waitForTimeout(100);
+        }
         const measured = await page.evaluate(() => {
           const root = document.getElementById('root');
           const clone = root ? root.cloneNode(true) : document.body.cloneNode(true);
@@ -89,7 +113,7 @@ async function main() {
             fxErrors,
           };
         });
-        const file = path.join(out, `${persona}-${vp.name}-${slug(url)}.png`);
+        const file = path.join(out, `${persona}-${vp.name}-${slug(url)}${plate ? `-plate-${plate}` : ''}.png`);
         // A very tall page (the /_ds specimen is tens of thousands of px) can
         // outrun a full-page capture; fall back to the viewport and say so.
         let shotKind = 'full';
@@ -99,8 +123,9 @@ async function main() {
           shotKind = 'viewport';
           await page.screenshot({ path: file, timeout: 30_000 }).catch(() => { shotKind = 'none'; });
         }
+        if (touchCdp) await touchCdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
         const row = {
-          persona, mig, width: vp.name, route: url,
+          persona, mig, width: vp.name, route: url, plate: plate ?? 'as loaded',
           finalPath: measured.path,
           redirected: measured.path.split('?')[0] !== url.split('?')[0],
           rendered: ready.rendered && measured.mainChars > 0 && !measured.errorBoundary,

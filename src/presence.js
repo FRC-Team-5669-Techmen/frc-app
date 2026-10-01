@@ -2,9 +2,9 @@
 // in attendanceState.js says they are checked in: their newest event is an 'in'
 // from today or still inside the session cap. The dashboard and both tag routes
 // read the same rule, so the board agrees with a member's own tile on every
-// event the caller's query returns. The callers still query from local
-// midnight, so a session open across midnight is the one case they miss until
-// they read from presenceSinceISO() instead. It adds no new tables.
+// event the caller's query returns. PresenceBoard, useGlance and
+// ParentHomePage all query from presenceSinceISO(), so a session open across
+// midnight reads present there too. It adds no new tables.
 
 import { currentStatus, statusWindowStartISO } from './attendanceState'
 
@@ -16,8 +16,8 @@ export function startOfTodayISO() {
 }
 
 // Where a presence query should start to see every open session the rule
-// counts, a session open across midnight included. startOfTodayISO() works too
-// (it is what the callers pass today) but misses that one case.
+// counts, a session open across midnight included. startOfTodayISO() misses
+// that one case; it remains right for "today's events" (the glance's schedule).
 export function presenceSinceISO() {
   return statusWindowStartISO(Date.now())
 }

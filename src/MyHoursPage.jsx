@@ -322,24 +322,24 @@ function FlagModal({ session, onClose, onSubmitted }) {
         <p className="mh-modal-sub hud-mono">
           {fmtSessionDate(session.inTime)} · {fmtClock(session.inTime)} – {session.outTime ? fmtClock(session.outTime) : 'open'}
         </p>
-        <label className="mh-modal-label">What's wrong? <span className="mh-req">*</span></label>
-        <textarea className="mh-modal-input mh-modal-textarea" rows={3} maxLength={500}
+        <label className="mh-modal-label" htmlFor="mh-flag-note">What's wrong? <span className="mh-req">*</span></label>
+        <textarea id="mh-flag-note" className="mh-modal-input mh-modal-textarea" rows={3} maxLength={500}
           placeholder="e.g. I forgot to sign out — I actually left at 6:30." value={note}
           onChange={e => setNote(e.target.value)} />
         <p className="mh-modal-hint">Optional — suggest the correct values:</p>
         <div className="mh-modal-row">
           <div className="mh-modal-field">
-            <label className="mh-modal-label">Check-in</label>
-            <input className="mh-modal-input" type="datetime-local" value={inT} onChange={e => setInT(e.target.value)} />
+            <label className="mh-modal-label" htmlFor="mh-flag-in">Check-in</label>
+            <input id="mh-flag-in" className="mh-modal-input" type="datetime-local" value={inT} onChange={e => setInT(e.target.value)} />
           </div>
           <div className="mh-modal-field">
-            <label className="mh-modal-label">Check-out</label>
-            <input className="mh-modal-input" type="datetime-local" value={outT} onChange={e => setOutT(e.target.value)} />
+            <label className="mh-modal-label" htmlFor="mh-flag-out">Check-out</label>
+            <input id="mh-flag-out" className="mh-modal-input" type="datetime-local" value={outT} onChange={e => setOutT(e.target.value)} />
           </div>
         </div>
         <div className="mh-modal-field">
-          <label className="mh-modal-label">Category</label>
-          <select className="mh-modal-input" value={cat} onChange={e => setCat(e.target.value)}>
+          <label className="mh-modal-label" htmlFor="mh-flag-cat">Category</label>
+          <select id="mh-flag-cat" className="mh-modal-input" value={cat} onChange={e => setCat(e.target.value)}>
             {CATEGORIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select>
         </div>

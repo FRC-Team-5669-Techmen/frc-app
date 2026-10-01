@@ -244,8 +244,13 @@ function RoleEditor({ roles, onChanged }) {
 
       {roles.length > 0 && (
         <ul className="an-roles">
-          {sortRoles(roles).map(r => (
-            <li key={r.id} className={`an-role${r.active ? '' : ' an-role-off'}`}>
+          {sortRoles(roles).map(r => {
+            // Off means active === false, the same reading activeRoles() gives
+            // the chips: a row whose active is missing must not be offered as
+            // a chip while its own row says Inactive.
+            const off = r.active === false
+            return (
+            <li key={r.id} className={`an-role${off ? ' an-role-off' : ''}`}>
               {editing === r.id ? (
                 <div className="an-role-edit">
                   <input className="an-input" value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} aria-label="Role name" />
@@ -262,13 +267,13 @@ function RoleEditor({ roles, onChanged }) {
                   <div className="an-role-main">
                     <span className="an-role-name">{r.name}</span>
                     <span className="an-mono an-role-id">{r.role_id}</span>
-                    {!r.active && <span className="an-pill">Inactive</span>}
+                    {off && <span className="an-pill">Inactive</span>}
                     {r.notes && <span className="an-role-notes">{r.notes}</span>}
                   </div>
                   <div className="an-row-actions">
                     <button type="button" className="an-btn" disabled={busy}
-                      onClick={() => write(supabase.from('discord_announce_roles').update({ active: !r.active }).eq('id', r.id))}>
-                      {r.active ? 'Deactivate' : 'Activate'}
+                      onClick={() => write(supabase.from('discord_announce_roles').update({ active: off }).eq('id', r.id))}>
+                      {off ? 'Activate' : 'Deactivate'}
                     </button>
                     <button type="button" className="an-btn" disabled={busy}
                       onClick={() => { setEditing(r.id); setArmed(null); setMsg(''); setEdit({ name: r.name, role_id: r.role_id, notes: r.notes ?? '', sort_order: String(r.sort_order ?? 0) }) }}>
@@ -286,7 +291,8 @@ function RoleEditor({ roles, onChanged }) {
                 </>
               )}
             </li>
-          ))}
+            )
+          })}
         </ul>
       )}
 
@@ -396,6 +402,18 @@ export default function AnnouncePage({ hasRole = () => false }) {
   const payloadJson = useMemo(() => JSON.stringify(payload), [payload])
 
   const fnReady = fn.kind === 'ok' && fn.body?.ready === true
+  // What the function says is missing. The deployed function always names it
+  // when it is not ready; an answer that is ok but neither ready nor naming
+  // anything (something else answering at that URL) gets a plain sentence
+  // rather than "needs ." with an empty list.
+  // The confirm step can be reached while the status check is still out (a
+  // slow network), and then nothing has answered yet.
+  const fnMissing = Array.isArray(fn.body?.missing) ? fn.body.missing : []
+  const notReadyLine = fn.kind === 'loading'
+    ? 'Still checking the announce function.'
+    : fnMissing.length
+      ? `Needs setup before anything can be sent: ${fnMissing.join(', ')}.`
+      : 'The announce function answered but did not say it is ready to send.'
 
   async function checkWithServer() {
     const asked = payloadJson
@@ -482,7 +500,7 @@ export default function AnnouncePage({ hasRole = () => false }) {
       <div className={`an-status-line an-status-${fn.kind === 'loading' ? 'wait' : fnReady ? 'good' : 'bad'}`} data-state={fn.kind === 'ok' ? (fnReady ? 'ready' : 'needs-setup') : fn.kind}>
         {fn.kind === 'loading' && 'Checking the announce function…'}
         {fn.kind === 'ok' && fnReady && 'Announce function connected.'}
-        {fn.kind === 'ok' && !fnReady && `Needs setup before anything can be sent: ${(fn.body?.missing ?? []).join(', ')}. You can still compose and preview.`}
+        {fn.kind === 'ok' && !fnReady && `${notReadyLine} You can still compose and preview.`}
         {fn.kind === 'not_deployed' && 'The announce function is not deployed yet. You can compose and preview; sending is off until it is deployed.'}
         {fn.kind === 'needs_setup' && `${fn.message} You can still compose and preview.`}
         {!['loading', 'ok', 'not_deployed', 'needs_setup'].includes(fn.kind) && fn.message}
@@ -603,7 +621,7 @@ export default function AnnouncePage({ hasRole = () => false }) {
                 {payload.poll && ' The poll cannot be edited once it is posted.'}
                 {' '}It cannot be unsent from this page.
               </p>
-              {!fnReady && <p className="an-note an-note-bad">Sending is off: {fn.message || `needs ${(fn.body?.missing ?? []).join(', ')}`}</p>}
+              {!fnReady && <p className="an-note an-note-bad">Sending is off. {fn.message || notReadyLine}</p>}
               <div className="an-actions">
                 <button type="button" className="an-btn" onClick={backToDraft} disabled={sending}>Back to the draft</button>
                 <button type="button" className="an-btn an-btn-go an-btn-big" onClick={send} disabled={sending || !fnReady}>

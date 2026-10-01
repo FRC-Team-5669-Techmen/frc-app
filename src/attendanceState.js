@@ -17,7 +17,7 @@
 // as an argument (a Storage, a Document), so it is tested in node and safe to
 // import from the NFC fast path.
 
-import { MAX_SESSION_MS } from './hoursUtils'
+import { MAX_SESSION_MS, laDateKey } from './hoursUtils'
 
 // A second tap inside this window is ignored rather than toggling back.
 export const DUPLICATE_WINDOW_MS = 60_000
@@ -26,11 +26,6 @@ export const DUPLICATE_WINDOW_MS = 60_000
 // all of "today" in Los Angeles (25 h on the fall-back day) plus the session cap.
 // 26 h covers both with room, and is what statusWindowStartISO returns.
 export const STATUS_LOOKBACK_MS = 26 * 60 * 60 * 1000
-
-const LA = 'America/Los_Angeles'
-// 'YYYY-MM-DD' in the team's zone. The same one-liner as reporting.js's
-// laDateKey; not imported from there to keep reporting out of the tag routes.
-const laDayKey = (ms) => new Date(ms).toLocaleDateString('en-CA', { timeZone: LA })
 
 // Epoch ms of an attendance_events row, or NaN when its time does not parse.
 // PostgREST's "2026-09-08T22:15:03.123456+00:00" parses in V8 and in
@@ -68,7 +63,10 @@ export function currentStatus(events, now = Date.now(), { maxOpenMs = MAX_SESSIO
   const last = latestEvent(events)
   if (!last || last.type !== 'in') return { known: true, checkedIn: false, since: null, last, stale: false }
   const t = eventMs(last)
-  const open = laDayKey(t) === laDayKey(now) || now - t <= maxOpenMs
+  // laDateKey: 'YYYY-MM-DD' in Los Angeles, the one copy hoursUtils keeps (proved
+  // identical to the one-liner this module used to carry, both 2026 DST days
+  // included, in tests/attendance-state.test.js).
+  const open = laDateKey(t) === laDateKey(now) || now - t <= maxOpenMs
   return { known: true, checkedIn: open, since: open ? last.event_time : null, last, stale: !open }
 }
 

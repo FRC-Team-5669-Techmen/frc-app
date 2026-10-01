@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from './supabase'
-import { computePresence, startOfTodayISO } from './presence'
+import { computePresence, presenceSinceISO, startOfTodayISO } from './presence'
 import { computeShopStatus, SHOP_OPEN_KINDS } from './shopStatus'
 
 // Shared "what's up" derivation: shop open/closed (from today's build windows),
@@ -32,7 +32,9 @@ export function useGlance() {
     const [{ data: events }, { data: todayEvents }] = await Promise.all([
       supabase.from('events').select('id, title, kind, starts_at, ends_at, location')
         .gte('ends_at', todayISO).order('starts_at', { ascending: true }).limit(50),
-      supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', todayISO),
+      // Presence reads from presenceSinceISO(), not today: a session open across
+      // LA midnight still counts, as it does on the member's own tile.
+      supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', presenceSinceISO()),
     ])
 
     const all = events ?? []

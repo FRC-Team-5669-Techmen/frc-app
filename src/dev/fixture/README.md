@@ -26,7 +26,8 @@ requires ABSENT (`tools/e2e/README.md`).
 
 | file | what it is |
 | --- | --- |
-| `client.js` | The stand-in for `src/supabase.js` (same named export `supabase`). Browser shell: persistence, controls, auth, storage, Edge Functions, `window.__fx`. |
+| `client.js` | The stand-in for `src/supabase.js` (same named export `supabase`). Browser shell: persistence, controls, auth, storage, Edge Functions, `window.__fx`, and following the other tabs (below). |
+| `plugins.js` | The plugin list: core, then every `features/*.js` in file-name order. Shared by `client.js` and `tests/fixture-seed.test.js`, which seeds every plugin under node in every migration state and requires 0 seed problems. |
 | `engine.js` | The fake PostgREST: query builder, filters, embeds, writes, constraints, RPC dispatch. **Pure** -- no window, no storage -- so `tests/fixture-client.test.js` drives it under node. |
 | `schema.js` | **Generated** (`tools/e2e/gen-fixture-schema.mjs`) from a Postgres with every frozen `supabase/*.sql` applied: columns, defaults, NOT NULL, enum CHECKs, unique keys (partial ones too), foreign keys, unreadable columns, RPC signatures. Do not edit by hand. |
 | `core.js` | The core plugin (same shape as a feature plugin, no migration): seed, RPCs, read filters, Edge Functions for everything already in production. |
@@ -47,10 +48,18 @@ fails against the live project:
 - `select('*')` on a table with a column `authenticated` cannot read -> `42501` (`member_applications.parent_token`);
 - a missing table -> `PGRST205`, a missing RPC **or an RPC called with argument names its deployed signature does not have** -> `PGRST202`, an embed with no foreign key -> `PGRST200`, an ambiguous one -> `PGRST201`;
 - NOT NULL (`23502`), enum-shaped CHECKs such as `attendance_events_method_check` (`23514`), unique keys including partial ones such as `surveys_one_open_idx` (`23505`), foreign keys (`23503`), `ON DELETE CASCADE` / `SET NULL`; a feature's `alters` relaxes the first two only while its migration is applied;
-- **seed rows are typed too**: an `id` that is not a uuid in a uuid column, or an explicit `null` in a NOT NULL column (an explicit null never takes the column default, in Postgres or here), is a seed problem on `/_fixture`. The row is still stored, so the page renders, but the count must read 0;
+- **seed rows are typed too**: an `id` that is not a uuid in a uuid column, or an explicit `null` in a NOT NULL column (an explicit null never takes the column default, in Postgres or here), is a seed problem on `/_fixture`. The row is still stored, so the page renders, but the count must read 0, and `tests/fixture-seed.test.js` holds it at 0 under `mig:all`, `mig:none` and each migration alone. A table a migration CREATES is untyped here (`schema.js` is the frozen catalog only), so that test also reads each numbered migration's `CREATE TABLE` and requires its uuid columns to hold uuids;
 - the SELECT policies narrower than `using (true)`, as read filters (`core.js` `CORE_VISIBLE`); a signed-out caller reads nothing;
 - **UPDATE and DELETE find their rows through the read filter**, as a Postgres UPDATE finds its rows through the SELECT policy: a student's update of `feedback` matches 0 rows, silently, exactly as it does live.
 - **A write with `.select()` (RETURNING) must be able to read back what it wrote**: when the new row fails the read filter the write answers `42501` ("new row violates row-level security policy") and nothing is stored, as Postgres does. The same write without `.select()` succeeds.
+
+- **Every tab of the browser sees one store.** Each tab holds its own copy,
+  loaded from `__fx_db` when it booted, and adopts another tab's write through
+  the `storage` event (persona, migration and latency changes too; a persona
+  change emits `SIGNED_IN` / `SIGNED_OUT` as supabase-js does across tabs). So
+  a tab left open re-reads what a tab opened later wrote, as it would against
+  one database. `npm run test:checkin` models each tag tap as a new tab and
+  depends on this.
 
 Not modelled: write-side RLS (a write a persona makes succeeds unless a
 constraint refuses it), triggers, views, CHECKs that are not enum lists
@@ -118,7 +127,9 @@ export default {
   // RPC handlers: ({ args, db, user, persona, now, engine, uuid, error }) -> { data, error }
   // Write through engine.insertRow / updateRows / deleteRows (service role:
   // no read filter, constraints still apply). A call is one transaction: when
-  // the handler returns an error or throws, every write it made is undone.
+  // the handler returns an error or throws, every write it made is undone,
+  // and a call that changed nothing persists nothing (a read-only function
+  // must not write a tab's older copy of the store back over another's).
   // A handler for an RPC that
   // already exists in core replaces it only while this migration is applied;
   // otherwise core's handler and core's argument check answer. An existing
@@ -172,13 +183,19 @@ The store also reseeds by itself when it was seeded on an earlier LA day (its
 "now" would be stale) or by different seed code (a plugin was added or changed).
 
 `window.__fx` exposes `{ supabase, db, reset(), persona, setPersona(key), migrations, setMigrations(v), latency,
-setLatency(ms), calls, seedProblems, rows(table), insert(table, row), patch(table, match, values), plugins,
-migrationNumbers, marker }` for a test to read and assert on. `setPersona` emits `SIGNED_IN` /
+setLatency(ms), calls, seedProblems, rows(table), insert(table, row), patch(table, match, values),
+failNext(rpc, { error } | { data }), plugins, migrationNumbers, marker }` for a test to read and assert on. `setPersona` emits `SIGNED_IN` /
 `SIGNED_OUT` to `onAuthStateChange` listeners as supabase-js does, so a mounted app reacts (App.jsx
 completes a pending NFC check-in on it). `calls` logs every query, RPC and function call with the error
 code it got, which is how `shoot.mjs` reports the error answers a page received.
 
-Auth: `getSession`/`getUser`/`refreshSession` answer for the current persona; `onAuthStateChange` delivers
+`failNext` makes the next call of that RPC in the current tab answer exactly what it is given, once (a
+transient failure, or a real answer the store would not give); `npm run test:checkin` uses it on
+`claim_profile`.
+
+Auth: `getSession`/`getUser`/`refreshSession` answer for the current persona; a tab brought back from
+hidden to visible emits `SIGNED_IN` as supabase-js 2.106 does (auth-js `_onVisibilityChanged` ->
+`_recoverAndRefresh`), so App.jsx re-runs `claim_profile` exactly as it does on a phone; `onAuthStateChange` delivers
 `INITIAL_SESSION` asynchronously and returns `{ data: { subscription: { unsubscribe } } }`; `signOut`
 switches to `signedout`; `signInWithOtp` / `verifyOtp` / `signInWithOAuth` are harmless no-ops (the persona
 switch is the sign-in). Storage records uploads in the store and hands back object URLs (or a placeholder

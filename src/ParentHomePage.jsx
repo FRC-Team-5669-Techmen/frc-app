@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { computeHoursMs, fmtDuration } from './hoursUtils'
 import { fetchAllRows } from './fetchAllRows'
-import { computePresence, startOfTodayISO, fmtClock, subteamOf } from './presence'
+import { computePresence, presenceSinceISO, startOfTodayISO, fmtClock, subteamOf } from './presence'
 import { displayName } from './names'
 import GlanceCard from './GlanceCard'
 import './ParentHomePage.css'
@@ -32,7 +32,9 @@ export default function ParentHomePage({ session }) {
 
   const loadLinkData = useCallback(async () => {
     const [{ data: r }, { data: reqs }] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, nickname').eq('status', 'active'),
+      // Approved members only: an account that signed in but was never let onto
+      // the team is not a student to link to (audit item 2).
+      supabase.from('profiles').select('id, full_name, nickname').eq('status', 'active').eq('approved', true),
       supabase.from('parent_link_requests')
         .select('id, student_id, status').eq('parent_id', parentId).eq('status', 'pending'),
     ])
@@ -56,21 +58,27 @@ export default function ParentHomePage({ session }) {
   }
 
   const load = useCallback(async () => {
-    // Who am I linked to?
-    const { data: links } = await supabase
+    // Who am I linked to? A failed read is NOT "no students linked": that
+    // invites a parent to request a link they already have. Keep the last good
+    // view; the 15 s poll tries again.
+    const { data: links, error: linkErr } = await supabase
       .from('guardian_links')
       .select('student_id')
       .eq('parent_id', parentId)
+    if (linkErr) return
     const studentIds = (links ?? []).map(l => l.student_id)
 
-    // Team glance + present derivation need today's events for everyone, and the
-    // active roster. These read fine for any authenticated member.
+    // Team glance + present derivation need recent events for everyone, and the
+    // active roster. These read fine for any authenticated member. Presence
+    // reads from presenceSinceISO(), the window the shared rule needs, so a
+    // session open across LA midnight reads present here as it does on the
+    // student's own tile; todayISO still bounds each student's today hours.
     const todayISO = startOfTodayISO()
-    const [{ data: todayEvents }, { data: active }] = await Promise.all([
-      supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', todayISO),
-      supabase.from('profiles').select('id, full_name, nickname').eq('status', 'active'),
+    const [{ data: recentEvents }, { data: active }] = await Promise.all([
+      supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', presenceSinceISO()),
+      supabase.from('profiles').select('id, full_name, nickname').eq('status', 'active').eq('approved', true),
     ])
-    const present = computePresence(todayEvents ?? [])
+    const present = computePresence(recentEvents ?? [])
     const activeRoster = active ?? []
     const team = {
       total: activeRoster.length,

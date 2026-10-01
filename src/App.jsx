@@ -2,9 +2,28 @@ import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabase'
 import { resolveCurrentSeason } from './seasons'
+import { nextApproval, nextRoles, nextOnboardedAt } from './claimApproval'
 import NavBar from './NavBar'
 import ErrorBoundary from './ErrorBoundary'
 import './App.css'
+
+// A tab left open across a deploy asks for a lazy chunk the new build no longer
+// has (the service worker's precache cleanup removes the old build's files, and
+// Vercel answers a missing /assets/*.js with index.html). Vite reports that as
+// vite:preloadError. Reload ONCE so the tab picks up the new build; the path is
+// remembered in sessionStorage, so a second failure on the same path is let
+// through to the ErrorBoundary instead of reloading in a loop. With no storage
+// (a private window that throws) nothing reloads: a loop is worse than the card.
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (event) => {
+    try {
+      if (sessionStorage.getItem('techmen:chunk-reload') === window.location.pathname) return
+      sessionStorage.setItem('techmen:chunk-reload', window.location.pathname)
+    } catch { return }
+    event.preventDefault()
+    window.location.reload()
+  })
+}
 
 const LandingPage = lazy(() => import('./LandingPage'))
 const LoginPage   = lazy(() => import('./LoginPage'))
@@ -64,10 +83,14 @@ const Splash = () => (
 )
 
 function ProtectedLayout({ hasRole, session }) {
+  // A page that throws is caught HERE, inside the layout, so the nav and the
+  // feedback button stay up when a student most needs them. Keyed on the path
+  // so navigating away (or Back) clears the error instead of keeping the card.
+  const { pathname } = useLocation()
   return (
     <div className="app-layout">
       <NavBar hasRole={hasRole} session={session} />
-      <Outlet />
+      <ErrorBoundary key={pathname}><Outlet /></ErrorBoundary>
       <Suspense fallback={null}>
         <FeedbackWidget session={session} />
       </Suspense>
@@ -88,6 +111,11 @@ export default function App() {
   const [session, setSession] = useState(undefined)
   const [roles, setRoles]     = useState([])
   const [approved, setApproved] = useState(null)
+  // The same value and the member it belongs to, readable inside claimAndLoad,
+  // which runs from auth events and so cannot see a later render's state.
+  const approvedRef = useRef(null) // { userId, approved } | null
+  // The roles this tab holds, per member, on the same terms (claimApproval.js).
+  const rolesRef = useRef(null) // { userId, roles } | null
   const [onboardedAt, setOnboardedAt] = useState(undefined)
   // Current season this member still owes an application for. undefined = not
   // resolved yet, null = nothing owed (already applied, or not a member track).
@@ -100,21 +128,38 @@ export default function App() {
     // Domain gate: claim_profile() approves allowed-domain members and grants
     // the default student role, then we load roles, approval, and onboarding state.
     async function claimAndLoad(userId) {
-      const { data: claimed } = await supabase.rpc('claim_profile')
-      setApproved(claimed === true)
-      const { data } = await supabase
+      // A failed claim never revokes an approval this tab already holds: a
+      // transient error on a tab resume would otherwise swap the whole tree
+      // for AccessGate mid check-out (claimApproval.js).
+      // Only THIS member's approval is held: a sign-in as somebody else starts
+      // from nothing. Read once the answer is back, not before the call: two
+      // claims run at once on every boot (getSession and INITIAL_SESSION), and
+      // an error on one must keep what the other has just decided meanwhile.
+      const claim = await supabase.rpc('claim_profile')
+      const held = approvedRef.current?.userId === userId ? approvedRef.current.approved : null
+      const isApproved = nextApproval(held, claim)
+      approvedRef.current = { userId, approved: isApproved }
+      setApproved(isApproved)
+      // A failed roles read keeps the roles held for this member, read once the
+      // answer is back for the same reason as the approval; with nothing held
+      // it is UNKNOWN (null), never "no roles" (claimApproval.js nextRoles).
+      const rolesRead = await supabase
         .from('member_roles')
         .select('role')
         .eq('member_id', userId)
-      const roleList = data?.map(r => r.role) ?? []
-      setRoles(roleList)
-      const { data: prof } = await supabase
+      const heldRoles = rolesRef.current?.userId === userId ? rolesRef.current.roles : null
+      const roleList = nextRoles(heldRoles, rolesRead)
+      if (roleList) rolesRef.current = { userId, roles: roleList }
+      setRoles(roleList ?? [])
+      // Only a read that answered sets onboarded_at: a failed one keeps what is
+      // held, so it never reads as "not onboarded" and starts the tour.
+      const profRead = await supabase
         .from('profiles')
         .select('onboarded_at')
         .eq('id', userId)
         .single()
-      setOnboardedAt(prof?.onboarded_at ?? null)
-      await loadApplicationState(userId, claimed === true, roleList)
+      setOnboardedAt(prev => nextOnboardedAt(prev, profRead))
+      await loadApplicationState(userId, isApproved, roleList)
     }
 
     // The per-season member application gate. Only the member track is asked:
@@ -122,6 +167,10 @@ export default function App() {
     // form (pathway, parent contact, build-season commitment), and gating them
     // would lock mentors and parents out of the app behind it.
     async function loadApplicationState(userId, isApproved, roleList) {
+      // Roles unknown (their read failed with nothing held): fail OPEN, as for
+      // an application read error below, rather than read a mentor or a parent
+      // as the member track and put them behind a student form.
+      if (roleList === null) { setAppSeason(null); return }
       const staff  = roleList.some(r => ['mentor', 'lead', 'admin'].includes(r))
       const parent = roleList.includes('parent') && !staff
       if (!isApproved || staff || parent) { setAppSeason(null); return }
@@ -166,6 +215,8 @@ export default function App() {
         }
       } else {
         setRoles([])
+        rolesRef.current = null
+        approvedRef.current = null
         setApproved(null)
         setOnboardedAt(undefined)
         setAppSeason(undefined)
@@ -238,11 +289,17 @@ export default function App() {
   // Signed in but approval not yet resolved: hold on the splash.
   if (session && approved === null && !onParentPath && !onSpecimenPath && !onFixturePath) return <Splash />
   // Signed in but not approved: show the access gate instead of the app shell.
+  // Both gates sit outside the routed tree's boundary, so each carries its own:
+  // a gate chunk that fails to load must show the card, not an empty page.
+  // Each is keyed so it never reconciles with the routed tree's (same element
+  // types at the root): a gate's caught error must not follow the member in.
   if (session && approved === false && !onParentPath && !onSpecimenPath && !onFixturePath) {
     return (
-      <Suspense fallback={<Splash />}>
-        <AccessGate session={session} />
-      </Suspense>
+      <ErrorBoundary key="access-gate">
+        <Suspense fallback={<Splash />}>
+          <AccessGate session={session} />
+        </Suspense>
+      </ErrorBoundary>
     )
   }
 
@@ -255,13 +312,15 @@ export default function App() {
     if (appSeason === undefined) return <Splash />
     if (appSeason) {
       return (
-        <Suspense fallback={<Splash />}>
-          <MemberApplication
-            session={session}
-            season={appSeason}
-            onDone={() => setAppSeason(null)}
-          />
-        </Suspense>
+        <ErrorBoundary key="member-application">
+          <Suspense fallback={<Splash />}>
+            <MemberApplication
+              session={session}
+              season={appSeason}
+              onDone={() => setAppSeason(null)}
+            />
+          </Suspense>
+        </ErrorBoundary>
       )
     }
   }

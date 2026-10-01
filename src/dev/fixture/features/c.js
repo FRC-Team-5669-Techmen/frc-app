@@ -9,18 +9,24 @@
 //   live project answers before 0002 is pasted -- so the console's "not set up
 //   yet" state and the widget's insert ladder are reproducible.
 //
+//   It also declares 0002's two changes to columns that already exist
+//   (`alters`): `feedback.category` loses its NOT NULL and the status CHECK
+//   gains the six new values. The engine enforces the frozen constraints
+//   until the migration counts as applied, so in `mig=none` an untyped
+//   report is refused with 23502 and a new status with 23514, exactly as the
+//   live table refuses them before 0002 is pasted; that is what the widget's
+//   insert ladder and the console's legacy-status writes are tested against.
+//   The seed is judged with every migration applied, so report 4 (untyped)
+//   is not a seed problem in either state (tests/fixture-seed.test.js).
+//
 // WHAT IT CANNOT MODEL, said so nobody reads a pass as more than it is:
-//   the pre-0002 NOT NULL on `feedback.category` and the old status CHECK are
-//   constraints, and the fake engine enforces none. So in `mig=none` an
-//   untyped report saves with category null on the first retry instead of
-//   taking the third rung to 'feedback'. That rung is covered by
-//   tests/feedback-model.test.js against a fake that refuses with 23502.
-//   Nor can it model 0002's BEFORE INSERT trigger (section 6: a non-admin's
-//   report is filed New, unstamped, created now): the contract has no insert
-//   hook. Nothing a browser does differs for it -- the widget sends none of
-//   status / reviewed_by / reviewed_at / created_at, so there is nothing for
-//   the trigger to rewrite. The trigger is proved by checks 20-24 of
-//   0002_feedback_console_rls_test.sql.
+//   0002's BEFORE INSERT trigger (section 6: a non-admin's report is filed
+//   New, unstamped, created now): the contract has no insert hook. Nothing a
+//   browser does differs for it -- the widget sends none of status /
+//   reviewed_by / reviewed_at / created_at, so there is nothing for the
+//   trigger to rewrite. The trigger is proved by checks 20-24 of
+//   0002_feedback_console_rls_test.sql. Nor does it model 0002's new status
+//   default ('new' instead of 'open'): `alters` relaxes constraints only.
 //
 // The seed is shared by both migration states, so every row carries a status
 // from the PRE-0002 vocabulary (open / reviewed / dismissed). That is a real
@@ -170,6 +176,11 @@ export default {
   creates: {
     rpcs: ['feedback_set_status', 'feedback_restore_status'],
     columns: { feedback: ['tried', 'build'] },
+  },
+  // 0002 sections 1 and 3: category drops NOT NULL, and the status CHECK is
+  // replaced by the new vocabulary plus the three legacy values.
+  alters: {
+    feedback: { category: { nullable: true }, status: { values: STORED_STATUSES } },
   },
   seed,
   rpcs: {

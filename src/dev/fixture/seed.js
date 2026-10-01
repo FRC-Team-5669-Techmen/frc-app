@@ -194,7 +194,9 @@ export function coreSeed({ now }) {
   //  - capped: Morgan's check-in two days ago is the LAST thing Morgan did, so
   //    it reads as a still-open session past MAX_SESSION_MS (missed check-out);
   //  - double_in: Jamie's IN five days ago is followed by another IN;
-  //  - geofence: Casey (exempt) checked in yesterday without the fence.
+  //  - no geofence card: Casey checks in without the fence but is
+  //    geofence_exempt, and detectAnomalies flags geofence only for non-exempt
+  //    members (the test's positive control removes the exemption).
   const stale = addPair(memberId('c6'), laAt(now, -2, 15, 40), null, 'build').inRow
   closedAfter[memberId('c6')] = laAt(now, -2, 15, 40).getTime()
   addPair(memberId('c9'), laAt(now, -5, 15, 35), null, 'build')

@@ -675,7 +675,10 @@ export default function JobsPage({ session, hasRole = () => false }) {
                       <li
                         key={t.id}
                         className={`jobs-row${selectedId === t.id ? ' selected' : ''}`}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => setSelectedId(t.id)}
+                        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedId(t.id) } }}
                       >
                         <span className={`jobs-row-pill ${meta.cls}`}>{meta.label}</span>
                         <span className="jobs-row-title">{t.title}</span>
@@ -786,7 +789,10 @@ export default function JobsPage({ session, hasRole = () => false }) {
               {Array.isArray(t.links) && t.links.length > 0 && (
                 <div className="jobs-detail-links">
                   {t.links.map((l, i) => (
-                    <a key={i} className="jobs-detail-link" href={l.url} target="_blank" rel="noopener noreferrer">
+                    // Only an http(s) link is clickable: any member can create a job, so
+                    // a javascript: or data: URL in its links renders as its label with
+                    // no href, never as a live link.
+                    <a key={i} className="jobs-detail-link" href={/^https?:\/\//i.test(l.url ?? '') ? l.url : undefined} target="_blank" rel="noopener noreferrer">
                       🔗 {l.label || l.url}
                     </a>
                   ))}

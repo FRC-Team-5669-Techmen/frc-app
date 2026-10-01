@@ -12,7 +12,7 @@
 
 import { createEngine, normMigration, uuid } from './engine.js'
 import { SCHEMA } from './schema.js'
-import core from './core.js'
+import { FEATURES, PLUGINS } from './plugins.js'
 import { CORE_IDS } from './seed.js'
 import { IDS, PERSONAS, PERSONA_KEYS, DEFAULT_PERSONA, resolvePersona } from './personas.js'
 import { laDate } from './time.js'
@@ -35,13 +35,10 @@ const ls = {
 }
 
 // ── Plugins ───────────────────────────────────────────────────────────────────
-// Every features/*.js default export, in file-name order after core. An empty
-// directory is fine.
-const modules = import.meta.glob('./features/*.js', { eager: true })
-const features = Object.entries(modules)
-  .sort(([a], [b]) => a.localeCompare(b))
-  .map(([path, mod]) => ({ name: path.replace(/^.*\/|\.js$/g, ''), ...(mod?.default ?? {}) }))
-const plugins = [core, ...features]
+// core, then every features/*.js in file-name order (plugins.js, shared with
+// tests/fixture-seed.test.js so both seed the same list).
+const features = FEATURES
+const plugins = PLUGINS
 
 // A store seeded by different seed code is stale: reseed rather than run the
 // app against rows a plugin no longer produces.
@@ -157,6 +154,33 @@ function reseed() {
   reseed()
 })()
 
+// ── Other tabs ────────────────────────────────────────────────────────────────
+// Every tab of a real browser talks to ONE database. Each fixture tab holds its
+// own copy of the store, loaded from localStorage when it booted, so a write in
+// one tab must reach the others or a tab left open (a /checkin receipt behind
+// a fresh tag tap in a new tab) would re-read its own stale copy. The storage
+// event fires in every OTHER same-origin document of this browser profile when
+// a key changes, which is exactly the set of tabs a real write would reach.
+// Persona changes are passed on with the auth event supabase-js broadcasts to
+// its other tabs (SIGNED_IN / SIGNED_OUT); emit is defined below and only runs
+// once an event arrives, long after this module has finished loading.
+;(function followOtherTabs() {
+  try {
+    globalThis.addEventListener?.('storage', (e) => {
+      if (e.key === KEYS.db && e.newValue) {
+        try { store.db = JSON.parse(e.newValue) } catch { /* a torn write: keep this tab's copy */ }
+      } else if (e.key === KEYS.mig) {
+        state.migrations = parseMig(e.newValue)
+      } else if (e.key === KEYS.latency) {
+        state.latency = parseLatency(e.newValue)
+      } else if (e.key === KEYS.persona && PERSONA_KEYS.includes(e.newValue) && e.newValue !== state.persona) {
+        state.persona = e.newValue
+        emit(e.newValue === 'signedout' ? 'SIGNED_OUT' : 'SIGNED_IN')
+      }
+    })
+  } catch { /* no window: under node there are no other tabs */ }
+})()
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 const listeners = new Set()
@@ -202,6 +226,20 @@ const auth = {
   signInWithOAuth: async ({ provider } = {}) => ({ data: { provider: provider ?? null, url: null }, error: null }),
   updateUser: async () => ({ data: { user: currentUser() }, error: null }),
 }
+
+// supabase-js 2.106 (auth-js GoTrueClient._onVisibilityChanged) answers every
+// hidden -> visible transition of the tab with _recoverAndRefresh(), which
+// emits SIGNED_IN with the current session, and App.jsx re-runs claim_profile
+// on it. The fixture does the same, asynchronously as auth-js does (it takes a
+// lock first), so a test that brings a tab back exercises that path too.
+;(function recoverOnVisible() {
+  try {
+    globalThis.document?.addEventListener('visibilitychange', () => {
+      if (globalThis.document.visibilityState !== 'visible' || !currentUser()) return
+      setTimeout(() => emit('SIGNED_IN'), 0)
+    })
+  } catch { /* no document: under node there is no tab to bring back */ }
+})()
 
 // ── Storage ───────────────────────────────────────────────────────────────────
 // Uploads are recorded (path, size, type) in the store; the bytes live only in
@@ -305,11 +343,34 @@ function channel(name) {
   return ch
 }
 
+// ── Injected answers ──────────────────────────────────────────────────────────
+// window.__fx.failNext(name, { error } | { data }) makes the NEXT call of that
+// RPC in this tab answer exactly that, once, after the usual latency: a
+// transient failure (a dropped connection as a phone wakes) or a real answer
+// the store would not give. Logged in `calls` with `injected: true`.
+const injected = new Map() // rpc name -> [answer, ...]
+
+function injectedAnswer(name, answer) {
+  const result = { data: answer?.data ?? null, error: answer?.error ?? null, count: null, status: answer?.error ? 500 : 200, statusText: answer?.error ? 'Internal Server Error' : 'OK' }
+  calls.push({ at: new Date().toISOString(), kind: 'rpc', name, error: answer?.error ? (answer.error.code || 'injected') : null, injected: true })
+  const q = {
+    then(resolve, reject) {
+      return new Promise((r) => setTimeout(r, state.latency)).then(() => result).then(resolve, reject)
+    },
+  }
+  for (const m of ['select', 'single', 'maybeSingle', 'abortSignal', 'throwOnError']) q[m] = () => q
+  return q
+}
+
 // ── The client ────────────────────────────────────────────────────────────────
 
 export const supabase = {
   from: (table) => engine.from(table),
-  rpc: (name, args, opts) => engine.rpc(name, args ?? {}, opts),
+  rpc: (name, args, opts) => {
+    const queue = injected.get(name)
+    if (queue?.length) return injectedAnswer(name, queue.shift())
+    return engine.rpc(name, args ?? {}, opts)
+  },
   auth,
   storage: { from: bucket },
   functions,
@@ -346,6 +407,12 @@ export const fixture = {
     state.persona = key
     ls.set(KEYS.persona, key)
     emit(key === 'signedout' ? 'SIGNED_OUT' : 'SIGNED_IN')
+  },
+  // The next call of RPC `name` in THIS tab answers `answer` ({ error } or
+  // { data }) instead of the store, once. See "Injected answers" above.
+  failNext(name, answer) {
+    if (!injected.has(name)) injected.set(name, [])
+    injected.get(name).push(answer ?? { error: { message: 'TypeError: Failed to fetch', code: '' } })
   },
   setMigrations(v) {
     state.migrations = parseMig(Array.isArray(v) ? v.join(',') : v)

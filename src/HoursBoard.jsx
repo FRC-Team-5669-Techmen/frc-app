@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { supabase } from './supabase'
-import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, laDateKey, CATEGORIES, DEFAULT_CATEGORY, categoryLabel, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
+import { fmtHours, buildBreakdown, sumBreakdown, sessionsFromEvents, fmtLocation, laDateKey, CATEGORIES, DEFAULT_CATEGORY, categoryLabel, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
+import { currentStatus } from './attendanceState'
 import { daysPresent, effectiveGoal, goalCategoryKeys, hoursTowardGoal } from './accountability'
 import { displayName } from './names'
 import AttendanceHistory from './AttendanceHistory'
@@ -68,7 +69,8 @@ const readReviews = () => fetchAllRows(() => supabase.from('session_reviews')
 const fmtCell = h => (h ?? 0).toFixed(1)
 
 function downloadCsv(lines, filename) {
-  const blob = new Blob([lines.join('\r\n')], { type: 'text/csv;charset=utf-8' })
+  // The BOM tells Excel on Windows the file is UTF-8 (accented names).
+  const blob = new Blob(['\ufeff', lines.join('\r\n')], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -101,15 +103,18 @@ export default function HoursBoard({ hasRole = () => false }) {
   }
 
   // Reloads only the volatile data (events + the review-exclusion map) after a
-  // staff adjustment; the season selection and tabs are left untouched.
+  // staff adjustment; the season selection and tabs are left untouched. A
+  // failed re-read keeps the board it already has rather than zeroing it: an
+  // empty ledger here would read as every member at 0 hours.
   async function reloadEvents() {
-    const [{ data: ae }, { data: sr }] = await Promise.all([
+    const [ae, sr] = await Promise.all([
       readEvents(),
       readReviews(),
     ])
-    setAllEvents(ae ?? [])
+    if (ae.error || sr.error) return
+    setAllEvents(ae.data ?? [])
     const excMap = {}
-    for (const row of sr ?? []) (excMap[row.user_id] ??= new Set()).add(row.checkout_id)
+    for (const row of sr.data ?? []) (excMap[row.user_id] ??= new Set()).add(row.checkout_id)
     setExcluded(excMap)
   }
 
@@ -166,7 +171,9 @@ export default function HoursBoard({ hasRole = () => false }) {
     return profiles.map(p => ({
       id:        p.id,
       name:      displayName(p),
-      checkedIn: isCheckedIn(eventMap[p.id] ?? []),
+      // The shared rule (attendanceState.js): an IN left open from two days ago
+      // is a forgotten check-out, not In, as on the member's own tile.
+      checkedIn: currentStatus(eventMap[p.id] ?? []).checkedIn,
       events:    eventMap[p.id] ?? [],
       breakdown: buildBreakdown(seasons, eventMap[p.id] ?? [], loggedMap[p.id] ?? [], excluded[p.id] ?? null, adjustMap[p.id] ?? []),
     }))
@@ -435,6 +442,7 @@ export default function HoursBoard({ hasRole = () => false }) {
               <button
                 key={s.id}
                 className={`board-tab${selSeason === s.id ? ' board-tab-active' : ''}`}
+                aria-pressed={selSeason === s.id}
                 onClick={() => setSelSeason(s.id)}
               >
                 {s.name}
@@ -447,14 +455,17 @@ export default function HoursBoard({ hasRole = () => false }) {
           <div className="board-viewtoggle">
             <button
               className={`board-viewbtn${view === 'members' ? ' active' : ''}`}
+              aria-pressed={view === 'members'}
               onClick={() => setView('members')}
             >By member</button>
             <button
               className={`board-viewbtn${view === 'matrix' ? ' active' : ''}`}
+              aria-pressed={view === 'matrix'}
               onClick={() => setView('matrix')}
             >Matrix</button>
             <button
               className={`board-viewbtn${view === 'goals' ? ' active' : ''}`}
+              aria-pressed={view === 'goals'}
               onClick={() => setView('goals')}
             >Goals</button>
           </div>
@@ -480,11 +491,11 @@ export default function HoursBoard({ hasRole = () => false }) {
         )}
 
         {view === 'members' ? (
-          <div className="board-table-wrap">
+          <div className="board-table-wrap" tabIndex={0} role="region" aria-label="Team hours table">
             <table className="board-table">
               <thead>
                 <tr>
-                  <SortTh col="name" label="Member" sort={sort} onSort={toggleSort} />
+                  <SortTh col="name" label="Member" sort={sort} onSort={toggleSort} className="board-sticky" />
                   {CATEGORIES.map(c => (
                     <SortTh key={c.key} col={c.key} label={c.label} sort={sort} onSort={toggleSort} color={c.color} />
                   ))}
@@ -501,7 +512,7 @@ export default function HoursBoard({ hasRole = () => false }) {
                     onClick={() => setDetail({ memberId: r.id, name: r.name, day: null })}
                     title="View sessions by day"
                   >
-                    <td className="board-td board-member-link">{r.name}</td>
+                    <td className="board-td board-member-link board-sticky">{r.name}</td>
                     {CATEGORIES.map(c => (
                       <td key={c.key} className="board-td board-num">{fmtHours(r[c.key])}</td>
                     ))}
@@ -525,7 +536,7 @@ export default function HoursBoard({ hasRole = () => false }) {
                 {matrix.fromAll && <> Showing <strong>{matrix.season.name}</strong> (active season).</>}
               </p>
             )}
-            <div className="board-table-wrap">
+            <div className="board-table-wrap" tabIndex={0} role="region" aria-label="Team hours table">
               {(!matrix || matrix.days.length === 0) ? (
                 <p className="board-empty">No days to show for this season yet.</p>
               ) : (
@@ -620,7 +631,7 @@ export default function HoursBoard({ hasRole = () => false }) {
               </div>
             )}
 
-            <div className="board-table-wrap">
+            <div className="board-table-wrap" tabIndex={0} role="region" aria-label="Team hours table">
               {(!goalRows || goalRows.length === 0) ? (
                 <p className="board-empty">
                   {teamGoal?.target_hours > 0

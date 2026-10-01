@@ -35,10 +35,14 @@ export const VIEWPORTS = Object.freeze({
   },
 });
 
-export function viewportFor(width) {
-  const w = Number(width);
-  if (VIEWPORTS[w]) return VIEWPORTS[w];
-  return { name: String(w), viewport: { width: w, height: w < 700 ? 812 : 900 }, isMobile: w < 700, hasTouch: w < 700, deviceScaleFactor: w < 700 ? 2 : 1 };
+// A width (375, '1440') or a WIDTHxHEIGHT spec ('342x673'): the reported phone
+// sizes come as the latter, and Number('342x673') is NaN. A bare width that has
+// a preset gets the preset; anything else is built from the numbers given.
+export function viewportFor(spec) {
+  const [w, h] = String(spec).split('x').map(Number);
+  if (!h && VIEWPORTS[w]) return VIEWPORTS[w];
+  const m = w < 700;
+  return { name: String(spec), viewport: { width: w, height: h || (m ? 812 : 900) }, isMobile: m, hasTouch: m, deviceScaleFactor: m ? 2 : 1 };
 }
 
 export function flag(args, name, fallback = null) {
@@ -165,6 +169,46 @@ export function watchConsole(page) {
   });
   page.on('pageerror', (err) => errors.push({ type: 'pageerror', text: `${err.name}: ${err.message}`, url: page.url() }));
   return errors;
+}
+
+/**
+ * The same, for every tab a context ever opens (a test that models each tag
+ * tap as a new tab would otherwise miss the errors of all but the first).
+ */
+export function watchContextConsole(context) {
+  const errors = [];
+  const watch = (page) => {
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') errors.push({ type: 'console', text: msg.text(), url: page.url() });
+    });
+    page.on('pageerror', (err) => errors.push({ type: 'pageerror', text: `${err.name}: ${err.message}`, url: page.url() }));
+  };
+  for (const p of context.pages()) watch(p);
+  context.on('page', watch);
+  return errors;
+}
+
+/**
+ * Put a tab in the background ('hidden') or bring it back ('visible'), as the
+ * page sees it: document.visibilityState and document.hidden read the new
+ * value and a visibilitychange event fires on the document.
+ *
+ * This shadows the two getters on the document object; it is NOT the browser
+ * hiding the tab. Measured on this container's Chromium 141 headless: a second
+ * tab in the same window (Target.createTarget, newWindow false, foreground or
+ * background), a minimized window (Browser.setWindowBounds), a frozen page
+ * (Page.setWebLifecycleState) and focus emulation all leave every tab reading
+ * 'visible' with no event, and the protocol has no visibility override. What
+ * the app reads is exactly these two properties and that one event, so this is
+ * the most faithful hide the harness can make; what it does NOT model is
+ * Chrome throttling or freezing the hidden tab's timers.
+ */
+export async function setTabVisibility(page, state) {
+  await page.evaluate((s) => {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => s });
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => s === 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, state);
 }
 
 export function ensureDir(dir) {
