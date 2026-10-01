@@ -19,7 +19,7 @@ Mr. Pina, 2026-09-30: the IDEA Classroom's recent UI update is "such a nice UI" 
 - **The deck design system is never reached.** Every selector names an app class; the field rules, the only ones that name an element (`input`, `select`, `textarea`), carry `:not(:where(.frc-deck) *)`. `src/lib/design-system/` is untouched. Measured: [/_ds is untouched](#_ds-is-untouched).
 - **Focus is not touched.** Nothing in `plate.css` sets an outline: every focusable control still paints the app's one solid 2px gold ring from `App.css`.
 - **One `!important`, on purpose.** `/checkin`'s confirm key is styled inline (`CONFIRM_BTN_STYLE`), and an inline `border-radius` beats every selector; that one declaration carries `!important` and moves a corner, nothing else.
-- **The check-in fast path loads it.** `plate.css` is imported by `main.jsx`, so it is in the entry stylesheet every route loads, `/checkin` included. Measured with `npm run build`: the entry stylesheet goes from 34.77 kB (18.24 kB gzip) at 99046e4 to 62.05 kB (23.52 kB gzip), **+5.3 kB over the wire**, once, then precached by the service worker like every other asset. `src/plate.css` is 47 kB of source, most of it comments. No JavaScript was added to the fast path beyond reading one string constant.
+- **The check-in fast path loads it.** `plate.css` is imported by `main.jsx`, so it is in the entry stylesheet every route loads, `/checkin` included. Measured with `npm run build`: the entry stylesheet goes from 34.77 kB (18.24 kB gzip) at 99046e4 to 66.32 kB (24.40 kB gzip), **+6.2 kB over the wire**, once, then precached by the service worker like every other asset. `src/plate.css` is 60 kB of source, most of it comments. No JavaScript was added to the fast path beyond reading one string constant.
 
 ## Mapping IDEA's blocks onto this app
 
@@ -37,16 +37,17 @@ IDEA's plate has seven kinds of block. Each kind here is the same geometry; the 
 | panel / card | `.mb-tile`, `.glance`, `.sch-event`, `.mh-card`, `.lh-entry`, `.profile-card`, `.sv-q`, `.jobs-card`, `.vh-card`, `.rd-card`, `.squad-card`… | radius 12; the panel edge (softer than a control's hairline: a panel is a region, not a control); one light line inside the top; a faint sheen; a long soft shadow falling down and a little left; a panel inside a panel casts a shorter one. A tinted tile (the student blue, the fault alert) keeps its tint |
 | housing (menu, dialog, popover) | `.nav-dropdown-menu`, `.fb-panel`, `.ah-dialog` (Team Hours drill-down), `.mh-modal`, `.lh-modal`, `.jobs-detail`, `.roster-modal`, and the tour's `.driver-popover` (listed, not photographed) | radius 12; a moulded frame inside the edge; a long cast shadow; menu rows 44px with the current row lit (a lighter face and a 2px gold bar at its left, the word gold as before) |
 | pads (period tiles, section tabs) with an LED | the primary nav: `.navbar-links .nav-link` and the Hours/Skills dropdown triggers | radius 8; a 3px band with its own gradient inside the hairline, a light inner lip, and a recessed LED in its own lane at the bottom right. The CURRENT section is the lit pad: a lighter face, the LED in gold, the word in its own gold — three signals, so light is never the only one. The old underline goes |
-| title bar with hazard blocks | the `h1` that names a page in the app shell (`.sch-title`, `.jobs-title`, `.study-title`, `.sv-title`, `.msh-title`, `.ic-title`, `.ph-title` and nine staff pages'); the single-card screens (the access gate, the application, the parent form, the check-in screens) keep their hero heading as it is | the words in spaced mono caps at regular weight between two mirrored blocks of slanted bars over a groove; each block is rounded down to a whole bar so it always ends on its own slant — the chamfer as a detail. The bar runs the width of its region (the page head wraps its controls to the line below) |
+| title bar with hazard blocks | the `h1` that names a page in the app shell (`.sch-title`, `.jobs-title`, `.study-title`, `.sv-title`, `.msh-title`, `.ic-title`, `.ph-title` and nine staff pages'); the single-card screens (the access gate, the application, the parent form, the check-in screens) keep their hero heading as it is | the words in spaced caps in this app's own display face (Chakra Petch 700, never under 20px) between two mirrored blocks of slanted bars over a groove; each block is rounded down to a whole bar so it always ends on its own slant — the chamfer as a detail. The bar runs the width of its region (the page head wraps its controls to the line below) |
 | the header | `.navbar` | a lighter plate strip with a groove under it |
-| labels | every eyebrow, stat label and field label (`.hud-label`, `.mb-tile-eyebrow`, `.mb-stat-label`, `.sch-label`, `.lh-label`, `.profile-label` … 47 classes) | Share Tech Mono at the 11px floor, uppercase, tracked 0.14em; each keeps its colour. A label naming a section already sits above it everywhere |
-| the display's chamfered screen | the check-in "ALREADY IN" readout panel (`.checkin-panel`) | its lower corners cut at 26px and softened (`corner-shape: superellipse(0.25)`), behind `@supports (corner-shape: bevel)`: without it, a plain rounded panel, which is IDEA's own fallback |
+| labels | every eyebrow, stat label and field label (`.hud-label`, `.mb-tile-eyebrow`, `.mb-stat-label`, `.sch-label`, `.lh-label`, `.profile-label` … 56 classes and the certification card's `dt`), and every card and section heading that names a block (`.mh-card-title`, `.lh-section-heading`, `.profile-section-heading`, `.mp-section-heading`, `.cp-cat-name`, `.jobs-coverage-title`, `.jobs-thread-title`, `.ic-panel-h`), so twins on one page are never in two faces | Share Tech Mono at the 11px floor, uppercase, tracked 0.14em; each keeps its colour. A label naming a section already sits above it everywhere. Table column heads keep their face on every table alike |
+| the display's chamfered screen | the check-in "ALREADY IN" / "ALREADY OUT" readout panel (`.checkin-panel`) | ONE corner, the lower right, cut at 26px and softened (`corner-shape: superellipse(0.25)`), behind `@supports (corner-shape: bevel)`; without it, a plain rounded corner, which is IDEA's own fallback. The left corners stay tight because the left edge is the panel's 4px amber rail, carried as a 1px border plus a 3px background layer so all four borders are one width (see the review, below) |
 
 ### What was left alone, and why
 
 - **The page ground stays `--bg`.** IDEA paints the page as a graded charcoal plate; here the page's near-black is this app's colour, and colour is not what was asked for. The header strip is the one lighter plate.
 - **The Google sign-in button** is Google's branded control, white by Google's rule; it keeps its own look.
-- **The account avatar is not framed** (IDEA's call too): its box grows to 44x44 around the round picture.
+- **The account avatar is not framed** (IDEA's call too): its box grows to 44x44 around the round picture, as hit area only; a negative margin keeps its footprint at the picture's 30px so the header lays out exactly as before.
+- **The access gate's `.gate-card` is not a panel.** It is an unframed hero column (no padding, no border, no fill); framing it drew a housing hugging the words with the sign-out key flush on its foot.
 - **Calendar day cells, table rows, list rows and the jobs list rows** keep their flat look: a month grid of 35 raised keys, or a raised key per table row, is the "decoration per row of a long list" the plate forbids.
 - **The YOU tile's gold corner brackets** are this app's identity ornament. The tile takes the plate's 6px radius (`--tm-r-plate`), not the panel's 12, so a bracket never floats off a rounded corner.
 - **Not ported, because nothing here plays the part:** IDEA's progress ring, the switch, the screws and the perforation patch, the display housing, the recessed column and its tabs, the engraved gutters. Inventing a surface to carry a part would be a control with no job.
@@ -64,6 +65,71 @@ IDEA's plate has seven kinds of block. Each kind here is the same geometry; the 
 5. **Every select on a plate is a 44px well.** Chromium laid out the restyled select 3px shorter (44.4 → 41.4px on `/log-hours` and `/profile`) with only paint properties changed — found by the sweep, not by eye — so the floor is set on every single-line field and select.
 6. **The nav strip is 56px at desktop** (was 52): the 44px pads plus 6px either side, room for the focus ring's 4px reach and the pads' cast shadow.
 7. **The login key has rules of its own** — IDEA's `:is()` trap, met again. The login page styles its submit as `.login-card button[type='submit']`, (0,2,1); written into the shared key list, that one entry raised the whole list to (0,3,1), and the small-key radius (0,3,0) lost to it on every per-row key in the app (the catalog's EDIT keys came out 11px round instead of 5 — seen in a screenshot, not in the CSS). `keyed.mjs` now fails any argument heavier than one class in a class list, with that exact entry as its positive control.
+
+8. **A page title keeps this app's display face.** The first port set the title bar's words in Share Tech Mono at regular weight, as the reference does; two reviewers flagged it against the brief (geometry only, keep the app's fonts) and CLAUDE.md (Chakra Petch is the display face, mono is for readouts). The bar, the hazard blocks, the groove, the caps and the tracking stay; the words are Chakra Petch 700 and never under 20px, so a title on a phone is never smaller than the body copy under it.
+9. **A label is a label wherever it sits.** Twins on one page were in two faces (`BY SEASON` mono over `SEASON GOAL` Chakra; `NOTIFICATIONS` mono beside `TEAM DISCORD` Chakra). The label treatment now reaches every card and section heading that names a block; table column heads keep their face on every table alike, because a table head is part of the table's grid, not a label above a region.
+
+## The review, and what it changed
+
+Four reviewers looked at all 176 pairs (and opened twenty more views by hand), each from a different group of routes, and reported 53 defects: 3 broken, 15 wrong, 35 polish (the table merges the ones two reviewers both found). Every broken and wrong one is fixed except `/_fixture`'s seed problems, which are not the plate's and sit in another lane's files; polish was fixed wherever it was cheap and safe, and each one left alone is listed with its reason below. The views the reviewers opened by hand are now states every run photographs and measures (`REVIEW_STATES` in `states.mjs`), and two of the defect classes they found by eye now have an instrument, so the next one is not left to a reviewer:
+
+- **`identity.mjs`** reads all four border sides of every element on every page, on and off, and fails on any edge with chroma (gold, red, a category or role hue) the plate repaints. The reviewers found three such edges (a chosen parent answer, the PDF key, a pending request's rail); the instrument then found three more they had not (the survey editor's Open/Duplicate/Save keys, its Delete key, the feedback dialog's gold Copy key). Its positive control puts the first review's `.ar-card` bug back in memory every run and must catch it.
+- **`measure.mjs`** now also measures every element that declares a pointer cursor (the app's own signal for "this is a control"), which is how it missed a skill row a student taps, a jobs row, Team Hours' sort heads and the coverage toggle. 106 of its 691 targets are found that way; 70 of those are under 44px with the class off, which is its positive control.
+
+| reviewer group | defect | severity | what changed |
+| --- | --- | --- | --- |
+| staff-a | admin avatar menu: Sign out below the fold (the 44px rows made the menu scroll) | broken | Sign out sticks to the housing's foot when the menu scrolls, with a lit seam above it; section labels take 8px, not 12, above them |
+| staff-a | admin avatar menu: all three dividers 0px tall | wrong | nothing in a menu may flex-shrink (a divider's min-height is 0, so it was squeezed first); the groove's lip is the panel edge so it reads on `--surface` |
+| staff-b | skills catalog at 375: ACTIONS column clipped off the card, EDIT/REMOVE unreachable (pre-existing) | broken | the table scrolls sideways inside its panel |
+| staff-b | survey settings at 375: page scrolls sideways 101px (pre-existing) | broken | the Opens/Closes row wraps |
+| student-core | check-in duplicate panel: stray amber on the RIGHT border, the rail curling round the corners | wrong | one chamfered corner (lower right); tight left corners; the 4px rail is a 1px border plus a 3px background layer so all borders are one width (the leak was Chromium's `corner-shape` meeting unequal border widths: 82 stray gold pixels before, 0 after) |
+| student-core | survey radio rings and checkbox squares vanish on the option key (1.07:1) | wrong | the unchosen mark is a small well with the load-bearing hairline |
+| student-core, member-rest | skill rows a student taps, ~33px | wrong | 44px floor on `.msp-clickable` |
+| member-rest | coverage view toggle label 17px | wrong | 44px floor; the matrix's member-name links get a 44px hit area too (found by the widened sweep) |
+| member-rest | jobs rows 40px; `+ Image` / `+ Upload image` 29–32px | wrong | 44px floor on `.jobs-row`; the image key is an inline flex box at 44px |
+| member-rest | Team Hours sort heads 37px | wrong | `height: 44px` on `.board-th-sort` (a cell ignores min-height) |
+| member-rest | the chosen parent answer lost its gold edge | wrong | `.pr-choice-on` excluded from the hairline |
+| member-rest | the pending gate framed as a panel it never was | wrong | `.gate-card` removed from the panel lists |
+| staff-a | `/verify-hours` at 375: wordmark truncated to `TECHMEN·56…` | wrong | the avatar's 44px box is hit area only: a −7px margin keeps its footprint at 30px (0 of 52 route/persona pairs truncate now, as with the class off) |
+| staff-a | pending request cards, the jobs review queue and overdue rows lost their accent rail | wrong | excluded from the panel edge, which now paints their other three sides; left corners tight so the rail runs straight |
+| staff-a | the PDF key lost its gold-dim identity border | wrong | `.rp-btn-print` excluded from the hairline |
+| staff-a, staff-b | page titles moved to the mono face, 15px on a phone | wrong | call 8 above |
+| staff-b | `/_fixture` reports 26 seed problems | wrong | not the plate; the fixture belongs to the gate lane (see below) |
+| student-core | FLAG key widened, squeezing the time over four lines | polish | the extra padding is gone and the time is one line, so the row's own wrap moves FLAG down |
+| student-core | adjustment rows wrap differently from each other at 375 | polish | on a phone every row is category, amount and date over a full-width reason |
+| student-core | `THIS WEEK` wraps, `ALL TIME` does not | polish | stat labels do not wrap |
+| student-core, member-rest, staff-b | twin headings and labels in two faces (hours, profile, feedback widget, member page, certification card, job detail, certify) | polish | call 9 above |
+| student-core | the check-in confirm key's grey ring round a gold face | polish | it sits in the same dark tray as every other accent key |
+| student-core | 44px per-row keys (FLAG, Delete, Request correction) with chip corners | polish | they take the control radius; only keys that stay short keep 5px |
+| student-core | the schedule's MONTH/AGENDA well 51px beside a 44px key | polish | the segments fill their track (46px); no overflow clip, so the focus ring is not cut |
+| member-rest | `.mp-discipline` / `.mp-position` pills beside 5px `.mp-subteam` chips | polish | all three are recessed 5px chips |
+| member-rest | the parent dashboard's `FAMILY VIEW` kicker hangs left of the centred title | polish | it centres over the bar |
+| member-rest, staff-b | `+ NEW JOB`, `+ ADD SKILL`, `+ ADD DISCIPLINE` stranded at the left under the bar | polish | the primary action keeps the right edge |
+| member-rest | dashed drop-zone border on a raised key | polish | the two keys take a solid hairline edge; the image key centres its word in the form |
+| member-rest | parent glance next-event link 30px, `View Team Hours →` 18px | polish | both 44px (the underline stays under the words) |
+| member-rest | certified skill's "certifier · date" runs off the card at 375 (pre-existing) | polish | the row wraps on a phone |
+| member-rest, staff-a | the header is tight at 375; the pending dot floats off the avatar | polish | both follow from the avatar fix above; the dot sits on the picture's rim |
+| staff-a | short keys rendered as 11px capsules (drill-down EDIT/VOID, RE-SCAN, `+ Manual session`) | polish | small radius; SAVE is raised to 44 beside its 44px well and keeps 11 |
+| staff-a | `.ah-close` 44px box towering over `+ Manual session`, "Sessions by day" wrapping at 375 | polish | the plate no longer resizes it: the component already widens its hit area to 44x44 with a `::before`, which the sweep now counts |
+| staff-a, staff-b | ragged rows: 44px wells beside 26–36px keys (Activity, Verify Hours, Applications, feedback inbox, survey editor) | polish | those keys take the 44px floor |
+| staff-a | `.rd-bucket` 4px inside a 12px panel; `.rp-table-wrap` not a panel | polish | the tile takes the pad radius; the table wrapper is a panel like its twins |
+| staff-b | the roster's search and count flush against the viewport at 375 | polish | inset to the panels' 16px |
+| staff-b | wide-screen agenda: stacked 44px Edit/Delete make every event 100px | polish | side by side at 640px and up |
+| staff-b | certify categories, catalog groups and survey manage rows flat beside panel twins | polish | panels (the catalog group as header + table with one shadow); the delete row keeps its fault edge |
+| staff-b | roster permission toggle a pill beside 5px role chips | polish | small radius |
+| staff-b | feedback export panel's gold rail bent into a C | polish | tight left corners |
+| staff-b | announce compose card: square sub-panels in a 12px housing | polish | 5px parts (poll/embed editors, the preview message, the checks list, the status banner's right corners) |
+| staff-b | lit sort key's ring ticks rasterise as dashes at 1x | polish | dropped at 1.5dppx and under; the masked ring stays |
+
+**Not fixed, and why:**
+
+- **The Reports keys' printer glyph (`🖨 PDF`)** — an emoji in `ReportsPage.jsx`, pre-existing and identical off; the plate lane edits no component file, and a glyph is content, not shape. For a later lane: an inline SVG or plain text.
+- **The announce page's "Needs setup before anything can be sent: ." with an empty list** — copy in `AnnouncePage.jsx`, not shape.
+- **`/_fixture`'s 26 seed problems** (non-uuid ids and a null category in the b2/d attendance rows) — `src/dev/fixture/**` belongs to the gate lane this night. Those rows do not load, so the anomaly and check-in pictures are missing that data with the class on and off alike.
+- **`/_ds`'s specimen lede running past 375** — the deck design system is frozen and identical on, off and base.
+- **The schedule's `My events` row air** — it is the toggle's own 44px box around a 17px line; tightening it means going under the floor.
+- **Table column heads** stay in their table's face (call 9).
+- **Staff-only dense controls** keep their size, as before (the catalog's reorder arrows, a table row's resend, the survey editor's mini keys, the drill-down's EDIT/VOID).
 
 ## The token table
 
@@ -142,21 +208,21 @@ Generated by `node tools/e2e/plate/tokens.mjs --port 5413` from `src/plate.css`,
 
 ## The measurements
 
-**For reviewers**: `artifacts/shots/plate/INDEX.md` lists all 176 on/off pairs with absolute paths, grouped as the check-in fast path, the member routes, the public routes, the interactive states (avatar menu, Hours menu, feedback panel open, Team Hours drill-down, schedule agenda and new-event form, job detail, flag-a-session and request-a-correction dialogs, the `/checkin` confirm and success screens), the staff and admin routes, the persona-only pages (parent dashboard, pending gate, signed-out landing and login) and the dev harnesses. Every file is `artifacts/shots/plate/<on|off|base|const-empty>/<persona>/<375|1440>/<slug>.png`.
+**For reviewers**: `artifacts/shots/plate/INDEX.md` lists all 196 on/off pairs with absolute paths, grouped as the check-in fast path, the member routes, the public routes, the interactive states (avatar menu, Hours menu, feedback panel open, Team Hours drill-down, schedule agenda and new-event form, job detail, flag-a-session and request-a-correction dialogs, the `/checkin` confirm and success screens, and the nine views the first review opened by hand: the check-in duplicate panel, Team coverage, the new-job form, an open certification, an expanded roster row, survey settings, certify with a member, an open catalog category, the feedback inbox detail), the staff and admin routes, the persona-only pages (parent dashboard, pending gate, signed-out landing and login) and the dev harnesses. Every file is `artifacts/shots/plate/<on|off|base|const-empty>/<persona>/<375|1440>/<slug>.png`.
 
 Everything below was measured in this container's Chromium (build 1194, headless, software raster) on fixture mode, 2026-10-01, and every figure is re-runnable with the commands in the next section. `artifacts/shots/plate/INDEX.md` lists every screenshot pair with its paths.
 
 ### Off is today
 
-**The proof is two trees, not one switch.** The *base* is `git archive 99046e4` (the commit this work started from, no plate at all). The *const-empty* tree is `git archive f97ae29` (this branch's source; every later change to `src/` is a comment in `plate.css`, and the file is identical to f97ae29's once comments are stripped) with only `APP_PLATE` changed to `''` (a copy in the scratch directory; this checkout was never edited to make it). Both were served in fixture mode on one port, one after the other, and photographed by the same driver: every route in `src/dev/fixture/routes.js` as admin and as student at 375x812 and 1440x900, the parent dashboard, the pending gate, the signed-out landing and login, and eleven interactive states.
+**The proof is two trees, not one switch.** The *base* is `git archive 99046e4` (the commit this work started from, no plate at all). The *const-empty* tree is `git archive a80a8a8` (this branch's source after the review's fixes; nothing under `src/` changed after it) with only `APP_PLATE` changed to `''` (a copy in the scratch directory; this checkout was never edited to make it). Both were served in fixture mode on one port, one after the other, and photographed by the same driver: every route in `src/dev/fixture/routes.js` as admin and as student at 375x812 and 1440x900, the parent dashboard, the pending gate, the signed-out landing and login, and twenty interactive states. The base set was extended by exactly the nine states added after it was first shot (`shots.mjs --routes none --states review --persona-pages false`, from the same 99046e4 archive).
 
 | comparison | result |
 | --- | --- |
-| const-empty (this source, `APP_PLATE = ''`) against base 99046e4 | **176 of 176 identical**, every one byte-identical as PNG |
-| off (this checkout, the class suppressed from the first frame) against base | **176 of 176 identical**, every one byte-identical |
-| on against off (the POSITIVE CONTROL: the comparison can see the plate) | **168 of 176 differ, 8 identical**: the identical ones are `/_ds` and `/_fixture`, the deck specimen and the fixture control page, which no plate rule reaches |
+| const-empty (this source, `APP_PLATE = ''`) against base 99046e4 | **196 of 196 identical**, every one byte-identical as PNG |
+| off (this checkout, the class suppressed from the first frame) against base | **196 of 196 identical**, every one byte-identical (re-shot after the review's fixes) |
+| on against off (the POSITIVE CONTROL: the comparison can see the plate) | **188 of 196 differ, 8 identical**: the identical ones are `/_ds` and `/_fixture`, the deck specimen and the fixture control page, which no plate rule reaches |
 
-**Repeatable, measured:** the base and const-empty sets were shot by two different server processes from two different trees, and off by a third from this checkout; all three agree on all 176 pages byte for byte. Before that, a same-tree control (the base shot twice, 56 pages) read 52 of 56 identical with no pins, 54 of 56 with the rasteriser pinned (the two left were `/_ds`'s tall capture), and identical once `/_ds` was photographed as its first screen.
+**Repeatable, measured:** the base and const-empty sets were shot by two different server processes from two different trees, and off by a third from this checkout; all three agree byte for byte on every page each holds. Before that, a same-tree control (the base shot twice, 56 pages) read 52 of 56 identical with no pins, 54 of 56 with the rasteriser pinned (the two left were `/_ds`'s tall capture), and identical once `/_ds` was photographed as its first screen.
 
 **What was pinned so one tree renders the same pixels twice**, each found by a run that did not repeat:
 
@@ -177,43 +243,49 @@ Everything below was measured in this container's Chromium (build 1194, headless
 | route | 375 | 1440 |
 | --- | --- | --- |
 | `/_ds` (6,473 elements, 6,448 inside `.frc-deck`) | **0 differ** | **0 differ** |
-| `/dashboard` (positive control) | 48 differ, 0 inside `.frc-deck` | 43 differ |
-| `/schedule` (positive control) | 41 differ | 46 differ |
+| `/dashboard` (positive control) | 45 differ, 0 inside `.frc-deck` | 41 differ |
+| `/schedule` (positive control) | 38 differ | 39 differ |
 
 The instrument's own noise is reported beside it: one table under a closed `<details>` on `/_ds` reads 0 px tall before the first style recalculation and 1,348.58 px after, with nothing toggled, which is why the decisive pair is two reads that both follow a recalculation.
 
 ### Every rule is keyed
 
-`keyed.mjs` (static, no browser): 67 rules in 3 at-rule blocks, **0 problems**, every selector opening `:root.tm-plate`, no raw colour (no hex, no `rgb()`, no named colour; a mask's opaque stops are `var(--bg)`), no `@import`/`@font-face`/`@keyframes`, no argument heavier than one class in a class `:is()` list, and `main.jsx` adding the class only when the constant is non-empty. **8 of 8 positive controls caught**: an unkeyed rule, one inside `@media`, a decoy `:root .tm-plate` prefix, a keyed selector beside an unkeyed one, a raw hex, a raw `rgba()`, an `@import`, and the login key's heavy `:is()` argument.
+`keyed.mjs` (static, no browser): 107 rules in 7 at-rule blocks, **0 problems**, every selector opening `:root.tm-plate`, no raw colour (no hex, no `rgb()`, no named colour; a mask's opaque stops are `var(--bg)`), no `@import`/`@font-face`/`@keyframes`, no argument heavier than one class in a class `:is()` list, and `main.jsx` adding the class only when the constant is non-empty. **8 of 8 positive controls caught**: an unkeyed rule, one inside `@media`, a decoy `:root .tm-plate` prefix, a keyed selector beside an unkeyed one, a raw hex, a raw `rgba()`, an `@import`, and the login key's heavy `:is()` argument.
 
 ### The 44px floor
 
-`measure.mjs`, every student-reachable route and state (the member, public and check-in routes, the eleven states, the pending gate, the signed-out landing and login) with the class on:
+`measure.mjs`, every student-reachable route and state (the member, public and check-in routes, the fifteen student states, the pending gate, the signed-out landing and login) with the class on. The sweep now also measures every outermost element that declares a pointer cursor, and counts a control's absolutely positioned `::before`/`::after` hit area; a link in a table cell is no longer exempt as running text:
 
 | | 375 | 1440 |
 | --- | --- | --- |
-| targets measured (buttons, links acting as controls, fields, selects, textareas, labels wrapping a checkbox) | 531 | 531 |
+| targets measured (buttons, links acting as controls, fields, selects, textareas, labels wrapping a checkbox, and anything else declaring a pointer cursor) | 708 | 708 |
+| of those, found by their pointer cursor alone (rows, sort heads, toggle labels) | 106 | 106 |
 | **under 44px, class ON** | **0** | **0** |
-| under 44px, class OFF (today) | 287 | 183 |
+| under 44px, class OFF (today) | 417 | 298 |
+| POSITIVE CONTROL: cursor-found targets under 44px with the class off | 70 | 70 |
 | text links in running text, exempt and listed | 0 | 0 |
 
 Fixed on the way (selector, height before): the nav links 37.2 and dropdown triggers, the avatar 30x30, the menu rows ~35, `.mb-next-body` 38, `.sch-viewtab` 27.2, `.sch-myonly-toggle` 17, `.sch-nav-btn` 32x32, `.sch-today-btn` 26.2, `.sch-rsvp-toggle` 15, `.sch-edit`/`.sch-del` 25 (1440), `.sch-toggle` 34.4 (1440), `.mh-session-flagbtn` 14.6, `.lh-submit` 40.8, `.lh-delete-btn`/`.lh-corr-btn` 24.4, every select (Chromium laid a restyled select out 3px shorter, 44.4 to 41.4), `.board-tab` 31.8, `.board-viewbtn` 28.8, `.ah-close` 20x24, `.msh-toggle-btn` 31.4, `.msh-select` 38, `.msh-note` 36, `.msh-btn` 35, `.jobs-add-btn` 33, `.jobs-search` 36, `.jobs-sort-btn` 29.2, `.jobs-group-header` 35.8, `.study-input` 36–38, `.study-log-btn` 36, `.profile-group-toggle` 16, `.profile-save` 40.8, `.profile-cal-subscribe` 37.6, `.profile-cal-tab` 28.8, `.profile-cal-input`/`-copy` 38.4, `.profile-cal-regen` 30.4, `.np-btn` 35, `.np-master` 21, `.np-cat` 32.6, `.np-time` 33.5, `.checkin-home-link` 19, `.landing-nav-link` 32, `.pr-choice` 36, `.pr-clear` 13, `.pr-input` 38.2, `.pr-check` 40.8 (1440).
 
 ### Chips are not keys
 
-Same run: **216 chips** (every non-interactive element whose class names it a chip, pill, badge, tag, status, count, flag, kind or state and that draws a box), **0 with a drop shadow, 0 declaring a pointer cursor** (a chip inside a clickable row inherits the row's pointer and is not counted; the row is the control). POSITIVE CONTROL, the same shadow parser over the keys: **145 of 154 keys have a drop shadow**; the 9 without are disabled keys, which the plate draws unlit on purpose.
+Same run: **237 chips** (every non-interactive element whose class names it a chip, pill, badge, tag, status, count, flag, kind or state and that draws a box), **0 with a drop shadow, 0 declaring a pointer cursor** (a chip inside a clickable row inherits the row's pointer and is not counted; the row is the control). POSITIVE CONTROL, the same shadow parser over the keys: **154 of 165 keys have a drop shadow**; the 11 without are 6 unlit segments inside a segmented control's well (Team Hours' and Skills' view toggles), 3 disabled keys (drawn unlit on purpose), the certification card's expand header (not a plate key) and Google's sign-in button (left alone).
 
 ### No page breaks sideways
 
-The shot run records each page's horizontal overflow on and off: **0 pages** scroll sideways with the plate on and not off.
+The shot run records each page's horizontal overflow on and off: **0 of 196 pages** scroll sideways with the plate on and not off. One page that DID scroll sideways with the plate off no longer does with it on: survey settings at 375 (101px, the Opens/Closes row, pre-existing).
+
+### No identity edge is recoloured
+
+`identity.mjs`, every route as admin and student, the persona pages and all twenty states, at both widths, on and off: **98 pages, 2,221 identity edge sides (a border side with chroma: gold, red, a category or role hue), 0 recoloured** at 375 and at 1440. 78 sides are recoloured on purpose, by the two listed rules (the lit sort keys' gold moving inside as the broken ring, and the nav pads' old underline). POSITIVE CONTROL, run first every time: the first review's `.ar-card` bug put back in memory is caught (4 pending rails reported).
 
 ### Check-in and check-out
 
-`npm run test:checkin -- --port 5413`, class on: **`checkin e2e: 8/24 passed (375 and 1440)`**. The same 16 steps fail with the class off — on base 99046e4 (8/24) and on this source with `APP_PLATE = ''` (8/24) — and their failure text is identical byte for byte once the clock time is normalised. They are not the plate's: the second NFC tap now shows a "Check out" confirm screen (`STATUS // CONFIRM TO CHECK OUT`) where `tools/e2e/checkin.mjs` still expects the one-tap check-out it was written against (steps c2 to g), and that file belongs to the gate lane. The 8 that pass are, at both widths, (a) the NFC check-in at the shop, (b) the dashboard's Check Out, (c1) a second check-in the same day and (z) no unexpected console error. Separately, the plate's own shots drive `/checkin`'s confirm screen and its success screen at both widths (`state-checkin-confirm`, `state-checkin-success`).
+`npm run test:checkin -- --port 5413`, class on: **`checkin e2e: 8/24 passed (375 and 1440)`**. The same 16 steps fail with the class off — on base 99046e4 (8/24) and on this source with `APP_PLATE = ''` (8/24) — and their failure text is identical byte for byte once the clock time is normalised. They are not the plate's: the second NFC tap now shows a "Check out" confirm screen (`STATUS // CONFIRM TO CHECK OUT`) where `tools/e2e/checkin.mjs` still expects the one-tap check-out it was written against (steps c2 to g), and that file belongs to the gate lane. The 8 that pass are, at both widths, (a) the NFC check-in at the shop, (b) the dashboard's Check Out, (c1) a second check-in the same day and (z) no unexpected console error. Separately, the plate's own shots drive `/checkin`'s confirm screen, its success screen and the duplicate-tap panel at both widths (`state-checkin-confirm`, `state-checkin-success`, `state-checkin-duplicate`). Re-run after the review's fixes: class on (this checkout) **8/24**, class off (`APP_PLATE = ''` tree, its own copy of the same `checkin.mjs`) **8/24**, and the failure text of the two runs is identical once the clock time is normalised.
 
 ### The production build
 
-`npm run build` passes. `prod404.mjs` against a production build served by `vite preview`: `/_fixture` renders `404 — not found`, the same element as `/_ds`, `window.__fx` is absent, the fixture client's marker string is in 0 files of `dist/`, and `/login` renders the real login card (the positive control). **PASS.**
+`npm run build` passes. `prod404.mjs` against a production build served by `vite preview` (built with placeholder `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` pointing at a port nothing listens on, as `.env.dsspec` does: a build with no Supabase URL throws at load and renders nothing, which the positive control catches): `/_fixture` renders `404 — not found`, the same element as `/_ds`, `window.__fx` is absent, the fixture client's marker string is in 0 files of `dist/`, and `/login` renders the real login card (the positive control). **PASS.**
 
 ### The suites CI runs
 
@@ -236,6 +308,9 @@ VERCEL_GIT_COMMIT_SHA=dev node tools/e2e/plate/shots.mjs --port 5413
 git archive 99046e4 | tar -x -C /tmp/base && ln -s "$PWD/node_modules" /tmp/base/node_modules
 (cd /tmp/base && node node_modules/vite/bin/vite.js --mode fixture --port 5413 --strictPort &)
 node tools/e2e/plate/shots.mjs --url http://127.0.0.1:5413 --set base
+# ...or extend an existing base by the review states only (into a scratch
+# folder, then copy its base/ PNGs in, so base.json is not overwritten)
+node tools/e2e/plate/shots.mjs --url http://127.0.0.1:5413 --set base --routes none --states review --persona-pages false --out artifacts/shots/plate-basenew
 
 # off is today: this tree with APP_PLATE = '' (a copy, never an edit here)
 git archive HEAD | tar -x -C /tmp/const && ln -s "$PWD/node_modules" /tmp/const/node_modules
@@ -247,7 +322,8 @@ node tools/e2e/plate/shots.mjs --url http://127.0.0.1:5413 --set const-empty
 node tools/e2e/plate/compare.mjs artifacts/shots/plate/base artifacts/shots/plate/const-empty --json artifacts/shots/plate/const-empty-vs-base.json
 node tools/e2e/plate/compare.mjs artifacts/shots/plate/base artifacts/shots/plate/off --json artifacts/shots/plate/off-vs-base.json
 
-node tools/e2e/plate/measure.mjs --port 5413      # the 44px sweep + chips-are-not-keys, student routes at 375
+node tools/e2e/plate/measure.mjs --port 5413 --widths 375,1440   # the 44px sweep + chips-are-not-keys, student routes
+node tools/e2e/plate/identity.mjs --port 5413 --widths 1440,375  # no identity edge recoloured, with its control
 node tools/e2e/plate/styles.mjs --port 5413       # /_ds untouched, element by element
 node tools/e2e/plate/keyed.mjs                    # every rule keyed, no raw colour, the wiring (static, no browser)
 node tools/e2e/plate/tokens.mjs --port 5413       # the token table above
@@ -263,6 +339,6 @@ Helpers for looking: `crop.mjs out.png x,y,w,h a.png b.png --scale 2` sets the s
 - **Safari and Firefox.** This container has Chromium only (build 1194). `corner-shape` is Chromium-only today, so elsewhere the check-in panel's foot is a plain rounded corner (the `@supports` fallback, by design); `color-mix()`, `mask-composite` and `round()` are in current Safari and Firefox but were not looked at there. Android Chrome is the platform students check in on, and the 375 run emulates it (touch, `isMobile`, an Android user agent).
 - **A real phone and a real projector.** Every figure is a headless software renderer at device scale 2 (375) and 1 (1440).
 - **Signed-in surfaces against the live project.** Everything here ran on fixture mode (an in-memory Supabase with fictional people); nothing in this container can reach the live project. Layout depends on data, so a real roster with longer names could wrap differently.
-- **Every state of every page.** The sets cover every route in `src/dev/fixture/routes.js` and eleven interactive states; modals and forms not listed in `tools/e2e/plate/states.mjs` (the staff edit forms, the roster's delete dialog, the applications detail modal, the feedback inbox detail) were not photographed open. Their classes are in the plate's lists, so they are drawn by the same rules.
+- **Every state of every page.** The sets cover every route in `src/dev/fixture/routes.js` and twenty interactive states; modals and forms not listed in `tools/e2e/plate/states.mjs` (the staff edit forms, the roster's delete dialog, the applications detail modal, the announce poll editor) were not photographed open. Their classes are in the plate's lists, so they are drawn by the same rules.
 - **Hover and pressed states were read, not driven.** The screenshots are at rest; `:hover` and `:active` rules were written against each component's own state rules (and the hairline rule excludes them so the component's gold hover edge stands), but no hover was photographed.
 - **Reduced motion.** The plate adds no animation and no transition. The harness runs with `prefers-reduced-motion: reduce` and freezes transitions so a toggled class is never photographed mid-ease.
