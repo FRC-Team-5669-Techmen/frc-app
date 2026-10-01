@@ -7,6 +7,24 @@ import NavBar from './NavBar'
 import ErrorBoundary from './ErrorBoundary'
 import './App.css'
 
+// A tab left open across a deploy asks for a lazy chunk the new build no longer
+// has (the service worker's precache cleanup removes the old build's files, and
+// Vercel answers a missing /assets/*.js with index.html). Vite reports that as
+// vite:preloadError. Reload ONCE so the tab picks up the new build; the path is
+// remembered in sessionStorage, so a second failure on the same path is let
+// through to the ErrorBoundary instead of reloading in a loop. With no storage
+// (a private window that throws) nothing reloads: a loop is worse than the card.
+if (typeof window !== 'undefined') {
+  window.addEventListener('vite:preloadError', (event) => {
+    try {
+      if (sessionStorage.getItem('techmen:chunk-reload') === window.location.pathname) return
+      sessionStorage.setItem('techmen:chunk-reload', window.location.pathname)
+    } catch { return }
+    event.preventDefault()
+    window.location.reload()
+  })
+}
+
 const LandingPage = lazy(() => import('./LandingPage'))
 const LoginPage   = lazy(() => import('./LoginPage'))
 const HomePage    = lazy(() => import('./HomePage'))
@@ -65,10 +83,14 @@ const Splash = () => (
 )
 
 function ProtectedLayout({ hasRole, session }) {
+  // A page that throws is caught HERE, inside the layout, so the nav and the
+  // feedback button stay up when a student most needs them. Keyed on the path
+  // so navigating away (or Back) clears the error instead of keeping the card.
+  const { pathname } = useLocation()
   return (
     <div className="app-layout">
       <NavBar hasRole={hasRole} session={session} />
-      <Outlet />
+      <ErrorBoundary key={pathname}><Outlet /></ErrorBoundary>
       <Suspense fallback={null}>
         <FeedbackWidget session={session} />
       </Suspense>
@@ -267,11 +289,17 @@ export default function App() {
   // Signed in but approval not yet resolved: hold on the splash.
   if (session && approved === null && !onParentPath && !onSpecimenPath && !onFixturePath) return <Splash />
   // Signed in but not approved: show the access gate instead of the app shell.
+  // Both gates sit outside the routed tree's boundary, so each carries its own:
+  // a gate chunk that fails to load must show the card, not an empty page.
+  // Each is keyed so it never reconciles with the routed tree's (same element
+  // types at the root): a gate's caught error must not follow the member in.
   if (session && approved === false && !onParentPath && !onSpecimenPath && !onFixturePath) {
     return (
-      <Suspense fallback={<Splash />}>
-        <AccessGate session={session} />
-      </Suspense>
+      <ErrorBoundary key="access-gate">
+        <Suspense fallback={<Splash />}>
+          <AccessGate session={session} />
+        </Suspense>
+      </ErrorBoundary>
     )
   }
 
@@ -284,13 +312,15 @@ export default function App() {
     if (appSeason === undefined) return <Splash />
     if (appSeason) {
       return (
-        <Suspense fallback={<Splash />}>
-          <MemberApplication
-            session={session}
-            season={appSeason}
-            onDone={() => setAppSeason(null)}
-          />
-        </Suspense>
+        <ErrorBoundary key="member-application">
+          <Suspense fallback={<Splash />}>
+            <MemberApplication
+              session={session}
+              season={appSeason}
+              onDone={() => setAppSeason(null)}
+            />
+          </Suspense>
+        </ErrorBoundary>
       )
     }
   }
