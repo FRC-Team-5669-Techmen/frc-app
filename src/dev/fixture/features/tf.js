@@ -16,6 +16,8 @@
 //   Una (persona `pending`, approved false, status active) for the approved-
 //   only reads on /display, /dashboard and the parent dashboard; Morgan's
 //   stale open session (c6, capped) for the service letter's '(capped)' mark.
+//   That session is Build, so the mark shows only with Build ticked on the
+//   letter: under the default Volunteer + Outreach, Morgan's letter is empty.
 
 const JOB_ID = '7f5f0000-0000-4000-8000-000000000001'
 
