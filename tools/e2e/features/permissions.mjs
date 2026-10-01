@@ -22,6 +22,7 @@
  * The event counts come from the store (events created_by each persona, not
  * mandatory, not yet ended), so a core-seed change cannot silently move them.
  */
+import { APP_PLATE } from '../../../src/plate.js';
 import { P } from './_util.mjs';
 
 async function agenda(t) {
@@ -125,7 +126,14 @@ export default {
         }
         if (!t.isPhone && staff && mig === 'all') {
           const h = await t.evaluate(() => [...document.querySelectorAll('.sch-edit, .sch-del')].map((b) => b.getBoundingClientRect().height));
-          t.check('desktop: Edit/Delete keep their small size', h.length > 0 && Math.max(...h) < 44, `${h.length} buttons, ${Math.round(Math.min(...h))}-${Math.round(Math.max(...h))}px`);
+          // Two designs, one per state of the shape language (src/plate.js):
+          // without it, Edit/Delete grow to 44px on a coarse pointer only; with
+          // it, the plate's 44px floor holds at every width. Which one ships is
+          // read off <html>, so the check follows the constant both ways.
+          const plated = await t.evaluate((cls) => !!cls && document.documentElement.classList.contains(cls), APP_PLATE);
+          const range = `${h.length} buttons, ${Math.round(Math.min(...h))}-${Math.round(Math.max(...h))}px`;
+          if (plated) t.check(`desktop, plate on: Edit/Delete keep the 44px floor`, h.length > 0 && Math.min(...h) >= 44, range);
+          else t.check('desktop, plate off: Edit/Delete keep their small size', h.length > 0 && Math.max(...h) < 44, range);
         }
         if (holder) {
           await t.noHScroll();
