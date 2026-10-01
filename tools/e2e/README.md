@@ -37,7 +37,10 @@ The rule it exists for: **check-in and check-out may not regress.** Students
 use them on their phones at the start and end of every session, so this runs
 after every workstream, at **375x812** (touch, `isMobile`, an Android Chrome
 user agent -- the platform Web NFC exists on) and at **1440x900**, each from a
-freshly reseeded store, signed in as the fixture student.
+freshly reseeded store, signed in as the fixture student. Setup then clears
+today's attendance for the two personas it drives (Sam and Casey), because a
+feature fixture may seed them a session (the check-out lane seeds Sam checked
+in 2h45m ago); the run prints how many rows that took with `--verbose`.
 
 The clock is Playwright's, installed at a fixed Thursday afternoon in LA
 (2026-10-01 4:00 PM PDT, the shop open) and fast-forwarded 61 s between taps,

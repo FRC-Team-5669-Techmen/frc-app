@@ -141,9 +141,24 @@ async function runViewport(browser, origin, vp) {
 
   // ── setup: a freshly reseeded store, signed in as the student ────────────
   await go('/_fixture?__fx=persona:student,mig:all,reset');
-  const seeded = await events(STUDENT);
+  // The test owns its starting state. A feature fixture may legitimately give
+  // the student a session (the contract lets a plugin append rows for any
+  // persona: the check-out lane seeds Sam checked in 2h45m ago), so today's
+  // attendance for the two personas this test drives is cleared here, after
+  // the reset and before the first step, rather than assumed absent. Today
+  // (LA) is exactly what /checkin reads; anything older is at least 16 h old
+  // at the 4 PM clock, past the 10 h session cap, so it cannot read as in.
   const todayStart = new Date('2026-10-01T00:00:00-07:00').toISOString();
-  assert(!seeded.some((e) => e.event_time >= todayStart), 'fixture seed has a check-in for the student today; the test needs a clean day');
+  const cleared = await page.evaluate(({ ids, since }) => {
+    const db = window.__fx.db;
+    const before = db.attendance_events.length;
+    db.attendance_events = db.attendance_events.filter((e) => !(ids.includes(e.user_id) && Date.parse(e.event_time) >= since));
+    window.__fx.save();
+    return before - db.attendance_events.length;
+  }, { ids: [STUDENT, EXEMPT], since: Date.parse(todayStart) });
+  log(`  setup: cleared ${cleared} attendance event(s) from today for the test personas`);
+  const seeded = await events(STUDENT);
+  assert(!seeded.some((e) => e.event_time >= todayStart), 'the student still has a check-in today after setup; the test needs a clean day');
 
   // a. NFC check-in at the shop.
   await step('a-nfc-checkin', 'NFC check-in at the shop writes one build IN with geo_ok true', async () => {
