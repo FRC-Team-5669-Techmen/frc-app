@@ -13,7 +13,11 @@ const LA = 'America/Los_Angeles'
 // it. Re-exported for this module's API.
 export { laDateKey }
 const fmtClock = d => d ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''
-const fmtDateLong = d => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+// A 'YYYY-MM-DD' key as "September 30, 2026": the key's own calendar date in
+// any zone. `new Date('2026-09-30')` is UTC midnight, which a device in Los
+// Angeles prints as September 29, so the letter named the day before each end
+// of the range the mentor picked; reading it back in UTC cannot shift it.
+const fmtDateLong = d => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
 const round2 = n => Math.round(n * 100) / 100
 
 // Event-attribution choice: hours are tied to a calendar event by DATE/TIME

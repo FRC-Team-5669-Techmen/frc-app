@@ -12,7 +12,7 @@
 // agreement is not two functions that both just slice the UTC date.
 
 import { describe, expect, test } from 'vitest'
-import { laDateKey as reportingLaDateKey, buildRows, filterRows, rowsToCsv } from '../src/reporting.js'
+import { laDateKey as reportingLaDateKey, buildRows, filterRows, rowsToCsv, letterData, letterHtml } from '../src/reporting.js'
 import { laDateKey } from '../src/hoursUtils.js'
 
 // src/reporting.js at 3d9dd54, verbatim.
@@ -101,5 +101,42 @@ describe('a report row is dated by the session\'s Los Angeles day', () => {
     expect(evening).not.toContain(read('2026-10-01T03:00:00Z', 'UTC'))
     // Positive control: the two zones really print that instant differently.
     expect(read('2026-10-01T03:00:00Z', LA)).not.toBe(read('2026-10-01T03:00:00Z', 'UTC'))
+  })
+})
+
+describe('the service-hour letter names the range the mentor picked', () => {
+  // A letter goes to a school as proof of service, so the two dates in its
+  // sentence are a claim. Its range comes in as 'YYYY-MM-DD' keys; the letter
+  // used to print `new Date(key)` (UTC midnight) in the device's zone, which in
+  // Los Angeles is the evening BEFORE, so Sep 1 - Sep 30 read Aug 31 - Sep 29.
+  const team = { name: 'Techmen', org: 'Don Bosco Technical Institute' }
+  const rows = buildRows({ m1: 'Sam' }, [
+    { id: 'i1', user_id: 'm1', type: 'in', event_time: '2026-09-30T22:30:00+00:00', category: 'volunteer' },
+    { id: 'o1', user_id: 'm1', type: 'out', event_time: '2026-10-01T01:30:00+00:00' },
+  ], [], {})
+  const sentence = (html) => /between <strong>(.*?)<\/strong> and\s*<strong>(.*?)<\/strong>/.exec(html).slice(1)
+  const inZone = (tz, fn) => {
+    const was = process.env.TZ
+    process.env.TZ = tz
+    try { return fn() } finally { if (was === undefined) delete process.env.TZ; else process.env.TZ = was }
+  }
+  const html = () => letterHtml(
+    letterData(rows, { memberId: 'm1', memberName: 'Sam', from: '2026-09-01', to: '2026-09-30', categories: ['volunteer'] }),
+    { preparedBy: 'A mentor', generatedAt: 'now', team })
+
+  test('on a device in Los Angeles, and in UTC, the sentence says Sep 1 to Sep 30', () => {
+    for (const tz of ['America/Los_Angeles', 'UTC', 'Pacific/Honolulu', 'Asia/Tokyo']) {
+      expect(inZone(tz, () => sentence(html())), tz).toEqual(['September 1, 2026', 'September 30, 2026'])
+    }
+    // and the itemized session is the 3h on Sep 30 (crosses 00:00 UTC)
+    expect(html()).toMatch(/<td>2026-09-30<\/td>\s*<td>Volunteer<\/td>\s*<td>Attendance<\/td>\s*<td class="num">3<\/td>/)
+  })
+
+  test('POSITIVE CONTROL: the old formatter, in Los Angeles, named the day before each end', () => {
+    const oldFmt = d => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    expect(inZone('America/Los_Angeles', () => [oldFmt('2026-09-01'), oldFmt('2026-09-30')]))
+      .toEqual(['August 31, 2026', 'September 29, 2026'])
+    // the zone switch is real: the same instant reads differently in the two zones
+    expect(inZone('UTC', () => oldFmt('2026-09-30'))).toBe('September 30, 2026')
   })
 })
