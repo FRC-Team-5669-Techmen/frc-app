@@ -94,8 +94,9 @@
 --   * It does not touch the bucket or its policies.
 --
 -- ----------------------------------------------------------------------------
--- TO UNDO (in this order; the update must come first, because the old CHECK
--- cannot be put back while a row holds a value it does not admit):
+-- TO UNDO (in this order; the status update must come before the old CHECK
+-- is put back, because it cannot be while a row holds a value it does not
+-- admit):
 --
 --   begin;
 --   drop trigger if exists feedback_member_insert_defaults on public.feedback;
