@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { supabase } from './supabase'
-import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, cappedSession, CATEGORIES, categoryLabel, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
+import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, cappedSession, CATEGORIES, DEFAULT_CATEGORY, categoryLabel, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
 import { daysPresent, effectiveGoal, goalCategoryKeys, hoursTowardGoal } from './accountability'
 import { displayName } from './names'
 import AttendanceHistory from './AttendanceHistory'
