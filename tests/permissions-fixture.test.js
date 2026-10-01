@@ -1,9 +1,10 @@
 // The lane-f fixture plugin (src/dev/fixture/features/f.js), driven directly.
 //
-// Its has_capability handler is what a browser test under fixture mode gets
-// when the schedule asks whether to offer "+ New event", so it must answer the
-// way public.has_capability() in 0004 does: staff, or a holder whose profile
-// is APPROVED. Each case is driven both ways on the same person, so a handler
+// Its has_capability handler must answer the way public.has_capability() in
+// 0004 does: staff, or a holder whose profile is APPROVED. (Nothing in the
+// client calls that RPC today -- the schedule decides whether to offer
+// "+ New event" from the member_permissions rows, src/permissions.js -- so
+// this pins the handler for the first caller that does.) Each case is driven both ways on the same person, so a handler
 // that answers false (or true) for everybody fails.
 
 import { describe, expect, test } from 'vitest'
