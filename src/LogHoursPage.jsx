@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 import { CATEGORIES, DEFAULT_CATEGORY, categoryLabel, categoryColor } from './categories'
+import { laDateKey } from './hoursUtils'
 import './LogHoursPage.css'
 
 // Manual off-site entry has no NFC tag to derive the category from, so the user
@@ -9,7 +10,9 @@ import './LogHoursPage.css'
 const TYPE_ORDER = ['build', 'volunteer', 'outreach', 'competition']
 const TYPES = TYPE_ORDER.filter(k => CATEGORIES.some(c => c.key === k))
 
-const today = () => new Date().toISOString().slice(0, 10)
+// The LA calendar date: the UTC date is tomorrow after 5 PM PDT, which made the
+// form default to tomorrow and let a future date through its max check.
+const today = () => laDateKey(Date.now())
 
 function fmtDate(str) {
   return new Date(str + 'T12:00:00').toLocaleDateString('en-US', {
