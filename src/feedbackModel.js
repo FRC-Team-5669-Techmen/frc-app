@@ -311,15 +311,33 @@ export function statusCounts(rows) {
   return c
 }
 
+// A route with every uuid in it replaced by `:id`, the way the route table
+// spells it: /members/<uuid> becomes /members/:id. A uuid in a route is
+// somebody's member id (the page that was open was THEIR profile), so it
+// identifies a person as surely as a name does -- and, unlike a name, no sweep
+// for names would ever catch it. The page is what a fix needs; whose page it
+// was is not. Anything that is not uuid-shaped is left exactly as it was.
+const UUID_IN_TEXT = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi
+export function redactRoute(route) {
+  if (route == null) return route
+  return String(route).replace(UUID_IN_TEXT, ':id')
+}
+
+// Every uuid in a piece of text, lowercased, in first-seen order.
+export function uuidsIn(text) {
+  return [...new Set((String(text ?? '').match(UUID_IN_TEXT) ?? []).map(u => u.toLowerCase()))]
+}
+
 // The filter in words, for an export header: an export says what it is an
 // export OF. A reporter is described by name only when names travel with the
-// export; otherwise the header says a reporter filter was on and no more.
+// export; otherwise the header says a reporter filter was on and no more, and
+// a route filter on somebody's page names the page and not the person.
 export function describeFilter(filter, { reporterLabel, names = true } = {}) {
   const f = { ...DEFAULT_FILTER, ...filter }
   const parts = [
     `status ${f.status === 'all' ? 'any' : STATUS_LABEL[f.status] ?? f.status}`,
     `type ${f.type === 'all' ? 'any' : TYPE_LABEL[f.type] ?? f.type}`,
-    `route ${f.route === 'all' ? 'any' : f.route || '(none recorded)'}`,
+    `route ${f.route === 'all' ? 'any' : (names ? f.route : redactRoute(f.route)) || '(none recorded)'}`,
   ]
   if (f.reporter !== 'all') {
     parts.push(names && reporterLabel ? `reporter ${reporterLabel}` : 'one reporter (name withheld)')

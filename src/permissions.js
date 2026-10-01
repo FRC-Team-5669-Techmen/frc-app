@@ -16,6 +16,14 @@
 //     never mandatory;
 //   - a holder may edit / delete only events THEY added that are not
 //     mandatory (an event staff mark mandatory becomes staff territory);
+//   - a holder's event may carry a series_id only if no event in that series
+//     was added by anyone else (events_series_is_own). Nothing here mirrors
+//     it because nothing in the UI could break it: SchedulePage mints a fresh
+//     id for a new series and never sends series_id on an edit;
+//   - a grant counts only while the holder's profile is APPROVED. Nothing here
+//     mirrors that either: an unapproved account never reaches the app shell
+//     (App.jsx shows it the access gate), so no screen that reads these
+//     capabilities can render for one;
 //   - a revoke takes all of that away at once.
 //
 // Before 0004 is applied the member_permissions table does not exist; every
@@ -62,7 +70,8 @@ function capSet(capabilities) {
   return new Set(Array.isArray(capabilities) ? capabilities : [])
 }
 
-// Mirrors public.has_capability(): staff, or a holder.
+// Mirrors public.has_capability(): staff, or a holder. (The database also
+// requires the holder's profile to be approved; see the rules above.)
 export function hasCapability(roles, capabilities, key) {
   return isStaffRoles(roles) || capSet(capabilities).has(key)
 }

@@ -65,11 +65,11 @@ Never unpack inside the repository. The export holds, under one folder:
 | File | What it is |
 |---|---|
 | `README.md` | What the export holds, the filter, the build it came from, which screenshots are missing and why |
-| `digest.txt` | One entry per report, `R01` = oldest: type, status, route, reporter ROLE, LA time, viewport, build, id, screenshot paths, the message, what they tried. **Work from this.** |
+| `digest.txt` | One entry per report, `R01` = oldest: type, status, route, reporter ROLE, LA time, viewport, build, id, screenshot paths, the message, what they tried. A route that held a member id reads `/members/:id`. **Work from this.** |
 | `reports/<R..>-<id>/` | Each report's `report.md` and its `screenshot-N.<ext>` |
 | `reports.md`, `reports.json` | The same reports with names (when the export included them). Read; never quote. |
-| `MARK_SEEN.sql` | Moves every report in the export that is still New to Seen. Step 8 copies it. |
-| `identities.txt` | Every reporter name in the export, for step 8's sweep. Present only when names were exported. |
+| `MARK_SEEN.sql` | Moves every report in the export that is still New to Seen. Report ids only; it names no member. Step 8 copies it. |
+| `identities.txt` | Every reporter name and every member id in the export, for step 8's sweep. Present only when names were exported. |
 
 **Open every screenshot with Read.** A screenshot is often the whole report. The build
 line says which app build a report was filed from; compare it with `git log` before
@@ -153,8 +153,13 @@ him before it is built.
 ## 8. Close the round
 
 1. Copy the export's `MARK_SEEN.sql` to `docs/feedback/<date>/MARK_SEEN.sql`, unchanged.
-   Report ids are not identities. He pastes it once, so the next New export holds only
-   new reports.
+   Report ids are not identities, and the file names no member: it sets `status` and
+   `reviewed_at` only. He pastes it once, so the next New export holds only new reports.
+   **An export made by a console from before 2026-10-01 stamped the exporting admin's
+   member id** (`reviewed_by = '<uuid>'` in the `set` line). If
+   `grep -n reviewed_by <copied file>` finds one, delete that one assignment so the line
+   reads `set status = 'seen', reviewed_at = now()`; that is the only change ever made
+   to the copy.
 2. Run the name sweep over every file the round created or changed. It must print
    nothing:
 
@@ -167,7 +172,9 @@ him before it is built.
 
    `-w` matches whole words and the match is case-sensitive, so a name part such as
    "Sam" does not fire on "same", and a surname that is also a word ("Young", "Student")
-   does not fire on the lowercase word. Without an `identities.txt` the export withheld names; sweep for any name you saw in
+   does not fire on the lowercase word. `identities.txt` also lists every member id the
+   export carries (each reporter's, and any id inside a route), in lowercase and in
+   capitals, so a member id quoted into a committed file is a hit too; report ids are not in it. Without an `identities.txt` the export withheld names; sweep for any name you saw in
    a screenshot instead. A hit is fixed by rewording to a role, never by trimming the
    sweep list.
 3. Write `docs/history/<branch slug>.md` (format in `docs/history/README.md`).
@@ -198,5 +205,6 @@ returning id, status, route;
 ```
 
 Use `'wont_do'` or `'spam'` in place of `'done'` for those verdicts, as separate
-statements. The `status in (...)` list includes the old spellings on purpose: a console
+statements. Never add `reviewed_by`: this file is committed to a public repository, and a
+member id is as identifying as a name. The `status in (...)` list includes the old spellings on purpose: a console
 deployed before 0002 may still have written them.

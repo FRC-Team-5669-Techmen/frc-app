@@ -14,6 +14,14 @@
 // capabilities and the three RPCs answer as missing (PGRST205 / PGRST202):
 // the roster row must read "Not set up yet" and the student's schedule must
 // look exactly like student2's.
+//
+// What the fake engine cannot model, said so nobody reads a pass as more: the
+// three holder policies on public.events (the engine enforces no RLS on
+// writes), so neither "a holder's event cannot join somebody else's series"
+// nor the created_by / mandatory pins are exercised here -- the UI never sends
+// a write that would hit them, and 0004_member_permissions_rls_test.sql
+// proves them. has_capability() below does mirror the approval rule, reading
+// the persona's profile from the store as the SQL reads profiles.approved.
 
 const CAP = 'events.create'
 const H = 3600 * 1000
@@ -103,9 +111,12 @@ export default {
   },
 
   rpcs: {
+    // Mirrors public.has_capability(): staff, or an APPROVED holder.
     has_capability: ({ args, db, user, persona }) => ({
-      data: !!persona?.isStaff || rows(db, 'member_permissions')
-        .some(r => r.member_id === user?.id && r.capability === args?.p_capability),
+      data: !!persona?.isStaff || (
+        rows(db, 'profiles').some(p => p.id === user?.id && p.approved === true)
+        && rows(db, 'member_permissions')
+          .some(r => r.member_id === user?.id && r.capability === args?.p_capability)),
       error: null,
     }),
 

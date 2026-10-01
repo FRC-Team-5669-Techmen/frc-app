@@ -20,7 +20,9 @@ This page is the human side of it.
 4. **Paste the prompt it hands you** into a NEW session. That session builds the fixes.
 5. **Paste `MARK_SEEN.sql` once** in the Supabase SQL editor. It is inside the zip and
    the round copies it to `docs/feedback/<date>/MARK_SEEN.sql`. It moves the reports in
-   that export from New to Seen, so the next export of New holds only new reports.
+   that export from New to Seen, so the next export of New holds only new reports. It
+   sets the status and the time and names nobody (no reporter, and not the admin who
+   exported it), which is why the round may commit it.
 6. When a build session finishes, it hands back a `MARK_DONE.sql` for the reports it
    fixed. Paste it once, the same way, and paste the next prompt in the queue.
 
@@ -53,6 +55,10 @@ the box before it is sent.
 | Done | Fixed or built. `MARK_DONE.sql` puts reports here. |
 | Won't do | Read and decided against. |
 | Spam | Not a real report. It is a status, not a delete, and can be moved back. |
+
+Every report arrives New. Once 0002 is pasted, the database files a report sent by
+anyone but an admin as New, untriaged and dated when it arrived, whatever the request
+asked for, so nothing can slip in already marked Done or Spam.
 
 Nothing is ever deleted: the table has no delete path for anyone. A move in the console,
 single or bulk, can be undone right after with **Undo**, which puts back exactly the
@@ -100,6 +106,12 @@ other members' names and hours. This repository is public. So the zip, the unpac
 folder, `identities.txt` and any text copied out of `reports.md` are never committed. A
 round's committed files describe reporters by role only (a student, a mentor, an admin),
 and the round checks every committed file against `identities.txt` before it pushes.
+
+A member id is as identifying as a name and no name check would catch one, so the export
+keeps them out of what a round commits. `MARK_SEEN.sql` carries report ids only.
+`digest.txt` always writes a route that held a member id (someone's profile page) as
+`/members/:id`, and with **Names in export** off every file does. With names on,
+`identities.txt` lists every member id the export carries, so the sweep catches one.
 
 ## Rounds
 

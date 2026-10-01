@@ -60,6 +60,30 @@
 --      status the move set), so an undo never overwrites a later change.
 --   Both functions: SECURITY DEFINER, search_path pinned, execute revoked from
 --   public, anon and authenticated BY NAME and granted back to authenticated.
+--   6. A BEFORE INSERT trigger on public.feedback,
+--      feedback_member_insert_defaults (function of the same name). A report
+--      filed by a client that is NOT an admin is filed New, untriaged and
+--      stamped now, whatever the request said:
+--          status := 'new', reviewed_by := null, reviewed_at := null,
+--          created_at := now()
+--      Why: supabase/feedback.sql's "feedback insert own" policy checks only
+--      member_id, so before this a student could POST a report that arrived
+--      already Done / Spam / In progress, "triaged" by any admin's id, and
+--      backdated -- landing outside the New tab and outside every export a
+--      round starts from. The policy is left exactly as it is; the trigger
+--      rewrites the row before the policy's WITH CHECK sees it.
+--      WHO IS CLAMPED: a statement running as the API roles anon or
+--      authenticated whose auth.uid() is not an admin. Not clamped: an admin
+--      (the "feedback update admin" policy already lets an admin set every one
+--      of these columns, so clamping their insert would protect nothing), the
+--      service role, and the SQL editor / table owner / any SECURITY DEFINER
+--      body -- current_user is none of the API roles there. Plain INVOKER
+--      function (is_admin() is already executable by authenticated), search_path
+--      pinned, execute revoked from public, anon and authenticated BY NAME
+--      (a trigger function is never called directly; firing it checks no
+--      EXECUTE privilege).
+--      The widget's insert sends none of these four columns, so it lands
+--      exactly as it did: the default status, no stamp, created now.
 --
 -- WHAT IT DELIBERATELY DOES NOT DO
 --   * It does not revoke the direct UPDATE policy "feedback update admin". The
@@ -70,10 +94,13 @@
 --   * It does not touch the bucket or its policies.
 --
 -- ----------------------------------------------------------------------------
--- TO UNDO (in this order; the update must come first, because the old CHECK
--- cannot be put back while a row holds a value it does not admit):
+-- TO UNDO (in this order; the status update must come before the old CHECK
+-- is put back, because it cannot be while a row holds a value it does not
+-- admit):
 --
 --   begin;
+--   drop trigger if exists feedback_member_insert_defaults on public.feedback;
+--   drop function if exists public.feedback_member_insert_defaults();
 --   drop function if exists public.feedback_restore_status(jsonb, text);
 --   drop function if exists public.feedback_set_status(uuid[], text);
 --   update public.feedback set status = case status
@@ -90,6 +117,9 @@
 --     drop constraint if exists feedback_build_chk;
 --   alter table public.feedback drop column if exists tried, drop column if exists build;
 --   commit;
+--
+-- Dropping the trigger first puts back the frozen behaviour exactly: a member's
+-- insert is again checked on member_id alone.
 --
 -- The undo is lossy in three places and says so: in_progress / done collapse
 -- to 'reviewed' and spam to 'dismissed' (the old vocabulary has nothing finer),
@@ -332,7 +362,66 @@ comment on function public.feedback_restore_status(jsonb, text) is
 revoke all on function public.feedback_restore_status(jsonb, text) from public, anon, authenticated;
 grant execute on function public.feedback_restore_status(jsonb, text) to authenticated;
 
--- ── 6. Self-check: every claim above, read back out of the catalog ──────────
+-- ── 6. A member files New; only an admin triages ────────────────────────────
+-- The frozen "feedback insert own" policy checks member_id and nothing else,
+-- and since section 3 the status CHECK admits in_progress / done / spam. So a
+-- hand-rolled POST from a student could file a report that is already Done,
+-- stamped by any admin's id at any time, with a backdated created_at -- and it
+-- would never show up under New, which is where the console opens and every
+-- feedback round starts. The widget sends none of those columns; this makes
+-- the database say the same thing for everyone who is not an admin.
+--
+-- WHO: current_user is the role the statement runs as. Through the API that is
+-- anon or authenticated (PostgREST switches to the JWT's role), so those two
+-- are the only roles clamped, and only when auth.uid() is not an admin. The
+-- SQL editor (postgres), the service role, a superuser and any SECURITY
+-- DEFINER body run as some other role and keep what they set -- which is what
+-- lets this file's RLS test seed a triaged row, and a service job import one.
+-- (MARK_SEEN.sql and MARK_DONE.sql are UPDATEs; an insert trigger never sees
+-- them.) An admin keeps what they set too: "feedback update admin"
+-- already lets them write every one of these columns, so a clamp there would
+-- only make the insert and the update disagree.
+--
+-- NOT SECURITY DEFINER, on purpose: it needs no privilege the caller lacks
+-- (is_admin() is executable by authenticated and is itself a definer
+-- function), and as an invoker current_user still names the caller. A definer
+-- trigger would see its owner there and clamp nobody.
+--
+-- The status is the literal 'new' rather than "the column default": section 3
+-- sets the default to 'new' and the self-check below fails the file if the two
+-- ever disagree.
+create or replace function public.feedback_member_insert_defaults()
+returns trigger
+language plpgsql
+set search_path = public
+as $fn$
+begin
+  if current_user in ('anon', 'authenticated') and not public.is_admin() then
+    new.status      := 'new';
+    new.reviewed_by := null;
+    new.reviewed_at := null;
+    new.created_at  := now();
+  end if;
+  return new;
+end
+$fn$;
+
+comment on function public.feedback_member_insert_defaults() is
+  'BEFORE INSERT on public.feedback: a report filed through the API by anyone but an admin is filed New, untriaged, created now. Added by 0002_feedback_console.sql.';
+
+-- A trigger function cannot be called directly, and firing one checks no
+-- EXECUTE privilege, so nobody needs it. Revoked by name for the same reason
+-- every other function here is: the bootstrap default privileges granted it.
+revoke all on function public.feedback_member_insert_defaults() from public, anon, authenticated;
+
+-- Replacing a trigger this file itself creates, so drop-if-exists + create is
+-- idempotent and names nothing a later migration owns.
+drop trigger if exists feedback_member_insert_defaults on public.feedback;
+create trigger feedback_member_insert_defaults
+  before insert on public.feedback
+  for each row execute function public.feedback_member_insert_defaults();
+
+-- ── 7. Self-check: every claim above, read back out of the catalog ──────────
 -- Raises, and so rolls the whole file back, if any of them is false.
 do $self$
 declare
@@ -409,6 +498,31 @@ begin
      or has_table_privilege('anon', 'public.feedback', 'SELECT') then
     raise exception '0002: feedback.sql''s revokes are not in force (authenticated DELETE or anon SELECT).';
   end if;
+
+  -- Section 6. tgtype bits: 1 ROW, 2 BEFORE, 4 INSERT, 8 DELETE, 16 UPDATE,
+  -- 32 TRUNCATE -- so exactly "before insert for each row" is 7 with none of
+  -- 8 / 16 / 32. tgenabled 'D' is a disabled trigger, which clamps nothing.
+  if not exists (
+    select 1 from pg_trigger t
+     where t.tgrelid = 'public.feedback'::regclass
+       and t.tgname = 'feedback_member_insert_defaults'
+       and not t.tgisinternal
+       and t.tgenabled <> 'D'
+       and t.tgfoid = 'public.feedback_member_insert_defaults()'::regprocedure
+       and (t.tgtype & 7) = 7 and (t.tgtype & 56) = 0
+  ) then
+    raise exception '0002: the BEFORE INSERT trigger feedback_member_insert_defaults is missing, disabled, or not row-level insert-only.';
+  end if;
+  if (select prosecdef from pg_proc where oid = 'public.feedback_member_insert_defaults()'::regprocedure) then
+    raise exception '0002: feedback_member_insert_defaults must NOT be SECURITY DEFINER: as a definer, current_user is its owner and it clamps nobody.';
+  end if;
+  if not coalesce((select proconfig from pg_proc
+                    where oid = 'public.feedback_member_insert_defaults()'::regprocedure), '{}')
+         @> array['search_path=public'] then
+    raise exception '0002: feedback_member_insert_defaults must pin search_path.';
+  end if;
+  -- (The trigger's literal 'new' agreeing with the column default is the
+  -- status-default check above.)
 end
 $self$;
 
