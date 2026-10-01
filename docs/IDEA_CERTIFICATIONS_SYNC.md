@@ -45,6 +45,14 @@ const { data, error } = await techmen.rpc('idea_cert_sync', {
 })
 ```
 
+**Where a refusal lands in supabase-js.** A refused snapshot is an HTTP 422, and supabase-js turns
+every non-2xx response into `error` with `data` null. So the refusal body described under "What
+comes back" arrives as `error` itself: `error.ok === false`, the problem list is `error.error`,
+and `error.message` is undefined. A wrong secret arrives as an ordinary PostgREST error
+(`error.code === '28000'`). Only `error === null && data?.ok === true` is a success; treat
+anything else as a failure, and log `error.error ?? error.message`, never the request body (it
+carries the secret).
+
 The three values are server-only environment variables on the IDEA side, read through
 `$env/dynamic/private`, **never** `PUBLIC_`-prefixed, never sent to a browser, never logged:
 
