@@ -25,9 +25,18 @@
  *   - the store: reseeded per route (`?__fx=persona:X,mig:all,reset` on the
  *     route itself), so no route's picture depends on which route ran first.
  *
- * The OFF picture of a route is taken in the SAME page load as its ON picture:
- * the class is removed from <html>, two animation frames pass, and the page is
- * photographed again, so the pair differs in nothing but the class.
+ * The OFF picture of a route is a second, FRESH load with the class
+ * suppressed from the first frame (`pinnedContext(..., { suppressPlate })`),
+ * which is the app exactly as the constant set to '' leaves it. Removing the
+ * class from the ON page instead (`setPlate`, kept for quick looks) leaves
+ * traces a fresh load does not: a pointer resting where a click was in the
+ * plated layout, and native selects Chromium does not return to their
+ * unstyled size after a style change within one load.
+ *
+ * Three more pins, each found by a run that did not repeat: the rasteriser
+ * (DETERMINISTIC_ARGS), /_ds photographed as its first screen (fullShot), and
+ * the build stamp, which differs between a checkout and an archive unless the
+ * server runs with VERCEL_GIT_COMMIT_SHA set (docs/SHAPES.md).
  */
 import path from 'node:path';
 import { chromium } from 'playwright-core';

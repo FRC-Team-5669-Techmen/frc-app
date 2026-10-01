@@ -163,7 +163,7 @@
   --tm-led-halo: var(--gold-a24);
   /* The hazard hatch either side of a title: steel chrome, not gold. */
   --tm-hazard: color-mix(in srgb, var(--muted) 72%, var(--border-strong));
-  /* The accent, flat wherever it appears (the lit ring, the LED, a caret). */
+  /* The accent, flat wherever it appears (the lit ring, the LED). */
   --tm-accent: var(--gold);
 }
 
@@ -470,12 +470,12 @@
 }
 
 /* LIT: a toggle key that is ON keeps its own gold fill (small-area gold IS
-   the active state) and gains the accent ring inside its bezel; the wide
-   outline toggles, whose ON is a gold edge on a dark face, get the plate's
-   BROKEN ring, the chamfer detail: the ring breaks at the top right after
-   three ticks and an angled block, and at the bottom left after two ticks.
-   The word, and aria-pressed where the component sets it, say the state
-   too, so the ring is never the only signal. */
+   the active state; a ring drawn on gold would not show). The outline
+   toggles whose ON is a gold edge on a dark face (the sort keys) get the
+   plate's BROKEN ring instead, the chamfer detail: the ring breaks at the
+   top right after three ticks and an angled block, and at the bottom left
+   after two ticks. The gold word says the state too, so the ring is never
+   the only signal. */
 :root.tm-plate :is(.jobs-sort-btn, .roster-sort-btn).active {
   position: relative;
   /* The bezel stays the hairline and the gold moves INSIDE it, to the ring,
