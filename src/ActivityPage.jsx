@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
+import { laDateKey, laMidnightMs } from './hoursUtils'
 import './ActivityPage.css'
 
 // Staff-only live view of today's attendance, plus a manual override control
@@ -14,9 +15,12 @@ export default function ActivityPage({ hasRole = () => false }) {
   const [busy, setBusy]         = useState(false)
   const [pageError, setPageError] = useState('')
 
+  // Today is the shop's day: from Los Angeles midnight, whatever zone the
+  // viewing device is in (a device set to UTC started "today" at 5 PM PDT).
+  // Bounded to one day of the team's events, so it stays far under the API's
+  // row cap and needs no paging.
   const load = useCallback(async () => {
-    const start = new Date()
-    start.setHours(0, 0, 0, 0)
+    const start = new Date(laMidnightMs(laDateKey(Date.now())))
     const { data, error } = await supabase
       .from('attendance_events')
       // Two FKs point at profiles now (user_id, overridden_by) so name the FK
@@ -126,7 +130,7 @@ export default function ActivityPage({ hasRole = () => false }) {
                       </span>
                     </td>
                     <td className="activity-td">
-                      {new Date(ev.event_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                      {new Date(ev.event_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })}
                     </td>
                     <td className="activity-td activity-loc">{(ev.location || '—').replace(/-/g, ' ')}</td>
                   </tr>

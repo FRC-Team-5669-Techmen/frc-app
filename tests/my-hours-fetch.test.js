@@ -1,5 +1,6 @@
-// `src/myHoursFetch.js` -- reading a member's whole attendance ledger past the
-// PostgREST max-rows cap, which truncates an unranged select silently.
+// `src/fetchAllRows.js` (was src/myHoursFetch.js) -- reading a whole
+// attendance ledger, one member's or the team's, past the PostgREST max-rows
+// cap, which truncates an unranged select silently.
 //
 // The fake below behaves like PostgREST: `.range(from, to)` returns at most
 // `maxRows` rows of that window, and an unranged await returns at most
@@ -7,7 +8,7 @@
 // fake really truncates, so "every row came back" means the paging did it.
 
 import { describe, expect, test } from 'vitest'
-import { fetchAllRows } from '../src/myHoursFetch.js'
+import { fetchAllRows } from '../src/fetchAllRows.js'
 
 function fakeTable(n, { maxRows = 1000, failAt = null, ignoreRange = false, noRange = false } = {}) {
   const rows = Array.from({ length: n }, (_, i) => ({ id: `e${String(i).padStart(5, '0')}`, type: i % 2 ? 'out' : 'in' }))
@@ -69,6 +70,20 @@ describe('fetchAllRows', () => {
     const { data, error } = await fetchAllRows(t.makeQuery)
     expect(data).toBe(null)
     expect(error.code).toBe('57014')
+  })
+
+  test('running out of pages before the end is an error, never the rows so far', async () => {
+    // 2,500 rows take three pages of data and an empty fourth that says "done".
+    // Two pages is the oldest 2,000: exactly the short ledger this prevents.
+    const short = fakeTable(2500)
+    const cut = await fetchAllRows(short.makeQuery, { maxPages: 2 })
+    expect(cut.data).toBe(null)
+    expect(cut.error.code).toBe('PAGE_LIMIT')
+    expect(short.calls).toHaveLength(2)
+    // Positive control: the same table with the four pages it needs is whole.
+    const enough = await fetchAllRows(fakeTable(2500).makeQuery, { maxPages: 4 })
+    expect(enough.error).toBe(null)
+    expect(enough.data).toHaveLength(2500)
   })
 
   test('a builder that ignores .range() is read once and the repeat is recognised', async () => {

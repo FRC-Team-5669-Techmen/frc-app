@@ -11,24 +11,19 @@
 // page states separately). The by-category card used to come from a second,
 // private pairing in buildBreakdown that split sessions at 00:00 UTC and lost
 // every one that crossed it; see tests/my-hours-model.test.js.
-import { breakdownFromSessions, isSessionCounted, laDateKey, sumBreakdown, sessionsFromEvents } from './hoursUtils'
+import { breakdownFromSessions, isSessionCounted, laDateKey, laMidnightMs, sumBreakdown, sessionsFromEvents } from './hoursUtils'
 import { effectiveGoal, goalCategoryKeys, hoursTowardGoal, daysPresent } from './accountability'
 
 const DAY_MS = 86_400_000
 const H_MS = 3_600_000
 
-// The instant a Los Angeles calendar date begins (midnight is 07:00Z in PDT,
-// 08:00Z in PST). Logged hours carry a date, not a time; the trend places them
-// at the start of that shop-local day, which is what a phone in the shop did
-// when this read `new Date(date + 'T00:00:00')` in the browser's zone.
-export function laMidnightMs(dateStr) {
-  const [y, m, d] = dateStr.split('-').map(Number)
-  for (const hourUtc of [7, 8]) {
-    const t = Date.UTC(y, m - 1, d, hourUtc)
-    if (laDateKey(t) === dateStr && laDateKey(t - 1) !== dateStr) return t
-  }
-  return Date.UTC(y, m - 1, d, 8)
-}
+// The instant a Los Angeles calendar date begins. Logged hours carry a date,
+// not a time; the trend places them at the start of that shop-local day, which
+// is what a phone in the shop did when this read `new Date(date + 'T00:00:00')`
+// in the browser's zone. It lives beside laDateKey in hoursUtils now (the
+// activity feed's "today" reads it too) and is re-exported for this module's
+// existing importers.
+export { laMidnightMs }
 
 /**
  * @param {object}   rows

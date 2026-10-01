@@ -8,7 +8,7 @@
 // is a stored attendance_events instant (only the duration is capped), never a
 // recomputed or fabricated one.
 
-import { sessionsFromEvents, emptyBreakdown } from './hoursUtils'
+import { sessionsFromEvents, emptyBreakdown, isSessionCounted, laDateKey } from './hoursUtils'
 import { resolveCurrentSeason } from './seasons'
 
 // ── Who may open a history from /display ─────────────────────────────────────
@@ -43,14 +43,32 @@ export function seasonRange(season) {
 }
 
 // ── Grouping ─────────────────────────────────────────────────────────────────
-// The day a session belongs to: its IN instant's UTC calendar date. This is the
-// SAME key the Team Hours matrix buckets by (attendanceHoursByDate reads
-// event_time.slice(0, 10)), which is what lets a matrix cell click find exactly
-// the sessions behind it. It is a UTC date, not an America/Los_Angeles one, so a
-// check-in after 5 PM PDT (4 PM PST) files under the next calendar day; fixing
-// that means moving the matrix and this key together, never this one alone.
+// The day a session belongs to: its IN instant's America/Los_Angeles calendar
+// date (laDateKey, the one day rule in hoursUtils), so a check-in at 8 PM PDT
+// files under the day it happened on, not the next UTC date, and a session that
+// runs past 5 PM PDT (00:00 UTC) stays one session on one day. The Team Hours
+// matrix buckets by THIS function too (hoursByDay below), which is what lets a
+// matrix cell click open exactly the sessions behind that cell: the two cannot
+// disagree because there is only one key. It is the same LA date the By member
+// totals put a session's season by (breakdownFromSessions), so the matrix row
+// total and the By member total count the same sessions.
 export function sessionDayKey(session) {
-  return session.inTime.toISOString().slice(0, 10)
+  return laDateKey(session.inTime)
+}
+
+// Hours per day for one member, from the same sessions and the same day key as
+// historyByDay: every counted session (not under a pending/voided review),
+// open ones counted up to now, capped, all categories. The Team Hours matrix
+// is a coach timesheet of physical presence, so the category split lives in the
+// By member table and the drill-down, not here. Returns { 'YYYY-MM-DD': hours }.
+export function hoursByDay(events, excluded = null) {
+  const out = {}
+  for (const s of sessionsFromEvents(events ?? [])) {
+    if (!isSessionCounted(s, excluded)) continue
+    const key = sessionDayKey(s)
+    out[key] = (out[key] ?? 0) + s.ms / 3600000
+  }
+  return out
 }
 
 export function dayInRange(day, range) {
