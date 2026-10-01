@@ -17,24 +17,29 @@ import './AttendanceHistory.css'
 // neither, so a history opened on a shared /display screen can never write.
 export default function AttendanceHistory({
   name, subtitle, day = null, groups, loading = false, error = '',
-  onClose, headActions = null, rowActions = null,
+  onClose, headActions = null, rowActions = null, covered = false,
 }) {
   const titleId = useId()
   const closeRef = useRef(null)
   const dialogRef = useRef(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
+  const coveredRef = useRef(covered)
+  coveredRef.current = covered
   const totals = useMemo(() => (groups ? historyTotals(groups) : null), [groups])
 
   // Keyboard: focus lands on Close when the history opens, Escape closes it,
   // and focus goes back to whatever opened it (the name button on /display).
-  // Escape is ignored while focus sits in another dialog stacked over this one
-  // (HoursBoard's adjust panel), so it never closes the history underneath.
+  // Escape never closes the history from under another dialog stacked over it
+  // (HoursBoard's adjust panel). The caller says so with `covered`, because
+  // focus alone cannot: opening the panel leaves focus on the history's own
+  // "+ Manual session" / Edit / Void button, and a click on the panel's blank
+  // area drops it to <body>. Focus sitting in some other dialog counts too.
   useEffect(() => {
     const opener = document.activeElement
     closeRef.current?.focus({ preventScroll: true })
     const onKey = e => {
-      if (e.key !== 'Escape' || e.defaultPrevented) return
+      if (e.key !== 'Escape' || e.defaultPrevented || coveredRef.current) return
       const a = document.activeElement
       if (a && a !== document.body && !dialogRef.current?.contains(a)) return
       onCloseRef.current()
