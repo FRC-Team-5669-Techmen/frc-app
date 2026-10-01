@@ -87,12 +87,19 @@ effect twice in dev) has time to land and fail the "exactly one" assertion.
 | R7 | the same URL again in the SAME tab (a browser that reuses the tab for a repeat tap) | `Checked in since`, never `CHECKED OUT` | 0 writes, **against** 1 `out` from one tap: the known cost of the fix (one tap instead of zero on such a phone), pinned so it cannot change silently |
 | R8 | a check-in receipt brought back while `claim_profile` (re-run by App on the `SIGNED_IN` every tab return emits) fails once (`__fx.failNext`) | receipt still `CHECKED IN`, no access gate (`.gate-wrap`) | 0 writes, the failure confirmed as what the call answered; **control** in the same step: a real `false` from the same call shows the gate, and the real `true` after it brings back `Checked in since` (0 writes) |
 | R9 | a fresh tag tap (new tab) while checked in, whose two concurrent BOOT `claim_profile` calls (getSession and INITIAL_SESSION) answer a real `true` and then a failure (answers queued by an init script as the tab boots, armed by the one-shot `localStorage.__e2e_boot_claims`) | `CHECKED OUT`, no access gate (`.gate-wrap`) | exactly 1 `out`, and the answers confirmed as `injected ok` then `injected error`; **control** in the same step: the same tap with a real `false` first shows the gate and writes 0 |
+| R10 | a mentor (no application row) checked in on `/dashboard`; the tab comes back while App's `member_roles` read fails (an answer queued on the page's own client, `window.__fx.supabase.from`; on `/dashboard` App is the only `member_roles` reader) | `Checked in` with its Check Out button, no application form (`.ma-wrap`) | 0 writes; **control** in the same step: a real empty answer shows the form, the real roles bring the dashboard back (0 writes), then one tap writes exactly 1 `out` |
 | V1 | the FLL tag over an open BUILD session | `Tap to switch to volunteer hours`, `You have a normal session open`; after the tap `VOLUNTEER · CHECKED IN` and `Switched from a normal session to volunteer.` | arrival: 0 writes; the tap: an `out` then an `in` (category `volunteer`, `geo_ok` true) |
 | V2 | `reload()` of V1's volunteer receipt after 61 s | `Volunteering since` and a Check out button | 0 writes, **against** 1 `out` (category `volunteer`) from that tap |
 | V3 | volunteer check-in, VIEW STATUS, `goBack()` | `Volunteering since` | 0 writes, **against** 1 `out` from a fresh volunteer tap in a new tab, no confirm |
 | g | signed out, `/checkin?loc=shop-main` (one tab throughout) | lands on `/login` | `sessionStorage.pendingCheckin` = `/checkin?loc=shop-main`, 0 writes, **against** signing in returning the visitor to that exact check-in |
 | M | its own context at **12:30 AM** LA: Sam's only recent event is an IN at 11:40 PM; then the same row moved to 1:40 PM the day before | tile `Checked in`, Sam `pb-present` on `/display` (as the mentor), the Team pulse count; then `Not checked in`, `pb-absent` | the board and the glance counts each move by exactly 1 between the two (the board and the glance read from `presenceSinceISO()`; from local midnight they dropped Sam while his tile said Checked in) |
-| z | the whole run, every tab | -- | 0 unexpected console errors |
+| z-touch | every full-page shot at 375 (that width only) | -- | each tab reads `(pointer: coarse)` and `maxTouchPoints` 1 after the shot's restore; the line counts the shots that had dropped to a fine pointer before it |
+| z-console | the whole run, every tab | -- | 0 unexpected console errors |
+
+The step column is the start of each result id in `checkin.mjs` (`a` is
+`a-nfc-checkin`, `M` is `M-midnight-presence`). Each width runs the 23 steps
+from `a` to `g`, plus `M` and `z-console`; `z-touch` runs at 375 only. A full
+run is therefore 26 results at 375 and 25 at 1440, 51 in all.
 
 It prints exactly one summary line, `checkin e2e: N/N passed (375 and 1440)`,
 exits non-zero on any failure, and writes one screenshot per step (and per
@@ -110,7 +117,9 @@ gate replaces the receipt); `App.jsx` reading the held approval BEFORE the
 claim call rather than after its answer (the first committed version of the
 claim fix) fails R9 at both widths ("a failed boot claim after a yes replaced
 the tag page with the access gate", 46/48) while R8 still passes, which is why
-R9 is its own step.
+R9 is its own step; `App.jsx` at `9543e90` (roles set to `[]` on a
+`member_roles` read error) fails R10 at both widths ("a member_roles error as
+the tab came back put the mentor behind the application form", 49/51).
 
 Things learned getting it to measure, each a trap for the next harness:
 

@@ -44,18 +44,24 @@ to an install step that cannot.
 
 ## What it covers, and what it cannot
 
-**It drives ONE route, and that is the honest state of this repo rather than a
-starting set.** `/_ds`, the design-system specimen, is the only route in this
-app that renders without a real Supabase session: it is dev-only, touches no
-table, and is let through both auth gates by a path check scoped to it.
+**It drives ONE route: `/_ds`, the design-system specimen**, which renders
+with no Supabase session at all: it is dev-only, touches no table, and is let
+through both auth gates by a path check scoped to it.
 
-Everything else -- `/dashboard`, `/jobs`, `/hours`, `/schedule`,
-`/verify-hours`, `/surveys`, `/feedback` -- sits behind a real Google or OTP
-sign-in against the live project. There is no `/dev` route family here and no
-committed fixture-mounting harness. **Growing this list means building that
-first**: a dev-only route family that mounts real components with fixture data,
-or a committed stub-alias mode. That is the next step, and it is named here
-rather than half-started.
+**Every other route is driven by fixture mode, not by this harness** (since
+2026-10-01). `npm run dev:fixture` resolves `src/supabase.js` to an in-memory
+fake Supabase seeded with fictional people (`src/dev/fixture/README.md`), so
+`/dashboard`, `/hours`, `/schedule`, `/feedback` and the rest render signed in
+as any fixture persona, with any numbered migration on or off.
+[`tools/e2e/README.md`](../e2e/README.md) documents the tools that drive it:
+`npm run test:checkin` (the check-in and check-out E2E), `npm run test:features`
+(the feature specs), `shoot.mjs` (screenshots of any route) and the plate
+harness. Fixture mode models no write-side RLS and no triggers, so it proves
+nothing about a write boundary or the live database. The checks in this harness
+(`checks.mjs`: contrast, tap targets, horizontal scroll) have not been pointed
+at those routes yet, and whether such a pass should block a branch is
+`docs/decisions/25-browser-checks-blocking.md`; that is the next step for this
+file, and it is named here rather than half-started.
 
 **A route is only as good as the state it mounts in.** `/_ds` renders inside the
 app shell, so it inherits `theme.css` and the app's `:root` tokens. That is not
