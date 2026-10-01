@@ -76,13 +76,26 @@
   max-width: 10rem;
 }
 
-/* ── Category pills ──
-   No default selection: the ask covers any kind of report, so forcing a guess
-   is friction. The submit stays disabled until one is picked. */
+/* Field labels. "optional" is in the label rather than only a placeholder,
+   because a placeholder disappears the moment somebody starts typing. */
+.fb-label {
+  margin-bottom: -0.3rem;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--steel);
+}
+
+/* ── Type pills ──
+   No default selection, and none is required: Send is live as soon as there
+   is a message. Tapping the chosen type again clears it. Every control in
+   this panel is at least 44px tall, because it is used on a phone in the
+   shop. */
 .fb-cats { display: flex; gap: 0.35rem; }
 
 .fb-cat {
   flex: 1;
+  min-height: 44px;
   padding: 0.35rem 0.2rem;
   font-family: var(--font-ui);
   font-size: 0.75rem;
@@ -110,9 +123,23 @@
   border-radius: var(--radius-sm);
 }
 .fb-text:focus { outline: none; border-color: var(--gold-dim); }
+.fb-text-tried { font-size: 0.8rem; }
+
+/* What is captured automatically, shown before it is sent. */
+.fb-context {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  line-height: 1.45;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
 
 /* ── Attach area ── */
 .fb-drop {
+  min-height: 44px;
+  display: grid;
+  place-items: center;
   padding: 0.7rem 0.6rem;
   text-align: center;
   border: 1px dashed var(--border-strong);
@@ -139,29 +166,42 @@
   position: relative;
   width: 3.6rem;
   height: 3.6rem;
+  margin: 0.45rem 0.45rem 0 0;
+}
+/* The image carries the frame and the clipping, NOT the thumb: clipping on the
+   thumb would also clip the remove button's widened hit area. */
+.fb-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  overflow: hidden;
 }
-.fb-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .fb-thumb-x {
   position: absolute;
-  top: 0;
-  right: 0;
-  width: 1.1rem;
-  height: 1.1rem;
+  top: -0.6rem;
+  right: -0.6rem;
+  width: 1.75rem;
+  height: 1.75rem;
   display: grid;
   place-items: center;
-  font-size: 0.85rem;
+  font-size: 1rem;
   line-height: 1;
   color: var(--text);
-  background: rgba(0, 0, 0, 0.72);
-  border: none;
-  border-bottom-left-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
   cursor: pointer;
 }
-.fb-thumb-x:hover { color: var(--fault); }
+.fb-thumb-x:hover { color: var(--fault); border-color: var(--fault); }
+/* 1.75rem visible, widened to 2.75rem (44px) for a finger. */
+.fb-thumb-x::after {
+  content: '';
+  position: absolute;
+  inset: -0.5rem;
+}
 
 .fb-error {
   margin: 0;
@@ -171,6 +211,7 @@
 }
 
 .fb-submit {
+  min-height: 44px;
   padding: 0.5rem;
   font-family: var(--font-ui);
   font-size: 0.8rem;
