@@ -7,6 +7,7 @@ import { displayName } from './names'
 // on that one job so an unrelated edit doesn't silently retag it.
 import { SUBTEAMS, isSubteam } from './subteams'
 import { fetchAllRows } from './fetchAllRows'
+import { laDateKey } from './hoursUtils'
 import './JobsPage.css'
 
 // Derived display status (richer than tasks.status) → label + color class.
@@ -37,7 +38,8 @@ const CLAIM_LABELS = {
 
 const fmtDue = d =>
   d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null
-const todayStr = () => new Date().toISOString().slice(0, 10)
+// The LA calendar date, so a job due today is not flagged overdue after 5 PM PDT.
+const todayStr = () => laDateKey(Date.now())
 
 const fmtWhen = iso =>
   new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
