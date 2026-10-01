@@ -277,11 +277,21 @@
 }
 
 /* The account control is NOT framed (the avatar stays the round picture it
-   is everywhere); its box grows to the 44px floor around it. */
+   is everywhere); its box grows to the 44px floor around it. The growth is
+   hit area only: a negative margin of half the difference keeps the box's
+   footprint at the picture's own 30px, so the header lays out exactly as it
+   did (a 44px footprint took 14px from the wordmark, which then truncated
+   beside the longest context tag at 375). The pending dot stays on the
+   picture's rim, not in the box's corner. */
 :root.tm-plate .nav-avatar-btn {
   min-width: var(--tm-target);
   min-height: var(--tm-target);
   justify-content: center;
+  margin: calc((1.875rem - var(--tm-target)) / 2);
+}
+:root.tm-plate .nav-avatar-dot {
+  top: calc((var(--tm-target) - 1.875rem) / 2 - 1px);
+  right: calc((var(--tm-target) - 1.875rem) / 2 - 1px);
 }
 
 /* --------------------------------------------------------------------------
@@ -290,12 +300,28 @@
       already does. Colour stays each label's own (gold where it is
       identity, steel or muted where it is a caption).
    -------------------------------------------------------------------------- */
-:root.tm-plate :is(.hud-label, .mb-tile-eyebrow, .mb-stat-label, .nav-dropdown-section, .sch-label, .sch-form-title, .mh-section-label, .mh-stat-label, .mh-modal-label, .lh-label, .lh-stat-label, .profile-label, .study-stat-label, .study-strip-label, .gate-label, .ma-label, .np-eyebrow, .np-quiet-label, .ph-eyebrow, .ph-stat-label, .ph-certs-label, .landing-eyebrow, .landing-section-label, .board-total-label, .board-adjust-label, .jobs-sort-label, .jobs-label, .msh-eyebrow, .msh-section-label, .msp-section-label, .checkin-cats-label, .sv-count, .squad-label, .roster-sort-label, .roster-detail-label, .rp-label, .sa-label, .an-label, .an-section-label, .ap-stat-label, .ap-topchoices-label, .vh-cutoff-label, .vh-anom-fix-label, .mha-fix-label, .ah-chip-label, .cp-picker-label, .sc-label) {
+:root.tm-plate :is(.hud-label, .mb-tile-eyebrow, .mb-stat-label, .nav-dropdown-section, .sch-label, .sch-form-title, .mh-section-label, .mh-stat-label, .mh-modal-label, .lh-label, .lh-stat-label, .profile-label, .study-stat-label, .study-strip-label, .gate-label, .ma-label, .np-eyebrow, .np-quiet-label, .ph-eyebrow, .ph-stat-label, .ph-certs-label, .landing-eyebrow, .landing-section-label, .board-total-label, .board-adjust-label, .jobs-sort-label, .jobs-label, .msh-eyebrow, .msh-section-label, .msp-section-label, .checkin-cats-label, .sv-count, .squad-label, .roster-sort-label, .roster-detail-label, .rp-label, .sa-label, .an-label, .an-section-label, .ap-stat-label, .ap-topchoices-label, .vh-cutoff-label, .vh-anom-fix-label, .mha-fix-label, .ah-chip-label, .cp-picker-label, .sc-label,
+  .mh-card-title, .lh-section-heading, .profile-section-heading, .mp-section-heading, .fb-label, .ic-panel-h, .jobs-coverage-title, .jobs-thread-title, .cp-cat-name) {
   font-family: var(--font-mono);
   font-size: var(--tm-label-size);
   font-weight: 400;
   letter-spacing: var(--tm-label-track);
   text-transform: uppercase;
+}
+/* The certification card's fact names (DEFINITION, ALLOWS, RENEWAL) are the
+   same label as the HOLDERS head beside them; an element, so a rule of its
+   own rather than a compound argument in the shared class list. */
+:root.tm-plate .ic-facts dt {
+  font-family: var(--font-mono);
+  font-size: var(--tm-label-size);
+  font-weight: 400;
+  letter-spacing: var(--tm-label-track);
+  text-transform: uppercase;
+}
+/* Sibling stat labels wrap alike: at 11px mono each fits its column on one
+   line at 375 ("THIS WEEK" is about 63px). */
+:root.tm-plate :is(.mh-stat-label, .lh-stat-label) {
+  white-space: nowrap;
 }
 
 /* --------------------------------------------------------------------------
@@ -349,10 +375,15 @@
    --border-strong takes the load-bearing hairline instead. Its hover, focus,
    pressed and on states are left to the component, so a gold hover edge and
    a gold "on" edge are exactly what they were; the identity keys (gold
-   border, fault border) are not in this list at all. */
+   border, fault border) are not in this list at all, and a listed key whose
+   MODIFIER carries an identity edge (the survey editor's go and danger keys,
+   the PDF key, a chosen parent answer, the feedback dialog's gold Copy key) is
+   excluded by name. tools/e2e/plate/identity.mjs reads every edge on every
+   page on and off and fails on any identity edge this rule repaints; it found
+   the last three of those. */
 :root.tm-plate :is(
   .mb-rsvp-btn, .sch-cancel, .sch-edit, .sch-del, .sch-rsvp-btn, .sch-past-toggle, .sch-nav-btn, .sch-today-btn, .sch-weekday, .sch-scope-opt,
-  .jobs-cancel-btn, .jobs-sort-btn, .jobs-link-remove, .jobs-claimtype-opt,
+  .jobs-cancel-btn, .jobs-sort-btn, .jobs-link-remove, .jobs-link-add, .jobs-img-upload, .jobs-claimtype-opt,
   .lh-delete-btn, .lh-corr-btn, .lh-modal-cancel, .mh-session-flagbtn, .mh-modal-cancel,
   .board-tab, .board-mini-btn, .board-adjust-cancel, .profile-cal-copy, .profile-cal-regen,
   .sv-opt, .sv-tick, .msp-certify-btn, .pr-choice, .fb-cat, .ma-chip, .ma-check, .ma-back,
@@ -360,8 +391,20 @@
   .mha-change, .mha-btn, .rd-refresh, .rp-btn, .rp-catchip, .role-chip, .roster-perm-toggle, .roster-sort-btn, .roster-modal-cancel,
   .sc-cancel-btn, .sc-reorder-btn, .sc-edit-btn, .sc-delete-btn, .squad-cancel-btn,
   .sa-btn, .sa-mini, .sa-tab, .sa-chip, .vh-dur-btn, .board-goal-cat, .jobs-skill-chip, .profile-subteam-chip, .checkin-cat
-):not(:hover, :focus, :disabled, :active, .on, .active, [aria-pressed='true'], .an-chip-on, .fbp-tab-on, .sa-tab-on, .sa-chip-on, .mha-btn-on, .mha-btn-danger, .mha-btn-go, .an-btn-danger, .an-btn-go, .board-tab-active, .chip-on, .role-on, .ma-chip-on, .checkin-cat-on, .fb-cat-on, .sv-opt-on, .sv-tick-on) {
+):not(:hover, :focus, :disabled, :active, .on, .active, [aria-pressed='true'], .an-chip-on, .fbp-tab-on, .sa-tab-on, .sa-chip-on, .mha-btn-on, .mha-btn-danger, .mha-btn-go, .an-btn-danger, .an-btn-go, .board-tab-active, .chip-on, .role-on, .ma-chip-on, .checkin-cat-on, .fb-cat-on, .sv-opt-on, .sv-tick-on, .pr-choice-on, .rp-btn-print, .sa-btn-go, .sa-btn-danger):not(:where(.fbp-actions) *) {
   border-color: var(--tm-hair-top) var(--tm-hair) var(--tm-hair);
+}
+/* "+ Add link" and "+ Upload image" were dashed outlines, the drop-zone
+   signal; drawn as raised keys they keep a solid edge, so a key never sends
+   both signals at once. */
+:root.tm-plate :is(.jobs-link-add, .jobs-img-upload) {
+  border-style: solid;
+}
+/* Stretched full width in the job form, the image key centres its word like
+   the link key above it; shrink-wrapped in the update composer it is
+   unchanged. */
+:root.tm-plate .jobs-img-upload {
+  justify-content: center;
 }
 
 /* ACCENT keys are the one flat gold face (gradients on greys only): the
@@ -448,24 +491,31 @@
    the ONLY !important in the file, and it moves a corner, nothing else. */
 :root.tm-plate .checkin-wrap > button {
   border-radius: var(--tm-r-control) !important;
+  /* The gold key sits in the same dark tray as every other accent key
+     (Check Out on the dashboard, Submit, + New Event): no grey ring around a
+     gold face, so the two keys a student taps to check in and out are one
+     material. */
   box-shadow:
-    0 0 0 1px var(--tm-hair),
     inset 0 2px 0 -1px var(--tm-bezel-hi),
     inset 0 -3px 3px -1px var(--tm-foot),
-    0 0 0 2px var(--tm-rim-out),
+    0 0 0 1px var(--tm-rim-out),
     0 2px 3px 0 var(--tm-drop),
     0 6px 10px -5px var(--tm-drop-far);
 }
 :root.tm-plate .checkin-wrap > button:active:not(:disabled) {
   box-shadow:
-    0 0 0 1px var(--tm-hair),
+    0 0 0 1px var(--tm-rim-out),
     inset 0 3px 4px 0 var(--tm-press),
     inset 0 -1px 0 0 var(--tm-bezel-hi);
 }
 
 /* A SMALL KEY is a chip that is pressable (a toggle chip, a per-row button):
-   the chip's radius, the key's material. */
-:root.tm-plate :is(.board-goal-cat, .jobs-skill-chip, .profile-subteam-chip, .checkin-cat, .ma-chip, .rp-catchip, .sa-chip, .an-chip, .role-chip, .mh-session-flagbtn, .lh-delete-btn, .lh-corr-btn, .msp-certify-btn, .sc-reorder-btn, .sc-edit-btn, .sc-delete-btn, .sa-mini, .ap-row-resend, .fbp-rowcopy, .fbp-act, .fbp-move, .fbp-part) {
+   the chip's radius, the key's material. Only keys that stay SHORT belong
+   here: at 11px a key under about 30px tall reads as a capsule, a status
+   pill. A per-row key the 44px floor raises (My Hours' FLAG, Log Hours'
+   Delete and Request correction) is a full control and keeps the control's
+   corner beside its siblings. */
+:root.tm-plate :is(.board-goal-cat, .jobs-skill-chip, .profile-subteam-chip, .checkin-cat, .ma-chip, .rp-catchip, .sa-chip, .an-chip, .role-chip, .roster-perm-toggle, .msp-certify-btn, .sc-reorder-btn, .sc-edit-btn, .sc-delete-btn, .sa-mini, .ap-row-resend, .fbp-rowcopy, .fbp-act, .fbp-move, .fbp-part, .board-mini-btn, .board-adjust-btn, .vh-btn-sm) {
   border-radius: var(--tm-r-small);
 }
 
@@ -527,8 +577,15 @@
 :root.tm-plate :is(.board-viewtoggle, .msh-toggle, .cp-seg) {
   overflow: hidden;
 }
+/* The 44px segments fill their track (no inner padding), so the well is the
+   segments' height plus its own hairline and sits level with a 44px key
+   beside it; each segment takes the track's inner radius. No overflow clip:
+   the gold focus ring is drawn 2px outside a segment and must not be cut. */
+:root.tm-plate :is(.sch-viewtabs, .profile-cal-scope) {
+  padding: 0;
+}
 :root.tm-plate :is(.sch-viewtab, .profile-cal-tab) {
-  border-radius: calc(var(--tm-r-control) - 3px);
+  border-radius: calc(var(--tm-r-control) - 1px);
 }
 :root.tm-plate :is(.sch-viewtab, .profile-cal-tab, .board-viewbtn, .msh-toggle-btn, .cp-seg-btn):is(.on, .active, .cp-seg-active) {
   box-shadow:
@@ -548,7 +605,7 @@
   .role-badge, .navbar-context, .checkin-header-tag, .mb-status, .board-pill, .board-total-chip, .ah-chip, .lh-type-chip, .lh-status-chip,
   .mh-session-flag, .mh-corr-status, .jobs-row-pill, .jobs-status, .jobs-skill-badge, .jobs-group-tag, .jobs-claim-state, .jobs-group-count,
   .sch-kind, .sch-series-tag, .sch-jobdue-flag, .sch-full-tag, .sch-mandatory-tag,
-  .ph-badge, .ph-cert-chip, .ph-req-chip, .msh-req-chip, .pb-tag, .ic-pill, .ic-retired, .mp-subteam, .subteam-chip,
+  .ph-badge, .ph-cert-chip, .ph-req-chip, .msh-req-chip, .pb-tag, .ic-pill, .ic-retired, .mp-subteam, .mp-discipline, .mp-position, .subteam-chip,
   .roster-perm-tag, .roster-domain-chip, .roster-pending-tag, .roster-role-tag, .rd-count, .rd-tag, .rd-atrisk-chip, .rd-pill, .rd-cert-count,
   .rp-chip, .squad-count, .sa-pill, .vh-badge, .vh-type-chip, .vh-anom-kind, .an-pill, .an-bot-tag, .ap-tag, .ap-badge, .ar-count,
   .fbp-status, .mha-count, .mha-status, .activity-badge, .activity-type, .cm-member-count, .sc-cat-count, .sc-badge-safety, .sc-cat-safety, .msp-safety-badge
@@ -571,10 +628,10 @@
   .mh-summary, .mh-card, .mh-season-card, .lh-summary, .lh-form-card, .lh-entry,
   .profile-card, .np, .study-card, .study-goal, .study-table-wrap, .sv-card, .sv-q,
   .jobs-form-card, .jobs-queue, .jobs-card, .board-table-wrap, .board-adjust, .mp-id-card, .msp-category, .msh-request,
-  .ic-cert, .ic-empty, .ph-card, .ph-team, .ph-link, .ph-empty, .landing-card, .login-card, .gate-card, .pr-note, .eb-card, .checkin-panel,
-  .ar-invite, .ar-card, .activity-override, .activity-table-wrap, .an-card, .an-preview, .ap-stat, .ap-table-wrap, .cp-picker-row,
-  .fbp-item, .fbp-bulkbar, .fbp-export, .mha-panel, .rd-card, .roster-domains, .roster-list, .squad-card, .squad-form-card,
-  .sa-new, .sa-item, .sa-res, .vh-card, .sc-form-card, .ma-card
+  .ic-cert, .ic-empty, .ph-card, .ph-team, .ph-link, .ph-empty, .landing-card, .login-card, .pr-note, .eb-card, .checkin-panel,
+  .ar-invite, .ar-card, .activity-override, .activity-table-wrap, .an-card, .an-preview, .ap-stat, .ap-table-wrap, .cp-picker-row, .cp-category,
+  .fbp-item, .fbp-bulkbar, .fbp-export, .mha-panel, .rd-card, .rp-table-wrap, .roster-domains, .roster-list, .squad-card, .squad-form-card,
+  .sa-new, .sa-item, .sa-res, .sa-manage-row, .vh-card, .sc-form-card, .ma-card
 ) {
   border-radius: var(--tm-r-panel);
   background-image: linear-gradient(to bottom, var(--tm-panel-sheen), transparent 4rem);
@@ -592,12 +649,59 @@
   .mh-summary, .mh-card, .mh-season-card, .lh-summary, .lh-form-card, .lh-entry,
   .profile-card, .np, .study-card, .study-goal, .study-table-wrap, .sv-card, .sv-q,
   .jobs-form-card, .jobs-queue, .jobs-card, .board-table-wrap, .board-adjust, .mp-id-card, .msp-category, .msh-request,
-  .ic-cert, .ic-empty, .ph-card, .ph-team, .ph-link, .landing-card, .login-card, .gate-card, .pr-note, .eb-card, .checkin-panel,
-  .ar-invite, .ar-card, .activity-override, .activity-table-wrap, .an-card, .an-preview, .ap-stat, .ap-table-wrap, .cp-picker-row,
-  .fbp-item, .fbp-bulkbar, .mha-panel, .rd-card, .roster-domains, .roster-list, .squad-card, .squad-form-card,
-  .sa-new, .sa-item, .sa-res, .vh-card, .sc-form-card, .ma-card
-):not(:hover, .mb-role-student, .mb-alert, .sa-item-on, .checkin-panel-amber, .sch-confirm) {
+  .ic-cert, .ic-empty, .ph-card, .ph-team, .ph-link, .landing-card, .login-card, .pr-note, .eb-card, .checkin-panel,
+  .ar-invite, .ar-card, .activity-override, .activity-table-wrap, .an-card, .an-preview, .ap-stat, .ap-table-wrap, .cp-picker-row, .cp-category,
+  .fbp-item, .fbp-bulkbar, .mha-panel, .rd-card, .rp-table-wrap, .roster-domains, .roster-list, .squad-card, .squad-form-card,
+  .sa-new, .sa-item, .sa-res, .sa-manage-row, .vh-card, .sc-form-card, .ma-card
+):not(:hover, .mb-role-student, .mb-alert, .sa-item-on, .checkin-panel-amber, .sch-confirm, .ar-card, .jobs-queue, .sch-jobdue-item, .sa-manage-danger) {
   border-color: var(--tm-panel-edge);
+}
+/* A panel whose LEFT edge is an accent rail (a pending request's gold-dim,
+   the jobs review queue's gold, an overdue job's fault red) takes the panel
+   edge on its other three sides only, and its left corners stay tight so the
+   rail runs straight instead of curling round a 12px corner. */
+:root.tm-plate :is(.ar-card, .jobs-queue, .sch-jobdue-item):not(:hover) {
+  border-top-color: var(--tm-panel-edge);
+  border-right-color: var(--tm-panel-edge);
+  border-bottom-color: var(--tm-panel-edge);
+}
+:root.tm-plate :is(.ar-card, .jobs-queue, .sch-jobdue-item, .fbp-export) {
+  border-top-left-radius: var(--tm-r-small);
+  border-bottom-left-radius: var(--tm-r-small);
+}
+/* Nested parts take the scale's smaller steps: a count tile inside a panel
+   is a pad, and the compose card's sub-panels (the poll and embed editors,
+   the message preview, the checks list, the status banner) are 5px parts
+   inside a 12px housing. */
+:root.tm-plate .rd-bucket {
+  border-radius: var(--tm-r-pad);
+}
+:root.tm-plate :is(.an-sub-card, .an-msg, .an-errors) {
+  border-radius: var(--tm-r-small);
+}
+:root.tm-plate .an-status-line {
+  border-top-right-radius: var(--tm-r-small);
+  border-bottom-right-radius: var(--tm-r-small);
+}
+/* The skills catalog's category group is a header key above its table: the
+   pair takes one panel's corners and casts one panel's shadow, so it reads
+   as the same expandable group as a certification card. */
+:root.tm-plate .sc-category {
+  border-radius: var(--tm-r-panel);
+  box-shadow:
+    0 1px 2px 0 var(--tm-drop),
+    0 8px 14px -6px var(--tm-drop),
+    -2px 18px 30px -14px var(--tm-drop-far);
+}
+:root.tm-plate .sc-cat-header {
+  border-radius: var(--tm-r-panel);
+}
+:root.tm-plate .sc-cat-header[aria-expanded='true'] {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+:root.tm-plate .sc-table-wrap {
+  border-radius: 0 0 var(--tm-r-panel) var(--tm-r-panel);
 }
 /* The YOU tile's gold corner brackets are this app's identity ornament; the
    tile's radius stays under them so a bracket never floats off a rounded
@@ -652,13 +756,41 @@
     inset 2px 0 0 0 var(--tm-accent);
 }
 :root.tm-plate .nav-dropdown-section {
-  padding: var(--tm-s3) var(--tm-s3) var(--tm-s1);
+  padding: var(--tm-s2) var(--tm-s3) var(--tm-s1);
 }
+/* The menu is a flex column that scrolls once it is taller than the screen
+   (the admin avatar menu, at 44px a row). Nothing in it may shrink to make
+   room: a divider's min-height is 0, so it was the first thing squeezed, and
+   all three vanished exactly when the menu overflowed. */
+:root.tm-plate .nav-dropdown-menu > * {
+  flex-shrink: 0;
+}
+/* A divider is an engraved groove: a dark line with a light lip under it. The
+   lip is the panel edge, the one light here strong enough to read on the
+   menu's --surface (2.1:1). */
 :root.tm-plate .nav-dropdown-divider {
   height: 2px;
   margin: var(--tm-s2) var(--tm-s1);
   background: var(--tm-groove-dk);
-  box-shadow: 0 1px 0 0 var(--tm-groove-lt);
+  box-shadow: 0 1px 0 0 var(--tm-panel-edge);
+}
+/* SIGN OUT IS ALWAYS IN REACH. When the avatar menu scrolls, its last row
+   sticks to the housing's foot with the menu's own face behind it and a lit
+   seam above it, so the one control every member needs is never below the
+   fold and the rows above visibly run on under it. */
+:root.tm-plate .nav-avatar-menu .nav-signout-item {
+  position: sticky;
+  bottom: calc(-1 * var(--tm-s2));
+  z-index: 1;
+  box-shadow:
+    0 -1px 0 0 var(--tm-panel-edge),
+    0 -10px 10px -8px var(--tm-drop);
+}
+:root.tm-plate .nav-avatar-menu .nav-signout-item:not(:hover) {
+  background-color: var(--surface);
+}
+:root.tm-plate .nav-avatar-menu .nav-signout-item:hover {
+  background: linear-gradient(var(--fault-a10), var(--fault-a10)), var(--surface);
 }
 /* The feedback launcher stays a round key: the material, not the corner. */
 :root.tm-plate .fb-launch {
@@ -688,6 +820,15 @@
 :root.tm-plate :is(input:is([type='text'], [type='search'], [type='email'], [type='url'], [type='number'], [type='date'], [type='time'], [type='datetime-local'], [type='password'], [type='tel'], :not([type])), select, textarea):not(:where(.frc-deck) *):not(:focus, :hover, :disabled) {
   border-color: var(--tm-hair);
 }
+/* A survey option's radio ring and checkbox square are small wells with the
+   load-bearing hairline: on the option key's lighter pillow face the old
+   --border-strong ring measured 1.07:1 and vanished, and the ring against
+   the square is what tells a one-answer question from a many-answer one.
+   The ON mark keeps its gold fill. */
+:root.tm-plate .sv-opt:not(.sv-opt-on) .sv-mark {
+  border-color: var(--tm-hair);
+  box-shadow: inset 0 1px 1px 0 var(--tm-well-shade);
+}
 /* A drop zone is a well too: dashed stays dashed, it just sits in. */
 :root.tm-plate :is(.fb-drop) {
   border-radius: var(--tm-r-small);
@@ -700,7 +841,7 @@
 /* --------------------------------------------------------------------------
    10. THE PAGE TITLE: a title bar between two hazard blocks.
        Every page's `h1` reads as the reference's title bar: the words in
-       spaced mono caps at regular weight, between two mirrored blocks of
+       spaced caps between two mirrored blocks of
        slanted bars, over a groove. The bars are an SVG MASK of antialiased
        parallelograms over the hatch colour (steel, never gold), the block's
        width rounded DOWN to a whole number of bars so a block always ends in
@@ -711,9 +852,13 @@
   position: relative;
   box-sizing: border-box;
   padding: var(--tm-s2) calc(var(--tm-hazard-w) + 14px);
-  font-family: var(--font-mono);
-  font-size: var(--tm-title-size);
-  font-weight: 400;
+  /* The bar is geometry; the words keep this app's DISPLAY face, Chakra
+     Petch at its heading weight (Share Tech Mono is for readouts, and a page
+     title is hero type), never smaller than 20px so a title on a phone is
+     never out-sized by the body copy under it. */
+  font-family: var(--font-ui);
+  font-size: max(var(--tm-title-size), 1.25rem);
+  font-weight: 700;
   line-height: 1.35;
   letter-spacing: var(--tm-title-track);
   text-transform: uppercase;
@@ -732,6 +877,16 @@
 :root.tm-plate :is(.sch-head, .jobs-header, .msh-head, .ph-head, .squad-header, .rd-header, .ar-head, .ap-head, .sc-page-header) {
   flex-wrap: wrap;
   row-gap: var(--tm-s3);
+}
+/* A head's one primary action stays at the right edge on the wrapped line,
+   where it sat beside the title before the bar took the full width. */
+:root.tm-plate :is(.jobs-add-btn, .sc-add-btn) {
+  margin-left: auto;
+}
+/* The parent dashboard's kicker (FAMILY VIEW) centres over the centred bar
+   it introduces instead of hanging at the left above it. */
+:root.tm-plate .ph-head > .ph-eyebrow {
+  text-align: center;
 }
 :root.tm-plate :is(.sch-title, .jobs-title, .study-title, .sv-title, .msh-title, .ic-title, .ph-title, .squad-title, .rd-title, .ar-title, .activity-title, .an-title, .ap-title, .fbp-title, .sa-title, .sc-page-title)::before,
 :root.tm-plate :is(.sch-title, .jobs-title, .study-title, .sv-title, .msh-title, .ic-title, .ph-title, .squad-title, .rd-title, .ar-title, .activity-title, .an-title, .ap-title, .fbp-title, .sa-title, .sc-page-title)::after {
@@ -757,13 +912,33 @@
 /* --------------------------------------------------------------------------
    11. THE CORNERS, and only where the browser can draw a real corner shape.
        The one large chamfered shape is the check-in readout panel's foot (the
-       "ALREADY IN" screen): its lower corners are cut and softened. Without
-       corner-shape it is simply a rounded panel.
+       "ALREADY IN" / "ALREADY OUT" screen): ONE corner, the lower right, is
+       cut and softened. The panel's left edge is a 4px amber rail on a 1px
+       panel, so its left corners keep the app's own tight radius and the rail
+       runs straight to both ends: a rail bent round a 12px corner and down a
+       26px bevel read as a swoosh, and Chromium drew a stray stretch of the
+       rail's colour on the RIGHT edge when corner-shape met the unequal
+       border widths. Without corner-shape the lower right is simply rounded.
    -------------------------------------------------------------------------- */
+:root.tm-plate .checkin-panel {
+  border-top-left-radius: var(--radius);
+  border-bottom-left-radius: var(--radius);
+}
+/* The rail keeps its 4px of amber: 1px of it is the border, the other 3px a
+   background layer just inside it, so all four borders are the same width. */
+:root.tm-plate .checkin-panel-amber {
+  border-left-width: 1px;
+  background-image:
+    linear-gradient(var(--gold-dim), var(--gold-dim)),
+    linear-gradient(to bottom, var(--tm-panel-sheen), transparent 4rem);
+  background-size: 3px 100%, auto;
+  background-position: left top, left top;
+  background-repeat: no-repeat;
+}
 @supports (corner-shape: bevel) {
   :root.tm-plate .checkin-panel {
-    border-radius: var(--tm-r-panel) var(--tm-r-panel) var(--tm-cut-screen) var(--tm-cut-screen);
-    corner-shape: round round var(--tm-soft) var(--tm-soft);
+    border-bottom-right-radius: var(--tm-cut-screen);
+    corner-shape: round round var(--tm-soft) round;
   }
 }
 
@@ -797,20 +972,45 @@
 }
 /* Links and labels that act as controls: an inline box cannot take a
    height, so each becomes an inline flex box of the same width. */
-:root.tm-plate :is(.profile-cal-subscribe, .landing-nav-link, .landing-cta, .pr-clear, .sch-rsvp-toggle) {
+:root.tm-plate :is(.profile-cal-subscribe, .landing-nav-link, .landing-cta, .pr-clear, .sch-rsvp-toggle, .jobs-img-upload) {
   display: inline-flex;
   align-items: center;
   min-height: var(--tm-target);
 }
-:root.tm-plate :is(.mb-next-body, .sch-myonly-toggle, .sch-toggle, .np-master, .np-cat, .pr-check) {
+:root.tm-plate :is(.mb-next-body, .glance-next, .sch-myonly-toggle, .sch-toggle, .np-master, .np-cat, .pr-check, .cm-toggle-label) {
+  min-height: var(--tm-target);
+}
+/* Rows that ARE the control: a skill row a student taps to mark it in
+   progress, a job row that opens the job. They stay flat (a raised key per
+   row of a long list is the decoration the plate forbids); only their height
+   floor moves. */
+:root.tm-plate :is(.msp-clickable, .jobs-row) {
+  min-height: var(--tm-target);
+}
+/* A sortable column head is a control too. A table cell ignores min-height;
+   its height acts as one. */
+:root.tm-plate .board-th-sort {
+  box-sizing: border-box;
+  height: var(--tm-target);
+}
+/* Keys that share a row with a 44px well match it, so the row reads level:
+   Activity's CHECK IN / CHECK OUT beside the member select, Verify Hours'
+   SAVE beside the auto-close time, Applications' EXPORT CSV beside the season
+   select and search, the feedback inbox's Clear filters and Refresh beside
+   its filters, the survey editor's Create beside its fields. */
+:root.tm-plate :is(.activity-btn, .vh-cutoff-save, .ap-export, .fbp-refresh) {
+  min-height: var(--tm-target);
+}
+:root.tm-plate .sa-new .sa-btn {
   min-height: var(--tm-target);
 }
 :root.tm-plate .np-cat {
   align-items: center;
 }
-/* The check-in screen's "VIEW STATUS" link keeps its underline right under
-   the words; the box grows upward to the floor. */
-:root.tm-plate .checkin-home-link {
+/* The check-in screen's "VIEW STATUS" link and the parent dashboard's "View
+   Team Hours" keep their underline right under the words; the box grows
+   upward to the floor. */
+:root.tm-plate :is(.checkin-home-link, .ph-team-link) {
   display: inline-flex;
   align-items: flex-end;
   min-height: var(--tm-target);
@@ -820,7 +1020,7 @@
   width: var(--tm-target);
   height: var(--tm-target);
 }
-:root.tm-plate :is(.ah-close, .jobs-detail-close, .mh-modal-close, .lh-modal-close, .board-detail-close) {
+:root.tm-plate :is(.jobs-detail-close, .mh-modal-close, .lh-modal-close, .board-detail-close) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -828,10 +1028,25 @@
   min-height: var(--tm-target);
   border-radius: var(--tm-r-control);
 }
-/* The per-row FLAG key on My Hours: a real key now, so it can never be
-   mistaken for the recessed status tags in the same row. */
-:root.tm-plate .mh-session-flagbtn {
-  padding-inline: var(--tm-s3);
+/* Not the Team Hours history's close (.ah-close): it already widens its own
+   hit area to 44 x 44 with a ::before (AttendanceHistory.css) and keeps the
+   glyph's footprint, so the head lays out as it did ("Sessions by day" on one
+   line at 375) and its focus ring stays round the glyph instead of across the
+   "+ Manual session" key beside it. measure.mjs counts a pseudo-element hit
+   area. */
+/* My Hours' recent sessions: the time stays on one line, so at phone width
+   the row's own wrap moves the markers and FLAG to the line below instead of
+   breaking "3:20 PM - 6:20 PM" over four lines beside a 44px key. */
+:root.tm-plate .mh-session-time {
+  white-space: nowrap;
+}
+/* The schedule's per-event Edit and Delete, 44px each, sit side by side on a
+   wide screen; stacked, every one-line event became a 100px card. */
+@media (min-width: 640px) {
+  :root.tm-plate .sch-event-actions {
+    flex-direction: row;
+    align-items: flex-start;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -849,4 +1064,61 @@
 }
 :root.tm-plate .mh-card > :is(.mh-goal-meta, .mh-corrections, .mh-adjustments) {
   margin-bottom: var(--tm-s3);
+}
+/* That inset narrows an adjustment row at 375, and its wrap then depended on
+   each reason's length (one row put the date beside the reason, the next put
+   it alone below). On a phone every row is one shape: the category, amount
+   and date on the first line, the reason full width under them. */
+@media (max-width: 480px) {
+  :root.tm-plate .mh-adj-date {
+    order: 1;
+  }
+  :root.tm-plate .mh-adj-reason {
+    order: 2;
+    flex-basis: 100%;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   14. LAYOUT REPAIRS the plate makes visible. Each predates the plate and
+       renders the same with the class off; on a plate the hairline and the
+       panel corners make the fault plain, so the plate fixes it where it can
+       without touching a component file.
+   -------------------------------------------------------------------------- */
+/* The skills catalog's tables clipped their ACTIONS column (every EDIT and
+   REMOVE key) off the right edge at 375; the table scrolls sideways inside
+   its own panel instead, as Team Hours' table does. */
+:root.tm-plate .sc-table-wrap {
+  overflow-x: auto;
+}
+/* The survey editor's Opens and Closes fields could not fit side by side at
+   375, and the whole page scrolled sideways by 101px; they wrap. */
+:root.tm-plate .sa-row {
+  flex-wrap: wrap;
+}
+/* The roster's search and member count sat flush against the viewport edge
+   at 375 (and 16px left of the panels at 1440); they take the panels' inset. */
+:root.tm-plate :is(.roster-toolbar, .roster-count) {
+  margin-inline: var(--tm-s4);
+}
+:root.tm-plate .roster-toolbar {
+  margin-top: var(--tm-s3);
+}
+/* A certified skill's "certifier · date" ran past the card's right edge at
+   375; on a phone the row wraps and the attribution takes the next line. */
+@media (max-width: 480px) {
+  :root.tm-plate .msp-skill-row {
+    flex-wrap: wrap;
+  }
+  :root.tm-plate .msp-cert-meta {
+    margin-left: auto;
+  }
+}
+/* The lit sort key's broken ring is drawn in 2px ticks; at one device pixel
+   per CSS pixel they rasterise as stray dashes beside the word, so a 1x
+   screen keeps the masked ring and drops only the ticks. */
+@media (max-resolution: 1.5dppx) {
+  :root.tm-plate :is(.jobs-sort-btn, .roster-sort-btn).active::before {
+    display: none;
+  }
 }
