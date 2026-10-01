@@ -9,6 +9,7 @@
  */
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync } from 'node:fs';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { resolveExecutable, LAUNCH_ARGS } from '../browser-verify/browser.mjs';
@@ -60,6 +61,18 @@ async function probe(url, timeoutMs = 2000) {
   }
 }
 
+// The checkout a fixture-mode dev server serves, or null when the server is
+// not one (any other server answers that path with HTML or a 404).
+async function servedRoot(origin) {
+  try {
+    const res = await fetch(`${origin}/__fixture/root`, { signal: AbortSignal.timeout(3000) });
+    const text = (await res.text()).trim();
+    return res.ok && path.isAbsolute(text) && !text.includes('\n') ? path.resolve(text) : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Boot `vite --mode fixture` on `port`, or reuse a server already answering
  * there (the caller then proves it is fixture mode by finding window.__fx).
@@ -68,6 +81,13 @@ async function probe(url, timeoutMs = 2000) {
 export async function startFixtureServer({ port = 5401, host = '127.0.0.1', bootTimeoutMs = 120_000, quiet = true } = {}) {
   const origin = `http://${host}:${port}`;
   if ((await probe(`${origin}/_fixture`)) !== null) {
+    // Reuse only a fixture server serving THIS checkout. Several worktrees can
+    // hold the same default port; reusing another's would test its code and
+    // report it as this tree's (vite.config.js answers /__fixture/root).
+    const served = await servedRoot(origin);
+    if (served !== path.resolve(REPO)) {
+      throw new Error(`A server on ${origin} is not a fixture server for this checkout (it serves ${served ?? 'something else'}; this is ${path.resolve(REPO)}). Stop it, or pass --port to use a free port.`);
+    }
     return { origin, reused: true, stop: async () => {}, log: () => '(reused a running server)' };
   }
   const vite = fileURLToPath(new URL('../../node_modules/vite/bin/vite.js', import.meta.url));
