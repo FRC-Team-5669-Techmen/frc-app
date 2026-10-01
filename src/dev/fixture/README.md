@@ -147,8 +147,9 @@ from `member_roles` in the store at call time.
 `student` (Sam, c1), `student2` (Riley, c2), `exempt` (Casey, c3, `geofence_exempt`), `mentor` (Max, b1),
 `admin` (Ada, a1), `parent` (Pat, d1, linked to Sam through `guardian_links`), `pending` (Una, e1,
 unapproved: `claim_profile` answers false), and `signedout`. Every student persona holds an application for
-the season spanning today, or App.jsx's application gate would swallow every route. Sam, Riley and Casey have
-no attendance today, so a check-in test starts from a clean day; four other members are checked in right
+the season spanning today, or App.jsx's application gate would swallow every route. In the CORE seed Sam, Riley
+and Casey have no attendance today (a feature may add some; `npm run test:checkin` clears today's rows for the
+personas it drives before its first step, so it does not depend on that); four other members are checked in right
 now, and a build event covers now, so the shop reads open.
 
 ## Controls
