@@ -1,8 +1,12 @@
-import { useState, useEffect } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { useSearchParams, useLocation, useNavigate, Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { verifyAtFLL } from './geo'
 import { DEFAULT_CATEGORY } from './categories'
+import {
+  DUPLICATE_WINDOW_MS, ARRIVAL_HANDLED, isRevisit, nextNfcAction, statusWindowStartISO,
+  readLocalTap, recordLocalTap, whenForeground,
+} from './attendanceState'
 import './CheckinPage.css'
 
 // Volunteer check-in fast path for summer FLL-room volunteering. Structured like
@@ -10,8 +14,19 @@ import './CheckinPage.css'
 // category = 'volunteer' so those hours filter separately on the boards. Tapping
 // while a NORMAL session is open closes that session and switches to volunteer.
 
-const DUPLICATE_WINDOW_MS = 60_000
 const CATEGORY = 'volunteer'
+
+// Same resting screens and refresh-on-return as CheckinPage: a tab brought back
+// after a minute away re-reads and shows the current status, never writing.
+const RESTING = new Set(['success', 'duplicate', 'confirm', 'confirm-out', 'unknown'])
+
+function deviceStore() {
+  try { return window.localStorage } catch { return null }
+}
+
+function fmtClockLA(t) {
+  return new Date(t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
+}
 
 const GEO_MESSAGES = {
   denied:      { heading: 'Location denied',      detail: 'Allow location access in your browser settings, then tap Confirm again.' },
@@ -50,6 +65,8 @@ function CheckinHeader({ tag = 'VOLUNTEER', dark = false }) {
 
 export default function VolunteerCheckinPage({ session }) {
   const [searchParams] = useSearchParams()
+  const location = useLocation()
+  const navigate = useNavigate()
   const loc = searchParams.get('loc') || 'fll-room'
   const [status, setStatus] = useState('loading')
   const [loadingMsg, setLoadingMsg] = useState(null)
@@ -59,6 +76,12 @@ export default function VolunteerCheckinPage({ session }) {
   const [acting, setActing] = useState(false)
   const [exempt, setExempt] = useState(false)   // staff-granted geofence exemption
   const [switched, setSwitched] = useState(false) // closed a normal session to open volunteer
+  const [since, setSince] = useState(null)        // open session start, for confirm-out
+  // True once this history entry has acted on its arrival (see CheckinPage).
+  const handled = useRef(isRevisit(location.state))
+  const started = useRef(false)
+  const busy = useRef(false)
+  const hiddenAt = useRef(null)
 
   const memberName = session?.user?.user_metadata?.full_name
     || session?.user?.email?.split('@')[0]
@@ -79,7 +102,33 @@ export default function VolunteerCheckinPage({ session }) {
     if (newType === 'in') row.geo_ok = geoVerified
     const { error } = await supabase.from('attendance_events').insert(row)
     if (error) throw error
+    recordLocalTap(deviceStore(), session.user.id, newType)
     return now
+  }
+
+  // Stamp this history entry as handled BEFORE anything is written, so a reload
+  // or a back-swipe onto it can never write a second event.
+  function markHandled() {
+    if (handled.current) return
+    handled.current = true
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: ARRIVAL_HANDLED })
+  }
+
+  // Explicit check-out from the confirm-out screen. Never geofenced.
+  async function confirmCheckout() {
+    if (acting) return
+    setActing(true)
+    try {
+      const ts = await insertEvent('out')
+      setEventType('out')
+      setEventTime(ts)
+      setStatus('success')
+    } catch (err) {
+      console.error(err)
+      setStatus('error')
+    } finally {
+      setActing(false)
+    }
   }
 
   // Close an already-open NON-volunteer session before opening the volunteer one.
@@ -126,69 +175,112 @@ export default function VolunteerCheckinPage({ session }) {
     }
   }
 
-  useEffect(() => {
-    async function init() {
-      try {
-        await supabase.from('profiles').upsert({ id: session.user.id }, { onConflict: 'id' })
+  // One arrival, decided by the shared rule (attendanceState.nextNfcAction) with
+  // this tag's category: an open volunteer session checks out, an open session
+  // of any other category offers the switch.
+  async function arrive({ revisit = false } = {}) {
+    if (busy.current) return
+    busy.current = true
+    setStatus('loading')
+    setLoadingMsg(revisit ? 'Checking your status…' : null)
+    try {
+      await supabase.from('profiles').upsert({ id: session.user.id }, { onConflict: 'id' })
 
-        // Staff can exempt a member from the location gate (e.g. a phone with
-        // unreliable GPS). Read it now so a tapped check-in can skip the fence.
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('geofence_exempt')
-          .eq('id', session.user.id)
-          .single()
-        setExempt(prof?.geofence_exempt === true)
+      // Staff can exempt a member from the location gate (e.g. a phone with
+      // unreliable GPS). Read it now so a tapped check-in can skip the fence.
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('geofence_exempt')
+        .eq('id', session.user.id)
+        .single()
+      setExempt(prof?.geofence_exempt === true)
 
-        const startOfToday = new Date()
-        startOfToday.setHours(0, 0, 0, 0)
+      // A failed read is passed on as null: 'unknown', never "not checked in".
+      const { data: recent, error: readErr } = await supabase
+        .from('attendance_events')
+        .select('type, category, event_time')
+        .eq('user_id', session.user.id)
+        .gte('event_time', statusWindowStartISO())
+        .order('event_time', { ascending: false })
+        .limit(1)
 
-        const { data: recent } = await supabase
-          .from('attendance_events')
-          .select('type, category, event_time')
-          .eq('user_id', session.user.id)
-          .gte('event_time', startOfToday.toISOString())
-          .order('event_time', { ascending: false })
-          .limit(1)
+      const next = nextNfcAction(readErr ? null : (recent ?? []), Date.now(), {
+        category: CATEGORY,
+        revisit: revisit || handled.current,
+        localTap: readLocalTap(deviceStore(), session.user.id),
+      })
 
-        const lastEvent = recent?.[0]
-        const now = new Date()
-
-        // Ignore a repeat tap within 60 s to prevent accidental double-toggle.
-        if (lastEvent && now - new Date(lastEvent.event_time) < DUPLICATE_WINDOW_MS) {
-          setEventType(lastEvent.type)
-          setEventTime(new Date(lastEvent.event_time))
-          setStatus('duplicate')
-          return
-        }
-
-        const openSession = lastEvent?.type === 'in'
-        const openVolunteer = openSession && lastEvent.category === CATEGORY
-
-        if (openVolunteer) {
-          // Same-tap toggle: open volunteer session → check OUT. Automatic and
-          // unrestricted, exactly like CheckinPage's check-out.
-          const ts = await insertEvent('out')
-          setEventType('out')
-          setEventTime(ts)
-          setStatus('success')
-        } else if (openSession) {
-          // A NORMAL session is open: auto-switch to volunteer. Both the close and
-          // the new check-in are geofenced + tapped, so defer to confirmCheckin.
-          setSwitched(true)
-          setStatus('confirm')
-        } else {
-          // No open session (last event was 'out', or none today): plain volunteer
-          // check-in. Wait for a tap before geolocating (iOS reliability).
-          setStatus('confirm')
-        }
-      } catch (err) {
-        console.error(err)
-        setStatus('error')
+      if (next.action === 'unknown') {
+        console.error(readErr)
+        setStatus('unknown')
+        return
       }
+      markHandled()
+
+      if (next.action === 'duplicate') {
+        // Ignore a repeat tap within 60 s to prevent accidental double-toggle.
+        setEventType(next.duplicate.type)
+        setEventTime(new Date(next.duplicate.at))
+        setStatus('duplicate')
+      } else if (next.action === 'check_out') {
+        // Same-tap toggle: open volunteer session → check OUT. Automatic and
+        // unrestricted, exactly like CheckinPage's check-out.
+        const ts = await insertEvent('out')
+        setEventType('out')
+        setEventTime(ts)
+        setStatus('success')
+      } else if (next.action === 'confirm_check_out') {
+        // This page was shown again: show the open session, let the member choose.
+        setSince(next.status.since)
+        setStatus('confirm-out')
+      } else if (next.action === 'switch') {
+        // A NORMAL session is open: auto-switch to volunteer. Both the close and
+        // the new check-in are geofenced + tapped, so defer to confirmCheckin.
+        setSwitched(true)
+        setStatus('confirm')
+      } else {
+        // No open session: plain volunteer check-in. Wait for a tap before
+        // geolocating (iOS reliability).
+        setSwitched(false)
+        setStatus('confirm')
+      }
+    } catch (err) {
+      console.error(err)
+      setStatus('error')
+    } finally {
+      busy.current = false
     }
-    init()
+  }
+
+  // Act on the arrival once, and only when the page is in front of the member.
+  useEffect(() => {
+    if (started.current) return
+    const cancel = whenForeground(document, () => {
+      started.current = true
+      arrive()
+    })
+    return cancel
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Re-read (never write) when a resting tab comes back after a minute away.
+  useEffect(() => {
+    const resting = RESTING.has(status) && !acting
+    function onVisibility() {
+      if (document.visibilityState === 'hidden') { hiddenAt.current = Date.now(); return }
+      const away = hiddenAt.current == null ? 0 : Date.now() - hiddenAt.current
+      hiddenAt.current = null
+      if (resting && away >= DUPLICATE_WINDOW_MS) arrive({ revisit: true })
+    }
+    function onPageShow(e) {
+      if (e.persisted && resting) arrive({ revisit: true })
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('pageshow', onPageShow)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('pageshow', onPageShow)
+    }
+  }, [status, acting]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (status === 'loading') {
     return (
@@ -205,17 +297,19 @@ export default function VolunteerCheckinPage({ session }) {
     )
   }
 
-  if (status === 'geo' || status === 'error') {
+  if (status === 'geo' || status === 'error' || status === 'unknown') {
     const msg = status === 'geo'
       ? (GEO_MESSAGES[geoReason] ?? GEO_MESSAGES.error)
-      : { heading: 'System fault', detail: 'Could not record your volunteer attendance. Try again.' }
+      : status === 'unknown'
+        ? { heading: 'Status unavailable', detail: 'Could not read your check-in status, so nothing was recorded. Check your connection and try again.' }
+        : { heading: 'System fault', detail: 'Could not record your volunteer attendance. Try again.' }
     return (
       <div className="checkin-wrap checkin-fault">
         <CheckinHeader tag="FAULT" />
         <div className="checkin-mark checkin-mark-fault">✗</div>
         <h1>{msg.heading}</h1>
         <p className="checkin-status">{msg.detail}</p>
-        {status === 'geo' && (
+        {status === 'geo' ? (
           <button
             onClick={confirmCheckin}
             disabled={acting}
@@ -223,6 +317,10 @@ export default function VolunteerCheckinPage({ session }) {
           >
             {acting ? 'Checking…' : 'Confirm check-in'}
           </button>
+        ) : (
+          // Re-reads first; after a failed write the entry is already marked, so
+          // this shows the current status rather than writing again on its own.
+          <button onClick={() => arrive()} style={CONFIRM_BTN_STYLE}>Try again</button>
         )}
         <footer className="checkin-footer checkin-footer-fault">STATUS // FAULT</footer>
       </div>
@@ -255,8 +353,29 @@ export default function VolunteerCheckinPage({ session }) {
     )
   }
 
-  const timeStr = eventTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
   const locDisplay = loc.replace(/-/g, ' ')
+
+  if (status === 'confirm-out') {
+    return (
+      <div className="checkin-wrap checkin-idle">
+        <CheckinHeader tag="CHECK-OUT" />
+        <h1 className="checkin-name">{memberName}</h1>
+        <p className="checkin-status">Volunteering since {fmtClockLA(since)}</p>
+        <p className="checkin-loc">{locDisplay}</p>
+        <button
+          onClick={confirmCheckout}
+          disabled={acting}
+          style={{ ...CONFIRM_BTN_STYLE, opacity: acting ? 0.6 : 1 }}
+        >
+          {acting ? 'Checking out…' : 'Check out'}
+        </button>
+        <footer className="checkin-footer">STATUS // CONFIRM TO CHECK OUT</footer>
+        <Link to="/dashboard" className="checkin-home-link">VIEW STATUS →</Link>
+      </div>
+    )
+  }
+
+  const timeStr = fmtClockLA(eventTime)
   const verb = eventType === 'in' ? 'IN' : 'OUT'
 
   if (status === 'duplicate') {
