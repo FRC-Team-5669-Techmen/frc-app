@@ -378,6 +378,47 @@ describe('migrations not applied', () => {
   })
 })
 
+describe('alters: a migration that relaxes a column that already exists', () => {
+  // The frozen feedback.sql makes feedback.category NOT NULL and CHECKs status
+  // to three values. This plugin relaxes both behind a migration no real lane
+  // uses, the shape of a migration that drops a NOT NULL or widens a CHECK.
+  const relax = {
+    name: 'test-relax',
+    migration: '0098',
+    alters: { feedback: { category: { nullable: true }, status: { values: ['open', 'reviewed', 'dismissed', 'done'] } } },
+    seed: ({ ids }) => ({ feedback: [{ member_id: ids.student, category: null, message: 'untyped', status: 'done' }] }),
+  }
+  const untyped = { member_id: IDS.student, category: null, message: 'untyped report' }
+
+  it('refuses the relaxed shapes while the migration is not applied, as the live table does', async () => {
+    const g = setup({ migrations: 'none', plugins: [core, relax] })
+    expect((await g.engine.from('feedback').insert(untyped)).error.code).toBe('23502')
+    expect((await g.engine.from('feedback').insert({ ...untyped, category: 'bug', status: 'done' })).error.code).toBe('23514')
+    // Positive control: the old shape, which a client falls back to, lands.
+    expect((await g.engine.from('feedback').insert({ ...untyped, category: 'bug' })).error).toBeNull()
+  })
+  it('accepts them once the migration is applied, and still refuses a value outside the new list', async () => {
+    const g = setup({ migrations: ['0098'], plugins: [core, relax] })
+    expect((await g.engine.from('feedback').insert(untyped)).error).toBeNull()
+    expect((await g.engine.from('feedback').insert({ ...untyped, status: 'done' })).error).toBeNull()
+    expect((await g.engine.from('feedback').insert({ ...untyped, status: 'spam' })).error.code).toBe('23514')
+    // A row stored under the new list can still take an unrelated update.
+    g.ctx.persona = 'admin'
+    const upd = await g.engine.from('feedback').update({ message: 'edited' }).eq('status', 'done').select('id')
+    expect(upd.error).toBeNull()
+    expect(upd.data.length).toBeGreaterThan(0)
+  })
+  it('judges seed rows with every migration applied, and never edits the shared schema', () => {
+    const g = setup({ migrations: 'none', plugins: [core, relax] })
+    expect(g.problems).toEqual([])
+    expect(SCHEMA.tables.feedback.columns.category.notnull).toBe(true)
+    expect(SCHEMA.tables.feedback.enums.status.values).not.toContain('done')
+    // Control: the same seed row without the alteration IS a problem.
+    const h = setup({ plugins: [core, { ...relax, alters: undefined }] })
+    expect(h.problems.some((p) => /23502/.test(p.problem))).toBe(true)
+  })
+})
+
 describe('rpc', () => {
   it('refuses arguments the deployed signature does not have (PGRST202), and runs it with the right ones', async () => {
     const bad = await f.engine.rpc('request_cert', { p_skill: f.db().skills[0].id, p_extra: true })

@@ -283,6 +283,9 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
   // Static claims made by plugins, indexed once.
   const featureTables = new Map()
   const featureColumns = new Map()
+  // Changes a migration makes to a column that already exists: a NOT NULL
+  // dropped, an enum CHECK replaced. table -> [{ column, nullable, values, migration }]
+  const featureAlters = new Map()
   const rpcClaims = new Map()
   const relations = []
   const visibles = new Map()
@@ -295,6 +298,13 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
       const entry = featureColumns.get(t) ?? []
       for (const [c, def] of list) entry.push({ column: c, def: def ?? {}, migration: mig, plugin: p.name })
       featureColumns.set(t, entry)
+    }
+    for (const [t, cols] of Object.entries(p.alters ?? {})) {
+      const entry = featureAlters.get(t) ?? []
+      for (const [c, def] of Object.entries(cols ?? {})) {
+        entry.push({ column: c, nullable: def?.nullable === true, values: Array.isArray(def?.values) ? def.values.slice() : null, migration: mig, plugin: p.name })
+      }
+      featureAlters.set(t, entry)
     }
     const handlers = p.rpcs ?? {}
     const claimed = new Set([...(p.creates?.rpcs ?? []), ...Object.keys(handlers)])
@@ -316,8 +326,9 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
   const applied = (mig) => migrationApplied(mig, ctx().migrations)
   const db = () => store.db
 
-  // A table as the CURRENT migration setting sees it.
-  function tableInfo(name) {
+  // A table as the CURRENT migration setting sees it (or as `isApplied` says,
+  // which the seed check uses to judge rows against every migration applied).
+  function tableInfo(name, isApplied = applied) {
     if (typeof name !== 'string' || name.startsWith('__')) return { exists: false, name }
     const core = tablesMeta[name]
     const feat = featureTables.get(name)
@@ -329,13 +340,13 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
       strict = true
       columns = { ...core.columns }
     } else if (feat) {
-      exists = applied(feat.migration)
+      exists = isApplied(feat.migration)
     } else if (Array.isArray(db()[name])) {
       exists = true
     }
     const hidden = new Set()
     for (const fc of featureColumns.get(name) ?? []) {
-      if (applied(fc.migration)) {
+      if (isApplied(fc.migration)) {
         if (!columns) columns = {}
         if (!core && !columns[fc.column]) strict = true
         columns[fc.column] = { type: fc.def.type ?? null, notnull: false, default: fc.def.default !== undefined ? { kind: 'value', value: fc.def.default } : null, feature: true }
@@ -349,13 +360,28 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
       columns.id ??= { type: null, notnull: false, default: { kind: 'uuid' } }
       columns.created_at ??= { type: null, notnull: false, default: { kind: 'now' } }
     }
+    // A migration that relaxes an existing column (drops NOT NULL, replaces an
+    // enum CHECK's list) does so only while it is applied: before it, the old
+    // constraint refuses exactly as the live table does, which is what a
+    // client's fallback to the old shape is tested against. Copies only, so
+    // the shared schema objects never change.
+    let meta = core ?? { pk: ['id'], unique: [], fks: [], enums: {} }
+    const alters = (featureAlters.get(name) ?? []).filter((a) => isApplied(a.migration))
+    if (alters.length) {
+      const enums = { ...(meta.enums ?? {}) }
+      for (const a of alters) {
+        if (a.nullable && columns?.[a.column]) columns[a.column] = { ...columns[a.column], notnull: false }
+        if (a.values) enums[a.column] = { constraint: enums[a.column]?.constraint ?? `${name}_${a.column}_check`, values: a.values }
+      }
+      meta = { ...meta, enums }
+    }
     return {
       name,
       exists,
       strict,
       columns,
       hidden,
-      meta: core ?? { pk: ['id'], unique: [], fks: [], enums: {} },
+      meta,
     }
   }
 
@@ -1028,11 +1054,12 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
     }
     store.db = next
     // Constraint pass over the finished store, so a seed may reference rows a
-    // later plugin adds.
+    // later plugin adds. One store serves every migration setting, so a row is
+    // judged against the schema with every migration applied: a value a
+    // feature's own migration makes legal is not a seed problem.
     for (const [table, rows] of Object.entries(next)) {
-      const meta = tablesMeta[table]
-      if (!meta) continue
-      const info = { name: table, strict: true, columns: meta.columns, meta, hidden: new Set() }
+      if (!tablesMeta[table]) continue
+      const info = tableInfo(table, () => true)
       rows.forEach((row, i) => {
         try { checkRow(info, row, rows.filter((_, j) => j !== i)) } catch (e) { problems.push({ table, problem: `${e.code} ${e.message}`, row: row.id ?? null }) }
       })

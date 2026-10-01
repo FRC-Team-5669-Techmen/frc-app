@@ -46,7 +46,8 @@ fails against the live project:
 - a column the table does not have: select/filter/order -> `42703`, insert/update payload -> `PGRST204`;
 - `select('*')` on a table with a column `authenticated` cannot read -> `42501` (`member_applications.parent_token`);
 - a missing table -> `PGRST205`, a missing RPC **or an RPC called with argument names its deployed signature does not have** -> `PGRST202`, an embed with no foreign key -> `PGRST200`, an ambiguous one -> `PGRST201`;
-- NOT NULL (`23502`), enum-shaped CHECKs such as `attendance_events_method_check` (`23514`), unique keys including partial ones such as `surveys_one_open_idx` (`23505`), foreign keys (`23503`), `ON DELETE CASCADE` / `SET NULL`;
+- NOT NULL (`23502`), enum-shaped CHECKs such as `attendance_events_method_check` (`23514`), unique keys including partial ones such as `surveys_one_open_idx` (`23505`), foreign keys (`23503`), `ON DELETE CASCADE` / `SET NULL`; a feature's `alters` relaxes the first two only while its migration is applied;
+- **seed rows are typed too**: an `id` that is not a uuid in a uuid column, or an explicit `null` in a NOT NULL column (an explicit null never takes the column default, in Postgres or here), is a seed problem on `/_fixture`. The row is still stored, so the page renders, but the count must read 0;
 - the SELECT policies narrower than `using (true)`, as read filters (`core.js` `CORE_VISIBLE`); a signed-out caller reads nothing;
 - **UPDATE and DELETE find their rows through the read filter**, as a Postgres UPDATE finds its rows through the SELECT policy: a student's update of `feedback` matches 0 rows, silently, exactly as it does live.
 
@@ -93,6 +94,17 @@ export default {
     // columns for one of YOUR new tables makes that table strict (unknown
     // columns refused); otherwise a new table accepts any column.
     columns: { feedback: ['tried'] },
+  },
+  // Changes the migration makes to a column that ALREADY EXISTS, applied only
+  // while the migration is: `nullable: true` drops a NOT NULL, `values`
+  // REPLACES an enum CHECK's list (give the whole new list, old values
+  // included). Before the migration the old constraint refuses (23502 /
+  // 23514) exactly as the live table does, which is what a client's fallback
+  // to the old shape must be tested against. Seed rows are judged with every
+  // migration applied, so a value your migration makes legal is not a seed
+  // problem.
+  alters: {
+    feedback: { category: { nullable: true }, status: { values: ['new', 'done', 'open', 'reviewed', 'dismissed'] } },
   },
   // Seed rows. For a table that already exists in core, rows are APPENDED, and
   // missing columns get the schema default. `({ ids, now, uuid })` -> rows:
