@@ -6,10 +6,12 @@ import { useGlance } from './useGlance'
 import { fmtTime, fmtDay } from './shopStatus'
 import { startOfTodayISO, fmtClock } from './presence'
 import { displayName } from './names'
+import { currentStatus } from './attendanceState'
+import { checkOutFromDashboard } from './attendanceCheckout'
 import './HomePage.css'
 
 function fmtClock12(iso) {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
 }
 
 // ── Role-aware tile metrics ────────────────────────────────────────────────
@@ -99,23 +101,47 @@ export default function HomePage({ session, hasRole = () => false }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
 
   const [allEvents, setAllEvents] = useState(null)
+  const [readFailed, setReadFailed] = useState(false) // last status read errored
   const [acting, setActing] = useState(false)
+  const [checkoutErr, setCheckoutErr] = useState(null)
   const [myResp, setMyResp] = useState(undefined) // next event: 'going' | 'maybe' | 'declined' | null
   const [rsvping, setRsvping] = useState(false)
 
   const glance = useGlance()
   const metrics = useTileMetrics(uid, isStaff)
 
+  // Newest first: past the API's row cap an ascending read drops TODAY's rows,
+  // the ones the status depends on. A failed read keeps whatever was shown
+  // before and says so, rather than reading as "not checked in".
   const fetchEvents = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('attendance_events')
       .select('id, type, event_time, location')
       .eq('user_id', uid)
-      .order('event_time', { ascending: true })
+      .order('event_time', { ascending: false })
+    if (error) {
+      setReadFailed(true)
+      setAllEvents(prev => prev ?? [])
+      return
+    }
+    setReadFailed(false)
     setAllEvents(data ?? [])
   }, [uid])
 
   useEffect(() => { fetchEvents() }, [fetchEvents])
+
+  // A dashboard tab left open is otherwise frozen at the moment it loaded: a
+  // tag tap in another tab would not show here. Re-read when it comes back.
+  useEffect(() => {
+    const onVisibility = () => { if (document.visibilityState === 'visible') fetchEvents() }
+    const onPageShow = (e) => { if (e.persisted) fetchEvents() }
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('pageshow', onPageShow)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('pageshow', onPageShow)
+    }
+  }, [fetchEvents])
 
   // My RSVP on the next event (so Going/Maybe reflect current state).
   const nextId = glance?.next?.id
@@ -128,12 +154,14 @@ export default function HomePage({ session, hasRole = () => false }) {
     return () => { active = false }
   }, [nextId, uid])
 
+  // The insert's result is read now: a rejected or failed write says so on the
+  // tile instead of leaving "Checked in" up with no explanation.
   async function handleCheckOut() {
     if (acting) return
     setActing(true)
-    await supabase.from('attendance_events').insert({
-      user_id: uid, type: 'out', location: 'button', method: null,
-    })
+    setCheckoutErr(null)
+    const result = await checkOutFromDashboard(supabase, uid)
+    if (!result.ok) setCheckoutErr(result.message)
     await fetchEvents()
     setActing(false)
   }
@@ -159,12 +187,13 @@ export default function HomePage({ session, hasRole = () => false }) {
     return <div className="home-loading"><div className="home-spinner" /></div>
   }
 
-  // ── YOU: same derivation as before ──
+  // ── YOU: the shared rule (attendanceState), the same one the tag reads ──
   const startOfToday = new Date()
   startOfToday.setHours(0, 0, 0, 0)
   const todayEvents = allEvents.filter(e => new Date(e.event_time) >= startOfToday)
-  const lastToday = todayEvents.at(-1)
-  const isIn = lastToday?.type === 'in'
+  const status = currentStatus(allEvents)
+  const isIn = status.checkedIn
+  const statusUnknown = readFailed && allEvents.length === 0
   const todayHours = fmtDuration(computeHoursMs(todayEvents))
   const seasonHours = fmtDuration(computeHoursMs(allEvents))
 
@@ -185,11 +214,11 @@ export default function HomePage({ session, hasRole = () => false }) {
             <div className="mb-you-top">
               <span className="mb-tile-eyebrow">YOU</span>
               <span className={`mb-status ${isIn ? 'mb-status-in' : 'mb-status-out'}`}>
-                {isIn ? 'Checked in' : 'Not checked in'}
+                {statusUnknown ? 'Status unavailable' : isIn ? 'Checked in' : 'Not checked in'}
               </span>
             </div>
-            {isIn && lastToday && (
-              <p className="mb-you-since hud-mono">since {fmtClock12(lastToday.event_time)}</p>
+            {isIn && status.since && (
+              <p className="mb-you-since hud-mono">since {fmtClock12(status.since)}</p>
             )}
             <div className="mb-you-stats" data-tour="today-activity">
               <div className="mb-stat">
@@ -202,12 +231,18 @@ export default function HomePage({ session, hasRole = () => false }) {
                 <span className="mb-stat-label">Season</span>
               </div>
             </div>
-            {isIn ? (
+            {statusUnknown ? (
+              <button className="mb-checkout mb-retry" onClick={fetchEvents}>Retry</button>
+            ) : isIn ? (
               <button className="mb-checkout" data-tour="checkout" onClick={handleCheckOut} disabled={acting}>
                 {acting ? '…' : 'Check Out'}
               </button>
             ) : (
               <p className="mb-nfc-hint hud-mono">Tap your NFC tag to check in</p>
+            )}
+            {checkoutErr && isIn && <p className="mb-you-error" role="alert">{checkoutErr}</p>}
+            {readFailed && !statusUnknown && (
+              <p className="mb-you-note hud-mono">Could not refresh your status. Showing the last one loaded.</p>
             )}
           </section>
 
