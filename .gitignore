@@ -11,6 +11,8 @@ dist
 !.claude/
 .claude/*
 !.claude/launch.json
+# ...and the repo's own skills, which travel with the repo like any other docs.
+!.claude/skills/
 artifacts/
 .ds-sync/
 ds-bundle/

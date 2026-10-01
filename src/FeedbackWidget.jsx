@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { supabase } from './supabase'
+import { REPORT_TYPES, TRIED_MAX, buildReport, submitReport, summarizeUserAgent } from './feedbackModel'
 import './FeedbackWidget.css'
 
 // The global feedback button. Mounted ONCE in App.jsx's ProtectedLayout, so it
@@ -8,15 +9,25 @@ import './FeedbackWidget.css'
 // wired into each one. The check-in fast paths sit OUTSIDE that layout by
 // design, so they stay untouched.
 //
-// Deliberately self-contained: it imports nothing from the admin page, and the
-// only fields a member fills in are the category and the message. Everything
-// else (route, viewport, user agent, author) is gathered at submit time.
+// Deliberately self-contained: it imports nothing from the admin page. A member
+// writes the message and, if they like, a type and what they tried; everything
+// else (route, viewport, user agent, build, author) is gathered at submit time
+// and shown in the panel before it is sent.
+//
+// THE TYPE IS OPTIONAL. Mr. Pina reported on 2026-09-03 that he should be able
+// to send feedback without picking one, so nothing is preselected and Send is
+// live as soon as there is a message. Tapping a chosen type again clears it.
+//
+// MIGRATION 0002 MAY NOT BE APPLIED YET, and this insert works today. So the
+// write goes through submitReport's ladder (src/feedbackModel.js): if the new
+// `tried` / `build` columns are missing, both are folded into the message and
+// the report is resent without them; if the old NOT NULL on category refuses an
+// untyped report, it is resent as the old neutral 'feedback'. The member sees
+// none of that -- the report simply saves.
 
-const CATEGORIES = [
-  { key: 'bug',      label: 'Bug' },
-  { key: 'idea',     label: 'Idea' },
-  { key: 'feedback', label: 'Feedback' },
-]
+// The client build, stamped by vite.config.js. Read defensively: a build that
+// predates the stamp, or a dev server without it, still files a report.
+const BUILD = import.meta.env.VITE_APP_BUILD || 'unknown'
 
 const MAX_IMAGES = 6
 const MAX_BYTES  = 10 * 1024 * 1024   // 10 MB per image
@@ -37,8 +48,9 @@ export default function FeedbackWidget({ session }) {
   const { pathname } = useLocation()
 
   const [open, setOpen]         = useState(false)
-  const [category, setCategory] = useState('')
+  const [type, setType]         = useState('')
   const [message, setMessage]   = useState('')
+  const [tried, setTried]       = useState('')
   const [images, setImages]     = useState([])   // { id, file, url }
   const [dragging, setDragging] = useState(false)
   const [busy, setBusy]         = useState(false)
@@ -60,7 +72,7 @@ export default function FeedbackWidget({ session }) {
 
   const reset = useCallback(() => {
     setImages(prev => { prev.forEach(i => URL.revokeObjectURL(i.url)); return [] })
-    setCategory(''); setMessage(''); setError(''); setDone(false); setDragging(false)
+    setType(''); setMessage(''); setTried(''); setError(''); setDone(false); setDragging(false)
   }, [])
 
   function close() { setOpen(false); reset() }
@@ -134,23 +146,26 @@ export default function FeedbackWidget({ session }) {
 
   async function submit(e) {
     e.preventDefault()
-    if (!category || !message.trim() || busy) return
+    if (!message.trim() || busy) return
     setBusy(true); setError('')
     try {
       // Images first: a row that names a path which failed to upload is worse
       // than a submit that reports the failure and keeps the queue intact.
-      const image_paths = []
-      for (const img of images) image_paths.push(await uploadImage(img.file))
+      const imagePaths = []
+      for (const img of images) imagePaths.push(await uploadImage(img.file))
 
-      const { error: err } = await supabase.from('feedback').insert({
-        member_id:  uid,
-        category,
-        message:    message.trim(),
-        image_paths,
-        route:      pathname,
-        viewport:   `${window.innerWidth}x${window.innerHeight}`,
-        user_agent: navigator.userAgent,
+      const payload = buildReport({
+        memberId:  uid,
+        type:      type || null,
+        message,
+        tried,
+        imagePaths,
+        route:     pathname,
+        viewport:  `${window.innerWidth}x${window.innerHeight}`,
+        userAgent: navigator.userAgent,
+        build:     BUILD,
       })
+      const { error: err } = await submitReport(p => supabase.from('feedback').insert(p), payload)
       if (err) throw err
       setDone(true)
       setTimeout(() => { setOpen(false); reset() }, 1600)
@@ -161,6 +176,8 @@ export default function FeedbackWidget({ session }) {
   }
 
   if (!uid) return null
+
+  const browser = summarizeUserAgent(typeof navigator === 'undefined' ? '' : navigator.userAgent)
 
   return (
     <>
@@ -199,26 +216,41 @@ export default function FeedbackWidget({ session }) {
             <p className="fb-done">Sent. Thank you.</p>
           ) : (
             <>
-              <div className="fb-cats" role="group" aria-label="Category">
-                {CATEGORIES.map(c => (
+              <span className="fb-label" id="fb-type-label">Type (optional)</span>
+              <div className="fb-cats" role="group" aria-labelledby="fb-type-label">
+                {REPORT_TYPES.map(t => (
                   <button
-                    key={c.key}
+                    key={t.key}
                     type="button"
-                    className={`fb-cat${category === c.key ? ' fb-cat-on' : ''}`}
-                    aria-pressed={category === c.key}
-                    onClick={() => setCategory(c.key)}
+                    title={t.hint}
+                    className={`fb-cat${type === t.key ? ' fb-cat-on' : ''}`}
+                    aria-pressed={type === t.key}
+                    onClick={() => setType(prev => (prev === t.key ? '' : t.key))}
                   >
-                    {c.label}
+                    {t.label}
                   </button>
                 ))}
               </div>
 
+              <label className="fb-label" htmlFor="fb-message">What happened?</label>
               <textarea
+                id="fb-message"
                 className="fb-text"
                 rows={4}
                 placeholder="What happened, or what would make this better?"
                 value={message}
                 onChange={e => setMessage(e.target.value)}
+              />
+
+              <label className="fb-label" htmlFor="fb-tried">What did you try? (optional)</label>
+              <textarea
+                id="fb-tried"
+                className="fb-text fb-text-tried"
+                rows={2}
+                maxLength={TRIED_MAX}
+                placeholder="Reloaded the page, tried another page, asked someone else..."
+                value={tried}
+                onChange={e => setTried(e.target.value)}
               />
 
               <div
@@ -259,12 +291,19 @@ export default function FeedbackWidget({ session }) {
                 </div>
               )}
 
+              {/* What travels with the report, shown before it is sent: nothing
+                  is gathered that the member cannot see here. */}
+              <p className="fb-context">
+                Sent with it: {pathname} · {typeof window === 'undefined' ? '' : `${window.innerWidth}x${window.innerHeight}`}
+                {browser ? ` · ${browser}` : ''} · build {BUILD}
+              </p>
+
               {error && <p className="fb-error">{error}</p>}
 
               <button
                 type="submit"
                 className="fb-submit"
-                disabled={busy || !category || !message.trim()}
+                disabled={busy || !message.trim()}
               >
                 {busy ? 'Sending…' : 'Send'}
               </button>
