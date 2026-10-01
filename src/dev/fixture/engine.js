@@ -1036,9 +1036,13 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
               else throw pgError('PGRST116', 'JSON object requested, multiple (or no) rows returned', { status: 406 })
             }
           }
-          // Persist only once the call has fully succeeded: PostgREST rolls a
-          // call back when its singular-object check fails, too.
-          onWrite()
+          // Persist only once the call has fully succeeded (PostgREST rolls a
+          // call back when its singular-object check fails, too), and only
+          // when it changed something. A read-only function writes nothing in
+          // Postgres; persisting the whole store after one let a tab holding
+          // an older copy overwrite another tab's newer write (measured in
+          // tools/e2e/checkin.mjs's midnight step: a planted row vanished).
+          if (snapshot != null && JSON.stringify(store.db) !== snapshot) onWrite()
           return { data: this.head ? null : clone(data), error: null, count: this.countMode && Array.isArray(out.data) ? out.data.length : null, status: 200, statusText: 'OK' }
         } catch (e) {
           rollback()

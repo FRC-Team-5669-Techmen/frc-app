@@ -515,3 +515,58 @@ describe('grammar', () => {
     expect(t[1].terms[1].value).toEqual(['x', 'y'])
   })
 })
+
+// A function persists the store only when it changed it. Every RPC used to
+// persist the whole store, so a tab holding an older copy that merely READ
+// (claim_profile on boot) wrote that copy back over another tab's newer write.
+describe('rpc persistence', () => {
+  const writer = {
+    name: 'test-writer',
+    migration: null,
+    rpcs: {
+      fx_touch_nothing: () => ({ data: 1, error: null }),
+      fx_add_event: ({ engine, user }) => ({ data: engine.insertRow('attendance_events', { user_id: user.id, type: 'in' }).id, error: null }),
+      fx_add_then_fail: ({ engine, user, error }) => { engine.insertRow('attendance_events', { user_id: user.id, type: 'in' }); return error('P0001', 'no') },
+    },
+  }
+  function counted() {
+    const store = { db: {} }
+    let writes = 0
+    const engine = createEngine({
+      schema: SCHEMA,
+      plugins: [core, writer],
+      store,
+      now: () => NOW,
+      onWrite: () => { writes += 1 },
+      context: () => ({ user: { id: PERSONAS.student.id }, persona: resolvePersona('student', store.db), migrations: 'all' }),
+    })
+    engine.seedAll({ ids: IDS, now: NOW, uuid })
+    return { engine, store, writes: () => writes }
+  }
+  // The three are not in the generated catalog, so they are claimed as new.
+  writer.creates = { rpcs: Object.keys(writer.rpcs) }
+
+  it('a read-only function persists nothing; claim_profile included', async () => {
+    const c = counted()
+    expect((await c.engine.rpc('claim_profile', {})).data).toBe(true)
+    expect((await c.engine.rpc('fx_touch_nothing', {})).data).toBe(1)
+    expect(c.writes()).toBe(0)
+  })
+  it('a function that writes persists once (positive control)', async () => {
+    const c = counted()
+    const before = c.store.db.attendance_events.length
+    const { data, error } = await c.engine.rpc('fx_add_event', {})
+    expect(error).toBe(null)
+    expect(c.store.db.attendance_events.length).toBe(before + 1)
+    expect(c.store.db.attendance_events.some((e) => e.id === data)).toBe(true)
+    expect(c.writes()).toBe(1)
+  })
+  it('a function that writes then raises is rolled back and persists nothing', async () => {
+    const c = counted()
+    const before = c.store.db.attendance_events.length
+    const { error } = await c.engine.rpc('fx_add_then_fail', {})
+    expect(error?.code).toBe('P0001')
+    expect(c.store.db.attendance_events.length).toBe(before)
+    expect(c.writes()).toBe(0)
+  })
+})

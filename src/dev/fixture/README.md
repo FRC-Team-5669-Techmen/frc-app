@@ -127,7 +127,9 @@ export default {
   // RPC handlers: ({ args, db, user, persona, now, engine, uuid, error }) -> { data, error }
   // Write through engine.insertRow / updateRows / deleteRows (service role:
   // no read filter, constraints still apply). A call is one transaction: when
-  // the handler returns an error or throws, every write it made is undone.
+  // the handler returns an error or throws, every write it made is undone,
+  // and a call that changed nothing persists nothing (a read-only function
+  // must not write a tab's older copy of the store back over another's).
   // A handler for an RPC that
   // already exists in core replaces it only while this migration is applied;
   // otherwise core's handler and core's argument check answer. An existing
@@ -181,13 +183,19 @@ The store also reseeds by itself when it was seeded on an earlier LA day (its
 "now" would be stale) or by different seed code (a plugin was added or changed).
 
 `window.__fx` exposes `{ supabase, db, reset(), persona, setPersona(key), migrations, setMigrations(v), latency,
-setLatency(ms), calls, seedProblems, rows(table), insert(table, row), patch(table, match, values), plugins,
-migrationNumbers, marker }` for a test to read and assert on. `setPersona` emits `SIGNED_IN` /
+setLatency(ms), calls, seedProblems, rows(table), insert(table, row), patch(table, match, values),
+failNext(rpc, { error } | { data }), plugins, migrationNumbers, marker }` for a test to read and assert on. `setPersona` emits `SIGNED_IN` /
 `SIGNED_OUT` to `onAuthStateChange` listeners as supabase-js does, so a mounted app reacts (App.jsx
 completes a pending NFC check-in on it). `calls` logs every query, RPC and function call with the error
 code it got, which is how `shoot.mjs` reports the error answers a page received.
 
-Auth: `getSession`/`getUser`/`refreshSession` answer for the current persona; `onAuthStateChange` delivers
+`failNext` makes the next call of that RPC in the current tab answer exactly what it is given, once (a
+transient failure, or a real answer the store would not give); `npm run test:checkin` uses it on
+`claim_profile`.
+
+Auth: `getSession`/`getUser`/`refreshSession` answer for the current persona; a tab brought back from
+hidden to visible emits `SIGNED_IN` as supabase-js 2.106 does (auth-js `_onVisibilityChanged` ->
+`_recoverAndRefresh`), so App.jsx re-runs `claim_profile` exactly as it does on a phone; `onAuthStateChange` delivers
 `INITIAL_SESSION` asynchronously and returns `{ data: { subscription: { unsubscribe } } }`; `signOut`
 switches to `signedout`; `signInWithOtp` / `verifyOtp` / `signInWithOAuth` are harmless no-ops (the persona
 switch is the sign-in). Storage records uploads in the store and hands back object URLs (or a placeholder

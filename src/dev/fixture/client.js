@@ -227,6 +227,20 @@ const auth = {
   updateUser: async () => ({ data: { user: currentUser() }, error: null }),
 }
 
+// supabase-js 2.106 (auth-js GoTrueClient._onVisibilityChanged) answers every
+// hidden -> visible transition of the tab with _recoverAndRefresh(), which
+// emits SIGNED_IN with the current session, and App.jsx re-runs claim_profile
+// on it. The fixture does the same, asynchronously as auth-js does (it takes a
+// lock first), so a test that brings a tab back exercises that path too.
+;(function recoverOnVisible() {
+  try {
+    globalThis.document?.addEventListener('visibilitychange', () => {
+      if (globalThis.document.visibilityState !== 'visible' || !currentUser()) return
+      setTimeout(() => emit('SIGNED_IN'), 0)
+    })
+  } catch { /* no document: under node there is no tab to bring back */ }
+})()
+
 // ── Storage ───────────────────────────────────────────────────────────────────
 // Uploads are recorded (path, size, type) in the store; the bytes live only in
 // this page as object URLs. A URL for anything else is a small placeholder.
@@ -329,11 +343,34 @@ function channel(name) {
   return ch
 }
 
+// ── Injected answers ──────────────────────────────────────────────────────────
+// window.__fx.failNext(name, { error } | { data }) makes the NEXT call of that
+// RPC in this tab answer exactly that, once, after the usual latency: a
+// transient failure (a dropped connection as a phone wakes) or a real answer
+// the store would not give. Logged in `calls` with `injected: true`.
+const injected = new Map() // rpc name -> [answer, ...]
+
+function injectedAnswer(name, answer) {
+  const result = { data: answer?.data ?? null, error: answer?.error ?? null, count: null, status: answer?.error ? 500 : 200, statusText: answer?.error ? 'Internal Server Error' : 'OK' }
+  calls.push({ at: new Date().toISOString(), kind: 'rpc', name, error: answer?.error ? (answer.error.code || 'injected') : null, injected: true })
+  const q = {
+    then(resolve, reject) {
+      return new Promise((r) => setTimeout(r, state.latency)).then(() => result).then(resolve, reject)
+    },
+  }
+  for (const m of ['select', 'single', 'maybeSingle', 'abortSignal', 'throwOnError']) q[m] = () => q
+  return q
+}
+
 // ── The client ────────────────────────────────────────────────────────────────
 
 export const supabase = {
   from: (table) => engine.from(table),
-  rpc: (name, args, opts) => engine.rpc(name, args ?? {}, opts),
+  rpc: (name, args, opts) => {
+    const queue = injected.get(name)
+    if (queue?.length) return injectedAnswer(name, queue.shift())
+    return engine.rpc(name, args ?? {}, opts)
+  },
   auth,
   storage: { from: bucket },
   functions,
@@ -370,6 +407,12 @@ export const fixture = {
     state.persona = key
     ls.set(KEYS.persona, key)
     emit(key === 'signedout' ? 'SIGNED_OUT' : 'SIGNED_IN')
+  },
+  // The next call of RPC `name` in THIS tab answers `answer` ({ error } or
+  // { data }) instead of the store, once. See "Injected answers" above.
+  failNext(name, answer) {
+    if (!injected.has(name)) injected.set(name, [])
+    injected.get(name).push(answer ?? { error: { message: 'TypeError: Failed to fetch', code: '' } })
   },
   setMigrations(v) {
     state.migrations = parseMig(Array.isArray(v) ? v.join(',') : v)
