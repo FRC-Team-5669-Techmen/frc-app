@@ -121,7 +121,9 @@ export default {
   // the handler returns an error or throws, every write it made is undone.
   // A handler for an RPC that
   // already exists in core replaces it only while this migration is applied;
-  // otherwise core's handler and core's argument check answer.
+  // otherwise core's handler and core's argument check answer. An existing
+  // function listed in creates.rpcs WITHOUT a handler (a new signature only)
+  // keeps answering through core's handler, minus the old argument check.
   rpcs: { idea_cert_sync: ({ args }) => ({ data: { ok: true }, error: null }) },
   // Embeds: `select('*, profiles!feedback_member_id_fkey(full_name)')`.
   // Core tables embed through their real foreign keys automatically; declare a
