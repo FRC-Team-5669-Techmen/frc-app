@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { computeHoursMs, fmtDuration } from './hoursUtils'
 import { fetchAllRows } from './fetchAllRows'
-import { computePresence, startOfTodayISO, fmtClock, subteamOf } from './presence'
+import { computePresence, presenceSinceISO, startOfTodayISO, fmtClock, subteamOf } from './presence'
 import { displayName } from './names'
 import GlanceCard from './GlanceCard'
 import './ParentHomePage.css'
@@ -63,14 +63,17 @@ export default function ParentHomePage({ session }) {
       .eq('parent_id', parentId)
     const studentIds = (links ?? []).map(l => l.student_id)
 
-    // Team glance + present derivation need today's events for everyone, and the
-    // active roster. These read fine for any authenticated member.
+    // Team glance + present derivation need recent events for everyone, and the
+    // active roster. These read fine for any authenticated member. Presence
+    // reads from presenceSinceISO(), the window the shared rule needs, so a
+    // session open across LA midnight reads present here as it does on the
+    // student's own tile; todayISO still bounds each student's today hours.
     const todayISO = startOfTodayISO()
-    const [{ data: todayEvents }, { data: active }] = await Promise.all([
-      supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', todayISO),
+    const [{ data: recentEvents }, { data: active }] = await Promise.all([
+      supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', presenceSinceISO()),
       supabase.from('profiles').select('id, full_name, nickname').eq('status', 'active'),
     ])
-    const present = computePresence(todayEvents ?? [])
+    const present = computePresence(recentEvents ?? [])
     const activeRoster = active ?? []
     const team = {
       total: activeRoster.length,

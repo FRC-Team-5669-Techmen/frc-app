@@ -2,10 +2,9 @@
 // in attendanceState.js says they are checked in: their newest event is an 'in'
 // from today or still inside the session cap. The dashboard and both tag routes
 // read the same rule, so the board agrees with a member's own tile on every
-// event the caller's query returns. PresenceBoard and useGlance query from
-// presenceSinceISO(), so a session open across midnight reads present there
-// too; ParentHomePage still queries from local midnight and misses that one
-// case until it does the same. It adds no new tables.
+// event the caller's query returns. PresenceBoard, useGlance and
+// ParentHomePage all query from presenceSinceISO(), so a session open across
+// midnight reads present there too. It adds no new tables.
 
 import { currentStatus, statusWindowStartISO } from './attendanceState'
 

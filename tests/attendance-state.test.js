@@ -520,11 +520,12 @@ describe('the day key is hoursUtils.laDateKey, identical to the one-liner it rep
   })
 })
 
-// ── where the board and the glance start reading ────────────────────────────
-// PresenceBoard (/display) and useGlance (the dashboard's "N checked in") used
-// to read attendance from local midnight, so a member who checked in at
-// 11:40 PM read present on their own tile and absent on the board. Both now
-// read from presenceSinceISO(), the window the rule needs.
+// ── where the board, the glance and the parent view start reading ───────────
+// PresenceBoard (/display), useGlance (the dashboard's "N checked in") and
+// ParentHomePage (a parent's "here since" and team glance) used to read
+// attendance from local midnight, so a member who checked in at 11:40 PM read
+// present on their own tile and absent on the board and to their parent. All
+// three now read from presenceSinceISO(), the window the rule needs.
 describe('presence queries start where the rule needs them', () => {
   const now = la('2026-10-01 00:30')
   const lateIn = { user_id: 'u1', type: 'in', event_time: pg(la('2026-09-30 23:40')) }
@@ -551,7 +552,7 @@ describe('presence queries start where the rule needs them', () => {
   // The attendance_events line of each caller, read from source.
   const queryLine = (s) => s.split('\n').find((l) => l.includes(".from('attendance_events')")) ?? ''
   const readsWindow = (s) => /\.gte\('event_time', presenceSinceISO\(\)\)/.test(queryLine(s))
-  for (const file of ['PresenceBoard.jsx', 'useGlance.js']) {
+  for (const file of ['PresenceBoard.jsx', 'useGlance.js', 'ParentHomePage.jsx']) {
     test(`${file} reads attendance from presenceSinceISO()`, () => {
       const src = readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8')
       expect(queryLine(src)).not.toBe('')
@@ -567,5 +568,17 @@ describe('presence queries start where the rule needs them', () => {
     const src = readFileSync(new URL('../src/useGlance.js', import.meta.url), 'utf8')
     expect(src).toMatch(/\.from\('events'\)[^\n]*\n[^\n]*\.gte\('ends_at', todayISO\)/)
     expect(src).toMatch(/const todayISO = startOfTodayISO\(\)/)
+  })
+
+  // The parent view's per-student "today" hours are a day total, not presence:
+  // they stay bounded at local midnight. Mutant: the same filter on the
+  // presence window instead, which would count yesterday evening as today.
+  test("ParentHomePage still bounds each student's TODAY hours at local midnight (only presence moved)", () => {
+    const src = readFileSync(new URL('../src/ParentHomePage.jsx', import.meta.url), 'utf8')
+    const today = (s) => /const todayISO = startOfTodayISO\(\)/.test(s) && /const todayEvs = evs\.filter\(e => e\.event_time >= todayISO\)/.test(s)
+    expect(today(src)).toBe(true)
+    const mutant = src.replace('e.event_time >= todayISO)', 'e.event_time >= presenceSinceISO())')
+    expect(mutant).not.toBe(src)
+    expect(today(mutant)).toBe(false)
   })
 })
