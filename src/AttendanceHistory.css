@@ -36,6 +36,11 @@
 .ah-title { margin: 0; font-size: 1.15rem; color: var(--text); }
 .ah-sub { margin: 0.2rem 0 0; font-size: 0.78rem; color: var(--muted); }
 .ah-head-actions { display: flex; align-items: center; gap: 0.6rem; }
+/* A caller's head action (Team Hours' "+ Manual session") sits above the
+   close's widened hit area below, which otherwise reaches a few px into it
+   across the 0.6rem gap, so a click on that button's right edge closed the
+   history instead. */
+.ah-head-actions > :not(.ah-close) { position: relative; z-index: 1; }
 
 /* The glyph keeps the old size; ::before widens the hit area to 44 x 44 around
    it without moving anything, so the close is a full touch target on a phone. */
