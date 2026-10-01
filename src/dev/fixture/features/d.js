@@ -3,13 +3,22 @@
 // live (attendance_events, session_reviews, seasons), so "migration applied" and
 // "not applied" are the same state for this feature.
 //
-// Seeds one member (persona `student2`, else `student`) with a varied history so
-// the shared history view has something to show in each of its row kinds:
-// a plain session, a door change, a staff manual entry, an auto-close under
-// review, a capped 12.5h session, and a competition session, on separate earlier
-// days. Rows are APPENDED to the core attendance_events / session_reviews.
-// Times are offsets from the fixture clock, so the history always falls inside
-// the season that spans `now`.
+// Seeds one member with a varied history so the shared history view has
+// something to show in each of its row kinds: a plain session, a door change,
+// a staff manual entry, an auto-close under review, a capped 12.5h session, and
+// a competition session, on separate earlier days. Rows are APPENDED to the
+// core attendance_events / session_reviews. Times are offsets from the fixture
+// clock, so the history always falls inside the season that spans `now`.
+//
+// The member is this file's OWN fictional student (D_IDS.member, Emerson Vale),
+// not a persona. The history used to sit on Riley, and the core seed's build
+// generator, which only avoids its own sessions, put Riley's ordinary sessions
+// inside the 12.5h and auto-closed ones below; paired in time order, the later
+// IN won, and the CAPPED and REVIEW rows never formed on the merged seed.
+// Nobody signs in as Emerson, so no application row is needed (App.jsx's gate
+// only ever reads the signed-in member's). tools/e2e/features/display-history.mjs
+// finds this member as the owner of the one OUT at 'side-door', which stays the
+// only one in the store.
 //
 // Plain data only: no imports, no side effects, nothing read but the arguments.
 
@@ -27,13 +36,17 @@ const fxId = (key) => {
   return `0d0d0d0d-0000-4000-8000-${String(n).padStart(12, '0')}`
 }
 
+// Lane d's member. A uuid outside every other seed's namespace (the core
+// roster is 00000000-...-0000000000xx, lane hd's Harper is 0d000000-...).
+export const D_IDS = Object.freeze({ member: '0d0d0d0d-0000-4000-8000-0000000d0001' })
+
 export default {
   migration: null,
   creates: {},
-  seed: ({ ids, now }) => {
-    const who = ids?.student2 ?? ids?.student
+  seed: ({ now }) => {
+    const who = D_IDS.member
     const t0 = now == null ? NaN : new Date(now).getTime()
-    if (!who || !Number.isFinite(t0)) return {}
+    if (!Number.isFinite(t0)) return {}
 
     const at = (daysAgo, hoursEarlier) => new Date(t0 - daysAgo * D - hoursEarlier * H).toISOString()
     // No category key unless a row names one: attendance_events.category is
@@ -46,7 +59,16 @@ export default {
       manual_entry: false, geo_ok: null, ...over,
     })
 
+    // An active, approved, onboarded student, as the board and Team Hours list
+    // them (the same profile shape as the core roster and lane hd's Harper).
+    const joined = new Date(t0 - 120 * D).toISOString()
     return {
+      profiles: [{
+        id: who, full_name: 'Emerson Vale', nickname: 'Emerson', bio: null, approved: true,
+        created_at: joined, grad_year: 2028, status: 'active', shirt_size: null,
+        subteams: ['Fabrication'], disciplines: [], onboarded_at: joined, geofence_exempt: false,
+      }],
+      member_roles: [{ member_id: who, role: 'student' }],
       attendance_events: [
         // 2.5h build, in and out the main door.
         ev('a-in', 'in', at(1, 6), { category: 'build', location: 'main-door', geo_ok: true }),

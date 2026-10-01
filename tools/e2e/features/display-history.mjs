@@ -18,10 +18,11 @@
  *
  * Expectations corrected here: the location cell is text-transform:
  * capitalize, so its textContent is "shop → side door" (innerText would be
- * "Shop → Side Door"); chip labels are compared by textContent; Riley's total
- * is NOT 17h 40m on the merged fixture -- the core seed and lane b2 add Riley
- * sessions -- so the spec asserts that lane d's own 17h 40m is contained in
- * it and that the total equals the sum of its four category chips.
+ * "Shop → Side Door"); chip labels are compared by textContent; lane d's
+ * member's total is asserted to CONTAIN lane d's own 17h 40m and to equal the
+ * sum of its four category chips, so it holds whoever else seeds them (lane d
+ * used to seed Riley, whom the core seed and lane b2 also seed; it now seeds
+ * its own member, Emerson, whose total is exactly 17h 40m).
  */
 import { parseHours } from './_util.mjs';
 
@@ -70,8 +71,8 @@ export default {
     const boards = {};
     let mentorButtons = null;
     // Lane d's member and an exact-match for their name (set by the precondition).
-    let member = 'Riley';
-    let exact = /^Riley$/;
+    let member = 'Emerson';
+    let exact = /^Emerson$/;
 
     for (const mig of ['all', 'none']) {
       // ════ /display, staff ══════════════════════════════════════════════
@@ -79,18 +80,17 @@ export default {
         t.as(`display · mig ${mig} · ${who}`);
         await t.open('/display', { persona: who, mig, reset: mig === 'all' && who === 'mentor', ready: '.pb-row' });
         if (mig === 'all' && who === 'mentor') {
-          // PRECONDITION (a fixture defect, reported): the core seed generates
-          // lane d's member's ordinary build sessions without knowing lane d's
-          // rows, and on the merged fixture some of them land INSIDE lane d's
-          // sessions. Paired in time order, a core IN inside lane d's 12.5h
-          // session and inside its auto-closed one overwrites lane d's IN, so
-          // the CAPPED and REVIEW sessions never form. The spec removes exactly
-          // the core rows (ids 50000000-...) that fall inside a lane d session,
-          // then reloads. Lane d's member is FOUND, not assumed: the owner of
-          // the one OUT at 'side-door' (the "Shop -> Side Door" session the
-          // dialog must show; the core seed's side exit is 'shop-side'). So
-          // once features/d.js stops interleaving -- moving its hours, or its
-          // member -- this removes 0 rows and every check below still holds.
+          // PRECONDITION: no core row may sit inside a lane d session. When
+          // lane d seeded Riley, the core seed's build generator (which only
+          // avoids its own sessions) put Riley's ordinary sessions INSIDE lane
+          // d's 12.5h and auto-closed ones; paired in time order the core IN
+          // won, and CAPPED and REVIEW never formed. features/d.js now seeds
+          // its own member, whom the core seed never touches, so this removes
+          // 0 rows; it stays so a seed that interleaves again is repaired here
+          // and NAMED in the measurement rather than failing three checks
+          // below. Lane d's member is FOUND, not assumed: the owner of the one
+          // OUT at 'side-door' (the "Shop -> Side Door" session the dialog
+          // must show; the core seed's side exit is 'shop-side').
           const pre = await t.evaluate(() => {
             const db = window.__fx.db;
             const sig = db.attendance_events.find((e) => e.type === 'out' && e.location === 'side-door');

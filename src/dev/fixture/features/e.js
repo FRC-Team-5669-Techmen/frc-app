@@ -8,9 +8,14 @@
 // Every Discord id here is FICTIONAL -- the shape of a real one, nobody's real
 // role. The real list is typed in by an admin from Discord itself.
 //
-// The Edge Function is not part of the fixture contract, so in fixture mode
-// supabase.functions has nothing behind it and the page reports the announce
-// function as not deployed: compose and preview work, Send stays off.
+// The Edge Function answers as a function that is NOT DEPLOYED: the gateway's
+// 404, which the fixture client hands the page as a FunctionsHttpError whose
+// context status is 404 (src/dev/fixture/client.js functions.invoke), and
+// discordAnnounce.js classifyInvoke reads as not_deployed. Compose and preview
+// work, Send stays off. Without this stand-in the client's generic answer for
+// an unknown function ({ ok: true, skipped: true }) read as a deployed
+// function that "did not say it is ready". tools/e2e/features/announce.mjs
+// stubs the other states per page.
 //
 // No imports and no side effects, per src/dev/fixture/README.md.
 
@@ -44,7 +49,25 @@ export default {
   creates: {
     tables: ['discord_announce_roles', 'discord_announcements'],
     rpcs: [],
-    columns: {},
+    // discord_announce_roles as 0003 creates it, so a role added through the
+    // editor is stored the way the live table stores it (`active` true, not
+    // absent) and an unknown column is refused. Listing the columns makes the
+    // table strict; `id` (a uuid) and `created_at` (now) are left out on
+    // purpose, because the engine gives a strict feature table exactly those
+    // defaults itself. Two defaults the contract cannot express are null here:
+    // created_by (auth.uid() live) and updated_at (now() live). The page reads
+    // neither (AnnouncePage.jsx ROLE_SELECT).
+    columns: {
+      discord_announce_roles: {
+        name: { type: 'text' },
+        role_id: { type: 'text' },
+        active: { default: true, type: 'boolean' },
+        sort_order: { default: 0, type: 'integer' },
+        notes: { type: 'text' },
+        created_by: { type: 'uuid' },
+        updated_at: { type: 'timestamp with time zone' },
+      },
+    },
   },
 
   seed: ({ ids, now }) => {
@@ -129,6 +152,13 @@ export default {
 
   rpcs: {},
   relations: {},
+
+  // Not deployed: the gateway's 404 (see the header). The page's own status
+  // check goes through supabase.functions.invoke, which the client turns into
+  // a FunctionsHttpError with context.status 404 for any status of 400 or more.
+  functions: {
+    'discord-announce': () => ({ data: null, error: null, status: 404 }),
+  },
 
   // Both tables are staff-read under migration 0003's RLS. The page itself is
   // admin-only, but a mentor reading the tables directly sees them.

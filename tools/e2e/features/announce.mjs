@@ -17,9 +17,10 @@
  *    back; a bad id is refused with the 17-to-20-digits sentence and a good
  *    one adds a chip; an empty table says "add roles first";
  *  - the function states: not deployed (a fetch error), the fixture's own
- *    answer, still answering, needing setup, and deployed-and-ready (each
- *    stubbed for one page), with Send off in all but the last; a send carries
- *    exactly the ticked role ids.
+ *    answer (features/e.js answers the gateway's 404: not deployed), still
+ *    answering, needing setup, and deployed-and-ready (each stubbed for one
+ *    page), with Send off in all but the last; a send carries exactly the
+ *    ticked role ids.
  *
  * Expectation corrected here: lane e expected the substring
  * '"roles": [ "100000000000000001" ]', which never occurs -- the payload is
@@ -53,7 +54,10 @@ export default {
     t.eq('h1 reads Announce (textContent; CSS uppercases it)', await t.text('h1.an-title'), 'Announce');
     const fixtureState = await t.evaluate(() => document.querySelector('.an-status-line')?.dataset.state);
     const fixtureLine = await t.text('.an-status-line');
-    t.check('the status line says sending is off, with no empty list in it', ['needs-setup', 'not_deployed'].includes(fixtureState) && !/: \./.test(fixtureLine) && /compose and preview/.test(fixtureLine),
+    // features/e.js answers 404, the gateway's answer for a function that does
+    // not exist. Before it did, the client's generic { ok: true, skipped: true }
+    // read as a deployed function that had not said it was ready (needs-setup).
+    t.check('the fixture\'s own answer (a 404) reads not deployed: sending is off, with no empty list in it', fixtureState === 'not_deployed' && !/: \./.test(fixtureLine) && /compose and preview/.test(fixtureLine),
       `data-state ${fixtureState}: "${fixtureLine}"`);
     t.eq('channel chips, #announcements pressed', await t.evaluate(() => [...document.querySelectorAll('section[aria-label="Compose"] .an-chips')][0]
       ? [...[...document.querySelectorAll('section[aria-label="Compose"] .an-chips')][0].querySelectorAll('.an-chip')].map((b) => `${b.textContent.trim()}:${b.getAttribute('aria-pressed')}`) : null),
@@ -177,9 +181,11 @@ export default {
       `${(await chipTexts(t)).join(', ')}`);
     const pitRow = t.page.locator('#announce-roles .an-role', { has: t.page.locator('.an-role-name', { hasText: /^Pit Crew$/ }) });
     const pitStored = (await t.rows('discord_announce_roles')).find((r) => r.name === 'Pit Crew');
-    t.check('the new role\'s own row agrees with its chip: not Inactive, toggle reads Deactivate', (await pitRow.locator('.an-pill').count()) === 0
-      && ((await pitRow.locator('.an-btn').first().textContent()) ?? '').trim() === 'Deactivate',
-      `pill ${await pitRow.locator('.an-pill').count()}, toggle "${((await pitRow.locator('.an-btn').first().textContent()) ?? '').trim()}"; stored active ${JSON.stringify(pitStored?.active)}${pitStored?.active === undefined ? ' (FIXTURE: features/e.js gives the new table no column defaults; the live column is not null default true)' : ''}`);
+    // The page sends no `active`; the column default does (0003: not null
+    // default true, declared in features/e.js creates.columns).
+    t.check('the new role\'s own row agrees with its chip and the store: not Inactive, toggle reads Deactivate, stored active true', (await pitRow.locator('.an-pill').count()) === 0
+      && ((await pitRow.locator('.an-btn').first().textContent()) ?? '').trim() === 'Deactivate' && pitStored?.active === true,
+      `pill ${await pitRow.locator('.an-pill').count()}, toggle "${((await pitRow.locator('.an-btn').first().textContent()) ?? '').trim()}"; stored active ${JSON.stringify(pitStored?.active)}${pitStored?.active === undefined ? ' (FIXTURE: the table has no active default; the live column is not null default true)' : ''}`);
     await t.press(pitRow.getByRole('button', { name: 'Delete' }));
     const armed = await pitRow.locator('.an-btn-danger').textContent();
     t.check('Delete arms first and names what it deletes', armed?.trim() === 'Delete Pit Crew? Past posts keep their copy.', armed);
