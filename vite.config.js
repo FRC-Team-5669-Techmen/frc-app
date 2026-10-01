@@ -16,7 +16,7 @@ function buildId() {
   const sha = process.env.VERCEL_GIT_COMMIT_SHA
   if (sha) return sha.slice(0, 7)
   try {
-    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || 'dev'
+    return execSync('git rev-parse --short HEAD', { cwd: ROOT, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim() || 'dev'
   } catch {
     return 'dev'
   }
