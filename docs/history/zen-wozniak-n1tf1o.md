@@ -434,7 +434,8 @@ Found and NOT corrected here, because it needs its own decision:
 `docs/decisions/` holds 38 new files, `04` to `41`: the audit's 24 drafts and
 the night's lane defaults. Status:
 - **05** is decided: solo mode, Mr. Pina's rule since 2026-09-27, as the prompt
-  recorded it.
+  recorded it. The seven-command local gate is the session's default, not his
+  words.
 - **Defaults the tree now implements**: 04, 06 (app side only), 13, 21, 23,
   28, 29, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40 and 41.
   - 04: security items as stubs in the public repo.
