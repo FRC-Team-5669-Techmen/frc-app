@@ -83,8 +83,9 @@ export default {
         ev('d-in', 'in', at(5, 8), { category: 'build', geo_ok: true }),
         ev('d-out', 'out', at(5, 1.5), { method: 'auto_close' }),
         // 12.5h build: clamped to 10h, the CAPPED tag. Every check-in here is at
-        // least 24h after the one before it, so each lands on its own UTC date
-        // (the history's day key) whatever time of day the fixture clock reads;
+        // least 24h after the one before it, so each lands on its own Los Angeles date
+        // (the history's day key, laDateKey; the 25h fall-back day excepted) whatever
+        // time of day the fixture clock reads;
         // at 8 days back this one sat 17h from the next and shared a day with it
         // whenever the clock read 06:00-12:59 UTC.
         ev('e-in', 'in', at(7, 13), { category: 'build', geo_ok: true }),

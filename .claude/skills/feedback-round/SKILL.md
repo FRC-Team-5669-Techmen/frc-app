@@ -147,6 +147,9 @@ him before it is built.
   additive only, with a `_rls_test.sql` sibling where it touches a policy, grant or
   revoke, written to the rules in `supabase/migrations/README.md`, and with the UI showing
   "not set up yet" until it is pasted. Nothing applies it but Mr. Pina.
+- Every bug-confirmed report's prompt names its fixture reproduction (persona, mig, route,
+  viewport) and requires the build session to commit it under `tools/e2e/` or `tests/`
+  before writing `MARK_DONE.sql`.
 - Every prompt ends by asking the build session for a `MARK_DONE.sql` naming the report
   ids it closed (shape in step 8).
 

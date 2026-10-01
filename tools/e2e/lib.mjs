@@ -35,10 +35,14 @@ export const VIEWPORTS = Object.freeze({
   },
 });
 
-export function viewportFor(width) {
-  const w = Number(width);
-  if (VIEWPORTS[w]) return VIEWPORTS[w];
-  return { name: String(w), viewport: { width: w, height: w < 700 ? 812 : 900 }, isMobile: w < 700, hasTouch: w < 700, deviceScaleFactor: w < 700 ? 2 : 1 };
+// A width (375, '1440') or a WIDTHxHEIGHT spec ('342x673'): the reported phone
+// sizes come as the latter, and Number('342x673') is NaN. A bare width that has
+// a preset gets the preset; anything else is built from the numbers given.
+export function viewportFor(spec) {
+  const [w, h] = String(spec).split('x').map(Number);
+  if (!h && VIEWPORTS[w]) return VIEWPORTS[w];
+  const m = w < 700;
+  return { name: String(spec), viewport: { width: w, height: h || (m ? 812 : 900) }, isMobile: m, hasTouch: m, deviceScaleFactor: m ? 2 : 1 };
 }
 
 export function flag(args, name, fallback = null) {
