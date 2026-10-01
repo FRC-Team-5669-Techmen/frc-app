@@ -127,6 +127,9 @@
   color: var(--steel);
   cursor: pointer;
 }
+/* The app's checkboxes tick in gold (ApplicationsPage, NotificationsPanel),
+   never the browser's default blue. */
+.fbp-names input, .fbp-selectall input { accent-color: var(--gold); }
 
 .fbp-parts {
   display: flex;
@@ -344,7 +347,7 @@
 .fbp-item:hover { border-color: var(--gold-a24); }
 .fbp-item:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 
-.fbp-check { margin-top: 0.2rem; width: 1.05rem; height: 1.05rem; cursor: pointer; }
+.fbp-check { margin-top: 0.2rem; width: 1.05rem; height: 1.05rem; cursor: pointer; accent-color: var(--gold); }
 
 .fbp-item-main { flex: 1; min-width: 0; }
 

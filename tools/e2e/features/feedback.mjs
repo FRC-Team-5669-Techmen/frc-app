@@ -104,6 +104,8 @@ export default {
       const l = [...document.querySelectorAll('.fbp-names')].find((x) => x.textContent.includes('Names in export'));
       return !!l?.querySelector('input')?.checked;
     }), 'checkbox checked');
+    const ticks = await t.evaluate(() => [...document.querySelectorAll('.fbp-wrap input[type=checkbox]')].map((i) => getComputedStyle(i).accentColor));
+    t.check('every console checkbox ticks in Techmen Gold, not the browser\'s blue', ticks.length >= 3 && ticks.every((c) => c === 'rgb(255, 230, 41)'), `${ticks.length} checkboxes: ${[...new Set(ticks)].join(', ')}`);
     t.eq('status tabs carry the store\'s counts', await t.texts('.fbp-tab'), tabTexts(rows));
     t.eq(`${N} rows listed`, await listCount(t), N);
     await t.noHScroll();
