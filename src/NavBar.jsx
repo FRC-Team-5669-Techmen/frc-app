@@ -44,6 +44,7 @@ const CONTEXT_TAGS = [
   ['/reports',     'REPORTS'],
   ['/certify',     'CERTIFY'],
   ['/certifications', 'CERTS'],
+  ['/announce',    'ANNOUNCE'],
   ['/coverage',    'COVERAGE'],
 ]
 function contextTag(pathname) {
@@ -147,6 +148,8 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
                   {openFeedback > 0 && <span className="nav-badge">{openFeedback}</span>}
                 </NavLink>
               )}
+              {/* Admin-only: a post can ping whole Discord roles. */}
+              {isAdmin && <NavLink to="/announce" className={itemClass}>Announce</NavLink>}
 
               <NavLink to="/surveys" className={itemClass}>Surveys</NavLink>
 
@@ -216,7 +219,9 @@ export default function NavBar({ hasRole = () => false, session = null }) {
     if (!isAdmin) return
     let active = true
     supabase.from('feedback')
-      .select('id', { count: 'exact', head: true }).eq('status', 'open')
+      // Both spellings: 0002 maps 'open' to 'new' in place, and this must
+      // count right whether or not that migration has been applied yet.
+      .select('id', { count: 'exact', head: true }).in('status', ['new', 'open'])
       .then(({ count }) => { if (active) setOpenFeedback(count ?? 0) })
     return () => { active = false }
   }, [isAdmin, pathname])
