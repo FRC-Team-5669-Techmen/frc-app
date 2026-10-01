@@ -987,6 +987,16 @@
 :root.tm-plate :is(.msp-clickable, .jobs-row) {
   min-height: var(--tm-target);
 }
+/* The coverage matrix's member names are links a student taps to open that
+   member's page. The link stays inline, so the cell's ellipsis still cuts a
+   long name; its padding is the hit area, and the cell takes the same
+   padding so nothing clips it. */
+:root.tm-plate .cm-name-link {
+  padding-block: 13px;
+}
+:root.tm-plate .cm-name-cell {
+  padding-block: 13px;
+}
 /* A sortable column head is a control too. A table cell ignores min-height;
    its height acts as one. */
 :root.tm-plate .board-th-sort {
