@@ -108,21 +108,11 @@ export function fmtHours(h) {
 }
 
 // Total worked milliseconds from in/out pairs, counting an open session up to
-// now. Shared by HomePage and ParentHomePage (was HomePage-local). Sorts
-// defensively so callers can pass events in any order.
+// now. Shared by HomePage and ParentHomePage (was HomePage-local). Sums the
+// sessions `sessionsFromEvents` derives rather than pairing a second time, so
+// there is one pairing rule in this module (sorted there, any order in).
 export function computeHoursMs(events) {
-  let total = 0
-  let inTime = null
-  for (const e of [...events].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))) {
-    if (e.type === 'in') {
-      inTime = new Date(e.event_time)
-    } else if (e.type === 'out' && inTime) {
-      total += cappedSession(inTime, new Date(e.event_time)).ms
-      inTime = null
-    }
-  }
-  if (inTime) total += cappedSession(inTime, null).ms
-  return total
+  return sessionsFromEvents(events).reduce((total, s) => total + s.ms, 0)
 }
 
 export function fmtDuration(ms) {
@@ -144,6 +134,29 @@ function sidFor(dateStr, seasons) {
   return seasons.find(s => dateStr >= s.start_date && dateStr <= s.end_date)?.id ?? 'other'
 }
 
+// The America/Los_Angeles calendar date ('YYYY-MM-DD') of an instant. A stored
+// timestamptz arrives from PostgREST as "2026-09-15T22:30:00+00:00", so
+// `event_time.slice(0, 10)` is the UTC date, which is the NEXT day for anything
+// after 5 PM PDT / 4 PM PST. Seasons, goals and the session list are all in
+// shop-local dates, so every date an instant is bucketed by comes from here.
+// Same result as `laDateKey` in src/reporting.js (which should re-export this
+// one rather than keep its own). One cached formatter, read by parts: a
+// `toLocaleDateString` with options builds a formatter per call, ~15x slower,
+// and Team Hours calls this once per session for the whole roster.
+const LA_DATE = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' })
+export function laDateKey(t) {
+  const p = {}
+  for (const { type, value } of LA_DATE.formatToParts(new Date(t))) p[type] = value
+  return `${p.year}-${p.month}-${p.day}`
+}
+
+// Whether a derived session counts toward official hours: every session except
+// one whose checkout is excluded (a pending or voided session_reviews row). An
+// open session counts up to now, exactly as the list shows it.
+export function isSessionCounted(session, excludedCheckoutIds = null) {
+  return !(session.outId && excludedCheckoutIds?.has(session.outId))
+}
+
 /**
  * Build a per-season breakdown map for one member.
  *
@@ -154,52 +167,43 @@ function sidFor(dateStr, seasons) {
  * @param {object[]} [adjustments]      - { category, hours(signed), created_at } staff hour_adjustments
  * @returns {{ [seasonId|'other']: { build, outreach, volunteer, competition, total } }}
  *
- * Attendance sessions are attributed by the IN event's category (normalized;
- * legacy 'normal'/null → 'build'). Attributing by the IN side keeps it robust to
- * the auto-close 'out' event, which need not carry the matching category. Logged
- * hours fold into the same category buckets (volunteering → volunteer). Staff
- * hour_adjustments fold in too — signed (negative debits allowed), attributed to
- * the season of their created_at, so a labeled correction shows in the same split.
+ * The attendance half is `sessionsFromEvents` -- the SAME pairing every session
+ * list (My Hours, the Team Hours drill-down, Reports) shows -- so a session a
+ * member can see is a session their totals count. Each session is attributed by
+ * its IN event's category (normalized; legacy 'normal'/null → 'build'), which
+ * keeps it robust to the auto-close 'out' event, and to the season of its IN's
+ * Los Angeles date. Logged hours fold into the same category buckets
+ * (volunteering → volunteer) by their date column. Staff hour_adjustments fold
+ * in too — signed (negative debits allowed), attributed to the season of their
+ * created_at's Los Angeles date, so a labeled correction shows in the same split.
+ *
+ * This used to pair events itself, inside groups keyed by the UTC date of each
+ * event, so any session spanning 00:00 UTC (checked in before and out after
+ * 5 PM PDT / 4 PM PST, i.e. most after-school sessions) had its IN and OUT in
+ * different groups and was dropped from every total while the session list
+ * still showed it. tests/my-hours-model.test.js reproduces the report;
+ * tests/my-hours-pairing.test.js pins that nothing else moved.
  */
 export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows, excludedCheckoutIds = null, adjustments = []) {
+  return breakdownFromSessions(seasons, sessionsFromEvents(attendanceEvents), loggedHoursRows, excludedCheckoutIds, adjustments)
+}
+
+/**
+ * `buildBreakdown` for a caller that already holds the derived sessions (My
+ * Hours lists them), so the totals are summed from the very rows it shows.
+ */
+export function breakdownFromSessions(seasons, sessions, loggedHoursRows, excludedCheckoutIds = null, adjustments = []) {
   const raw = {} // sid → { [category]: hours }
   const addHours = (sid, cat, hours) => {
     const b = (raw[sid] ??= {})
     b[cat] = (b[cat] ?? 0) + hours
   }
 
-  // --- Attendance: group events by calendar date, attribute each closed pair's
-  //     duration to its IN category. ---
-  const byDate = {}
-  for (const e of attendanceEvents) {
-    ;(byDate[e.event_time.slice(0, 10)] ??= []).push(e)
+  // --- Attendance: every counted session (closed, capped or open), by its IN ---
+  for (const s of sessions) {
+    if (!isSessionCounted(s, excludedCheckoutIds)) continue
+    addHours(sidFor(laDateKey(s.inTime), seasons), s.category, s.ms / 3600000)
   }
-  for (const [date, evts] of Object.entries(byDate)) {
-    evts.sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-    let inTime = null, inCat = null
-    for (const e of evts) {
-      if (e.type === 'in') {
-        inTime = new Date(e.event_time)
-        inCat  = normAttendanceCategory(e.category)
-      } else if (e.type === 'out' && inTime) {
-        // Always close the pair; only count it if not excluded (pending/voided review)
-        if (!excludedCheckoutIds || !excludedCheckoutIds.has(e.id)) {
-          addHours(sidFor(date, seasons), inCat, cappedSession(inTime, new Date(e.event_time)).ms / 3600000)
-        }
-        inTime = null; inCat = null
-      }
-    }
-  }
-
-  // Open session: find the last unmatched 'in' (member is currently checked in)
-  // Auto-close checkouts clear inTime, so this only fires for genuinely open sessions.
-  const sorted = [...attendanceEvents].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-  let openIn = null, openDate = null, openCat = null
-  for (const e of sorted) {
-    if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10); openCat = normAttendanceCategory(e.category) }
-    else if (e.type === 'out' && openIn) { openIn = null; openDate = null; openCat = null }
-  }
-  if (openIn) addHours(sidFor(openDate, seasons), openCat, cappedSession(openIn, null).ms / 3600000)
 
   // --- Logged hours (verified only, already filtered by caller) ---
   for (const row of loggedHoursRows) {
@@ -208,7 +212,7 @@ export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows, exclu
 
   // --- Staff hour adjustments (signed; attributed to the season of created_at) ---
   for (const a of adjustments) {
-    const date = (a.created_at ?? '').slice(0, 10)
+    const date = a.created_at ? laDateKey(a.created_at) : ''
     addHours(sidFor(date, seasons), normAttendanceCategory(a.category), parseFloat(a.hours) || 0)
   }
 
@@ -238,18 +242,7 @@ export function sumBreakdown(map) {
  */
 export function computePendingMs(attendanceEvents, pendingCheckoutIds) {
   if (!pendingCheckoutIds?.size) return 0
-  let total = 0
-  let inTime = null
-  const sorted = [...attendanceEvents].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-  for (const e of sorted) {
-    if (e.type === 'in') {
-      inTime = new Date(e.event_time)
-    } else if (e.type === 'out' && inTime) {
-      if (pendingCheckoutIds.has(e.id)) {
-        total += cappedSession(inTime, new Date(e.event_time)).ms
-      }
-      inTime = null
-    }
-  }
-  return total
+  return sessionsFromEvents(attendanceEvents)
+    .filter(s => s.outId && pendingCheckoutIds.has(s.outId))
+    .reduce((total, s) => total + s.ms, 0)
 }

@@ -14,6 +14,7 @@ const HoursBoard  = lazy(() => import('./HoursBoard'))
 const RosterPage     = lazy(() => import('./RosterPage'))
 const ProfilePage    = lazy(() => import('./ProfilePage'))
 const SkillsCatalog  = lazy(() => import('./SkillsCatalog'))
+const CertificationsPage = lazy(() => import('./CertificationsPage'))
 const MemberSkillsHome = lazy(() => import('./MemberSkillsHome'))
 const MemberPage     = lazy(() => import('./MemberPage'))
 const CheckinPage    = lazy(() => import('./CheckinPage'))
@@ -282,6 +283,10 @@ export default function App() {
           <Route path="/hours"     element={<HoursBoard hasRole={hasRole} />} />
           <Route path="/roster"    element={<RosterPage />} />
           <Route path="/skills"      element={isStaffUser ? <SkillsCatalog hasRole={hasRole} /> : <MemberSkillsHome session={session} hasRole={hasRole} />} />
+          {/* Read-only mirror of IDEA Classroom certifications (migration 0001). Not
+              role-gated: the page picks its own staff / member / parent view and
+              RLS decides the rows. */}
+          <Route path="/certifications" element={<CertificationsPage session={session} hasRole={hasRole} />} />
           <Route path="/jobs"        element={<JobsPage session={session} hasRole={hasRole} />} />
           <Route path="/study"       element={<StudyPage session={session} hasRole={hasRole} />} />
           <Route path="/members/:id" element={<MemberPage session={session} hasRole={hasRole} />} />
@@ -301,7 +306,7 @@ export default function App() {
           <Route path="/survey"          element={<SurveyPage session={session} />} />
           <Route path="/surveys"         element={<SurveysAdmin session={session} hasRole={hasRole} />} />
           {/* Display lives inside the layout so the nav + profile stay visible. */}
-          <Route path="/display" element={<PresenceBoard />} />
+          <Route path="/display" element={<PresenceBoard hasRole={hasRole} />} />
         </Route>
 
         {/* ── Minimal: no NavBar, bundle stays small ── */}

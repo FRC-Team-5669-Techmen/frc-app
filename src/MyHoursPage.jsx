@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
-import { fmtHours, buildBreakdown, computePendingMs, sumBreakdown, sessionsFromEvents, CATEGORIES, categoryLabel, categoryColor, DEFAULT_CATEGORY } from './hoursUtils'
-import { effectiveGoal, goalCategoryKeys, hoursTowardGoal, daysPresent } from './accountability'
+import { fmtHours, CATEGORIES, categoryLabel, categoryColor, DEFAULT_CATEGORY } from './hoursUtils'
+import { myHoursModel } from './myHoursModel'
+import { fetchAllRows } from './myHoursFetch'
 import './MyHoursPage.css'
 
 const DAY_MS = 86_400_000
@@ -30,7 +31,9 @@ export default function MyHoursPage({ session }) {
     const uid = session.user.id
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
-      supabase.from('attendance_events').select('id, type, event_time, category, manual_entry').eq('user_id', uid).order('event_time'),
+      // Paged: an unranged select stops silently at the API's max rows, which
+      // would drop the newest check-ins from the list and every total at once.
+      fetchAllRows(() => supabase.from('attendance_events').select('id, type, event_time, category, manual_entry').eq('user_id', uid).order('event_time').order('id')),
       supabase.from('logged_hours').select('type, hours, date').eq('member_id', uid).eq('status', 'verified'),
       supabase.from('session_reviews').select('checkout_id, status').eq('user_id', uid).in('status', ['pending', 'voided']),
       supabase.from('hour_goals').select('member_id, season_id, target_hours, categories'),
@@ -46,119 +49,21 @@ export default function MyHoursPage({ session }) {
     loadCorrections(uid)
   }, [session.user.id])
 
-  // Checkout/checkin IDs that already have an open (pending) correction request.
-  const flaggedIds = useMemo(() => {
-    const s = new Set()
-    for (const c of corrections) {
-      if (c.status !== 'pending') continue
-      if (c.checkin_id)  s.add(c.checkin_id)
-      if (c.checkout_id) s.add(c.checkout_id)
-    }
-    return s
-  }, [corrections])
-
-  // Checkout IDs excluded from official hours (pending or voided review)
-  const excludedIds = useMemo(
-    () => reviews ? new Set(reviews.map(r => r.checkout_id)) : null,
-    [reviews]
-  )
-
-  // Checkout IDs that are pending review only (shown in the notice, not voided)
-  const pendingIds = useMemo(
-    () => reviews ? new Set(reviews.filter(r => r.status === 'pending').map(r => r.checkout_id)) : null,
-    [reviews]
-  )
-
-  const breakdown = useMemo(
-    () => seasons && events && logged && excludedIds
-      ? buildBreakdown(seasons, events, logged, excludedIds, adjustments)
+  // Every number and every session row on the page comes out of one pure
+  // computation (src/myHoursModel.js), so the totals and the session list are
+  // derived from the same rows.
+  const model = useMemo(
+    () => seasons && events && logged && reviews
+      ? myHoursModel({ seasons, events, logged, reviews, goals, adjustments, corrections, memberId: session.user.id })
       : null,
-    [seasons, events, logged, excludedIds, adjustments]
+    [seasons, events, logged, reviews, goals, adjustments, corrections, session.user.id]
   )
 
-  const pendingMs = useMemo(
-    () => events && pendingIds ? computePendingMs(events, pendingIds) : 0,
-    [events, pendingIds]
-  )
-
-  // All-time totals per type (across every season).
-  const allTime = useMemo(() => breakdown ? sumBreakdown(breakdown) : null, [breakdown])
-
-  // Active-season goal progress: effective goal (own override else team default),
-  // hours toward it (only the goal's categories), and days present this season.
-  const goalProgress = useMemo(() => {
-    if (!seasons || !breakdown || !events) return null
-    const today = new Date().toISOString().slice(0, 10)
-    const active = seasons.find(s => s.start_date <= today && (s.end_date == null || s.end_date >= today))
-    if (!active) return null
-    const goal = effectiveGoal(goals, session.user.id, active.id)
-    if (!goal || !(goal.target_hours > 0)) return null
-    const hours = hoursTowardGoal(breakdown[active.id], goal)
-    const days  = daysPresent(events, { since: active.start_date, until: active.end_date ?? today })
-    return {
-      season: active, target: goal.target_hours, hours, days,
-      pct: Math.min(100, (hours / goal.target_hours) * 100),
-      met: hours >= goal.target_hours,
-      catKeys: goalCategoryKeys(goal),
-      allCats: !goal.categories?.length,
-    }
-  }, [seasons, breakdown, events, goals, session.user.id])
-
-  // Sessions newest-first, with the pending/voided flag for display.
-  const sessions = useMemo(() => events ? sessionsFromEvents(events) : [], [events])
-  const recent = useMemo(
-    () => [...sessions].reverse().slice(0, 8).map(s => ({
-      ...s,
-      pending: s.outId ? !!pendingIds?.has(s.outId) : false,
-      flagged: (s.inId && flaggedIds.has(s.inId)) || (s.outId && flaggedIds.has(s.outId)),
-    })),
-    [sessions, pendingIds, flaggedIds]
-  )
-
-  // Trailing-7-day hours (attendance sessions + logged), and a 6-week trend.
-  const trend = useMemo(() => {
-    if (!events || !logged) return null
-    const now = Date.now()
-    const rangeHours = (start, end) => {
-      let ms = 0
-      for (const s of sessions) {
-        const t = s.inTime.getTime()
-        if (t >= start && t < end) ms += s.ms
-      }
-      let h = ms / 3600000
-      for (const l of logged) {
-        const t = new Date(l.date + 'T00:00:00').getTime()
-        if (t >= start && t < end) h += parseFloat(l.hours) || 0
-      }
-      return h
-    }
-    const weeks = []
-    for (let i = 5; i >= 0; i--) {
-      const end = now - i * 7 * DAY_MS
-      weeks.push({ hours: rangeHours(end - 7 * DAY_MS, end), end })
-    }
-    return { thisWeek: weeks[weeks.length - 1].hours, weeks }
-  }, [events, logged, sessions])
-
-  const cards = useMemo(() => {
-    if (!breakdown || !seasons) return []
-    const list = []
-    for (const s of [...seasons].sort((a, b) => b.start_date.localeCompare(a.start_date))) {
-      const b = breakdown[s.id]
-      if (b?.total >= 0.01) list.push({ key: s.id, label: s.name, b })
-    }
-    if (breakdown.other?.total >= 0.01) {
-      list.push({ key: 'other', label: 'Other', b: breakdown.other })
-    }
-    return list
-  }, [breakdown, seasons])
-
-  if (!breakdown) {
+  if (!model) {
     return <div className="mh-loading"><div className="mh-spinner" /></div>
   }
 
-  const grandTotal = cards.reduce((s, c) => s + c.b.total, 0)
-  const pendingCount = pendingIds?.size ?? 0
+  const { allTime, cards, grandTotal, trend, goalProgress, recent, pendingCount, pendingMs } = model
   const typeMax = allTime ? Math.max(...CATEGORIES.map(t => allTime[t.key] || 0), 0.01) : 0.01
 
   return (
@@ -323,6 +228,7 @@ export default function MyHoursPage({ session }) {
                       {s.manual && <span className="mh-session-flag" style={{ color: 'var(--steel)' }}>manual</span>}
                       {s.wasCapped && <span className="mh-session-flag" style={{ color: 'var(--gold-dim)' }} title="Capped — exceeded the max session length (likely a missed check-out)">capped</span>}
                       {s.pending && <span className="mh-session-flag">review</span>}
+                      {s.voided && <span className="mh-session-flag" title="Voided by a mentor — not counted in your totals">not counted</span>}
                       {s.flagged
                         ? <span className="mh-session-flag" style={{ color: 'var(--gold)' }}>flagged</span>
                         : (s.inId || s.outId) && (
