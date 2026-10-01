@@ -63,7 +63,8 @@
 --     moment their profile stops being approved. A grant on an unapproved
 --     profile (an account staff have not let in, or have since turned away)
 --     confers nothing. Staff are unaffected: their path is is_staff(), exactly
---     as before.
+--     as before. (approved is a column its owner can still write today --
+--     see section 3 -- so revoke the grant itself when turning someone away.)
 -- Staff (is_staff(): mentor / lead / admin) keep every right they have today.
 -- The existing "events writable by staff" policy is NOT dropped, altered or
 -- re-created by this file; Postgres ORs permissive policies together.
@@ -221,6 +222,16 @@ grant select on table public.member_permissions to authenticated;
 -- The staff half is deliberately unchanged: is_staff() is what every staff
 -- policy in this database already trusts, and narrowing it here alone would
 -- make staff's rights depend on which policy asked.
+--
+-- WHAT THIS DOES NOT STOP, measured on the PostgreSQL 16 harness: the base
+-- policy "profiles update own or admin" (platform_migration.sql) lets a member
+-- update EVERY column of their own profile, approved included, so an
+-- unapproved account can PATCH approved = true on itself (UPDATE 1) and this
+-- clause then reads true for it. Until a later migration freezes
+-- profiles.approved against non-admin API callers, approval here stops a
+-- turned-away holder only until they flip their own flag. The control that
+-- cannot be undone from the member's side is admin_revoke_capability() --
+-- revoke the grant when you turn someone away.
 create or replace function public.has_capability(p_capability text)
 returns boolean
 language sql
