@@ -153,7 +153,7 @@ the `__fx` parameter is stripped from the URL before the router reads it.
 The store also reseeds by itself when it was seeded on an earlier LA day (its
 "now" would be stale) or by different seed code (a plugin was added or changed).
 
-`window.__fx` exposes `{ db, reset(), persona, setPersona(key), migrations, setMigrations(v), latency,
+`window.__fx` exposes `{ supabase, db, reset(), persona, setPersona(key), migrations, setMigrations(v), latency,
 setLatency(ms), calls, seedProblems, rows(table), insert(table, row), patch(table, match, values), plugins,
 migrationNumbers, marker }` for a test to read and assert on. `setPersona` emits `SIGNED_IN` /
 `SIGNED_OUT` to `onAuthStateChange` listeners as supabase-js does, so a mounted app reacts (App.jsx
