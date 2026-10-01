@@ -143,9 +143,9 @@ export default {
     t.eq('the page count is below a count-every-row count exactly where a non-held row sits', differs,
       [...new Set(holders.filter((h) => !isHeldRow(h)).map((h) => h.code))].sort());
     t.eq('WELD-3 is marked Retired', await t.text('[data-code="WELD-3"] .ic-retired'), 'Retired');
-    t.eq('no parent block, no sync line, no empty line for a student',
-      { student: await t.count('[data-testid=ic-student]'), sync: await t.count('[data-testid=ic-sync]'), empty: await t.count('.ic-empty') },
-      { student: 0, sync: 0, empty: 0 });
+    t.eq('no parent block, no sync line, no empty line and no error for a student',
+      { student: await t.count('[data-testid=ic-student]'), sync: await t.count('[data-testid=ic-sync]'), empty: await t.count('.ic-empty'), error: await t.count('.ic-error') },
+      { student: 0, sync: 0, empty: 0, error: 0 });
     await t.press('[data-code="SAFE-1"] .ic-cert-btn');
     await t.waitFor('#ic-panel-SAFE-1');
     t.eq('SAFE-1 opens 3 holders, IDEA-FX-0008, -0001, -0005', await t.evaluate(() => [...document.querySelectorAll('#ic-panel-SAFE-1 .ic-holder')].map((li) => li.dataset.serial)),

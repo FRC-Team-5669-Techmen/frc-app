@@ -149,8 +149,7 @@ export default {
         t.check('positive control: a staff click DOES read a history (columns differ from the board\'s)', histCols.length > 0 && histCols.every((c) => c !== BOARD_COLUMNS), histCols.join(' | '));
         t.eq('focus is on Close', await t.evaluate(() => document.activeElement?.getAttribute('aria-label')), 'Close');
         await t.noHScroll('no horizontal page scroll with the dialog open');
-        if (mig === 'all') await t.page.screenshot({ path: (await t.shot(`display-${who}-history`)).replace(/\.png$/, '-viewport.png') });
-        if (mig === 'all' && t.isPhone) await t.restoreTouch();
+        if (mig === 'all') await t.shot(`display-${who}-history`, { full: false });
         await t.page.keyboard.press('Escape');
         await t.page.waitForSelector('[role=dialog]', { state: 'detached' });
         t.eq('Escape closes it and focus returns to the same name button', await t.evaluate(() => document.activeElement?.getAttribute('data-e2e-opener')), '1');
@@ -234,7 +233,7 @@ export default {
       }));
       t.check(`a student still opens the drill-down, with 0 "+ Manual session" and 0 Edit/Void (against 1 and ${mh.edit * 2} for the mentor)`,
         sh.rows > 0 && sh.manual === 0 && sh.actions === 0 && mh.manual === 1 && mh.edit > 0, JSON.stringify(sh));
-      if (mig === 'all') await t.shot('hours-student-drilldown');
+      if (mig === 'all') await t.shot('hours-student-drilldown', { full: false });
       await t.page.keyboard.press('Escape');
     }
 

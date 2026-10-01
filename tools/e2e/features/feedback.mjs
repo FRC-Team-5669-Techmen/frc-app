@@ -162,7 +162,7 @@ export default {
     t.eq('six Move-to buttons, only the current one (New) disabled', detail.acts,
       ORDER.map((s) => ({ label: STATUS_LABEL[s], disabled: s === 'new' })));
     t.eq('"Copy for Claude" in the detail', detail.copy, 'Copy for Claude');
-    await t.shot('console-detail');
+    await t.shot('console-detail', { full: false });
     await t.page.keyboard.press('Escape');
     await t.page.waitForSelector('.fbp-modal', { state: 'detached' });
 

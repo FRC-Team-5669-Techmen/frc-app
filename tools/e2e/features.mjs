@@ -352,10 +352,17 @@ class Harness {
    * reloads. Every later check on that page then measures the DESKTOP layout
    * of a `@media (pointer: coarse)` rule (the schedule's 44px buttons read
    * 25px). So on the phone viewport touch emulation is re-enabled through CDP
-   * after every shot, and the tap-target check prints which pointer it saw.
+   * after every full-page shot, and the tap-target check prints which
+   * pointer it saw. A viewport-only shot (`full: false`) leaves it alone.
    */
-  async shot(name) {
+  async shot(name, { full = true } = {}) {
     const file = path.join(OUT, `${this.feature}-${this.width}-${name}.png`);
+    if (!full) {
+      // A dialog is fixed to the viewport; a full-page capture of one shows the
+      // page under it past the first screen, which is not what anyone sees.
+      await this.page.screenshot({ path: file }).catch(() => {});
+      return file;
+    }
     await this.page.screenshot({ path: file, fullPage: true }).catch(async () => {
       await this.page.screenshot({ path: file }).catch(() => {});
     });
