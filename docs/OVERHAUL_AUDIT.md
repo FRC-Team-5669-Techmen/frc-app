@@ -107,11 +107,11 @@ Fixed before the audit was written (in `aa3f533`):
 - **Admin feedback badge.** It counts both `new` and `open`, so it works before and after 0002.
 
 Fixed after `aa3f533`, by four pushes to `main`: `9543e90` (the check-in gate pass, and item
-12's fix reaching production), `e24d63d` (the finish pass, `25bc795` to `8434472`), `7cdf3e3`
+12's fix reaching production), `e24d63d` (the finish pass, `25bc795` to `e24d63d`), `7cdf3e3`
 (the audit's trivial fixes, `7539e03` onward) and `e652b01` (the shape-language port,
 `78d239c` onward). Fixed: items 5, 10, 11, 13, 27, 29, 30, 33, 36, 41, 43, 64, 76 and 81.
-Partly fixed: 4, 9, 12, 17, 28, 31, 35, 38, 40, 44, 45, 46, 65, 72, 74, 75, 77, 79, 80, 82, 83
-and 85. Item 23 is resolved by decision 05. Each item's status line names its commit.
+Partly fixed: 4, 9, 12, 17, 24, 25, 28, 31, 35, 38, 40, 44, 45, 46, 65, 72, 74, 75, 77, 79, 80,
+82, 83 and 85. Item 23 is resolved by decision 05. Each item's status line names its commit.
 
 ---
 
@@ -322,8 +322,9 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 
 #### 12. Team Hours "+ Manual session" crashes in production, and nothing static catches an undefined name
 - **Dimension:** testing-ci. **Severity:** high. **Size:** S.
-- **Status at `e652b01`:** FIXED in production: the import reached `main` as `c939674`, pushed
-  with `9543e90` on 2026-10-01. Still open: nothing static catches an undefined name.
+- **Status at `e652b01`:** PARTLY FIXED. The crash is fixed in production: the import reached
+  `main` as `c939674`, pushed with `9543e90` on 2026-10-01. Still open: nothing static catches
+  an undefined name.
 - **What is wrong:**
   - On deployed `main` (`89896ca`), `src/HoursBoard.jsx:905` uses `DEFAULT_CATEGORY` with no
     import.
@@ -562,7 +563,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 
 #### 24. CLAUDE.md contradicts the tree in 16 places and carries none of tonight's rules
 - **Dimension:** documentation, testing-ci. **Severity:** high. **Size:** M.
-- **Status at `e652b01`:** open. PARTLY FIXED by the closing docs of 2026-10-01: all ten
+- **Status at `e652b01`:** PARTLY FIXED by the closing docs of 2026-10-01: all ten
   rows shown below are corrected in `CLAUDE.md`, which now also names
   `src/attendanceState.js` and `fetchAllRows`, and its Commands block carries `dev:fixture`
   and `test:checkin`. The withheld row stands (decision 04). The other five of the 16 were
@@ -598,6 +599,10 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 
 #### 25. The base access policies live in two root SQL files no document names
 - **Dimension:** documentation. **Severity:** high. **Size:** S.
+- **Status at `e652b01`:** PARTLY FIXED by the closing docs of 2026-10-01: `CLAUDE.md`'s
+  database section names both files and says which one was pasted. Neither file is marked "do
+  not run" at its top, and `supabase/migrations/README.md` still describes the frozen set as
+  `supabase/*.sql` plus `sql/` only.
 - **What is wrong:**
   - `platform_migration.sql` and `platform_foundation.sql` at the repo root define the
     base read and update policies for `profiles` and `attendance_events`, `has_role()`
@@ -803,7 +808,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 
 #### 38. Tap targets and type sizes on student screens are below any floor
 - **Dimension:** mobile-layout, accessibility. **Severity:** medium. **Size:** M.
-- **Status at `e652b01`:** LARGELY FIXED by the shape-language port (`docs/SHAPES.md`): with
+- **Status at `e652b01`:** PARTLY FIXED by the shape-language port (`docs/SHAPES.md`): with
   the plate on, which is the default at `e652b01`, 0 of 708 student-reachable targets are under
   44px at 375 and at 1440 (417 and 298 with it off). Dense staff-only controls are exempt. Text
   under 11px was not re-measured (decision 23).
@@ -920,7 +925,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 
 #### 46. The staff drill-down hides Edit and Void behind a sideways scroll in every day
 - **Dimension:** mobile-layout. **Severity:** medium. **Size:** S.
-- **Status at `e652b01`:** PARTLY IMPROVED by `8dcaae2`: duration and category stay in view at
+- **Status at `e652b01`:** PARTLY FIXED by `8dcaae2`: duration and category stay in view at
   375, but Edit and Void still scroll sideways, by about 57px.
 - **What is wrong:** `AttendanceHistory.css:121` holds a 362px table (`:128`) in a 263-305px day
   box, so each day scrolls sideways with no visible bar. The buttons are 40x18.
