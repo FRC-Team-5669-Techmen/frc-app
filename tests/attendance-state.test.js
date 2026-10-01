@@ -27,7 +27,7 @@ import { describe, expect, test } from 'vitest'
 import {
   ARRIVAL_HANDLED, DUPLICATE_WINDOW_MS, STATUS_LOOKBACK_MS,
   currentStatus, eventMs, isDuplicateTap, isRevisit, latestEvent, nextNfcAction,
-  readLocalTap, recordLocalTap, statusWindowStartISO, whenForeground,
+  readLocalTap, receiptHolds, recordLocalTap, statusWindowStartISO, whenForeground,
 } from '../src/attendanceState.js'
 import { computePresence } from '../src/presence.js'
 import { MAX_SESSION_MS } from '../src/hoursUtils.js'
@@ -317,6 +317,52 @@ describe('arrival marker', () => {
     expect(isRevisit(undefined)).toBe(false)
     expect(isRevisit({})).toBe(false)
     expect(isRevisit({ techmenCheckin: 'something-else' })).toBe(false)
+  })
+})
+
+// ── a receipt left on screen: re-read on return, never turned into a prompt ─
+// The tag routes re-read when a tab comes back after a minute away. A receipt
+// ("CHECKED OUT · 6:00 PM") whose status still holds must stay up: re-deriving
+// the screen from the status alone turns a check-out receipt into "Tap to
+// confirm your check-in", which is the reported screen appearing on its own.
+describe('receipt screens re-read on return', () => {
+  const inA = ev('in', '2026-09-08 15:15')
+  const outA = ev('out', '2026-09-08 18:00')
+  const at = la('2026-09-08 18:05')
+
+  test('a check-out receipt stays up while the member is still checked out', () => {
+    const next = nextNfcAction([inA, outA], at, { revisit: true })
+    // control: the re-read on its own would put up the check-in prompt
+    expect(next.action).toBe('check_in')
+    expect(receiptHolds(next, 'out')).toBe(true)
+    // the other way: checked back in from another tab, so the receipt is stale
+    const inB = ev('in', '2026-09-08 18:02')
+    expect(receiptHolds(nextNfcAction([inA, outA, inB], at, { revisit: true }), 'out')).toBe(false)
+  })
+
+  test('a check-in receipt stays up while the session is open, and not once it is closed or stale', () => {
+    const open = nextNfcAction([inA], at, { revisit: true })
+    expect(open.action).toBe('confirm_check_out') // what the re-read alone would show
+    expect(receiptHolds(open, 'in')).toBe(true)
+    expect(receiptHolds(nextNfcAction([inA, outA], at, { revisit: true }), 'in')).toBe(false)
+    const nextDay = la('2026-09-10 09:00') // the IN is two days old: a forgotten check-out
+    expect(receiptHolds(nextNfcAction([inA], nextDay, { revisit: true }), 'in')).toBe(false)
+  })
+
+  test('the volunteer receipt does not hold over a different open session (the switch case)', () => {
+    const vol = ev('in', '2026-09-08 15:15', { category: 'volunteer' })
+    // the volunteer session was closed (6:00) and a BUILD session opened (6:02)
+    const build = ev('in', '2026-09-08 18:02', { category: 'build' })
+    expect(receiptHolds(nextNfcAction([vol], at, { category: 'volunteer', revisit: true }), 'in')).toBe(true)
+    const switched = nextNfcAction([vol, outA, build], at, { category: 'volunteer', revisit: true })
+    expect(switched).toMatchObject({ action: 'switch', status: { checkedIn: true } })
+    expect(receiptHolds(switched, 'in')).toBe(false)
+  })
+
+  test('a failed re-read leaves a receipt alone; a non-receipt is never held', () => {
+    expect(receiptHolds(nextNfcAction(null, at, { revisit: true }), 'out')).toBe(true)
+    expect(receiptHolds(nextNfcAction([inA, outA], at, { revisit: true }), null)).toBe(false)
+    expect(receiptHolds(nextNfcAction([inA, outA], at, { revisit: true }), 'sideways')).toBe(false)
   })
 })
 
