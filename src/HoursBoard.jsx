@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { supabase } from './supabase'
-import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, cappedSession, CATEGORIES, DEFAULT_CATEGORY, categoryLabel, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
+import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, laDateKey, CATEGORIES, DEFAULT_CATEGORY, categoryLabel, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
 import { daysPresent, effectiveGoal, goalCategoryKeys, hoursTowardGoal } from './accountability'
 import { displayName } from './names'
 import AttendanceHistory from './AttendanceHistory'
-import { historyByDay, defaultHistorySeason } from './attendanceHistory'
+import { historyByDay, hoursByDay, defaultHistorySeason } from './attendanceHistory'
 import { fetchAllRows } from './fetchAllRows'
 import './HoursBoard.css'
 
@@ -39,36 +39,22 @@ function addDaysKey(key, n) {
 // Saturday that starts the Sat–Fri week containing `key`.
 function weekStartKey(key) { return addDaysKey(key, -((weekdayOf(key) + 1) % 7)) }
 
-// Per-date attendance (on-site, all categories) hours for one member — mirrors
-// the by-date pairing in buildBreakdown, including an open session counted to
-// now. The matrix is a coach timesheet of physical presence, so every category
-// counts toward the daily total; the category split lives in the by-member table
-// and the per-member drill-down.
-function attendanceHoursByDate(events, excludedSet) {
-  const byDate = {}
-  for (const e of events) (byDate[e.event_time.slice(0, 10)] ??= []).push(e)
-  const out = {}
-  for (const [date, evts] of Object.entries(byDate)) {
-    evts.sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-    let inT = null, ms = 0
-    for (const e of evts) {
-      if (e.type === 'in') inT = new Date(e.event_time)
-      else if (e.type === 'out' && inT) {
-        if (!excludedSet?.has(e.id)) ms += cappedSession(inT, new Date(e.event_time)).ms
-        inT = null
-      }
-    }
-    if (ms > 0) out[date] = (out[date] ?? 0) + ms / 3600000
-  }
-  const sorted = [...events].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
-  let openIn = null, openDate = null
-  for (const e of sorted) {
-    if (e.type === 'in') { openIn = new Date(e.event_time); openDate = e.event_time.slice(0, 10) }
-    else if (e.type === 'out' && openIn) { openIn = null; openDate = null }
-  }
-  if (openIn) out[openDate] = (out[openDate] ?? 0) + cappedSession(openIn, null).ms / 3600000
-  return out
-}
+// The matrix's per-day hours come from hoursByDay (src/attendanceHistory.js):
+// the sessions sessionsFromEvents derives, each on its check-in's Los Angeles
+// date. That is the same pairing the By member totals sum and the same day key
+// the drill-down groups by, so a row's Total equals that member's attendance
+// hours in By member, and a cell click opens exactly the sessions behind the
+// cell. This used to be a private copy of an older pairing that grouped events
+// by UTC date first, so a session spanning 00:00 UTC (5 PM PDT / 4 PM PST, most
+// after-school sessions) had its IN and OUT in different groups and counted
+// nowhere, while By member counted it: 12h in one view, 2h in the other.
+
+// "Today" in the shop's zone: after 5 PM PDT the UTC date is already tomorrow.
+const todayLA = () => laDateKey(Date.now())
+
+// A session instant as the CSV prints it, in the shop's zone, so it sits beside
+// a Date column on the same Los Angeles day whatever zone the device is in.
+const csvTime = d => d.toLocaleString(undefined, { timeZone: 'America/Los_Angeles' })
 
 // The whole team's ledger, every page of it (src/fetchAllRows.js): about 60
 // members pass the API's 1000-row cap inside a season, and an unranged read
@@ -195,7 +181,7 @@ export default function HoursBoard({ hasRole = () => false }) {
 
   const rows = useMemo(() => {
     if (!byMember || selSeason === null) return null
-    const today = new Date().toISOString().slice(0, 10)
+    const today = todayLA()
     return byMember.map(m => {
       const stats = selSeason === 'all'
         ? sumBreakdown(m.breakdown)
@@ -230,7 +216,7 @@ export default function HoursBoard({ hasRole = () => false }) {
   // 'All Time' tab falls back to the active (current) season for this view.
   const matrixSeason = useMemo(() => {
     if (!seasons || selSeason === null) return null
-    const today  = new Date().toISOString().slice(0, 10)
+    const today  = todayLA()
     const active = seasons.find(s => s.start_date <= today && (s.end_date == null || s.end_date >= today))
     if (selSeason === 'all') return active ?? seasons[0] ?? null
     return seasons.find(s => s.id === selSeason) ?? active ?? null
@@ -248,7 +234,7 @@ export default function HoursBoard({ hasRole = () => false }) {
   const goalRows = useMemo(() => {
     if (!byMember || !matrixSeason) return null
     const sid = matrixSeason.id
-    const today = new Date().toISOString().slice(0, 10)
+    const today = todayLA()
     const range = { since: matrixSeason.start_date, until: matrixSeason.end_date ?? today }
     const list = []
     for (const m of byMember) {
@@ -272,7 +258,7 @@ export default function HoursBoard({ hasRole = () => false }) {
   // grouped into Sat–Fri weeks with a per-week subtotal and a season Total.
   const matrix = useMemo(() => {
     if (!profiles || !allEvents || !excluded || !matrixSeason) return null
-    const today     = new Date().toISOString().slice(0, 10)
+    const today     = todayLA()
     const start     = matrixSeason.start_date
     const seasonEnd = matrixSeason.end_date ?? today
     const end       = seasonEnd < today ? seasonEnd : today  // never render future days
@@ -293,7 +279,7 @@ export default function HoursBoard({ hasRole = () => false }) {
     for (const e of allEvents) (eventMap[e.user_id] ??= []).push(e)
 
     const rows = profiles.map(p => {
-      const hoursByDate = attendanceHoursByDate(eventMap[p.id] ?? [], excluded[p.id])
+      const hoursByDate = hoursByDay(eventMap[p.id] ?? [], excluded[p.id])
       const perDay = {}, weekSub = {}
       let total = 0
       for (const w of weeks) {
@@ -370,9 +356,9 @@ export default function HoursBoard({ hasRole = () => false }) {
       for (const s of sessionsFromEvents(eventMap[p.id] ?? [])) {
         const flagged = s.outId && excluded?.[p.id]?.has(s.outId) ? 'review' : ''
         lines.push([
-          name, categoryLabel(s.category), s.inTime.toISOString().slice(0, 10),
-          s.inTime.toLocaleString(), fmtLocation(s.inLoc),
-          s.open ? '(open)' : s.outTime.toLocaleString(),
+          name, categoryLabel(s.category), laDateKey(s.inTime),
+          csvTime(s.inTime), fmtLocation(s.inLoc),
+          s.open ? '(open)' : csvTime(s.outTime),
           s.open ? '' : fmtLocation(s.outLoc),
           (s.ms / 3600000).toFixed(2), flagged,
         ].map(csv).join(','))
@@ -384,7 +370,7 @@ export default function HoursBoard({ hasRole = () => false }) {
         '', '', '', '', (parseFloat(l.hours) || 0).toFixed(2), '',
       ].map(csv).join(','))
     }
-    downloadCsv(lines, `techmen-hours-${new Date().toISOString().slice(0, 10)}.csv`)
+    downloadCsv(lines, `techmen-hours-${todayLA()}.csv`)
   }
 
   // Matrix CSV: the member × day grid with each week's subtotal and the Total.
@@ -416,7 +402,7 @@ export default function HoursBoard({ hasRole = () => false }) {
     foot.push(fmtCell(matrix.dailyTotal.total))
     lines.push(foot.map(csv).join(','))
 
-    downloadCsv(lines, `techmen-matrix-${new Date().toISOString().slice(0, 10)}.csv`)
+    downloadCsv(lines, `techmen-matrix-${todayLA()}.csv`)
   }
 
   function toggleSort(col) {
@@ -437,7 +423,7 @@ export default function HoursBoard({ hasRole = () => false }) {
   })
 
   const tabs = [...(seasons ?? []), { id: 'all', name: 'All Time' }]
-  const todayKey = new Date().toISOString().slice(0, 10)
+  const todayKey = todayLA()
 
   return (
     <div className="board-wrap">
@@ -822,7 +808,7 @@ function AdjustPanel({ adjust, onClose, onDone }) {
     const t = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
     return t.toISOString().slice(0, 16)
   }
-  const baseDay = day || new Date().toISOString().slice(0, 10)
+  const baseDay = day || todayLA()
   const [inT,  setInT]  = useState(mode === 'edit' ? toLocalInput(session.inTime)  : `${baseDay}T16:00`)
   const [outT, setOutT] = useState(mode === 'edit'
     ? (session.outTime ? toLocalInput(session.outTime) : '')

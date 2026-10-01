@@ -1,7 +1,7 @@
 // Accountability / eligibility helpers — hour goals, anomaly detection, and the
 // attendance-vs-hours split. Pure functions (no React/Supabase); builds on the
 // session derivation in hoursUtils.
-import { sessionsFromEvents } from './hoursUtils'
+import { sessionsFromEvents, laDateKey } from './hoursUtils'
 import { CATEGORIES } from './categories'
 
 const ALL_CATEGORY_KEYS = CATEGORIES.map(c => c.key)
@@ -14,11 +14,14 @@ const fmtTs = iso => new Date(iso).toLocaleString('en-US', {
 // member has at least one IN ("days present") — robust and decoupled from the
 // schedule. This is intentionally NOT hours: a member can be present many days
 // with few logged hours, or vice-versa, and the two are reported side by side.
+// A day is the IN's Los Angeles date (laDateKey, the hours day rule), the same
+// day the matrix and the drill-down file that session under; it was the UTC
+// date, which counted an 8 PM check-in on the next day.
 export function daysPresent(events, { since = null, until = null } = {}) {
   const days = new Set()
   for (const e of events) {
     if (e.type !== 'in') continue
-    const day = e.event_time.slice(0, 10)
+    const day = laDateKey(e.event_time)
     if (since && day < since) continue
     if (until && day > until) continue
     days.add(day)
@@ -37,7 +40,7 @@ export function effectiveGoal(goals, memberId, seasonId) {
     ?? null
 }
 
-// The category keys a goal counts toward (null/empty subset → all six).
+// The category keys a goal counts toward (null/empty subset → all four).
 export function goalCategoryKeys(goal) {
   return goal?.categories?.length ? goal.categories : ALL_CATEGORY_KEYS
 }
