@@ -32,11 +32,14 @@ export default function LogHoursPage({ session }) {
   useEffect(() => { load(); loadCorrections() }, [session.user.id])
 
   async function load() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('logged_hours')
       .select('*')
       .eq('member_id', session.user.id)
       .order('date', { ascending: false })
+    // A failed read is NOT "No entries yet": that invites a student to log the
+    // same hours again, and two verified duplicates double-count.
+    if (error) { setFormError('Your logged hours could not load. Refresh before logging again.'); return }
     setEntries(data ?? [])
   }
 
@@ -79,7 +82,7 @@ export default function LogHoursPage({ session }) {
     setSubmitting(false)
 
     if (error) { setFormError(error.message); return }
-    setEntries(prev => [data, ...prev])
+    setEntries(prev => [data, ...(prev ?? [])])
     setForm({ date: today(), hours: '', type: DEFAULT_CATEGORY, description: '' })
   }
 
@@ -301,8 +304,9 @@ function CorrectionModal({ entry, onClose, onSubmitted }) {
         </p>
 
         <div className="lh-field">
-          <label className="lh-label">What's wrong? <span className="lh-modal-req">*</span></label>
+          <label className="lh-label" htmlFor="lh-corr-reason">What's wrong? <span className="lh-modal-req">*</span></label>
           <textarea
+            id="lh-corr-reason"
             className="lh-input lh-textarea"
             rows={3}
             maxLength={500}
@@ -315,22 +319,24 @@ function CorrectionModal({ entry, onClose, onSubmitted }) {
         <p className="lh-section-heading" style={{ margin: '0.25rem 0 0' }}>Corrected values</p>
         <div className="lh-modal-row">
           <div className="lh-field">
-            <label className="lh-label">Type</label>
-            <select className="lh-select" value={type} onChange={e => setType(e.target.value)}>
+            <label className="lh-label" htmlFor="lh-corr-type">Type</label>
+            <select id="lh-corr-type" className="lh-select" value={type} onChange={e => setType(e.target.value)}>
               {TYPES.map(t => <option key={t} value={t}>{categoryLabel(t)}</option>)}
             </select>
           </div>
           <div className="lh-field">
-            <label className="lh-label">Hours</label>
+            <label className="lh-label" htmlFor="lh-corr-hours">Hours</label>
             <input
+              id="lh-corr-hours"
               className="lh-input" type="number" min="0.25" max="24" step="0.25"
               value={hours} onChange={e => setHours(e.target.value)}
             />
           </div>
         </div>
         <div className="lh-field">
-          <label className="lh-label">Date</label>
+          <label className="lh-label" htmlFor="lh-corr-date">Date</label>
           <input
+            id="lh-corr-date"
             className="lh-input" type="date" max={today()}
             value={date} onChange={e => setDate(e.target.value)}
           />

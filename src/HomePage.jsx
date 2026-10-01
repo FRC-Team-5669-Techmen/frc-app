@@ -24,9 +24,10 @@ function useTileMetrics(uid, isStaff) {
   useEffect(() => {
     let active = true
     async function load() {
-      // Shared: active roster size for "Team pulse".
+      // Shared: active roster size for "Team pulse". Approved members only: a
+      // signed-in account never let onto the team is not a member (audit item 2).
       const totalP = supabase.from('profiles')
-        .select('id', { count: 'exact', head: true }).eq('status', 'active')
+        .select('id', { count: 'exact', head: true }).eq('status', 'active').eq('approved', true)
 
       if (isStaff) {
         const [access, plinks, certs, total, readiness, skills, memberSkills, activeProfiles, feed] = await Promise.all([
@@ -37,7 +38,7 @@ function useTileMetrics(uid, isStaff) {
           supabase.rpc('readiness_summary'),
           supabase.from('skills').select('id'),
           supabase.from('member_skills').select('member_id, skill_id, status').eq('status', 'certified'),
-          supabase.from('profiles').select('id').eq('status', 'active'),
+          supabase.from('profiles').select('id').eq('status', 'active').eq('approved', true),
           supabase.from('attendance_events')
             .select('id, user_id, type, event_time, profiles!attendance_events_user_fkey(full_name, nickname, subteams)')
             .order('event_time', { ascending: false }).limit(6),
@@ -171,16 +172,16 @@ export default function HomePage({ session, hasRole = () => false }) {
     if (!nextId || rsvping) return
     setRsvping(true)
     const next = myResp === response ? null : response // tap again to clear
-    if (next === null) {
-      await supabase.from('event_signups').delete().match({ event_id: nextId, member_id: uid })
-    } else {
-      await supabase.from('event_signups').upsert(
+    const { error } = next === null
+      ? await supabase.from('event_signups').delete().match({ event_id: nextId, member_id: uid })
+      : await supabase.from('event_signups').upsert(
         { event_id: nextId, member_id: uid, response: next, updated_at: new Date().toISOString() },
         { onConflict: 'event_id,member_id' },
       )
-    }
-    setMyResp(next)
     setRsvping(false)
+    // Show the answer only once it saved: a failed write keeps the old one.
+    if (error) return
+    setMyResp(next)
   }
 
   if (allEvents === null) {
@@ -214,7 +215,7 @@ export default function HomePage({ session, hasRole = () => false }) {
             <span className="hud-bracket-b" aria-hidden="true" />
             <div className="mb-you-top">
               <span className="mb-tile-eyebrow">YOU</span>
-              <span className={`mb-status ${isIn ? 'mb-status-in' : 'mb-status-out'}`}>
+              <span className={`mb-status ${isIn ? 'mb-status-in' : 'mb-status-out'}`} role="status">
                 {statusUnknown ? 'Status unavailable' : isIn ? 'Checked in' : 'Not checked in'}
               </span>
             </div>

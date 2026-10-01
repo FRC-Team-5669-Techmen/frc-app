@@ -32,7 +32,9 @@ export default function ParentHomePage({ session }) {
 
   const loadLinkData = useCallback(async () => {
     const [{ data: r }, { data: reqs }] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, nickname').eq('status', 'active'),
+      // Approved members only: an account that signed in but was never let onto
+      // the team is not a student to link to (audit item 2).
+      supabase.from('profiles').select('id, full_name, nickname').eq('status', 'active').eq('approved', true),
       supabase.from('parent_link_requests')
         .select('id, student_id, status').eq('parent_id', parentId).eq('status', 'pending'),
     ])
@@ -56,11 +58,14 @@ export default function ParentHomePage({ session }) {
   }
 
   const load = useCallback(async () => {
-    // Who am I linked to?
-    const { data: links } = await supabase
+    // Who am I linked to? A failed read is NOT "no students linked": that
+    // invites a parent to request a link they already have. Keep the last good
+    // view; the 15 s poll tries again.
+    const { data: links, error: linkErr } = await supabase
       .from('guardian_links')
       .select('student_id')
       .eq('parent_id', parentId)
+    if (linkErr) return
     const studentIds = (links ?? []).map(l => l.student_id)
 
     // Team glance + present derivation need recent events for everyone, and the
@@ -71,7 +76,7 @@ export default function ParentHomePage({ session }) {
     const todayISO = startOfTodayISO()
     const [{ data: recentEvents }, { data: active }] = await Promise.all([
       supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', presenceSinceISO()),
-      supabase.from('profiles').select('id, full_name, nickname').eq('status', 'active'),
+      supabase.from('profiles').select('id, full_name, nickname').eq('status', 'active').eq('approved', true),
     ])
     const present = computePresence(recentEvents ?? [])
     const activeRoster = active ?? []

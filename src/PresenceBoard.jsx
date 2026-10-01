@@ -33,7 +33,9 @@ export default function PresenceBoard({ hasRole } = {}) {
     // so a session open across LA midnight reads present here exactly as it
     // does on the member's own dashboard tile.
     const [{ data: profs, error: pErr }, { data: events, error: eErr }] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, nickname, subteams, status').eq('status', 'active'),
+      // Approved members only: a signed-in account never let onto the team is
+      // not on the wall display (audit item 2).
+      supabase.from('profiles').select('id, full_name, nickname, subteams, status').eq('status', 'active').eq('approved', true),
       supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', presenceSinceISO()),
     ])
     if (pErr || eErr) { setError((pErr || eErr).message); return }
@@ -51,9 +53,11 @@ export default function PresenceBoard({ hasRole } = {}) {
   }, [load])
 
   if (members === null) {
+    // A failed FIRST load says so instead of spinning forever; the poll keeps
+    // trying and replaces this with the board once a read answers.
     return (
       <div className="pb-wrap pb-loading">
-        <div className="pb-spinner" />
+        {error ? <p className="pb-error">{error}</p> : <div className="pb-spinner" />}
       </div>
     )
   }
