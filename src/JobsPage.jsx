@@ -6,6 +6,7 @@ import { displayName } from './names'
 // (tasks.subteam predates this constraint / the CHECK below) stays selectable
 // on that one job so an unrelated edit doesn't silently retag it.
 import { SUBTEAMS, isSubteam } from './subteams'
+import { fetchAllRows } from './fetchAllRows'
 import './JobsPage.css'
 
 // Derived display status (richer than tasks.status) → label + color class.
@@ -149,8 +150,11 @@ export default function JobsPage({ session, hasRole = () => false }) {
       supabase.from('task_updates')
         .select('id, body, image_path, created_at, member_id, author:member_id(full_name, nickname)')
         .eq('task_id', taskId).order('created_at', { ascending: true }),
+      // Every page of the claimants' ledgers (src/fetchAllRows.js): unranged,
+      // the API's 1000-row cap cuts them short with no error, and the time on
+      // this job would read low.
       memberIds.length
-        ? supabase.from('attendance_events').select('user_id, type, event_time, job_id').in('user_id', memberIds)
+        ? fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time, job_id').in('user_id', memberIds).order('event_time').order('id'))
         : Promise.resolve({ data: [] }),
     ])
     setUpdates(upRes.data ?? [])

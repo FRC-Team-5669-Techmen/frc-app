@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 import { displayName } from './names'
 import { CATEGORIES, categoryLabel, categoryColor, sessionsFromEvents, fmtHours } from './hoursUtils'
 import { DURATION_PRESETS, STEP_MINUTES, fmtSpanMins, stepMinutes, setPreset, endInstantMs, minutesFromInstant, resolveReadout } from './hoursResolve'
+import { fetchAllRows } from './fetchAllRows'
 import './MemberHoursAdmin.css'
 
 // Per-member admin hours management, embedded in the staff VerifyHoursPage (the
@@ -78,7 +79,9 @@ export default function MemberHoursAdmin({ initialMemberId = null, focusEventIds
   async function loadMember(id) {
     const [{ data: lh }, { data: ae }, { data: adj }] = await Promise.all([
       supabase.from('logged_hours').select('id, date, hours, type, description, status').eq('member_id', id).order('date', { ascending: false }),
-      supabase.from('attendance_events').select('id, type, event_time, category, location, method, manual_entry').eq('user_id', id).order('event_time', { ascending: false }),
+      // Every page (src/fetchAllRows.js): the pairing below needs the whole
+      // ledger, and an unranged read stops at the API's row cap.
+      fetchAllRows(() => supabase.from('attendance_events').select('id, type, event_time, category, location, method, manual_entry').eq('user_id', id).order('event_time', { ascending: false }).order('id')),
       supabase.from('hour_adjustments').select('id, category, hours, reason, created_at').eq('member_id', id).order('created_at', { ascending: false }),
     ])
     setLogged(lh ?? []); setEvents(ae ?? []); setAdjustments(adj ?? [])

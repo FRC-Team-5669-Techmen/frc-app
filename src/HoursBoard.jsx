@@ -5,6 +5,7 @@ import { daysPresent, effectiveGoal, goalCategoryKeys, hoursTowardGoal } from '.
 import { displayName } from './names'
 import AttendanceHistory from './AttendanceHistory'
 import { historyByDay, defaultHistorySeason } from './attendanceHistory'
+import { fetchAllRows } from './fetchAllRows'
 import './HoursBoard.css'
 
 // Defined outside HoursBoard so React sees a stable component reference across renders.
@@ -69,6 +70,15 @@ function attendanceHoursByDate(events, excludedSet) {
   return out
 }
 
+// The whole team's ledger, every page of it (src/fetchAllRows.js): about 60
+// members pass the API's 1000-row cap inside a season, and an unranged read
+// ordered oldest-first loses the NEWEST rows, so this week would go missing. A
+// failed page fails the whole read rather than handing back a short one.
+const readEvents = () => fetchAllRows(() => supabase.from('attendance_events')
+  .select('id, user_id, type, event_time, location, category, manual_entry').order('event_time').order('id'))
+const readReviews = () => fetchAllRows(() => supabase.from('session_reviews')
+  .select('id, user_id, checkout_id').in('status', ['pending', 'voided']).order('id'))
+
 const fmtCell = h => (h ?? 0).toFixed(1)
 
 function downloadCsv(lines, filename) {
@@ -108,8 +118,8 @@ export default function HoursBoard({ hasRole = () => false }) {
   // staff adjustment; the season selection and tabs are left untouched.
   async function reloadEvents() {
     const [{ data: ae }, { data: sr }] = await Promise.all([
-      supabase.from('attendance_events').select('id, user_id, type, event_time, location, category, manual_entry').order('event_time'),
-      supabase.from('session_reviews').select('user_id, checkout_id').in('status', ['pending', 'voided']),
+      readEvents(),
+      readReviews(),
     ])
     setAllEvents(ae ?? [])
     const excMap = {}
@@ -121,11 +131,11 @@ export default function HoursBoard({ hasRole = () => false }) {
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
       supabase.from('profiles').select('id, full_name, nickname'),
-      supabase.from('attendance_events').select('id, user_id, type, event_time, location, category, manual_entry').order('event_time'),
-      supabase.from('logged_hours').select('member_id, type, hours, date').eq('status', 'verified'),
-      supabase.from('session_reviews').select('user_id, checkout_id').in('status', ['pending', 'voided']),
+      readEvents(),
+      fetchAllRows(() => supabase.from('logged_hours').select('id, member_id, type, hours, date').eq('status', 'verified').order('date').order('id')),
+      readReviews(),
       supabase.from('hour_goals').select('member_id, season_id, target_hours, categories'),
-      supabase.from('hour_adjustments').select('member_id, category, hours, created_at'),
+      fetchAllRows(() => supabase.from('hour_adjustments').select('id, member_id, category, hours, created_at').order('created_at').order('id')),
     ]).then(([{ data: s }, { data: p }, { data: ae }, { data: lh }, { data: sr }, { data: hg }, { data: adj }]) => {
       const seas = s ?? []
       setSeasons(seas)

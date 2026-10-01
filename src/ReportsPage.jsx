@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
 import { CATEGORIES, categoryLabel, fmtHours } from './hoursUtils'
+import { fetchAllRows } from './fetchAllRows'
 import {
   buildRows, filterRows, rollupByEvent, rowsToCsv, totalsByCategory,
   letterData, letterHtml, exportHtml, SERVICE_CATEGORIES,
@@ -57,12 +58,15 @@ export default function ReportsPage({ session, hasRole = () => false }) {
 
   useEffect(() => {
     if (!isStaff) return
+    // Every page of each team-wide read (src/fetchAllRows.js): an unranged read
+    // stops at the API's 1000-row cap, and oldest-first that loses the newest
+    // sessions, logged hours and calendar events from every report at once.
     Promise.all([
       supabase.from('profiles').select('id, full_name, nickname'),
-      supabase.from('attendance_events').select('id, user_id, type, event_time, location, category, manual_entry').order('event_time'),
-      supabase.from('logged_hours').select('member_id, date, hours, type, description').eq('status', 'verified'),
-      supabase.from('events').select('id, title, kind, starts_at, ends_at, location').order('starts_at', { ascending: true }),
-      supabase.from('session_reviews').select('user_id, checkout_id').in('status', ['pending', 'voided']),
+      fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time, location, category, manual_entry').order('event_time').order('id')),
+      fetchAllRows(() => supabase.from('logged_hours').select('id, member_id, date, hours, type, description').eq('status', 'verified').order('date').order('id')),
+      fetchAllRows(() => supabase.from('events').select('id, title, kind, starts_at, ends_at, location').order('starts_at', { ascending: true }).order('id')),
+      fetchAllRows(() => supabase.from('session_reviews').select('id, user_id, checkout_id').in('status', ['pending', 'voided']).order('id')),
     ]).then(([{ data: p }, { data: ae }, { data: lh }, { data: ev }, { data: sr }]) => {
       const profs = p ?? []
       setProfiles(profs)

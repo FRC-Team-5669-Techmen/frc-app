@@ -1,5 +1,6 @@
-// `src/myHoursFetch.js` -- reading a member's whole attendance ledger past the
-// PostgREST max-rows cap, which truncates an unranged select silently.
+// `src/fetchAllRows.js` (was src/myHoursFetch.js) -- reading a whole
+// attendance ledger, one member's or the team's, past the PostgREST max-rows
+// cap, which truncates an unranged select silently.
 //
 // The fake below behaves like PostgREST: `.range(from, to)` returns at most
 // `maxRows` rows of that window, and an unranged await returns at most
@@ -7,7 +8,7 @@
 // fake really truncates, so "every row came back" means the paging did it.
 
 import { describe, expect, test } from 'vitest'
-import { fetchAllRows } from '../src/myHoursFetch.js'
+import { fetchAllRows } from '../src/fetchAllRows.js'
 
 function fakeTable(n, { maxRows = 1000, failAt = null, ignoreRange = false, noRange = false } = {}) {
   const rows = Array.from({ length: n }, (_, i) => ({ id: `e${String(i).padStart(5, '0')}`, type: i % 2 ? 'out' : 'in' }))
