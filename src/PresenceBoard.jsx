@@ -2,18 +2,29 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from './supabase'
 import { computePresence, startOfTodayISO, fmtClock, groupBySubteam } from './presence'
 import { displayName } from './names'
+import { canOpenHistory } from './attendanceHistory'
+import { MemberAttendanceHistory } from './AttendanceHistory'
 import './PresenceBoard.css'
 
 // Read-only wall-display board of who is currently present, derived from the
 // existing attendance_events + profiles data (no new tables). Behind auth.
 // Live updates via polling — realtime is not wired in this project.
+//
+// Staff can click a name to open that member's attendance history (the same
+// view as the Team Hours drill-down), read-only here because this board may be
+// a shared screen in the shop. Everyone else gets the board exactly as before:
+// a name is plain text, not a button, not focusable. That split is a UI rule --
+// attendance_events is readable by every signed-in member regardless (see
+// canOpenHistory). With no `hasRole` passed, the board renders the non-staff way.
 
 const POLL_MS = 15_000
 
-export default function PresenceBoard() {
+export default function PresenceBoard({ hasRole } = {}) {
+  const staff = canOpenHistory(hasRole)
   const [members, setMembers] = useState(null)   // active roster
   const [present, setPresent] = useState(new Map()) // user_id -> sinceISO
   const [error, setError] = useState('')
+  const [history, setHistory] = useState(null)    // { memberId, name } — staff only
   const timer = useRef(null)
 
   const load = useCallback(async () => {
@@ -81,10 +92,21 @@ export default function PresenceBoard() {
                 const since = present.get(m.id)
                 const isPresent = !!since
                 const sub = (m.subteams && m.subteams.length) ? m.subteams[0] : '—'
+                const name = displayName(m)
                 return (
                   <li key={m.id} className={`pb-row${isPresent ? ' pb-present' : ' pb-absent'}`}>
                     <span className="pb-icon" aria-hidden="true">{isPresent ? '✓' : '○'}</span>
-                    <span className="pb-name">{displayName(m)}</span>
+                    {staff ? (
+                      <button
+                        type="button"
+                        className="pb-name pb-name-btn"
+                        aria-haspopup="dialog"
+                        title="Attendance history"
+                        onClick={() => setHistory({ memberId: m.id, name })}
+                      >{name}</button>
+                    ) : (
+                      <span className="pb-name">{name}</span>
+                    )}
                     <span className="pb-meta hud-tnum">{sub} · {isPresent ? fmtClock(since) : '--'}</span>
                   </li>
                 )
@@ -95,6 +117,14 @@ export default function PresenceBoard() {
       </div>
 
       <footer className="pb-footer">STATUS // LIVE · POLL {POLL_MS / 1000}s</footer>
+
+      {staff && history && (
+        <MemberAttendanceHistory
+          memberId={history.memberId}
+          name={history.name}
+          onClose={() => setHistory(null)}
+        />
+      )}
     </div>
   )
 }
