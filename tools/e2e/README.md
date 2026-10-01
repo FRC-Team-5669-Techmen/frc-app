@@ -20,7 +20,13 @@ node tools/e2e/gen-fixture-schema.mjs --host /tmp --port 54330 --db <a db with t
 
 Each tool boots `vite --mode fixture` on its port (default 5401, `--port` or
 `FIXTURE_PORT`) and stops it afterwards, or reuses a fixture server already
-answering there. Output goes to `artifacts/` (gitignored). The browser is the
+answering there, but ONLY one serving this same checkout: the fixture dev
+server answers `/__fixture/root` with its checkout path, and anything else on
+the port (another worktree's fixture server, a plain dev server) is refused
+with an error naming both trees, never driven. Several worktrees share the
+default port, and a check-in run that silently tested another tree's code
+would report that tree's result as this one's. `shoot.mjs --url` is an
+explicit choice and is not checked. Output goes to `artifacts/` (gitignored). The browser is the
 container's Chromium, found through `tools/browser-verify/browser.mjs`'s
 resolution chain (that file explains why `chromium.executablePath()` is not
 trusted here). Every non-loopback request is blocked and counted.

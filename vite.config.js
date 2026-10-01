@@ -32,6 +32,15 @@ function fixtureSupabase() {
   return {
     name: 'techmen-fixture-supabase',
     enforce: 'pre',
+    // Which checkout this server is serving. tools/e2e reuses a server already
+    // on its port only when the answer is its own checkout, so a check-in run
+    // in one tree can never silently drive another tree's code.
+    configureServer(server) {
+      server.middlewares.use('/__fixture/root', (_req, res) => {
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+        res.end(ROOT)
+      })
+    },
     async resolveId(source, importer, options) {
       if (!importer || !/(^|\/)supabase(\.js)?$/.test(source) || source.startsWith('@')) return null
       const hit = await this.resolve(source, importer, { ...options, skipSelf: true })
