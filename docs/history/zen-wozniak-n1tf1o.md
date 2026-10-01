@@ -100,8 +100,9 @@ PASS.
     Fix each confirmed day on `/verify-hours` with a manual check-out or a void,
     both of which require a reason and are audited. Nothing repairs them
     automatically (decision 30).
-13. **Unstick `integration`** (next section). This is a person's call, and no
-    session force-pushes.
+13. **`integration` was unstuck at the end of the night** (next section): no
+    action needed beyond deleting the two leftover `claude/**` branches if
+    wanted.
 14. **Read the security items delivered privately, and fix them first** (last
     section).
 15. **The IDEA Classroom side of the certifications sync is not built.** The
@@ -122,7 +123,7 @@ supabase/migrations/0004_member_permissions_rls_test.sql
 docs/feedback/2026-10-01/MARK_DONE.sql
 ```
 
-## `integration` has conflicted with `main` since 08:57Z
+## `integration` conflicted with `main` from 08:57Z until the closing push
 
 The prompt's landing rule was `git rebase origin/main` before each push. The
 second push therefore went through a rebase that **linearized 103 commits**: the
@@ -142,16 +143,19 @@ nothing was merged, pushed or deleted": eight failed runs, two each at 08:58Z,
 10:13Z, 11:09Z and 13:53Z. CI itself passed on every push, on `main` and on the
 branch.
 
-Nothing is lost. `integration` sits at `8e535e7`, whose tree is identical to
-`cc7ca70`, a commit already on `main`. The clean way out, for a person:
-
-- Delete the remote `integration` branch. The next Integrate run recreates it
-  from `main`, which `integrate.yml` does whenever the branch is missing.
-- Then delete `claude/zen-wozniak-n1tf1o` (at `e652b01`, identical to `main`)
-  and `claude/repo-standards-conformance-uk5er7` (at `af59b66`, merged long
-  ago). `integrate.yml` skips a branch that `integration` already contains but
-  never deletes it, so both would otherwise stand forever, and a standing
-  branch is supposed to be a signal.
+Nothing was lost, and it is resolved. `integration` sat at `8e535e7`, whose
+tree is identical to `cc7ca70`, a commit already on `main`. At the end of the
+night the orchestrator pushed `35d6be1` to `integration`: a merge commit whose
+parents are `8e535e7` and `e652b01` and whose tree is exactly `e652b01`'s
+(checked by tree hash, `3b2a2ce`). That is a plain fast-forward of
+`integration`, nothing forced and nothing discarded (its content was already a
+subset of `main`'s), and every later Integrate run can merge `main` into it
+again. Two branches still stand and can be deleted by a person:
+`claude/zen-wozniak-n1tf1o` (identical to `main` after the closing push) and
+`claude/repo-standards-conformance-uk5er7` (at `af59b66`, merged long ago).
+`integrate.yml` skips a branch that `integration` already contains but never
+deletes it, so both would otherwise stand forever, and a standing branch is
+supposed to be a signal.
 
 `CLAUDE.md`'s solo-mode paragraph now carries the rule this taught: rebase only
 commits that have not been pushed anywhere.
