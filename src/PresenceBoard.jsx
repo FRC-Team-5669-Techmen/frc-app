@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from './supabase'
-import { computePresence, startOfTodayISO, fmtClock, groupBySubteam } from './presence'
+import { computePresence, presenceSinceISO, fmtClock, groupBySubteam } from './presence'
 import { displayName } from './names'
 import { canOpenHistory } from './attendanceHistory'
 import { MemberAttendanceHistory } from './AttendanceHistory'
@@ -28,10 +28,13 @@ export default function PresenceBoard({ hasRole } = {}) {
   const timer = useRef(null)
 
   const load = useCallback(async () => {
-    // Active roster + today's attendance, both readable by any authenticated member.
+    // Active roster + every event the checked-in rule can count, both readable
+    // by any authenticated member. From presenceSinceISO(), not local midnight,
+    // so a session open across LA midnight reads present here exactly as it
+    // does on the member's own dashboard tile.
     const [{ data: profs, error: pErr }, { data: events, error: eErr }] = await Promise.all([
       supabase.from('profiles').select('id, full_name, nickname, subteams, status').eq('status', 'active'),
-      supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', startOfTodayISO()),
+      supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', presenceSinceISO()),
     ])
     if (pErr || eErr) { setError((pErr || eErr).message); return }
     setError('')

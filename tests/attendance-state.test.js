@@ -23,14 +23,15 @@
 // than reading the zone of whatever machine runs the suite. So
 // `TZ=UTC npx vitest run tests/attendance-state.test.js` passes too.
 
-import { describe, expect, test } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { describe, expect, test, vi } from 'vitest'
 import {
   ARRIVAL_HANDLED, DUPLICATE_WINDOW_MS, STATUS_LOOKBACK_MS,
   currentStatus, eventMs, isDuplicateTap, isRevisit, latestEvent, nextNfcAction,
   readLocalTap, receiptHolds, recordLocalTap, statusWindowStartISO, whenForeground,
 } from '../src/attendanceState.js'
-import { computePresence } from '../src/presence.js'
-import { MAX_SESSION_MS } from '../src/hoursUtils.js'
+import { computePresence, presenceSinceISO } from '../src/presence.js'
+import { MAX_SESSION_MS, laDateKey } from '../src/hoursUtils.js'
 
 // ── fixtures ────────────────────────────────────────────────────────────────
 // Every date used here is inside Pacific DAYLIGHT time (UTC-7), asserted below,
@@ -446,5 +447,125 @@ describe('whenForeground (no write from a hidden or prerendered page)', () => {
     doc.fire('visibilitychange')
     expect(ran).toBe(0)
     expect(doc.count()).toBe(0)
+  })
+})
+
+// ── one Los Angeles day key ─────────────────────────────────────────────────
+// attendanceState.js used to carry its own one-liner for "the LA date of this
+// instant", a second copy of hoursUtils.laDateKey (CLAUDE.md working
+// convention 7: a second copy is the thing that quietly stops matching). It
+// now imports laDateKey. The one-liner is kept HERE as the reference, and the
+// two are shown identical over every hour of 2026 and minute by minute across
+// both 2026 DST changes (Sun 2026-03-08 2:00 AM PST -> PDT, a 23 h day; Sun
+// 2026-11-01 2:00 AM PDT -> PST, a 25 h day) before anything relies on it.
+describe('the day key is hoursUtils.laDateKey, identical to the one-liner it replaced', () => {
+  const oneLiner = (ms) => new Date(ms).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+  const MIN = 60_000
+  const HOUR = 60 * MIN
+  const SPRING = Date.parse('2026-03-08T10:00:00Z') // 2:00 AM PST becomes 3:00 AM PDT
+  const FALL = Date.parse('2026-11-01T09:00:00Z')   // 2:00 AM PDT becomes 1:00 AM PST
+  function instants() {
+    const out = []
+    // every hour of 2026, at :00 and at :59:59.999 (the last instant of an hour)
+    for (let t = Date.parse('2026-01-01T00:00:00Z'); t < Date.parse('2027-01-01T00:00:00Z'); t += HOUR) out.push(t, t + HOUR - 1)
+    // every minute from 30 h before to 30 h after each DST change: both
+    // midnights of each changed day, and the changed hour itself
+    for (const pivot of [SPRING, FALL]) {
+      for (let t = pivot - 30 * HOUR; t <= pivot + 30 * HOUR; t += MIN) out.push(t, t - 1)
+    }
+    return out
+  }
+
+  test('identical on every instant sampled, both DST days included', () => {
+    const all = instants()
+    expect(all.length).toBeGreaterThan(30_000)
+    const differ = all.filter((t) => laDateKey(t) !== oneLiner(t))
+    expect(differ.map((t) => new Date(t).toISOString())).toEqual([])
+    // The instants that matter on the changed days, named:
+    expect(laDateKey(Date.parse('2026-03-09T06:59:59.999Z'))).toBe('2026-03-08') // 11:59:59 PM PDT, end of the 23 h day
+    expect(laDateKey(Date.parse('2026-03-09T07:00:00Z'))).toBe('2026-03-09')
+    expect(laDateKey(Date.parse('2026-11-02T07:59:59.999Z'))).toBe('2026-11-01') // 11:59:59 PM PST, end of the 25 h day
+    expect(laDateKey(Date.parse('2026-11-02T08:00:00Z'))).toBe('2026-11-02')
+  })
+
+  test('positive control: the same comparison catches a key that is wrong (the UTC date)', () => {
+    const utcKey = (ms) => new Date(ms).toISOString().slice(0, 10)
+    const differ = instants().filter((t) => utcKey(t) !== oneLiner(t))
+    expect(differ.length).toBeGreaterThan(1000)
+  })
+
+  test('currentStatus decides "today" on Los Angeles dates on both DST days', () => {
+    // maxOpenMs 0 leaves the day key as the only thing that can say "still in".
+    const only = { maxOpenMs: 0 }
+    const at = (iso) => ({ id: 'x', user_id: 'u1', type: 'in', event_time: iso, category: 'build' })
+    // 23 h day: in at 12:30 AM PST, still the same day at 11:30 PM PDT ...
+    expect(currentStatus([at('2026-03-08T08:30:00Z')], Date.parse('2026-03-09T06:30:00Z'), only).checkedIn).toBe(true)
+    // ... and not at 12:30 AM PDT the next morning (positive control)
+    expect(currentStatus([at('2026-03-08T08:30:00Z')], Date.parse('2026-03-09T07:30:00Z'), only).checkedIn).toBe(false)
+    // 25 h day: in at 12:30 AM PDT, still the same day at 11:30 PM PST ...
+    expect(currentStatus([at('2026-11-01T07:30:00Z')], Date.parse('2026-11-02T07:30:00Z'), only).checkedIn).toBe(true)
+    // ... and not at 12:30 AM PST the next morning (positive control)
+    expect(currentStatus([at('2026-11-01T07:30:00Z')], Date.parse('2026-11-02T08:30:00Z'), only).checkedIn).toBe(false)
+  })
+
+  test('attendanceState.js imports laDateKey and keeps no copy of its own', () => {
+    const src = readFileSync(new URL('../src/attendanceState.js', import.meta.url), 'utf8')
+    const usesShared = (s) => /import\s*\{[^}]*\blaDateKey\b[^}]*\}\s*from\s*'\.\/hoursUtils'/.test(s)
+      && !/toLocaleDateString\(/.test(s) && !/\bconst laDayKey\b/.test(s)
+    expect(usesShared(src)).toBe(true)
+    // the mutant: the old one-liner put back beside the import
+    const mutant = src.replace(/\nexport function eventMs/, "\nconst laDayKey = (ms) => new Date(ms).toLocaleDateString('en-CA', { timeZone: LA })\nexport function eventMs")
+    expect(mutant).not.toBe(src)
+    expect(usesShared(mutant)).toBe(false)
+  })
+})
+
+// ── where the board and the glance start reading ────────────────────────────
+// PresenceBoard (/display) and useGlance (the dashboard's "N checked in") used
+// to read attendance from local midnight, so a member who checked in at
+// 11:40 PM read present on their own tile and absent on the board. Both now
+// read from presenceSinceISO(), the window the rule needs.
+describe('presence queries start where the rule needs them', () => {
+  const now = la('2026-10-01 00:30')
+  const lateIn = { user_id: 'u1', type: 'in', event_time: pg(la('2026-09-30 23:40')) }
+  const other = { user_id: 'u2', type: 'in', event_time: pg(la('2026-10-01 00:10')) }
+  const windowed = (since) => [lateIn, other].filter((e) => e.event_time >= since)
+
+  test('a session open across LA midnight is present from presenceSinceISO, absent from local midnight', () => {
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(now)
+      expect(presenceSinceISO()).toBe(statusWindowStartISO(now))
+      expect(computePresence(windowed(presenceSinceISO()), now).has('u1')).toBe(true)
+      // positive control: the old window (LA midnight) drops the same member
+      const midnight = new Date(laMidnight(now)).toISOString()
+      expect(computePresence(windowed(midnight), now).has('u1')).toBe(false)
+      // and both windows agree on a session opened after midnight
+      expect(computePresence(windowed(midnight), now).has('u2')).toBe(true)
+      expect(computePresence(windowed(presenceSinceISO()), now).has('u2')).toBe(true)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  // The attendance_events line of each caller, read from source.
+  const queryLine = (s) => s.split('\n').find((l) => l.includes(".from('attendance_events')")) ?? ''
+  const readsWindow = (s) => /\.gte\('event_time', presenceSinceISO\(\)\)/.test(queryLine(s))
+  for (const file of ['PresenceBoard.jsx', 'useGlance.js']) {
+    test(`${file} reads attendance from presenceSinceISO()`, () => {
+      const src = readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8')
+      expect(queryLine(src)).not.toBe('')
+      expect(readsWindow(src)).toBe(true)
+      // the mutant: the same line back on local midnight
+      const mutant = src.replace(/(\.from\('attendance_events'\)[^\n]*\.gte\('event_time', )presenceSinceISO\(\)\)/, '$1startOfTodayISO())')
+      expect(mutant).not.toBe(src)
+      expect(readsWindow(mutant)).toBe(false)
+    })
+  }
+
+  test("useGlance still bounds TODAY's schedule at local midnight (only presence moved)", () => {
+    const src = readFileSync(new URL('../src/useGlance.js', import.meta.url), 'utf8')
+    expect(src).toMatch(/\.from\('events'\)[^\n]*\n[^\n]*\.gte\('ends_at', todayISO\)/)
+    expect(src).toMatch(/const todayISO = startOfTodayISO\(\)/)
   })
 })
