@@ -323,6 +323,9 @@ export const supabase = {
 
 export const fixture = {
   marker: FIXTURE_MARKER,
+  // The same client the app uses, as the current persona: a browser test can
+  // ask `await __fx.supabase.from('feedback').select('id')` what a page would.
+  supabase,
   get db() { return store.db },
   get persona() { return state.persona },
   get migrations() { return state.migrations },
