@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { fmtHours, CATEGORIES, categoryLabel, categoryColor, DEFAULT_CATEGORY } from './hoursUtils'
 import { myHoursModel } from './myHoursModel'
+import { fetchAllRows } from './myHoursFetch'
 import './MyHoursPage.css'
 
 const DAY_MS = 86_400_000
@@ -30,7 +31,9 @@ export default function MyHoursPage({ session }) {
     const uid = session.user.id
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
-      supabase.from('attendance_events').select('id, type, event_time, category, manual_entry').eq('user_id', uid).order('event_time'),
+      // Paged: an unranged select stops silently at the API's max rows, which
+      // would drop the newest check-ins from the list and every total at once.
+      fetchAllRows(() => supabase.from('attendance_events').select('id, type, event_time, category, manual_entry').eq('user_id', uid).order('event_time').order('id')),
       supabase.from('logged_hours').select('type, hours, date').eq('member_id', uid).eq('status', 'verified'),
       supabase.from('session_reviews').select('checkout_id, status').eq('user_id', uid).in('status', ['pending', 'voided']),
       supabase.from('hour_goals').select('member_id, season_id, target_hours, categories'),
