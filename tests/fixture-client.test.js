@@ -5,7 +5,7 @@
 // with the same fixture driven the other way, so an engine that had stopped
 // answering at all could not pass this file.
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createEngine, uuid, parseSelect, parseLogic, migrationApplied } from '../src/dev/fixture/engine.js'
 import { SCHEMA } from '../src/dev/fixture/schema.js'
 import core from '../src/dev/fixture/core.js'
@@ -81,19 +81,29 @@ describe('seed', () => {
     expect(f.db().attendance_events.filter((e) => e.event_time >= todayStart && e.type === 'in').length).toBeGreaterThan(0)
   })
   it('seeds exactly the deliberate attendance anomalies, as the app detects them', () => {
-    // Per member, as VerifyHoursPage.fetchAnomalies runs it. The detector is
-    // the app's own (src/accountability.js); a stray generator overlap would
-    // show up here as an extra double_in.
-    const byMember = {}
-    for (const e of f.db().attendance_events) (byMember[e.user_id] ??= []).push(e)
-    const exempt = new Set(f.db().profiles.filter((p) => p.geofence_exempt).map((p) => p.id))
-    const found = Object.entries(byMember).flatMap(([uid, evs]) =>
-      detectAnomalies(evs, { exempt: exempt.has(uid) }).map((a) => `${a.kind} ${uid.slice(-2)}`))
-    expect(found.sort()).toEqual(['capped c6', 'double_in c9'])
-    // Positive control: the same detector flags the exempt member's fence skip
-    // once the exemption is taken away.
-    const casey = byMember[IDS.exempt]
-    expect(detectAnomalies(casey, { exempt: false }).map((a) => a.kind)).toContain('geofence')
+    // The seed is laid out relative to NOW, but detectAnomalies measures a
+    // still-open session against the real clock (cappedSession's `new Date()`).
+    // Unpinned, the seeded open sessions crossed the 10 h cap on the morning
+    // of 2026-10-02 and this went red on every branch. So Date reads NOW here.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(NOW)
+    try {
+      // Per member, as VerifyHoursPage.fetchAnomalies runs it. The detector is
+      // the app's own (src/accountability.js); a stray generator overlap would
+      // show up here as an extra double_in.
+      const byMember = {}
+      for (const e of f.db().attendance_events) (byMember[e.user_id] ??= []).push(e)
+      const exempt = new Set(f.db().profiles.filter((p) => p.geofence_exempt).map((p) => p.id))
+      const found = Object.entries(byMember).flatMap(([uid, evs]) =>
+        detectAnomalies(evs, { exempt: exempt.has(uid) }).map((a) => `${a.kind} ${uid.slice(-2)}`))
+      expect(found.sort()).toEqual(['capped c6', 'double_in c9'])
+      // Positive control: the same detector flags the exempt member's fence skip
+      // once the exemption is taken away.
+      const casey = byMember[IDS.exempt]
+      expect(detectAnomalies(casey, { exempt: false }).map((a) => a.kind)).toContain('geofence')
+    } finally {
+      vi.useRealTimers()
+    }
   })
   it('gives every student persona an application for the season spanning today', () => {
     const season = f.db().seasons.find((s) => s.start_date <= '2026-10-01' && s.end_date >= '2026-10-01')
