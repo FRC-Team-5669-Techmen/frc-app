@@ -45,9 +45,13 @@ export default {
         // 6.5h build closed by the 10 PM auto-checkout, under review: the REVIEW tag.
         ev('d-in', 'in', at(5, 8), { category: 'build', geo_ok: true }),
         ev('d-out', 'out', at(5, 1.5), { method: 'auto_close' }),
-        // 12.5h build: clamped to 10h, the CAPPED tag.
-        ev('e-in', 'in', at(8, 13), { category: 'build', geo_ok: true }),
-        ev('e-out', 'out', at(8, 0.5)),
+        // 12.5h build: clamped to 10h, the CAPPED tag. Every check-in here is at
+        // least 24h after the one before it, so each lands on its own UTC date
+        // (the history's day key) whatever time of day the fixture clock reads;
+        // at 8 days back this one sat 17h from the next and shared a day with it
+        // whenever the clock read 06:00-12:59 UTC.
+        ev('e-in', 'in', at(7, 13), { category: 'build', geo_ok: true }),
+        ev('e-out', 'out', at(7, 0.5)),
         // 40m competition.
         ev('f-in', 'in', at(9, 6), { category: 'competition', geo_ok: true }),
         ev('f-out', 'out', at(9, 6 - 40 / 60)),
