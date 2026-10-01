@@ -76,6 +76,9 @@ export default function VolunteerCheckinPage({ session }) {
   const [geoReason, setGeoReason] = useState(null)
   const [acting, setActing] = useState(false)
   const [exempt, setExempt] = useState(false)   // staff-granted geofence exemption
+  // The code (or message) of the error behind a 'System fault', shown on that
+  // screen so a student has something specific to tell a mentor.
+  const [fault, setFault] = useState(null)
   const [switched, setSwitched] = useState(false) // closed a normal session to open volunteer
   const [since, setSince] = useState(null)        // open session start, for confirm-out
   // True once this history entry has acted on its arrival (see CheckinPage).
@@ -127,6 +130,7 @@ export default function VolunteerCheckinPage({ session }) {
       setStatus('success')
     } catch (err) {
       console.error(err)
+      setFault(err?.code || err?.message || null)
       setStatus('error')
     } finally {
       setActing(false)
@@ -171,6 +175,7 @@ export default function VolunteerCheckinPage({ session }) {
       setStatus('success')
     } catch (err) {
       console.error(err)
+      setFault(err?.code || err?.message || null)
       setStatus('error')
     } finally {
       setActing(false)
@@ -257,6 +262,7 @@ export default function VolunteerCheckinPage({ session }) {
       }
     } catch (err) {
       console.error(err)
+      setFault(err?.code || err?.message || null)
       setStatus('error')
     } finally {
       busy.current = false
@@ -320,13 +326,13 @@ export default function VolunteerCheckinPage({ session }) {
       ? (GEO_MESSAGES[geoReason] ?? GEO_MESSAGES.error)
       : status === 'unknown'
         ? { heading: 'Status unavailable', detail: 'Could not read your check-in status, so nothing was recorded. Check your connection and try again.' }
-        : { heading: 'System fault', detail: 'Could not record your volunteer attendance. Try again.' }
+        : { heading: 'System fault', detail: `Could not record your volunteer attendance${fault ? ` (${fault})` : ''}. Try again. If it happens again, show this screen to a mentor.` }
     return (
       <div className="checkin-wrap checkin-fault">
         <CheckinHeader tag="FAULT" />
-        <div className="checkin-mark checkin-mark-fault">✗</div>
+        <div className="checkin-mark checkin-mark-fault" aria-hidden="true">✗</div>
         <h1>{msg.heading}</h1>
-        <p className="checkin-status">{msg.detail}</p>
+        <p className="checkin-status" role="alert">{msg.detail}</p>
         {status === 'geo' ? (
           <button
             onClick={confirmCheckin}
@@ -340,7 +346,7 @@ export default function VolunteerCheckinPage({ session }) {
           // this shows the current status rather than writing again on its own.
           <button onClick={() => arrive()} style={CONFIRM_BTN_STYLE}>Try again</button>
         )}
-        <footer className="checkin-footer checkin-footer-fault">STATUS // FAULT</footer>
+        <footer className="checkin-footer checkin-footer-fault" aria-hidden="true">STATUS // FAULT</footer>
       </div>
     )
   }
@@ -401,12 +407,12 @@ export default function VolunteerCheckinPage({ session }) {
       <div className="checkin-wrap checkin-duplicate">
         <CheckinHeader />
         <div className="checkin-panel checkin-panel-amber">
-          <div className="checkin-bang">!</div>
+          <div className="checkin-bang" aria-hidden="true">!</div>
           <h1 className="checkin-name">{memberName}</h1>
-          <p className="checkin-status">ALREADY {verb} · {timeStr}</p>
+          <p className="checkin-status" role="alert">ALREADY {verb} · {timeStr}</p>
           <p className="checkin-loc">{locDisplay}</p>
         </div>
-        <footer className="checkin-footer checkin-footer-amber">STATUS // NO DUPLICATE</footer>
+        <footer className="checkin-footer checkin-footer-amber" aria-hidden="true">STATUS // NO DUPLICATE</footer>
         <Link to="/dashboard" className="checkin-home-link">VIEW STATUS →</Link>
       </div>
     )
@@ -417,16 +423,16 @@ export default function VolunteerCheckinPage({ session }) {
   return (
     <div className={`checkin-wrap ${isIn ? 'checkin-success' : 'checkin-checkout'}`}>
       <CheckinHeader tag={isIn ? 'VOLUNTEERING' : 'CHECK-OUT'} dark={isIn} />
-      <div className="checkin-mark">✓</div>
+      <div className="checkin-mark" aria-hidden="true">✓</div>
       <h1 className="checkin-name">{memberName}</h1>
-      <p className="checkin-status">VOLUNTEER · CHECKED {verb} · {timeStr}</p>
+      <p className="checkin-status" role="alert">VOLUNTEER · CHECKED {verb} · {timeStr}</p>
       {switched && isIn && (
         <p className="checkin-status" style={{ color: 'var(--gold)' }}>
           Switched from a normal session to volunteer.
         </p>
       )}
       <p className="checkin-loc">{locDisplay}</p>
-      <footer className="checkin-footer">STATUS // {isIn ? 'VOLUNTEERING' : 'CLEAR'}</footer>
+      <footer className="checkin-footer" aria-hidden="true">STATUS // {isIn ? 'VOLUNTEERING' : 'CLEAR'}</footer>
       <Link to="/dashboard" className="checkin-home-link">VIEW STATUS →</Link>
     </div>
   )

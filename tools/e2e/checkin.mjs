@@ -306,15 +306,23 @@ async function runViewport(browser, origin, vp) {
     const before = await count(STUDENT);
     await newTab(SHOP_TAG);
     await waitText('Tap to confirm your check-in');
+    // The confirm screen shares .checkin-status with the receipt and must not
+    // announce itself: 0 alerts here, against exactly 1 (the receipt) below.
+    const alertsOnConfirm = await page.locator('[role=alert]').count();
     await press(confirmButton());
     await waitText('CHECKED IN');
     await settle();
+    const alerts = await page.locator('[role=alert]').allTextContents();
+    const glyphHidden = await page.locator('.checkin-mark').getAttribute('aria-hidden');
     const added = (await events(STUDENT)).slice(before);
     assert(added.length === 1, `expected exactly 1 new event, got ${added.length}`);
     const e = added[0];
     assert(e.type === 'in' && e.category === 'build' && e.geo_ok === true, `new event is ${JSON.stringify({ type: e.type, category: e.category, geo_ok: e.geo_ok })}`);
     assert(e.location === 'shop-main' && e.method === 'nfc', `location/method ${e.location}/${e.method}`);
-    return `1 IN, category ${e.category}, geo_ok ${e.geo_ok}`;
+    assert(alertsOnConfirm === 0, `the confirm screen carries ${alertsOnConfirm} role=alert`);
+    assert(alerts.length === 1 && alerts[0].includes('CHECKED IN') && glyphHidden === 'true',
+      `the receipt should be exactly 1 alert reading CHECKED IN with its glyph aria-hidden; got ${JSON.stringify(alerts)}, glyph aria-hidden ${glyphHidden}`);
+    return `1 IN, category ${e.category}, geo_ok ${e.geo_ok}; alerts: 0 on confirm, 1 on the receipt`;
   });
 
   // b. Dashboard Check Out.
@@ -376,9 +384,11 @@ async function runViewport(browser, origin, vp) {
     await waitText('ALREADY OUT');
     await settle();
     const after = await count(STUDENT);
+    const alerts = await page.locator('[role=alert]').allTextContents();
     assert(after === before, `duplicate tap wrote ${after - before} event(s)`);
     assert(checkoutWrites >= 1, `positive control missing: the out-of-window tap (c2) wrote ${checkoutWrites}`);
-    return `0 writes inside the window, against ${checkoutWrites} write(s) by the same tag outside it (c2)`;
+    assert(alerts.length === 1 && alerts[0].includes('ALREADY OUT'), `the duplicate receipt should be exactly 1 alert reading ALREADY OUT; got ${JSON.stringify(alerts)}`);
+    return `0 writes inside the window, against ${checkoutWrites} write(s) by the same tag outside it (c2); 1 alert`;
   });
 
   // e1. Out of range: refused, nothing written. Control: back in range, writes.
