@@ -5,7 +5,7 @@ import { verifyAtFLL } from './geo'
 import { DEFAULT_CATEGORY } from './categories'
 import {
   DUPLICATE_WINDOW_MS, ARRIVAL_HANDLED, isRevisit, nextNfcAction, statusWindowStartISO,
-  readLocalTap, recordLocalTap, whenForeground,
+  readLocalTap, receiptHolds, recordLocalTap, whenForeground,
 } from './attendanceState'
 import './CheckinPage.css'
 
@@ -17,7 +17,8 @@ import './CheckinPage.css'
 const CATEGORY = 'volunteer'
 
 // Same resting screens and refresh-on-return as CheckinPage: a tab brought back
-// after a minute away re-reads and shows the current status, never writing.
+// after a minute away re-reads, never writing; a receipt stays up while the
+// status still agrees with it, anything else shows the current status.
 const RESTING = new Set(['success', 'duplicate', 'confirm', 'confirm-out', 'unknown'])
 
 function deviceStore() {
@@ -179,11 +180,14 @@ export default function VolunteerCheckinPage({ session }) {
   // One arrival, decided by the shared rule (attendanceState.nextNfcAction) with
   // this tag's category: an open volunteer session checks out, an open session
   // of any other category offers the switch.
-  async function arrive({ revisit = false } = {}) {
+  async function arrive({ revisit = false, receipt = null } = {}) {
     if (busy.current) return
     busy.current = true
-    setStatus('loading')
-    setLoadingMsg(revisit ? 'Checking your status…' : null)
+    // A quiet re-read behind a receipt leaves the receipt on screen meanwhile.
+    if (!receipt) {
+      setStatus('loading')
+      setLoadingMsg(revisit ? 'Checking your status…' : null)
+    }
     try {
       await supabase.from('profiles').upsert({ id: session.user.id }, { onConflict: 'id' })
 
@@ -214,6 +218,8 @@ export default function VolunteerCheckinPage({ session }) {
       // The member left this page while it was reading: act on nothing (see
       // CheckinPage).
       if (!mounted.current) return
+      // A receipt the re-read still agrees with stays up (attendanceState.receiptHolds).
+      if (receipt && receiptHolds(next, receipt)) return
 
       if (next.action === 'unknown') {
         console.error(readErr)
@@ -275,14 +281,16 @@ export default function VolunteerCheckinPage({ session }) {
   // Re-read (never write) when a resting tab comes back after a minute away.
   useEffect(() => {
     const resting = RESTING.has(status) && !acting
+    // What a receipt screen shows, so the re-read can leave it up when it still holds.
+    const receipt = status === 'success' || status === 'duplicate' ? eventType : null
     function onVisibility() {
       if (document.visibilityState === 'hidden') { hiddenAt.current = Date.now(); return }
       const away = hiddenAt.current == null ? 0 : Date.now() - hiddenAt.current
       hiddenAt.current = null
-      if (resting && away >= DUPLICATE_WINDOW_MS) arrive({ revisit: true })
+      if (resting && away >= DUPLICATE_WINDOW_MS) arrive({ revisit: true, receipt })
     }
     function onPageShow(e) {
-      if (e.persisted && resting) arrive({ revisit: true })
+      if (e.persisted && resting) arrive({ revisit: true, receipt })
     }
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('pageshow', onPageShow)
@@ -290,7 +298,7 @@ export default function VolunteerCheckinPage({ session }) {
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('pageshow', onPageShow)
     }
-  }, [status, acting]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, acting, eventType]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (status === 'loading') {
     return (

@@ -5,14 +5,16 @@ import { verifyAtShop } from './geo'
 import { DEFAULT_CATEGORY } from './categories'
 import {
   DUPLICATE_WINDOW_MS, ARRIVAL_HANDLED, isRevisit, nextNfcAction, statusWindowStartISO,
-  readLocalTap, recordLocalTap, whenForeground,
+  readLocalTap, receiptHolds, recordLocalTap, whenForeground,
 } from './attendanceState'
 import './CheckinPage.css'
 
 // Screens a member can leave the tab sitting on. When the tab comes back after
-// more than a minute away, the page re-reads and shows the CURRENT status (never
-// writing on its own), so a tab the browser re-surfaces is not a stale "checked
-// in" from hours ago.
+// more than a minute away, the page re-reads (never writing on its own). A
+// prompt is replaced by the CURRENT status; a receipt (success, duplicate)
+// stays up while the status still agrees with it, and is replaced only when it
+// no longer does, so a tab the browser re-surfaces is neither a stale "checked
+// in" from hours ago nor a "CHECKED OUT" that turns into the check-in prompt.
 const RESTING = new Set(['success', 'duplicate', 'confirm', 'confirm-out', 'unknown'])
 
 // Times on this route read in the team's zone.
@@ -163,11 +165,14 @@ export default function CheckinPage({ session }) {
   // One arrival: read the member's status and act on it through the shared rule
   // (attendanceState.nextNfcAction). `revisit` forces the no-auto-write path;
   // the history entry's own marker forces it too.
-  async function arrive({ revisit = false } = {}) {
+  async function arrive({ revisit = false, receipt = null } = {}) {
     if (busy.current) return
     busy.current = true
-    setStatus('loading')
-    setLoadingMsg(revisit ? 'Checking your status…' : null)
+    // A quiet re-read behind a receipt leaves the receipt on screen meanwhile.
+    if (!receipt) {
+      setStatus('loading')
+      setLoadingMsg(revisit ? 'Checking your status…' : null)
+    }
     try {
       await supabase.from('profiles').upsert({ id: session.user.id }, { onConflict: 'id' })
 
@@ -201,6 +206,8 @@ export default function CheckinPage({ session }) {
       // would replace whatever entry is current with /checkin and pull them
       // back here, and a write now would be one nobody is looking at.
       if (!mounted.current) return
+      // A receipt the re-read still agrees with stays up (attendanceState.receiptHolds).
+      if (receipt && receiptHolds(next, receipt)) return
 
       if (next.action === 'unknown') {
         console.error(readErr)
@@ -257,14 +264,16 @@ export default function CheckinPage({ session }) {
   // status. It never writes: the member taps if they mean to.
   useEffect(() => {
     const resting = RESTING.has(status) && !acting
+    // What a receipt screen shows, so the re-read can leave it up when it still holds.
+    const receipt = status === 'success' || status === 'duplicate' ? eventType : null
     function onVisibility() {
       if (document.visibilityState === 'hidden') { hiddenAt.current = Date.now(); return }
       const away = hiddenAt.current == null ? 0 : Date.now() - hiddenAt.current
       hiddenAt.current = null
-      if (resting && away >= DUPLICATE_WINDOW_MS) arrive({ revisit: true })
+      if (resting && away >= DUPLICATE_WINDOW_MS) arrive({ revisit: true, receipt })
     }
     function onPageShow(e) {
-      if (e.persisted && resting) arrive({ revisit: true })
+      if (e.persisted && resting) arrive({ revisit: true, receipt })
     }
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('pageshow', onPageShow)
@@ -272,7 +281,7 @@ export default function CheckinPage({ session }) {
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('pageshow', onPageShow)
     }
-  }, [status, acting]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, acting, eventType]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (status === 'loading') {
     return (

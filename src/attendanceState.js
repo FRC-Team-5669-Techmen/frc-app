@@ -121,6 +121,22 @@ export function nextNfcAction(events, now = Date.now(), { revisit = false, categ
   return { action: 'check_in', status }
 }
 
+// A receipt screen ("CHECKED IN · 3:15 PM", "CHECKED OUT · 6:00 PM", or the
+// amber ALREADY screen) re-read after the tab comes back still tells the truth
+// when the member's status agrees with it, and then it stays up rather than
+// turning into a prompt. A "CHECKED OUT" left on screen must never become "Tap
+// to confirm your check-in" on its own: that reads exactly as the 2026-09-08
+// report did. A failed re-read leaves the receipt alone too; it names a past
+// event and asks for nothing.
+//   next: a nextNfcAction result; receiptType: 'in' | 'out' (what is shown).
+export function receiptHolds(next, receiptType) {
+  if (receiptType !== 'in' && receiptType !== 'out') return false
+  if (next.action === 'unknown') return true
+  if (receiptType === 'out') return !next.status.checkedIn
+  // The volunteer tag's 'switch' means the open session is not the one shown.
+  return next.status.checkedIn && next.action !== 'switch'
+}
+
 // Where a team-wide presence query should start so this rule sees everyone it
 // would count (a session open across midnight included).
 export function statusWindowStartISO(now = Date.now()) {
