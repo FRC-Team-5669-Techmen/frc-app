@@ -176,6 +176,24 @@
 .mb-checkout:hover:not(:disabled) { background: var(--gold-bright); }
 .mb-checkout:disabled { opacity: 0.55; cursor: not-allowed; }
 
+/* Status could not be read: a retry is neither identity nor an active state,
+   so it is steel, not gold. */
+.mb-checkout.mb-retry { background: transparent; color: var(--steel); border-color: var(--border-strong); }
+.mb-checkout.mb-retry:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+
+/* A check-out that did not land is a genuine fault. */
+.mb-you-error {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--fault);
+  background: var(--fault-a10);
+  color: var(--fault);
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+.mb-you-note { margin: 0; font-size: 0.75rem; color: var(--steel); }
+
 .mb-nfc-hint {
   margin-top: 0.3rem;
   min-height: 48px;
