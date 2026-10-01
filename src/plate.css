@@ -880,7 +880,8 @@
 }
 /* A head's one primary action stays at the right edge on the wrapped line,
    where it sat beside the title before the bar took the full width. */
-:root.tm-plate :is(.jobs-add-btn, .sc-add-btn) {
+:root.tm-plate :is(.jobs-add-btn, .sc-add-btn, .squad-add-btn),
+:root.tm-plate .rd-header > .rd-refresh {
   margin-left: auto;
 }
 /* The parent dashboard's kicker (FAMILY VIEW) centres over the centred bar
