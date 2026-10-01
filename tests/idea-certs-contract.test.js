@@ -18,7 +18,9 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import {
   CERT_STATUSES, CATALOG_SELECT, HOLDER_SELECT, SYNC_LOG_SELECT,
+  ownCertifications, holderCounts,
 } from '../src/ideaCerts.js'
+import fixture from '../src/dev/fixture/features/a.js'
 
 const read = (rel) => readFileSync(fileURLToPath(new URL(rel, import.meta.url)), 'utf8')
 const SQL = read('../supabase/migrations/0001_idea_certifications_mirror.sql')
@@ -146,6 +148,78 @@ describe('the page selects only columns that exist', () => {
     for (const c of split(CATALOG_SELECT)) expect(CAT_COLS).toContain(c)
     for (const c of split(HOLDER_SELECT)) expect(HOLD_COLS).toContain(c)
     for (const c of split(SYNC_LOG_SELECT)) expect(LOG_COLS).toContain(c)
+  })
+})
+
+// The fixture plugin (src/dev/fixture/features/a.js) is the third consumer of
+// these column names: the browser pass drives the real page against it, so a
+// fixture row with a column the table lacks would test a page production
+// never sees. Its derived numbers are also the browser test's expectations.
+describe('the fixture plugin matches the migration', () => {
+  const NOW_FX = Date.parse('2026-10-01T19:00:00Z')
+  const seed = fixture.seed({ ids: {}, now: NOW_FX })
+
+  it('declares migration 0001 and exactly the objects it creates', () => {
+    expect(fixture.migration).toBe('0001')
+    const created = [...SQL_CODE.matchAll(/create table if not exists public\.([a-z_]+)/g)].map(m => m[1])
+    expect(sameSet(fixture.creates.tables, created)).toBe(true)
+    expect(fixture.creates.rpcs).toEqual(['idea_cert_sync'])
+  })
+
+  it('every seeded row has exactly its table\'s columns', () => {
+    expect(seed.idea_cert_catalog.length).toBeGreaterThan(0)
+    expect(seed.idea_cert_holders.length).toBeGreaterThan(0)
+    expect(seed.idea_cert_sync_log.length).toBeGreaterThan(0)
+    for (const r of seed.idea_cert_catalog) expect(sameSet(Object.keys(r), CAT_COLS)).toBe(true)
+    for (const r of seed.idea_cert_holders) expect(sameSet(Object.keys(r), HOLD_COLS)).toBe(true)
+    for (const r of seed.idea_cert_sync_log) expect(sameSet(Object.keys(r), LOG_COLS)).toBe(true)
+  })
+
+  it('the seeded holders obey what idea_cert_sync would enforce', () => {
+    const codes = seed.idea_cert_catalog.map(c => c.code)
+    for (const h of seed.idea_cert_holders) {
+      expect(codes).toContain(h.code)
+      expect(CERT_STATUSES).toContain(h.status)
+      expect(h.email).toBe(h.email.toLowerCase())
+    }
+    const serials = seed.idea_cert_holders.map(h => h.serial)
+    expect(new Set(serials).size).toBe(serials.length)
+  })
+
+  it('the numbers the browser test expects', () => {
+    const student = seed.idea_cert_holders.find(h => h.serial === 'IDEA-FX-0001').email
+    const mine = ownCertifications(seed.idea_cert_holders, student, NOW_FX)
+    expect(mine).toHaveLength(4)
+    expect(mine.filter(r => r.held)).toHaveLength(2)
+    expect(mine.find(r => r.serial === 'IDEA-FX-0004').effective).toBe('expired')
+    const counts = holderCounts(seed.idea_cert_holders, NOW_FX)
+    expect(Object.fromEntries(['SAFE-1', 'SAFE-2', 'MECH-1', 'MILL-2', 'WELD-3', 'ELEC-1']
+      .map(c => [c, counts.get(c) ?? 0])))
+      .toEqual({ 'SAFE-1': 3, 'SAFE-2': 0, 'MECH-1': 1, 'MILL-2': 1, 'WELD-3': 1, 'ELEC-1': 0 })
+  })
+
+  it('a parent-only persona sees only the linked student\'s rows; staff and members see all', () => {
+    const rows = seed.idea_cert_holders
+    const see = (persona) => rows.filter(row => fixture.visible.idea_cert_holders({ table: 'idea_cert_holders', row, persona }))
+    const parentRows = see({ key: 'parent', roles: ['parent'], isStaff: false })
+    expect(parentRows.map(r => r.serial).sort()).toEqual(['IDEA-FX-0001', 'IDEA-FX-0002', 'IDEA-FX-0003', 'IDEA-FX-0004'])
+    // Positive controls: the same filter lets everyone else read every row,
+    // and a parent who is also staff is staff.
+    expect(see({ key: 'student', roles: ['student'], isStaff: false })).toHaveLength(rows.length)
+    expect(see({ key: 'mentor', roles: ['mentor'], isStaff: true })).toHaveLength(rows.length)
+    expect(see({ key: 'parent', roles: ['parent', 'mentor'], isStaff: true })).toHaveLength(rows.length)
+  })
+
+  it('the sync log is staff-only and the key table is never visible', () => {
+    const log = seed.idea_cert_sync_log[0]
+    expect(fixture.visible.idea_cert_sync_log({ row: log, persona: { isStaff: true } })).toBe(true)
+    expect(fixture.visible.idea_cert_sync_log({ row: log, persona: { isStaff: false } })).toBe(false)
+    expect(fixture.visible.idea_cert_sync_key({ row: {}, persona: { isStaff: true } })).toBe(false)
+  })
+
+  it('holder emails follow the engine\'s persona emails when it passes them', () => {
+    const s = fixture.seed({ now: NOW_FX, emails: { student: 'Persona.Student@Fixture.Test' } })
+    expect(s.idea_cert_holders.find(h => h.serial === 'IDEA-FX-0001').email).toBe('persona.student@fixture.test')
   })
 })
 
