@@ -413,6 +413,11 @@
 .mh-req { color: var(--fault); }
 .mh-modal-hint { margin: 1rem 0 0; font-size: 0.78rem; color: var(--muted); }
 .mh-modal-row { display: flex; gap: 0.6rem; }
+/* Two datetime-local fields side by side need about a 458px viewport before
+   the proposed time fits in its field; on a phone they stack. */
+@media (max-width: 520px) {
+  .mh-modal-row { flex-direction: column; gap: 0; }
+}
 .mh-modal-field { flex: 1 1 0; min-width: 0; }
 .mh-modal-input {
   width: 100%; box-sizing: border-box;

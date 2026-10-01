@@ -59,6 +59,10 @@ export default function FeedbackWidget({ session }) {
 
   const fileRef = useRef(null)
   const panelRef = useRef(null)
+  // image id -> storage path, for screenshots that already uploaded. A submit
+  // retried after the row insert failed reuses them instead of uploading each
+  // screenshot again (and orphaning the first copies in the bucket).
+  const uploadedRef = useRef({})
 
   // Object URLs are revoked at the three moments the preview genuinely stops
   // being shown -- remove, reset, unmount -- and never on a queue change. An
@@ -72,6 +76,7 @@ export default function FeedbackWidget({ session }) {
 
   const reset = useCallback(() => {
     setImages(prev => { prev.forEach(i => URL.revokeObjectURL(i.url)); return [] })
+    uploadedRef.current = {}
     setType(''); setMessage(''); setTried(''); setError(''); setDone(false); setDragging(false)
   }, [])
 
@@ -152,7 +157,7 @@ export default function FeedbackWidget({ session }) {
       // Images first: a row that names a path which failed to upload is worse
       // than a submit that reports the failure and keeps the queue intact.
       const imagePaths = []
-      for (const img of images) imagePaths.push(await uploadImage(img.file))
+      for (const img of images) imagePaths.push(uploadedRef.current[img.id] ??= await uploadImage(img.file))
 
       const payload = buildReport({
         memberId:  uid,

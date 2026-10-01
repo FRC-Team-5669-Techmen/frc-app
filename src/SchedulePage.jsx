@@ -81,7 +81,9 @@ export default function SchedulePage({ session, hasRole }) {
   const [form, setForm]       = useState(blankForm())
   const [saving, setSaving]   = useState(false)
   const [error, setError]     = useState('')
-  const [view, setView]       = useState('month') // 'agenda' | 'month' (in-memory only)
+  // Agenda on a phone, Month above (decision draft R's default): the month
+  // grid's cells are about 45px wide at 375 and clip every event title.
+  const [view, setView]       = useState(() => (typeof window !== 'undefined' && window.matchMedia?.('(max-width: 639px)').matches ? 'agenda' : 'month')) // 'agenda' | 'month' (in-memory only)
   const [myOnly, setMyOnly]   = useState(false)
   const [monthAnchor, setMonthAnchor] = useState(() => firstOfMonth(todayKey()))
   const [selectedDay, setSelectedDay] = useState(() => todayKey()) // day shown below the month grid

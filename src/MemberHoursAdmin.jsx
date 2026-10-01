@@ -121,7 +121,7 @@ export default function MemberHoursAdmin({ initialMemberId = null, focusEventIds
     if (!focusTargetId) return
     setHighlightId(focusTargetId)
     listRef.current?.querySelector(`[data-event-id="${focusTargetId}"]`)
-      ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      ?.scrollIntoView({ block: 'center', behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
     const t = setTimeout(() => setHighlightId(null), 2000)
     return () => clearTimeout(t)
   }, [focusTargetId])

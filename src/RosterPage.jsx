@@ -106,7 +106,11 @@ export default function RosterPage() {
   async function load() {
     const { data, error } = await supabase.rpc('admin_get_members')
     if (error) {
-      if (error.message.includes('Permission denied')) setDenied(true)
+      // 42501 is insufficient_privilege (an execute grant revoked, or a check
+      // raised with that errcode). The deployed admin_get_members raises its
+      // admin check as P0001 with this text (admin_member_management.sql), so
+      // the text match is what fires today and has to stay.
+      if (error.code === '42501' || error.message.includes('Permission denied')) setDenied(true)
       else setPageError(error.message)
       setMembers([])
       return
@@ -175,6 +179,7 @@ export default function RosterPage() {
   }
 
   async function removeDomain(d) {
+    if (!window.confirm(`Remove ${d}? New sign-ins from @${d} will need approval.`)) return
     const { error } = await supabase.from('allowed_domains').delete().eq('domain', d)
     if (error) { setPageError(error.message); return }
     setDomains(ds => ds.filter(x => x !== d))
