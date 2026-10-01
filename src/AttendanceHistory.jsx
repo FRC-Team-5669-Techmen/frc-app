@@ -4,6 +4,7 @@ import { fmtHours, fmtLocation, CATEGORIES, categoryLabel, categoryColor } from 
 import {
   historyByDay, historyTotals, defaultHistorySeason, seasonRange, fmtSessionTime, fmtDayKey,
 } from './attendanceHistory'
+import { fetchAllRows } from './fetchAllRows'
 import './AttendanceHistory.css'
 
 // The one attendance-history view: a member's stored sessions grouped by day,
@@ -144,8 +145,9 @@ export default function AttendanceHistory({
 // or session_reviews read means all time / no review flags, while a failed
 // attendance_events read -- the history itself -- shows its error.
 //
-// Newest first, so if a member's rows ever outgrow the API's row cap it is the
-// oldest that fall off, not this week's. sessionsFromEvents sorts regardless.
+// Every page of the member's ledger (src/fetchAllRows.js), so nothing falls off
+// at the API's row cap; a failed page is the error, never a shorter history.
+// Read newest first as before; sessionsFromEvents sorts regardless.
 export function MemberAttendanceHistory({ memberId, name, onClose }) {
   const [state, setState] = useState({ loading: true, error: '', groups: null, season: null })
 
@@ -154,10 +156,11 @@ export function MemberAttendanceHistory({ memberId, name, onClose }) {
     setState({ loading: true, error: '', groups: null, season: null })
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
-      supabase.from('attendance_events')
+      fetchAllRows(() => supabase.from('attendance_events')
         .select('id, user_id, type, event_time, location, category, manual_entry')
         .eq('user_id', memberId)
-        .order('event_time', { ascending: false }),
+        .order('event_time', { ascending: false })
+        .order('id')),
       supabase.from('session_reviews').select('checkout_id').eq('user_id', memberId).in('status', ['pending', 'voided']),
     ]).then(([{ data: seas }, { data: events, error: eErr }, { data: reviews }]) => {
       if (!live) return

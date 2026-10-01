@@ -1,11 +1,19 @@
 // Read every row of a PostgREST query, past the project's max-rows cap.
 //
 // An unranged select silently stops at the API's max rows (1000 on a default
-// Supabase project) and says nothing: no error, just a short array. My Hours
-// orders a member's attendance_events oldest-first, so a truncated read would
-// drop their NEWEST check-ins from the session list and from every total at
-// once. Two events per session puts that at about 500 sessions -- years for a
-// student, not never.
+// Supabase project) and says nothing: no error, just a short array. Every hours
+// read orders attendance_events oldest-first, so a truncated read drops the
+// NEWEST check-ins from the session lists and from every total at once. For
+// one member that is about 500 sessions, years; for a team-wide read (Team
+// Hours, Reports, the anomaly list, the roster's hours sort) about 60 members
+// pass it inside a season. So every attendance_events read that is not bounded
+// to today goes through here, and so does any other hours table a team-wide
+// page reads whole (logged_hours, session_reviews, hour_adjustments).
+//
+// Callers select `id` and order by it last (`.order('event_time').order('id')`):
+// two check-ins can share an instant, and without a unique final key PostgREST
+// may return them in a different order on the next page's query, so a row is
+// read twice or never.
 //
 // Pure: it takes a function that builds a fresh query and never imports
 // Supabase. Pages are requested until one comes back EMPTY rather than short,

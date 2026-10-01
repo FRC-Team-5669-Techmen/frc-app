@@ -5,6 +5,7 @@ import { CATEGORIES, categoryLabel } from './categories'
 import { detectAnomalies } from './accountability'
 import { DURATION_PRESETS, STEP_MINUTES, fmtSpanMins, stepMinutes, setPreset, endInstantMs, resolveReadout } from './hoursResolve'
 import MemberHoursAdmin from './MemberHoursAdmin'
+import { fetchAllRows } from './fetchAllRows'
 import './VerifyHoursPage.css'
 
 // ─── formatting helpers ───────────────────────────────────────────────────────
@@ -184,7 +185,10 @@ async function fetchAnomalies() {
   const [{ data: ev }, { data: profs }] = await Promise.all([
     // `category` is pulled so an inline-added check-out can carry the category of
     // the check-in it closes, rather than the RPC's 'build' default standing in.
-    supabase.from('attendance_events').select('id, user_id, type, event_time, geo_ok, category').order('event_time'),
+    // Every page of the team's ledger (src/fetchAllRows.js): an unranged read
+    // stops at the API's 1000-row cap, and oldest-first that drops the NEWEST
+    // events, which is exactly where a missed check-out from this week lives.
+    fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time, geo_ok, category').order('event_time').order('id')),
     supabase.from('profiles').select('id, full_name, nickname, geofence_exempt'),
   ])
   const byMember = {}

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { computeHoursMs, fmtHours } from './hoursUtils'
+import { fetchAllRows } from './fetchAllRows'
 import { RoleBadge, roleColor } from './roles'
 import { displayName } from './names'
 import { CAPABILITIES, isStaffRoles, loadAllGrants, setCapability } from './permissions'
@@ -126,10 +127,13 @@ export default function RosterPage() {
   }
 
   // Total hours per member (attendance + verified logged hours) for sorting.
+  // Every page of both team-wide reads (src/fetchAllRows.js): an unranged read
+  // stops at the API's 1000-row cap, which the team passes inside a season, and
+  // oldest-first that drops this week's sessions from every member's total.
   async function loadHours() {
     const [{ data: ae }, { data: lh }] = await Promise.all([
-      supabase.from('attendance_events').select('user_id, type, event_time').order('event_time'),
-      supabase.from('logged_hours').select('member_id, hours').eq('status', 'verified'),
+      fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time').order('event_time').order('id')),
+      fetchAllRows(() => supabase.from('logged_hours').select('id, member_id, hours').eq('status', 'verified').order('id')),
     ])
     const byId = {}
     const evByMember = {}

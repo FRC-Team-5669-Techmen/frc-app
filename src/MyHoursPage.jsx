@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { fmtHours, CATEGORIES, categoryLabel, categoryColor, DEFAULT_CATEGORY } from './hoursUtils'
 import { myHoursModel } from './myHoursModel'
-import { fetchAllRows } from './myHoursFetch'
+import { fetchAllRows } from './fetchAllRows'
 import './MyHoursPage.css'
 
 const DAY_MS = 86_400_000

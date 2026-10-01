@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { computeHoursMs, fmtDuration } from './hoursUtils'
+import { fetchAllRows } from './fetchAllRows'
 import { computePresence, startOfTodayISO, fmtClock, subteamOf } from './presence'
 import { displayName } from './names'
 import GlanceCard from './GlanceCard'
@@ -85,7 +86,10 @@ export default function ParentHomePage({ session }) {
     // Per-student detail.
     const [{ data: profs }, { data: allEvents }, { data: certs }, { data: logged }] = await Promise.all([
       supabase.from('profiles').select('id, full_name, nickname, subteams, avatar_url').in('id', studentIds),
-      supabase.from('attendance_events').select('id, user_id, type, event_time').in('user_id', studentIds),
+      // Every page (src/fetchAllRows.js): a student's whole ledger passes the
+      // API's 1000-row cap in a couple of years, two students sooner, and an
+      // unranged read would drop rows from the season total without a word.
+      fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time').in('user_id', studentIds).order('event_time').order('id')),
       supabase.from('member_skills').select('member_id, skill_id, updated_at, skills(name)').eq('status', 'certified').in('member_id', studentIds),
       supabase.from('logged_hours').select('member_id, hours, type').eq('status', 'verified').in('member_id', studentIds),
     ])
