@@ -372,6 +372,39 @@ begin
 end
 $edits$;
 
+-- -- public.events: upsert -----------------------------------------------------
+-- supabase-js .upsert() is INSERT ... ON CONFLICT DO UPDATE. On the conflict
+-- path Postgres skips the INSERT policy and applies the UPDATE policy to the
+-- EXISTING row -- and raises rather than skipping it -- so this is its own
+-- boundary, not a repeat of 16. The positive control upserts the holder's own
+-- event (notes only: check 23 still reads its title).
+do $upsert$
+declare f t0004_fx; o text; o2 text; before text; t text; nt text;
+begin
+  select * into f from t0004_fx;
+  select title into before from public.events where id = f.ev_staff;
+
+  o := pg_temp.run_as(f.holder_id, format(
+         'insert into public.events (id, title, kind, starts_at, ends_at, created_by) '
+         || 'values (%L, %L, ''meeting'', now(), now() + interval ''1 hour'', %L) '
+         || 'on conflict (id) do update set title = excluded.title',
+         f.ev_staff, 'rls-0004 HIJACK', f.holder_id));
+  select title into t from public.events where id = f.ev_staff;
+
+  o2 := pg_temp.run_as(f.holder_id, format(
+          'insert into public.events (id, title, kind, starts_at, ends_at, created_by) '
+          || 'values (%L, %L, ''meeting'', now(), now() + interval ''1 hour'', %L) '
+          || 'on conflict (id) do update set notes = %L',
+          f.ev_h2, 'rls-0004 ignored', f.holder_id, 'rls-0004 upsert'));
+  select notes into nt from public.events where id = f.ev_h2;
+
+  perform pg_temp.rec(29, 'an upsert cannot take over somebody else''s event; it CAN update the holder''s own (positive control)',
+    o = 'err:42501' and t is not distinct from before and o2 = 'ok:1' and nt = 'rls-0004 upsert',
+    format('upsert onto staff event %s (want err:42501), title unchanged: %s; upsert onto own %s (want ok:1), notes now %L',
+      o, t is not distinct from before, o2, nt));
+end
+$upsert$;
+
 -- -- Revoke --------------------------------------------------------------------
 do $revoke$
 declare f t0004_fx; o text; cap text; ins text; upd text; del text; cnt int; t text;
