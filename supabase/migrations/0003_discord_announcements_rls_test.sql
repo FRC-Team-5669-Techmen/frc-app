@@ -189,13 +189,17 @@ begin
     when n = 0 and affected = 0 then 'PASS|update matched 0 rows (no admin policy for staff)'
     else 'FAIL|a non-admin staff member changed ' || n || ' role rows' end, false);
 
+  -- Counted by the two fixture ids, not by the notes tag: if r04 leaked, the
+  -- mentor's own row also carries 'rls-test', and counting it here made this
+  -- check FAIL as "deleted -1 role rows" for a delete that never happened.
   blocked := false; affected := -1;
   begin
     delete from public.discord_announce_roles where notes = 'rls-test';
     get diagnostics affected = row_count;
   exception when insufficient_privilege then blocked := true;
   end;
-  select count(*) into n from public.discord_announce_roles where notes = 'rls-test';
+  select count(*) into n from public.discord_announce_roles
+   where role_id in ('199999999999999901', '199999999999999902');
   perform set_config('announce_test.r08', case
     when n = 2 and blocked then 'PASS|delete refused with 42501'
     when n = 2 and affected = 0 then 'PASS|delete matched 0 rows, both fixture rows remain'
