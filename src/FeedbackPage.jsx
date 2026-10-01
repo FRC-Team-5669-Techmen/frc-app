@@ -617,7 +617,16 @@ export default function FeedbackPage({ session, hasRole = () => false }) {
               const shots = imagePathsOf(r)
               const checked = selected.includes(r.id)
               return (
-                <li key={r.id} className="fbp-item" onClick={() => setOpen(r.id)}>
+                <li
+                  key={r.id}
+                  className="fbp-item"
+                  tabIndex={0}
+                  aria-label={`Open report: ${r.route || 'no route'}, ${reporterName(r)}`}
+                  onClick={() => setOpen(r.id)}
+                  onKeyDown={e => {
+                    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); setOpen(r.id) }
+                  }}
+                >
                   <input
                     type="checkbox"
                     className="fbp-check"
