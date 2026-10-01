@@ -84,9 +84,9 @@ describe('@everyone and @here are neutralised in the text as well as in allowed_
     const out = neutralizeMassMentions('@everyone and @HERE, listen')
     expect(out).not.toMatch(/@everyone/i)
     expect(out).not.toMatch(/@here/i)
-    expect(out).toBe('@​everyone and @​HERE, listen')
+    expect(out).toBe('@\u200beveryone and @\u200bHERE, listen')
     const p = build(draft({ content: '@everyone shop is closed' }))
-    expect(p.content).toBe('@​everyone shop is closed')
+    expect(p.content).toBe('@\u200beveryone shop is closed')
     expect(p.allowed_mentions.parse).toEqual([])
   })
 

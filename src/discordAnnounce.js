@@ -69,7 +69,7 @@ export const SNOWFLAKE_RE = /^[0-9]{17,20}$/
 //   unknown  the call left and no answer came back. It MAY have posted.
 export const ANNOUNCE_STATUSES = Object.freeze(['pending', 'sent', 'failed', 'unknown'])
 
-const ZWSP = '​'
+const ZWSP = '\u200b'
 const asText = v => (typeof v === 'string' ? v : '')
 const unixNewlines = s => s.replace(/\r\n?/g, '\n')
 
