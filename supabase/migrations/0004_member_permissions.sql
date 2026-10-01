@@ -24,15 +24,21 @@
 -- CREATES
 --   public.capabilities                      the vocabulary, one row per key
 --   public.member_permissions                (member_id, capability) grants
---   public.has_capability(text)              true for staff OR a holder
+--   public.has_capability(text)              true for staff, OR for an
+--                                            APPROVED member holding the grant
+--   public.events_series_is_own(uuid)        true when a series id is null or
+--                                            names no event anyone else created
 --   public.admin_grant_capability(uuid,text) admin only, raises 42501 otherwise
 --   public.admin_revoke_capability(uuid,text) admin only, raises 42501 otherwise
 --   three ADDITIVE permissive policies on public.events, for a holder of
 --   'events.create' who is not staff:
---     insert -- created_by must be the caller, and mandatory must be false
+--     insert -- created_by must be the caller, mandatory must be false, and
+--               series_id must be null or a series only the caller's events
+--               are in
 --     update -- only rows the caller created and that are not mandatory, only
 --               while the caller still holds the capability, and the row must
---               still be theirs and still not mandatory afterwards
+--               still be theirs, still not mandatory, and still in no series
+--               anyone else's events are in afterwards
 --     delete -- only rows the caller created and that are not mandatory, only
 --               while the caller still holds the capability
 --
@@ -45,7 +51,19 @@
 --     regardless of RSVP, which is the widest broadcast the app has, so it
 --     stays staff-only. An event staff later marks mandatory becomes staff
 --     territory and drops out of the holder's edit/delete rights;
---   - lose all of the above the moment an admin revokes the capability.
+--   - never put an event into somebody else's series. series_id is a plain
+--     column the client mints, and staff's "Whole series (N)" edit and delete
+--     act on every row sharing it -- so before this, a holder who copied a
+--     staff series' id onto an event they added (one direct API insert) got
+--     their row counted, retimed or deleted by staff's next series action. A
+--     holder's own series, and an event in no series, are unaffected. The UI
+--     never sends a foreign series_id (an insert mints a fresh one, an update
+--     sends none); the database now refuses one (42501);
+--   - lose all of the above the moment an admin revokes the capability, OR the
+--     moment their profile stops being approved. A grant on an unapproved
+--     profile (an account staff have not let in, or have since turned away)
+--     confers nothing. Staff are unaffected: their path is is_staff(), exactly
+--     as before.
 -- Staff (is_staff(): mentor / lead / admin) keep every right they have today.
 -- The existing "events writable by staff" policy is NOT dropped, altered or
 -- re-created by this file; Postgres ORs permissive policies together.
@@ -70,7 +88,9 @@
 --
 -- ASSUMES (checked first; the file raises rather than half-applies):
 --   public.profiles, public.events                (base schema, events.sql)
+--   profiles.approved                              (domain_roster_gate.sql)
 --   events.created_by                              (events.sql)
+--   events.series_id                               (event_series.sql)
 --   events.mandatory                               (push_notifications.sql)
 --   public.is_staff()                              (skills_catalog.sql)
 --   public.is_admin()                              (feedback.sql)
@@ -82,6 +102,7 @@
 --   drop policy if exists "events delete own by capability holder" on public.events;
 --   drop function if exists public.admin_grant_capability(uuid, text);
 --   drop function if exists public.admin_revoke_capability(uuid, text);
+--   drop function if exists public.events_series_is_own(uuid);
 --   drop function if exists public.has_capability(text);
 --   drop table if exists public.member_permissions;
 --   drop table if exists public.capabilities;
@@ -100,6 +121,14 @@ begin
   if not exists (select 1 from information_schema.columns
                   where table_schema = 'public' and table_name = 'events' and column_name = 'mandatory') then
     raise exception '0004: events.mandatory missing -- apply supabase/push_notifications.sql first';
+  end if;
+  if not exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'events' and column_name = 'series_id') then
+    raise exception '0004: events.series_id missing -- apply supabase/event_series.sql first';
+  end if;
+  if not exists (select 1 from information_schema.columns
+                  where table_schema = 'public' and table_name = 'profiles' and column_name = 'approved') then
+    raise exception '0004: profiles.approved missing -- apply supabase/domain_roster_gate.sql first';
   end if;
   if to_regprocedure('public.is_staff()') is null then
     raise exception '0004: public.is_staff() missing -- apply supabase/skills_catalog.sql first';
@@ -178,10 +207,20 @@ revoke insert, update, delete, truncate, references, trigger
 grant select on table public.member_permissions to authenticated;
 
 -- ── 3. has_capability(): the one check every policy and RPC consults ─────────
--- True for staff (they can already do everything a capability grants) or for a
--- member holding the capability. SECURITY DEFINER so a policy can consult
--- member_permissions without depending on the caller's own read policy, and
--- search_path pinned like every other definer function here.
+-- True for staff (they can already do everything a capability grants) or for
+-- an APPROVED member holding the capability. SECURITY DEFINER so a policy can
+-- consult member_permissions and profiles without depending on the caller's
+-- own read policies, and search_path pinned like every other definer function
+-- here.
+--
+-- WHY APPROVAL IS CHECKED HERE. A grant row outlives the reason it was given:
+-- an admin can grant a member who is later turned away (approved set back to
+-- false), and the app's own gate (App.jsx shows the access gate, not the app,
+-- to an unapproved account) is a client screen, not a boundary -- a direct API
+-- call never meets it. So the capability is only as live as the profile.
+-- The staff half is deliberately unchanged: is_staff() is what every staff
+-- policy in this database already trusts, and narrowing it here alone would
+-- make staff's rights depend on which policy asked.
 create or replace function public.has_capability(p_capability text)
 returns boolean
 language sql
@@ -191,9 +230,42 @@ set search_path = public
 as $fn$
   select public.is_staff()
       or exists (
-           select 1 from public.member_permissions mp
+           select 1
+             from public.member_permissions mp
+             join public.profiles p on p.id = mp.member_id
             where mp.member_id = auth.uid()
-              and mp.capability = p_capability);
+              and mp.capability = p_capability
+              and p.approved);
+$fn$;
+
+-- ── 3b. events_series_is_own(): a holder's event joins only their own series ──
+-- True when p_series is null, or when every event already carrying it was
+-- created by the caller -- which includes a fresh id nobody has used (the
+-- repeating-series form mints one per series) and the holder's own series.
+-- False the moment one event in it was created by anybody else, a null
+-- created_by included (an event nobody claims is not the caller's).
+--
+-- SECURITY DEFINER, but NOT because a policy on events cannot read events: it
+-- can (measured on PostgreSQL 16 -- an inline subquery in these policies runs,
+-- because the events SELECT policy is a bare `using (true)` and so expands to
+-- nothing further). It is a definer so the answer covers EVERY row of the
+-- series whatever the caller may read: inline, the subquery would go through
+-- the caller's own SELECT policy, and the day a later migration hides some
+-- events from students it would start answering "no foreign rows here" about
+-- rows it simply cannot see. events_series_id_idx (event_series.sql) serves
+-- the lookup.
+create or replace function public.events_series_is_own(p_series uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $fn$
+  select p_series is null
+      or not exists (
+           select 1 from public.events e
+            where e.series_id = p_series
+              and e.created_by is distinct from auth.uid());
 $fn$;
 
 -- ── 4. Admin grant / revoke ──────────────────────────────────────────────────
@@ -243,12 +315,16 @@ $fn$;
 -- Execute: authenticated only. The bootstrap default privileges granted anon
 -- (and PUBLIC holds EXECUTE on every new function by default), so all three
 -- are revoked by name first and then granted back to the one role intended.
--- has_capability must stay executable by authenticated: the events policies
--- below call it as the signed-in caller.
+-- has_capability and events_series_is_own must stay executable by
+-- authenticated: the events policies below call them as the signed-in caller.
+-- (events_series_is_own answers only about rows every member can already read
+-- through "events readable by authenticated", so it discloses nothing.)
 revoke execute on function public.has_capability(text)               from public, anon, authenticated;
+revoke execute on function public.events_series_is_own(uuid)         from public, anon, authenticated;
 revoke execute on function public.admin_grant_capability(uuid, text)  from public, anon, authenticated;
 revoke execute on function public.admin_revoke_capability(uuid, text) from public, anon, authenticated;
 grant  execute on function public.has_capability(text)               to authenticated;
+grant  execute on function public.events_series_is_own(uuid)         to authenticated;
 grant  execute on function public.admin_grant_capability(uuid, text)  to authenticated;
 grant  execute on function public.admin_revoke_capability(uuid, text) to authenticated;
 
@@ -256,6 +332,13 @@ grant  execute on function public.admin_revoke_capability(uuid, text) to authent
 -- Additive and permissive: they OR with "events writable by staff", which is
 -- untouched. For staff these add nothing (has_capability() is already true and
 -- the staff policy already allows more), so staff behaviour cannot change.
+--
+-- SERIES. The insert and update checks also require series_id to be null or a
+-- series only the caller's events are in (events_series_is_own, 3b). Without
+-- it a holder could copy a staff series' id onto their own event, and staff's
+-- "Whole series (N)" edit / delete would then count, retime or delete that row
+-- along with theirs. Delete needs no such clause: a holder's delete already
+-- reaches only their own rows, series or not.
 --
 -- UPDATE has to FIND its rows first, and events are select using (true), so a
 -- holder's update of somebody else's event finds the row and is then filtered
@@ -268,6 +351,7 @@ create policy "events insert by capability holder"
     public.has_capability('events.create')
     and created_by = auth.uid()
     and mandatory = false
+    and public.events_series_is_own(series_id)
   );
 
 drop policy if exists "events update own by capability holder" on public.events;
@@ -282,6 +366,7 @@ create policy "events update own by capability holder"
     public.has_capability('events.create')
     and created_by = auth.uid()
     and mandatory = false
+    and public.events_series_is_own(series_id)
   );
 
 drop policy if exists "events delete own by capability holder" on public.events;
