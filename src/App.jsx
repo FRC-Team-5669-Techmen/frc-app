@@ -301,7 +301,7 @@ export default function App() {
           <Route path="/survey"          element={<SurveyPage session={session} />} />
           <Route path="/surveys"         element={<SurveysAdmin session={session} hasRole={hasRole} />} />
           {/* Display lives inside the layout so the nav + profile stay visible. */}
-          <Route path="/display" element={<PresenceBoard />} />
+          <Route path="/display" element={<PresenceBoard hasRole={hasRole} />} />
         </Route>
 
         {/* ── Minimal: no NavBar, bundle stays small ── */}
