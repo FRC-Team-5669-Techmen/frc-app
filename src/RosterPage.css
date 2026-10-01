@@ -172,6 +172,62 @@
   cursor: not-allowed;
 }
 
+/* ── Per-member capabilities (0004_member_permissions) ── */
+.roster-perms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+}
+
+/* Same footprint as .role-chip, but a real <button aria-pressed> so the
+   toggle is reachable and announced from the keyboard. */
+.roster-perm-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--border-strong);
+  color: var(--muted);
+  background: var(--surface-2);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.roster-perm-toggle:hover:not(:disabled) { border-color: var(--gold-dim); color: var(--text); }
+.roster-perm-toggle.on {
+  background: var(--gold);
+  color: var(--bg);
+  border-color: var(--gold);
+}
+.roster-perm-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.roster-perm-note {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.roster-perm-unset { font-family: var(--font-mono); font-size: 0.78rem; }
+
+/* In the collapsed member head: who holds a capability, at a glance. */
+.roster-perm-tag {
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  white-space: nowrap;
+}
+/* The head row already fits a name, a role badge and Pending on a phone with
+   nothing to spare; the detail row still shows the grant there. */
+@media (max-width: 480px) {
+  .roster-perm-tag { display: none; }
+}
+
 /* ── Status select ── */
 .status-select {
   padding: 0.3rem 0.6rem;

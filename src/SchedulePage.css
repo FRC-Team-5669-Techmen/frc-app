@@ -165,6 +165,19 @@
   line-height: 1.4;
 }
 
+/* Shown in the form to a member adding events by permission rather than by a
+   staff role, so the rules the server enforces are stated up front. */
+.sch-holder-note {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--steel);
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  border-left: 2px solid var(--border-strong);
+  padding-left: 0.6rem;
+}
+
 .sch-confirm {
   display: flex;
   flex-wrap: wrap;
@@ -658,4 +671,18 @@
 @media (max-width: 480px) {
   .sch-cell { min-height: 3.8rem; padding: 0.2rem; }
   .sch-mchip { font-size: 0.56rem; padding: 0.08rem 0.2rem; }
+}
+
+/* Touch targets. The create / edit controls used to be staff-only; a student
+   an admin granted "Can add calendar events" (0004) now uses them on a phone
+   in the shop, so on a coarse pointer every one of them is at least 44px.
+   Gated on the pointer, not the width, so desktop density is unchanged. */
+@media (pointer: coarse) {
+  .sch-new-btn, .sch-save, .sch-cancel,
+  .sch-edit, .sch-del,
+  .sch-weekday, .sch-scope-opt, .sch-input {
+    min-height: 44px;
+  }
+  .sch-edit, .sch-del, .sch-weekday { min-width: 44px; }
+  .sch-toggle { min-height: 44px; }
 }
