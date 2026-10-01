@@ -120,6 +120,25 @@ async function runViewport(browser, origin, vp) {
   const { context, blocked } = await newContext(browser, vp, { geolocation: SHOP, permissions: ['geolocation'] });
   await context.clock.install({ time: CLOCK_START });
   const consoleErrors = watchContextConsole(context);
+  // R9's hook: answers for the claim_profile calls a tab makes while it BOOTS,
+  // queued the moment the fixture client publishes window.__fx (before App's
+  // first effect runs). __fx.failNext cannot reach them from outside, because
+  // the tab does not exist yet. Armed by a one-shot localStorage key that the
+  // first tab to boot consumes, so every other tab boots untouched.
+  await context.addInitScript(() => {
+    let plan = null;
+    try {
+      plan = JSON.parse(localStorage.getItem('__e2e_boot_claims') || 'null');
+      if (plan) localStorage.removeItem('__e2e_boot_claims');
+    } catch { /* storage unavailable: boot untouched */ }
+    if (!Array.isArray(plan)) return;
+    let fx;
+    Object.defineProperty(window, '__fx', {
+      configurable: true,
+      get() { return fx; },
+      set(v) { fx = v; for (const answer of plan) v.failNext('claim_profile', answer); },
+    });
+  });
 
   // ── tabs ─────────────────────────────────────────────────────────────────
   // `page` is the tab in front: what the student is looking at, and what every
@@ -652,6 +671,52 @@ async function runViewport(browser, origin, vp) {
     await press(checkOutButton());
     await waitText('CHECKED OUT');
     return 'error on resume: receipt up, no gate; a real "no": the gate; the real "yes": back to "Checked in since", 0 writes throughout';
+  });
+
+  // R9. Every boot runs claim_profile twice at once (getSession and
+  //     INITIAL_SESSION). A fresh tag tap whose first claim answers yes and
+  //     whose second fails must still check the student out: the failure
+  //     arrives after the approval is held, so it keeps it. Read before the
+  //     call instead, the failure saw nothing held and the access gate
+  //     replaced the page (measured on the reviewer's mutant). Control in the
+  //     same step: a real "no" first shows the gate and writes nothing.
+  await step('R9-boot-claim-race', 'a fresh tap whose second boot claim fails still checks out (1 OUT, no gate); a real "no" first shows the gate (0 writes)', async () => {
+    const failed = { error: { message: 'TypeError: Failed to fetch', code: '' } };
+    const bootClaims = async (plan) => {
+      await page.evaluate((p) => localStorage.setItem('__e2e_boot_claims', JSON.stringify(p)), plan);
+      await tick();
+      await newTab(SHOP_TAG);
+    };
+    const answered = () => page.evaluate(() => window.__fx.calls
+      .filter((c) => c.kind === 'rpc' && c.name === 'claim_profile')
+      .map((c) => `${c.injected ? 'injected ' : ''}${c.error ? 'error' : 'ok'}`));
+
+    await ensureOut(STUDENT);
+    await checkInByTag();
+    const base = await count(STUDENT);
+    await bootClaims([{ data: true }, failed, failed, failed]);
+    await waitText('CHECKED OUT').catch(async (e) => {
+      throw new Error((await page.locator('.gate-wrap').count()) ? 'a failed boot claim after a yes replaced the tag page with the access gate' : e.message);
+    });
+    await settle();
+    const claims = await answered();
+    assert(claims[0] === 'injected ok' && claims.includes('injected error'), `the boot claims answered ${JSON.stringify(claims)}, not a yes followed by a failure`);
+    assert((await page.locator('.gate-wrap').count()) === 0, 'the access gate is up after the check-out');
+    const added = (await events(STUDENT)).slice(base);
+    assert(added.length === 1 && added[0].type === 'out', `the fresh tap wrote ${JSON.stringify(added.map((e) => e.type))}`);
+
+    // Control: the same tap, the student checked in, a real "no" first.
+    await checkInByTag();
+    const withIn = await count(STUDENT);
+    await bootClaims([{ data: false }, failed, failed, failed]);
+    await page.waitForSelector('.gate-wrap', { timeout: 15_000 })
+      .catch(() => { throw new Error('control: a real "no" at boot did not show the access gate'); });
+    await settle();
+    assert((await count(STUDENT)) === withIn, `control: the gated tap wrote ${(await count(STUDENT)) - withIn}`);
+    await shot('R9-boot-claim-race-gate');
+    // Leave the student checked out through an ordinary tap.
+    await ensureOut(STUDENT);
+    return `boot claims ${claims.join(', ')}: CHECKED OUT, 1 OUT, no gate; a real "no" first: the gate, 0 writes`;
   });
 
   // ── V: the volunteer tag's switch and revisit ────────────────────────────

@@ -86,6 +86,7 @@ effect twice in dev) has time to land and fail the "exactly one" assertion.
 | R6 | R5's control: tab A shows `CHECKED IN`, a fresh tap in tab B checks out, A hidden 2 min then shown | B `CHECKED OUT`; A `Tap to confirm your check-in` | B: 1 `out`; A: 0 writes |
 | R7 | the same URL again in the SAME tab (a browser that reuses the tab for a repeat tap) | `Checked in since`, never `CHECKED OUT` | 0 writes, **against** 1 `out` from one tap: the known cost of the fix (one tap instead of zero on such a phone), pinned so it cannot change silently |
 | R8 | a check-in receipt brought back while `claim_profile` (re-run by App on the `SIGNED_IN` every tab return emits) fails once (`__fx.failNext`) | receipt still `CHECKED IN`, no access gate (`.gate-wrap`) | 0 writes, the failure confirmed as what the call answered; **control** in the same step: a real `false` from the same call shows the gate, and the real `true` after it brings back `Checked in since` (0 writes) |
+| R9 | a fresh tag tap (new tab) while checked in, whose two concurrent BOOT `claim_profile` calls (getSession and INITIAL_SESSION) answer a real `true` and then a failure (answers queued by an init script as the tab boots, armed by the one-shot `localStorage.__e2e_boot_claims`) | `CHECKED OUT`, no access gate (`.gate-wrap`) | exactly 1 `out`, and the answers confirmed as `injected ok` then `injected error`; **control** in the same step: the same tap with a real `false` first shows the gate and writes 0 |
 | V1 | the FLL tag over an open BUILD session | `Tap to switch to volunteer hours`, `You have a normal session open`; after the tap `VOLUNTEER · CHECKED IN` and `Switched from a normal session to volunteer.` | arrival: 0 writes; the tap: an `out` then an `in` (category `volunteer`, `geo_ok` true) |
 | V2 | `reload()` of V1's volunteer receipt after 61 s | `Volunteering since` and a Check out button | 0 writes, **against** 1 `out` (category `volunteer`) from that tap |
 | V3 | volunteer check-in, VIEW STATUS, `goBack()` | `Volunteering since` | 0 writes, **against** 1 `out` from a fresh volunteer tap in a new tab, no confirm |
@@ -105,7 +106,11 @@ tap; `PresenceBoard.jsx` reading attendance from `startOfTodayISO()` fails M
 ("the board shows Sam absent while the tile reads Checked in"); `useGlance.js`
 reading it from `todayISO` fails M ("the glance count moved by 0"); `App.jsx`
 setting approval straight from `claimed === true` again fails R8 (the access
-gate replaces the receipt).
+gate replaces the receipt); `App.jsx` reading the held approval BEFORE the
+claim call rather than after its answer (the first committed version of the
+claim fix) fails R9 at both widths ("a failed boot claim after a yes replaced
+the tag page with the access gate", 46/48) while R8 still passes, which is why
+R9 is its own step.
 
 Things learned getting it to measure, each a trap for the next harness:
 
