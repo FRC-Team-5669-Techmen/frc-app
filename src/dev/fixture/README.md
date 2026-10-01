@@ -117,7 +117,9 @@ export default {
   seed: ({ ids, now }) => ({ idea_cert_catalog: [ /* ... */ ] }),
   // RPC handlers: ({ args, db, user, persona, now, engine, uuid, error }) -> { data, error }
   // Write through engine.insertRow / updateRows / deleteRows (service role:
-  // no read filter, constraints still apply). A handler for an RPC that
+  // no read filter, constraints still apply). A call is one transaction: when
+  // the handler returns an error or throws, every write it made is undone.
+  // A handler for an RPC that
   // already exists in core replaces it only while this migration is applied;
   // otherwise core's handler and core's argument check answer.
   rpcs: { idea_cert_sync: ({ args }) => ({ data: { ok: true }, error: null }) },
