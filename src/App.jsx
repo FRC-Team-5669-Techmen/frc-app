@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabase'
 import { resolveCurrentSeason } from './seasons'
+import { nextApproval } from './claimApproval'
 import NavBar from './NavBar'
 import ErrorBoundary from './ErrorBoundary'
 import './App.css'
@@ -88,6 +89,9 @@ export default function App() {
   const [session, setSession] = useState(undefined)
   const [roles, setRoles]     = useState([])
   const [approved, setApproved] = useState(null)
+  // The same value and the member it belongs to, readable inside claimAndLoad,
+  // which runs from auth events and so cannot see a later render's state.
+  const approvedRef = useRef(null) // { userId, approved } | null
   const [onboardedAt, setOnboardedAt] = useState(undefined)
   // Current season this member still owes an application for. undefined = not
   // resolved yet, null = nothing owed (already applied, or not a member track).
@@ -100,8 +104,15 @@ export default function App() {
     // Domain gate: claim_profile() approves allowed-domain members and grants
     // the default student role, then we load roles, approval, and onboarding state.
     async function claimAndLoad(userId) {
-      const { data: claimed } = await supabase.rpc('claim_profile')
-      setApproved(claimed === true)
+      // A failed claim never revokes an approval this tab already holds: a
+      // transient error on a tab resume would otherwise swap the whole tree
+      // for AccessGate mid check-out (claimApproval.js).
+      // Only THIS member's approval is held: a sign-in as somebody else starts
+      // from nothing.
+      const held = approvedRef.current?.userId === userId ? approvedRef.current.approved : null
+      const isApproved = nextApproval(held, await supabase.rpc('claim_profile'))
+      approvedRef.current = { userId, approved: isApproved }
+      setApproved(isApproved)
       const { data } = await supabase
         .from('member_roles')
         .select('role')
@@ -114,7 +125,7 @@ export default function App() {
         .eq('id', userId)
         .single()
       setOnboardedAt(prof?.onboarded_at ?? null)
-      await loadApplicationState(userId, claimed === true, roleList)
+      await loadApplicationState(userId, isApproved, roleList)
     }
 
     // The per-season member application gate. Only the member track is asked:
@@ -166,6 +177,7 @@ export default function App() {
         }
       } else {
         setRoles([])
+        approvedRef.current = null
         setApproved(null)
         setOnboardedAt(undefined)
         setAppSeason(undefined)
