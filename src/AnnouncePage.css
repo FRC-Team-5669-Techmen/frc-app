@@ -452,6 +452,9 @@
   font-size: 0.88rem;
   line-height: 1.5;
   color: var(--steel);
+  /* The migration path and a Discord message id are single unbreakable mono
+     words; at 375 the path alone pushed the page 97px wide. */
+  overflow-wrap: anywhere;
 }
 .an-confirm strong { color: var(--text); }
 .an-result { border-left-width: 3px; }
