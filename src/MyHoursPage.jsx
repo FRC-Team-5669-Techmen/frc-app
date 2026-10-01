@@ -225,6 +225,7 @@ export default function MyHoursPage({ session }) {
                       {s.manual && <span className="mh-session-flag" style={{ color: 'var(--steel)' }}>manual</span>}
                       {s.wasCapped && <span className="mh-session-flag" style={{ color: 'var(--gold-dim)' }} title="Capped — exceeded the max session length (likely a missed check-out)">capped</span>}
                       {s.pending && <span className="mh-session-flag">review</span>}
+                      {s.voided && <span className="mh-session-flag" title="Voided by a mentor — not counted in your totals">not counted</span>}
                       {s.flagged
                         ? <span className="mh-session-flag" style={{ color: 'var(--gold)' }}>flagged</span>
                         : (s.inId || s.outId) && (

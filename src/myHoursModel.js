@@ -2,10 +2,33 @@
 // Supabase): MyHoursPage loads the rows and renders what this returns, so the
 // numbers on the page can be driven by tests/my-hours-model.test.js through the
 // exact code path the page runs.
-import { buildBreakdown, computePendingMs, sumBreakdown, sessionsFromEvents } from './hoursUtils'
+//
+// ONE DERIVATION. `sessionsFromEvents` runs once; every session row the page
+// lists carries whether it counts (`counted`) and why not (`pending`/`voided`),
+// and every hour total on the page -- By category, By season, All Time, This
+// Week, the 6-week trend, the season goal, the pending notice -- is summed from
+// those same rows (plus verified logged hours and staff adjustments, which the
+// page states separately). The by-category card used to come from a second,
+// private pairing in buildBreakdown that split sessions at 00:00 UTC and lost
+// every one that crossed it; see tests/my-hours-model.test.js.
+import { breakdownFromSessions, isSessionCounted, laDateKey, sumBreakdown, sessionsFromEvents } from './hoursUtils'
 import { effectiveGoal, goalCategoryKeys, hoursTowardGoal, daysPresent } from './accountability'
 
 const DAY_MS = 86_400_000
+const H_MS = 3_600_000
+
+// The instant a Los Angeles calendar date begins (midnight is 07:00Z in PDT,
+// 08:00Z in PST). Logged hours carry a date, not a time; the trend places them
+// at the start of that shop-local day, which is what a phone in the shop did
+// when this read `new Date(date + 'T00:00:00')` in the browser's zone.
+export function laMidnightMs(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  for (const hourUtc of [7, 8]) {
+    const t = Date.UTC(y, m - 1, d, hourUtc)
+    if (laDateKey(t) === dateStr && laDateKey(t - 1) !== dateStr) return t
+  }
+  return Date.UTC(y, m - 1, d, 8)
+}
 
 /**
  * @param {object}   rows
@@ -20,10 +43,12 @@ const DAY_MS = 86_400_000
  * @param {number}   [rows.now]        - the clock, ms
  */
 export function myHoursModel({ seasons, events, logged, reviews, goals = [], adjustments = [], corrections = [], memberId, now = Date.now() }) {
-  // Checkout IDs excluded from official hours (pending or voided review)
-  const excludedIds = new Set(reviews.map(r => r.checkout_id))
-  // Checkout IDs that are pending review only (shown in the notice, not voided)
-  const pendingIds = new Set(reviews.filter(r => r.status === 'pending').map(r => r.checkout_id))
+  // Checkout IDs excluded from official hours: a pending or voided review.
+  const reviewOf = new Map()
+  for (const r of reviews) {
+    if (r.status === 'pending' || r.status === 'voided') reviewOf.set(r.checkout_id, r.status)
+  }
+  const excludedIds = new Set(reviewOf.keys())
 
   // Checkout/checkin IDs that already have an open (pending) correction request.
   const flaggedIds = new Set()
@@ -33,17 +58,33 @@ export function myHoursModel({ seasons, events, logged, reviews, goals = [], adj
     if (c.checkout_id) flaggedIds.add(c.checkout_id)
   }
 
-  const breakdown = buildBreakdown(seasons, events, logged, excludedIds, adjustments)
-  const pendingMs = computePendingMs(events, pendingIds)
+  // The rows. Chronological, every derived session, each marked with whether it
+  // counts toward the totals below.
+  const sessions = sessionsFromEvents(events).map(s => {
+    const status = s.outId ? reviewOf.get(s.outId) : undefined
+    return {
+      ...s,
+      counted: isSessionCounted(s, excludedIds),
+      pending: status === 'pending',
+      voided:  status === 'voided',
+      flagged: !!((s.inId && flaggedIds.has(s.inId)) || (s.outId && flaggedIds.has(s.outId))),
+    }
+  })
+  const counted = sessions.filter(s => s.counted)
 
-  // All-time totals per type (across every season).
+  // Per season, then all time, from those rows + verified logged + adjustments.
+  const breakdown = breakdownFromSessions(seasons, sessions, logged, excludedIds, adjustments)
   const allTime = sumBreakdown(breakdown)
+
+  // The pending notice names the rows marked for review.
+  const pendingRows = sessions.filter(s => s.pending)
+  const pendingMs = pendingRows.reduce((ms, s) => ms + s.ms, 0)
 
   // Active-season goal progress: effective goal (own override else team default),
   // hours toward it (only the goal's categories), and days present this season.
   let goalProgress = null
   {
-    const today = new Date(now).toISOString().slice(0, 10)
+    const today = laDateKey(now)
     const active = seasons.find(s => s.start_date <= today && (s.end_date == null || s.end_date >= today))
     const goal = active ? effectiveGoal(goals, memberId, active.id) : null
     if (goal && goal.target_hours > 0) {
@@ -59,24 +100,21 @@ export function myHoursModel({ seasons, events, logged, reviews, goals = [], adj
     }
   }
 
-  // Sessions newest-first, with the pending/voided flag for display.
-  const sessions = sessionsFromEvents(events)
-  const recent = [...sessions].reverse().slice(0, 8).map(s => ({
-    ...s,
-    pending: s.outId ? pendingIds.has(s.outId) : false,
-    flagged: (s.inId && flaggedIds.has(s.inId)) || (s.outId && flaggedIds.has(s.outId)),
-  }))
+  // Newest first, for the Recent sessions card.
+  const recent = [...sessions].reverse().slice(0, 8)
 
-  // Trailing-7-day hours (attendance sessions + logged), and a 6-week trend.
+  // Trailing-7-day hours and a 6-week trend: counted sessions by check-in
+  // instant + verified logged hours by date. Staff adjustments are corrections
+  // to a season, not work done in a week, so they are in the totals and not here.
   const rangeHours = (start, end) => {
     let ms = 0
-    for (const s of sessions) {
+    for (const s of counted) {
       const t = s.inTime.getTime()
       if (t >= start && t < end) ms += s.ms
     }
-    let h = ms / 3600000
+    let h = ms / H_MS
     for (const l of logged) {
-      const t = new Date(l.date + 'T00:00:00').getTime()
+      const t = laMidnightMs(l.date)
       if (t >= start && t < end) h += parseFloat(l.hours) || 0
     }
     return h
@@ -97,10 +135,11 @@ export function myHoursModel({ seasons, events, logged, reviews, goals = [], adj
     cards.push({ key: 'other', label: 'Other', b: breakdown.other })
   }
 
-  const grandTotal = cards.reduce((s, c) => s + c.b.total, 0)
+  // All Time is the sum the By category card draws, so the two cannot disagree.
+  const grandTotal = allTime.total
 
   return {
     sessions, recent, breakdown, allTime, cards, grandTotal, trend, goalProgress,
-    pendingCount: pendingIds.size, pendingMs,
+    pendingCount: pendingRows.length, pendingMs,
   }
 }

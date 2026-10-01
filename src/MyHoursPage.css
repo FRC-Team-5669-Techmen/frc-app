@@ -292,6 +292,10 @@
 }
 
 @media (max-width: 480px) {
+  /* A row carrying several markers (Volunteer, capped, review, not counted, flag)
+     is wider than a phone; let the markers drop to a second line instead of
+     pushing the card sideways. A row that fits lays out exactly as before. */
+  .mh-session { flex-wrap: wrap; row-gap: 0.35rem; }
   .mh-session-date { flex-basis: 6rem; }
   .mh-type-label { flex-basis: 4.5rem; }
 }
