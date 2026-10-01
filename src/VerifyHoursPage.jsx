@@ -406,9 +406,11 @@ export default function VerifyHoursPage({ session, hasRole }) {
     setCutoffBusy(true)
     // No updated_at: where study_sessions.sql created app_settings first the
     // column does not exist and the write raised 42703, and nothing reads it.
-    // .select() so a write that matched no row (the policy is admin-only) is
-    // seen as not saved, instead of marking the new value saved while the old
-    // cutoff stays in force. A failure leaves Save enabled to try again.
+    // .select() so a write that matched no row (no auto_close_cutoff row, or
+    // a caller the UPDATE policies refuse: forgotten_checkout.sql lets
+    // mentor/lead/admin update, study_sessions.sql adds admin) is seen as not
+    // saved, instead of marking the new value saved while the old cutoff stays
+    // in force. A failure leaves Save enabled to try again.
     const { data, error } = await supabase.from('app_settings')
       .update({ value: cutoff })
       .eq('key', 'auto_close_cutoff')
