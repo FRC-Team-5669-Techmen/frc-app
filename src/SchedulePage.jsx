@@ -2,11 +2,18 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import { fmtTime, fmtDay, SHOP_OPEN_KINDS } from './shopStatus'
 import { displayName } from './names'
+import {
+  rolesFrom, canCreateEvents, canEditEvent, canSetMandatory, editableSeriesEvents,
+  silentlyRefused, eventWriteMessage, loadMyCapabilities,
+} from './permissions'
 import './SchedulePage.css'
 
 const KINDS = ['build', 'meeting', 'competition', 'potluck', 'outreach', 'volunteering', 'training', 'other']
 const VIEWS = [['month', 'Month'], ['agenda', 'Agenda']]
 const RESPONSES = [['going', 'Going'], ['maybe', 'Maybe'], ['declined', "Can't go"]]
+// An update/delete RLS filtered out (0 rows, no error) -- e.g. the member's
+// calendar permission was revoked while this page was open.
+const REFUSED_MSG = 'That change was not saved: you can only edit or delete events you added yourself. Ask an admin if this looks wrong.'
 // 0 = Sunday … 6 = Saturday (matches Date.getDay()).
 const WEEKDAYS = [[0, 'Sun'], [1, 'Mon'], [2, 'Tue'], [3, 'Wed'], [4, 'Thu'], [5, 'Fri'], [6, 'Sat']]
 const blankForm = () => ({
@@ -53,6 +60,15 @@ function fmtMonth(key) {
 
 export default function SchedulePage({ session, hasRole }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
+  // Calendar permissions (supabase/migrations/0004_member_permissions.sql):
+  // staff by role, or a member an admin granted 'events.create' on the roster.
+  // The lookup failing -- including 0004 not applied yet -- means no grant,
+  // which is exactly how this page behaved before; staff never depend on it.
+  const [caps, setCaps]       = useState([])
+  const roles        = rolesFrom(hasRole)
+  const canCreate    = canCreateEvents(roles, caps)
+  const canMandatory = canSetMandatory(roles)
+  const canEdit      = ev => canEditEvent(ev, session.user, roles, caps)
   const [events, setEvents]   = useState(null)
   const [signups, setSignups] = useState([])
   const [jobDues, setJobDues] = useState([]) // jobs with a due_date, surfaced read-only on the calendar
@@ -117,6 +133,12 @@ export default function SchedulePage({ session, hasRole }) {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    let live = true
+    loadMyCapabilities(supabase, session.user.id).then(r => { if (live) setCaps(r.capabilities) })
+    return () => { live = false }
+  }, [session.user.id])
+
   function openNew() { setForm(blankForm()); setEditing('new'); setError('') }
   function openEdit(ev) {
     setForm({
@@ -141,7 +163,8 @@ export default function SchedulePage({ session, hasRole }) {
       location: form.location.trim() || null, notes: form.notes.trim() || null,
       rsvp_enabled: form.rsvp_enabled,
       capacity: form.rsvp_enabled && Number.isFinite(capNum) && capNum > 0 ? capNum : null,
-      mandatory: form.mandatory,
+      // Staff only; RLS refuses a mandatory row from anyone else.
+      mandatory: canMandatory ? form.mandatory : false,
     }
 
     // Bulk create: one submission → the same time block on every selected
@@ -176,7 +199,7 @@ export default function SchedulePage({ session, hasRole }) {
 
       const { error: bulkErr } = await supabase.from('events').insert(rows)
       setSaving(false)
-      if (bulkErr) { setError(bulkErr.message); return }
+      if (bulkErr) { setError(eventWriteMessage(bulkErr)); return }
       setEditing(null); load()
       return
     }
@@ -193,25 +216,34 @@ export default function SchedulePage({ session, hasRole }) {
         mandatory: payload.mandatory,
         updated_at: new Date().toISOString(),
       }
-      const sibs = events.filter(ev => ev.series_id === editingEvent.series_id)
+      // Staff: the whole series. A permission holder: only the rows they added,
+      // which is all RLS would change anyway.
+      const sibs = editableSeriesEvents(events, editingEvent.series_id, session.user, roles, caps)
       const results = await Promise.all(sibs.map(sib => {
         const s = new Date(sib.starts_at)
         s.setHours(start.getHours(), start.getMinutes(), 0, 0)
         const e2 = new Date(s.getTime() + durationMs)
-        return supabase.from('events').update({ ...fields, starts_at: s.toISOString(), ends_at: e2.toISOString() }).eq('id', sib.id)
+        const q = supabase.from('events').update({ ...fields, starts_at: s.toISOString(), ends_at: e2.toISOString() }).eq('id', sib.id)
+        return isStaff ? q : q.select('id')
       }))
       setSaving(false)
       const failed = results.find(r => r.error)
-      if (failed) { setError(failed.error.message); return }
+      if (failed) { setError(eventWriteMessage(failed.error)); return }
+      if (results.some(silentlyRefused)) { setError(REFUSED_MSG); setEditing(null); load(); return }
       setEditing(null); load()
       return
     }
 
+    const upd = () => {
+      const q = supabase.from('events').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editing)
+      return isStaff ? q : q.select('id')
+    }
     const res = editing === 'new'
       ? await supabase.from('events').insert({ ...payload, created_by: session.user.id })
-      : await supabase.from('events').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editing)
+      : await upd()
     setSaving(false)
-    if (res.error) { setError(res.error.message); return }
+    if (res.error) { setError(eventWriteMessage(res.error)); return }
+    if (silentlyRefused(res)) { setError(REFUSED_MSG); setEditing(null); load(); return }
     setEditing(null); load()
   }
 
@@ -221,9 +253,10 @@ export default function SchedulePage({ session, hasRole }) {
     const q = scope === 'series'
       ? supabase.from('events').delete().eq('series_id', ev.series_id)
       : supabase.from('events').delete().eq('id', ev.id)
-    const { error: err } = await q
+    const res = await (isStaff ? q : q.select('id'))
     setConfirmDel(null)
-    if (err) { setError(err.message); return }
+    if (res.error) { setError(eventWriteMessage(res.error)); return }
+    if (silentlyRefused(res)) setError(REFUSED_MSG)
     load()
   }
 
@@ -289,7 +322,7 @@ export default function SchedulePage({ session, hasRole }) {
               </button>
             )}
           </div>
-          {isStaff && (
+          {canEdit(ev) && (
             <div className="sch-event-actions">
               <button className="sch-edit" onClick={() => openEdit(ev)}>Edit</button>
               <button className="sch-del" onClick={() => remove(ev)}>Delete</button>
@@ -387,9 +420,12 @@ export default function SchedulePage({ session, hasRole }) {
   })()
 
   const editingEvent = editing && editing !== 'new' ? events.find(e => e.id === editing) : null
+  // Counted as what this member can change: the whole series for staff, only
+  // their own rows for a permission holder (RLS skips the rest silently).
   const editingSeriesCount = editingEvent?.series_id
-    ? events.filter(e => e.series_id === editingEvent.series_id).length : 0
-  const seriesCountOf = ev => ev.series_id ? events.filter(e => e.series_id === ev.series_id).length : 0
+    ? editableSeriesEvents(events, editingEvent.series_id, session.user, roles, caps).length : 0
+  const seriesCountOf = ev => ev.series_id
+    ? editableSeriesEvents(events, ev.series_id, session.user, roles, caps).length : 0
 
   return (
     <div className="sch-wrap">
@@ -402,7 +438,7 @@ export default function SchedulePage({ session, hasRole }) {
                 className={`sch-viewtab${view === v ? ' on' : ''}`} onClick={() => setView(v)}>{label}</button>
             ))}
           </div>
-          {isStaff && editing === null && (
+          {canCreate && editing === null && (
             <button className="sch-new-btn" onClick={openNew}>+ New event</button>
           )}
         </header>
@@ -426,9 +462,14 @@ export default function SchedulePage({ session, hasRole }) {
           </div>
         )}
 
-        {isStaff && editing !== null && (
+        {canCreate && editing !== null && (
           <form className="sch-form" onSubmit={save}>
             <h2 className="sch-form-title">{editing === 'new' ? 'New event' : 'Edit event'}</h2>
+            {!isStaff && (
+              <p className="sch-holder-note">
+                You can add events, and edit or delete the ones you added. Only staff can make an event mandatory.
+              </p>
+            )}
 
             {editingEvent?.series_id && (
               <div className="sch-scope">
@@ -551,14 +592,16 @@ export default function SchedulePage({ session, hasRole }) {
                 </label>
               )}
             </div>
-            <div className="sch-field">
-              <label className="sch-toggle">
-                <input type="checkbox" checked={form.mandatory}
-                  onChange={e => setForm(f => ({ ...f, mandatory: e.target.checked }))} />
-                <span className="sch-label">Mandatory</span>
-              </label>
-              <span className="sch-repeat-hint">Reminds every active member regardless of RSVP.</span>
-            </div>
+            {canMandatory && (
+              <div className="sch-field">
+                <label className="sch-toggle">
+                  <input type="checkbox" checked={form.mandatory}
+                    onChange={e => setForm(f => ({ ...f, mandatory: e.target.checked }))} />
+                  <span className="sch-label">Mandatory</span>
+                </label>
+                <span className="sch-repeat-hint">Reminds every active member regardless of RSVP.</span>
+              </div>
+            )}
             <div className="sch-form-actions">
               <button type="button" className="sch-cancel" onClick={() => setEditing(null)}>Cancel</button>
               <button type="submit" className="sch-save" disabled={saving}>
