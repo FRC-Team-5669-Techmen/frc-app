@@ -37,7 +37,9 @@ import { APP_PLATE } from '../../src/plate.js';
 const args = process.argv.slice(2);
 const persona = String(flag(args, 'persona', 'admin'));
 const mig = String(flag(args, 'mig', 'all'));
-const widths = String(flag(args, 'widths', '375,1440')).split(',').map((w) => Number(w.trim())).filter(Boolean);
+// A width is a preset (375, 1440) or an exact WxH such as 342x673 or 384x692,
+// the phone sizes in tonight's reports; lib.mjs viewportFor reads both.
+const widths = String(flag(args, 'widths', '375,1440')).split(',').map((w) => w.trim()).filter(Boolean);
 const routesArg = flag(args, 'routes', 'all');
 const urlArg = flag(args, 'url', null);
 const port = Number(flag(args, 'port', process.env.FIXTURE_PORT || 5401));
@@ -69,6 +71,12 @@ async function main() {
         }, String(rootClass));
       }
       const page = await context.newPage();
+      // A fullPage screenshot drops Playwright's touch emulation for the rest
+      // of the page (pointer turns fine, maxTouchPoints 0), so every later 375
+      // shot would render the desktop side of (pointer: coarse) rules. Restore
+      // it after each shot through a CDP session kept open: the override dies
+      // when the session detaches. Same fix as checkin.mjs's shot helper.
+      const touchCdp = vp.hasTouch ? await context.newCDPSession(page) : null;
       const errors = watchConsole(page);
       const controls = [`persona:${persona}`, `mig:${mig}`, reset ? 'reset' : null].filter(Boolean).join(',');
       await page.goto(`${server.origin}/_fixture?__fx=${controls}`);
@@ -115,6 +123,7 @@ async function main() {
           shotKind = 'viewport';
           await page.screenshot({ path: file, timeout: 30_000 }).catch(() => { shotKind = 'none'; });
         }
+        if (touchCdp) await touchCdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
         const row = {
           persona, mig, width: vp.name, route: url, plate: plate ?? 'as loaded',
           finalPath: measured.path,
