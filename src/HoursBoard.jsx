@@ -682,6 +682,7 @@ export default function HoursBoard({ hasRole = () => false }) {
           day={detail.day}
           groups={detailData}
           onClose={() => setDetail(null)}
+          covered={!!adjust}
           headActions={isStaff ? (
             <button
               className="board-adjust-btn"
