@@ -422,7 +422,7 @@ export default function FeedbackPage({ session, hasRole = () => false }) {
     setZip({ phase: 'working', done: 0, total: filtered.reduce((n, r) => n + imagePathsOf(r).length, 0) })
     try {
       const result = await buildArchive(filtered, fetchImage, {
-        names, roleOf, filterText, build: BUILD, migrated: migrated === true, adminId: uid,
+        names, roleOf, filterText, build: BUILD, migrated: migrated === true,
         exportedAt: new Date().toISOString(),
         onProgress: (done, total) => setZip(z => ({ ...z, done, total })),
       })
