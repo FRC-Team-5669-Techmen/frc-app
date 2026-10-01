@@ -1,7 +1,7 @@
 // Reporting / export helpers — pure data shaping over BOTH hour sources:
 // attendance_events-derived sessions (capped) and verified logged_hours. No DOM
 // here; ReportsPage owns CSV download + the print window.
-import { sessionsFromEvents, laDateKey, CATEGORIES, categoryLabel, loggedTypeToCategory } from './hoursUtils'
+import { sessionsFromEvents, laDateKey, CATEGORIES, categoryLabel, loggedTypeToCategory, MAX_SESSION_HOURS } from './hoursUtils'
 
 const LA = 'America/Los_Angeles'
 // 'YYYY-MM-DD' in the team's timezone: the ONE day rule, from hoursUtils, so a
@@ -12,7 +12,6 @@ const LA = 'America/Los_Angeles'
 // tests/reporting-day-rule.test.js keeps the old copy as its oracle and proves
 // it. Re-exported for this module's API.
 export { laDateKey }
-const fmtClock = d => d ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''
 // A 'YYYY-MM-DD' key as "September 30, 2026": the key's own calendar date in
 // any zone. `new Date('2026-09-30')` is UTC midnight, which a device in Los
 // Angeles prints as September 29, so the letter named the day before each end
@@ -205,7 +204,7 @@ export function letterHtml(data, { preparedBy, generatedAt, team }) {
     <tr>
       <td>${esc(r.date)}</td>
       <td>${esc(categoryLabel(r.category))}</td>
-      <td>${esc(r.source === 'attendance' ? 'Attendance' : 'Logged')}</td>
+      <td>${esc(r.source === 'attendance' ? 'Attendance' : 'Logged')}${r.wasCapped ? ' (capped)' : ''}</td>
       <td class="num">${fmtH(r.hours)}</td>
     </tr>`).join('')
 
@@ -246,8 +245,9 @@ export function letterHtml(data, { preparedBy, generatedAt, team }) {
     </tbody>
   </table>
 
-  <p class="muted">Hours are drawn from the team's verified attendance records (sign-in/out) and
-     mentor-verified logged hours. Sessions exceeding the daily cap or pending review are excluded.
+  <p class="muted">Hours are drawn from the team's sign-in/out records and mentor-verified logged
+     hours. Sessions pending mentor review are excluded; a session longer than ${MAX_SESSION_HOURS} hours
+     (usually a missed sign-out) is counted as ${MAX_SESSION_HOURS} hours and marked capped below.
      Prepared by ${esc(preparedBy)}.</p>
 
   <div class="sig">

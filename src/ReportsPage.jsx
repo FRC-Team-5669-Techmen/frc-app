@@ -28,7 +28,9 @@ function openPrint(html) {
 }
 
 function downloadCsv(text, filename) {
-  const blob = new Blob([text], { type: 'text/csv;charset=utf-8' })
+  // The BOM tells Excel on Windows the file is UTF-8; without it an accented
+  // name comes out garbled.
+  const blob = new Blob(['\ufeff', text], { type: 'text/csv;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url; a.download = filename; a.click()
@@ -58,6 +60,10 @@ export default function ReportsPage({ session, hasRole = () => false }) {
   const [ltFrom,   setLtFrom]   = useState('')
   const [ltTo,     setLtTo]     = useState(today())
   const [ltCats,   setLtCats]   = useState(new Set(SERVICE_CATEGORIES))
+  // Any of the five reads failing: render NO table and NO letter. A missing
+  // session_reviews read, say, empties the exclusion map and counts voided
+  // sessions back in, and a short attendance read prints a smaller total.
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
     if (!isStaff) return
@@ -70,7 +76,10 @@ export default function ReportsPage({ session, hasRole = () => false }) {
       fetchAllRows(() => supabase.from('logged_hours').select('id, member_id, date, hours, type, description').eq('status', 'verified').order('date').order('id')),
       fetchAllRows(() => supabase.from('events').select('id, title, kind, starts_at, ends_at, location').order('starts_at', { ascending: true }).order('id')),
       fetchAllRows(() => supabase.from('session_reviews').select('id, user_id, checkout_id').in('status', ['pending', 'voided']).order('id')),
-    ]).then(([{ data: p }, { data: ae }, { data: lh }, { data: ev }, { data: sr }]) => {
+    ]).then((results) => {
+      const bad = results.find(r => r.error)
+      if (bad) { setLoadError(bad.error.message || 'A read failed.'); return }
+      const [{ data: p }, { data: ae }, { data: lh }, { data: ev }, { data: sr }] = results
       const profs = p ?? []
       setProfiles(profs)
       setEvents(ev ?? [])
@@ -109,6 +118,9 @@ export default function ReportsPage({ session, hasRole = () => false }) {
 
   if (!isStaff) {
     return <div className="rp-wrap"><div className="rp-denied">You need a staff role to access reports.</div></div>
+  }
+  if (loadError) {
+    return <div className="rp-wrap"><div className="rp-denied">Reports could not load ({loadError}). Nothing is shown, because a partial ledger prints wrong totals. Reload to try again.</div></div>
   }
   if (!rows || !events || !profiles) {
     return <div className="rp-wrap"><div className="rp-loading"><div className="rp-spinner" /></div></div>
@@ -175,8 +187,8 @@ export default function ReportsPage({ session, hasRole = () => false }) {
             <div className="rp-controls">
               <p className="rp-note">Hours tied to each calendar event by time/date window, folding attendance + verified logged hours.</p>
               <div className="rp-btns">
-                <button className="rp-btn" onClick={rollupCsv}>⬇ CSV</button>
-                <button className="rp-btn rp-btn-print" onClick={rollupPdf}>🖨 PDF</button>
+                <button className="rp-btn" onClick={rollupCsv}>CSV</button>
+                <button className="rp-btn rp-btn-print" onClick={rollupPdf}>PDF</button>
               </div>
             </div>
             <div className="rp-table-wrap">
@@ -254,8 +266,8 @@ export default function ReportsPage({ session, hasRole = () => false }) {
                 Both sources; flags shown as columns.
               </p>
               <div className="rp-btns">
-                <button className="rp-btn" onClick={exportCsvFile}>⬇ CSV</button>
-                <button className="rp-btn rp-btn-print" onClick={exportPdf}>🖨 PDF</button>
+                <button className="rp-btn" onClick={exportCsvFile}>CSV</button>
+                <button className="rp-btn rp-btn-print" onClick={exportPdf}>PDF</button>
               </div>
             </div>
 
@@ -325,9 +337,9 @@ export default function ReportsPage({ session, hasRole = () => false }) {
                 <div className="rp-letter-head">
                   <div>
                     <div className="rp-strong">{ltData.memberName}</div>
-                    <div className="rp-muted">{ltFrom || 'start'} → {ltTo || 'today'} · {[...ltCats].map(categoryLabel).join(', ') || 'no categories'}</div>
+                    <div className="rp-muted">{ltFrom || 'pick a start date'} → {ltTo || 'today'} · {[...ltCats].map(categoryLabel).join(', ') || 'no categories'}</div>
                   </div>
-                  <button className="rp-btn rp-btn-print" onClick={makeLetter} disabled={!ltCats.size}>🖨 Generate letter (PDF)</button>
+                  <button className="rp-btn rp-btn-print" onClick={makeLetter} disabled={!ltCats.size || !ltFrom}>Generate letter (PDF)</button>
                 </div>
                 <div className="rp-letter-totals">
                   {CATEGORIES.filter(c => ltCats.has(c.key) && (ltData.totals[c.key] || 0) > 0).map(c => (
@@ -347,11 +359,12 @@ export default function ReportsPage({ session, hasRole = () => false }) {
   )
 }
 
+// The event's dates in the shop's zone, not the device's: a mentor's laptop
+// set to another zone would otherwise move an evening event to the next day.
 function whenLabel(e) {
-  const s = new Date(e.starts_at)
-  const sameDay = new Date(e.ends_at).toDateString() === s.toDateString()
-  const d = s.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  return sameDay ? d : `${d}–${new Date(e.ends_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+  const o = { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' }
+  const d = new Date(e.starts_at).toLocaleDateString('en-US', o)
+  return laDateKey(e.starts_at) === laDateKey(e.ends_at) ? d : `${d}–${new Date(e.ends_at).toLocaleDateString('en-US', o)}`
 }
 
 const _catColor = Object.fromEntries(CATEGORIES.map(c => [c.key, c.color]))
