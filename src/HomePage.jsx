@@ -193,6 +193,7 @@ export default function HomePage({ session, hasRole = () => false }) {
   const todayEvents = allEvents.filter(e => new Date(e.event_time) >= startOfToday)
   const status = currentStatus(allEvents)
   const isIn = status.checkedIn
+  // Nothing was ever read: the status AND the hours are unknown, not zero.
   const statusUnknown = readFailed && allEvents.length === 0
   const todayHours = fmtDuration(computeHoursMs(todayEvents))
   const seasonHours = fmtDuration(computeHoursMs(allEvents))
@@ -222,12 +223,12 @@ export default function HomePage({ session, hasRole = () => false }) {
             )}
             <div className="mb-you-stats" data-tour="today-activity">
               <div className="mb-stat">
-                <span className="mb-stat-value hud-tnum">{todayHours || '0m'}</span>
+                <span className="mb-stat-value hud-tnum">{statusUnknown ? '—' : todayHours || '0m'}</span>
                 <span className="mb-stat-label">Today</span>
               </div>
               <div className="mb-stat-divider" />
               <div className="mb-stat">
-                <span className="mb-stat-value hud-tnum">{seasonHours || '0m'}</span>
+                <span className="mb-stat-value hud-tnum">{statusUnknown ? '—' : seasonHours || '0m'}</span>
                 <span className="mb-stat-label">Season</span>
               </div>
             </div>
