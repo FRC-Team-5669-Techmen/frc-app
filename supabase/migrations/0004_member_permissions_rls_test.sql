@@ -31,9 +31,27 @@
 -- Actors, picked from live data by role:
 --   admin      a member holding 'admin'
 --   staff      a mentor or lead who is NOT admin, else the admin
---   holder     a non-staff member (a student if there is one), granted
---              'events.create' by the admin inside this transaction
+--   holder     an APPROVED non-staff member (a student if there is one),
+--              granted 'events.create' by the admin inside this transaction.
+--              Approved, because has_capability() now requires it: an
+--              unapproved holder would fail every positive control for a
+--              reason that is not the one being tested. Check 32 is where
+--              the holder's approval is switched off, on purpose.
 --   other      a second non-staff member who does NOT hold 'events.create'
+--
+-- Checks 30-33 (added with the series and approval hardening):
+--   30  the holder cannot add an event into a STAFF series (series_id copied
+--       off a staff event), loud; positive controls: a fresh series id, and a
+--       second event joining the holder's own series, both land
+--   31  the holder cannot move their own event into a staff series by update,
+--       loud; positive control: moving it into their own series works
+--   32  a holder whose profile is NOT approved has no capability: no add, no
+--       edit; positive controls on the same person: approved again, both
+--       work; and staff keep has_capability() with their own approval off
+--       (the staff path is unchanged)
+--   33  structure: events_series_is_own is SECURITY DEFINER, search_path
+--       pinned, authenticated-only; the holder insert and update policies
+--       both call it; has_capability() reads profiles.approved
 -- ============================================================
 
 begin;
@@ -69,7 +87,14 @@ create temp table t0004_fx (
   ev_h1             uuid default gen_random_uuid(),
   ev_h2             uuid default gen_random_uuid(),
   ev_h3             uuid default gen_random_uuid(),
-  ev_s2             uuid default gen_random_uuid()
+  ev_s2             uuid default gen_random_uuid(),
+  -- 30-32: a staff series, the holder's own series, and their events.
+  staff_series      uuid default gen_random_uuid(),
+  own_series        uuid default gen_random_uuid(),
+  ev_h4             uuid default gen_random_uuid(),
+  ev_h5             uuid default gen_random_uuid(),
+  ev_h6             uuid default gen_random_uuid(),
+  ev_h7             uuid default gen_random_uuid()
 ) on commit drop;
 
 insert into t0004_fx (admin_id, nonadmin_staff_id, holder_id)
@@ -82,7 +107,8 @@ select
                        where a.member_id = r.member_id and a.role = 'admin')
     order by r.member_id limit 1),
   (select p.id from public.profiles p
-    where not exists (select 1 from public.member_roles s
+    where p.approved
+      and not exists (select 1 from public.member_roles s
                        where s.member_id = p.id and s.role in ('mentor', 'lead', 'admin'))
     order by exists (select 1 from public.member_roles st
                       where st.member_id = p.id and st.role = 'student') desc, p.id
@@ -96,7 +122,7 @@ update t0004_fx set
                                   where s.member_id = p.id and s.role in ('mentor', 'lead', 'admin'))
                  and not exists (select 1 from public.member_permissions mp
                                   where mp.member_id = p.id and mp.capability = 'events.create')
-               order by p.id limit 1);
+               order by p.approved desc, p.id limit 1);
 
 do $pre$
 declare f t0004_fx;
@@ -106,7 +132,7 @@ begin
     raise exception 'Cannot test: no member holds the admin role, so the grant RPC has no positive control';
   end if;
   if f.holder_id is null or f.other_id is null then
-    raise exception 'Cannot test: need two non-staff members (one not already holding events.create)';
+    raise exception 'Cannot test: need two non-staff members, one of them approved (and one not already holding events.create)';
   end if;
 end
 $pre$;
@@ -180,10 +206,21 @@ returns text language sql as $fn$
     p_id, 'rls-0004 fixture', p_created_by, p_mandatory);
 $fn$;
 
--- Setup as the table owner (bypasses RLS): one event a staff member added.
-insert into public.events (id, title, kind, starts_at, ends_at, created_by)
+-- The same, into a series.
+create function pg_temp.ev_insert_series(p_id uuid, p_created_by uuid, p_series uuid)
+returns text language sql as $fn$
+  select format(
+    'insert into public.events (id, title, kind, starts_at, ends_at, created_by, series_id) '
+    || 'values (%L, %L, ''meeting'', now() + interval ''31 days'', '
+    || 'now() + interval ''31 days 2 hours'', %L, %L)',
+    p_id, 'rls-0004 series fixture', p_created_by, p_series);
+$fn$;
+
+-- Setup as the table owner (bypasses RLS): one event a staff member added,
+-- part of a staff series (its id is what check 30 tries to copy).
+insert into public.events (id, title, kind, starts_at, ends_at, created_by, series_id)
 select ev_staff, 'rls-0004 fixture staff', 'meeting',
-       now() + interval '30 days', now() + interval '30 days 2 hours', staff_id
+       now() + interval '30 days', now() + interval '30 days 2 hours', staff_id, staff_series
   from t0004_fx;
 
 -- -- The grant / revoke RPCs and the member_permissions table -----------------
@@ -405,6 +442,81 @@ begin
 end
 $upsert$;
 
+-- -- Series: a holder's event joins only a series of their own ----------------
+-- Staff's "Whole series (N)" edit and delete act on every row sharing a
+-- series_id, so a holder's row inside a staff series would be counted,
+-- retimed or deleted with it. Both refusals are loud (an RLS WITH CHECK
+-- violation, 42501), never silent.
+do $series$
+declare f t0004_fx; o text; o2 text; o3 text; cnt int; s uuid;
+begin
+  select * into f from t0004_fx;
+
+  o  := pg_temp.run_as(f.holder_id, pg_temp.ev_insert_series(f.ev_h4, f.holder_id, f.staff_series));
+  select count(*) into cnt from public.events where series_id = f.staff_series;
+  o2 := pg_temp.run_as(f.holder_id, pg_temp.ev_insert_series(f.ev_h5, f.holder_id, f.own_series));
+  o3 := pg_temp.run_as(f.holder_id, pg_temp.ev_insert_series(f.ev_h6, f.holder_id, f.own_series));
+  perform pg_temp.rec(30, 'the holder cannot add an event into a staff series; CAN start and extend their own (positive control)',
+    o = 'err:42501' and cnt = 1 and o2 = 'ok:1' and o3 = 'ok:1'
+      and (select count(*) from public.events where series_id = f.own_series) = 2,
+    format('into the staff series %s (want err:42501), staff series rows %s (want 1); own series: first %s, second %s (want ok:1 both), rows %s (want 2)',
+      o, cnt, o2, o3, (select count(*) from public.events where series_id = f.own_series)));
+
+  -- ev_h2 is the holder's own, not mandatory, in no series.
+  o := pg_temp.run_as(f.holder_id, format(
+         'update public.events set series_id = %L where id = %L', f.staff_series, f.ev_h2));
+  select series_id into s from public.events where id = f.ev_h2;
+  select count(*) into cnt from public.events where series_id = f.staff_series;
+  o2 := pg_temp.run_as(f.holder_id, format(
+          'update public.events set series_id = %L where id = %L', f.own_series, f.ev_h2));
+  perform pg_temp.rec(31, 'the holder cannot move their own event into a staff series; CAN move it into their own (positive control)',
+    o = 'err:42501' and s is null and cnt = 1 and o2 = 'ok:1'
+      and (select series_id from public.events where id = f.ev_h2) = f.own_series,
+    format('into the staff series %s (want err:42501), series after: %s, staff series rows %s (want 1); into own series %s (want ok:1), now in own series: %s',
+      o, coalesce(s::text, 'none'), cnt, o2,
+      (select series_id from public.events where id = f.ev_h2) is not distinct from f.own_series));
+
+  -- Put ev_h2 back in no series, as the owner, so the checks after this one
+  -- see the row exactly as they did before 30-31 existed.
+  update public.events set series_id = null where id = f.ev_h2;
+end
+$series$;
+
+-- -- Approval: a grant on an unapproved profile confers nothing ----------------
+-- The SAME holder both ways: unapproved (as the owner, inside this
+-- transaction), then approved again. Staff are checked with their own
+-- approval off too, because "the staff path is unchanged" means exactly that.
+do $approval$
+declare f t0004_fx; cap text; ins text; upd text; scap text; cap2 text; ins2 text; t text;
+        h_was boolean; s_was boolean;
+begin
+  select * into f from t0004_fx;
+  select approved into h_was from public.profiles where id = f.holder_id;
+  select approved into s_was from public.profiles where id = f.staff_id;
+
+  update public.profiles set approved = false where id = f.holder_id;
+  cap := pg_temp.val_as(f.holder_id, 'select public.has_capability(''events.create'')');
+  ins := pg_temp.run_as(f.holder_id, pg_temp.ev_insert(f.ev_h7, f.holder_id, false));
+  upd := pg_temp.run_as(f.holder_id, format(
+           'update public.events set title = %L where id = %L', 'rls-0004 unapproved edit', f.ev_h2));
+  select title into t from public.events where id = f.ev_h2;
+
+  update public.profiles set approved = false where id = f.staff_id;
+  scap := pg_temp.val_as(f.staff_id, 'select public.has_capability(''events.create'')');
+  update public.profiles set approved = s_was where id = f.staff_id;
+
+  update public.profiles set approved = h_was where id = f.holder_id;
+  cap2 := pg_temp.val_as(f.holder_id, 'select public.has_capability(''events.create'')');
+  ins2 := pg_temp.run_as(f.holder_id, pg_temp.ev_insert(f.ev_h7, f.holder_id, false));
+
+  perform pg_temp.rec(32, 'an UNAPPROVED holder has no capability (no add, no edit); approved again they do; staff unchanged (positive controls)',
+    cap = 'false' and ins = 'err:42501' and upd = 'ok:0' and t = 'rls-0004 fixture'
+      and scap = 'true' and cap2 = 'true' and ins2 = 'ok:1',
+    format('unapproved: has_capability %s, add %s (want err:42501), edit own %s (want ok:0), title intact: %s; staff with approval off: has_capability %s (want true); approved again: has_capability %s, add %s (want ok:1)',
+      cap, ins, upd, t = 'rls-0004 fixture', scap, cap2, ins2));
+end
+$approval$;
+
 -- -- Revoke --------------------------------------------------------------------
 do $revoke$
 declare f t0004_fx; o text; cap text; ins text; upd text; del text; cnt int; t text;
@@ -504,6 +616,42 @@ begin
        or exists (select 1 from aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) x
                    where x.grantee = 0 and x.privilege_type = 'EXECUTE'));
   perform pg_temp.rec(28, 'the three functions are SECURITY DEFINER, search_path pinned, authenticated-only',
+    bad is null, coalesce('offending: ' || bad, 'none'));
+
+  -- The series helper, the two policies that must call it, and the approval
+  -- clause in has_capability(): what 30-32 rely on, read from the catalog.
+  bad := null;
+  if to_regprocedure('public.events_series_is_own(uuid)') is null then
+    bad := 'events_series_is_own(uuid) is missing';
+  else
+    select string_agg(x, '; ') into bad from (
+      select 'events_series_is_own is not SECURITY DEFINER' as x
+        from pg_proc p where p.oid = 'public.events_series_is_own(uuid)'::regprocedure and not p.prosecdef
+      union all
+      select 'events_series_is_own does not pin search_path'
+        from pg_proc p where p.oid = 'public.events_series_is_own(uuid)'::regprocedure
+         and not coalesce(p.proconfig::text like '%search_path=public%', false)
+      union all
+      select 'anon or PUBLIC can execute events_series_is_own'
+        from pg_proc p where p.oid = 'public.events_series_is_own(uuid)'::regprocedure
+         and (has_function_privilege('anon', p.oid, 'EXECUTE')
+           or exists (select 1 from aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
+                       where a.grantee = 0 and a.privilege_type = 'EXECUTE'))
+      union all
+      select 'authenticated cannot execute events_series_is_own (every holder write would fail)'
+        where not has_function_privilege('authenticated', 'public.events_series_is_own(uuid)', 'EXECUTE')
+      union all
+      select format('the holder %s policy does not call events_series_is_own(series_id)', cmd)
+        from pg_policies
+       where schemaname = 'public' and tablename = 'events' and policyname like '%capability holder%'
+         and cmd in ('INSERT', 'UPDATE')
+         and coalesce(with_check, '') not like '%events_series_is_own(series_id)%'
+      union all
+      select 'has_capability() does not read profiles.approved'
+       where (select prosrc from pg_proc where oid = 'public.has_capability(text)'::regprocedure)
+             not like '%p.approved%') s;
+  end if;
+  perform pg_temp.rec(33, 'series helper: definer, search_path pinned, authenticated-only, called by the holder insert and update; has_capability reads approved',
     bad is null, coalesce('offending: ' || bad, 'none'));
 end
 $structure$;

@@ -2,12 +2,15 @@ import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { fmtHours, CATEGORIES, categoryLabel, categoryColor, DEFAULT_CATEGORY } from './hoursUtils'
 import { myHoursModel } from './myHoursModel'
-import { fetchAllRows } from './myHoursFetch'
+import { fetchAllRows } from './fetchAllRows'
 import './MyHoursPage.css'
 
 const DAY_MS = 86_400_000
-const fmtSessionDate = d => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-const fmtClock = d => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+// Session dates and times read in the shop's zone whatever zone the phone is
+// in, so a row's date is the Los Angeles day its hours are counted on.
+const LA = 'America/Los_Angeles'
+const fmtSessionDate = d => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: LA })
+const fmtClock = d => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: LA })
 
 export default function MyHoursPage({ session }) {
   const [seasons,  setSeasons]  = useState(null)
@@ -158,7 +161,7 @@ export default function MyHoursPage({ session }) {
                     {a.hours >= 0 ? '+' : '−'}{fmtHours(Math.abs(a.hours))}
                   </span>
                   <span className="mh-adj-reason">{a.reason}</span>
-                  <span className="mh-adj-date hud-mono">{new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  <span className="mh-adj-date hud-mono">{new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: LA })}</span>
                 </li>
               ))}
             </ul>

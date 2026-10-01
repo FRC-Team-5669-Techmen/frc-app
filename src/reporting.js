@@ -1,13 +1,23 @@
 // Reporting / export helpers — pure data shaping over BOTH hour sources:
 // attendance_events-derived sessions (capped) and verified logged_hours. No DOM
 // here; ReportsPage owns CSV download + the print window.
-import { sessionsFromEvents, CATEGORIES, categoryLabel, loggedTypeToCategory } from './hoursUtils'
+import { sessionsFromEvents, laDateKey, CATEGORIES, categoryLabel, loggedTypeToCategory } from './hoursUtils'
 
 const LA = 'America/Los_Angeles'
-// 'YYYY-MM-DD' in the team's timezone (en-CA renders ISO order).
-export const laDateKey = iso => new Date(iso).toLocaleDateString('en-CA', { timeZone: LA })
+// 'YYYY-MM-DD' in the team's timezone: the ONE day rule, from hoursUtils, so a
+// report row files a session under the same day Team Hours and My Hours do.
+// This module used to keep its own copy (`toLocaleDateString('en-CA', ...)`,
+// which leans on the en-CA locale happening to print ISO order). The two agree
+// on every quarter hour of 2026 and every minute of both DST transition days;
+// tests/reporting-day-rule.test.js keeps the old copy as its oracle and proves
+// it. Re-exported for this module's API.
+export { laDateKey }
 const fmtClock = d => d ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''
-const fmtDateLong = d => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+// A 'YYYY-MM-DD' key as "September 30, 2026": the key's own calendar date in
+// any zone. `new Date('2026-09-30')` is UTC midnight, which a device in Los
+// Angeles prints as September 29, so the letter named the day before each end
+// of the range the mentor picked; reading it back in UTC cannot shift it.
+const fmtDateLong = d => new Date(`${d}T00:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
 const round2 = n => Math.round(n * 100) / 100
 
 // Event-attribution choice: hours are tied to a calendar event by DATE/TIME
@@ -56,7 +66,7 @@ export function buildRows(nameById, attEvents, logged, excludedByMember, events 
         memberId, memberName: nameById[memberId] || '—',
         source: 'attendance',
         category: s.category,
-        date: laDateKey(s.inTime.toISOString()),
+        date: laDateKey(s.inTime),
         inTime: s.inTime, outTime: s.outTime,
         hours: round2(s.ms / 3600000),
         wasCapped: s.wasCapped, manual: !!s.manual, open: s.open,
@@ -126,6 +136,9 @@ export function rollupByEvent(rows, events) {
 
 // ── CSV ──────────────────────────────────────────────────────────────────────
 const csvCell = v => `"${String(v ?? '').replace(/"/g, '""')}"`
+// An instant in the shop's zone, so Check In / Check Out sit on the row's Date
+// whatever zone the exporting device is in.
+const csvTime = d => d.toLocaleString(undefined, { timeZone: LA })
 export const EXPORT_HEADERS = [
   'Member', 'Source', 'Category', 'Date', 'Check In', 'Check Out', 'Hours',
   'Capped', 'Manual', 'Review', 'Event', 'Description',
@@ -138,8 +151,8 @@ export function rowsToCsv(rows) {
       r.source === 'attendance' ? 'Attendance' : 'Logged',
       categoryLabel(r.category),
       r.date,
-      r.inTime ? r.inTime.toLocaleString() : '',
-      r.open ? '(open)' : (r.outTime ? r.outTime.toLocaleString() : ''),
+      r.inTime ? csvTime(r.inTime) : '',
+      r.open ? '(open)' : (r.outTime ? csvTime(r.outTime) : ''),
       r.hours.toFixed(2),
       r.wasCapped ? 'yes' : '',
       r.manual ? 'yes' : '',

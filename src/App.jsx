@@ -50,6 +50,11 @@ const FeedbackWidget     = lazy(() => import('./FeedbackWidget'))
 // import only exists in dev, so the bundle is never built into production and
 // the route renders a 404 there. Touches no auth and no Supabase.
 const SpecimenPage = import.meta.env.DEV ? lazy(() => import('./lib/design-system/specimen/SpecimenPage')) : null
+// Fixture-mode control page (/_fixture): persona, migration switch, reset, and
+// a link to every route. Same dev-only guard as /_ds, so it is absent from a
+// production build and renders the same 404 there. It drives window.__fx,
+// which exists only under `vite --mode fixture` (src/dev/fixture/README.md).
+const FixturePage = import.meta.env.DEV ? lazy(() => import('./dev/fixture/FixturePage')) : null
 const DsNotFound = () => <div style={{ padding: 32, fontFamily: 'monospace' }}>404 — not found</div>
 
 const Splash = () => (
@@ -225,11 +230,15 @@ export default function App() {
   // the first person who needs to check a component skips the check instead.
   // Scoped to this one path and to dev — nothing else is loosened.
   const onSpecimenPath = SpecimenPage != null && location.pathname === '/_ds'
+  // The fixture control page is let through the same way and for the same
+  // reason: it must be reachable as any persona, including signed out and
+  // unapproved, or it could not switch away from them.
+  const onFixturePath = FixturePage != null && location.pathname === '/_fixture'
 
   // Signed in but approval not yet resolved: hold on the splash.
-  if (session && approved === null && !onParentPath && !onSpecimenPath) return <Splash />
+  if (session && approved === null && !onParentPath && !onSpecimenPath && !onFixturePath) return <Splash />
   // Signed in but not approved: show the access gate instead of the app shell.
-  if (session && approved === false && !onParentPath && !onSpecimenPath) {
+  if (session && approved === false && !onParentPath && !onSpecimenPath && !onFixturePath) {
     return (
       <Suspense fallback={<Splash />}>
         <AccessGate session={session} />
@@ -242,7 +251,7 @@ export default function App() {
   // are deliberately let through — they're outside the app shell, and a member
   // mid-session must never be blocked from signing out by a form.
   const onCheckinPath = location.pathname.startsWith('/checkin')
-  if (session && approved === true && !onCheckinPath && !onParentPath && !onSpecimenPath) {
+  if (session && approved === true && !onCheckinPath && !onParentPath && !onSpecimenPath && !onFixturePath) {
     if (appSeason === undefined) return <Splash />
     if (appSeason) {
       return (
@@ -274,6 +283,8 @@ export default function App() {
 
         {/* Design-system specimen. Dev only — 404 in production. No auth, no Supabase. */}
         <Route path="/_ds" element={SpecimenPage ? <SpecimenPage /> : <DsNotFound />} />
+        {/* Fixture controls. Dev only -- 404 in production, like /_ds. */}
+        <Route path="/_fixture" element={FixturePage ? <FixturePage /> : <DsNotFound />} />
 
         {/* ── Protected: shared NavBar via ProtectedLayout ── */}
         <Route element={session ? <ProtectedLayout hasRole={hasRole} session={session} /> : <Navigate to="/login" replace />}>

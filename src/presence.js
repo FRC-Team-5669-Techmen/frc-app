@@ -1,7 +1,12 @@
-// Shared "who is present" derivation. A member is PRESENT when their most recent
-// attendance event today is an 'in' with no later 'out' — i.e. an open check-in.
-// This reuses the exact attendance_events shape and the today-boundary used by
-// the personal check-in flow (HomePage/CheckinPage); it adds no new tables.
+// Shared "who is present" derivation. A member is PRESENT when the shared rule
+// in attendanceState.js says they are checked in: their newest event is an 'in'
+// from today or still inside the session cap. The dashboard and both tag routes
+// read the same rule, so the board agrees with a member's own tile on every
+// event the caller's query returns. The callers still query from local
+// midnight, so a session open across midnight is the one case they miss until
+// they read from presenceSinceISO() instead. It adds no new tables.
+
+import { currentStatus, statusWindowStartISO } from './attendanceState'
 
 // Local midnight, matching HomePage's startOfToday.
 export function startOfTodayISO() {
@@ -10,19 +15,25 @@ export function startOfTodayISO() {
   return d.toISOString()
 }
 
-// events: [{ user_id, type, event_time }] for today (any order).
+// Where a presence query should start to see every open session the rule
+// counts, a session open across midnight included. startOfTodayISO() works too
+// (it is what the callers pass today) but misses that one case.
+export function presenceSinceISO() {
+  return statusWindowStartISO(Date.now())
+}
+
+// events: [{ user_id, type, event_time }] (any order, any window that ends now).
 // Returns Map<user_id, sinceISO> of members with an open check-in.
-export function computePresence(events) {
-  const latest = new Map() // user_id -> most recent event
+export function computePresence(events, now = Date.now()) {
+  const byUser = new Map() // user_id -> that member's events
   for (const e of events) {
-    const prev = latest.get(e.user_id)
-    if (!prev || new Date(e.event_time) > new Date(prev.event_time)) {
-      latest.set(e.user_id, e)
-    }
+    if (!byUser.has(e.user_id)) byUser.set(e.user_id, [])
+    byUser.get(e.user_id).push(e)
   }
   const present = new Map()
-  for (const [uid, e] of latest) {
-    if (e.type === 'in') present.set(uid, e.event_time)
+  for (const [uid, evs] of byUser) {
+    const s = currentStatus(evs, now)
+    if (s.checkedIn) present.set(uid, s.since)
   }
   return present
 }

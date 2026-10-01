@@ -274,4 +274,28 @@ describe('drift: src/permissions.js against 0004_member_permissions.sql', () => 
     // ...and the staff policy is NOT re-created (or dropped) by this file.
     expect(MIGRATION).not.toMatch(/(drop|create) policy (if exists )?"events writable by staff"/i)
   })
+
+  // The two rules the client does not mirror (it never sends a foreign
+  // series_id, and an unapproved account never reaches the app shell) are
+  // still pinned here, so deleting one from the migration fails a test.
+  it('insert and update keep a holder\'s event out of a series somebody else\'s events are in; delete needs no such clause', () => {
+    const byCmd = Object.fromEntries(eventPolicies(MIGRATION).map(p => [p.cmd, p]))
+    expect(byCmd.insert.body).toContain('public.events_series_is_own(series_id)')
+    expect(byCmd.update.body.split(/with check/i)[1]).toContain('public.events_series_is_own(series_id)')
+    expect(byCmd.delete.body).not.toContain('events_series_is_own')
+    // Positive control: the parser notices the clause removed from a copy.
+    const doctored = MIGRATION.replace(/\n\s*and public\.events_series_is_own\(series_id\)/g, '')
+    for (const p of eventPolicies(doctored)) expect(p.body).not.toContain('events_series_is_own')
+  })
+
+  it('has_capability() grants a holder only while their profile is approved, and leaves the staff path alone', () => {
+    const fn = (sql) => sql.match(/create or replace function public\.has_capability\(p_capability text\)[\s\S]*?\$fn\$([\s\S]*?)\$fn\$/i)?.[1] ?? null
+    const body = fn(MIGRATION)
+    expect(body).not.toBeNull()
+    expect(body).toMatch(/join public\.profiles p on p\.id = mp\.member_id/)
+    expect(body).toMatch(/and p\.approved\b/)
+    expect(body).toMatch(/select public\.is_staff\(\)\s+or exists/)
+    // Positive control: a copy without the approval clause is noticed.
+    expect(fn(MIGRATION.replace(/\s+and p\.approved\)/, ')'))).not.toMatch(/and p\.approved\b/)
+  })
 })
