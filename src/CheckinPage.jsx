@@ -80,6 +80,7 @@ export default function CheckinPage({ session }) {
   const started = useRef(false)
   const busy = useRef(false)
   const hiddenAt = useRef(null)
+  const mounted = useRef(false)
 
   const memberName = session?.user?.user_metadata?.full_name
     || session?.user?.email?.split('@')[0]
@@ -195,6 +196,12 @@ export default function CheckinPage({ session }) {
         localTap: readLocalTap(deviceStore(), session.user.id),
       })
 
+      // The member left this page while it was reading (a back gesture, the
+      // app's access gate replacing the tree): act on nothing. Stamping now
+      // would replace whatever entry is current with /checkin and pull them
+      // back here, and a write now would be one nobody is looking at.
+      if (!mounted.current) return
+
       if (next.action === 'unknown') {
         console.error(readErr)
         setStatus('unknown')
@@ -227,6 +234,11 @@ export default function CheckinPage({ session }) {
       busy.current = false
     }
   }
+
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
 
   // Act on the arrival once, and only when the page is actually in front of the
   // member (not while hidden or prerendered). The ref keeps StrictMode's double
