@@ -50,6 +50,7 @@ fails against the live project:
 - **seed rows are typed too**: an `id` that is not a uuid in a uuid column, or an explicit `null` in a NOT NULL column (an explicit null never takes the column default, in Postgres or here), is a seed problem on `/_fixture`. The row is still stored, so the page renders, but the count must read 0;
 - the SELECT policies narrower than `using (true)`, as read filters (`core.js` `CORE_VISIBLE`); a signed-out caller reads nothing;
 - **UPDATE and DELETE find their rows through the read filter**, as a Postgres UPDATE finds its rows through the SELECT policy: a student's update of `feedback` matches 0 rows, silently, exactly as it does live.
+- **A write with `.select()` (RETURNING) must be able to read back what it wrote**: when the new row fails the read filter the write answers `42501` ("new row violates row-level security policy") and nothing is stored, as Postgres does. The same write without `.select()` succeeds.
 
 Not modelled: write-side RLS (a write a persona makes succeeds unless a
 constraint refuses it), triggers, views, CHECKs that are not enum lists

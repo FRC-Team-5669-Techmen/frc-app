@@ -410,17 +410,36 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
     return ctx().persona ?? null
   }
 
+  // Whether the caller's SELECT policies let them read `row`. Every SELECT
+  // policy in this schema is `to authenticated`: a signed-out caller (the anon
+  // key) reads nothing.
+  function canRead(name, row) {
+    const c = ctx()
+    if (!c.user) return false
+    const fns = visibles.get(name)
+    if (!fns || !fns.length) return true
+    return fns.every((fn) => {
+      try { return fn({ table: name, row, user: c.user ?? null, persona: c.persona ?? null, db: db() }) !== false } catch { return false }
+    })
+  }
+
   function visibleRows(name) {
     const rows = db()[name] ?? []
-    const c = ctx()
-    // Every SELECT policy in this schema is `to authenticated`: a signed-out
-    // caller (the anon key) reads nothing.
-    if (!c.user) return []
-    const fns = visibles.get(name)
-    if (!fns || !fns.length) return rows
-    return rows.filter((row) => fns.every((fn) => {
-      try { return fn({ table: name, row, user: c.user ?? null, persona: c.persona ?? null, db: db() }) !== false } catch { return false }
-    }))
+    if (!ctx().user) return []
+    if (!(visibles.get(name) ?? []).length) return rows
+    return rows.filter((row) => canRead(name, row))
+  }
+
+  // INSERT/UPDATE ... RETURNING (supabase-js `.select()` after a write): the
+  // new row must pass the SELECT policy too, or Postgres raises and the whole
+  // statement is undone. Measured on Postgres 16 with the frozen feedback.sql:
+  // a student's plain insert succeeds, the same insert with RETURNING raises
+  // `new row violates row-level security policy for table "feedback"`.
+  // Called before the staged rows are committed, so nothing is written.
+  function assertReturnable(name, rows) {
+    if (rows.some((r) => !canRead(name, r))) {
+      throw pgError('42501', `new row violates row-level security policy for table "${name}"`, { status: 403 })
+    }
   }
 
   // ── Embeds ───────────────────────────────────────────────────────────────
@@ -896,6 +915,7 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
           staged.push(row)
           affected.push(row)
         }
+        if (this.returning != null) assertReturnable(this.table, affected)
         db()[this.table] = staged
       } else if (this.op === 'update') {
         const patch = this.payload ?? {}
@@ -912,6 +932,7 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
           staged[staged.indexOf(t)] = next
           affected.push(next)
         }
+        if (this.returning != null) assertReturnable(this.table, affected)
         db()[this.table] = staged
       } else if (this.op === 'delete') {
         const targets = this._matching(info)
@@ -930,7 +951,8 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
       if (this.returning == null) {
         return { data: null, error: null, count: this.countMode ? affected.length : null, status, statusText: status === 201 ? 'Created' : 'No Content' }
       }
-      // RETURNING goes through the read filter too, as it does in Postgres.
+      // RETURNING goes through the read filter too, as it does in Postgres
+      // (an insert or update that would return a hidden row already raised).
       const fns = visibles.get(this.table)
       const back = fns ? affected.filter((r) => visibleRows(this.table).includes(r) || !(db()[this.table] ?? []).includes(r)) : affected
       const saveFilters = this.filters

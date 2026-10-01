@@ -295,6 +295,29 @@ describe('writes', () => {
     expect(adminUpd.data.length).toBeGreaterThan(0)
     expect(adminUpd.data.every((r) => r.status === 'dismissed')).toBe(true)
   })
+  it('a write with .select() that would return a row the caller cannot read raises 42501 and writes nothing', async () => {
+    // feedback is admin-read only. Postgres 16, measured: the plain insert
+    // succeeds, the same insert with RETURNING raises and is undone.
+    const before = f.db().feedback.length
+    const hidden = await f.engine.from('feedback').insert({ member_id: IDS.student, category: 'bug', message: 'm' }).select('id')
+    expect(hidden.error.code).toBe('42501')
+    expect(f.db().feedback.length).toBe(before)
+    const plain = await f.engine.from('feedback').insert({ member_id: IDS.student, category: 'bug', message: 'm' })
+    expect(plain.error).toBeNull()
+    expect(f.db().feedback.length).toBe(before + 1)
+    // Update: the team-default goal is readable, but re-pointed at another
+    // member it no longer is.
+    const repoint = () => f.engine.from('hour_goals').update({ member_id: IDS.parent }).is('member_id', null)
+    expect((await repoint().select('id')).error.code).toBe('42501')
+    expect(f.db().hour_goals.some((g) => g.member_id === IDS.parent)).toBe(false)
+    expect((await repoint()).error).toBeNull()
+    expect(f.db().hour_goals.some((g) => g.member_id === IDS.parent)).toBe(true)
+    // Positive control: a caller who CAN read the new row gets it back.
+    f.ctx.persona = 'admin'
+    const back = await f.engine.from('feedback').insert({ member_id: IDS.admin, category: 'idea', message: 'm' }).select('id').single()
+    expect(back.error).toBeNull()
+    expect(back.data.id).toMatch(/^[0-9a-f-]{36}$/)
+  })
   it('delete cascades along ON DELETE CASCADE foreign keys', async () => {
     f.ctx.persona = 'admin'
     const qs = () => f.db().survey_questions.filter((q) => q.survey_id === CORE_IDS.surveyPast).length
