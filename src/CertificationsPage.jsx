@@ -4,7 +4,7 @@ import {
   CATALOG_SELECT, HOLDER_SELECT, SYNC_LOG_SELECT, NOT_SYNCED_LINE,
   resolvePageState, viewModeFor, groupCatalog, holderCounts, holdersFor,
   ownCertifications, groupByHolder, syncSummary, statusLabel, normEmail,
-  fmtDate, fmtDateTime,
+  fmtDate, fmtDateTime, readAllPages, pageOf,
 } from './ideaCerts'
 import './CertificationsPage.css'
 
@@ -63,9 +63,13 @@ export default function CertificationsPage({ session, hasRole = () => false }) {
   useEffect(() => {
     let active = true
     async function run() {
+      // Paged on each table's own key: one response is capped at 1000 rows
+      // with no error, and the holder list can be longer (src/ideaCerts.js).
+      const readAll = (table, cols, key) => readAllPages(
+        (from, size) => pageOf(supabase.from(table).select(cols).order(key), from, size), key)
       const [cat, hold, log] = await Promise.all([
-        supabase.from('idea_cert_catalog').select(CATALOG_SELECT),
-        supabase.from('idea_cert_holders').select(HOLDER_SELECT),
+        readAll('idea_cert_catalog', CATALOG_SELECT, 'code'),
+        readAll('idea_cert_holders', HOLDER_SELECT, 'serial'),
         // Staff-only by RLS; not asked for at all otherwise. Its failure never
         // breaks the page -- it only feeds the sync readout.
         isStaff
