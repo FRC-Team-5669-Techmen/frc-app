@@ -73,6 +73,11 @@ app can be ahead of the database. Until `0002_feedback_console.sql` is pasted:
   between New, Seen and Won't do;
 - In progress, Done, Spam, bulk moves and Undo show a plain "not set up yet" line.
 
+Paste it once this console is live, not before: the console from before it reads only
+`open` / `reviewed` / `dismissed`, so pasted under that older console its Open view and
+the avatar-menu badge read 0 until the new one ships (nothing is lost; the reports are
+all under "All statuses").
+
 After pasting it, run `supabase/migrations/0002_feedback_console_rls_test.sql` in the
 same editor. It changes nothing (it rolls itself back) and returns one row per check;
 every row should read PASS.
