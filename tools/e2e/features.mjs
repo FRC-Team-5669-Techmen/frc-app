@@ -98,6 +98,8 @@ function pageInit(stubs) {
     // What supabase-js answers when the function does not exist or cannot be
     // reached: a FunctionsFetchError, never a response.
     fetch_error: () => ({ data: null, error: { name: 'FunctionsFetchError', message: 'Failed to send a request to the Edge Function' } }),
+    // A function that has not answered yet (a slow network): never resolves.
+    hang: () => new Promise(() => {}),
     // The deployed announce function with a secret missing (it names the
     // secret, never a value).
     announce_needs_setup: (body) => (body?.action === 'status'

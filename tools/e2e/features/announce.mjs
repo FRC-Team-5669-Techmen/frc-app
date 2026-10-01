@@ -17,9 +17,9 @@
  *    back; a bad id is refused with the 17-to-20-digits sentence and a good
  *    one adds a chip; an empty table says "add roles first";
  *  - the function states: not deployed (a fetch error), the fixture's own
- *    answer, and deployed-and-ready (stubbed for one page), with Send off in
- *    the first two and on in the third; a send carries exactly the ticked
- *    role ids.
+ *    answer, still answering, needing setup, and deployed-and-ready (each
+ *    stubbed for one page), with Send off in all but the last; a send carries
+ *    exactly the ticked role ids.
  *
  * Expectation corrected here: lane e expected the substring
  * '"roles": [ "100000000000000001" ]', which never occurs -- the payload is
@@ -223,6 +223,17 @@ export default {
     await t.waitFor('section[aria-label="Confirm"]');
     t.check('"Send now" present and OFF', await t.page.getByRole('button', { name: 'Send now' }).isDisabled(), 'disabled');
     await t.shot('function-not-deployed');
+
+    t.as('mig all · admin · function still answering');
+    await t.newPage({ stubs: { 'discord-announce': 'hang' } });
+    await t.open('/announce', { persona: 'admin', mig: 'all', ready: 'section[aria-label="Compose"]' });
+    t.eq('still checking: the loading line', { state: await t.evaluate(() => document.querySelector('.an-status-line')?.dataset.state), line: await t.text('.an-status-line') },
+      { state: 'loading', line: 'Checking the announce function…' });
+    await t.page.fill('section[aria-label="Compose"] textarea', 'Test');
+    await t.press(t.page.getByRole('button', { name: 'Review and send' }));
+    await t.waitFor('section[aria-label="Confirm"]');
+    t.check('"Send now" OFF, and the confirm step says it is still checking (never "answered")', await t.page.getByRole('button', { name: 'Send now' }).isDisabled()
+      && (await t.text('section[aria-label="Confirm"] .an-note-bad')) === 'Sending is off. Still checking the announce function.', await t.text('section[aria-label="Confirm"] .an-note-bad'));
 
     t.as('mig all · admin · function needs setup');
     await t.newPage({ stubs: { 'discord-announce': 'announce_needs_setup' } });

@@ -406,10 +406,14 @@ export default function AnnouncePage({ hasRole = () => false }) {
   // when it is not ready; an answer that is ok but neither ready nor naming
   // anything (something else answering at that URL) gets a plain sentence
   // rather than "needs ." with an empty list.
+  // The confirm step can be reached while the status check is still out (a
+  // slow network), and then nothing has answered yet.
   const fnMissing = Array.isArray(fn.body?.missing) ? fn.body.missing : []
-  const notReadyLine = fnMissing.length
-    ? `Needs setup before anything can be sent: ${fnMissing.join(', ')}.`
-    : 'The announce function answered but did not say it is ready to send.'
+  const notReadyLine = fn.kind === 'loading'
+    ? 'Still checking the announce function.'
+    : fnMissing.length
+      ? `Needs setup before anything can be sent: ${fnMissing.join(', ')}.`
+      : 'The announce function answered but did not say it is ready to send.'
 
   async function checkWithServer() {
     const asked = payloadJson
