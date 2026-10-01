@@ -100,7 +100,8 @@ feedback widget is absent from them (as a checked-out member, writing nothing).
 3. FIXED (lane fin): `features/d.js` seeded Riley's history at times the core
    seed's build generator also uses. It now seeds its own member (Emerson
    Vale, `D_IDS.member`), keeping the one OUT at `side-door`, so
-   `display-history.mjs`'s precondition removes 0 core rows.
+   `display-history.mjs`'s precondition removes 0 core rows, and asserts it
+   (reverting d.js onto Riley fails that one check: 4 core rows inside).
 4. FIXED (lane fin): `features/e.js` declared no `discord-announce`
    stand-in, so the page read "answered but did not say it is ready". It now
    answers the gateway's 404 (not deployed), which `announce.mjs` checks.
