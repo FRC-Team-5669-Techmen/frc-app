@@ -1,8 +1,14 @@
 # 05 Does the solo-mode rule (a solo session pushes straight to main) apply to frc-app, and what must pass locally first?
 - Raised: 2026-10-01 by the overhaul audit (`docs/OVERHAUL_AUDIT.md`, item 23)
 - Status: decided
-- Default if nobody decides: not needed; decided below. Before the decision
-  the audit's draft default was parallel mode only.
+- Default if nobody decides: whether solo mode applies is decided below. What
+  must pass locally first is not in his words, so until he says otherwise the
+  gate is the one `CLAUDE.md`'s Branches section lists, run on the exact tree
+  being pushed: `npm run build`, `npm test`, `npm run ds:audit`,
+  `npm run discord:calendar:test`, `npm run history:verify`,
+  `npm run test:checkin` and `npm run test:features`, each read by its summary
+  line. That is the gate the overnight session of 2026-10-01 ran, not a rule he
+  stated. Before the decision the audit's draft default was parallel mode only.
 - Decided: 2026-09-27 -- as the session prompt of 2026-10-01 records it:
   "Mr. Pina's rule since 2026-09-27 is that a solo session commits and pushes
   straight to `main`, and the branch path is for parallel work only." The same
@@ -36,12 +42,15 @@
 
 ## The options
 
-**Solo mode with conditions (decided).** A solo session pushes to `main` after
-the local gate passes: build, `npm test`, `ds:audit`, `discord:calendar:test`,
-`history:verify`, and `test:checkin` whenever check-in, dashboard or app-shell
-code changed. Code that reads a migration not yet pasted degrades through
-`src/schemaMissing.js`. Never forced, never rebased onto a moved `main` without
-re-running the gate.
+**Solo mode (decided), with the session's gate (the default above).** A solo
+session pushes to `main` after all seven commands pass. Code that reads a
+migration not yet pasted degrades through `src/schemaMissing.js`. Never forced,
+never rebased onto a moved `main` without re-running the gate, and never a
+rebase of commits already pushed anywhere (`integrate.yml` may have merged them
+into `integration`, as happened on 2026-10-01). A lighter gate is his call: for
+example `test:checkin` only when check-in, dashboard or app-shell code changed,
+or doc checks only for a docs-only push, which is what idea-app's 4.30 version
+allows.
 
 **Parallel sessions keep the branch path.** Two sessions at once still push
 `claude/**` branches to `integration`, because two sessions cannot both gate
