@@ -380,6 +380,12 @@ describe('member ids never reach the committed side of an export', () => {
     const lines = identitiesText(rows).trim().split('\n')
     for (const id of [ALEX, BLAIR, VIEWED]) expect(lines).toContain(id)
     for (const id of reportIds) expect(lines).not.toContain(id)
+    // The sweep is grep -wF, case-sensitive. R02's route holds VIEWED in
+    // capitals, so a line quoted from it is caught only by that spelling;
+    // the lowercase line is the positive control that a plain quote is too.
+    const quoted = `see R02 at /members/${VIEWED.toUpperCase()}/hours`
+    expect(lines.filter(l => quoted.includes(l))).toEqual([VIEWED.toUpperCase()])
+    expect(lines.filter(l => `see /members/${VIEWED}`.includes(l))).toEqual([VIEWED])
     // The names are still there, as before.
     expect(lines).toContain('Sam Student')
     expect(lines).toContain('Ada Admin')
