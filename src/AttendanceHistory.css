@@ -152,10 +152,13 @@
 .ah-table td.ah-dur { font-weight: 700; }
 .ah-actions { white-space: nowrap; }
 
+/* A door change ("shop → side door") may wrap: kept on one line it made the
+   day's table 16px wider than its box at 375, and the duration and category
+   were the part scrolled out of view. Where the dialog has room (desktop) it
+   still sits on one line. */
 .ah-loc {
   font-family: var(--font-mono);
   text-transform: capitalize;
-  white-space: nowrap;
 }
 .ah-table td.ah-loc { color: var(--steel); }
 .ah-open { color: var(--gold-dim); font-family: var(--font-mono); font-size: 0.78rem; }

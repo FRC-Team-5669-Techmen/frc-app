@@ -305,13 +305,14 @@
 .mh-breakdown-label .mh-type-dot { margin-right: 0.45rem; vertical-align: middle; }
 
 /* ── Season-goal progress card ── */
-.mh-goal-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
+.mh-goal-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; padding: 0.9rem 1rem 0; }
 .mh-goal-nums { font-family: var(--font-mono); font-size: 1.1rem; font-weight: 700; color: var(--text); }
 .mh-goal-of { color: var(--muted); font-weight: 400; font-size: 0.9rem; }
 .mh-goal-state { font-family: var(--font-mono); font-size: 0.78rem; }
 .mh-goal-met    { color: var(--hr-volunteer); }
 .mh-goal-behind { color: var(--gold-dim); }
 .mh-goal-track {
+  margin: 0 1rem;
   height: 0.6rem; border-radius: var(--radius);
   background: var(--surface-2); border: 1px solid var(--border);
   overflow: hidden;
@@ -319,12 +320,13 @@
 .mh-goal-fill { display: block; height: 100%; background: var(--gold); }
 .mh-goal-meta {
   display: flex; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
-  margin-top: 0.5rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted);
+  margin-top: 0.5rem; padding: 0 1rem 0.9rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted);
 }
 .mh-goal-days { color: var(--steel); }
 
 /* ── Flag-for-correction button on a recent session ── */
 .mh-session-flagbtn {
+  position: relative;
   flex: 0 0 auto;
   font-family: var(--font-mono);
   font-size: 0.62rem;
@@ -338,9 +340,29 @@
   cursor: pointer;
 }
 .mh-session-flagbtn:hover { color: var(--gold); border-color: var(--gold); }
+/* The label keeps its small chip; ::before widens the hit area to at least
+   44 x 44 around it without moving anything in the row, as the history
+   dialog's close button does (AttendanceHistory.css). */
+.mh-session-flagbtn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+/* On a touch screen a plain session row is 37px, so two of them in a row put
+   the flags 37px apart and the lower 44px hit area took the bottom 7px of the
+   upper one (measured: 37px left). A row at least 44px tall gives every flag
+   its whole 44px; the row's content stays centred, and a mouse keeps the
+   compact rows. */
+@media (pointer: coarse) {
+  .mh-session { min-height: 44px; }
+}
 
 /* ── Correction-request status list ── */
-.mh-corrections { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.mh-corrections { list-style: none; margin: 0; padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
 .mh-correction { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
 .mh-corr-status {
   flex: 0 0 auto;
@@ -359,7 +381,7 @@
 .mh-corr-resolution { color: var(--muted); font-size: 0.8rem; font-style: italic; }
 
 /* ── Hour adjustments (staff corrections) ── */
-.mh-adjustments { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.mh-adjustments { list-style: none; margin: 0; padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
 .mh-adjustment { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
 .mh-adj-cat { color: var(--steel); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
 .mh-adj-amt { font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700; }

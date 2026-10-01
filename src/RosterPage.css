@@ -202,6 +202,9 @@
   color: var(--bg);
   border-color: var(--gold);
 }
+/* The plain hover above out-specifies .on and set --text on the gold fill
+   (about 1.02:1); a pressed toggle keeps its dark label under the pointer. */
+.roster-perm-toggle.on:hover:not(:disabled) { color: var(--bg); border-color: var(--gold-bright); }
 .roster-perm-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .roster-perm-note {
@@ -210,7 +213,9 @@
   color: var(--muted);
 }
 
-.roster-perm-unset { font-family: var(--font-mono); font-size: 0.78rem; }
+/* Names a migration file, one unbroken run of mono: let it break anywhere so
+   it stays inside the card at 375 rather than running 38px past it. */
+.roster-perm-unset { font-family: var(--font-mono); font-size: 0.78rem; overflow-wrap: anywhere; min-width: 0; }
 
 /* In the collapsed member head: who holds a capability, at a glance. */
 .roster-perm-tag {
