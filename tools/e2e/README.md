@@ -9,6 +9,7 @@ and they run from a clean checkout.
 npm run test:checkin                       # the standing check-in / check-out E2E
 node tools/e2e/checkin.mjs --port 5402     # on another port
 node tools/e2e/checkin.mjs --verbose       # every step, PASS or FAIL, with its measurement
+node tools/e2e/checkin.mjs --only M        # just the across-midnight presence step, both widths
 
 node tools/e2e/shoot.mjs --persona admin --mig all --widths 375,1440 \
   --routes /dashboard,/hours --out artifacts/shots/my-check
@@ -53,9 +54,9 @@ reload that KEEPS `history.state`, so every repeat "tap" was a revisit and the
 run read 8/24 against a correct app. Fresh taps now open a new tab in the same
 context, which shares localStorage (the fixture store and the device's
 last-tap record) as a phone's browser does; sessionStorage is per tab, which is
-why the signed-out bounce (g) stays in one tab. The earlier tab is closed
-unless a step keeps it, because this headless Chromium cannot put a tab in the
-background (below). The revisit paths have their own steps, R7 included (the
+why the signed-out bounce (g) stays in one tab. The earlier tab is closed once
+the new one has booted, unless a step keeps it, because this headless Chromium
+cannot put a tab in the background (below). The revisit paths have their own steps, R7 included (the
 same tab reused for a repeat tap), so neither model can change silently.
 
 The clock is Playwright's, installed on the context (every tab shares it) at a
@@ -84,6 +85,7 @@ effect twice in dev) has time to land and fail the "exactly one" assertion.
 | R5 | a `CHECKED IN` receipt hidden 2 min, then shown | still `CHECKED IN` | 0 writes and at least 1 re-read |
 | R6 | R5's control: tab A shows `CHECKED IN`, a fresh tap in tab B checks out, A hidden 2 min then shown | B `CHECKED OUT`; A `Tap to confirm your check-in` | B: 1 `out`; A: 0 writes |
 | R7 | the same URL again in the SAME tab (a browser that reuses the tab for a repeat tap) | `Checked in since`, never `CHECKED OUT` | 0 writes, **against** 1 `out` from one tap: the known cost of the fix (one tap instead of zero on such a phone), pinned so it cannot change silently |
+| R8 | a check-in receipt brought back while `claim_profile` (re-run by App on the `SIGNED_IN` every tab return emits) fails once (`__fx.failNext`) | receipt still `CHECKED IN`, no access gate (`.gate-wrap`) | 0 writes, the failure confirmed as what the call answered; **control** in the same step: a real `false` from the same call shows the gate, and the real `true` after it brings back `Checked in since` (0 writes) |
 | V1 | the FLL tag over an open BUILD session | `Tap to switch to volunteer hours`, `You have a normal session open`; after the tap `VOLUNTEER · CHECKED IN` and `Switched from a normal session to volunteer.` | arrival: 0 writes; the tap: an `out` then an `in` (category `volunteer`, `geo_ok` true) |
 | V2 | `reload()` of V1's volunteer receipt after 61 s | `Volunteering since` and a Check out button | 0 writes, **against** 1 `out` (category `volunteer`) from that tap |
 | V3 | volunteer check-in, VIEW STATUS, `goBack()` | `Volunteering since` | 0 writes, **against** 1 `out` from a fresh volunteer tap in a new tab, no confirm |
@@ -101,7 +103,9 @@ both tag pages passing `revisit: false` (the pre-fix behaviour) fails R1, R2,
 R3, R7, V2 and V3 at both widths, every one by checking the member out with no
 tap; `PresenceBoard.jsx` reading attendance from `startOfTodayISO()` fails M
 ("the board shows Sam absent while the tile reads Checked in"); `useGlance.js`
-reading it from `todayISO` fails M ("the glance count moved by 0").
+reading it from `todayISO` fails M ("the glance count moved by 0"); `App.jsx`
+setting approval straight from `claimed === true` again fails R8 (the access
+gate replaces the receipt).
 
 Things learned getting it to measure, each a trap for the next harness:
 
@@ -121,6 +125,22 @@ Things learned getting it to measure, each a trap for the next harness:
 - **Every fixture tab holds its own copy of the store.** `client.js` follows
   the `storage` event so a write in one tab reaches the others, as one database
   would; without it, a tab left open re-reads its own stale copy.
+- **Open the next tab BEFORE closing the last one.** Chromium can drop a
+  localStorage write made just before its tab closes, and the next tab then
+  boots from the copy before it. Measured with the app as writer and reader:
+  closing first lost the write 1 time in 60 (twice, both at the 16th tab);
+  opening first, 0 in 60. It surfaced as M failing about 1 run in 9 at 1440
+  ("planted MISSING" in the next tab's store), never in the app.
+- **A read-only RPC must not persist.** The fixture engine used to save the
+  whole tab store after EVERY successful RPC, so a tab that merely called
+  `claim_profile` wrote its copy back over a newer one. It now persists only
+  when the call changed the store (`tests/fixture-client.test.js`, rpc
+  persistence). With both fixes M passed 20 runs of 20, against 4 failures in
+  35 before.
+- **A tab coming back re-runs App's `claim_profile`.** supabase-js 2.106 emits
+  `SIGNED_IN` on every hidden-to-visible transition (auth-js
+  `_onVisibilityChanged` -> `_recoverAndRefresh`), and the fixture client now
+  does the same, so R3, R5, R6 and R8 exercise that path as a phone does.
 - **Location permission goes through CDP, scoped to the context.**
   `context.clearPermissions()` leaves the next `getCurrentPosition` pending
   forever (a prompt nobody can answer headless), and every later request then

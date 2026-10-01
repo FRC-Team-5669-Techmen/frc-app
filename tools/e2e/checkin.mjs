@@ -49,6 +49,8 @@ import {
 const args = process.argv.slice(2);
 const PORT = Number(flag(args, 'port', process.env.FIXTURE_PORT || 5401));
 const VERBOSE = !!flag(args, 'verbose', false);
+// --only M runs just the midnight presence step (its own context per width).
+const ONLY = flag(args, 'only', null);
 const OUT = ensureDir(path.join(REPO, 'artifacts', 'e2e'));
 
 // Fixture personas (src/dev/fixture/personas.js).
@@ -97,7 +99,7 @@ async function main() {
   const browser = await launchBrowser();
   try {
     for (const vp of [VIEWPORTS[375], VIEWPORTS[1440]]) {
-      await runViewport(browser, server.origin, vp);
+      if (ONLY !== 'M') await runViewport(browser, server.origin, vp);
       await runMidnight(browser, server.origin, vp);
     }
   } finally {
@@ -128,17 +130,22 @@ async function runViewport(browser, origin, vp) {
   // run, which is the one state a real background tab never is.
   let page = null;
   const tabs = new Set();
+  // The new tab is opened BEFORE the earlier ones close, as on a phone, and
+  // for a measured reason: Chromium can drop a localStorage write made just
+  // before its tab closes (the fixture store lives there), and the next tab
+  // then boots from the copy before it. Closing the writer first lost the
+  // write 1 time in 60; opening the next tab first, 0 in 60.
   async function newTab(url, { keep = [] } = {}) {
-    for (const t of [...tabs]) {
-      if (keep.includes(t)) continue;
-      tabs.delete(t);
-      await t.close().catch(() => {});
-    }
+    const earlier = [...tabs].filter((t) => !keep.includes(t));
     const t = await context.newPage();
     tabs.add(t);
     page = t;
     await t.goto(origin + url);
     await waitForFixture(t);
+    for (const old of earlier) {
+      tabs.delete(old);
+      await old.close().catch(() => {});
+    }
     return t;
   }
   // The same tab, a new navigation: what a browser that REUSES the tab for a
@@ -601,6 +608,52 @@ async function runViewport(browser, origin, vp) {
     return 'same tab, same URL: "Checked in since" and 0 writes; one tap: 1 OUT';
   });
 
+  // R8. App re-runs claim_profile every time a tab comes back (supabase-js
+  //     emits SIGNED_IN on hidden -> visible; the fixture does too). A
+  //     transient error on that call must not swap the page for the access
+  //     gate under a student about to check out. Control in the same step: a
+  //     real "no" from the same call DOES show the gate, so the step can see
+  //     it, and the real "yes" after it brings back a page that asks (the
+  //     re-mount is a revisit) rather than writing.
+  await step('R8-resume-claim-error', 'a claim_profile error as the tab comes back leaves the page up; a real "no" shows the access gate; 0 writes', async () => {
+    await ensureOut(STUDENT);
+    const a = await checkInByTag();
+    await settle();
+    const base = await count(STUDENT);
+    const claims = () => a.evaluate(() => window.__fx.calls.filter((c) => c.kind === 'rpc' && c.name === 'claim_profile'));
+    const nextClaim = async (n) => a.waitForFunction((k) => window.__fx.calls.filter((c) => c.kind === 'rpc' && c.name === 'claim_profile').length > k, n, { timeout: 15_000 })
+      .catch(() => { throw new Error('the tab did not re-run claim_profile when it came back'); });
+
+    const c0 = (await claims()).length;
+    await a.evaluate(() => window.__fx.failNext('claim_profile', { error: { message: 'TypeError: Failed to fetch', code: '' } }));
+    await away(a);
+    await nextClaim(c0);
+    await settle();
+    const answered = (await claims()).slice(c0);
+    assert(answered.some((c) => c.injected && c.error), `the injected failure was not what claim_profile answered: ${JSON.stringify(answered)}`);
+    assert((await a.locator('.gate-wrap').count()) === 0, 'a transient claim_profile error replaced the page with the access gate');
+    assert((await text(a)).includes('CHECKED IN'), 'the check-in receipt is gone after a transient claim_profile error');
+    await shot('R8-resume-claim-error-held', a);
+
+    // Control: a real "no" shows the gate ...
+    const c1 = (await claims()).length;
+    await a.evaluate(() => window.__fx.failNext('claim_profile', { data: false }));
+    await away(a);
+    await nextClaim(c1);
+    await a.waitForSelector('.gate-wrap', { timeout: 15_000 })
+      .catch(() => { throw new Error('control: a real "no" from claim_profile did not show the access gate'); });
+    await shot('R8-resume-claim-error-gate', a);
+    // ... and the real "yes" the store gives brings the app back, asking.
+    await away(a);
+    await a.waitForFunction(() => !document.querySelector('.gate-wrap'), null, { timeout: 15_000 });
+    await waitText('Checked in since');
+    await settle();
+    assert((await count(STUDENT)) === base, `the gate and the re-mount wrote ${(await count(STUDENT)) - base}`);
+    await press(checkOutButton());
+    await waitText('CHECKED OUT');
+    return 'error on resume: receipt up, no gate; a real "no": the gate; the real "yes": back to "Checked in since", 0 writes throughout';
+  });
+
   // ── V: the volunteer tag's switch and revisit ────────────────────────────
 
   // V1. The FLL tag over an open BUILD session offers the switch and writes
@@ -730,11 +783,13 @@ async function runMidnight(browser, origin, vp) {
   await context.clock.install({ time: MIDNIGHT_CLOCK });
   const consoleErrors = watchContextConsole(context);
   let page = await context.newPage();
+  // Next tab first, then close the one before (see newTab in runViewport).
   const open = async (url) => {
-    await page.close().catch(() => {});
+    const earlier = page;
     page = await context.newPage();
     await page.goto(origin + url);
     await waitForFixture(page);
+    await earlier.close().catch(() => {});
   };
   const id = 'M-midnight-presence';
   const name = 'a check-in at 11:40 PM reads present at 12:30 AM on the tile, the glance and the board; past the cap, absent on all three';
@@ -754,14 +809,25 @@ async function runMidnight(browser, origin, vp) {
     }, { uid: STUDENT, since: MIDNIGHT_CLOCK.getTime() - 26 * 3600_000, at: new Date('2026-09-30T23:40:00-07:00').toISOString() });
     assert(planted.name, 'no display name for the student persona');
 
+    // What this tab's copy of the store says about Sam: the planted row's time
+    // and his newest event. Every read carries it, so a failure names the data
+    // the page was looking at rather than only what it showed.
+    const storeSays = () => page.evaluate(({ uid, rowId }) => {
+      const evs = window.__fx.rows('attendance_events').filter((e) => e.user_id === uid).sort((a, b) => a.event_time.localeCompare(b.event_time));
+      const last = evs.at(-1);
+      return `planted ${evs.find((e) => e.id === rowId)?.event_time ?? 'MISSING'}, newest ${last ? `${last.type} ${last.event_time}` : 'none'}`;
+    }, { uid: STUDENT, rowId: planted.rowId });
     const readTile = async () => {
       await open('/dashboard');
       await page.waitForSelector('.mb-status', { timeout: 15_000 });
       await page.waitForFunction(() => /^\d+/.test([...document.querySelectorAll('a.mb-tile')].find((t) => t.textContent.includes('present now'))?.querySelector('.mb-tile-big')?.textContent ?? ''), null, { timeout: 15_000 });
-      return page.evaluate(() => ({
-        status: document.querySelector('.mb-status')?.textContent?.trim(),
-        glance: parseInt([...document.querySelectorAll('a.mb-tile')].find((t) => t.textContent.includes('present now')).querySelector('.mb-tile-big').textContent, 10),
-      }));
+      return {
+        ...(await page.evaluate(() => ({
+          status: document.querySelector('.mb-status')?.textContent?.trim(),
+          glance: parseInt([...document.querySelectorAll('a.mb-tile')].find((t) => t.textContent.includes('present now')).querySelector('.mb-tile-big').textContent, 10),
+        }))),
+        store: await storeSays(),
+      };
     };
     const readBoard = async () => {
       await open('/_fixture?__fx=persona:mentor');
@@ -771,6 +837,7 @@ async function runMidnight(browser, origin, vp) {
         const row = [...document.querySelectorAll('li.pb-row')].find((li) => li.querySelector('.pb-name')?.textContent?.trim() === who);
         return { count: parseInt(document.querySelector('.pb-count-now').textContent, 10), row: row ? (row.classList.contains('pb-present') ? 'present' : 'absent') : 'missing' };
       }, planted.name);
+      out.store = await storeSays();
       await open('/_fixture?__fx=persona:student');
       return out;
     };
@@ -778,15 +845,16 @@ async function runMidnight(browser, origin, vp) {
     const inTile = await readTile();
     const inBoard = await readBoard();
     await page.screenshot({ path: path.join(OUT, `${vp.name}-${id}-in.png`), fullPage: true }).catch(() => {});
-    assert(inTile.status === 'Checked in', `tile reads "${inTile.status}" for a session opened at 11:40 PM`);
-    assert(inBoard.row === 'present', `the board shows ${planted.name} ${inBoard.row} while the tile reads Checked in`);
+    assert(inTile.status === 'Checked in', `tile reads "${inTile.status}" for a session opened at 11:40 PM (${inTile.store})`);
+    assert(inBoard.row === 'present', `the board shows ${planted.name} ${inBoard.row} while the tile reads Checked in (${inBoard.store})`);
 
     // Control: the same row, 1:40 PM the day before.
-    await page.evaluate(({ rowId, at }) => window.__fx.patch('attendance_events', { id: rowId }, { event_time: at }), { rowId: planted.rowId, at: new Date('2026-09-30T13:40:00-07:00').toISOString() });
+    const hits = await page.evaluate(({ rowId, at }) => window.__fx.patch('attendance_events', { id: rowId }, { event_time: at }), { rowId: planted.rowId, at: new Date('2026-09-30T13:40:00-07:00').toISOString() });
+    assert(hits === 1, `the control patch matched ${hits} row(s) (${await storeSays()})`);
     const outTile = await readTile();
     const outBoard = await readBoard();
-    assert(outTile.status === 'Not checked in', `control: tile reads "${outTile.status}" for a session past the cap`);
-    assert(outBoard.row === 'absent', `control: the board shows ${planted.name} ${outBoard.row} past the cap`);
+    assert(outTile.status === 'Not checked in', `control: tile reads "${outTile.status}" for a session past the cap (${outTile.store})`);
+    assert(outBoard.row === 'absent', `control: the board shows ${planted.name} ${outBoard.row} past the cap (${outBoard.store})`);
     assert(inBoard.count - outBoard.count === 1, `the board count moved by ${inBoard.count - outBoard.count}, expected 1 (${inBoard.count} -> ${outBoard.count})`);
     assert(inTile.glance - outTile.glance === 1, `the glance count moved by ${inTile.glance - outTile.glance}, expected 1 (${inTile.glance} -> ${outTile.glance})`);
     const unexpected = consoleErrors.filter((e) => !EXPECTED_CONSOLE.some((re) => re.test(e.text)));
