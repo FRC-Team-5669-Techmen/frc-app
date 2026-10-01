@@ -1,8 +1,10 @@
 // Shared "who is present" derivation. A member is PRESENT when the shared rule
 // in attendanceState.js says they are checked in: their newest event is an 'in'
 // from today or still inside the session cap. The dashboard and both tag routes
-// read the same rule, so the board can never disagree with a member's own tile.
-// It adds no new tables.
+// read the same rule, so the board agrees with a member's own tile on every
+// event the caller's query returns. The callers still query from local
+// midnight, so a session open across midnight is the one case they miss until
+// they read from presenceSinceISO() instead. It adds no new tables.
 
 import { currentStatus, statusWindowStartISO } from './attendanceState'
 
