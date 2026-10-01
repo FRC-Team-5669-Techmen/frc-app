@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { supabase } from './supabase'
-import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, cappedSession, CATEGORIES, categoryLabel, categoryColor, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
+import { fmtHours, buildBreakdown, sumBreakdown, isCheckedIn, sessionsFromEvents, fmtLocation, cappedSession, CATEGORIES, categoryLabel, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
 import { daysPresent, effectiveGoal, goalCategoryKeys, hoursTowardGoal } from './accountability'
 import { displayName } from './names'
+import AttendanceHistory from './AttendanceHistory'
+import { historyByDay, defaultHistorySeason } from './attendanceHistory'
 import './HoursBoard.css'
 
 // Defined outside HoursBoard so React sees a stable component reference across renders.
@@ -140,11 +142,9 @@ export default function HoursBoard({ hasRole = () => false }) {
       }
       setExcluded(excMap)
 
-      const today   = new Date().toISOString().slice(0, 10)
-      const current = seas.find(s =>
-        s.start_date <= today && (s.end_date == null || s.end_date >= today)
-      )
-      setSelSeason(current?.id ?? seas[0]?.id ?? 'all')
+      // Current season, else the most recent, else All Time -- the same period
+      // the /display history opens on (defaultHistorySeason).
+      setSelSeason(defaultHistorySeason(seas)?.id ?? 'all')
     })
   }, [])
 
@@ -338,37 +338,14 @@ export default function HoursBoard({ hasRole = () => false }) {
   // Drill-down: the stored sessions behind a member's hours, grouped by day and
   // pulled straight from the attendance records (no recomputed/fabricated times).
   // detail.day set → just that day (matrix cell); null → every in-season day.
+  // The grouping and the totals live in src/attendanceHistory.js and the modal
+  // in src/AttendanceHistory.jsx, shared with the /display name-click.
   const detailData = useMemo(() => {
     if (!detail) return null
-    const evs = eventsByMember[detail.memberId] ?? []
-    const inRange = d => !selRange || (d >= selRange.start && (selRange.end == null || d <= selRange.end))
-    const byDay = new Map()
-    for (const s of sessionsFromEvents(evs)) {
-      const day = s.inTime.toISOString().slice(0, 10)
-      if (detail.day ? day !== detail.day : !inRange(day)) continue
-      if (!byDay.has(day)) byDay.set(day, [])
-      byDay.get(day).push({ ...s, flagged: !!(s.outId && excluded?.[detail.memberId]?.has(s.outId)) })
-    }
-    return [...byDay.entries()]
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .map(([day, sessions]) => ({ day, sessions }))
+    return historyByDay(eventsByMember[detail.memberId] ?? [], {
+      day: detail.day, range: selRange, excluded: excluded?.[detail.memberId] ?? null,
+    })
   }, [detail, eventsByMember, selRange, excluded])
-
-  // Category breakdown (+ grand total) of the sessions shown in the drill-down,
-  // counting only the ones that count toward official hours (not flagged).
-  const detailTotals = useMemo(() => {
-    if (!detailData) return null
-    const t = emptyBreakdown()
-    for (const { sessions } of detailData) {
-      for (const s of sessions) {
-        if (s.flagged) continue
-        const h = s.ms / 3600000
-        t[s.category] = (t[s.category] ?? 0) + h
-        t.total += h
-      }
-    }
-    return t
-  }, [detailData])
 
   // Admin CSV: every member's full sign in/out history + logged hours.
   function exportCsv() {
@@ -700,87 +677,24 @@ export default function HoursBoard({ hasRole = () => false }) {
 
       {/* ── Drill-down: stored sessions behind a member's hours ── */}
       {detail && (
-        <div className="board-detail-backdrop" onClick={() => setDetail(null)}>
-          <div className="board-detail" onClick={e => e.stopPropagation()}>
-            <div className="board-detail-head">
-              <div>
-                <h2 className="board-detail-title">{detail.name}</h2>
-                <p className="board-detail-sub hud-mono">
-                  {detail.day ? fmtDay(detail.day) : 'Sessions by day'}
-                </p>
-              </div>
-              <div className="board-detail-head-actions">
-                {isStaff && (
-                  <button
-                    className="board-adjust-btn"
-                    onClick={() => setAdjust({ mode: 'add', memberId: detail.memberId, name: detail.name, day: detail.day })}
-                  >+ Manual session</button>
-                )}
-                <button className="board-detail-close" onClick={() => setDetail(null)} aria-label="Close">×</button>
-              </div>
-            </div>
-            {(!detailData || detailData.length === 0) ? (
-              <p className="board-empty">No sessions recorded{detail.day ? ' this day' : ' for this period'}.</p>
-            ) : (
-              <div className="board-detail-body">
-                {detailTotals && detailTotals.total > 0 && (
-                  <div className="board-detail-totals">
-                    {CATEGORIES.filter(c => (detailTotals[c.key] || 0) >= 0.01).map(c => (
-                      <span key={c.key} className="board-total-chip">
-                        <span className="board-type-dot" style={{ background: c.color }} />
-                        <span className="board-total-label">{c.label}</span>
-                        <span className="board-total-val hud-tnum">{fmtHours(detailTotals[c.key])}</span>
-                      </span>
-                    ))}
-                    <span className="board-total-chip board-total-grand">
-                      <span className="board-total-label">Total</span>
-                      <span className="board-total-val hud-tnum">{fmtHours(detailTotals.total)}</span>
-                    </span>
-                  </div>
-                )}
-                {detailData.map(({ day, sessions }) => (
-                  <div key={day} className="board-detail-day">
-                    {!detail.day && <h3 className="board-detail-dayhead">{fmtDay(day)}</h3>}
-                    <table className="board-detail-table">
-                      <thead>
-                        <tr>
-                          <th>In</th><th>Out</th><th>Where</th><th>Duration</th>{isStaff && <th></th>}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sessions.map((s, i) => (
-                          <tr key={i}>
-                            <td className="board-num">{fmtTime(s.inTime)}</td>
-                            <td className="board-num">
-                              {s.open ? <span className="board-open">— open —</span> : fmtTime(s.outTime)}
-                            </td>
-                            <td className="board-loc">
-                              {fmtLocation(s.inLoc)}
-                              {!s.open && s.outLoc && s.outLoc !== s.inLoc ? ` → ${fmtLocation(s.outLoc)}` : ''}
-                            </td>
-                            <td className="board-num board-total">
-                              {fmtHours(s.ms / 3600000)}
-                              <span className="board-cat-tag" style={{ color: categoryColor(s.category) }} title={`${categoryLabel(s.category)} hours`}> · {categoryLabel(s.category)}</span>
-                              {s.manual && <span className="board-cat-tag" style={{ color: 'var(--steel)' }} title="Manual entry"> · MANUAL</span>}
-                              {s.wasCapped && <span className="board-cat-tag" style={{ color: 'var(--gold-dim)' }} title="Capped at the max session length (likely a missed check-out)"> · CAPPED</span>}
-                              {s.flagged && <span className="board-flag" title="Pending/auto-close review"> ⚠</span>}
-                            </td>
-                            {isStaff && (
-                              <td className="board-num board-sess-actions">
-                                <button className="board-mini-btn" onClick={() => setAdjust({ mode: 'edit', memberId: detail.memberId, name: detail.name, session: s })}>Edit</button>
-                                <button className="board-mini-btn board-mini-danger" onClick={() => setAdjust({ mode: 'void', memberId: detail.memberId, name: detail.name, session: s })}>Void</button>
-                              </td>
-                            )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <AttendanceHistory
+          name={detail.name}
+          day={detail.day}
+          groups={detailData}
+          onClose={() => setDetail(null)}
+          headActions={isStaff ? (
+            <button
+              className="board-adjust-btn"
+              onClick={() => setAdjust({ mode: 'add', memberId: detail.memberId, name: detail.name, day: detail.day })}
+            >+ Manual session</button>
+          ) : null}
+          rowActions={isStaff ? s => (
+            <>
+              <button className="board-mini-btn" onClick={() => setAdjust({ mode: 'edit', memberId: detail.memberId, name: detail.name, session: s })}>Edit</button>
+              <button className="board-mini-btn board-mini-danger" onClick={() => setAdjust({ mode: 'void', memberId: detail.memberId, name: detail.name, session: s })}>Void</button>
+            </>
+          ) : null}
+        />
       )}
 
       {adjust && (
@@ -1000,14 +914,4 @@ function AdjustPanel({ adjust, onClose, onDone }) {
       </div>
     </div>
   )
-}
-
-function fmtTime(d) {
-  return d ? d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '—'
-}
-
-function fmtDay(date) {
-  return new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
-    weekday: 'short', month: 'short', day: 'numeric',
-  })
 }
