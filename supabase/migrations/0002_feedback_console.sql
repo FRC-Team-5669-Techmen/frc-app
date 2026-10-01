@@ -41,7 +41,8 @@
 --   4. public.feedback_set_status(p_ids uuid[], p_status text)
 --      Admin only, checked INSIDE the body (is_admin()), so a hand-rolled
 --      request from a non-admin is refused by the database. Moves every listed
---      report not already in p_status, and RETURNS each changed report's
+--      report not already in p_status (under either spelling: a legacy
+--      'reviewed' row is already Seen), and RETURNS each changed report's
 --      previous status and triage stamp -- the undo's input.
 --   5. public.feedback_restore_status(p_items jsonb, p_from text)
 --      Admin only, checked inside the body. Puts back exactly what
@@ -180,7 +181,14 @@ alter table public.feedback alter column status set default 'new';
 --
 -- Rows already in p_status are not touched (their triage stamp would otherwise
 -- be overwritten by a move that changed nothing) and are not returned, so the
--- undo never "restores" a row the move did not change.
+-- undo never "restores" a row the move did not change. "Already in p_status"
+-- includes the OLD SPELLING of it: a row the pre-0002 console wrote as
+-- 'reviewed' after this file ran already reads as Seen, so a move to 'seen'
+-- leaves it and its stamp alone. (Restamping it would lose the original
+-- reviewer and time, and the console's undo deliberately skips a row whose
+-- previous status already read as the target, so nothing would put it back.)
+-- The legacy map is the jsonb literal below, mirrored by STATUS_TO_LEGACY in
+-- src/feedbackModel.js and pinned by tests/feedback-model.test.js.
 --
 -- 'new' clears the triage stamp; every other status records who and when.
 create or replace function public.feedback_set_status(p_ids uuid[], p_status text)
@@ -197,6 +205,7 @@ as $fn$
 #variable_conflict use_column
 declare
   v_status text := lower(btrim(coalesce(p_status, '')));
+  v_legacy text;
 begin
   if auth.uid() is null then
     raise exception 'You must be signed in.' using errcode = '42501';
@@ -214,6 +223,8 @@ begin
   if cardinality(p_ids) > 2000 then
     raise exception 'At most 2000 reports per move.' using errcode = '22023';
   end if;
+  -- NULL for in_progress / done / spam, which have no old spelling.
+  v_legacy := '{"new": "open", "seen": "reviewed", "wont_do": "dismissed"}'::jsonb ->> v_status;
 
   return query
   with prev as (
@@ -221,6 +232,7 @@ begin
       from public.feedback f
      where f.id = any (p_ids)
        and f.status is distinct from v_status
+       and f.status is distinct from v_legacy
        for update
   ), moved as (
     update public.feedback f

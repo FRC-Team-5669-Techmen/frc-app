@@ -105,6 +105,19 @@ describe('rpc handlers', () => {
     expect(r.status).toBe('in_progress')
   })
 
+  test('a row already in the target under its OLD spelling is left alone, stamp included, as in the SQL', () => {
+    const db = fresh()
+    const r5 = db.feedback[4]   // stored 'reviewed', stamped by the admin
+    const stamp = { status: r5.status, reviewed_by: r5.reviewed_by, reviewed_at: r5.reviewed_at }
+    const same = set({ args: { p_ids: [r5.id], p_status: 'seen' }, db, user: { id: 'A' }, persona: admin, now })
+    expect(same.data).toEqual([])
+    expect({ status: r5.status, reviewed_by: r5.reviewed_by, reviewed_at: r5.reviewed_at }).toEqual(stamp)
+    // Positive control: the same row does move to a status it is not in.
+    const other = set({ args: { p_ids: [r5.id], p_status: 'done' }, db, user: { id: 'A' }, persona: admin, now })
+    expect(other.data.map(d => d.previous_status)).toEqual(['reviewed'])
+    expect(r5.status).toBe('done')
+  })
+
   test('only the six new statuses go through the move, as in the SQL', () => {
     const db = fresh()
     expect(set({ args: { p_ids: [db.feedback[0].id], p_status: 'reviewed' }, db, user: { id: 'A' }, persona: admin, now }).error.code).toBe('22023')

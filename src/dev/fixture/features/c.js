@@ -23,7 +23,7 @@
 // Won't do. In progress, Done and Spam are reached by moving reports with the
 // RPCs, which is the thing worth testing.
 
-import { STATUSES, STORED_STATUSES } from '../../../feedbackModel.js'
+import { STATUSES, STORED_STATUSES, normStatus } from '../../../feedbackModel.js'
 
 // Fictional, fixed fallbacks in case the core seed names its personas
 // differently; a row whose member is unknown renders as "Member".
@@ -62,7 +62,8 @@ function feedbackRows(db) {
 const refuse = (code, message) => ({ data: null, error: { code, message } })
 
 // Mirrors public.feedback_set_status: admin checked first, only the six new
-// statuses, rows already there untouched, previous state returned.
+// statuses, rows already there (under either spelling) untouched, previous
+// state returned.
 function setStatus({ args, db, user, persona, now }) {
   const uid = user?.id ?? null
   if (!uid) return refuse('42501', 'You must be signed in.')
@@ -75,7 +76,7 @@ function setStatus({ args, db, user, persona, now }) {
   const at = new Date(nowMs(now)).toISOString()
   const out = []
   for (const r of rows) {
-    if (!ids.has(r.id) || r.status === status) continue
+    if (!ids.has(r.id) || normStatus(r.status) === status) continue
     out.push({ id: r.id, previous_status: r.status, previous_reviewed_by: r.reviewed_by ?? null, previous_reviewed_at: r.reviewed_at ?? null })
     if (status === 'new') Object.assign(r, { status, reviewed_by: null, reviewed_at: null })
     else Object.assign(r, { status, reviewed_by: uid, reviewed_at: at })

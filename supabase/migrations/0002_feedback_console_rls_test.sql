@@ -44,6 +44,9 @@
 --       authenticated, and NOT by anon or PUBLIC
 --   17  nobody can delete a report, admin included          (revoke kept)
 --   18  the refused calls in 07-10 changed no report, read back as the owner
+--   19  a report already in the target under its OLD spelling (a 'reviewed'
+--       row moved to Seen) is left alone, stamp included  (with a positive
+--       control: the same row does move to a status it is not in)
 -- ============================================================================
 
 begin;
@@ -299,6 +302,7 @@ declare
   v_code text;
   v_ok boolean;
   v_restored int;
+  v_kept int;
   r record;
 begin
   if not public.is_admin() then
@@ -389,6 +393,32 @@ begin
     case when v_ok then 'PASS' else 'FAIL' end,
     case when v_ok then '''reviewed'', ''bogus'' and '''' each refused with 22023' else v_err end);
 
+  -- 19: a report already in the target under its OLD spelling is left alone,
+  -- stamp included. The console deployed before 0002 still writes 'reviewed'
+  -- with a direct update (06 proves it can); moving that row to Seen must not
+  -- restamp it, because the console's undo skips a row whose previous status
+  -- already read as the target and nothing would ever put the stamp back.
+  -- r2 is back at 'seen', stamped by the admin at 2026-09-05 18:00 (13).
+  update public.feedback set status = 'reviewed' where id = current_setting('fb0002.r2')::uuid;
+  select count(*) into v_n
+    from public.feedback_set_status(array[current_setting('fb0002.r2')::uuid], 'seen');
+  select count(*) into v_kept from public.feedback
+   where id = current_setting('fb0002.r2')::uuid and status = 'reviewed'
+     and reviewed_by = current_setting('fb0002.admin')::uuid
+     and reviewed_at = '2026-09-05 18:00:00+00'::timestamptz;
+  -- Positive control: the same row DOES move to a status it is not in, and
+  -- comes back carrying the old spelling as its previous status.
+  select jsonb_agg(jsonb_build_object('id', s.id, 'status', s.previous_status))
+    into v_items
+    from public.feedback_set_status(array[current_setting('fb0002.r2')::uuid], 'wont_do') s;
+  v_ok := v_n = 0 and v_kept = 1
+      and jsonb_array_length(coalesce(v_items, '[]')) = 1
+      and v_items -> 0 ->> 'status' = 'reviewed';
+  insert into fb0002_results values (19, 'a move leaves a report already there under its old spelling alone, stamp included',
+    case when v_ok then 'PASS' else 'FAIL' end,
+    format('move of a ''reviewed'' report to seen changed %s (want 0), stamp kept %s of 1; positive control: move to wont_do returned %s',
+           v_n, v_kept, coalesce(v_items::text, 'nothing')));
+
   -- 17: delete stays impossible, admin included.
   v_code := null;
   begin
@@ -438,7 +468,7 @@ begin
 end
 $c16$;
 
--- The verdicts. Eighteen rows; every one should read PASS.
+-- The verdicts. Nineteen rows; every one should read PASS.
 select n as "#", "check", result, detail
   from fb0002_results
  order by n;

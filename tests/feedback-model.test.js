@@ -304,6 +304,14 @@ describe('drift: src/feedbackModel.js vs 0002_feedback_console.sql', () => {
     for (const l of LEGACY_STATUSES) expect(quoted(m[1])).not.toContain(l)
   })
 
+  test('feedback_set_status leaves a row already in the target under its OLD spelling, by the map STATUS_TO_LEGACY holds', () => {
+    const m = EXEC.match(/v_legacy := '(\{[^']*\})'::jsonb ->> v_status;/)
+    expect(m).not.toBeNull()
+    expect(JSON.parse(m[1])).toEqual(STATUS_TO_LEGACY)
+    // The map is only worth anything if the move's WHERE reads it.
+    expect(EXEC).toMatch(/and f\.status is distinct from v_status\s+and f\.status is distinct from v_legacy/)
+  })
+
   test('the in-place mapping is LEGACY_TO_STATUS', () => {
     const pairs = [...EXEC.matchAll(/when '(\w+)'\s+then '(\w+)'/g)].map(m => [m[1], m[2]])
     expect(Object.fromEntries(pairs)).toEqual(LEGACY_TO_STATUS)
