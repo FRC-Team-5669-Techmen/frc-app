@@ -215,30 +215,16 @@
 .pill-in  { background: var(--gold-a14); color: var(--gold-bright); }
 .pill-out { background: var(--surface-2); color: var(--steel); }
 
-/* ── Sessions view: entrance/exit detail ── */
-.board-loc {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: var(--steel);
-  text-transform: capitalize;
-  white-space: nowrap;
-}
-.board-open { color: var(--gold-dim); font-family: var(--font-mono); font-size: 0.78rem; }
-.board-flag { color: var(--gold-dim); }
+/* Mono tag after a value (the goals view's "override"). */
 .board-cat-tag { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.02em; }
 
-/* ── Category totals strip (by-member view + drill-down) ── */
+/* ── Category totals strip (by-member view). The drill-down's own strip moved
+   to AttendanceHistory.css with the rest of the drill-down. ── */
 .board-totals {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   margin: 0.75rem 1rem 0;
-}
-.board-detail-totals {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
 }
 .board-total-chip {
   display: inline-flex;
@@ -327,7 +313,8 @@
   border-bottom: 2px solid var(--gold);
 }
 
-/* ── Drill-down modal ── */
+/* ── Modal chrome for the goal editor and the adjust panel. The drill-down
+   itself is src/AttendanceHistory.jsx, styled by AttendanceHistory.css. ── */
 .board-detail-backdrop {
   position: fixed;
   inset: 0;
@@ -338,14 +325,6 @@
   padding: 4rem 1rem;
   z-index: 50;
   overflow-y: auto;
-}
-.board-detail {
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  width: 100%;
-  max-width: 34rem;
-  padding: 1.25rem 1.4rem 1.6rem;
 }
 .board-detail-head {
   display: flex;
@@ -366,34 +345,8 @@
   padding: 0 0.2rem;
 }
 .board-detail-close:hover { color: var(--text); }
-.board-detail-day { margin-bottom: 1.1rem; }
-.board-detail-dayhead {
-  margin: 0 0 0.4rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--gold-bright);
-}
-.board-detail-table { width: 100%; border-collapse: collapse; }
-.board-detail-table th {
-  text-align: left;
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  font-weight: 600;
-  padding: 0.3rem 0.5rem;
-  border-bottom: 1px solid var(--border);
-}
-.board-detail-table td {
-  padding: 0.4rem 0.5rem;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-  font-size: 0.85rem;
-}
-.board-detail-table .board-loc { color: var(--steel); font-family: var(--font-mono); }
 
 /* ── Staff session adjustment: manual entry / edit / void ── */
-.board-detail-head-actions { display: flex; align-items: center; gap: 0.6rem; }
 .board-adjust-btn {
   font-family: var(--font-ui); font-size: 0.78rem; font-weight: 600;
   color: var(--gold-bright); background: var(--gold-a08);

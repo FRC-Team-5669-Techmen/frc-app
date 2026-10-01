@@ -1,0 +1,158 @@
+/* Attendance history modal -- one view, shared by the Team Hours drill-down and
+   the presence board (/display). Self-contained under the `ah-` prefix so the
+   presence board does not have to load HoursBoard.css to show it. Values are
+   carried over unchanged from the drill-down's old board-detail-* rules. */
+
+.ah-backdrop {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg) 66%, transparent);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4rem 1rem;
+  z-index: 50;
+  overflow-y: auto;
+}
+
+.ah-dialog {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 34rem;
+  padding: 1.25rem 1.4rem 1.6rem;
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+
+.ah-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.ah-title { margin: 0; font-size: 1.15rem; color: var(--text); }
+.ah-sub { margin: 0.2rem 0 0; font-size: 0.78rem; color: var(--muted); }
+.ah-head-actions { display: flex; align-items: center; gap: 0.6rem; }
+
+/* The glyph keeps the old size; ::before widens the hit area to 44 x 44 around
+   it without moving anything, so the close is a full touch target on a phone. */
+.ah-close {
+  position: relative;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.2rem;
+}
+.ah-close::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+.ah-close:hover { color: var(--text); }
+
+.ah-empty {
+  padding: 1.5rem 1rem;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.ah-error { color: var(--fault); }
+
+/* ── Category totals strip ── */
+.ah-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.ah-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.7rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.ah-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: var(--radius-sm);
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+.ah-chip-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+.ah-chip-val {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.ah-chip-grand {
+  background: var(--gold-a08);
+  border-color: var(--gold-dim);
+}
+.ah-chip-grand .ah-chip-val { color: var(--gold-bright); }
+
+/* ── Sessions, one table per day ── */
+/* A narrow phone scrolls a day's table sideways rather than spilling it out of
+   the dialog. */
+.ah-day { margin-bottom: 1.1rem; overflow-x: auto; }
+.ah-dayhead {
+  margin: 0 0 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gold-bright);
+}
+.ah-table { width: 100%; border-collapse: collapse; }
+.ah-table th {
+  text-align: left;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.ah-table td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.ah-num {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1;
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.ah-table td.ah-dur { font-weight: 700; }
+.ah-actions { white-space: nowrap; }
+
+.ah-loc {
+  font-family: var(--font-mono);
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+.ah-table td.ah-loc { color: var(--steel); }
+.ah-open { color: var(--gold-dim); font-family: var(--font-mono); font-size: 0.78rem; }
+.ah-tag { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.02em; }
+.ah-flag { color: var(--gold-dim); }
