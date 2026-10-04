@@ -7,6 +7,7 @@
 // if one is missing here, or if one listed here no longer exists there.
 
 import { IDS } from './personas.js'
+import { EH } from './features/eventhub.js'
 
 // The student's application parent_token, fixed in seed.js so the public
 // parent questionnaire has a working capability URL.
@@ -18,6 +19,8 @@ export const ROUTES = Object.freeze([
   { path: '/', url: '/', group: 'public', label: 'Landing (signed-out) / redirect' },
   { path: '/login', url: '/login', group: 'public', label: 'Login' },
   { path: '/parent/:token', url: `/parent/${PARENT_TOKEN}`, group: 'public', label: 'Parent questionnaire' },
+  { path: '/e/:token', url: `/e/${EH.tokens.sam}`, group: 'public', label: 'Event family page (Sam, fresh)' },
+  { path: '/e', url: '/e', group: 'public', label: 'Event family page: lost link' },
   { path: '/dashboard', url: '/dashboard', group: 'member', label: 'Dashboard' },
   { path: '/schedule', url: '/schedule', group: 'member', label: 'Schedule' },
   { path: '/my-hours', url: '/my-hours', group: 'member', label: 'My Hours' },
@@ -31,6 +34,8 @@ export const ROUTES = Object.freeze([
   { path: '/survey', url: '/survey', group: 'member', label: 'Weekly Survey' },
   { path: '/display', url: '/display', group: 'member', label: 'Presence Board' },
   { path: '/certifications', url: '/certifications', group: 'member', label: 'Certifications' },
+  { path: '/trips', url: '/trips', group: 'member', label: 'Trips' },
+  { path: '/trips/:id', url: `/trips/${EH.event}`, group: 'member', label: 'Trip boards (Fixture Blitz)' },
   { path: '/certify', url: '/certify', group: 'staff', label: 'Certify' },
   { path: '/coverage', url: '/coverage', group: 'staff', label: 'Coverage' },
   { path: '/verify-hours', url: '/verify-hours', group: 'staff', label: 'Verify Hours' },
@@ -41,6 +46,7 @@ export const ROUTES = Object.freeze([
   { path: '/access-requests', url: '/access-requests', group: 'staff', label: 'Access Requests' },
   { path: '/applications', url: '/applications', group: 'staff', label: 'Applications' },
   { path: '/surveys', url: '/surveys', group: 'staff', label: 'Surveys (admin)' },
+  { path: '/trips/:id/manage', url: `/trips/${EH.event}/manage`, group: 'staff', label: 'Trip mentor page' },
   { path: '/roster', url: '/roster', group: 'admin', label: 'Roster' },
   { path: '/feedback', url: '/feedback', group: 'admin', label: 'Feedback inbox' },
   { path: '/announce', url: '/announce', group: 'admin', label: 'Discord announce' },

@@ -9,8 +9,8 @@
 # breaks the pg_cron jobs and capability links that depend on these functions.
 #
 # Functions NOT listed here (invite-member, send-approval-email,
-# send-parent-request) are invoked with the signed-in user's JWT and must
-# keep default JWT verification on.
+# send-parent-request, discord-announce) are invoked with the signed-in
+# user's JWT and must keep default JWT verification on.
 
 [functions.cron-notify]
 # Invoked by pg_cron via pg_net with a shared secret in the x-push-secret
@@ -36,4 +36,12 @@ verify_jwt = false
 [functions.parent-response]
 # A capability URL, same pattern as calendar-feed: authenticated by the
 # unguessable member_applications.parent_token, not a JWT. No sign-in step.
+verify_jwt = false
+
+[functions.event-family]
+# A capability URL, same pattern as parent-response: a family opens the event
+# family hub (/e/<token>) with the unguessable token from their email, never a
+# JWT -- families have no account. The pg_cron tick is checked against the
+# EVENT_HUB_CRON_SECRET function secret (x-cron-secret header), and the staff
+# "send now" action verifies the caller's own JWT inside the function.
 verify_jwt = false

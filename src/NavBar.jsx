@@ -40,6 +40,7 @@ const CONTEXT_TAGS = [
   ['/feedback',    'FEEDBACK'],
   ['/surveys',     'SURVEYS'],
   ['/survey',      'SURVEY'],
+  ['/trips',       'TRIPS'],
   ['/verify-hours','HRS//VERIFY'],
   ['/reports',     'REPORTS'],
   ['/certify',     'CERTIFY'],
@@ -142,6 +143,12 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
           {!isParent && (
             <NavLink to="/survey" className={itemClass}>Weekly Survey</NavLink>
           )}
+          {/* Offsite events: the carpool and food boards. Staff reach the same
+              list from the staff block below, where it also opens the mentor
+              page. A parent-only account plans through its emailed link. */}
+          {!isParent && !isStaff && (
+            <NavLink to="/trips" className={itemClass}>Trips</NavLink>
+          )}
           <button className="nav-dropdown-item" onClick={replayTour}>Replay tour</button>
 
           {isStaff && (
@@ -160,6 +167,7 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
               {isAdmin && <NavLink to="/announce" className={itemClass}>Announce</NavLink>}
 
               <NavLink to="/surveys" className={itemClass}>Surveys</NavLink>
+              <NavLink to="/trips" className={itemClass}>Trips</NavLink>
 
               <span className="nav-dropdown-section">People</span>
               {isAdmin && <NavLink to="/roster" className={itemClass}>Roster</NavLink>}

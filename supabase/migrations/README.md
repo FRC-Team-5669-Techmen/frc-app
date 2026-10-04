@@ -3,7 +3,16 @@
 **This directory holds the numbered migrations.** It was established empty by
 the conformance bundle on 2026-09-02, and nothing was renumbered or moved to
 create it. The first four, `0001` to `0004`, landed on 2026-10-01, each with its
-`_rls_test.sql`; none had been applied to the live project when written.
+`_rls_test.sql`; none had been applied to the live project when written. `0005`
+(the event family hub, with its test) and `0006` (the Beach Blitz 2026 seed,
+data only, so no test of its own; the 0005 test builds its own fixture event)
+landed on 2026-10-04, likewise unapplied.
+
+**Every numbered test can now be run here, before anyone pastes it.**
+`node tools/sql-harness/run.mjs` builds a throwaway PostgreSQL 16 with Supabase
+stand-ins, applies the frozen files and the numbered migrations, and counts the
+rows each `_rls_test.sql` returns (its README has the flags and what it cannot
+see). A pass there is evidence about the SQL, never about the live project.
 
 ## The three rules
 
@@ -61,8 +70,9 @@ has to FIND its rows, and row lookup goes through the SELECT policy, so a test
 that thought it was checking UPDATE was checking SELECT again.
 
 Three of the frozen SQL files have a test sibling; every numbered migration has
-had one since `0001`, which made seven on 2026-10-01. That is the number this
-rule exists to move.
+had one since `0001`, which made seven on 2026-10-01 and eight on 2026-10-04
+(a pure data seed such as `0006` has no boundary to test). That is the number
+this rule exists to move.
 
 ## How SQL actually reaches this database
 
@@ -82,7 +92,7 @@ follows from it:
 - Nearly every existing file opens with a line like *"Run once in the Supabase
   SQL editor, BEFORE testing the UI"*. That line is the apply instruction, and
   it is addressed to a person.
-- `supabase/config.toml` pins `verify_jwt = false` for the five Edge Functions
+- `supabase/config.toml` pins `verify_jwt = false` for the six Edge Functions
   that are invoked by pg_cron or by capability URL. Deploying those is a
   separate manual step (`npx supabase functions deploy <name>`), and
   `discord-calendar` is the one function that is not single-file and so cannot

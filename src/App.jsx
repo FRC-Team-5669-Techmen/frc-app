@@ -60,6 +60,11 @@ const FeedbackPage       = lazy(() => import('./FeedbackPage'))
 const AnnouncePage       = lazy(() => import('./AnnouncePage'))
 const SurveyPage         = lazy(() => import('./SurveyPage'))
 const SurveysAdmin       = lazy(() => import('./SurveysAdmin'))
+// Event family hub (migrations 0005/0006). The family page is public, like
+// ParentResponse; the trips pages are member and staff views in the shell.
+const EventFamilyPage    = lazy(() => import('./EventFamilyPage'))
+const TripsPage          = lazy(() => import('./TripsPage'))
+const TripsAdmin         = lazy(() => import('./TripsAdmin'))
 // Mounted in ProtectedLayout, so it is on every authenticated page. Lazy with
 // its OWN Suspense boundary and a null fallback: sharing the app-level
 // boundary would put the whole shell back on the splash while it loads.
@@ -272,6 +277,10 @@ export default function App() {
   // to already be signed in (an unapproved guest, or a member who still owes an
   // application).
   const onParentPath = location.pathname.startsWith('/parent/')
+  // The event family hub's family page (/e/<token>) is the same kind of public
+  // capability URL, for parents with no account, and is let through the same
+  // way. /e alone is its "lost your link" form.
+  const onFamilyPath = location.pathname === '/e' || location.pathname.startsWith('/e/')
 
   // The design-system specimen. It exists ONLY where SpecimenPage exists, which
   // is dev, and it touches no auth and no Supabase, so no gate has anything to
@@ -287,13 +296,13 @@ export default function App() {
   const onFixturePath = FixturePage != null && location.pathname === '/_fixture'
 
   // Signed in but approval not yet resolved: hold on the splash.
-  if (session && approved === null && !onParentPath && !onSpecimenPath && !onFixturePath) return <Splash />
+  if (session && approved === null && !onParentPath && !onFamilyPath && !onSpecimenPath && !onFixturePath) return <Splash />
   // Signed in but not approved: show the access gate instead of the app shell.
   // Both gates sit outside the routed tree's boundary, so each carries its own:
   // a gate chunk that fails to load must show the card, not an empty page.
   // Each is keyed so it never reconciles with the routed tree's (same element
   // types at the root): a gate's caught error must not follow the member in.
-  if (session && approved === false && !onParentPath && !onSpecimenPath && !onFixturePath) {
+  if (session && approved === false && !onParentPath && !onFamilyPath && !onSpecimenPath && !onFixturePath) {
     return (
       <ErrorBoundary key="access-gate">
         <Suspense fallback={<Splash />}>
@@ -308,7 +317,7 @@ export default function App() {
   // are deliberately let through — they're outside the app shell, and a member
   // mid-session must never be blocked from signing out by a form.
   const onCheckinPath = location.pathname.startsWith('/checkin')
-  if (session && approved === true && !onCheckinPath && !onParentPath && !onSpecimenPath && !onFixturePath) {
+  if (session && approved === true && !onCheckinPath && !onParentPath && !onFamilyPath && !onSpecimenPath && !onFixturePath) {
     if (appSeason === undefined) return <Splash />
     if (appSeason) {
       return (
@@ -339,6 +348,14 @@ export default function App() {
             Edge Function). Gates nothing; a parent who ignores it costs their
             student nothing. */}
         <Route path="/parent/:token" element={<ParentResponse />} />
+
+        {/* Event family hub, the family page. Public by design, outside
+            ProtectedLayout (no NavBar, no feedback widget, no notification
+            code): the emailed token is the credential, and the page never
+            touches a table (every call goes to the event-family Edge
+            Function). /e alone is "lost your link". */}
+        <Route path="/e/:token" element={<EventFamilyPage />} />
+        <Route path="/e" element={<EventFamilyPage />} />
 
         {/* Design-system specimen. Dev only — 404 in production. No auth, no Supabase. */}
         <Route path="/_ds" element={SpecimenPage ? <SpecimenPage /> : <DsNotFound />} />
@@ -379,6 +396,11 @@ export default function App() {
               the mentor route authors them and reads results. */}
           <Route path="/survey"          element={<SurveyPage session={session} />} />
           <Route path="/surveys"         element={<SurveysAdmin session={session} hasRole={hasRole} />} />
+          {/* Event family hub: the read-only boards for members, and the
+              mentor page (it gates itself; hub_staff_call is the boundary). */}
+          <Route path="/trips"           element={<TripsPage hasRole={hasRole} />} />
+          <Route path="/trips/:id"       element={<TripsPage hasRole={hasRole} />} />
+          <Route path="/trips/:id/manage" element={<TripsAdmin hasRole={hasRole} />} />
           {/* Display lives inside the layout so the nav + profile stay visible. */}
           <Route path="/display" element={<PresenceBoard hasRole={hasRole} />} />
         </Route>

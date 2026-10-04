@@ -11,6 +11,11 @@
 
 - The CSV escaper exists five times: `ApplicationsPage.jsx`, `reporting.js`,
   `ReportsPage.jsx`, `HoursBoard.jsx` and `surveys.js`.
+- Since 2026-10-04 the shared `src/csv.js` this default names exists (escaper,
+  BOM, the leading-quote guard for `=` `+` `-` `@`, tab and CR), because the
+  event family hub's prompt asked for its mentor CSV to carry the guard. Only
+  that export uses it. The five above were not moved onto it: that is this
+  decision's work, and the survey's verbatim rule is unchanged.
 - Fixed on 2026-10-01 (`921bbbd`, `3df69eb`): the Reports and Team Hours
   exports now start with a UTF-8 BOM, so Excel on Windows reads accented names.
   The Applications and survey exports do not yet.

@@ -64,6 +64,7 @@ const FEATURES = Object.freeze([
   'display-history',
   'my-hours',
   'dashboard-checkout',
+  'event-hub',
 ]);
 
 
