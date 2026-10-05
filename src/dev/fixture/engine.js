@@ -1167,6 +1167,10 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
   const api = {
     from: (table) => new Query(table),
     rpc: (name, args, opts) => new RpcQuery(name, args, opts),
+    // Is a migration on in the current setting? For a feature whose later
+    // migration changes what an earlier one's handlers answer (the event hub,
+    // 0005 then 0008).
+    applied: (mig) => applied(mig),
     tableInfo,
     seedAll,
     edgeFunction,

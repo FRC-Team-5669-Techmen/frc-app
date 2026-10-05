@@ -22,6 +22,18 @@ import './EventHub.css'
 // directly to the hub tables, which RLS lets staff write. Everything about a
 // family is written through hub_staff_call.
 
+// A staff RPC of its own (0008's removals), answering like staffCall.
+async function staffRpc(name, args) {
+  const { data, error } = await supabase.rpc(name, args)
+  if (error) {
+    const m = /^hub:([a-z_]+)$/.exec(error.message ?? '')
+    if (m) return { kind: 'refused', code: m[1], message: error.details }
+    if (isSchemaMissing(error)) return { kind: 'missing' }
+    return { kind: 'error', message: error.message }
+  }
+  return { kind: 'ok', data }
+}
+
 async function staffCall(action, args = {}) {
   const { data, error } = await supabase.rpc('hub_staff_call', { p_action: action, p_args: args })
   if (error) {
@@ -234,6 +246,63 @@ function Readiness({ ov, eventId, reload, openFamily }) {
 
 // ── families ────────────────────────────────────────────────────────────────
 
+// Removing a parent or guardian (their link stops working) and taking a
+// family off the trip (0008: hub_staff_remove_guardian, hub_staff_remove_family).
+function Removals({ selected, inviteId, onGone, reload }) {
+  const [arm, setArm] = useState(null)
+  const [note, setNote] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const say = (r, ok) => setNote(r.kind === 'ok' ? { text: ok }
+    : r.kind === 'missing' ? { text: 'Removing needs the 0008 update pasted first.', bad: true }
+      : { text: r.message || 'Not done.', bad: true })
+  async function dropEmail(email) {
+    setBusy(true)
+    const r = await staffRpc('hub_staff_remove_guardian', { p_invite: inviteId, p_email: email })
+    setBusy(false); setArm(null)
+    say(r, `${email} removed. Their link no longer works.`)
+    if (r.kind === 'ok') reload()
+  }
+  async function dropFamily() {
+    setBusy(true)
+    const r = await staffRpc('hub_staff_remove_family', { p_invite: inviteId })
+    setBusy(false); setArm(null)
+    if (r.kind === 'ok') { onGone(); return }
+    say(r, '')
+  }
+  return (
+    <section className="eh-card" data-testid="ehm-removals">
+      <h3 className="eh-label">Parents and guardians on this family</h3>
+      <ul className="eh-people-list">
+        {(selected.emails ?? []).map((e) => (
+          <li key={e} className="eh-person">
+            <span className="eh-person-text"><span className="eh-person-name">{e}</span></span>
+            {arm !== e
+              ? <button type="button" className="eh-btn eh-btn-quiet" disabled={busy} onClick={() => setArm(e)}>Remove</button>
+              : (
+                <span className="eh-confirm-inline">
+                  <span>Remove {e}? Their link stops working.</span>
+                  <button type="button" className="eh-btn eh-btn-danger" disabled={busy} onClick={() => dropEmail(e)} data-testid="ehm-remove-email-yes">Yes, remove</button>
+                  <button type="button" className="eh-btn" onClick={() => setArm(null)}>Keep</button>
+                </span>
+              )}
+          </li>
+        ))}
+        {(selected.emails ?? []).length === 0 && <li className="eh-quiet">No email on this family.</li>}
+      </ul>
+      {arm !== 'family'
+        ? <button type="button" className="eh-btn eh-btn-danger" disabled={busy} onClick={() => setArm('family')} data-testid="ehm-remove-family">Remove this family from the trip</button>
+        : (
+          <div className="eh-confirm-inline">
+            <span>Remove {selected.name}'s family? Their answers, seats, car and food claims go; drivers and mentors are told. They can sign up again on the open link.</span>
+            <button type="button" className="eh-btn eh-btn-danger" disabled={busy} onClick={dropFamily} data-testid="ehm-remove-family-yes">Yes, remove the family</button>
+            <button type="button" className="eh-btn" onClick={() => setArm(null)}>Keep them</button>
+          </div>
+        )}
+      {note && <p className={`eh-note${note.bad ? ' eh-note-bad' : ''}`} role="status">{note.text}</p>}
+    </section>
+  )
+}
+
 function Families({ ov, inviteId, setInviteId, reload }) {
   const [q, setQ] = useState('')
   const fam = (ov.families ?? []).filter((f) => f.name.toLowerCase().includes(q.trim().toLowerCase()))
@@ -264,6 +333,7 @@ function Families({ ov, inviteId, setInviteId, reload }) {
           <p className="eh-mono">Invite: {selected.invite_status}</p>
           {note && <p className={`eh-note${note.bad ? ' eh-note-bad' : ''}`}>{note.text}</p>}
         </section>
+        <Removals selected={selected} inviteId={inviteId} onGone={() => { setInviteId(null); reload() }} reload={reload} />
         <FamilyHub key={inviteId} transport={transport} standalone={false} />
       </div>
     )
@@ -299,9 +369,12 @@ function StaffBoards({ eventId, which }) {
   }, [eventId])
   useEffect(() => { load() }, [load])
   const act = useCallback(async (action, args) => {
-    const r = await staffCall(action, args)
+    // Seating two at once is its own RPC (0008); everything else is hub_staff_call.
+    const r = action === 'place_pair'
+      ? await staffRpc('hub_staff_place_pair', { p_car: args.car_id, p_first: args.first, p_second: args.second })
+      : await staffCall(action, args)
     await load()
-    return r
+    return r.kind === 'missing' && action === 'place_pair' ? { ...r, message: 'Seating two together needs the 0008 update pasted first.' } : r
   }, [load])
   if (!state) return <p className="eh-empty">Loading.</p>
   const tz = state.event.timezone
@@ -451,8 +524,9 @@ function Setup({ eventId, ov, reload }) {
         <DateTimeIn label="Lock-in opens" iso={ev.lockin_opens_at} tz={tz} onChange={(v) => setE('lockin_opens_at', v)} />
         <DateTimeIn label="Lock-in due" iso={ev.lockin_due_at} tz={tz} onChange={(v) => setE('lockin_due_at', v)} />
         <div className="eh-chips">
-          <button type="button" role="switch" aria-checked={ev.one_minor_rule} className={`eh-chip${ev.one_minor_rule ? ' eh-chip-on' : ''}`}
-                  onClick={() => setE('one_minor_rule', !ev.one_minor_rule)}>One-minor rule {ev.one_minor_rule ? 'on' : 'off'}</button>
+          {/* The Salesian one-child rule is enforced for every event (0008
+              makes it impossible to switch off), so it is shown, not offered. */}
+          <span className="eh-chip eh-chip-on" aria-disabled="true" data-testid="ehm-one-child">One-child rule: always on</span>
           <button type="button" role="switch" aria-checked={ev.driver_paperwork_required} className={`eh-chip${ev.driver_paperwork_required ? ' eh-chip-on' : ''}`}
                   onClick={() => setE('driver_paperwork_required', !ev.driver_paperwork_required)}>Driver paperwork required {ev.driver_paperwork_required ? 'on' : 'off'}</button>
         </div>

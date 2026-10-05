@@ -301,6 +301,14 @@ declare
   svc text[] := array['hub_family_call','hub_resend_request','hub_outbox_take','hub_outbox_mint_link',
                       'hub_outbox_done','hub_cron_enqueue'];
   usr text[] := array['hub_member_board','hub_member_events','hub_staff_call'];
+  -- Functions a LATER migration adds (0007's open link, 0008's family
+  -- changes) carry their own grants, checked by their own tests. Check 5 is
+  -- about 0005's functions, so it skips these; without this list it failed
+  -- whenever 0007 was applied, which it was meant never to do.
+  later text[] := array['hub_join','hub_join_info','hub_add_parent','_hub_join_eligible','_hub_join_event','_hub_join_taken',
+                        '_hub_mask_email','hub_remove_guardian','hub_remove_family','hub_staff_remove_guardian',
+                        'hub_staff_remove_family','hub_staff_place_pair','_hub_mint_token_for','_hub_family_extras',
+                        '_hub_remove_guardian','_hub_remove_family'];
   bad text; n int;
 begin
   select count(*), string_agg(c.relname, ', ') filter (where not c.relrowsecurity) into n, bad
@@ -333,11 +341,12 @@ begin
     from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace
    where ns.nspname = 'public'
      and (p.proname like '\_hub\_%' or p.proname like 'hub\_%' or p.proname = 'invoke_event_hub_tick')
+     and not (p.proname = any(later))
      and (has_function_privilege('anon', p.oid, 'EXECUTE')
           or has_function_privilege('authenticated', p.oid, 'EXECUTE') <> (p.proname = any(usr))
           or has_function_privilege('service_role', p.oid, 'EXECUTE') <> (p.proname = any(svc)));
   select count(*) into n from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace
-   where ns.nspname = 'public' and (p.proname like '\_hub\_%' or p.proname like 'hub\_%');
+   where ns.nspname = 'public' and (p.proname like '\_hub\_%' or p.proname like 'hub\_%') and not (p.proname = any(later));
   perform pg_temp.rec(5, 'each hub function is executable by exactly its caller: 6 by service_role, 3 by authenticated, none by anon',
     bad is null, format('%s functions checked; wrong: %s', n, coalesce(bad, 'none')));
 

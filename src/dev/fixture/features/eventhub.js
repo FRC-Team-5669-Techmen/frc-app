@@ -85,6 +85,11 @@ const ALLERGENS = ['peanut', 'tree_nut', 'milk', 'egg', 'wheat', 'soy', 'fish', 
 const TABLES = ['hub_events', 'hub_days', 'hub_meals', 'hub_food_needs', 'hub_invites', 'hub_invite_tokens', 'hub_responses',
   'hub_day_answers', 'hub_cars', 'hub_seats', 'hub_pickups', 'hub_food_claims', 'hub_outbox', 'hub_resend_log']
 const STAFF_ROLES = ['mentor', 'lead', 'admin']
+// Is 0008 (supabase/migrations/0008_event_hub_families.sql) on? Set at the
+// start of every handler from the engine, so this port answers as 0005 alone
+// or as 0005 plus 0008, whichever the fixture is set to.
+let V8 = false
+const setV8 = (engine) => { V8 = !!engine?.applied?.('0008') }
 
 // ── time ────────────────────────────────────────────────────────────────────
 const fmtParts = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -200,7 +205,14 @@ function progress(db, inv) {
     const p = planRow(db, inv, d)
     if (a.attending == null) miss('days', 'attending', d.id)
     else if (a.attending === 'unsure') unsure += 1
-    if (a.attending !== 'yes') continue
+    // 0008: a parent may drive students without their own student aboard,
+    // whatever the student's answer, and the car questions apply then too.
+    const drives = V8 && (a.drive_to === true || a.drive_home === true)
+    const carChecks = () => {
+      if (a.offer_seats == null || !String(a.offer_description ?? '').trim() || !a.offer_leave_by || a.offer_takes_pickups == null) miss('getting', 'car', d.id)
+      if (!r.driver_25 || !r.driver_licensed) miss('getting', 'driver_checks', d.id)
+    }
+    if (a.attending !== 'yes') { if (drives) carChecks(); continue }
     coming += 1
     if (!a.confirmed_at) unconfirmed += 1
     if (a.adults == null) miss('days', 'adults', d.id)
@@ -209,10 +221,7 @@ function progress(db, inv) {
       if (a.school_mode == null) miss('getting', 'school_mode', d.id)
       else if (a.school_mode === 'pickup' && !one(db, 'hub_pickups', (k) => k.invite_id === inv && k.day_id === d.id && k.spot)) miss('getting', 'pickup', d.id)
     }
-    if ([p.eff_to, p.eff_home].includes('driving')) {
-      if (a.offer_seats == null || !String(a.offer_description ?? '').trim() || !a.offer_leave_by || a.offer_takes_pickups == null) miss('getting', 'car', d.id)
-      if (!r.driver_25 || !r.driver_licensed) miss('getting', 'driver_checks', d.id)
-    }
+    if ([p.eff_to, p.eff_home].includes('driving') || drives) carChecks()
   }
   if (!(r.allergies_none || (r.allergens ?? []).length || String(r.allergy_other ?? '').trim())) miss('food', 'allergies')
   if (r.medication == null) miss('food', 'medication')
@@ -337,7 +346,8 @@ function syncCars(db, inv, dayId, now) {
   const d = one(db, 'hub_days', (x) => x.id === dayId)
   for (const run of ['to', 'home']) {
     const mode = run === 'to' ? a.to_mode : a.home_mode
-    const want = a.attending === 'yes' && mode === 'driving' && a.offer_seats != null && String(a.offer_description ?? '').trim()
+    const flag = V8 && (run === 'to' ? a.drive_to : a.drive_home) === true
+    const want = ((a.attending === 'yes' && mode === 'driving') || flag) && a.offer_seats != null && String(a.offer_description ?? '').trim()
       && a.offer_leave_by && a.offer_takes_pickups != null && r.driver_25 && r.driver_licensed
     const c = one(db, 'hub_cars', (x) => x.day_id === dayId && x.run === run && x.driver_invite_id === inv)
     if (want) {
@@ -412,7 +422,7 @@ function save(db, inv, staff, field, value, dayId, now) {
       for (const d of T(db, 'hub_days').filter((x) => x.event_id === i.event_id)) syncCars(db, inv, d.id, now)
       break
     default: {
-      if (!DAY_FIELDS.includes(field)) refuse('unknown_field', 'That answer is not part of this form.')
+      if (!DAY_FIELDS.includes(field) && !(V8 && ['drive_to', 'drive_home'].includes(field))) refuse('unknown_field', 'That answer is not part of this form.')
       const d = one(db, 'hub_days', (x) => x.id === dayId && x.event_id === i.event_id)
       if (!d) refuse('bad_day', 'That day is not part of this event.')
       if (!staff && now >= ms(d.venue_closes_at)) refuse('day_over', 'That day is over. Its answers are read-only now.')
@@ -442,8 +452,16 @@ function saveDay(db, inv, staff, field, value, d, a, r, now) {
       return
     }
     case 'adults':
-      if (value != null && ![0, 1, 2, 3, 4].includes(value)) refuse('invalid', 'Choose 0 to 4 adults.')
+      if (V8) { if (value != null && !(Number.isInteger(value) && value >= 0 && value <= 30)) refuse('invalid', 'Choose 0 to 30 adults.') }
+      else if (value != null && ![0, 1, 2, 3, 4].includes(value)) refuse('invalid', 'Choose 0 to 4 adults.')
       a.adults = value; return
+    case 'drive_to': case 'drive_home': {
+      const run = field === 'drive_to' ? 'to' : 'home'
+      if (T(db, 'hub_cars').some((c) => c.driver_invite_id === inv && c.day_id === d.id && c.run === run && c.left_at)) refuse('car_left', 'That car already left.')
+      a[field] = jbool(value)
+      syncCars(db, inv, d.id, now)
+      return
+    }
     case 'pit_setup': a.pit_setup = jbool(value); return
     case 'home_option': {
       const v = jtext(value)
@@ -489,7 +507,7 @@ function saveDay(db, inv, staff, field, value, d, a, r, now) {
     }
     default: {
       const blank = value == null || (field === 'car_description' && !jtext(value))
-      if (blank && T(db, 'hub_cars').some((c) => c.driver_invite_id === inv && c.day_id === d.id)) refuse('car_required', 'Keep this filled in while you are driving. To stop driving, change how your student gets to the venue.')
+      if (blank && T(db, 'hub_cars').some((c) => c.driver_invite_id === inv && c.day_id === d.id)) refuse('car_required', V8 ? 'Keep this filled in while you are driving. To stop driving, change your answer to "Will a parent drive?"' : 'Keep this filled in while you are driving. To stop driving, change how your student gets to the venue.')
       if (field === 'car_seats') { if (value != null && ![1, 2, 3, 4, 5, 6, 7].includes(value)) refuse('invalid', 'Choose 1 to 7 seats.'); a.offer_seats = value }
       if (field === 'car_description') a.offer_description = jlen(jtext(value), 80)
       if (field === 'car_leave_by') { if (value != null && Number.isNaN(Date.parse(value))) refuse('invalid', 'That is not a time.'); a.offer_leave_by = value }
@@ -737,6 +755,7 @@ function familyView(db, inv, viewer, now) {
       eff_to: p.eff_to, eff_home: p.eff_home, nearby_before: p.nearby_before, nearby_after: p.nearby_after,
       car_seats: a.offer_seats ?? null, car_description: a.offer_description ?? null, car_leave_by: a.offer_leave_by ?? null,
       car_takes_pickups: a.offer_takes_pickups ?? null, confirmed: !!a.confirmed_at,
+      ...(V8 ? { drive_to: a.drive_to ?? null, drive_home: a.drive_home ?? null } : {}),
       pickup: pk ? { spot: pk.spot, covers_home: pk.covers_home, accepted: !!pk.car_id, driver: pk.car_id ? driverName(db, pk.car_id) : null } : null,
     }
   }
@@ -958,6 +977,58 @@ function staffCall(db, user, action, args, now) {
   return { ok: true, ...(v ?? {}) }
 }
 
+// 0008: who the link belongs to, and every parent or guardian on the family.
+function familyExtras(db, token) {
+  const tk = one(db, 'hub_invite_tokens', (t) => t.token === token && !t.revoked_at)
+  const i = tk && one(db, 'hub_invites', (x) => x.id === tk.invite_id)
+  if (!i) return {}
+  return { me: tk.email ?? null, guardians: (i.emails ?? []).map((e) => ({ email: e, name: i.guardian_names?.[e] ?? null })) }
+}
+
+/** The 0008 removals, for features/eventhubfamilies.js (its migration gates them). */
+export function removeFamily(db, inv, staff, now) {
+  const i = one(db, 'hub_invites', (x) => x.id === inv)
+  if (!i) refuse('not_found', 'That family is not part of this event.')
+  if (!staff) {
+    if (now >= eventEnd(db, i.event_id)) refuse('event_over', 'This event is over.')
+    const left = T(db, 'hub_seats').some((x) => x.invite_id === inv && one(db, 'hub_cars', (c) => c.id === x.car_id)?.left_at)
+      || T(db, 'hub_cars').some((c) => c.driver_invite_id === inv && c.left_at)
+    if (left) refuse('car_left', 'A car with your family in it has already left. Ask a mentor.')
+  }
+  for (const x of T(db, 'hub_seats').filter((y) => y.invite_id === inv)) dropSeat(db, x.car_id, inv, 'rider', null, now)
+  for (const c of T(db, 'hub_cars').filter((y) => y.driver_invite_id === inv)) {
+    for (const x of seatsIn(db, c.id)) dropSeat(db, c.id, x.invite_id, 'driver', "The driver's family left the trip.", now)
+    for (const p of T(db, 'hub_pickups')) if (p.car_id === c.id) { p.car_id = null; p.accepted_at = null }
+    db.hub_cars = T(db, 'hub_cars').filter((y) => y !== c)
+  }
+  for (const d of T(db, 'hub_days').filter((x) => x.event_id === i.event_id)) withdrawPickup(db, inv, d.id, now)
+  for (const fc of T(db, 'hub_food_claims').filter((x) => x.invite_id === inv)) {
+    const m = one(db, 'hub_meals', (x) => x.id === fc.meal_id)
+    if (m && now < ms(m.starts_at)) foodChange(db, fc.id, inv, staff, true, null, null, null, now)
+  }
+  const name = studentName(db, i.student_id)
+  enqueue(db, i.event_id, 'family_removed', mentorEmails(db, i.event_id), `${name}'s family was removed`, staff ? 'By a mentor.' : 'By the family.')
+  for (const t of ['hub_invite_tokens', 'hub_responses', 'hub_day_answers', 'hub_pickups', 'hub_food_claims', 'hub_seats']) db[t] = T(db, t).filter((x) => x.invite_id !== inv)
+  db.hub_outbox = T(db, 'hub_outbox').filter((x) => x.link_invite_id !== inv)
+  db.hub_invites = T(db, 'hub_invites').filter((x) => x.id !== inv)
+  return { ok: true, student: name }
+}
+
+export function removeGuardian(db, inv, email, staff, callerEmail, now) {
+  const i = one(db, 'hub_invites', (x) => x.id === inv)
+  if (!i) refuse('not_found', 'That family is not part of this event.')
+  const e = String(email ?? '').trim().toLowerCase()
+  if (!staff && now >= eventEnd(db, i.event_id)) refuse('event_over', 'This event is over.')
+  if (!(i.emails ?? []).includes(e)) refuse('not_on_family', 'That email is not on this family.')
+  if (!staff && i.emails.length === 1) refuse('last_guardian', 'You are the only parent or guardian on this family. To take your family off the trip, use "Remove our family".')
+  i.emails = i.emails.filter((x) => x !== e)
+  if (i.guardian_names) { const g = { ...i.guardian_names }; delete g[e]; i.guardian_names = g }
+  for (const t of T(db, 'hub_invite_tokens')) if (t.invite_id === inv && t.email === e && !t.revoked_at) t.revoked_at = iso(now)
+  return { ok: true, self: callerEmail === e }
+}
+
+export const hubFixture = { T, one, nowMs, txn, Refusal, tokenInvite, isStaff, claim, seatsIn, refuse }
+
 const refusalAnswer = (e) => ({ data: null, error: { code: e.state, message: `hub:${e.code}`, details: e.message, hint: null } })
 
 // ── seed ────────────────────────────────────────────────────────────────────
@@ -1098,7 +1169,8 @@ export default {
   },
   seed: ({ now }) => seedRows({ now }),
   rpcs: {
-    hub_member_events: ({ db, user, persona, now }) => {
+    hub_member_events: ({ db, user, persona, now, engine }) => {
+      setV8(engine)
       const ok = isStaff(db, user?.id) || (!!user && one(db, 'profiles', (p) => p.id === user.id)?.approved !== false && roles(db, user.id).includes('student'))
       if (!ok) return { data: [], error: null }
       const t = nowMs(now)
@@ -1109,7 +1181,8 @@ export default {
         error: null,
       }
     },
-    hub_member_board: ({ args, db, user, now }) => {
+    hub_member_board: ({ args, db, user, now, engine }) => {
+      setV8(engine)
       const t = nowMs(now)
       const staff = isStaff(db, user?.id)
       const ok = staff || (!!user && one(db, 'profiles', (p) => p.id === user.id)?.approved !== false && roles(db, user.id).includes('student'))
@@ -1117,7 +1190,8 @@ export default {
       if (!one(db, 'hub_events', (e) => e.id === args?.p_event)) return { data: null, error: { code: 'P0002', message: 'hub:not_found', details: 'That event does not exist.' } }
       return { data: { event: eventJson(db, args.p_event, t), board: board(db, args.p_event, staff ? 'staff' : 'member', null, t) }, error: null }
     },
-    hub_staff_call: ({ args, db, user, now }) => {
+    hub_staff_call: ({ args, db, user, now, engine }) => {
+      setV8(engine)
       if (!isStaff(db, user?.id)) return { data: null, error: { code: '42501', message: 'hub:not_allowed', details: 'Staff only.' } }
       try { return { data: txn(db, () => staffCall(db, user, args?.p_action, args?.p_args, nowMs(now))), error: null } } catch (e) {
         if (e instanceof Refusal) return refusalAnswer(e)
@@ -1127,7 +1201,8 @@ export default {
   },
   functions: {
     // The event-family Edge Function: a family by token, and "lost your link".
-    'event-family': ({ body, db, now }) => {
+    'event-family': ({ body, db, now, engine }) => {
+      setV8(engine)
       const t = nowMs(now)
       if (body?.action === 'resend_link') {
         T(db, 'hub_resend_log').push({ id: T(db, 'hub_resend_log').length + 1, email: String(body.email ?? '').toLowerCase(), at: iso(t) })
@@ -1136,7 +1211,8 @@ export default {
       if (body?.action === 'drain') return { data: { ok: true, sent: 0, failed: 0, skipped: 'gmail_not_configured' }, error: null }
       if (!tokenInvite(db, body?.token)) return { data: { error: 'not_found' }, status: 404 }
       try {
-        return { data: txn(db, () => familyCall(db, body.token, body.action ?? 'fetch', body.args, t)), error: null }
+        const out = txn(db, () => familyCall(db, body.token, body.action ?? 'fetch', body.args, t))
+        return { data: V8 && out?.event ? { ...out, ...familyExtras(db, body.token) } : out, error: null }
       } catch (e) {
         if (e instanceof Refusal) return e.state === 'P0002' ? { data: { error: 'not_found' }, status: 404 } : { data: { error: e.code, message: e.message }, status: 409 }
         throw e

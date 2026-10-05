@@ -3,6 +3,8 @@ import {
   ALLERGENS, allergyStrip, carStatus, defaultDayIndex, fmtDate, fmtPhone, fmtTime, gapLine, headcountLine, leavesEarly,
   needsSeat, parseInfoLine, visibleSections, allergenLabel,
 } from './eventHub'
+import { Fold } from './EventHubControls'
+import { IconBed, IconCar, IconClipboard, IconClock, IconFlag, IconInfo, IconLink, IconPin, IconShield, IconStar, IconUsers, IconUtensils } from './eventIcons'
 import './EventHub.css'
 
 // The event family hub's three boards, shared by the family page
@@ -38,6 +40,11 @@ export function Seg({ items, value, onPick, label, className = '' }) {
       ))}
     </div>
   )
+}
+
+/** Today's date (YYYY-MM-DD) in the event's time zone. */
+function todayIn(tz) {
+  try { return new Intl.DateTimeFormat('en-CA', { timeZone: tz || 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()) } catch { return '' }
 }
 
 function Note({ note }) {
@@ -161,7 +168,7 @@ function SeatDots({ seats, filled }) {
   )
 }
 
-function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced, act, locked }) {
+export function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced = [], act, locked }) {
   const [confirm, setConfirm] = useState(null)
   const [note, setNote] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -170,7 +177,16 @@ function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced, act, locked })
   const status = carStatus(car, tz)
   const early = leavesEarly(car, day, tz)
   const frozen = car.status === 'left' || car.status === 'arrived'
+  // A family sees Leaving now and Arrived only on the day itself; weeks
+  // ahead they were a puzzle. Mentors keep them every day.
+  const dayOf = viewer === 'staff' || day.date === todayIn(tz)
   const canClaim = viewer === 'family' && !locked && !frozen && !car.mine && needsSeat(myDay, runKey)
+  // An empty car without its driver's own student aboard takes its first two
+  // riders together (the one-child rule). A family claim of the first seat
+  // would be refused, so it is not offered; a mentor seats two at once.
+  const emptyPair = !!car.needs_two && car.riders_count === 0
+  const [pairA, setPairA] = useState('')
+  const [pairB, setPairB] = useState('')
 
   async function go(action, args, okText) {
     setBusy(true)
@@ -210,7 +226,16 @@ function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced, act, locked })
           {car.problem === 'single_pickup' ? 'Needs a second pickup rider' : 'Needs a second rider'}
         </p>
       )}
-      {car.needs_two && !car.problem && viewer !== 'member' && <p className="eh-quiet eh-small">Takes two or more riders.</p>}
+      {car.needs_two && !car.problem && viewer !== 'member' && (
+        <p className="eh-pair-note" data-testid="eh-needs-two"><IconShield size={16} />
+          <span>{viewer === 'staff'
+            ? (emptyPair ? 'Needs two students together (one-child rule). Seat two at once below.' : 'Takes two or more riders (one-child rule).')
+            : car.mine
+              ? 'Your car takes two or more students together (one-child rule). A mentor seats the first two, then families can pick it.'
+              : emptyPair ? 'Takes two students together (one-child rule). A mentor seats the first two; then you can pick it.'
+                : 'Takes two or more riders (one-child rule).'}</span>
+        </p>
+      )}
       {car.override_reason && <p className="eh-quiet eh-small">Override: {car.override_reason}</p>}
 
       {car.riders?.length > 0 && (
@@ -232,7 +257,7 @@ function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced, act, locked })
         </ul>
       )}
 
-      {car.driver_phone && (
+      {car.driver_phone && !car.mine && (
         <p className="eh-phone">Driver: <a href={`tel:${car.driver_phone}`} data-testid="eh-driver-phone">{fmtPhone(car.driver_phone)}</a></p>
       )}
       {!car.driver_phone && car.phone_note === 'contact_mentors' && <p className="eh-phone eh-quiet">Contact through mentors</p>}
@@ -242,7 +267,7 @@ function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced, act, locked })
           <button type="button" className="eh-btn" disabled={busy}
                   onClick={() => go('unclaim_seat', { car_id: car.id }, 'Seat released.')}>Leave this car</button>
         )}
-        {canClaim && !car.my_seat && car.status !== 'pending' && car.status !== 'full' && confirm !== 'claim' && (
+        {canClaim && !car.my_seat && !emptyPair && car.status !== 'pending' && car.status !== 'full' && confirm !== 'claim' && (
           <button type="button" className="eh-btn eh-btn-primary" disabled={busy} data-testid="eh-claim"
                   onClick={() => (early ? setConfirm('claim')
                     : go('claim_seat', { car_id: car.id, day_id: day.id, run: runKey }, 'Seat claimed.'))}>
@@ -259,13 +284,13 @@ function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced, act, locked })
             <button type="button" className="eh-btn" onClick={() => setConfirm(null)}>Cancel</button>
           </div>
         )}
-        {(car.mine || viewer === 'staff') && !locked && !frozen && (
+        {(car.mine || viewer === 'staff') && dayOf && !locked && !frozen && (
           <button type="button" className="eh-btn eh-btn-primary" disabled={busy} data-testid="eh-leaving"
                   onClick={() => go('mark', { car_id: car.id, what: 'left', override_reason: override || undefined }, 'Marked as left. Riders’ families were emailed.')}>
             Leaving now
           </button>
         )}
-        {(car.mine || viewer === 'staff') && !locked && car.status === 'left' && (
+        {(car.mine || viewer === 'staff') && dayOf && !locked && car.status === 'left' && (
           <button type="button" className="eh-btn eh-btn-primary" disabled={busy}
                   onClick={() => go('mark', { car_id: car.id, what: 'arrived' }, 'Marked as arrived. Riders’ families were emailed.')}>
             Arrived
@@ -284,7 +309,26 @@ function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced, act, locked })
               <input className="eh-input" value={override} onChange={(e) => setOverride(e.target.value)} placeholder="Why this car may leave as it is" />
             </label>
           )}
-          {unplaced.length > 0 && (
+          {emptyPair && unplaced.filter((u) => u.invite_id).length >= 2 && (
+            <div className="eh-pair" data-testid="eh-pair">
+              <span className="eh-q-label">Seat two students together</span>
+              <div className="eh-inline">
+                <select className="eh-input" value={pairA} onChange={(e) => setPairA(e.target.value)} aria-label="First student">
+                  <option value="">First student</option>
+                  {unplaced.filter((u) => u.invite_id && u.invite_id !== pairB).map((u) => <option key={u.invite_id} value={u.invite_id}>{u.name}</option>)}
+                </select>
+                <select className="eh-input" value={pairB} onChange={(e) => setPairB(e.target.value)} aria-label="Second student">
+                  <option value="">Second student</option>
+                  {unplaced.filter((u) => u.invite_id && u.invite_id !== pairA).map((u) => <option key={u.invite_id} value={u.invite_id}>{u.name}</option>)}
+                </select>
+                <button type="button" className="eh-btn eh-btn-primary" disabled={!pairA || !pairB || busy} data-testid="eh-pair-go"
+                        onClick={() => go('place_pair', { car_id: car.id, first: pairA, second: pairB }, 'Both seated.').then(() => { setPairA(''); setPairB('') })}>
+                  Seat both
+                </button>
+              </div>
+            </div>
+          )}
+          {unplaced.length > 0 && !emptyPair && (
             <div className="eh-inline">
               <select className="eh-input" value={moveTo} onChange={(e) => setMoveTo(e.target.value)} aria-label="Move a student into this car">
                 <option value="">Move a student here</option>
@@ -303,7 +347,7 @@ function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced, act, locked })
   )
 }
 
-function PickupRequests({ pickups, cars, viewer, act, locked, day }) {
+export function PickupRequests({ pickups, cars, viewer, act, locked, day }) {
   const [note, setNote] = useState(null)
   const [carFor, setCarFor] = useState({})
   const myCar = cars.find((c) => c.mine)
@@ -519,36 +563,52 @@ function MealCard({ meal, tz, viewer, act, locked }) {
 
 // ── Event info ──────────────────────────────────────────────────────────────
 
+// Which icon a section of the Event info page carries, by its key.
+function infoIcon(key = '') {
+  if (/drive|route|parking/.test(key)) return IconCar
+  if (/agenda|schedule|fri|sat|sun/.test(key)) return IconClock
+  if (/truck|food|meal|vendor/.test(key)) return IconUtensils
+  if (/hotel|stay|lodg/.test(key)) return IconBed
+  if (/rule|halloween|safety|conduct/.test(key)) return IconShield
+  if (/parent|channel|group/.test(key)) return IconUsers
+  if (/team|award/.test(key)) return IconFlag
+  if (/watch|stream/.test(key)) return IconStar
+  if (/bring|pack|shirt|store/.test(key)) return IconClipboard
+  return IconInfo
+}
+
 export function EventInfo({ event }) {
   const links = event?.links ?? {}
-  const sections = visibleSections(event?.info, links)
+  const sections = visibleSections(event?.info, links).filter((s) => s.key !== 'where')
   return (
-    <div className="eh-info">
+    <div className="eh-event-info">
       {(event?.venue_name || event?.venue_address) && (
-        <section className="eh-card">
-          <h3 className="eh-label">Where</h3>
-          <p className="eh-info-venue">{event.venue_name}</p>
-          {event.venue_address && <p>{event.venue_address}</p>}
-          {event.map_url && <a className="eh-link" href={event.map_url} target="_blank" rel="noopener noreferrer">Open the map</a>}
+        <section className="eh-card eh-where">
+          <span className="eh-where-icon"><IconPin size={26} /></span>
+          <div>
+            <p className="eh-info-venue">{event.venue_name}</p>
+            {event.venue_address && <p className="eh-quiet">{event.venue_address}</p>}
+            {event.map_url && <a className="eh-btn eh-btn-primary" href={event.map_url} target="_blank" rel="noopener noreferrer"><IconPin size={18} />Open the map</a>}
+          </div>
         </section>
       )}
-      {sections.filter((s) => s.key !== 'where').map((s) => (
-        <section key={s.key} className="eh-card" data-testid="eh-info-section">
-          <h3 className="eh-label">{s.title}</h3>
+      <p className="eh-hint">Tap a heading to open it.</p>
+      {sections.map((s, i) => (
+        <Fold key={s.key} title={s.title} icon={infoIcon(s.key)} testid="eh-info-section" defaultOpen={i === 0 && sections.length <= 3}>
           <ul className="eh-info-lines">
-            {(s.lines ?? []).map((line, i) => {
+            {(s.lines ?? []).map((line, j) => {
               const l = parseInfoLine(line, links)
-              if (l.kind === 'text') return <li key={i} className="eh-info-text">{l.text}</li>
-              if (l.kind === 'link') return <li key={i} className="eh-info-row"><a className="eh-link" href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a></li>
+              if (l.kind === 'text') return <li key={j} className="eh-info-text">{l.text}</li>
+              if (l.kind === 'link') return <li key={j} className="eh-info-row"><a className="eh-link eh-with-icon" href={l.href} target="_blank" rel="noopener noreferrer"><IconLink size={16} />{l.label}</a></li>
               return (
-                <li key={i} className="eh-info-row">
+                <li key={j} className="eh-info-row">
                   <span className="eh-info-k">{l.label}</span>
                   <span className={`eh-info-v${l.missing ? ' eh-quiet' : ''}`}>{l.value}</span>
                 </li>
               )
             })}
           </ul>
-        </section>
+        </Fold>
       ))}
     </div>
   )

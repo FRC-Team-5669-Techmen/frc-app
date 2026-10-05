@@ -7,7 +7,11 @@ create it. The first four, `0001` to `0004`, landed on 2026-10-01, each with its
 (the event family hub, with its test) and `0006` (the Beach Blitz 2026 seed,
 data only, so no test of its own; the 0005 test builds its own fixture event)
 landed on 2026-10-04, likewise unapplied. `0007` (the event hub's open
-sign-up link, with its test) landed on 2026-10-05.
+sign-up link, with its test) landed on 2026-10-05, and `0008` (the hub's
+family changes: a parent driving without their own student, more than one
+parent per family and removing one, a family leaving the trip, mentors
+seating two at once, the one-child rule made permanent; with its test) the
+same day.
 
 **Every numbered test can now be run here, before anyone pastes it.**
 `node tools/sql-harness/run.mjs` builds a throwaway PostgreSQL 16 with Supabase
@@ -71,7 +75,8 @@ has to FIND its rows, and row lookup goes through the SELECT policy, so a test
 that thought it was checking UPDATE was checking SELECT again.
 
 Three of the frozen SQL files have a test sibling; every numbered migration has
-had one since `0001`, which made seven on 2026-10-01, eight on 2026-10-04 and nine on 2026-10-05
+had one since `0001`, which made seven on 2026-10-01, eight on 2026-10-04, nine on 2026-10-05 with
+`0007`, and ten later that day with `0008`
 (a pure data seed such as `0006` has no boundary to test). That is the number
 this rule exists to move.
 

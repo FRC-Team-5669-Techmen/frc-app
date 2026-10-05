@@ -14,6 +14,8 @@ node tools/sql-harness/run.mjs --migrations 0005 --tests none \
   --node tools/sql-harness/race-0005.mjs                         # the two-session seat race
 node tools/sql-harness/run.mjs --migrations 0005 --tests none \
   --node tools/sql-harness/mutants-0005.mjs                      # 30 mutants against the 0005 test
+node tools/sql-harness/run.mjs --migrations 0005,0006,0007,0008 --tests none \
+  --node tools/sql-harness/mutants-0008.mjs                      # 37 mutants against the 0008 test
 node tools/sql-harness/run.mjs --keep                            # leave it up and print how to psql in
 ```
 
@@ -29,8 +31,9 @@ cluster. It writes nothing inside the repository. About 40 seconds.
 | `run.mjs` | the runner (its header documents every flag) |
 | `stubs.sql` | what a Supabase project has before any file here runs: the `anon` / `authenticated` / `service_role` roles, `auth.users` and `auth.uid()` / `email()` / `role()` / `jwt()` reading the same GUCs PostgREST sets, the bootstrap `ALTER DEFAULT PRIVILEGES` that grants every new public table to `anon` and `authenticated` (reproduced on purpose: it is the trap behind "a missing policy fails at 0 rows"), `storage.*`, pgcrypto in schema `extensions`, stub `pg_net` / `pg_cron`, and the starter `profiles` / `attendance_events` tables |
 | `seed.sql` | fictional members with the fixture personas' ids (`src/dev/fixture/personas.js`), a season spanning today and current-season applications |
-| `race-0005.mjs` | two real sessions racing for the last seat of a car (0005) |
+| `race-0005.mjs` | two real sessions racing for the last seat of a car (0005). Run it with `--migrations 0005` only: its event has the one-child rule off, which 0008 refuses |
 | `mutants-0005.mjs` | widens each 0005 boundary in turn and requires the test to turn red |
+| `mutants-0008.mjs` | the same for 0008 (removals, drive flags, guardians, pair seating, grants) |
 
 ## What it is not
 

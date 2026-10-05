@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
-import { supabase } from './supabase'
+import { createSaver, fmtDate, fmtDay, statusLine } from './eventHub'
+import { EventInfo } from './EventHubBoards'
+import { PARTS, PartContacts, PartDays, PartFood, PartRides, Summary } from './EventFamilyParts'
 import {
-  ALLERGENS, STEPS, createSaver, fmtDate, fmtDay, fmtTime, formDays, isoToZoned, missingFor, needsSeat,
-  nightOptions, sameNights, statusLine, zonedToIso,
-} from './eventHub'
-import { CarpoolBoard, EventInfo, FoodBoard, Seg } from './EventHubBoards'
+  IconArrowLeft, IconArrowRight, IconCalendar, IconCheck, IconClock, IconFlag, IconInfo, IconPin, IconSave, IconWifiOff,
+} from './eventIcons'
 import './EventHub.css'
 
 // The event family hub's FAMILY PAGE, /e/<token>: one page per student, for a
@@ -44,6 +44,7 @@ async function callFn(payload) {
 export function familyTransport(token) {
   return {
     viewer: 'family',
+    token,
     storageKey: `techmen:hub-pending:${token}`,
     load: () => callFn({ token, action: 'fetch' }),
     save: (p) => callFn({ token, action: 'save', args: p }),
@@ -65,7 +66,7 @@ function localStore(key) {
 
 // Answers whose change moves the board or the plan: reload the page's data
 // after they save.
-const RELOAD_FIELDS = new Set(['attending', 'staying_nights', 'to_mode', 'home_mode', 'school_mode', 'pickup',
+const RELOAD_FIELDS = new Set(['attending', 'staying_nights', 'to_mode', 'home_mode', 'school_mode', 'pickup', 'drive_to', 'drive_home',
   'car_seats', 'car_description', 'car_leave_by', 'car_takes_pickups', 'driver_25', 'driver_licensed',
   'driver_phone_consent', 'rider_phone_consent', 'allergens', 'allergies_none', 'allergy_other', 'adults'])
 
@@ -85,504 +86,160 @@ function applyLocal(view, p) {
   return { ...view, answers: { ...answers, response: { ...answers.response, [p.field]: p.value } } }
 }
 
-// ── small controls ──────────────────────────────────────────────────────────
+// ── the hub ─────────────────────────────────────────────────────────────────
 
-function SaveNote({ s, tz }) {
-  if (!s) return null
-  const text = s.state === 'saving' ? 'Saving'
-    : s.state === 'saved' ? `Saved ${fmtTime(s.at, tz)}`
-      : s.state === 'retrying' ? 'Not saved, retrying'
-        : s.message
-  return <span className={`eh-save eh-save-${s.state}`} aria-live="polite" data-testid="eh-save">{text}</span>
+/** Where a family lands: the first part with something left, else the
+ *  summary. Decided once, at the first load, so a page never jumps under a
+ *  parent's thumb when an answer saves. */
+function landing(view) {
+  if (view.event?.over || view.progress?.phase1_done) return 'summary'
+  const left = new Set((view.progress?.missing ?? []).map((m) => m.step))
+  return (PARTS.find((pt) => left.has(pt.progressKey)) ?? PARTS[0]).key
 }
 
-function Choice({ k, label, hint, options, value, onPick, ctx, disabled, children, testid }) {
+/** A part counts as done when nothing is missing from it. Rides has nothing
+ *  to ask until a day is answered, so it is not done before Who is coming. */
+function partDone(view, pt) {
+  const steps = view.progress?.steps ?? {}
+  return !!steps[pt.progressKey] && (pt.key !== 'rides' || !!steps.days)
+}
+
+function SaveBar({ states }) {
+  const all = Object.values(states)
+  const retrying = all.some((s) => s.state === 'retrying')
+  const saving = all.some((s) => s.state === 'saving')
+  // "All changes saved" shows for a moment after each save and then goes;
+  // "Saving" and "Not saved yet" stay up for as long as they are true.
+  const [fresh, setFresh] = useState(false)
+  useEffect(() => {
+    if (all.length === 0 || retrying || saving) return undefined
+    setFresh(true)
+    const id = setTimeout(() => setFresh(false), 2500)
+    return () => clearTimeout(id)
+  }, [states]) // eslint-disable-line react-hooks/exhaustive-deps
+  if (all.length === 0 || (!retrying && !saving && !fresh)) return null
+  const cls = retrying ? 'eh-savebar-bad' : saving ? 'eh-savebar-busy' : 'eh-savebar-ok'
   return (
-    <fieldset className="eh-q" data-testid={testid}>
-      <legend className="eh-q-label">{label}</legend>
-      {hint && <p className="eh-hint">{hint}</p>}
-      <div className="eh-chips" role="radiogroup" aria-label={label}>
-        {options.map((o) => {
-          const on = o.on ?? value === o.value
+    <div className="eh-savebar" aria-live="polite">
+      <span className={`eh-savebar-pill ${cls}`} data-testid="eh-savebar">
+        {retrying ? <IconWifiOff size={16} /> : saving ? <IconSave size={16} /> : <IconCheck size={16} />}
+        {retrying ? 'Not saved yet, retrying' : saving ? 'Saving' : 'All changes saved'}
+      </span>
+    </div>
+  )
+}
+
+function Hero({ view, standalone, onInfo }) {
+  const ev = view.event
+  const days = [...(view.board.days ?? [])].sort((x, y) => String(x.date).localeCompare(String(y.date)))
+  const dates = days.length === 0 ? ''
+    : days.length === 1 ? fmtDate(days[0].date, 'medium')
+      : `${fmtDate(days[0].date, 'medium')} to ${fmtDate(days[days.length - 1].date, 'medium')}`
+  return (
+    <header className="eh-hero">
+      {standalone && <img src="/assets/logos/Mark-Gold.svg" className="eh-mark" alt="Techmen" />}
+      <div className="eh-hero-text">
+        <p className="eh-kicker">{ev.title}</p>
+        <h1 className="eh-title" data-testid="eh-student">{view.student.name}</h1>
+        <p className="eh-hero-meta">
+          {ev.venue_name && <span><IconPin size={16} />{ev.venue_name}</span>}
+          {dates && <span><IconCalendar size={16} />{dates}</span>}
+        </p>
+        <p className="eh-status" data-testid="eh-status">{statusLine(view)}</p>
+      </div>
+      <button type="button" className="eh-btn eh-hero-info" onClick={onInfo} data-testid="eh-info-open">
+        <IconInfo size={18} />Event info
+      </button>
+    </header>
+  )
+}
+
+function Tracker({ view, part, go }) {
+  const ev = view.event
+  const done = PARTS.filter((pt) => partDone(view, pt)).length
+  return (
+    <nav className="eh-tracker" aria-label="Sign-up progress" data-testid="eh-tracker">
+      <div className="eh-tracker-top">
+        <span className="eh-tracker-count" data-testid="eh-tracker-count">{done} of {PARTS.length} parts done</span>
+        {ev.phase1_due_at && !view.progress?.phase1_done && (
+          <span className="eh-tracker-due"><IconClock size={16} />Due {fmtDay(ev.phase1_due_at, ev.timezone)}</span>
+        )}
+      </div>
+      <div className="eh-bar" role="progressbar" aria-valuemin={0} aria-valuemax={PARTS.length} aria-valuenow={done}
+           aria-label={`${done} of ${PARTS.length} parts done`}>
+        <span style={{ width: `${(done / PARTS.length) * 100}%` }} />
+      </div>
+      <ol className="eh-tiles">
+        {PARTS.map((pt, i) => {
+          const ok = partDone(view, pt)
+          const n = (view.progress?.missing ?? []).filter((m) => m.step === pt.progressKey).length
+          const I = pt.icon
           return (
-            <button key={o.key ?? String(o.value)} type="button" role="radio" aria-checked={on}
-                    className={`eh-chip${on ? ' eh-chip-on' : ''}`} disabled={disabled}
-                    onClick={() => onPick(o.value)}>
-              {o.label}
-            </button>
+            <li key={pt.key}>
+              <button type="button" className={`eh-tile eh-tone-${pt.tone}${part === pt.key ? ' eh-tile-on' : ''}${ok ? ' eh-tile-done' : ''}`}
+                      aria-current={part === pt.key ? 'step' : undefined} onClick={() => go(pt.key)} data-testid="eh-part-tile"
+                      aria-label={`Part ${i + 1}, ${pt.label}: ${ok ? 'done' : n ? `${n} left` : 'to do'}`}>
+                <span className="eh-tile-icon"><I size={22} />{ok && <span className="eh-tile-check"><IconCheck size={12} /></span>}</span>
+                <span className="eh-tile-label">{pt.short}</span>
+                <span className="eh-tile-state">{ok ? 'Done' : n ? `${n} left` : 'To do'}</span>
+              </button>
+            </li>
           )
         })}
+        <li>
+          <button type="button" className={`eh-tile eh-tone-gold${part === 'summary' ? ' eh-tile-on' : ''}${view.progress?.phase1_done ? ' eh-tile-done' : ''}`}
+                  aria-current={part === 'summary' ? 'step' : undefined} onClick={() => go('summary')} data-testid="eh-part-tile"
+                  aria-label="Finish: review your answers">
+            <span className="eh-tile-icon"><IconFlag size={22} />{view.progress?.phase1_done && <span className="eh-tile-check"><IconCheck size={12} /></span>}</span>
+            <span className="eh-tile-label">Finish</span>
+            <span className="eh-tile-state">{view.progress?.phase1_done ? 'Done' : 'Review'}</span>
+          </button>
+        </li>
+      </ol>
+    </nav>
+  )
+}
+
+function PartHead({ pt, index, first }) {
+  const I = pt.icon
+  return (
+    <div className={`eh-part-head eh-tone-${pt.tone}`}>
+      <span className="eh-part-icon"><I size={28} /></span>
+      <div>
+        <p className="eh-part-kicker" data-testid="eh-step-count">Part {index + 1} of {PARTS.length}</p>
+        <h2 className="eh-part-title">{pt.label}</h2>
+        <p className="eh-part-intro">{pt.intro(first)}</p>
       </div>
-      <SaveNote s={ctx.states[k]} tz={ctx.tz} />
-      {children}
-    </fieldset>
-  )
-}
-
-function Tick({ k, label, checked, onToggle, ctx, disabled, hint, testid }) {
-  return (
-    <div className="eh-tick-wrap">
-      <button type="button" role="checkbox" aria-checked={!!checked} className={`eh-tick${checked ? ' eh-tick-on' : ''}`}
-              disabled={disabled} onClick={() => onToggle(!checked)} data-testid={testid}>
-        <span className="eh-tick-box" aria-hidden="true">{checked ? '✓' : ''}</span>
-        <span>{label}</span>
-      </button>
-      {hint && <p className="eh-hint">{hint}</p>}
-      <SaveNote s={ctx.states[k]} tz={ctx.tz} />
     </div>
   )
 }
 
-function Text({ k, label, hint, value, onCommit, ctx, disabled, type = 'text', inputMode, autoComplete, placeholder,
-  multiline = false, maxLength, testid, wait = 800 }) {
-  const [local, setLocal] = useState(value ?? '')
-  const focused = useRef(false)
-  const last = useRef(value ?? '')
-  const timer = useRef(null)
-  useEffect(() => {
-    if (!focused.current && !timer.current) { setLocal(value ?? ''); last.current = value ?? '' }
-  }, [value])
-  useEffect(() => () => clearTimeout(timer.current), [])
-  const commit = (v) => {
-    clearTimeout(timer.current)
-    timer.current = null
-    if (v === last.current) return
-    last.current = v
-    onCommit(v)
-  }
-  const change = (v) => {
-    setLocal(v)
-    clearTimeout(timer.current)
-    timer.current = setTimeout(() => commit(v), wait)
-  }
-  const Tag = multiline ? 'textarea' : 'input'
+function PartNav({ index, go }) {
+  const prev = PARTS[index - 1]
+  const next = PARTS[index + 1]
   return (
-    <label className="eh-field">
-      <span className="eh-q-label">{label}</span>
-      {hint && <span className="eh-hint">{hint}</span>}
-      <Tag className="eh-input" type={multiline ? undefined : type} inputMode={inputMode} autoComplete={autoComplete}
-           placeholder={placeholder} maxLength={maxLength} disabled={disabled} value={local} data-testid={testid}
-           rows={multiline ? 2 : undefined}
-           onFocus={() => { focused.current = true }}
-           onBlur={(e) => { focused.current = false; commit(e.target.value) }}
-           onChange={(e) => change(e.target.value)} />
-      <SaveNote s={ctx.states[k]} tz={ctx.tz} />
-    </label>
+    <>
+      <div className="eh-part-nav">
+        {prev
+          ? <button type="button" className="eh-btn eh-btn-big" onClick={() => go(prev.key)}><IconArrowLeft size={18} />Back</button>
+          : <span />}
+        {next
+          ? <button type="button" className="eh-btn eh-btn-primary eh-btn-big" onClick={() => go(next.key)} data-testid="eh-next">
+              Next: {next.label}<IconArrowRight size={18} /></button>
+          : <button type="button" className="eh-btn eh-btn-primary eh-btn-big" onClick={() => go('summary')} data-testid="eh-finish">
+              Review and finish<IconArrowRight size={18} /></button>}
+      </div>
+      <p className="eh-hint eh-center">Your answers save as you go. You can come back and change them any time.</p>
+    </>
   )
 }
-
-const YES_NO = [{ value: true, label: 'Yes' }, { value: false, label: 'No' }]
-const ATTEND = [{ value: 'yes', label: 'Coming' }, { value: 'no', label: 'Not coming' }, { value: 'unsure', label: 'Not sure yet' }]
-
-// ── steps ───────────────────────────────────────────────────────────────────
-
-function StepDays({ view, ctx }) {
-  const days = formDays(view.board.days)
-  const a = view.answers
-  const nights = nightOptions(view.board.days)
-  const coming = days.filter((d) => a.days[d.id]?.attending === 'yes')
-  return (
-    <div className="eh-step-body">
-      {days.map((d) => {
-        const ad = a.days[d.id] ?? {}
-        const off = ctx.locked || d.over
-        return (
-          <section key={d.id} className="eh-card eh-day-q" data-testid="eh-day-q">
-            {d.intro && (
-              <div className="eh-intro" data-testid="eh-day-intro">
-                {d.intro.split('\n').map((l, i) => <p key={i}>{l}</p>)}
-              </div>
-            )}
-            <Choice k={`attending:${d.id}`} ctx={ctx} disabled={off} label={`${fmtDate(d.date)}${d.title ? `, ${d.title.toLowerCase()}` : ''}`}
-                    options={ATTEND} value={ad.attending ?? null} testid="eh-attending"
-                    onPick={(v) => ctx.save(`attending:${d.id}`, { field: 'attending', value: v, day_id: d.id })} />
-            {ad.attending === 'yes' && d.ask_pit_setup && (
-              <Choice k={`pit_setup:${d.id}`} ctx={ctx} disabled={off} label="Help with pit setup?" options={YES_NO}
-                      value={ad.pit_setup ?? null}
-                      onPick={(v) => ctx.save(`pit_setup:${d.id}`, { field: 'pit_setup', value: v, day_id: d.id })} />
-            )}
-            {ad.attending === 'yes' && d.home_options?.length > 0 && (
-              <Choice k={`home_option:${d.id}`} ctx={ctx} disabled={off} label="Ride home"
-                      options={d.home_options.map((o) => ({ key: o.key, value: o.key, label: o.label,
-                        on: (ad.home_option ?? d.home_options.find((x) => x.default)?.key) === o.key }))}
-                      onPick={(v) => ctx.save(`home_option:${d.id}`, { field: 'home_option', value: v, day_id: d.id })} />
-            )}
-          </section>
-        )
-      })}
-
-      <section className="eh-card">
-        <Choice k="staying_nights" ctx={ctx} disabled={ctx.locked} label="Staying near the venue?"
-                hint="Families arrange their own lodging. The Event info tab lists the hotel."
-                options={nights.map((o) => ({ key: o.key, value: o.value, label: o.label, on: sameNights(a.response.staying_nights, o.value) }))}
-                onPick={(v) => ctx.save('staying_nights', { field: 'staying_nights', value: v })} />
-      </section>
-
-      {coming.length > 0 && (
-        <section className="eh-card">
-          <h3 className="eh-label">Adults from your family attending</h3>
-          <p className="eh-hint">For the food headcount.</p>
-          {coming.map((d) => (
-            <Choice key={d.id} k={`adults:${d.id}`} ctx={ctx} disabled={ctx.locked || d.over} label={fmtDate(d.date)}
-                    options={[0, 1, 2, 3, 4].map((n) => ({ value: n, label: String(n) }))}
-                    value={a.days[d.id]?.adults ?? null}
-                    onPick={(v) => ctx.save(`adults:${d.id}`, { field: 'adults', value: v, day_id: d.id })} />
-          ))}
-        </section>
-      )}
-    </div>
-  )
-}
-
-function PickupBlock({ d, ad, ctx, off }) {
-  const saved = ad.pickup
-  const [spot, setSpot] = useState(saved?.spot ?? '')
-  const [consent, setConsent] = useState(!!saved)
-  const [covers, setCovers] = useState(saved?.covers_home ?? true)
-  const timer = useRef(null)
-  useEffect(() => () => clearTimeout(timer.current), [])
-  const k = `pickup:${d.id}`
-  const send = (next) => ctx.save(k, { field: 'pickup', day_id: d.id, value: next })
-  return (
-    <div className="eh-sub">
-      <label className="eh-field">
-        <span className="eh-q-label">Approximate pickup spot</span>
-        <span className="eh-hint">Cross streets or a landmark, not a street address.</span>
-        <input className="eh-input" value={spot} maxLength={160} disabled={off} data-testid="eh-pickup-spot"
-               onChange={(e) => {
-                 const v = e.target.value
-                 setSpot(v)
-                 clearTimeout(timer.current)
-                 if (consent) timer.current = setTimeout(() => send({ spot: v, consent: true, covers_home: covers }), 800)
-               }} />
-      </label>
-      <Tick k={k} ctx={ctx} disabled={off} checked={consent} testid="eh-pickup-consent"
-            label="Share this spot with the driver who accepts and with mentors."
-            onToggle={(v) => { setConsent(v); send({ spot, consent: v, covers_home: covers }) }} />
-      {!consent && spot.trim() && <p className="eh-hint eh-hint-warn">Tick the box to save this spot. Without it, nothing is stored.</p>}
-      {consent && (
-        <Tick k={`${k}:covers`} ctx={ctx} disabled={off} checked={covers} label="Bring my student home the same way."
-              onToggle={(v) => { setCovers(v); send({ spot, consent: true, covers_home: v }) }} />
-      )}
-      {saved?.accepted && <p className="eh-ok-line">Accepted by {saved.driver}.</p>}
-    </div>
-  )
-}
-
-function CarOffer({ d, ad, ctx, off, tz }) {
-  const leave = ad.car_leave_by ? isoToZoned(ad.car_leave_by, tz).time : ''
-  return (
-    <div className="eh-sub eh-offer" data-testid="eh-car-offer">
-      <h4 className="eh-label">Your car</h4>
-      <Choice k={`car_seats:${d.id}`} ctx={ctx} disabled={off} label="Seats besides your own student"
-              options={[1, 2, 3, 4, 5, 6, 7].map((n) => ({ value: n, label: String(n) }))} value={ad.car_seats ?? null}
-              onPick={(v) => ctx.save(`car_seats:${d.id}`, { field: 'car_seats', value: v, day_id: d.id })} />
-      <Text k={`car_description:${d.id}`} ctx={ctx} disabled={off} label="Car description" hint="So students find it in the lot."
-            placeholder="Silver Odyssey" maxLength={80} value={ad.car_description ?? ''} testid="eh-car-desc"
-            onCommit={(v) => ctx.save(`car_description:${d.id}`, { field: 'car_description', value: v, day_id: d.id })} />
-      <Text k={`car_leave_by:${d.id}`} ctx={ctx} disabled={off} type="time" label="Latest time you can leave the venue"
-            value={leave} wait={400}
-            onCommit={(v) => ctx.save(`car_leave_by:${d.id}`, { field: 'car_leave_by', value: zonedToIso(d.date, v, tz), day_id: d.id })} />
-      <Choice k={`car_takes_pickups:${d.id}`} ctx={ctx} disabled={off} label="Will you take home pickups?" options={YES_NO}
-              value={ad.car_takes_pickups ?? null}
-              onPick={(v) => ctx.save(`car_takes_pickups:${d.id}`, { field: 'car_takes_pickups', value: v, day_id: d.id })} />
-    </div>
-  )
-}
-
-function StepGetting({ view, ctx }) {
-  const tz = ctx.tz
-  const days = [...view.board.days].sort((x, y) => String(x.date).localeCompare(String(y.date)))
-  const a = view.answers
-  const coming = days.filter((d) => a.days[d.id]?.attending === 'yes')
-  const unsure = days.filter((d) => a.days[d.id]?.attending === 'unsure')
-  const anyDriving = coming.some((d) => [a.days[d.id]?.eff_to, a.days[d.id]?.eff_home].includes('driving'))
-  const anyCarpool = coming.some((d) => [a.days[d.id]?.eff_to, a.days[d.id]?.eff_home].includes('carpool'))
-  const r = a.response
-  if (coming.length === 0) {
-    return <p className="eh-empty">Nothing to plan yet. Mark a day as Coming on the Days step.</p>
-  }
-  return (
-    <div className="eh-step-body">
-      {coming.map((d) => {
-        const ad = a.days[d.id] ?? {}
-        const off = ctx.locked || d.over
-        const showSchool = d.ask_school_ride && !ad.nearby_before && ad.eff_to === 'carpool'
-        return (
-          <section key={d.id} className="eh-card" data-testid="eh-getting-day">
-            <h3 className="eh-card-title">{fmtDate(d.date)}</h3>
-            {showSchool && (
-              <Choice k={`school_mode:${d.id}`} ctx={ctx} disabled={off} label="Getting to Bosco Tech"
-                      options={[{ value: 'self', label: 'We get there ourselves' }, { value: 'pickup', label: 'Needs a ride from home' }]}
-                      value={ad.school_mode ?? null}
-                      onPick={(v) => ctx.save(`school_mode:${d.id}`, { field: 'school_mode', value: v, day_id: d.id })}>
-                {ad.school_mode === 'pickup' && <PickupBlock d={d} ad={ad} ctx={ctx} off={off} />}
-              </Choice>
-            )}
-            <Choice k={`to_mode:${d.id}`} ctx={ctx} disabled={off} label="Bosco Tech to the venue" testid="eh-to-mode"
-                    options={[{ value: 'carpool', label: 'Team carpool' }, { value: 'driving', label: 'I am driving' },
-                      { value: 'self', label: 'We go straight to the venue' }]}
-                    value={ad.eff_to}
-                    onPick={(v) => ctx.save(`to_mode:${d.id}`, { field: 'to_mode', value: v, day_id: d.id })} />
-            <Choice k={`home_mode:${d.id}`} ctx={ctx} disabled={off} label="Getting home"
-                    hint={ad.nearby_after ? 'You are staying near the venue tonight.' : null}
-                    options={[{ value: 'carpool', label: 'Team carpool' }, { value: 'driving', label: 'I am driving' },
-                      { value: 'self', label: ad.nearby_after ? 'We stay nearby' : 'We get home ourselves' }]}
-                    value={ad.eff_home}
-                    onPick={(v) => ctx.save(`home_mode:${d.id}`, { field: 'home_mode', value: v, day_id: d.id })} />
-            {[ad.eff_to, ad.eff_home].includes('driving') && <CarOffer d={d} ad={ad} ctx={ctx} off={off} tz={tz} />}
-          </section>
-        )
-      })}
-
-      {anyDriving && (
-        <section className="eh-card" data-testid="eh-driver-checks">
-          <h3 className="eh-label">Driver checks</h3>
-          <p className="eh-hint">The school handbook requires both for anyone who drives students.</p>
-          <Tick k="driver_25" ctx={ctx} disabled={ctx.locked} checked={r.driver_25} label="I am 25 or older."
-                onToggle={(v) => ctx.save('driver_25', { field: 'driver_25', value: v })} />
-          <Tick k="driver_licensed" ctx={ctx} disabled={ctx.locked} checked={r.driver_licensed}
-                label="I have a valid California license and insurance."
-                onToggle={(v) => ctx.save('driver_licensed', { field: 'driver_licensed', value: v })} />
-          <Tick k="driver_phone_consent" ctx={ctx} disabled={ctx.locked} checked={r.driver_phone_consent} testid="eh-driver-consent"
-                label="Share my phone number with families riding in my car."
-                hint="Without this, riders see Contact through mentors."
-                onToggle={(v) => ctx.save('driver_phone_consent', { field: 'driver_phone_consent', value: v })} />
-          {view.event.driver_paperwork_required && (
-            <p className={r.driver_paperwork_on_file ? 'eh-ok-line' : 'eh-hint eh-hint-warn'}>
-              {r.driver_paperwork_on_file ? 'Your license and insurance are on file.'
-                : 'A mentor needs a copy of your license and insurance on file. Until then your car shows Pending.'}
-            </p>
-          )}
-        </section>
-      )}
-
-      {anyCarpool && (
-        <section className="eh-card">
-          <Tick k="rider_phone_consent" ctx={ctx} disabled={ctx.locked} checked={r.rider_phone_consent}
-                label="Share our phone number with our student's driver."
-                onToggle={(v) => ctx.save('rider_phone_consent', { field: 'rider_phone_consent', value: v })} />
-        </section>
-      )}
-
-      {unsure.length > 0 && (
-        <p className="eh-hint">{unsure.map((d) => fmtDate(d.date, 'medium')).join(' and ')}: not sure yet. Plan {unsure.length === 1 ? 'it' : 'them'} once you choose Coming.</p>
-      )}
-    </div>
-  )
-}
-
-function StepFood({ view, ctx, goFood }) {
-  const r = view.answers.response
-  const links = view.event.links ?? {}
-  const has = new Set(r.allergens ?? [])
-  return (
-    <div className="eh-step-body">
-      <section className="eh-card" data-testid="eh-allergies">
-        <fieldset className="eh-q">
-          <legend className="eh-q-label">Food allergies</legend>
-          <div className="eh-chips">
-            <button type="button" role="checkbox" aria-checked={!!r.allergies_none} disabled={ctx.locked}
-                    className={`eh-chip${r.allergies_none ? ' eh-chip-on' : ''}`}
-                    onClick={() => ctx.save('allergies_none', { field: 'allergies_none', value: !r.allergies_none })}>None</button>
-            {ALLERGENS.map((x) => (
-              <button key={x.key} type="button" role="checkbox" aria-checked={has.has(x.key)} disabled={ctx.locked}
-                      className={`eh-chip${has.has(x.key) ? ' eh-chip-on' : ''}`}
-                      onClick={() => {
-                        const next = has.has(x.key) ? [...has].filter((k) => k !== x.key) : [...has, x.key]
-                        ctx.save('allergens', { field: 'allergens', value: next })
-                      }}>
-                {x.label}
-              </button>
-            ))}
-          </div>
-          <SaveNote s={ctx.states.allergens ?? ctx.states.allergies_none} tz={ctx.tz} />
-        </fieldset>
-        <Text k="allergy_other" ctx={ctx} disabled={ctx.locked} label="Other allergy" placeholder="Describe it"
-              value={r.allergy_other ?? ''} maxLength={300}
-              onCommit={(v) => ctx.save('allergy_other', { field: 'allergy_other', value: v })} />
-      </section>
-      <section className="eh-card">
-        <Text k="dietary" ctx={ctx} disabled={ctx.locked} label="Other dietary needs (optional)" placeholder="Vegetarian, halal"
-              value={r.dietary ?? ''} maxLength={300}
-              onCommit={(v) => ctx.save('dietary', { field: 'dietary', value: v })} />
-      </section>
-      <section className="eh-card">
-        <Choice k="medication" ctx={ctx} disabled={ctx.locked} label="Medication needed during the event?" options={YES_NO}
-                value={r.medication ?? null} onPick={(v) => ctx.save('medication', { field: 'medication', value: v })}>
-          {r.medication === true && (links.medication_form
-            ? <a className="eh-link" href={links.medication_form} target="_blank" rel="noopener noreferrer">Medication form</a>
-            : <p className="eh-hint">A mentor will follow up about the medication form.</p>)}
-        </Choice>
-      </section>
-      <button type="button" className="eh-btn" onClick={goFood}>See the food board</button>
-      <p className="eh-hint">Bringing food is optional and never holds up sign-up.</p>
-    </div>
-  )
-}
-
-function StepContacts({ view, ctx }) {
-  const r = view.answers.response
-  const links = view.event.links ?? {}
-  return (
-    <div className="eh-step-body">
-      <section className="eh-card">
-        <h3 className="eh-label">Parent or guardian</h3>
-        <Text k="parent_name" ctx={ctx} disabled={ctx.locked} label="Name" autoComplete="name" value={r.parent_name ?? ''} maxLength={120}
-              onCommit={(v) => ctx.save('parent_name', { field: 'parent_name', value: v })} />
-        <Text k="parent_phone" ctx={ctx} disabled={ctx.locked} label="Phone" type="tel" inputMode="tel" autoComplete="tel"
-              value={r.parent_phone ?? ''} maxLength={40} testid="eh-parent-phone"
-              onCommit={(v) => ctx.save('parent_phone', { field: 'parent_phone', value: v })} />
-        <Text k="parent_email" ctx={ctx} disabled={ctx.locked} label="Email" type="email" inputMode="email" autoComplete="email"
-              value={r.parent_email ?? ''} maxLength={200}
-              onCommit={(v) => ctx.save('parent_email', { field: 'parent_email', value: v })} />
-      </section>
-      <section className="eh-card">
-        <h3 className="eh-label">Emergency contact during the event</h3>
-        <Text k="emergency_name" ctx={ctx} disabled={ctx.locked} label="Name" value={r.emergency_name ?? ''} maxLength={120}
-              onCommit={(v) => ctx.save('emergency_name', { field: 'emergency_name', value: v })} />
-        <Text k="emergency_phone" ctx={ctx} disabled={ctx.locked} label="Phone" type="tel" inputMode="tel"
-              value={r.emergency_phone ?? ''} maxLength={40}
-              onCommit={(v) => ctx.save('emergency_phone', { field: 'emergency_phone', value: v })} />
-      </section>
-      <section className="eh-card">
-        <h3 className="eh-label">Paperwork</h3>
-        <Choice k="first_reg_done" ctx={ctx} disabled={ctx.locked} label="FIRST registration for this season"
-                options={[{ value: true, label: 'Done' }, { value: false, label: 'Not done' }]} value={r.first_reg_done ?? null}
-                onPick={(v) => ctx.save('first_reg_done', { field: 'first_reg_done', value: v })}>
-          {links.first_registration && <a className="eh-link" href={links.first_registration} target="_blank" rel="noopener noreferrer">FIRST registration</a>}
-        </Choice>
-        {links.school_form && (
-          <Choice k="school_form_done" ctx={ctx} disabled={ctx.locked} label="School activity permission form"
-                  options={[{ value: true, label: 'Done' }, { value: false, label: 'Not done' }]} value={r.school_form_done ?? null}
-                  onPick={(v) => ctx.save('school_form_done', { field: 'school_form_done', value: v })}>
-            <a className="eh-link" href={links.school_form} target="_blank" rel="noopener noreferrer">School permission form</a>
-          </Choice>
-        )}
-      </section>
-    </div>
-  )
-}
-
-// ── summaries: done, and lock-in ────────────────────────────────────────────
-
-function runText(view, d, run) {
-  const ad = view.answers.days[d.id] ?? {}
-  const mode = run === 'to' ? ad.eff_to : ad.eff_home
-  const nearby = run === 'to' ? ad.nearby_before : ad.nearby_after
-  const car = (d.runs?.find((x) => x.run === run)?.cars ?? []).find((c) => c.my_seat || c.mine)
-  if (mode === 'driving') return 'You drive'
-  if (nearby) return 'Staying nearby'
-  if (mode === 'self') return 'On your own'
-  return car ? `${car.driver}'s car` : 'Needs a seat'
-}
-
-function DaySummary({ view, d }) {
-  const ad = view.answers.days[d.id] ?? {}
-  const meals = (view.board.meals ?? []).filter((m) => m.day_id === d.id)
-  const claims = (view.answers.food ?? []).filter((f) => meals.some((m) => m.id === f.meal_id))
-  return (
-    <dl className="eh-facts eh-summary">
-      <div><dt>To venue</dt><dd>{runText(view, d, 'to')}</dd></div>
-      <div><dt>Home</dt><dd>{runText(view, d, 'home')}</dd></div>
-      {ad.pickup && <div><dt>Pickup</dt><dd>{ad.pickup.accepted ? `With ${ad.pickup.driver}` : 'Asked, not accepted yet'}</dd></div>}
-      {ad.adults != null && <div><dt>Adults</dt><dd>{ad.adults}</dd></div>}
-      {claims.length > 0 && <div><dt>Food</dt><dd>{claims.map((c) => c.what).join(', ')}</dd></div>}
-    </dl>
-  )
-}
-
-function LockIn({ view, ctx, act, onEdit }) {
-  const ev = view.event
-  const days = [...view.board.days].sort((x, y) => String(x.date).localeCompare(String(y.date)))
-  const [note, setNote] = useState(null)
-  return (
-    <div className="eh-step-body" data-testid="eh-lockin">
-      <section className="eh-card eh-banner">
-        <h2 className="eh-card-title">Lock-in: confirm each day</h2>
-        <p>{ev.lockin_due_at ? `Due ${fmtDay(ev.lockin_due_at, ctx.tz)}. ` : ''}A day with no changes is one tap. Changes are still fine after that.</p>
-      </section>
-      {days.map((d) => {
-        const ad = view.answers.days[d.id] ?? {}
-        const off = ctx.locked || d.over
-        return (
-          <section key={d.id} className="eh-card" data-testid="eh-lockin-day">
-            <h3 className="eh-card-title">{fmtDate(d.date)}</h3>
-            {ad.attending === 'unsure' || ad.attending == null ? (
-              <Choice k={`attending:${d.id}`} ctx={ctx} disabled={off} label="Not sure yet. Coming?"
-                      options={ATTEND.slice(0, 2)} value={ad.attending ?? null}
-                      onPick={(v) => ctx.save(`attending:${d.id}`, { field: 'attending', value: v, day_id: d.id })} />
-            ) : ad.attending === 'no' ? (
-              <p className="eh-quiet">Not coming.</p>
-            ) : (
-              <>
-                <DaySummary view={view} d={d} />
-                {ad.confirmed
-                  ? <p className="eh-ok-line" data-testid="eh-confirmed">Confirmed</p>
-                  : <button type="button" className="eh-btn eh-btn-primary" disabled={off} data-testid="eh-confirm-day"
-                            onClick={async () => {
-                              const res = await act('confirm_day', { day_id: d.id })
-                              setNote(res?.kind === 'ok' ? null : { text: res?.message || 'Not saved. Try again.', bad: true })
-                            }}>Confirm this day</button>}
-              </>
-            )}
-          </section>
-        )
-      })}
-      {note && <p className="eh-note eh-note-bad" role="alert">{note.text}</p>}
-      <button type="button" className="eh-btn" onClick={onEdit}>Change an answer</button>
-    </div>
-  )
-}
-
-function Done({ view, ctx, onEdit, goCarpool }) {
-  const ev = view.event
-  const days = [...view.board.days].sort((x, y) => String(x.date).localeCompare(String(y.date)))
-  const needs = days.some((d) => {
-    const ad = view.answers.days[d.id]
-    return ['to', 'home'].some((run) => needsSeat(ad, run)
-      && !(d.runs?.find((x) => x.run === run)?.cars ?? []).some((c) => c.my_seat))
-  })
-  const next = ev.over ? null
-    : !ev.lockin_open && ev.lockin_opens_at ? `Lock-in opens ${fmtDay(ev.lockin_opens_at, ctx.tz)}.`
-      : view.progress.lockin_done ? `All set. See you ${fmtDate(ev.starts_on, 'medium')}.` : null
-  return (
-    <div className="eh-step-body" data-testid="eh-done">
-      <section className="eh-card eh-banner">
-        <h2 className="eh-card-title">{ev.over ? 'This event is over' : view.progress.lockin_done ? 'You are locked in' : 'You are done with sign-up'}</h2>
-        {next && <p>{next}</p>}
-        {ev.over && <p>Everything here is read-only now. Thank you!</p>}
-      </section>
-      {days.map((d) => {
-        const ad = view.answers.days[d.id] ?? {}
-        return (
-          <section key={d.id} className="eh-card">
-            <h3 className="eh-card-title">{fmtDate(d.date)}: {ad.attending === 'yes' ? 'Coming' : ad.attending === 'no' ? 'Not coming' : 'Not sure yet'}</h3>
-            {ad.attending === 'yes' && <DaySummary view={view} d={d} />}
-          </section>
-        )
-      })}
-      {needs && !ev.over && <button type="button" className="eh-btn eh-btn-primary" onClick={goCarpool}>Pick a seat on the carpool board</button>}
-      {!ev.over && <button type="button" className="eh-btn" onClick={onEdit}>Change an answer</button>}
-    </div>
-  )
-}
-
-// ── the hub ─────────────────────────────────────────────────────────────────
 
 export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
   const [view, setView] = useState(null)
-  const [mode, setMode] = useState('loading')   // loading | ready | invalid | offline
-  const [tab, setTab] = useState('plan')
+  const [mode, setMode] = useState('loading')   // loading | ready | invalid | offline | removed | left
+  const [part, setPart] = useState(null)        // days | rides | food | contacts | summary | info
+  const [infoBack, setInfoBack] = useState('summary')
   const [states, setStates] = useState({})
-  // On the form or not. Decided once, from the first load: a family that has
-  // not finished sign-up starts on the form and STAYS there until it presses
-  // Finish, even when its last required answer saves mid-step (jumping to the
-  // lock-in screen under a parent's thumb was the first version, found by the
-  // event-hub e2e spec).
-  const [editing, setEditing] = useState(null)
-  const [step, setStep] = useState(0)
-  const [banner, setBanner] = useState(null)
   const reloadTimer = useRef(null)
   const topRef = useRef(null)
 
@@ -596,10 +253,10 @@ export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
     }
     if (r.kind === 'ok') {
       setView(r.data)
-      setMode('ready')
-      setEditing((e) => (e === null ? !r.data.progress?.phase1_done : e))
+      setMode((m) => (m === 'removed' || m === 'left' ? m : 'ready'))
+      setPart((pt) => pt ?? landing(r.data))
     }
-    else if (r.kind === 'invalid') { setMode('invalid'); onInvalid?.() }
+    else if (r.kind === 'invalid') { setMode((m) => (m === 'removed' || m === 'left' ? m : 'invalid')); onInvalid?.() }
     else setMode((m) => (m === 'ready' ? m : 'offline'))
     if (r.kind === 'ok' && r.data?.event?.over) onOver?.()
     return r
@@ -643,8 +300,22 @@ export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
     return r
   }, [transport, load])
 
-  useEffect(() => { topRef.current?.scrollIntoView?.({ block: 'start' }) }, [step, tab])
+  useEffect(() => { if (part) topRef.current?.scrollIntoView?.({ block: 'start' }) }, [part])
 
+  if (mode === 'removed' || mode === 'left') {
+    return (
+      <div className="eh-page">
+        <section className="eh-card eh-lost" data-testid={mode === 'removed' ? 'eh-removed' : 'eh-left'}>
+          <img src="/assets/logos/Mark-Gold.svg" className="eh-mark" alt="Techmen" />
+          <h1 className="eh-card-title">{mode === 'removed' ? 'Your family is off this trip' : 'You were removed from this page'}</h1>
+          <p>{mode === 'removed'
+            ? 'Drivers and mentors have been told. If that was a mistake, open the sign-up form again and pick your student.'
+            : 'Your link no longer works. The rest of your family still has theirs.'}</p>
+          {standalone && <Link className="eh-btn eh-btn-primary" to="/join">Open the sign-up form</Link>}
+        </section>
+      </div>
+    )
+  }
   if (mode === 'loading') return <div className="eh-page"><p className="eh-empty">Loading your family page.</p></div>
   if (mode === 'invalid') return standalone ? <LostLink invalid /> : <p className="eh-empty">That family is not part of this event.</p>
   if (mode === 'offline' && !view) {
@@ -659,92 +330,52 @@ export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
 
   const ev = view.event
   const tz = ev.timezone
+  // 0008 is live when the page carries its fields (drive_to on a day).
+  const v8 = Object.values(view.answers?.days ?? {}).some((d) => d && 'drive_to' in d)
   const ctx = {
-    tz, states, locked: !!ev.over,
+    tz, states, locked: !!ev.over, v8,
     save: (k, payload) => { setView((v) => applyLocal(v, payload)); saver.save(k, payload) },
   }
-  const p = view.progress
-  const showSteps = !ev.over && !!editing
-  const lockin = !ev.over && !showSteps && ev.lockin_open && !p.lockin_done
+  const go = (k) => setPart(k)
+  const goInfo = () => { setInfoBack(part === 'info' ? 'summary' : part); setPart('info') }
+  const family = transport.token ? {
+    token: transport.token, locked: !!ev.over, canLeave: v8 && !ev.over,
+    sendMail: sendQueuedMail, reload: load,
+    onRemoved: () => setMode('removed'), onRemovedSelf: () => setMode('left'),
+  } : null
+  const index = PARTS.findIndex((pt) => pt.key === part)
+  const pt = PARTS[index]
+  const first = view.student.first
 
   return (
     <div className={`eh-page${standalone ? '' : ' eh-embedded'}`} ref={topRef}>
-      <header className="eh-head">
-        {standalone && <img src="/assets/logos/Mark-Gold.svg" className="eh-mark" alt="Techmen" />}
-        <div className="eh-head-text">
-          <p className="eh-kicker">{ev.title}</p>
-          <h1 className="eh-title" data-testid="eh-student">{view.student.name}</h1>
-          <p className="eh-status" data-testid="eh-status">{statusLine(view)}</p>
+      <SaveBar states={states} />
+      <Hero view={view} standalone={standalone} onInfo={goInfo} />
+      {!ev.over && part !== 'info' && <Tracker view={view} part={part} go={go} />}
+
+      {pt && (
+        <div className={`eh-part eh-tone-${pt.tone}`} data-testid="eh-steps">
+          <PartHead pt={pt} index={index} first={first} />
+          {pt.key === 'days' && <PartDays view={view} ctx={ctx} />}
+          {pt.key === 'rides' && <PartRides view={view} ctx={ctx} act={act} viewer={transport.viewer} />}
+          {pt.key === 'food' && <PartFood view={view} ctx={ctx} act={act} viewer={transport.viewer} />}
+          {pt.key === 'contacts' && <PartContacts view={view} ctx={ctx} family={family} />}
+          <PartNav index={index} go={go} />
         </div>
-      </header>
-
-      <Seg className="eh-tabs" label="Sections" value={tab} onPick={setTab}
-           items={[{ key: 'plan', label: 'Our plan' }, { key: 'carpool', label: 'Carpool' }, { key: 'food', label: 'Food' }, { key: 'info', label: 'Event info' }]} />
-
-      {banner && <p className="eh-note" role="status">{banner}</p>}
-
-      {tab === 'plan' && (showSteps ? (
-        <div data-testid="eh-steps">
-          <nav className="eh-stepper" aria-label="Sign-up steps">
-            {STEPS.map((s, i) => {
-              // "Getting there" has nothing to ask until a day is answered, so
-              // it is not shown as done before the Days step is.
-              const ok = p.steps?.[s.key] && (s.key !== 'getting' || p.steps?.days)
-              return (
-                <button key={s.key} type="button" className={`eh-stepdot${i === step ? ' eh-stepdot-on' : ''}${ok ? ' eh-stepdot-done' : ''}`}
-                        aria-current={i === step ? 'step' : undefined} onClick={() => setStep(i)}
-                        aria-label={`Step ${i + 1}: ${s.label}${ok ? ', done' : ''}`} data-testid="eh-stepdot">
-                  <span className="eh-stepdot-n">{ok ? '✓' : i + 1}</span>
-                  <span className="eh-stepdot-l">{s.label}</span>
-                </button>
-              )
-            })}
-          </nav>
-          <p className="eh-step-count" data-testid="eh-step-count">
-            Step {step + 1} of {STEPS.length}: {STEPS[step].label}
-            {(() => { const n = missingFor(p, STEPS[step].key).length; return n ? ` · ${n} to go` : ' · done' })()}
-          </p>
-          {step === 0 && <StepDays view={view} ctx={ctx} />}
-          {step === 1 && <StepGetting view={view} ctx={ctx} />}
-          {step === 2 && <StepFood view={view} ctx={ctx} goFood={() => setTab('food')} />}
-          {step === 3 && <StepContacts view={view} ctx={ctx} />}
-          <div className="eh-step-nav">
-            {step > 0 && <button type="button" className="eh-btn" onClick={() => setStep(step - 1)}>Back</button>}
-            {step < STEPS.length - 1
-              ? <button type="button" className="eh-btn eh-btn-primary" onClick={() => setStep(step + 1)} data-testid="eh-next">Next: {STEPS[step + 1].label}</button>
-              : <button type="button" className="eh-btn eh-btn-primary" data-testid="eh-finish"
-                        onClick={() => {
-                          if (p.phase1_done) { setEditing(false); setBanner(null) }
-                          else {
-                            const first = STEPS.findIndex((s) => missingFor(p, s.key).length)
-                            setBanner(`${p.missing.length} ${p.missing.length === 1 ? 'answer' : 'answers'} still to go.`)
-                            setStep(Math.max(0, first))
-                          }
-                        }}>Finish</button>}
-          </div>
+      )}
+      {part === 'summary' && <Summary view={view} ctx={ctx} act={act} goPart={go} goInfo={goInfo} />}
+      {part === 'info' && (
+        <div className="eh-part" data-testid="eh-info-page">
+          <button type="button" className="eh-btn eh-btn-big" onClick={() => setPart(infoBack || 'summary')} data-testid="eh-info-back">
+            <IconArrowLeft size={18} />Back to {infoBack === 'summary' ? 'my answers' : (PARTS.find((x) => x.key === infoBack)?.label ?? 'my answers')}
+          </button>
+          <EventInfo event={ev} />
         </div>
-      ) : lockin ? (
-        <LockIn view={view} ctx={ctx} act={act} onEdit={() => { setEditing(true); setStep(0) }} />
-      ) : (
-        <Done view={view} ctx={ctx} onEdit={() => { setEditing(true); setStep(0) }} goCarpool={() => setTab('carpool')} />
-      ))}
-
-      {tab === 'carpool' && (
-        <CarpoolBoard board={view.board} tz={tz} viewer={transport.viewer} myDays={view.answers.days} act={act} locked={ev.over} />
       )}
-      {tab === 'food' && (
-        <>
-          <p className="eh-hint">Claiming food is optional. Edit or drop a claim until its meal starts.</p>
-          <FoodBoard board={view.board} tz={tz} viewer={transport.viewer} act={act} locked={ev.over} />
-        </>
-      )}
-      {tab === 'info' && <EventInfo event={ev} />}
     </div>
   )
 }
 
-// "Lost your link?" The answer is the same whether or not the address is on
-// file; a link goes out only to an address an invite carries.
 // A link that does not work. Since the open link (0007) a family that lost
 // its page opens the team's sign-up link again and picks its student.
 function LostLink({ invalid = false }) {
@@ -773,41 +404,6 @@ function Welcome({ joined }) {
   )
 }
 
-// More than one parent: anyone on the family page can add another parent or
-// guardian, who gets their own link to the same page (hub_add_parent, 0007).
-function AddParent({ token }) {
-  const [email, setEmail] = useState('')
-  const [note, setNote] = useState(null)
-  const [busy, setBusy] = useState(false)
-  return (
-    <div className="eh-page eh-addparent-wrap">
-      <section className="eh-card" data-testid="eh-add-parent">
-        <h2 className="eh-card-title">Add another parent or guardian</h2>
-        <p className="eh-hint">They get their own link to this same page, so either of you can fill it in.</p>
-        <form className="eh-inline" onSubmit={async (e) => {
-          e.preventDefault()
-          setBusy(true)
-          const { error } = await supabase.rpc('hub_add_parent', { p_token: token, p_email: email.trim() })
-          setBusy(false)
-          if (error) {
-            const m = /^hub:([a-z_]+)$/.exec(error.message ?? '')
-            setNote({ bad: true, text: m ? (error.details || 'That did not work.') : 'Could not reach the team server. Try again.' })
-            return
-          }
-          sendQueuedMail()
-          setNote({ text: `Sent a link to ${email.trim()}.` })
-          setEmail('')
-        }}>
-          <input className="eh-input" type="email" required autoComplete="off" placeholder="their email" value={email}
-                 onChange={(e) => setEmail(e.target.value)} aria-label="Email of another parent or guardian" />
-          <button type="submit" className="eh-btn" disabled={busy || !email.trim()}>Send them a link</button>
-        </form>
-        {note && <p className={`eh-note${note.bad ? ' eh-note-bad' : ''}`} role="status">{note.text}</p>}
-      </section>
-    </div>
-  )
-}
-
 // The rules queue the email; the deployed event-family function sends what is
 // queued. Its "lost your link" action with a blank address sends the queue and
 // nothing else, so this needs no new function. Best effort: the hourly tick
@@ -831,7 +427,6 @@ export default function EventFamilyPage() {
     <>
       {joined && !invalid && <Welcome joined={joined} />}
       <FamilyHub key={token} transport={transport} onInvalid={onInvalid} onOver={onOver} />
-      {!invalid && !over && <AddParent token={token} />}
     </>
   )
 }

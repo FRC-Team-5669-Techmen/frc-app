@@ -200,6 +200,29 @@ begin
 end
 $c$;
 
+-- 17. Each 0007 function is executable by exactly its caller: the three
+-- entry points by anon and signed-in callers, the four helpers by neither.
+-- (0005's check 5 skips these names; this is where they are checked.)
+-- hub_add_parent is matched by name because 0008 replaces its signature.
+do $c$
+declare bad text; n int;
+begin
+  with want(name, open_to_callers, definer) as (values
+    ('hub_join_info', true, true), ('hub_join', true, true), ('hub_add_parent', true, true),
+    ('_hub_join_eligible', false, true), ('_hub_join_event', false, true), ('_hub_join_taken', false, true),
+    ('_hub_mask_email', false, false))
+  select count(p.oid), string_agg(w.name, ', ') filter (where p.oid is null
+           or has_function_privilege('anon', p.oid, 'EXECUTE') <> w.open_to_callers
+           or has_function_privilege('authenticated', p.oid, 'EXECUTE') <> w.open_to_callers
+           or p.prosecdef <> w.definer
+           or not exists (select 1 from unnest(coalesce(p.proconfig, '{}')) c where c like 'search_path=%'))
+    into n, bad
+    from want w left join pg_proc p on p.proname = w.name and p.pronamespace = 'public'::regnamespace;
+  perform pg_temp.rec(17, 'the three entry points are open to anon and signed-in callers, the four helpers to neither; search_path pinned',
+    n = 7 and bad is null, format('%s of 7 found; wrong: %s', n, coalesce(bad, 'none')));
+end
+$c$;
+
 select n, check_name as check, result, detail from t7_results
 union all
 select 999, 'summary', case when count(*) filter (where result = 'FAIL') = 0 then 'PASS' else 'FAIL' end,

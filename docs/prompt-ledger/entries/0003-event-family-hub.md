@@ -14,3 +14,8 @@
   sign-up link (decision 43, option B, more than one parent per student). It took migration 0007, the next
   free number on `main` and on every remote branch at the time; `docs/history/brave-noether-tyn6cb.md` has
   the record and the steps.
+  2026-10-05, a second follow-up asked by Mr. Pina in the same session: the family page redesign (parts with a
+  progress tracker, info cards, rides and seats in one place, collapsible event info) and migration 0008 (a
+  parent driving without their own student, removing a parent or a whole family, mentors seating two at once,
+  adults 0 to 30, the one-child rule always on, decision 44). 0008 was the next free number on `main` and on
+  every remote branch when it was taken.

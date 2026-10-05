@@ -337,3 +337,374 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .eh-welcome-wrap, .eh-addparent-wrap { min-height: 0; padding-top: 0; padding-bottom: 0; }
 .eh-welcome-wrap { padding-top: 16px; }
 .eh-addparent-wrap { padding-bottom: 32px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE FAMILY FORM, redesigned 2026-10-05 (Mr. Pina: easy for a parent who
+   rarely uses forms online, color and icons for legibility at a glance, the
+   app's latest look). Every color is a theme token; each part carries one
+   (Who is coming blue, Rides green, Food orange, Contacts violet, Finish
+   gold) as its --tone. Gold stays the active state: a chosen answer is gold
+   wherever it sits.
+   ══════════════════════════════════════════════════════════════════════════ */
+.eh-page { max-width: 880px; font-size: 1.0625rem; }
+.eh-tone-blue { --tone: var(--hr-outreach); }
+.eh-tone-green { --tone: var(--hr-volunteer); }
+.eh-tone-orange { --tone: var(--role-lead); }
+.eh-tone-violet { --tone: var(--hr-competition); }
+.eh-tone-gold { --tone: var(--gold); }
+.eh-tone-danger { --tone: var(--fault); }
+.eh-icon { flex: none; display: block; }
+.eh-with-icon { display: flex; align-items: center; gap: 8px; }
+.eh-center { text-align: center; }
+
+/* ── type, a size up ─────────────────────────────────────────────────────── */
+.eh-q-label { font-size: 1.1rem; font-weight: 700; line-height: 1.3; margin: 0; }
+.eh-hint { font-size: 0.95rem; line-height: 1.4; }
+.eh-input { font-size: 1.05rem; min-height: 48px; }
+.eh-chip { font-size: 1rem; min-height: 48px; display: inline-flex; align-items: center; gap: 6px; }
+.eh-chip-num { min-width: 56px; justify-content: center; font-family: var(--font-mono); font-size: 1.1rem; }
+.eh-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 1rem; }
+.eh-btn-big { min-height: 52px; padding: 0 20px; font-size: 1.05rem; }
+.eh-btn-wide { width: 100%; margin: 8px 0; }
+.eh-btn-quiet { background: transparent; color: var(--steel); }
+.eh-btn-danger { color: var(--fault); border-color: var(--fault); background: var(--surface); }
+.eh-btn-danger:hover:not(:disabled), .eh-btn-danger:focus-visible { background: var(--fault); color: var(--bg); }
+.eh-tick { font-size: 1rem; min-height: 52px; }
+.eh-tick-box { width: 26px; height: 26px; }
+.eh-ok-line { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.eh-card-title { font-size: 1.15rem; }
+.eh-sub-title { margin: 0 0 8px; font-size: 1.05rem; font-weight: 700; }
+
+/* ── the hero ────────────────────────────────────────────────────────────── */
+.eh-hero {
+  position: relative; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 14px;
+  margin: 0 0 14px; padding: 16px 16px 16px 20px; border-radius: var(--eh-r-panel);
+  background: linear-gradient(135deg, var(--surface-2), var(--surface) 55%, var(--bg));
+  border: 1px solid var(--border-strong); overflow: hidden;
+}
+.eh-hero::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--gold); }
+.eh-hero .eh-mark { width: 52px; height: 52px; }
+.eh-hero-text { flex: 1 1 260px; min-width: 0; }
+.eh-hero .eh-title { font-size: 1.75rem; margin: 2px 0 6px; }
+.eh-hero-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 6px; color: var(--steel); font-size: 0.95rem; }
+.eh-hero-meta span { display: inline-flex; align-items: center; gap: 6px; }
+.eh-hero .eh-status { color: var(--text); font-size: 1rem; }
+.eh-hero-info { margin: 0; flex: none; }
+@media (max-width: 560px) { .eh-hero-info { width: 100%; } .eh-hero .eh-title { font-size: 1.45rem; } }
+
+/* ── the tracker ─────────────────────────────────────────────────────────── */
+.eh-tracker {
+  margin: 0 0 18px; padding: 12px 12px 10px; border-radius: var(--eh-r-panel);
+  background: var(--surface); border: 1px solid var(--border-strong);
+}
+.eh-tracker-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin: 0 2px 8px; }
+.eh-tracker-count { font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); }
+.eh-tracker-due { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.85rem; color: var(--gold-dim); }
+.eh-bar {
+  height: 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--border-strong);
+  overflow: hidden; margin: 0 2px 12px;
+}
+.eh-bar > span {
+  display: block; height: 100%; border-radius: 999px; transition: width 0.3s ease;
+  background: linear-gradient(90deg, var(--hr-outreach), var(--hr-volunteer), var(--role-lead), var(--hr-competition));
+}
+.eh-tiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.eh-tile {
+  width: 100%; min-height: 76px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  border: 1px solid var(--border-strong); border-radius: var(--eh-r-key); background: var(--surface-2);
+  color: var(--text); font: 600 0.85rem var(--font-ui); cursor: pointer; text-align: center;
+}
+.eh-tile:hover { border-color: var(--steel); }
+.eh-tile-icon {
+  position: relative; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%;
+  color: var(--tone); background: color-mix(in srgb, var(--tone) 15%, transparent);
+}
+.eh-tile-check {
+  position: absolute; right: -4px; top: -4px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--hr-volunteer); color: var(--bg); border: 2px solid var(--surface-2);
+}
+.eh-tile-label { line-height: 1.1; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eh-tile-state { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--steel); white-space: nowrap; }
+.eh-tile-done .eh-tile-state { color: var(--hr-volunteer); }
+.eh-tile-on { border: 2px solid var(--tone); background: color-mix(in srgb, var(--tone) 9%, var(--surface-2)); padding: 7px 3px; }
+.eh-tile-on .eh-tile-label { color: var(--tone); }
+@media (max-width: 420px) {
+  .eh-tiles { gap: 4px; }
+  .eh-tile { font-size: 0.78rem; min-height: 72px; }
+  .eh-tile-icon { width: 34px; height: 34px; }
+}
+
+/* ── a part ──────────────────────────────────────────────────────────────── */
+.eh-part-head {
+  display: flex; gap: 14px; align-items: flex-start; margin: 0 0 14px; padding: 0 0 12px;
+  border-bottom: 2px solid color-mix(in srgb, var(--tone) 45%, transparent);
+}
+.eh-part-icon {
+  flex: none; width: 54px; height: 54px; display: grid; place-items: center; border-radius: 14px;
+  color: var(--tone); background: color-mix(in srgb, var(--tone) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 45%, transparent);
+}
+.eh-part-kicker { margin: 0; font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tone); }
+.eh-part-title { margin: 2px 0 4px; font-size: 1.55rem; line-height: 1.15; font-weight: 700; }
+.eh-part-intro { margin: 0; color: var(--steel); font-size: 1rem; line-height: 1.4; }
+.eh-part-body { display: block; }
+.eh-part-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 18px 0 6px; }
+.eh-part-nav .eh-btn { margin: 0; }
+.eh-part-nav .eh-btn-primary { flex: 0 1 auto; }
+@media (max-width: 560px) {
+  .eh-part-nav { flex-direction: column-reverse; align-items: stretch; }
+  .eh-part-nav .eh-btn { width: 100%; }
+  .eh-part-nav > span:empty { display: none; }
+}
+
+/* ── a question ──────────────────────────────────────────────────────────── */
+.eh-q { margin: 0 0 18px; }
+.eh-q-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; padding: 0; width: 100%; }
+.eh-field { margin: 0 0 16px; }
+
+/* The (i) and its card. The card drops in under the question's label, the
+   full width of the question, so it never runs off a phone. */
+.eh-tip { position: static; flex: none; }
+.eh-tip-btn {
+  width: 44px; height: 44px; margin: -6px -8px -6px 0; display: grid; place-items: center; border-radius: 50%;
+  background: transparent; border: 0; color: var(--steel); cursor: pointer;
+}
+.eh-tip-btn:hover, .eh-tip-on { color: var(--gold); }
+.eh-tip-card {
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 20; margin-top: 6px;
+  display: block; padding: 12px 14px; border-radius: 10px;
+  background: var(--surface-2); border: 1px solid var(--gold-dim); color: var(--text);
+  font: 400 0.98rem/1.45 var(--font-ui); box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.7);
+}
+.eh-tip-card::before {
+  content: ''; position: absolute; right: 10px; top: -7px; width: 12px; height: 12px; transform: rotate(45deg);
+  background: var(--surface-2); border-left: 1px solid var(--gold-dim); border-top: 1px solid var(--gold-dim);
+}
+.eh-tip-text { display: block; }
+.eh-tip-close {
+  margin-top: 8px; min-height: 44px; padding: 0 14px; border-radius: var(--eh-r-key);
+  background: var(--surface); border: 1px solid var(--border-strong); color: var(--text); font: 600 0.95rem var(--font-ui); cursor: pointer;
+}
+.eh-tick-row { position: relative; display: flex; align-items: center; gap: 4px; }
+.eh-tick-row .eh-tick { flex: 1 1 auto; }
+.eh-card-title .eh-tip { margin-left: auto; }
+.eh-card-title { position: relative; }
+
+/* Option cards: one per answer. */
+.eh-options { display: grid; gap: 8px; }
+.eh-option {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 66px; padding: 10px 12px; text-align: left;
+  border: 1px solid var(--border-strong); border-radius: var(--eh-r-key); background: var(--surface-2);
+  color: var(--text); font: 1rem var(--font-ui); cursor: pointer;
+}
+.eh-option:hover:not(:disabled) { border-color: var(--steel); }
+.eh-option:disabled { opacity: 0.55; cursor: default; }
+.eh-option-icon {
+  flex: none; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px;
+  color: var(--tone, var(--steel)); background: color-mix(in srgb, var(--tone, var(--steel)) 14%, transparent);
+}
+.eh-option-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.eh-option-title { font-weight: 700; font-size: 1.05rem; }
+.eh-option-sub { color: var(--steel); font-size: 0.92rem; line-height: 1.3; }
+.eh-option-mark {
+  flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  border: 2px solid var(--muted); color: var(--bg);
+}
+.eh-option-on { border: 2px solid var(--gold); background: color-mix(in srgb, var(--gold) 7%, var(--surface-2)); padding: 9px 11px; }
+.eh-option-on .eh-option-mark { background: var(--gold); border-color: var(--gold); }
+.eh-option-on .eh-option-title { color: var(--gold-bright); }
+
+/* The count picker's exact-number row. */
+.eh-stepper-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.eh-step-btn { width: 52px; min-height: 48px; padding: 0; margin: 0; font-size: 1.4rem; }
+.eh-count-input { width: 90px; text-align: center; font-family: var(--font-mono); font-size: 1.2rem; }
+
+/* ── day cards ───────────────────────────────────────────────────────────── */
+.eh-dayq { padding: 14px 16px 16px; }
+.eh-dayq-quiet { opacity: 0.92; }
+.eh-dayq-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 12px; }
+.eh-day-badge {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+  background: color-mix(in srgb, var(--tone, var(--gold)) 14%, transparent); color: var(--tone, var(--gold));
+  font-weight: 700; font-size: 1rem;
+}
+.eh-day-title { color: var(--steel); font-size: 0.98rem; }
+.eh-day-meet { flex-basis: 100%; display: inline-flex; align-items: center; gap: 6px; color: var(--steel); font-size: 0.92rem; }
+.eh-pill-ok { color: var(--hr-volunteer); border-color: var(--hr-volunteer); }
+.eh-intro {
+  border-left: 4px solid var(--gold-dim); background: var(--gold-a08); border-radius: 0 10px 10px 0;
+  padding: 10px 12px; margin: 0 0 14px;
+}
+.eh-runs { display: grid; gap: 14px; }
+@media (min-width: 820px) { .eh-runs { grid-template-columns: 1fr 1fr; align-items: start; } }
+.eh-run { padding: 12px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); min-width: 0; }
+.eh-run-tag {
+  display: inline-flex; align-items: center; gap: 6px; margin: 0 0 10px; padding: 3px 10px; border-radius: 999px;
+  font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--tone, var(--hr-volunteer)); border: 1px solid color-mix(in srgb, var(--tone, var(--hr-volunteer)) 50%, transparent);
+}
+.eh-seats { margin: 12px 0 0; }
+.eh-seats .eh-car { background: var(--surface); }
+.eh-wait {
+  display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border-radius: 10px;
+  background: var(--gold-a08); color: var(--gold-dim); font-size: 0.95rem;
+}
+.eh-sub { border-left: 3px solid color-mix(in srgb, var(--tone, var(--gold)) 45%, transparent); padding: 12px 0 2px 14px; margin: 14px 0 0; }
+.eh-offer { border-left-color: var(--hr-volunteer); }
+
+/* The one-child rule. */
+.eh-rule {
+  display: flex; gap: 12px; align-items: flex-start; margin: 0 0 14px; padding: 12px 14px; border-radius: var(--eh-r-panel);
+  background: color-mix(in srgb, var(--hr-outreach) 9%, var(--surface)); border: 1px solid color-mix(in srgb, var(--hr-outreach) 45%, transparent);
+}
+.eh-rule p { margin: 0; line-height: 1.45; font-size: 0.97rem; }
+.eh-rule-title { font-weight: 700; color: var(--hr-outreach); margin-bottom: 4px !important; }
+.eh-rule-icon { flex: none; color: var(--hr-outreach); margin-top: 2px; }
+
+/* ── folds ───────────────────────────────────────────────────────────────── */
+.eh-fold { margin: 0 0 10px; border-radius: var(--eh-r-panel); background: var(--surface); border: 1px solid var(--border-strong); }
+.eh-fold-head {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 10px 14px; text-align: left;
+  background: transparent; border: 0; color: var(--text); font: 700 1.05rem var(--font-ui); cursor: pointer;
+}
+.eh-fold-icon {
+  flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 9px;
+  color: var(--tone, var(--gold)); background: color-mix(in srgb, var(--tone, var(--gold)) 14%, transparent);
+}
+.eh-fold-title { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.eh-fold-sub { font-weight: 400; font-size: 0.9rem; color: var(--steel); }
+.eh-fold-chev { flex: none; color: var(--steel); transition: transform 0.2s ease; }
+.eh-fold-open .eh-fold-chev { transform: rotate(180deg); }
+.eh-fold-body { padding: 4px 14px 14px; }
+.eh-fold-body .eh-board, .eh-fold-body .eh-food { margin-top: 4px; }
+
+/* ── people, removal ─────────────────────────────────────────────────────── */
+.eh-people-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+.eh-person {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 10px; border-radius: 10px;
+  background: var(--surface-2); border: 1px solid var(--border);
+}
+.eh-person-icon { color: var(--hr-competition); }
+.eh-person-text { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; }
+.eh-person-name { font-weight: 700; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.eh-person-email { color: var(--steel); font-size: 0.9rem; overflow-wrap: anywhere; }
+.eh-person .eh-btn { margin: 0; }
+.eh-confirm-inline { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.eh-confirm-inline > span { flex-basis: 100%; color: var(--gold-dim); }
+.eh-confirm-inline .eh-btn { margin: 0; }
+.eh-add-person { border-top: 1px solid var(--border); padding-top: 12px; display: grid; gap: 8px; }
+.eh-add-person .eh-hint { margin: 0; }
+.eh-tone-danger .eh-fold-head { color: var(--fault); }
+
+/* ── summary ─────────────────────────────────────────────────────────────── */
+.eh-banner { display: flex; gap: 14px; align-items: flex-start; padding: 16px; }
+.eh-banner-icon { flex: none; width: 54px; height: 54px; display: grid; place-items: center; border-radius: 50%; }
+.eh-banner-title { margin: 0 0 4px; font-size: 1.3rem; line-height: 1.2; }
+.eh-banner p { margin: 0; color: var(--text); line-height: 1.45; }
+.eh-banner-todo { border-color: var(--gold-dim); }
+.eh-banner-todo .eh-banner-icon { color: var(--gold); background: var(--gold-a14); }
+.eh-banner-signed, .eh-banner-locked { border-color: var(--hr-volunteer); }
+.eh-banner-signed .eh-banner-icon, .eh-banner-locked .eh-banner-icon { color: var(--hr-volunteer); background: color-mix(in srgb, var(--hr-volunteer) 15%, transparent); }
+.eh-banner-lockin { border-color: var(--hr-outreach); }
+.eh-banner-lockin .eh-banner-icon { color: var(--hr-outreach); background: color-mix(in srgb, var(--hr-outreach) 15%, transparent); }
+.eh-banner-over .eh-banner-icon { color: var(--steel); background: var(--surface-2); }
+.eh-todo-list, .eh-review { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.eh-todo {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 8px 12px; text-align: left;
+  border: 1px solid var(--border-strong); border-radius: var(--eh-r-key); background: var(--surface-2);
+  color: var(--text); font: 600 1rem var(--font-ui); cursor: pointer;
+}
+.eh-todo:hover { border-color: var(--tone); }
+.eh-todo-icon, .eh-review-icon {
+  flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 9px;
+  color: var(--tone); background: color-mix(in srgb, var(--tone) 14%, transparent);
+}
+.eh-todo-text { flex: 1 1 auto; display: flex; flex-direction: column; }
+.eh-todo-part { font-weight: 400; font-size: 0.85rem; color: var(--steel); }
+.eh-todo-go { flex: none; font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
+.eh-callout {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; margin: 0 0 12px; padding: 10px 14px; text-align: left;
+  border-radius: var(--eh-r-panel); border: 1px solid var(--gold-dim); background: var(--gold-a08);
+  color: var(--gold-bright); font: 700 1rem var(--font-ui); cursor: pointer;
+}
+.eh-review-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.eh-review-row { flex-wrap: nowrap; }
+.eh-review-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; font-weight: 700; }
+.eh-review-ok, .eh-review-left { font-family: var(--font-mono); font-weight: 400; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.eh-review-ok { color: var(--hr-volunteer); }
+.eh-review-left { color: var(--gold-dim); }
+.eh-review-row .eh-btn { margin: 0; }
+.eh-plan { margin: 0; display: grid; gap: 6px; }
+.eh-plan > div { display: grid; grid-template-columns: 110px 1fr; gap: 10px; align-items: center; }
+.eh-plan dt { display: inline-flex; align-items: center; gap: 6px; color: var(--steel); font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.eh-plan dd { margin: 0; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.eh-plan-warn dd { color: var(--gold); }
+
+/* ── the save indicator ──────────────────────────────────────────────────── */
+/* Bottom of the screen, clear of the header; "saved" fades after a moment, "retrying" stays. */
+.eh-savebar { position: fixed; left: 0; right: 0; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 30; display: flex; justify-content: center; pointer-events: none; }
+.eh-savebar-pill {
+  display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px;
+  font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase;
+  background: var(--surface-2); border: 1px solid var(--border-strong); box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.8);
+}
+.eh-savebar-ok { color: var(--hr-volunteer); border-color: color-mix(in srgb, var(--hr-volunteer) 50%, transparent); }
+.eh-savebar-busy { color: var(--steel); }
+.eh-savebar-bad { color: var(--fault); border-color: var(--fault); }
+
+/* ── event info ──────────────────────────────────────────────────────────── */
+.eh-event-info { margin-top: 10px; }
+.eh-where { display: flex; gap: 14px; align-items: flex-start; }
+.eh-where-icon { flex: none; width: 50px; height: 50px; display: grid; place-items: center; border-radius: 12px; color: var(--gold); background: var(--gold-a14); }
+.eh-where .eh-btn { margin: 10px 0 0; }
+.eh-info-venue { font-size: 1.15rem; font-weight: 700; margin: 0; }
+.eh-info-row { min-height: 32px; border-bottom: 1px solid var(--border); padding: 4px 0; }
+.eh-info-row:last-child { border-bottom: 0; }
+
+/* ── the app's plate: the same material as the rest of the app ───────────── */
+:root.tm-plate :is(.eh-card, .eh-tracker, .eh-fold, .eh-hero, .eh-car, .eh-meal, .eh-rule) {
+  background-image: linear-gradient(to bottom, var(--tm-panel-sheen), transparent 4rem);
+  box-shadow:
+    inset 0 1px 0 0 var(--tm-panel-hi),
+    0 1px 2px 0 var(--tm-drop),
+    0 8px 14px -6px var(--tm-drop),
+    -2px 18px 30px -14px var(--tm-drop-far);
+}
+:root.tm-plate .eh-hero { background-image: linear-gradient(135deg, var(--surface-2), var(--surface) 55%, var(--bg)); }
+:root.tm-plate :is(.eh-btn, .eh-option, .eh-tile, .eh-todo, .eh-tick, .eh-chip:not(.eh-chip-on)) {
+  border-radius: var(--tm-r-control);
+  background-image: linear-gradient(to bottom, var(--tm-face-hi), var(--tm-face-lo));
+  box-shadow:
+    inset 0 2px 0 -1px var(--tm-bezel-hi),
+    inset 0 -2px 2px -1px var(--tm-foot),
+    0 0 0 1px var(--tm-rim-out),
+    0 2px 3px 0 var(--tm-drop);
+}
+:root.tm-plate :is(.eh-btn, .eh-option, .eh-tile, .eh-todo, .eh-tick, .eh-chip):active:not(:disabled) {
+  box-shadow: inset 0 3px 4px 0 var(--tm-press), inset 0 1px 1px 0 var(--tm-press), 0 0 0 1px var(--tm-rim-out);
+}
+:root.tm-plate .eh-input {
+  border-radius: var(--tm-r-small);
+  box-shadow: inset 0 1px 0 0 var(--tm-well-shade), inset 0 2px 3px -1px var(--tm-well-shade), 0 1px 0 0 var(--tm-well-lip);
+}
+:root.tm-plate .eh-bar { box-shadow: inset 0 1px 2px 0 var(--tm-well-shade), 0 1px 0 0 var(--tm-well-lip); }
+:root.tm-plate .eh-run { box-shadow: inset 0 1px 2px 0 var(--tm-well-shade); }
+.eh-options-shut { gap: 6px; }
+.eh-option-change { justify-self: start; margin: 0; min-height: 44px; }
+@media (max-width: 560px) {
+  .eh-hero .eh-mark { position: absolute; right: 14px; top: 14px; width: 40px; height: 40px; }
+  .eh-hero-text { padding-right: 46px; }
+}
+@media (max-width: 420px) {
+  .eh-tile { padding: 8px 2px; }
+  .eh-tile-on { padding: 7px 1px; }
+  .eh-tile-label { font-size: 0.72rem; }
+  .eh-tile-state { font-size: 0.66rem; }
+}
+
+/* An answer the page assumed: says so above the cards. */
+.eh-assumed { margin: 0 0 8px; padding: 8px 12px; border-left: 3px solid var(--hr-outreach); background: color-mix(in srgb, var(--hr-outreach) 10%, transparent); color: var(--text); font-size: 0.95rem; border-radius: 0 var(--radius) var(--radius) 0; }
+/* A car that takes its first two riders together. */
+.eh-pair-note { display: flex; gap: 8px; align-items: flex-start; margin: 6px 0; color: var(--steel); font-size: 0.95rem; }
+.eh-pair-note svg { flex: none; margin-top: 2px; color: var(--hr-outreach); }
+.eh-pair { display: grid; gap: 6px; }

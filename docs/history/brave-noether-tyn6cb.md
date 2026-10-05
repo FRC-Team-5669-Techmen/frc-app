@@ -3,7 +3,7 @@ title: "Event family hub (Beach Blitz 2026): family form, carpool board, food bo
 date: 2026-10-04
 branches: [claude/brave-noether-tyn6cb]
 commits: []
-migrations: ["0005_event_family_hub.sql", "0005_event_family_hub_rls_test.sql", "0006_beach_blitz_seed.sql", "0007_event_hub_open_link.sql", "0007_event_hub_open_link_rls_test.sql"]
+migrations: ["0005_event_family_hub.sql", "0005_event_family_hub_rls_test.sql", "0006_beach_blitz_seed.sql", "0007_event_hub_open_link.sql", "0007_event_hub_open_link_rls_test.sql", "0008_event_hub_families.sql", "0008_event_hub_families_rls_test.sql"]
 subsystems: ["Schedule", "Testing", "Documentation"]
 ---
 
@@ -361,3 +361,92 @@ and email delivery.
    function's secrets.
 3. Send that link to every parent and guardian.
 
+
+## 2026-10-05: the family page rebuilt for parents, and 0008 (decision 44)
+
+Mr. Pina, after trying the page: families must be able to take themselves or
+one parent off; the form's progress was confusing; "adults from your family"
+needed any number; a parent may drive students other than their own; every
+question needed an info card ("will you take home pickups", for one); the
+Salesian one-child rule had to be visible and enforced; carpool was planned in
+one place and seats picked in another; Event info was "an annoying scrolling
+mess"; the look was one flat theme; and "a boomer parent who minimizes
+technology use in their daily lives should find this a breeze to fill out."
+
+**The page** (`src/EventFamilyPage.jsx`, with the parts in
+`src/EventFamilyParts.jsx`, the controls in `src/EventHubControls.jsx` and
+inline icons in `src/eventIcons.jsx`): four parts, Who is coming, Rides, Food
+and health, Contacts and forms, each with its own colour and icon, then a
+Finish review. A tracker under the header says "N of 4 parts done" and has a
+tile per part naming what is left; a part says "Part 2 of 4" and ends with
+"Next: <part>". Every question carries an (i) card that opens on a tap (and on
+hover with a mouse). A ride question the page assumed ("We started you on Team
+carpool") keeps every card showing until someone taps one; an answered option
+question shrinks to the chosen card and "Change this answer". Seats are
+claimed right under "How will Sam get to the venue?", for that day and run;
+the whole-team board is a fold under Rides, the food board a fold under Food.
+The one-child rule is stated at the top of Rides. Finish lists every missing
+answer as a line that opens its part, flags a run with no seat, and turns into
+lock-in (one tap per day) and then "You are all set". Event info is a list of
+closed sections. A save shows "All changes saved" at the foot of the screen
+for a moment; "Not saved yet, retrying" stays until it lands. Adults take
+0 to 4 as chips and "5 or more" opens a number box. Phones show formatted
+and are stored as typed. Contacts lists the people on the page, with Remove,
+and "Take our family off this trip" is a fold at the end. The mentor page
+gained Removals on a family, "Seat two students together" on an empty car
+that needs two, and shows the rule as always on.
+
+**0008** (`supabase/migrations/0008_event_hub_families.sql`, its header has
+every why): `drive_to` / `drive_home` on a day, so a parent can drive a car for
+the team without their own student in it (whether or not that student is
+coming), and that car falls under the one-child rule; adults 0 to 30; each
+email gets its own link (one outbox row per recipient, the email recorded on
+the token), so `hub_remove_guardian` can cut off one person; a family leaves
+with `hub_remove_family`, a mentor removes one with `hub_staff_remove_family`;
+`hub_staff_place_pair` seats two students into an empty needs-two car at once;
+the rule is always on (`hub_events_one_minor_rule_on`); and
+`_hub_invite_status` reads every email that carried a link, which fixes a real
+bug: a family that came in through the open link read "none" forever and so
+was never reminded. Everything new is called from the browser through
+PostgREST, so the deployed function needs no redeploy.
+
+**Found and fixed on the way.** An empty car without its driver's own student
+(the mentor van) could not be filled by anyone: a family's first claim is
+refused by the rule, and a mentor's one-student move needed an override reason
+that then stayed on the car and stopped it ever turning red. Hence
+`hub_staff_place_pair`, and the family page no longer offers a Claim it knows
+will be refused. 0005's test check 5 had failed since 0007 was applied (its
+function list predates 0007's anon grants); it now checks 0005's own
+functions, and 0007's test gained check 17 for its own grants. A phone field
+that switched from formatted to raw digits on focus made typing append to the
+old number; it no longer switches. "Got it" on an info card did not close it
+while the mouse was over it.
+
+**Decision 44** records how the rule is read and the one question left: may a
+student hold the first seat in a car that needs two (the car then cannot leave
+until a second joins)? Default: no, a mentor seats the first two.
+
+Verified: the SQL harness, every migration and every test, 238/238 (0005
+69/69, 0007 17/17, 0008 41/41); mutants 0008 37/37 and 0005 30/30 (now with
+0007 applied, whose baseline was red before the check 5 fix); `test:features`
+1106/1106 (`event-hub` 149/149, in both 0008 states); `test:checkin` 51/51; the
+build, `npm test` (675), `ds:audit`, `discord:calendar:test` and
+`history:verify`. Not verified: anything on the live database (0008 is not
+applied), email delivery, a real phone.
+
+## MR. PINA'S STEPS for 0008 (2026-10-05)
+
+0007 must be in first (the steps above). Then:
+
+1. SQL editor (https://supabase.com/dashboard/project/pbuogcrhdywpzvcxbwsd/sql/new),
+   one tab each, in order:
+   1. `supabase/migrations/0008_event_hub_families.sql`: "Success. No rows returned".
+   2. `supabase/migrations/0008_event_hub_families_rls_test.sql`: 41 rows plus
+      "summary", all PASS. It rolls itself back. It needs one staff member, one
+      approved student, two students with this season's application and two
+      more non-staff accounts.
+2. No function redeploy: everything new is called from the browser.
+3. In a private window, open your own family page from the earlier step:
+   Contacts now lists the people on the page, and Rides asks, per day, whether
+   a parent can help drive other students. The mentor page's Setup shows
+   "One-child rule: always on".

@@ -48,11 +48,11 @@ const taken = (db, inv) => !!inv && (
   || T(db, 'hub_day_answers').some((a) => a.invite_id === inv)
   || T(db, 'hub_responses').some((r) => r.invite_id === inv && r.staff_updated_by))
 const mask = (e) => `${e.split('@')[0].slice(0, 1)}•••@${e.split('@')[1]}`
-function mint(db, inv, t) {
+function mint(db, inv, t, email = null) {
   const a = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_'
   let token = ''
   for (let i = 0; i < 22; i++) token += a[Math.floor(Math.random() * a.length)]
-  T(db, 'hub_invite_tokens').push({ token, invite_id: inv, created_at: iso(t), revoked_at: null })
+  T(db, 'hub_invite_tokens').push({ token, invite_id: inv, email, created_at: iso(t), revoked_at: null })
   return token
 }
 function enqueue(db, ev, kind, to, subject, link, dedupe, t) {
@@ -101,11 +101,12 @@ export default {
         T(db, 'hub_invites').push(inv)
       }
       if (!inv.emails.includes(email)) inv.emails = [...inv.emails, email]
+      inv.guardian_names = { ...(inv.guardian_names ?? {}), [email]: name }
       const r = one(db, 'hub_responses', (x) => x.invite_id === inv.id)
       if (r) Object.assign(r, { parent_name: name, parent_email: email, parent_phone: null })
       else T(db, 'hub_responses').push({ invite_id: inv.id, parent_name: name, parent_email: email, parent_phone: null, allergens: [] })
       enqueue(db, e.id, 'welcome', [email], `Your ${e.title} page`, inv.id, `welcome:${inv.id}:${email}`, t)
-      return { data: { status: 'in', token: mint(db, inv.id, t), student }, error: null }
+      return { data: { status: 'in', token: mint(db, inv.id, t, email), student }, error: null }
     },
     hub_add_parent: ({ args, db, now }) => {
       const t = nowMs(now)
@@ -119,6 +120,8 @@ export default {
         if (inv.emails.length >= 6) return refusal('too_many', 'This family already has six emails. Ask a mentor to change them.')
         inv.emails = [...inv.emails, email]
       }
+      const nm = String(args?.p_name ?? '').trim()
+      if (nm) inv.guardian_names = { ...(inv.guardian_names ?? {}), [email]: nm.slice(0, 120) }
       enqueue(db, inv.event_id, 'added', [email], 'Your family page', inv.id, `added:${inv.id}:${email}`, t)
       return { data: { ok: true, emails: inv.emails }, error: null }
     },
