@@ -63,6 +63,7 @@ const SurveysAdmin       = lazy(() => import('./SurveysAdmin'))
 // Event family hub (migrations 0005/0006). The family page is public, like
 // ParentResponse; the trips pages are member and staff views in the shell.
 const EventFamilyPage    = lazy(() => import('./EventFamilyPage'))
+const EventJoinPage      = lazy(() => import('./EventJoinPage'))
 const TripsPage          = lazy(() => import('./TripsPage'))
 const TripsAdmin         = lazy(() => import('./TripsAdmin'))
 // Mounted in ProtectedLayout, so it is on every authenticated page. Lazy with
@@ -281,6 +282,7 @@ export default function App() {
   // capability URL, for parents with no account, and is let through the same
   // way. /e alone is its "lost your link" form.
   const onFamilyPath = location.pathname === '/e' || location.pathname.startsWith('/e/')
+    || location.pathname === '/join' || location.pathname.startsWith('/join/')
 
   // The design-system specimen. It exists ONLY where SpecimenPage exists, which
   // is dev, and it touches no auth and no Supabase, so no gate has anything to
@@ -356,6 +358,10 @@ export default function App() {
             Function). /e alone is "lost your link". */}
         <Route path="/e/:token" element={<EventFamilyPage />} />
         <Route path="/e" element={<EventFamilyPage />} />
+        {/* The open sign-up link (0007): like a Google Form, for parents and
+            guardians. Public, outside ProtectedLayout, same as /e. */}
+        <Route path="/join" element={<EventJoinPage />} />
+        <Route path="/join/:eventId" element={<EventJoinPage />} />
 
         {/* Design-system specimen. Dev only — 404 in production. No auth, no Supabase. */}
         <Route path="/_ds" element={SpecimenPage ? <SpecimenPage /> : <DsNotFound />} />

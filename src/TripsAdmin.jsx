@@ -667,6 +667,26 @@ function Exports({ eventId, ov }) {
 
 // ── the page ────────────────────────────────────────────────────────────────
 
+// The open sign-up link (0007): what a mentor sends to every parent, like a
+// Google Form link. Works for anyone; the family that already started gets an
+// email instead of the page.
+function OpenLink({ eventId }) {
+  const url = `${window.location.origin}/join/${eventId}`
+  const [copied, setCopied] = useState(false)
+  return (
+    <section className="eh-card ehm-openlink" data-testid="ehm-open-link">
+      <h2 className="eh-label">Family sign-up link</h2>
+      <p className="eh-hint">Send this to every parent and guardian (text, email, GroupMe). They pick their student and fill it out.</p>
+      <div className="eh-inline">
+        <input className="eh-input" readOnly value={url} aria-label="Family sign-up link" onFocus={(e) => e.target.select()} />
+        <button type="button" className="eh-btn eh-btn-primary" onClick={async () => {
+          try { await navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2500) } catch { /* select and copy by hand */ }
+        }}>{copied ? 'Copied' : 'Copy'}</button>
+      </div>
+    </section>
+  )
+}
+
 export default function TripsAdmin({ hasRole = () => false }) {
   const { id } = useParams()
   const isStaff = ['mentor', 'lead', 'admin'].some(hasRole)
@@ -694,6 +714,7 @@ export default function TripsAdmin({ hasRole = () => false }) {
       <p className="eh-kicker"><Link className="eh-link" to="/trips">Trips</Link></p>
       <h1 className="ehm-title">{ov.event.title}</h1>
       <p className="eh-hint">{ov.event.venue_name}{ov.event.starts_on ? ` · ${fmtDate(ov.event.starts_on, 'medium')}` : ''} · Mentor page</p>
+      <OpenLink eventId={id} />
       <Seg className="eh-tabs" label="Mentor page" value={tab} onPick={(t) => { setTab(t); if (t !== 'families') setInviteId(null) }}
            items={[{ key: 'ready', label: 'Readiness' }, { key: 'families', label: 'Families' }, { key: 'carpool', label: 'Carpool' },
              { key: 'food', label: 'Food' }, { key: 'setup', label: 'Setup' }, { key: 'exports', label: 'Exports' }]} />

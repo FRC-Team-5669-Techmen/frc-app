@@ -38,7 +38,11 @@
  *    /trips/<id>, against the family page and the staff board;
  *  - 0005 not applied: "not set up yet" on /trips and the mentor page, the
  *    family page's unreachable card, and no hub call succeeds;
- *  - "lost your link" answers the same for a known and an unknown address;
+ *  - the open link (0007, option B): students with this season's application
+ *    listed and staff not; the guardian tick required; the first person for a
+ *    student goes straight in, against a family that already started, whose
+ *    link is emailed to that family instead; a second parent added from the
+ *    page; the same phone goes back; a dead link points to /join;
  *  - the mentor page: five readiness lines; Send invites confirms with a
  *    count and queues exactly that many; staff see allergy names;
  *  - 44px floor on every control at 375, no horizontal scroll, 0 console errors.
@@ -389,19 +393,92 @@ export default {
         names >= 1 && writes === 0 && phones === 0 && staffPhones >= 1, `riders ${names}; write controls ${writes}; phones/spots ${phones} against staff ${staffPhones}`);
     });
 
-    // ════ lost your link ══════════════════════════════════════════════════
-    await t.step('lost link', async () => {
-      t.as('/e with a dead token');
-      const answers = [];
-      for (const email of ['riley.family@example.com', 'nobody@example.com']) {
-        await t.open('/e/AAAAAAAAAAAAAAAAAAAAAA', { persona: 'signedout', ready: '[data-testid="eh-lost"]' });
-        await t.page.locator('[data-testid="eh-lost"] input[type="email"]').fill(email);
-        await t.press(t.page.locator('[data-testid="eh-lost"] button[type="submit"]'));
-        await t.waitFor('.eh-ok-line');
-        answers.push(await t.text('.eh-ok-line'));
-      }
-      t.check('a dead link offers a new one, and the answer is the same for a known and an unknown address',
-        answers[0] === answers[1] && /^If that email is on file/.test(answers[0]), `"${answers[0]}" / same: ${answers[0] === answers[1]}`);
+    // ════ the open link (0007): like a Google Form, option B ═════════════
+    await t.step('open link', async () => {
+      t.as('a parent on /join, signed out');
+      await t.open('/join', { persona: 'signedout', reset: true, ready: '[data-testid="eh-join-form"]' });
+      const names = await t.texts('.eh-join-opt');
+      t.check('the open link lists students with this season\'s application, and no staff (Robin is a lead and a student)',
+        names.includes('Dakota Hale') && names.includes('Riley Student') && !names.includes('Robin Park') && !names.some((n) => /Max|Ada/.test(n)),
+        `${names.length} listed: ${names.slice(0, 4).join(', ')}...`);
+      await t.tapTargets(CONTROLS + ', .eh-join-mentor a', '44px floor on every control of the open link');
+      await t.noHScroll('no horizontal scroll on the open link');
+
+      // Nobody has started for Dakota: straight in.
+      await t.page.locator('[data-testid="eh-join-form"] input[aria-label="Search for your student"]').fill('dak');
+      const filtered = await t.count('.eh-join-opt');
+      await t.press(t.page.locator('.eh-join-opt', { hasText: 'Dakota Hale' }));
+      await t.page.locator('input[autocomplete="name"]').fill('Dana Hale');
+      await t.page.locator('input[type="email"]').fill('Dana.Hale@example.com');
+      await t.press('button[type="submit"]');
+      await t.waitFor('[data-testid="eh-join-error"]');
+      const refused = await t.text('[data-testid="eh-join-error"]');
+      const stillHere = await t.count('[data-testid="eh-join-form"]');
+      t.check('typing filters the list; without the parent-or-guardian tick it does not start, and says why',
+        filtered === 1 && /parent or guardian/.test(refused) && stillHere === 1, `${filtered} match for "dak"; "${refused}"`);
+      await t.press('[data-testid="eh-join-guardian"]');
+      await t.press('button[type="submit"]');
+      await t.waitFor('[data-testid="eh-welcome"]');
+      await t.waitFor('[data-testid="eh-status"]');
+      const student = await t.text('[data-testid="eh-student"]');
+      const welcome = await t.text('[data-testid="eh-welcome"]');
+      const steps = await t.count('[data-testid="eh-stepdot"]');
+      t.check('the first person for a student goes straight into the form, told to bookmark it and that the link is emailed',
+        /\/e\/[A-Za-z0-9_-]{22}$/.test(new URL(t.page.url()).pathname) && student === 'Dakota Hale' && /Bookmark it/.test(welcome) && /dana\.hale@example\.com/i.test(welcome) && steps === 4,
+        `${new URL(t.page.url()).pathname.slice(0, 6)}...; student "${student}"; ${steps} steps`);
+      const invites = (await t.rows('hub_invites')).filter((i) => i.student_id === '00000000-0000-0000-0000-0000000000cc');
+      const welcomes = (await t.rows('hub_outbox')).filter((o) => o.kind === 'welcome');
+      t.check('one family is created for Dakota, with the email that was typed, and one welcome email is queued',
+        invites.length === 1 && JSON.stringify(invites[0].emails) === '["dana.hale@example.com"]' && welcomes.length === 1,
+        `invites ${invites.length}, emails ${JSON.stringify(invites[0]?.emails)}, welcome emails ${welcomes.length}`);
+
+      // A second parent, added from the family page.
+      await t.page.locator('[data-testid="eh-add-parent"] input[type="email"]').fill('Pat.Hale@example.com');
+      await t.press('[data-testid="eh-add-parent"] button[type="submit"]');
+      await t.waitFor('[data-testid="eh-add-parent"] [role="status"]');
+      const addNote = await t.text('[data-testid="eh-add-parent"] [role="status"]');
+      const after = (await t.rows('hub_invites')).find((i) => i.student_id === '00000000-0000-0000-0000-0000000000cc');
+      const added = (await t.rows('hub_outbox')).filter((o) => o.kind === 'added');
+      t.check('a family adds another parent from its page: their email joins the family and gets its own link',
+        /Sent a link to Pat\.Hale@example\.com/.test(addNote) && after.emails.includes('pat.hale@example.com') && after.emails.length === 2 && added.length === 1,
+        `"${addNote}"; emails ${JSON.stringify(after.emails)}; added emails ${added.length}`);
+
+      // Reopening the open link on the same phone goes back to the page.
+      await t.open('/join', { persona: 'signedout', ready: '[data-testid="eh-join-saved"]' });
+      const back = await t.text('[data-testid="eh-join-saved"]');
+      t.check('opening the link again on the same phone offers "Continue for Dakota Hale"', /Continue for Dakota Hale/.test(back), back.slice(0, 60));
+
+      // Someone already started for Riley: the page is NOT opened.
+      await t.press(t.page.locator('[data-testid="eh-join-saved"] button', { hasText: 'Sign up another student' }));
+      await t.press(t.page.locator('.eh-join-opt', { hasText: 'Riley Student' }));
+      await t.page.locator('input[autocomplete="name"]').fill('Someone Else');
+      await t.page.locator('input[type="email"]').fill('someone.else@example.com');
+      await t.press('[data-testid="eh-join-guardian"]');
+      await t.press('button[type="submit"]');
+      await t.waitFor('[data-testid="eh-join-done"]');
+      const done = await t.text('[data-testid="eh-join-done"]');
+      const onForm = await t.count('[data-testid="eh-status"]');
+      const riley = (await t.rows('hub_invites')).find((i) => i.student_id === '00000000-0000-0000-0000-0000000000c2');
+      const asks = (await t.rows('hub_outbox')).filter((o) => o.kind === 'join_request');
+      t.check('once a family started, a second person is not let in: the link is emailed to that family, address masked, and the asker is not added',
+        /already started/.test(done) && /•••@/.test(done) && !/someone\.else/.test(riley.emails.join()) && onForm === 0 && asks.length === 1 && asks[0].to_emails.join() === riley.emails.join(),
+        `"${done.slice(0, 70)}..."; family page shown ${onForm}; join emails ${asks.length}`);
+
+      // A dead family link now points at the open link; /e alone goes there.
+      await t.open('/e/AAAAAAAAAAAAAAAAAAAAAA', { persona: 'signedout', ready: '[data-testid="eh-lost"]' });
+      const dead = await t.count('[data-testid="eh-lost"] a[href="/join"]');
+      const deadAdd = await t.count('[data-testid="eh-add-parent"]');
+      await t.open('/e', { persona: 'signedout', ready: '[data-testid="eh-join-form"], [data-testid="eh-join-saved"]' });
+      t.check('a dead link points to the sign-up form (no add-parent card on it), and /e alone opens the sign-up form',
+        dead === 1 && deadAdd === 0 && new URL(t.page.url()).pathname === '/join', `link ${dead}, add-parent ${deadAdd}, /e -> ${new URL(t.page.url()).pathname}`);
+
+      // Mentors: the copyable link, and the way to add a car.
+      await t.open(MANAGE, { persona: 'mentor', ready: '[data-testid="ehm-open-link"]' });
+      const link = await t.page.locator('[data-testid="ehm-open-link"] input').inputValue();
+      t.check('the mentor page shows the family sign-up link for this event', link.endsWith(`/join/${EH.event}`), link);
+      await t.open(`/join/${EH.event}`, { persona: 'signedout', ready: '.eh-join-mentor' });
+      const mentorLink = await t.count(`.eh-join-mentor a[href="/trips/${EH.event}/manage"]`);
+      t.check('the open link tells a driving mentor where to add a car', mentorLink === 1, `${mentorLink}`);
     });
 
     // ════ the mentor page ═════════════════════════════════════════════════

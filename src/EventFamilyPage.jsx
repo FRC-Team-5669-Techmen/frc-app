@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
+import { supabase } from './supabase'
 import {
   ALLERGENS, STEPS, createSaver, fmtDate, fmtDay, fmtTime, formDays, isoToZoned, missingFor, needsSeat,
   nightOptions, sameNights, statusLine, zonedToIso,
@@ -569,7 +570,7 @@ function Done({ view, ctx, onEdit, goCarpool }) {
 
 // ── the hub ─────────────────────────────────────────────────────────────────
 
-export function FamilyHub({ transport, standalone = true, onInvalid }) {
+export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
   const [view, setView] = useState(null)
   const [mode, setMode] = useState('loading')   // loading | ready | invalid | offline
   const [tab, setTab] = useState('plan')
@@ -600,8 +601,9 @@ export function FamilyHub({ transport, standalone = true, onInvalid }) {
     }
     else if (r.kind === 'invalid') { setMode('invalid'); onInvalid?.() }
     else setMode((m) => (m === 'ready' ? m : 'offline'))
+    if (r.kind === 'ok' && r.data?.event?.over) onOver?.()
     return r
-  }, [transport, onInvalid])
+  }, [transport, onInvalid, onOver])
 
   const scheduleReload = useCallback(() => {
     clearTimeout(reloadTimer.current)
@@ -743,39 +745,93 @@ export function FamilyHub({ transport, standalone = true, onInvalid }) {
 
 // "Lost your link?" The answer is the same whether or not the address is on
 // file; a link goes out only to an address an invite carries.
+// A link that does not work. Since the open link (0007) a family that lost
+// its page opens the team's sign-up link again and picks its student.
 function LostLink({ invalid = false }) {
-  const [email, setEmail] = useState('')
-  const [sent, setSent] = useState(false)
-  const [busy, setBusy] = useState(false)
   return (
     <div className="eh-page">
       <section className="eh-card eh-lost" data-testid="eh-lost">
         <img src="/assets/logos/Mark-Gold.svg" className="eh-mark" alt="Techmen" />
-        <h1 className="eh-card-title">{invalid ? 'This link does not work' : 'Get your family link'}</h1>
-        {invalid && <p>It may be old or mistyped. Enter the email the team has for you, and we will send a fresh link.</p>}
-        {sent ? (
-          <p className="eh-ok-line" role="status">If that email is on file, a new link is on its way. Check your inbox in a few minutes.</p>
-        ) : (
-          <form onSubmit={async (e) => {
-            e.preventDefault()
-            setBusy(true)
-            await callFn({ action: 'resend_link', email: email.trim() })
-            setBusy(false)
-            setSent(true)
-          }}>
-            <label className="eh-field"><span className="eh-q-label">Email</span>
-              <input className="eh-input" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-            <button type="submit" className="eh-btn eh-btn-primary" disabled={busy || !email.trim()}>Send me a link</button>
-          </form>
-        )}
+        <h1 className="eh-card-title">{invalid ? 'This link does not work' : 'Family sign-up'}</h1>
+        <p>{invalid ? 'It may be old or mistyped. ' : ''}Open the sign-up form and pick your student to get back to your family&rsquo;s page.</p>
+        <Link className="eh-btn eh-btn-primary" to="/join">Open the sign-up form</Link>
       </section>
     </div>
   )
 }
 
+// Shown right after a parent comes in through the open link.
+function Welcome({ joined }) {
+  return (
+    <div className="eh-page eh-welcome-wrap">
+      <section className="eh-card eh-welcome" role="status" data-testid="eh-welcome">
+        <h2 className="eh-card-title">You are signed up{joined.student ? ` for ${joined.student}` : ''}</h2>
+        <p>This is your family&rsquo;s page. <strong>Bookmark it</strong> or add it to your home screen: you will come back before the event to confirm the carpool and food, and you can change any answer until then.</p>
+        {joined.email && <p className="eh-hint">We are also emailing this link to {joined.email}.</p>}
+      </section>
+    </div>
+  )
+}
+
+// More than one parent: anyone on the family page can add another parent or
+// guardian, who gets their own link to the same page (hub_add_parent, 0007).
+function AddParent({ token }) {
+  const [email, setEmail] = useState('')
+  const [note, setNote] = useState(null)
+  const [busy, setBusy] = useState(false)
+  return (
+    <div className="eh-page eh-addparent-wrap">
+      <section className="eh-card" data-testid="eh-add-parent">
+        <h2 className="eh-card-title">Add another parent or guardian</h2>
+        <p className="eh-hint">They get their own link to this same page, so either of you can fill it in.</p>
+        <form className="eh-inline" onSubmit={async (e) => {
+          e.preventDefault()
+          setBusy(true)
+          const { error } = await supabase.rpc('hub_add_parent', { p_token: token, p_email: email.trim() })
+          setBusy(false)
+          if (error) {
+            const m = /^hub:([a-z_]+)$/.exec(error.message ?? '')
+            setNote({ bad: true, text: m ? (error.details || 'That did not work.') : 'Could not reach the team server. Try again.' })
+            return
+          }
+          sendQueuedMail()
+          setNote({ text: `Sent a link to ${email.trim()}.` })
+          setEmail('')
+        }}>
+          <input className="eh-input" type="email" required autoComplete="off" placeholder="their email" value={email}
+                 onChange={(e) => setEmail(e.target.value)} aria-label="Email of another parent or guardian" />
+          <button type="submit" className="eh-btn" disabled={busy || !email.trim()}>Send them a link</button>
+        </form>
+        {note && <p className={`eh-note${note.bad ? ' eh-note-bad' : ''}`} role="status">{note.text}</p>}
+      </section>
+    </div>
+  )
+}
+
+// The rules queue the email; the deployed event-family function sends what is
+// queued. Its "lost your link" action with a blank address sends the queue and
+// nothing else, so this needs no new function. Best effort: the hourly tick
+// sends it anyway.
+function sendQueuedMail() {
+  fetch(FN_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'resend_link', email: '' }) })
+    .catch(() => { /* the hourly tick sends it */ })
+}
+
 export default function EventFamilyPage() {
   const { token } = useParams()
+  const location = useLocation()
   const transport = useMemo(() => (token ? familyTransport(token) : null), [token])
-  if (!transport) return <LostLink />
-  return <FamilyHub key={token} transport={transport} />
+  const [invalid, setInvalid] = useState(false)
+  const [over, setOver] = useState(false)
+  const onInvalid = useCallback(() => setInvalid(true), [])
+  const onOver = useCallback(() => setOver(true), [])
+  if (!transport) return <Navigate to="/join" replace />
+  const joined = location.state?.joined
+  return (
+    <>
+      {joined && !invalid && <Welcome joined={joined} />}
+      <FamilyHub key={token} transport={transport} onInvalid={onInvalid} onOver={onOver} />
+      {!invalid && !over && <AddParent token={token} />}
+    </>
+  )
 }

@@ -325,3 +325,15 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .ehm-needs-edit { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 4px; }
 .ehm-section-edit, .ehm-meal-edit { border-top: 1px solid var(--border); padding: 10px 0; }
 .ehm-section-edit textarea { margin-top: 6px; }
+
+/* The open link (/join, migration 0007). */
+.eh-join-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-height: 50vh; overflow-y: auto; }
+.eh-join-opt { width: 100%; justify-content: flex-start; text-align: left; min-height: 44px; }
+.eh-join-picked { font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
+.eh-join-go { width: 100%; min-height: 48px; margin-top: 8px; }
+.eh-join-mentor { margin-top: 16px; }
+.eh-join-mentor a { color: var(--gold); min-height: 44px; display: inline-flex; align-items: center; }
+.eh-welcome { border-color: var(--gold-dim); }
+.eh-welcome-wrap, .eh-addparent-wrap { min-height: 0; padding-top: 0; padding-bottom: 0; }
+.eh-welcome-wrap { padding-top: 16px; }
+.eh-addparent-wrap { padding-bottom: 32px; }

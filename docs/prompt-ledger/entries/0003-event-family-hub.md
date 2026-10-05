@@ -10,3 +10,7 @@
   `main` and NOT applied to the live project, and `event-family` is NOT deployed: nothing in this session could reach
   either. `docs/history/brave-noether-tyn6cb.md` ends with the steps. Until they are done `/trips` says not set up yet.
 - Branch: main (solo mode, decision 05: one push). The harness branch `claude/brave-noether-tyn6cb` was not pushed.
+- Notes: 2026-10-05, a follow-up asked by Mr. Pina directly in the same session, not a new prompt: the open
+  sign-up link (decision 43, option B, more than one parent per student). It took migration 0007, the next
+  free number on `main` and on every remote branch at the time; `docs/history/brave-noether-tyn6cb.md` has
+  the record and the steps.

@@ -6,7 +6,8 @@ create it. The first four, `0001` to `0004`, landed on 2026-10-01, each with its
 `_rls_test.sql`; none had been applied to the live project when written. `0005`
 (the event family hub, with its test) and `0006` (the Beach Blitz 2026 seed,
 data only, so no test of its own; the 0005 test builds its own fixture event)
-landed on 2026-10-04, likewise unapplied.
+landed on 2026-10-04, likewise unapplied. `0007` (the event hub's open
+sign-up link, with its test) landed on 2026-10-05.
 
 **Every numbered test can now be run here, before anyone pastes it.**
 `node tools/sql-harness/run.mjs` builds a throwaway PostgreSQL 16 with Supabase
@@ -70,7 +71,7 @@ has to FIND its rows, and row lookup goes through the SELECT policy, so a test
 that thought it was checking UPDATE was checking SELECT again.
 
 Three of the frozen SQL files have a test sibling; every numbered migration has
-had one since `0001`, which made seven on 2026-10-01 and eight on 2026-10-04
+had one since `0001`, which made seven on 2026-10-01, eight on 2026-10-04 and nine on 2026-10-05
 (a pure data seed such as `0006` has no boundary to test). That is the number
 this rule exists to move.
 

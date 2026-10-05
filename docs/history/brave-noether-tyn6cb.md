@@ -3,7 +3,7 @@ title: "Event family hub (Beach Blitz 2026): family form, carpool board, food bo
 date: 2026-10-04
 branches: [claude/brave-noether-tyn6cb]
 commits: []
-migrations: ["0005_event_family_hub.sql", "0005_event_family_hub_rls_test.sql", "0006_beach_blitz_seed.sql"]
+migrations: ["0005_event_family_hub.sql", "0005_event_family_hub_rls_test.sql", "0006_beach_blitz_seed.sql", "0007_event_hub_open_link.sql", "0007_event_hub_open_link_rls_test.sql"]
 subsystems: ["Schedule", "Testing", "Documentation"]
 ---
 
@@ -307,3 +307,57 @@ same mutant then read 77/79.
      anyone on the "No parent email on file" list.
    - Then **"Send invites"**. It shows how many families will get an email and
      asks once more before sending.
+
+## 2026-10-05: the open link (0007, decision 43)
+
+Mr. Pina tried the steps above on the live project and got no link: the
+event had no families yet ("Sign-up 0 of 0"), and the "lost your link" form
+only emails an address already on a family, while the screen said "a link is
+on its way" either way. A probe of the live function with a made-up link
+answered `{"error":"not_found"}` from the function itself, so `event-family`
+was deployed with JWT verification off and 0005 was applied; the gap was the
+flow. He asked for a Google-Form-style open link, families with no email on
+file included, and that mentors (who drive) be supported.
+
+Built: `/join` and `/join/<event id>` (option B, decision 43). The first
+person for a student goes straight into the family page; once a family has
+started, the open link emails that family instead of opening its page, so a
+name picked from the list never shows another family's answers. "Add another
+parent or guardian" on the family page covers more than one parent. The
+mentor page shows the link with Copy, and the open page links a driving
+mentor to the Carpool tab, where mentor cars already were. `/e` alone and a
+dead link now point at `/join`; the "Send me a link" form is gone. An
+unrestricted version (option A) was refused by the session's safety check
+before the choice was made.
+
+The two new functions are granted to `anon` and called from the browser
+through PostgREST, so this needed no function redeploy. Queued mail is sent by
+calling the deployed function's `resend_link` with a blank address, which
+sends the queue and nothing else.
+
+Verified: the 0007 test, 16/16 on `tools/sql-harness/`; mutants with the
+started-family check removed (3 rows red) and the address mask removed (1
+red) were caught, and one with the guardian tick removed turned the test red
+by crashing it rather than by a clean FAIL row. `event-hub` E2E 100/100 at 375
+and 1440 (the new open-link step: listed and not listed, the tick required,
+straight in against already started, a second parent added, the same phone
+going back, the dead link, the mentor link). Running it caught one real bug:
+the add-parent box showed on an event that had ended. The family page now
+hides it. Not verified: anything on the live database (0007 is not applied),
+and email delivery.
+
+## MR. PINA'S STEPS for the open link (2026-10-05)
+
+1. SQL editor (https://supabase.com/dashboard/project/pbuogcrhdywpzvcxbwsd/sql/new),
+   one tab each, in order:
+   1. `supabase/migrations/0007_event_hub_open_link.sql`: "Success. No rows returned".
+   2. `supabase/migrations/0007_event_hub_open_link_rls_test.sql`: 16 rows plus
+      "summary", all PASS. It needs one approved student with this season's
+      application; it rolls itself back.
+2. Open https://frc-app-liard.vercel.app/trips/b1b12026-0000-4000-8000-000000000001/manage,
+   copy the **Family sign-up link** at the top, open it in a private window,
+   and sign up a student yourself with your own email. You land on the family
+   page; the welcome email needs `GMAIL_USER` and `GMAIL_APP_PASSWORD` on the
+   function's secrets.
+3. Send that link to every parent and guardian.
+
