@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { createSaver, fmtDate, fmtDay, statusLine } from './eventHub'
+import { createSaver, fmtDate, fmtDay, serviceHoursSpots, statusLine } from './eventHub'
 import { supabase } from './supabase'
 import { EventInfo } from './EventHubBoards'
+import { ServiceHoursLine } from './EventHubControls'
 import { PARTS, PartContacts, PartDays, PartFood, PartRides, Summary, hasV8, seatsMissing } from './EventFamilyParts'
 import {
   IconArrowLeft, IconArrowRight, IconCalendar, IconCheck, IconClock, IconFlag, IconInfo, IconPin, IconUserPlus, IconUsers, IconWifiOff,
@@ -435,6 +436,8 @@ export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
   const v8 = hasV8(view)
   const ctx = {
     tz, states, locked: !!ev.over, v8,
+    // 0011: the parent service hours lines (null when the event has no note).
+    serviceHours: serviceHoursSpots(ev),
     // 0009: the cars a brother or sister's family drives; their first seat is
     // this student's to take.
     householdCars: new Set((view.household ?? []).flatMap((h) => h.cars ?? [])),
@@ -468,6 +471,7 @@ export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
         <Household view={view} family={family} compact={part !== 'days' && part !== 'summary'} />
       )}
       {!ev.over && part !== 'info' && <Tracker view={view} part={part} go={go} />}
+      {part !== 'info' && <ServiceHoursLine text={serviceHoursSpots(ev).banner} testid="eh-sh-banner" />}
       {part !== 'info' && <InfoBar view={view} onInfo={goInfo} />}
 
       {pt && (

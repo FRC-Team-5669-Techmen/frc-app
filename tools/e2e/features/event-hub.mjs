@@ -57,6 +57,12 @@
  *    the trip and the student can be signed up again; a mentor removes a
  *    family; the mentor page shows the rule as always on; without 0008 none of
  *    it is offered;
+ *  - parent service hours (0011): the note on /join, under the tracker, at
+ *    the adults question, at the driver offer and in Event info (with the
+ *    volunteer link), 5 of 5 spots with the seeded note and 0 of 5 once a
+ *    mentor clears it in Setup or without 0011; the service hours CSV opens
+ *    with its count-not-names note and has one row per family per day, drove
+ *    matching the cars in the store both ways;
  *  - the mentor page: five readiness lines; Send invites confirms with a
  *    count and queues exactly that many;
  *  - 44px floor on every control at 375, no horizontal scroll, 0 console errors.
@@ -64,6 +70,7 @@
 import { EH } from '../../../src/dev/fixture/features/eventhub.js';
 import { ROSTER_FIXTURE } from '../../../src/dev/fixture/features/eventhubroster.js';
 import { waitForFixture } from '../lib.mjs';
+import { readFile } from 'node:fs/promises';
 
 const TOK = EH.tokens;
 const fam = (k) => `/e/${TOK[k]}`;
@@ -167,6 +174,7 @@ export default {
     const migs = await t.evaluate(() => window.__fx.migrationNumbers);
     const without0005 = migs.filter((m) => m !== '0005').join(',') || 'none';
     const without0008 = migs.filter((m) => m !== '0008').join(',') || 'none';
+    const without0011 = migs.filter((m) => m !== '0011').join(',') || 'none';
 
     // ════ outside the shell ═══════════════════════════════════════════════
     await t.step('outside the shell', async () => {
@@ -1122,6 +1130,98 @@ export default {
       const hhYes = await t.count('[data-testid="eh-household"]');
       t.check('Skyler\'s Who page reminds to count adults once; without 0009 there is no household card, with it there is',
         adultsOnce === 1 && hhNo === 0 && hhYes === 1, `adults note ${adultsOnce}; card without ${hhNo}, with ${hhYes}`);
+    });
+
+    // ════ parent service hours (0011) ═════════════════════════════════════
+    // The five spots, counted for the seeded note, then after a mentor clears
+    // it in Setup (blank saves as null), and without 0011 at all; the service
+    // hours CSV against the cars in the store.
+    await t.step('parent service hours (0011)', async () => {
+      const SPOT_IDS = ['eh-sh-join', 'eh-sh-banner', 'eh-sh-adults', 'eh-sh-drive', 'eh-sh-info'];
+      const spots = async (mig, look = false) => {
+        const seen = {};
+        await joinForm(t, { mig });
+        seen['eh-sh-join'] = await t.count('[data-testid="eh-sh-join"]');
+        if (look) await t.shot('service-hours-join');
+        await familyPage(t, 'casey', { persona: 'signedout', mig });
+        seen['eh-sh-banner'] = await t.count('[data-testid="eh-sh-banner"]');
+        await part(t, 'Who');
+        seen['eh-sh-adults'] = await t.count('[data-testid="eh-adults"] [data-testid="eh-sh-adults"]');
+        if (look) await t.shot('service-hours-who');
+        await part(t, 'Rides');
+        seen['eh-sh-drive'] = await t.count('[data-testid="eh-car-offer"] [data-testid="eh-sh-drive"]');
+        seen.driveFoldSub = await t.count('[data-testid="eh-drive-fold"] .eh-fold-sub:has-text("Driving counts toward parent service hours.")');
+        if (look) await t.shot('service-hours-rides');
+        await t.press('[data-testid="eh-infobar-open"]');
+        await t.waitFor('[data-testid="eh-info-page"]');
+        seen['eh-sh-info'] = await t.count('[data-testid="eh-sh-info"]');
+        seen.volunteer = await t.count('[data-testid="eh-sh-volunteer"][href*="volunteer"]');
+        if (look) {
+          await t.shot('service-hours-info');
+          await t.tapTargets(CONTROLS, '44px floor on Event info with the service hours section');
+          await t.noHScroll('no horizontal scroll on Event info with the service hours section');
+        }
+        seen.total = SPOT_IDS.reduce((n, k) => n + (seen[k] > 0 ? 1 : 0), 0);
+        return seen;
+      };
+      const fmt = (o) => SPOT_IDS.map((k) => `${k.slice(6)} ${o[k]}`).join(', ');
+
+      t.as('the seeded note');
+      await t.open('/_fixture', { persona: 'signedout', mig: 'all', reset: true });
+      const on = await spots('all', true);
+      const bannerText = await (async () => {
+        await familyPage(t, 'casey', { persona: 'signedout', mig: 'all' });
+        return t.text('[data-testid="eh-sh-banner"]');
+      })();
+      t.check('with a note, all five spots show it (the banner is the stored sentence), the driver fold says so, and Event info links volunteering',
+        on.total === 5 && /Fixture Blitz all count toward parent service hours\.$/.test(bannerText) && on.driveFoldSub >= 1 && on.volunteer === 1,
+        `${fmt(on)}; fold subs ${on.driveFoldSub}; volunteer link ${on.volunteer}; "${bannerText}"`);
+
+      t.as('the service hours CSV');
+      await t.open(MANAGE, { persona: 'admin', mig: 'all', ready: '[data-testid="ehm-page"]' });
+      await tab(t, 'Exports');
+      const [dl] = await Promise.all([
+        t.page.waitForEvent('download', { timeout: 20_000 }),
+        t.press('[data-testid="ehm-service-csv"]'),
+      ]);
+      const csv = (await readFile(await dl.path(), 'utf8')).replace(/^﻿/, '').trim().split('\r\n');
+      const invites = (await store(t, 'hub_invites')).filter((i) => i.event_id === EH.event).length;
+      const days = (await store(t, 'hub_days')).filter((d) => d.event_id === EH.event).length;
+      const drove = new Set((await store(t, 'hub_cars')).filter((c) => c.event_id === EH.event && c.driver_invite_id).map((c) => `${c.driver_invite_id}|${c.day_id}`)).size;
+      const body = csv.slice(2);
+      const yes = body.filter((l) => /,yes,[^,]*$/.test(l)).length;
+      const no = body.filter((l) => /,no,[^,]*$/.test(l)).length;
+      t.check('the CSV opens with the count-not-names note, then the header, then one row per family per day; drove matches the cars in the store, both ways',
+        /COUNT of adults, not their names/.test(csv[0]) && csv[1] === 'Parent name,Parent email,Student,Day,Drove,Adults attending'
+          && body.length === invites * days && yes === drove && yes > 0 && no === body.length - drove && no > 0,
+        `${body.length} rows for ${invites} families x ${days} days; drove yes ${yes} (cars ${drove}), no ${no}; "${dl.suggestedFilename()}"`);
+
+      t.as('a mentor clears the note');
+      await tab(t, 'Setup');
+      const field = await t.count('[data-testid="ehm-service-note"]');
+      await t.page.locator('[data-testid="ehm-service-note"]').fill('   ');
+      await t.press(t.page.locator('button', { hasText: /^Save event$/ }));
+      await t.settle({ quietMs: 500 });
+      const stored = (await store(t, 'hub_events')).find((e) => e.id === EH.event)?.parent_service_hours_note;
+      const off = await spots('all');
+      t.check('Setup edits the note; saved blank it is stored as null and none of the five spots shows anything',
+        field === 1 && stored === null && off.total === 0 && off.driveFoldSub === 0 && off.volunteer === 0,
+        `field ${field}; stored ${JSON.stringify(stored)}; ${fmt(off)}; fold subs ${off.driveFoldSub}`);
+
+      t.as(`without 0011 (mig ${without0011})`);
+      await t.open('/_fixture', { persona: 'signedout', mig: without0011, reset: true });
+      const before = await spots(without0011);
+      await t.open(MANAGE, { persona: 'admin', mig: without0011, ready: '[data-testid="ehm-page"]' });
+      await tab(t, 'Setup');
+      const fieldBefore = await t.count('[data-testid="ehm-service-note"]');
+      await t.press(t.page.locator('button', { hasText: /^Save event$/ }));
+      await t.settle({ quietMs: 500 });
+      const saveErr = await t.count('.ehm-setup .eh-note-bad');
+      await tab(t, 'Exports');
+      const exportBefore = await t.count('[data-testid="ehm-service-hours"]');
+      t.check('without 0011 nothing shows, Setup has no note field and still saves the event, and there is no service hours export',
+        before.total === 0 && fieldBefore === 0 && saveErr === 0 && exportBefore === 0,
+        `${fmt(before)}; field ${fieldBefore}; save errors ${saveErr}; export ${exportBefore}`);
     });
 
     // ════ the mentor page ═════════════════════════════════════════════════

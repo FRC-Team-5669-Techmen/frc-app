@@ -34,6 +34,7 @@ cluster. It writes nothing inside the repository. About 40 seconds.
 | `race-0005.mjs` | two real sessions racing for the last seat of a car (0005). Run it with `--migrations 0005` only: its event has the one-child rule off, which 0008 refuses |
 | `mutants-0005.mjs` | widens each 0005 boundary in turn and requires the test to turn red |
 | `mutants-0008.mjs` | the same for 0008 (removals, drive flags, guardians, pair seating, grants) |
+| `check-0011.mjs` | 0011 has no `_rls_test.sql` (no grant or policy changes), so this proves it instead: the Beach Blitz note, a re-paste keeping a mentor edit, the note through `_hub_event_json` and `hub_join_info` (as anon) and null once cleared, `drove` per family per day in `_hub_export`, and the unchanged grants both ways. `node tools/sql-harness/run.mjs --tests none --node tools/sql-harness/check-0011.mjs`; 15/15, and 3/15 (the grant checks) with 0011 left out |
 
 ## What it is not
 

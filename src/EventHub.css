@@ -756,3 +756,10 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .eh-btn-groupme { border-color: var(--hr-volunteer); color: var(--hr-volunteer); }
 .ehm-edit-head { margin: 18px 0 6px; font-size: 1.05rem; }
 .ehm-del-cell { text-align: right; }
+
+/* Parent service hours (0011): one highlighted line where it motivates, never
+   a card of its own. Volunteer tone, not gold: gold is never a surface fill. */
+.eh-service { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 12px; padding: 8px 12px; border-left: 3px solid var(--hr-volunteer); background: color-mix(in srgb, var(--hr-volunteer) 10%, transparent); color: var(--text); font-size: 0.95rem; line-height: 1.4; border-radius: 0 var(--radius) var(--radius) 0; }
+.eh-service > svg { flex: none; margin-top: 2px; color: var(--hr-volunteer); }
+.eh-service-tight { margin: 4px 0 8px; font-size: 0.9rem; }
+.eh-service-info p { margin: 0 0 10px; }

@@ -5,7 +5,15 @@
 // answer and shows what the server said.
 import { useEffect, useId, useRef, useState } from 'react'
 import { fmtTime } from './eventHub'
-import { IconCheck, IconChevron, IconInfo } from './eventIcons'
+import { IconCheck, IconChevron, IconInfo, IconStar } from './eventIcons'
+
+/** A parent service hours line (0011): one short highlighted line, or
+ *  nothing at all when the event has no note (src/eventHub.js
+ *  serviceHoursSpots decides the text). */
+export function ServiceHoursLine({ text, testid, className = '' }) {
+  if (!text) return null
+  return <p className={`eh-service ${className}`.trim()} data-testid={testid}><IconStar size={16} /><span>{text}</span></p>
+}
 
 /** "Saving", "Saved 2:41 PM", "Not saved, retrying", or a refusal sentence. */
 export function SaveNote({ s, tz }) {

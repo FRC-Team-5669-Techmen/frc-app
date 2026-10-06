@@ -12,7 +12,10 @@ family changes: a parent driving without their own student, more than one
 parent per family and removing one, a family leaving the trip, mentors
 seating two at once, the one-child rule made permanent; with its test) the
 same day. `0009` (households: a parent with more than one student, with its
-test) landed on 2026-10-06.
+test) landed on 2026-10-06, and `0010` (the hub roster and names, with
+its test) and `0011` (the parent service hours note and export) the same
+day. `0011` changes no grant or policy, so it has no `_rls_test.sql`; it is
+proven by `tools/sql-harness/check-0011.mjs`.
 
 **Every numbered test can now be run here, before anyone pastes it.**
 `node tools/sql-harness/run.mjs` builds a throwaway PostgreSQL 16 with Supabase

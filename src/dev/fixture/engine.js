@@ -348,7 +348,10 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
     for (const fc of featureColumns.get(name) ?? []) {
       if (isApplied(fc.migration)) {
         if (!columns) columns = {}
-        if (!core && !columns[fc.column]) strict = true
+        // Listing columns makes a feature's OWN table strict. A column added to
+        // a table another feature created (0011's note on 0005's hub_events)
+        // leaves that table as lenient as its owner made it.
+        if (!core && (!feat || feat.plugin === fc.plugin) && !columns[fc.column]) strict = true
         columns[fc.column] = { type: fc.def.type ?? null, notnull: false, default: fc.def.default !== undefined ? { kind: 'value', value: fc.def.default } : null, feature: true }
       } else {
         hidden.add(fc.column)
@@ -551,6 +554,9 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
           }
         } else {
           for (const [col, v] of Object.entries(row)) if (!info.hidden.has(col)) out[col] = clone(v)
+          // An applied feature column a row never set reads null, as a real
+          // column does, rather than being absent from the row.
+          for (const [col, def] of Object.entries(info.columns ?? {})) if (def.feature && !(col in out)) out[col] = null
         }
       } else if (node.type === 'col') {
         assertColumn(info, node.name)

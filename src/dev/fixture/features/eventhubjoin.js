@@ -56,7 +56,9 @@ export default {
       const days = T(db, 'hub_days').filter((d) => d.event_id === e.id).map((d) => d.day_date).sort()
       return {
         data: {
-          event: { id: e.id, title: e.title, venue_name: e.venue_name ?? null, timezone: e.timezone, first_day: days[0], last_day: days[days.length - 1], lockin_due_at: e.lockin_due_at ?? null },
+          event: { id: e.id, title: e.title, venue_name: e.venue_name ?? null, timezone: e.timezone, first_day: days[0], last_day: days[days.length - 1], lockin_due_at: e.lockin_due_at ?? null,
+            // 0011 (features/eventhubservicehours.js)
+            ...(engine?.applied?.('0011') ? { parent_service_hours_note: String(e.parent_service_hours_note ?? '').trim() || null } : {}) },
           students: T(db, 'profiles').filter((p) => eligible(db, p.id, t)).map((p) => ({ id: p.id, name: studentName(db, p.id) }))
             .sort((a, b) => a.name.localeCompare(b.name)),
         },

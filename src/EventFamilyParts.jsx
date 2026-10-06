@@ -10,7 +10,7 @@ import {
   ALLERGENS, fmtDate, fmtDay, fmtPhone, fmtTime, isoToZoned, needsSeat, nightOptions, sameNights, zonedToIso,
 } from './eventHub'
 import { CarCard, CarpoolBoard, FoodBoard, PickupRequests } from './EventHubBoards'
-import { Choice, CountPicker, Fold, InfoTip, Options, Q, Text, Tick } from './EventHubControls'
+import { Choice, CountPicker, Fold, InfoTip, Options, Q, ServiceHoursLine, Text, Tick } from './EventHubControls'
 import {
   IconAlert, IconBed, IconCalendar, IconCar, IconCheck, IconCheckCircle, IconClipboard, IconClock, IconEdit, IconFlag,
   IconHeart, IconHome, IconInfo, IconMail, IconPhone, IconPill, IconPin, IconSchool, IconShield, IconTrash, IconUserPlus, IconUsers,
@@ -161,6 +161,7 @@ export function PartDays({ view, ctx }) {
         <section className="eh-card" data-testid="eh-adults">
           <h3 className="eh-card-title eh-with-icon"><IconUsers size={20} />Adults from your family</h3>
           <p className="eh-hint">Parents, guardians and other grown-ups from your family who will be there. Count yourself if you are going; pick 0 if only {first} goes. It sets how much food is planned.</p>
+          <ServiceHoursLine text={ctx.serviceHours?.adults} testid="eh-sh-adults" className="eh-service-tight" />
           {ctx.household?.length > 0 && <p className="eh-hint eh-hint-warn" data-testid="eh-adults-once">More than one of your students is coming? Count your adults on one student's page only, and 0 on the others, so food is not planned twice.</p>}
           {coming.map((d) => (
             <CountPicker key={d.id} k={`adults:${d.id}`} ctx={ctx} disabled={ctx.locked || d.over} label={fmtDate(d.date)}
@@ -305,7 +306,7 @@ function DriveExtra({ d, ad, ctx, off, first, coming }) {
   return (
     <Fold icon={IconCar} testid="eh-drive-fold" defaultOpen={v === 'to' || v === 'home' || v === 'both'}
           title={coming ? `Driving to the event anyway on ${day}?` : `Can a parent still drive students on ${day}?`}
-          sub={coming ? `Optional. Offer your empty seats while ${first} rides with someone else.` : `Optional. ${first} is not coming that day.`}>
+          sub={`${coming ? `Optional. Offer your empty seats while ${first} rides with someone else.` : `Optional. ${first} is not coming that day.`}${ctx.serviceHours?.drive ? ` ${ctx.serviceHours.drive}` : ''}`}>
       <Choice k={`drive_to:${d.id}`} ctx={ctx} disabled={off} testid="eh-drive-extra"
               label={coming ? `Will a parent drive other students on ${day}, without ${first} in the car?` : `Will a parent drive students on ${day}?`}
               info={`Extra drivers help the whole team. If ${first} rides with you, choose "We drive ${first}, and can take others" above instead. Because ${first} would not be in this car, the one-child rule applies: it takes two or more students together, and a mentor seats the first two. You will be asked about the car below.`}
@@ -319,6 +320,7 @@ function CarDetails({ d, ad, ctx, off, first, own }) {
   return (
     <div className="eh-sub eh-offer" data-testid="eh-car-offer">
       <h4 className="eh-sub-title eh-with-icon"><IconCar size={20} />Your car on {fmtDate(d.date, 'medium')}</h4>
+      <ServiceHoursLine text={ctx.serviceHours?.drive} testid="eh-sh-drive" className="eh-service-tight" />
       <Choice k={`car_seats:${d.id}`} ctx={ctx} disabled={off}
               label={own ? `How many other students fit? (not counting ${first})` : 'How many students fit?'}
               info="Count seat belts you can give to students, after the adults in your car. A student only sits where there is a seat belt."

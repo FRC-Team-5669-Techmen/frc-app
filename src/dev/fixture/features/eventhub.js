@@ -91,7 +91,8 @@ const STAFF_ROLES = ['mentor', 'lead', 'admin']
 let V8 = false
 let V9 = false
 let V10 = false
-const setV8 = (engine) => { V8 = !!engine?.applied?.('0008'); V9 = !!engine?.applied?.('0009'); V10 = !!engine?.applied?.('0010') }
+let V11 = false
+const setV8 = (engine) => { V8 = !!engine?.applied?.('0008'); V9 = !!engine?.applied?.('0009'); V10 = !!engine?.applied?.('0010'); V11 = !!engine?.applied?.('0011') }
 // 0009: two families in one event sharing an email are brothers and sisters.
 function siblings(db, a, b) {
   if (!a || !b || a === b) return false
@@ -783,6 +784,8 @@ function eventJson(db, ev, now) {
     lockin_due_at: e.lockin_due_at ?? null, starts_on: days[0] ?? null, ends_at: Number.isFinite(end) ? iso(end) : null,
     over: now >= end, lockin_open: !!e.lockin_opens_at && now >= ms(e.lockin_opens_at),
     one_minor_rule: !!e.one_minor_rule, driver_paperwork_required: !!e.driver_paperwork_required, links: e.links ?? {}, info: e.info ?? {},
+    // 0011 (features/eventhubservicehours.js): the parent service hours note.
+    ...(V11 ? { parent_service_hours_note: String(e.parent_service_hours_note ?? '').trim() || null } : {}),
   }
 }
 
@@ -887,7 +890,9 @@ function exportRows(db, ev) {
         const seat = (run) => { const s = one(db, 'hub_seats', (x) => x.invite_id === i.id && x.day_id === d.id && x.run === run); return s ? driverName(db, s.car_id) : null }
         return { day: dayLabel(d.day_date, 'short'), attending: p.attending, adults: p.adults, confirmed: !!a.confirmed_at, pit_setup: a.pit_setup ?? null,
           home_option: a.home_option ?? null, to: p.eff_to, home: p.eff_home, school: p.school_mode,
-          pickup_spot: one(db, 'hub_pickups', (x) => x.invite_id === i.id && x.day_id === d.id)?.spot ?? null, to_car: seat('to'), home_car: seat('home') }
+          pickup_spot: one(db, 'hub_pickups', (x) => x.invite_id === i.id && x.day_id === d.id)?.spot ?? null, to_car: seat('to'), home_car: seat('home'),
+          // 0011: the date, and drove = this family listed a car that day.
+          ...(V11 ? { date: d.day_date, drove: T(db, 'hub_cars').some((c) => c.driver_invite_id === i.id && c.day_id === d.id) } : {}) }
       }),
       food: T(db, 'hub_food_claims').filter((f) => f.invite_id === i.id).map((f) => `${one(db, 'hub_meals', (m) => m.id === f.meal_id)?.label}: ${f.what} (serves ${f.serves})`).join('; ') || null,
     }
@@ -1115,7 +1120,9 @@ function seedRows({ now }) {
     map_url: 'https://www.google.com/maps/search/?api=1&query=26301+Via+Escolar', timezone: TZ,
     phase1_due_at: iso(t + 2 * 24 * H), lockin_opens_at: iso(t - 24 * H), lockin_due_at: iso(t + 5 * 24 * H),
     one_minor_rule: true, driver_paperwork_required: false, alert_emails: [],
-    links: { site: 'https://beachblitz.org/', stream: 'https://twitch.tv/ocfirst', hotel: 'https://group.hamptoninn.com/lj95ci', first_registration: 'https://www.firstinspires.org/programs/youth-registration', team_list: '', school_form: '', medication_form: '', parent_channel: 'https://groupme.com/join_group/fixture-parents' },
+    // 0011's column; hidden from every read while 0011 is off.
+    parent_service_hours_note: 'Driving, attending, and volunteering at Fixture Blitz all count toward parent service hours.',
+    links: { site: 'https://beachblitz.org/', volunteer: 'https://beachblitz.org/volunteer/index.html', stream: 'https://twitch.tv/ocfirst', hotel: 'https://group.hamptoninn.com/lj95ci', first_registration: 'https://www.firstinspires.org/programs/youth-registration', team_list: '', school_form: '', medication_form: '', parent_channel: 'https://groupme.com/join_group/fixture-parents' },
     info: { sections: [
       { key: 'drive', title: 'Drive from Bosco Tech', lines: ['To the venue | I-5 S, 48.1 mi', 'Sat, arrive 7:00 AM | 45 min to 1 hr'] },
       { key: 'agenda_sat', title: 'Saturday', lines: ['8:00 AM | Venue opens', '9:35 AM to 12:00 PM | Qualification matches'] },

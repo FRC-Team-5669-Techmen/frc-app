@@ -433,3 +433,82 @@ export function exportRecords(rows) {
     return out
   })
 }
+
+// ── parent service hours (0011) ─────────────────────────────────────────────
+// ONE stored sentence per event (hub_events.parent_service_hours_note). Every
+// spot that mentions service hours shows that sentence or one of these fixed
+// short labels, and only while the sentence is set: no note, nothing anywhere.
+
+export const SERVICE_HOURS_LABELS = Object.freeze({
+  title: 'Parent service hours',
+  drive: 'Driving counts toward parent service hours.',
+  adults: 'Adults who attend count toward parent service hours.',
+  volunteer: 'Volunteer at the event: also counts',
+})
+
+/** The event's note, trimmed, or null when there is none (or before 0011). */
+export function serviceHoursNote(event) {
+  const s = typeof event?.parent_service_hours_note === 'string' ? event.parent_service_hours_note.trim() : ''
+  return s || null
+}
+
+/**
+ * What each of the five spots shows for this event, or null for a spot that
+ * shows nothing: join (/join, under the intro), banner (the family page, under
+ * the tracker), drive (the driver offer in Rides), adults (the adults
+ * question), info (the Event info section, with the volunteer link when the
+ * event has one).
+ */
+export function serviceHoursSpots(event) {
+  const note = serviceHoursNote(event)
+  if (!note) return { join: null, banner: null, drive: null, adults: null, info: null }
+  const href = String(event?.links?.volunteer ?? '').trim()
+  return {
+    join: note,
+    banner: note,
+    drive: SERVICE_HOURS_LABELS.drive,
+    adults: SERVICE_HOURS_LABELS.adults,
+    info: {
+      title: SERVICE_HOURS_LABELS.title,
+      note,
+      volunteer: URL_RE.test(href) ? { href, label: SERVICE_HOURS_LABELS.volunteer } : null,
+    },
+  }
+}
+
+/** The service hours CSV: its note row (above the header), columns and rows. */
+export const SERVICE_HOURS_CSV_NOTE = 'Parent service hours: one row per family per day. Drove = the family listed a car for that day. '
+  + 'Adults attending = the number of adults the family said would come with their student. '
+  + 'The form records a COUNT of adults, not their names, so this list cannot name every adult who attended.'
+
+export const SERVICE_HOURS_COLUMNS = Object.freeze([
+  ['parent_name', 'Parent name'], ['parent_email', 'Parent email'], ['student', 'Student'],
+  ['day', 'Day'], ['drove', 'Drove'], ['adults', 'Adults attending'],
+])
+
+/** True when the export rows carry 0011's per-day fields (drove, date). */
+export const hasServiceHoursData = (rows) => (rows ?? []).some((r) => (r.days ?? []).some((d) => d && 'drove' in d))
+
+/**
+ * One row per family per day from the staff export (_hub_export). Adults is
+ * the count the family gave on a day their student comes, 0 on a day the
+ * student does not come (the question is not asked then), blank while
+ * unanswered.
+ */
+export function serviceHoursRecords(rows) {
+  const out = []
+  for (const r of rows ?? []) {
+    const days = [...(r.days ?? [])].sort((a, b) => String(a.date ?? '').localeCompare(String(b.date ?? '')))
+    for (const d of days) {
+      out.push({
+        parent_name: r.parent_name ?? null,
+        parent_email: r.parent_email || r.emails || null,
+        student: r.student,
+        day: d.date ? fmtDate(d.date, 'medium') : d.day,
+        drove: d.drove === true,
+        adults: d.attending === 'yes' ? (d.adults ?? null) : 0,
+      })
+    }
+  }
+  return out
+}

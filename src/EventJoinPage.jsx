@@ -9,7 +9,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from './supabase'
 import { isSchemaMissing } from './schemaMissing'
-import { fmtDate } from './eventHub'
+import { fmtDate, serviceHoursSpots } from './eventHub'
+import { ServiceHoursLine } from './EventHubControls'
 import './EventHub.css'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -168,6 +169,7 @@ export default function EventJoinPage() {
           {another
             ? <p className="eh-note" data-testid="eh-join-another">Your name and email are filled in from {another.from ? `${another.from}'s page` : 'your other page'}. Pick your other student and press Start. Both pages will list each other.</p>
             : <p className="eh-hint">For parents and guardians. About five minutes. Your answers save as you go, and you can come back and change them any time. More than one student on the team? Sign up one, then press "Add another student" at the top of their page.</p>}
+          <ServiceHoursLine text={serviceHoursSpots(ev).join} testid="eh-sh-join" />
 
           <fieldset className="eh-q">
             <legend className="eh-q-label">Your student</legend>

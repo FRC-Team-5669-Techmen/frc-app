@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   ALLERGENS, allergyStrip, carStatus, defaultDayIndex, fmtDate, fmtPhone, fmtTime, gapLine, headcountLine, leavesEarly,
-  needsSeat, parseInfoLine, visibleSections, allergenLabel,
+  needsSeat, parseInfoLine, serviceHoursSpots, visibleSections, allergenLabel,
 } from './eventHub'
 import { Fold } from './EventHubControls'
 import { IconBed, IconCar, IconClipboard, IconClock, IconFlag, IconInfo, IconLink, IconPin, IconShield, IconStar, IconUsers, IconUtensils } from './eventIcons'
@@ -600,6 +600,8 @@ export function EventInfo({ event }) {
     links.parent_channel && { key: 'groupme', href: links.parent_channel, label: 'Parent GroupMe chat', icon: IconUsers, cls: 'eh-btn-groupme' },
     links.agenda && { key: 'agenda', href: links.agenda, label: 'Agenda', icon: IconClipboard, cls: '' },
   ].filter(Boolean)
+  // 0011: the parent service hours section, only while the event has a note.
+  const sh = serviceHoursSpots(event).info
   return (
     <div className="eh-event-info">
       {(event?.venue_name || event?.venue_address) && (
@@ -618,6 +620,16 @@ export function EventInfo({ event }) {
             <a key={q.key} className={`eh-btn eh-btn-wide ${q.cls}`} href={q.href} target="_blank" rel="noopener noreferrer" data-testid={`eh-quick-${q.key}`}>
               <q.icon size={18} />{q.label}</a>
           ))}
+        </section>
+      )}
+      {sh && (
+        <section className="eh-card eh-service-info" data-testid="eh-sh-info">
+          <h3 className="eh-card-title eh-with-icon"><IconStar size={20} />{sh.title}</h3>
+          <p>{sh.note}</p>
+          {sh.volunteer && (
+            <a className="eh-btn eh-btn-wide" href={sh.volunteer.href} target="_blank" rel="noopener noreferrer" data-testid="eh-sh-volunteer">
+              <IconLink size={18} />{sh.volunteer.label}</a>
+          )}
         </section>
       )}
       <p className="eh-hint">Tap a heading to open it.</p>

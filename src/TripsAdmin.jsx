@@ -3,8 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { supabase } from './supabase'
 import { isSchemaMissing } from './schemaMissing'
 import {
-  DEFAULT_TZ, LINK_KEYS, daySheetHtml, exportColumns, exportRecords, fmtDate, fmtDayTime, isoToZoned, linesToText,
-  runTitle, textToLines, zonedToIso,
+  DEFAULT_TZ, LINK_KEYS, SERVICE_HOURS_COLUMNS, SERVICE_HOURS_CSV_NOTE, daySheetHtml, exportColumns, exportRecords, fmtDate,
+  fmtDayTime, hasServiceHoursData, isoToZoned, linesToText, runTitle, serviceHoursRecords, textToLines, zonedToIso,
 } from './eventHub'
 import { toCsv } from './csv'
 import { CarpoolBoard, FoodBoard, Seg } from './EventHubBoards'
@@ -563,6 +563,14 @@ function Setup({ eventId, ov, reload }) {
           <button type="button" role="switch" aria-checked={ev.driver_paperwork_required} className={`eh-chip${ev.driver_paperwork_required ? ' eh-chip-on' : ''}`}
                   onClick={() => setE('driver_paperwork_required', !ev.driver_paperwork_required)}>Driver paperwork required {ev.driver_paperwork_required ? 'on' : 'off'}</button>
         </div>
+        {/* 0011: present on the row only once the migration is applied. */}
+        {'parent_service_hours_note' in ev && (
+          <label className="eh-field"><span className="eh-q-label">Parent service hours note</span>
+            <span className="eh-hint">One sentence parents see on the sign-up link, near the top of their page, at the driver and adults questions, and in Event info. Blank: nothing about service hours shows.</span>
+            <textarea className="eh-input" rows={2} maxLength={300} value={ev.parent_service_hours_note ?? ''} data-testid="ehm-service-note"
+                      placeholder="Driving, attending, and volunteering at this event all count toward parent service hours."
+                      onChange={(e) => setE('parent_service_hours_note', e.target.value)} /></label>
+        )}
         <label className="eh-field"><span className="eh-q-label">Who gets mentor alerts</span>
           <span className="eh-hint">Emails, separated by commas. Blank: every admin.</span>
           <input className="eh-input" value={(ev.alert_emails ?? []).join(', ')}
@@ -578,6 +586,8 @@ function Setup({ eventId, ov, reload }) {
           phase1_due_at: ev.phase1_due_at, lockin_opens_at: ev.lockin_opens_at, lockin_due_at: ev.lockin_due_at,
           one_minor_rule: ev.one_minor_rule, driver_paperwork_required: ev.driver_paperwork_required,
           alert_emails: ev.alert_emails ?? [], links: ev.links ?? {}, updated_at: new Date().toISOString(),
+          // Sent only when the row has the column (0011), so an event saves the same before it is pasted.
+          ...('parent_service_hours_note' in ev ? { parent_service_hours_note: String(ev.parent_service_hours_note ?? '').trim() || null } : {}),
         }).eq('id', eventId))}>Save event</button>
       </section>
 
@@ -731,16 +741,27 @@ function Exports({ eventId, ov }) {
   async function csv() {
     const r = await staffCall('export', { event_id: eventId })
     if (r.kind !== 'ok') { setNote({ text: 'Export failed.', bad: true }); return }
-    const text = toCsv(exportColumns(r.data), exportRecords(r.data))
+    download(toCsv(exportColumns(r.data), exportRecords(r.data)), 'families')
+    setNote({ text: `${r.data.length} families exported.` })
+  }
+  function download(text, suffix) {
     const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }))
     const a = document.createElement('a')
     a.href = url
-    a.download = `${ov.event.title.replace(/[^A-Za-z0-9]+/g, '-')}-families.csv`
+    a.download = `${ov.event.title.replace(/[^A-Za-z0-9]+/g, '-')}-${suffix}.csv`
     document.body.appendChild(a)
     a.click()
     a.remove()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
-    setNote({ text: `${r.data.length} families exported.` })
+  }
+  // The parent service hours list (0011): one row per family per day.
+  async function serviceHours() {
+    const r = await staffCall('export', { event_id: eventId })
+    if (r.kind !== 'ok') { setNote({ text: 'Export failed.', bad: true }); return }
+    if (!hasServiceHoursData(r.data)) { setNote({ text: 'The service hours list needs migration 0011 applied first.', bad: true }); return }
+    const rows = serviceHoursRecords(r.data)
+    download(toCsv(SERVICE_HOURS_COLUMNS, rows, { note: SERVICE_HOURS_CSV_NOTE }), 'parent-service-hours')
+    setNote({ text: `${rows.length} rows exported (${r.data.length} families).` })
   }
   async function sheet(dayId) {
     const r = await staffCall('board', { event_id: eventId })
@@ -760,6 +781,13 @@ function Exports({ eventId, ov }) {
         <p className="eh-hint">One row per family, every answer. Cells that start with = + - or @ are written as text.</p>
         <button type="button" className="eh-btn eh-btn-primary" onClick={csv} data-testid="ehm-csv">Download CSV</button>
       </section>
+      {'parent_service_hours_note' in (ov.event ?? {}) && (
+        <section className="eh-card" data-testid="ehm-service-hours">
+          <h3 className="eh-label">Parent service hours</h3>
+          <p className="eh-hint">One row per family per day: parent name and email, student, day, whether the family drove (listed a car that day), and how many adults came. The form asks for a count of adults, not their names, so this list cannot name every adult who attended.</p>
+          <button type="button" className="eh-btn eh-btn-primary" onClick={serviceHours} data-testid="ehm-service-csv">Download service hours CSV</button>
+        </section>
+      )}
       <section className="eh-card">
         <h3 className="eh-label">Day sheets, printed at the lot</h3>
         <p className="eh-hint">Cars, riders, phones where consented, pickup notes, allergies with names, the meet captain.</p>

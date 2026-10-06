@@ -25,10 +25,12 @@ export function csvCell(value) {
 /**
  * columns: [[key, header], ...]; rows: plain objects. A UTF-8 BOM leads, so
  * Excel on Windows reads accented names (the Reports and Team Hours exports
- * do the same).
+ * do the same). `note`, when given, is one cell on its own line ABOVE the
+ * header, for what a reader must know before trusting the columns.
  */
-export function toCsv(columns, rows) {
+export function toCsv(columns, rows, { note } = {}) {
   const head = columns.map(([, h]) => csvCell(h)).join(',')
   const body = (rows ?? []).map((r) => columns.map(([k]) => csvCell(r[k])).join(','))
-  return '﻿' + [head, ...body].join('\r\n') + '\r\n'
+  const lead = note ? [csvCell(note)] : []
+  return '﻿' + [...lead, head, ...body].join('\r\n') + '\r\n'
 }
