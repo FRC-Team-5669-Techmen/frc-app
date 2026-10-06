@@ -62,7 +62,7 @@ const MUTANTS = [
   fn('the application name ignored', NAME,
     'where ma.member_id = p_student\n      order by', 'where false\n      order by', [7, 9]),
   fn('the at-sign guard removed', 'public._hub_clean_name(text)',
-    "case when v = '' or position('@' in v) > 0 or v ~* '^[a-z0-9._-]+\\.[0-9]{2,4}$' then null else v end",
+    "case when v = '' or position('@' in v) > 0 or v ~* '^[a-z0-9._-]+\\.[0-9]{2,4}\\Z' then null else v end",
     "nullif(v, '')", [9]),
   fn('the profile name preferred over the application', NAME,
     "  select coalesce(\n    (select public._hub_clean_name(concat_ws",

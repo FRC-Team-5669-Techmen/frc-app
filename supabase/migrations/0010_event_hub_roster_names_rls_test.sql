@@ -259,7 +259,7 @@ begin
   j := pg_temp.info();
   n := jsonb_array_length(j -> 'students');
   select string_agg(s ->> 'name', ', ') into bad from jsonb_array_elements(j -> 'students') s
-   where position('@' in s ->> 'name') > 0 or (s ->> 'name') ~* '^[a-z0-9._-]+\.[0-9]{2,4}$';
+   where position('@' in s ->> 'name') > 0 or (s ->> 'name') ~* '^[a-z0-9._-]+\.[0-9]{2,4}\Z';
   perform pg_temp.rec(8, 'no name on the open page contains an at sign or is an email local part',
     n >= 2 and bad is null, format('%s names listed; offending: %s', n, coalesce(bad, 'none')));
 end

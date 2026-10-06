@@ -97,7 +97,7 @@ $fn$;
 -- sign, and not a bare email local part like jdoe.2029.
 create or replace function public._hub_clean_name(p_name text)
 returns text language sql immutable set search_path = public, pg_temp as $fn$
-  select case when v = '' or position('@' in v) > 0 or v ~* '^[a-z0-9._-]+\.[0-9]{2,4}$' then null else v end
+  select case when v = '' or position('@' in v) > 0 or v ~* '^[a-z0-9._-]+\.[0-9]{2,4}\Z' then null else v end
     from (select btrim(regexp_replace(coalesce(p_name, ''), '\s+', ' ', 'g')) as v) x
 $fn$;
 

@@ -714,6 +714,16 @@ spec could not tap one. Reproduced twice, then gone with a shorter nickname
 joke nicknames too, so on a phone a long one can do the same to that matrix.
 That is Team Hours, not the hub, and is left for its own task.
 
+**The first paste of 0010 failed** in the SQL editor ("unterminated
+dollar-quoted string at or near $fn$", line 99): the splitter read the regex
+end anchor `$` just before a quote in `_hub_clean_name` as a dollar tag. That
+`$` is now `\Z` (end of string) in the migration and the test, which changes
+nothing a regex matches; the harness (262/262), the test's check 9 (a nickname
+`ntest.2030` still refused) and the mutants (12/12) were re-run on it. The
+migrations README now carries the rule. Postgres parses a multi-statement query
+whole before running any of it, so a syntax error runs nothing; 0010 is
+re-runnable either way.
+
 ## MR. PINA'S STEPS for 0010 (2026-10-06)
 
 In the Supabase SQL editor

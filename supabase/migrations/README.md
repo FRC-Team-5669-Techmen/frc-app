@@ -161,3 +161,8 @@ SQL editor's statement splitter does not: an odd number of `'` in `--`
 comments made it cut `0008_event_hub_families_rls_test.sql` mid `$pre$` block
 ("unterminated dollar-quoted string", 2026-10-06). Write "the rules", not
 "the rule's".
+
+**No `$` directly before a quote inside a dollar-quoted body.** The same
+splitter read the regex end anchor in `'...[0-9]{2,4}$'` as the start of a
+dollar tag and cut `0010_event_hub_roster_names.sql` mid `$fn$` body (same
+error, 2026-10-06). In a Postgres regex write `\Z` for end of string instead.
