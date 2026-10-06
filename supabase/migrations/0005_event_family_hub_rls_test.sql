@@ -301,14 +301,14 @@ declare
   svc text[] := array['hub_family_call','hub_resend_request','hub_outbox_take','hub_outbox_mint_link',
                       'hub_outbox_done','hub_cron_enqueue'];
   usr text[] := array['hub_member_board','hub_member_events','hub_staff_call'];
-  -- Functions a LATER migration adds (0007's open link, 0008's family
-  -- changes) carry their own grants, checked by their own tests. Check 5 is
+  -- Functions a LATER migration adds (0007 open link, 0008 family changes,
+  -- 0009 households) carry their own grants, checked by their own tests. Check 5 is
   -- about 0005's functions, so it skips these; without this list it failed
   -- whenever 0007 was applied, which it was meant never to do.
   later text[] := array['hub_join','hub_join_info','hub_add_parent','_hub_join_eligible','_hub_join_event','_hub_join_taken',
                         '_hub_mask_email','hub_remove_guardian','hub_remove_family','hub_staff_remove_guardian',
                         'hub_staff_remove_family','hub_staff_place_pair','_hub_mint_token_for','_hub_family_extras',
-                        '_hub_remove_guardian','_hub_remove_family'];
+                        '_hub_remove_guardian','_hub_remove_family','hub_household_open','_hub_siblings'];
   bad text; n int;
 begin
   select count(*), string_agg(c.relname, ', ') filter (where not c.relrowsecurity) into n, bad

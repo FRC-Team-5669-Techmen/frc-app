@@ -89,7 +89,15 @@ const STAFF_ROLES = ['mentor', 'lead', 'admin']
 // start of every handler from the engine, so this port answers as 0005 alone
 // or as 0005 plus 0008, whichever the fixture is set to.
 let V8 = false
-const setV8 = (engine) => { V8 = !!engine?.applied?.('0008') }
+let V9 = false
+const setV8 = (engine) => { V8 = !!engine?.applied?.('0008'); V9 = !!engine?.applied?.('0009') }
+// 0009: two families in one event sharing an email are brothers and sisters.
+function siblings(db, a, b) {
+  if (!a || !b || a === b) return false
+  const x = one(db, 'hub_invites', (i) => i.id === a)
+  const y = one(db, 'hub_invites', (i) => i.id === b)
+  return !!x && !!y && x.event_id === y.event_id && (x.emails ?? []).some((e) => (y.emails ?? []).includes(e))
+}
 
 // ── time ────────────────────────────────────────────────────────────────────
 const fmtParts = new Intl.DateTimeFormat('en-US', { timeZone: TZ, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -171,7 +179,8 @@ function plan(db, ev) {
 function ownAboard(db, carId) {
   const c = one(db, 'hub_cars', (x) => x.id === carId)
   const a = c && answer(db, c.driver_invite_id, c.day_id)
-  return !!a && a.attending === 'yes' && (c.run === 'to' ? a.to_mode : a.home_mode) === 'driving'
+  if (!!a && a.attending === 'yes' && (c.run === 'to' ? a.to_mode : a.home_mode) === 'driving') return true
+  return V9 && !!c && T(db, 'hub_seats').some((x) => x.car_id === carId && siblings(db, c.driver_invite_id, x.invite_id))
 }
 const seatsIn = (db, carId) => T(db, 'hub_seats').filter((s) => s.car_id === carId)
 function carProblem(db, carId) {
@@ -289,9 +298,10 @@ function claim(db, carId, rider, staff, override, viaPickup, now) {
   const pickups = riders.filter((s) => s.via_pickup).length
   const mine = riders.find((s) => s.invite_id === rider)
   const overridden = !!staff && !!String(override ?? '').trim()
+  const sib = V9 && siblings(db, c.driver_invite_id, rider)
   if (mine) {
     if (viaPickup && !mine.via_pickup) {
-      if (e.one_minor_rule && !ownAboard(db, carId) && pickups + 1 === 1 && !overridden) refuse('one_minor', 'The home pickup leg would carry one student alone with an adult who is not their parent. Ask a mentor.')
+      if (e.one_minor_rule && !sib && !ownAboard(db, carId) && pickups + 1 === 1 && !overridden) refuse('one_minor', 'The home pickup leg would carry one student alone with an adult who is not their parent. Ask a mentor.')
       mine.via_pickup = true
       Object.assign(c, { minor_override_reason: overridden ? override.trim() : null, updated_at: iso(now) })
     }
@@ -299,7 +309,7 @@ function claim(db, carId, rider, staff, override, viaPickup, now) {
   }
   if (riders.length >= c.seats) refuse('car_full', 'That car just filled. Pick another.')
   let setOverride = false
-  if (e.one_minor_rule && !ownAboard(db, carId) && (riders.length + 1 === 1 || (viaPickup && pickups + 1 === 1))) {
+  if (e.one_minor_rule && !sib && !ownAboard(db, carId) && (riders.length + 1 === 1 || (viaPickup && pickups + 1 === 1))) {
     if (overridden) setOverride = true
     else refuse('one_minor', riders.length + 1 === 1
       ? 'This car would carry one student alone with an adult who is not their parent. Pick a car with another rider, or ask a mentor.'
@@ -985,7 +995,16 @@ function familyExtras(db, token) {
   const tk = one(db, 'hub_invite_tokens', (t) => t.token === token && !t.revoked_at)
   const i = tk && one(db, 'hub_invites', (x) => x.id === tk.invite_id)
   if (!i) return {}
-  return { me: tk.email ?? null, guardians: (i.emails ?? []).map((e) => ({ email: e, name: i.guardian_names?.[e] ?? null })) }
+  const me = tk.email ?? null
+  const out = { me, guardians: (i.emails ?? []).map((e) => ({ email: e, name: i.guardian_names?.[e] ?? null })) }
+  if (V9) {
+    out.household = T(db, 'hub_invites')
+      .filter((b) => b.id !== i.id && b.event_id === i.event_id && (b.emails ?? []).some((e) => (i.emails ?? []).includes(e)))
+      .map((b) => ({ invite_id: b.id, student: studentName(db, b.student_id), can_open: !!me && (b.emails ?? []).includes(me),
+        cars: T(db, 'hub_cars').filter((c) => c.driver_invite_id === b.id).map((c) => c.id) }))
+      .sort((x, y) => x.student.localeCompare(y.student))
+  }
+  return out
 }
 
 /** The 0008 removals, for features/eventhubfamilies.js (its migration gates them). */
@@ -1030,7 +1049,7 @@ export function removeGuardian(db, inv, email, staff, callerEmail, now) {
   return { ok: true, self: callerEmail === e }
 }
 
-export const hubFixture = { T, one, nowMs, txn, Refusal, tokenInvite, isStaff, claim, seatsIn, refuse }
+export const hubFixture = { T, one, nowMs, txn, Refusal, tokenInvite, isStaff, claim, seatsIn, refuse, setV8 }
 
 const refusalAnswer = (e) => ({ data: null, error: { code: e.state, message: `hub:${e.code}`, details: e.message, hint: null } })
 

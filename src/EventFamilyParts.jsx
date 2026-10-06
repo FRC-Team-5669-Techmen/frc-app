@@ -159,6 +159,7 @@ export function PartDays({ view, ctx }) {
         <section className="eh-card" data-testid="eh-adults">
           <h3 className="eh-card-title eh-with-icon"><IconUsers size={20} />Adults from your family</h3>
           <p className="eh-hint">Parents, guardians and other grown-ups from your family who will be there. Count yourself if you are going; pick 0 if only {first} goes. It sets how much food is planned.</p>
+          {ctx.household?.length > 0 && <p className="eh-hint eh-hint-warn" data-testid="eh-adults-once">More than one of your students is coming? Count your adults on one student's page only, and 0 on the others, so food is not planned twice.</p>}
           {coming.map((d) => (
             <CountPicker key={d.id} k={`adults:${d.id}`} ctx={ctx} disabled={ctx.locked || d.over} label={fmtDate(d.date)}
                          max={ctx.v8 ? 30 : 4} value={a.days[d.id]?.adults ?? null}
@@ -237,6 +238,8 @@ function SeatPicker({ d, run, ad, ctx, act, viewer, first }) {
   const cars = r.cars ?? []
   const mine = cars.find((c) => c.my_seat)
   const others = cars.filter((c) => !c.my_seat && !c.mine && c.status !== 'left' && c.status !== 'arrived')
+  // Your own family's car (a brother or sister's page drives it) comes first.
+  others.sort((x, y) => Number(!!ctx.householdCars?.has(y.id)) - Number(!!ctx.householdCars?.has(x.id)))
   const roomy = others.filter((c) => c.status !== 'full' && c.status !== 'pending')
   return (
     <div className="eh-seats" data-testid="eh-seat-picker">
@@ -244,12 +247,12 @@ function SeatPicker({ d, run, ad, ctx, act, viewer, first }) {
         <span className="eh-q-label">{mine ? `${first}'s seat for the drive ${run === 'to' ? 'there' : 'home'}` : `Pick a seat for the drive ${run === 'to' ? 'there' : 'home'}`}</span>
         <InfoTip>Tap Claim a seat on a car with room. You can leave it and pick another until the car leaves. If no car has room yet, check back later. Mentors make sure every student has a seat before the event.</InfoTip>
       </div>
-      {mine && <CarCard car={mine} day={d} tz={ctx.tz} viewer={viewer} myDay={ad} runKey={run} unplaced={[]} act={act} locked={ctx.locked} />}
+      {mine && <CarCard car={mine} day={d} tz={ctx.tz} viewer={viewer} myDay={ad} runKey={run} unplaced={[]} act={act} locked={ctx.locked} ours={ctx.householdCars?.has(mine.id)} />}
       {!mine && roomy.length === 0 && (
         <p className="eh-wait" data-testid="eh-no-room"><IconClock size={18} />No car has room yet. Check back soon; mentors place every student before the event.</p>
       )}
       {!mine && others.map((c) => (
-        <CarCard key={c.id} car={c} day={d} tz={ctx.tz} viewer={viewer} myDay={ad} runKey={run} unplaced={[]} act={act} locked={ctx.locked} />
+        <CarCard key={c.id} car={c} day={d} tz={ctx.tz} viewer={viewer} myDay={ad} runKey={run} unplaced={[]} act={act} locked={ctx.locked} ours={ctx.householdCars?.has(c.id)} />
       ))}
     </div>
   )
@@ -650,11 +653,56 @@ function LeaveTrip({ view, family, onRemoved }) {
   )
 }
 
+const COPY_FIELDS = ['parent_name', 'parent_phone', 'parent_email', 'emergency_name', 'emergency_phone',
+  'driver_25', 'driver_licensed', 'driver_phone_consent', 'rider_phone_consent']
+
+/** 0009: fill this page's contacts from a brother or sister's page. Fills
+ *  only what is empty here; nothing already typed is overwritten. */
+function CopyContacts({ view, ctx, family }) {
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState(null)
+  const r = view.answers.response
+  const from = (family?.household ?? []).filter((h) => h.can_open)
+  const empty = COPY_FIELDS.filter((k) => r[k] == null || r[k] === '' || r[k] === false)
+  if (!from.length || ctx.locked || empty.length < 3) return null
+  const first = (n) => String(n ?? '').split(' ')[0]
+  async function copy(h) {
+    setBusy(true); setNote(null)
+    const other = await family.siblingView(h.invite_id)
+    setBusy(false)
+    if (!other) { setNote({ bad: true, text: 'Could not open that page. Try again.' }); return }
+    const o = other.answers.response
+    let n = 0
+    for (const k of empty) {
+      const v = o[k]
+      if (v == null || v === '' || v === false) continue
+      ctx.save(k, { field: k, value: v }); n += 1
+    }
+    setNote(n ? { text: `Copied ${n} ${n === 1 ? 'answer' : 'answers'} from ${first(h.student)}'s page. Check them below.` }
+      : { text: `${first(h.student)}'s page has nothing to copy yet.` })
+  }
+  return (
+    <section className="eh-card eh-tone-violet" data-testid="eh-copy-contacts">
+      <h3 className="eh-card-title eh-with-icon"><IconUsers size={20} />Same contacts as your other student?</h3>
+      <p className="eh-hint">Copy your phone, email, emergency contact and driver answers from their page. Only empty answers are filled in.</p>
+      <div className="eh-inline">
+        {from.map((h) => (
+          <button key={h.invite_id} type="button" className="eh-btn eh-btn-primary" disabled={busy} onClick={() => copy(h)} data-testid="eh-copy-from">
+            Copy from {first(h.student)}'s page
+          </button>
+        ))}
+      </div>
+      {note && <p className={`eh-note${note.bad ? ' eh-note-bad' : ''}`} role="status">{note.text}</p>}
+    </section>
+  )
+}
+
 export function PartContacts({ view, ctx, family }) {
   const r = view.answers.response
   const links = view.event.links ?? {}
   return (
     <div className="eh-part-body">
+      <CopyContacts view={view} ctx={ctx} family={family} />
       <section className="eh-card">
         <h3 className="eh-card-title eh-with-icon"><IconPhone size={20} />How mentors reach you</h3>
         <Text k="parent_name" ctx={ctx} disabled={ctx.locked} label="Your name" autoComplete="name" value={r.parent_name ?? ''} maxLength={120}

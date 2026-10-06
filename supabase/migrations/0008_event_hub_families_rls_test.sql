@@ -888,7 +888,7 @@ $rides$;
 
 select n, check_name as check, result, detail from t8_results
 union all
-select 999, 'summary', case when count(*) filter (where result = 'FAIL') = 0 and count(*) = 41 then 'PASS' else 'FAIL' end,
+select 999, 'summary', case when count(*) filter (where result = 'FAIL') = 0 and count(*) = 42 then 'PASS' else 'FAIL' end,
        format('%s PASS, %s FAIL, %s SKIP of %s checks', count(*) filter (where result = 'PASS'), count(*) filter (where result = 'FAIL'),
               count(*) filter (where result = 'SKIP'), count(*))
   from t8_results

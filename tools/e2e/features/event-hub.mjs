@@ -862,6 +862,126 @@ export default {
         `drive ${driveNo}, leave ${leaveNo}, people ${peopleNo}, add ${addStill}, 5-or-more ${moreNo} / with 0008 ${moreYes}`);
     });
 
+    // ════ households (0009): a parent with more than one student ════════
+    await t.step('households (0009)', async () => {
+      t.as('Dana signs up Dakota, then Skyler');
+      const without0009 = migs.filter((m) => m !== '0009').join(',') || 'none';
+      await t.open('/join', { persona: 'signedout', mig: 'all', reset: true, ready: '[data-testid="eh-join-form"], [data-testid="eh-join-saved"]' });
+      if (await t.count('[data-testid="eh-join-saved"]')) await t.press(t.page.locator('[data-testid="eh-join-saved"] button', { hasText: 'Sign up another student' }));
+      await t.press(t.page.locator('.eh-join-opt', { hasText: 'Dakota Hale' }));
+      await t.page.locator('input[autocomplete="name"]').fill('Dana Hale');
+      await t.page.locator('input[type="email"]').fill('dana.hale@example.com');
+      await t.press('[data-testid="eh-join-guardian"]');
+      await t.press('button[type="submit"]');
+      await t.waitFor('[data-testid="eh-household"]');
+      const dakotaUrl = new URL(t.page.url()).pathname;
+      const items0 = await t.count('[data-testid="eh-household-item"]');
+      await t.press('[data-testid="eh-household-add"]');
+      await t.waitFor('[data-testid="eh-join-another"]');
+      const nameIn = await t.page.locator('input[autocomplete="name"]').inputValue();
+      const emailIn = await t.page.locator('input[type="email"]').inputValue();
+      const ticked = await t.page.locator('[data-testid="eh-join-guardian"]').getAttribute('aria-checked');
+      t.check('"Add another student" opens the sign-up with the parent name, email and tick already filled in',
+        items0 === 0 && nameIn === 'Dana Hale' && emailIn === 'dana.hale@example.com' && ticked === 'true',
+        `others listed ${items0}; "${nameIn}", "${emailIn}", ticked ${ticked}`);
+      await t.press(t.page.locator('.eh-join-opt', { hasText: 'Skyler Diaz' }));
+      await t.press('button[type="submit"]');
+      await t.waitFor('[data-testid="eh-household-item"]');
+      const skylerUrl = new URL(t.page.url()).pathname;
+      const student2 = await t.text('[data-testid="eh-student"]');
+      const listed = await t.texts('[data-testid="eh-household-item"] .eh-household-name');
+      const skyInvite = (await t.rows('hub_invites')).find((i) => i.student_id === '00000000-0000-0000-0000-0000000000cb');
+      t.check('the second student gets their own page, on the same email, and it lists the first',
+        student2 === 'Skyler Diaz' && listed.join() === 'Dakota Hale' && (skyInvite?.emails ?? []).includes('dana.hale@example.com') && skylerUrl !== dakotaUrl,
+        `page "${student2}"; lists ${listed.join(', ')}; emails ${JSON.stringify(skyInvite?.emails)}`);
+      await t.press('[data-testid="eh-household-open"]');
+      await t.waitFor(() => document.querySelector('[data-testid="eh-student"]')?.textContent === 'Dakota Hale');
+      await t.settle({ quietMs: 300 });
+      const back = await t.texts('[data-testid="eh-household-item"] .eh-household-name');
+      t.check('"Open Dakota\'s page" goes straight there, and that page lists Skyler', back.join() === 'Skyler Diaz', back.join());
+
+      t.as('the family car takes a brother or sister alone, and not an outsider');
+      // Dakota is not coming Saturday; Dana drives for the team anyway.
+      await pick(t, t.page.locator('[data-testid="eh-day-q"]').nth(0), 'Not coming');
+      await part(t, 'Rides');
+      const sat = rideDay(t, 'Saturday');
+      await t.press(sat.locator('[data-testid="eh-drive-fold"] > .eh-fold-head'));
+      await pick(t, sat.locator('[data-testid="eh-drive-extra"]'), 'Yes, going there');
+      await t.settle({ quietMs: 500 });
+      const offer = sat.locator('[data-testid="eh-car-offer"]');
+      await pick(t, offer, '3');
+      await offer.locator('[data-testid="eh-car-desc"]').fill('green wagon');
+      await offer.locator('[data-testid="eh-car-desc"]').blur();
+      await offer.locator('input[type="time"]').fill('18:00');
+      await offer.locator('input[type="time"]').blur();
+      await pick(t, offer.locator('fieldset', { hasText: 'pick up a student near their home' }), 'No');
+      const checks = t.page.locator('[data-testid="eh-driver-checks"]');
+      await t.press(checks.locator('.eh-tick', { hasText: 'I am 25 or older.' }));
+      await t.press(checks.locator('.eh-tick', { hasText: "valid California driver's license" }));
+      await t.page.waitForTimeout(1200);
+      await t.settle({ quietMs: 500 });
+      const dakInvite = (await t.rows('hub_invites')).find((i) => i.student_id === DAKOTA)?.id;
+      const famCar = (await t.rows('hub_cars')).find((c) => c.driver_invite_id === dakInvite && c.day_id === EH.sat && c.run === 'to');
+      // Contacts on Dakota's page, to copy over later.
+      await part(t, 'Contacts');
+      await t.page.locator('[data-testid="eh-parent-phone"]').fill('5555550123');
+      await t.page.locator('[data-testid="eh-parent-phone"]').blur();
+      const em = t.page.locator('.eh-card', { hasText: 'Emergency contact' }).locator('input');
+      await em.nth(0).fill('Lou Hale');
+      await em.nth(1).fill('5555550124');
+      await em.nth(1).blur();
+      await t.page.waitForTimeout(1200);
+      await t.settle({ quietMs: 400 });
+
+      // An outsider sees the car closed (it needs two).
+      await familyPage(t, 'rowan');
+      await part(t, 'Rides');
+      await t.press(option(rideDay(t, 'Saturday').locator('[data-testid="eh-to-mode"]'), 'Rowan rides with another driver'));
+      await t.settle({ quietMs: 400 });
+      const outsider = seatCar(t, 'Saturday', 'to', 'Dana Hale');
+      const outClaim = await outsider.locator('[data-testid="eh-claim"]').count();
+      const outNote = await outsider.locator('[data-testid="eh-needs-two"]').count();
+
+      // Skyler, the brother or sister, takes it alone.
+      await t.open(skylerUrl, { persona: 'signedout', ready: '[data-testid="eh-status"]' });
+      await part(t, 'Who');
+      await pick(t, t.page.locator('[data-testid="eh-day-q"]').nth(0), 'Coming');
+      await part(t, 'Rides');
+      await t.press(option(rideDay(t, 'Saturday').locator('[data-testid="eh-to-mode"]'), 'Skyler rides with another driver'));
+      await t.settle({ quietMs: 600 });
+      const ours = seatCar(t, 'Saturday', 'to', 'Dana Hale');
+      const label = await ours.locator('[data-testid="eh-our-car"]').count();
+      await claimIn(t, ours);
+      const skyInv = (await t.rows('hub_invites')).find((i) => i.student_id === '00000000-0000-0000-0000-0000000000cb')?.id;
+      const seated = (await t.rows('hub_seats')).filter((x) => x.car_id === famCar?.id);
+      t.check('the family car offers Skyler a seat, labelled as the family car, and takes Skyler alone; an outsider sees it closed with the one-child note',
+        !!famCar && label === 1 && seated.length === 1 && seated[0].invite_id === skyInv && outClaim === 0 && outNote === 1,
+        `car ${!!famCar}; label ${label}; riders ${seated.length}; outsider Claim ${outClaim}, note ${outNote}`);
+
+      t.as('contacts copied from the other page');
+      await part(t, 'Contacts');
+      const copyCard = await t.count('[data-testid="eh-copy-contacts"]');
+      await t.press('[data-testid="eh-copy-from"]');
+      await t.page.waitForTimeout(1500);
+      await t.settle({ quietMs: 500 });
+      const sky = (await t.rows('hub_responses')).find((x) => x.invite_id === skyInv);
+      t.check('"Copy from Dakota\'s page" fills the empty contacts on Skyler\'s page',
+        copyCard === 1 && sky?.parent_phone === '5555550123' && sky?.emergency_name === 'Lou Hale' && sky?.emergency_phone === '5555550124',
+        `card ${copyCard}; phone ${sky?.parent_phone}; emergency ${sky?.emergency_name} ${sky?.emergency_phone}`);
+      await part(t, 'Who');
+      const adultsOnce = await t.count('[data-testid="eh-adults-once"]');
+      await t.noHScroll('no horizontal scroll with the household card');
+      await t.tapTargets(CONTROLS, '44px floor on every control with the household card');
+
+      t.as(`without 0009 (mig ${without0009})`);
+      await t.open(fam('sam'), { persona: 'signedout', mig: without0009, reset: true, ready: '[data-testid="eh-status"]' });
+      const hhNo = await t.count('[data-testid="eh-household"]');
+      await t.open(fam('sam'), { persona: 'signedout', mig: 'all', ready: '[data-testid="eh-status"]' });
+      const hhYes = await t.count('[data-testid="eh-household"]');
+      t.check('Skyler\'s Who page reminds to count adults once; without 0009 there is no household card, with it there is',
+        adultsOnce === 1 && hhNo === 0 && hhYes === 1, `adults note ${adultsOnce}; card without ${hhNo}, with ${hhYes}`);
+    });
+
     // ════ the mentor page ═════════════════════════════════════════════════
     await t.step('mentor page', async () => {
       await t.open(MANAGE, { persona: 'admin', mig: 'all', reset: true, ready: '[data-testid="ehm-page"]' });

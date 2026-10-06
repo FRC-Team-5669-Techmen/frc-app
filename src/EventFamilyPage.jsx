@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { createSaver, fmtDate, fmtDay, statusLine } from './eventHub'
+import { supabase } from './supabase'
 import { EventInfo } from './EventHubBoards'
 import { PARTS, PartContacts, PartDays, PartFood, PartRides, Summary, hasV8, seatsMissing } from './EventFamilyParts'
 import {
-  IconArrowLeft, IconArrowRight, IconCalendar, IconCheck, IconClock, IconFlag, IconInfo, IconPin, IconWifiOff,
+  IconArrowLeft, IconArrowRight, IconCalendar, IconCheck, IconClock, IconFlag, IconInfo, IconPin, IconUserPlus, IconUsers, IconWifiOff,
 } from './eventIcons'
 import './EventHub.css'
 
@@ -240,6 +241,66 @@ function PartNav({ index, go }) {
   )
 }
 
+/** A parent with more than one student on the trip (0009): each student has
+ *  their own page; this card lists the others and moves between them. A
+ *  page is listed when the families share an email; it can be opened from
+ *  here when the email on this link is on it. */
+function Household({ view, family, compact = false }) {
+  const navigate = useNavigate()
+  const [busy, setBusy] = useState(null)
+  const [note, setNote] = useState(null)
+  const hh = view.household ?? []
+  const first = (n) => String(n ?? '').split(' ')[0]
+  const open = async (h) => {
+    setBusy(h.invite_id); setNote(null)
+    const tok = await family.openSibling(h.invite_id)
+    setBusy(null)
+    if (!tok.token) { setNote(tok.message); return }
+    navigate(`/e/${tok.token}`)
+  }
+  const me = view.me ?? view.answers.response.parent_email ?? ''
+  const myName = (view.guardians ?? []).find((g) => g.email === me)?.name ?? view.answers.response.parent_name ?? ''
+  if (compact) {
+    if (!hh.length) return null
+    return (
+      <div className="eh-household-line" data-testid="eh-household-line">
+        <IconUsers size={16} /><span>Also on this trip:</span>
+        {hh.filter((h) => h.can_open).map((h) => (
+          <button key={h.invite_id} type="button" className="eh-btn eh-btn-quiet" disabled={!!busy} onClick={() => open(h)}>
+            {first(h.student)}<IconArrowRight size={14} /></button>
+        ))}
+        {note && <span className="eh-note eh-note-bad">{note}</span>}
+      </div>
+    )
+  }
+  return (
+    <section className="eh-card eh-household" data-testid="eh-household">
+      <h2 className="eh-card-title eh-with-icon"><IconUsers size={20} />{hh.length ? 'Your students on this trip' : 'More than one student on the team?'}</h2>
+      {hh.length === 0
+        ? <p className="eh-hint">Each student has their own page. Add your other student and you can switch between their pages here, copy your contact details over, and seat them in your car.</p>
+        : (
+          <ul className="eh-household-list">
+            <li className="eh-household-item eh-household-here"><span className="eh-household-name">{view.student.name}</span><span className="eh-tag">This page</span></li>
+            {hh.map((h) => (
+              <li key={h.invite_id} className="eh-household-item" data-testid="eh-household-item">
+                <span className="eh-household-name">{h.student}</span>
+                {h.can_open
+                  ? <button type="button" className="eh-btn eh-btn-primary" disabled={!!busy} onClick={() => open(h)} data-testid="eh-household-open">
+                      Open {first(h.student)}'s page<IconArrowRight size={16} /></button>
+                  : <span className="eh-hint">Use the link emailed for {first(h.student)}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      <button type="button" className="eh-btn" data-testid="eh-household-add"
+              onClick={() => navigate(`/join/${view.event.id}`, { state: { another: { name: myName, email: me, from: view.student.name } } })}>
+        <IconUserPlus size={18} />Add another student
+      </button>
+      {note && <p className="eh-note eh-note-bad" role="alert">{note}</p>}
+    </section>
+  )
+}
+
 export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
   const [view, setView] = useState(null)
   const [mode, setMode] = useState('loading')   // loading | ready | invalid | offline | removed | left
@@ -340,6 +401,10 @@ export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
   const v8 = hasV8(view)
   const ctx = {
     tz, states, locked: !!ev.over, v8,
+    // 0009: the cars a brother or sister's family drives; their first seat is
+    // this student's to take.
+    householdCars: new Set((view.household ?? []).flatMap((h) => h.cars ?? [])),
+    household: view.household ?? null,
     save: (k, payload) => { setView((v) => applyLocal(v, payload)); saver.save(k, payload) },
   }
   const go = (k) => setPart(k)
@@ -347,6 +412,14 @@ export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
   const family = transport.token ? {
     token: transport.token, locked: !!ev.over, canLeave: v8 && !ev.over,
     sendMail: sendQueuedMail, reload: load,
+    household: Array.isArray(view.household) ? view.household : null,
+    openSibling: (invite) => openSibling(transport.token, invite),
+    siblingView: async (invite) => {
+      const t = await openSibling(transport.token, invite)
+      if (!t.token) return null
+      const r = await familyTransport(t.token).load()
+      return r.kind === 'ok' ? r.data : null
+    },
     onRemoved: () => setMode('removed'), onRemovedSelf: () => setMode('left'),
   } : null
   const index = PARTS.findIndex((pt) => pt.key === part)
@@ -357,6 +430,9 @@ export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
     <div className={`eh-page${standalone ? '' : ' eh-embedded'}`} ref={topRef}>
       <SaveBar states={states} />
       <Hero view={view} standalone={standalone} onInfo={goInfo} />
+      {family?.household && !ev.over && part !== 'info' && (
+        <Household view={view} family={family} compact={part !== 'days' && part !== 'summary'} />
+      )}
       {!ev.over && part !== 'info' && <Tracker view={view} part={part} go={go} />}
 
       {pt && (
@@ -408,6 +484,16 @@ function Welcome({ joined }) {
       </section>
     </div>
   )
+}
+
+// A fresh link to a brother or sister's family page (0009), for the email on
+// this link. Refused unless that email is on the other family.
+async function openSibling(token, invite) {
+  const { data, error } = await supabase.rpc('hub_household_open', { p_token: token, p_invite: invite })
+  if (error || !data?.token) {
+    return { message: /^hub:/.test(error?.message ?? '') ? error.details : 'Could not open that page. Check your connection and try again.' }
+  }
+  return { token: data.token }
 }
 
 // The rules queue the email; the deployed event-family function sends what is

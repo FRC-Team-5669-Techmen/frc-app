@@ -6,7 +6,7 @@
 // page only renders. A token is remembered on this device per event, so
 // opening the link again goes straight back.
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from './supabase'
 import { isSchemaMissing } from './schemaMissing'
 import { fmtDate } from './eventHub'
@@ -40,15 +40,18 @@ function sendQueuedMail() {
 export default function EventJoinPage() {
   const { eventId } = useParams()
   const navigate = useNavigate()
+  // "Add another student" on a family page comes here with the parent's name
+  // and email, so a parent with two students types them once.
+  const another = useLocation().state?.another ?? null
   const [state, setState] = useState({ mode: 'loading' })   // loading | ready | closed | offline
   const [q, setQ] = useState('')
   const [student, setStudent] = useState(null)
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [guardian, setGuardian] = useState(false)
+  const [name, setName] = useState(another?.name ?? '')
+  const [email, setEmail] = useState(another?.email ?? '')
+  const [guardian, setGuardian] = useState(!!another)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
-  const [fresh, setFresh] = useState(false)
+  const [fresh, setFresh] = useState(!!another)
   const [done, setDone] = useState(null)   // { status: 'emailed' | 'ask_mentor', student, to }
 
   const load = async () => {
@@ -161,8 +164,10 @@ export default function EventJoinPage() {
 
       {!done && !saved?.token && (
         <form className="eh-card" onSubmit={submit} data-testid="eh-join-form">
-          <h2 className="eh-card-title">Family sign-up</h2>
-          <p className="eh-hint">For parents and guardians. About five minutes. Your answers save as you go, and you can come back and change them any time.</p>
+          <h2 className="eh-card-title">{another ? 'Add another student' : 'Family sign-up'}</h2>
+          {another
+            ? <p className="eh-note" data-testid="eh-join-another">Your name and email are filled in from {another.from ? `${another.from}'s page` : 'your other page'}. Pick your other student and press Start. Both pages will list each other.</p>
+            : <p className="eh-hint">For parents and guardians. About five minutes. Your answers save as you go, and you can come back and change them any time. More than one student on the team? Sign up one, then press "Add another student" at the top of their page.</p>}
 
           <fieldset className="eh-q">
             <legend className="eh-q-label">Your student</legend>

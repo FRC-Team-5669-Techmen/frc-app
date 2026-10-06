@@ -19,3 +19,6 @@
   parent driving without their own student, removing a parent or a whole family, mentors seating two at once,
   adults 0 to 30, the one-child rule always on, decision 44). 0008 was the next free number on `main` and on
   every remote branch when it was taken.
+  2026-10-06, a third follow-up asked by Mr. Pina in the same session: parents with more than one student
+  (migration 0009, households), urgent because the form was about to be sent. 0009 was the next free number
+  on `main` and on every remote branch when it was taken.

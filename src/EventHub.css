@@ -714,3 +714,11 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .eh-chip-num { font-family: var(--font-ui); }
 .eh-tile .eh-tile-state.eh-tile-warn { color: var(--gold); }
 .eh-rider-detail a { color: var(--gold); }
+
+/* Households (0009): a parent with more than one student on the trip. */
+.eh-household { border-left: 4px solid var(--role-parent, var(--hr-outreach)); }
+.eh-household-list { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 8px; }
+.eh-household-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); }
+.eh-household-here { border-color: var(--gold-dim); }
+.eh-household-name { font-weight: 700; }
+.eh-household-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 12px; color: var(--steel); }

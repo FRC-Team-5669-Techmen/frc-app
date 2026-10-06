@@ -11,7 +11,8 @@ sign-up link, with its test) landed on 2026-10-05, and `0008` (the hub's
 family changes: a parent driving without their own student, more than one
 parent per family and removing one, a family leaving the trip, mentors
 seating two at once, the one-child rule made permanent; with its test) the
-same day.
+same day. `0009` (households: a parent with more than one student, with its
+test) landed on 2026-10-06.
 
 **Every numbered test can now be run here, before anyone pastes it.**
 `node tools/sql-harness/run.mjs` builds a throwaway PostgreSQL 16 with Supabase
@@ -76,7 +77,7 @@ that thought it was checking UPDATE was checking SELECT again.
 
 Three of the frozen SQL files have a test sibling; every numbered migration has
 had one since `0001`, which made seven on 2026-10-01, eight on 2026-10-04, nine on 2026-10-05 with
-`0007`, and ten later that day with `0008`
+`0007`, ten later that day with `0008`, and eleven on 2026-10-06 with `0009`
 (a pure data seed such as `0006` has no boundary to test). That is the number
 this rule exists to move.
 

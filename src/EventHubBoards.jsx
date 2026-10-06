@@ -168,7 +168,7 @@ function SeatDots({ seats, filled }) {
   )
 }
 
-export function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced = [], act, locked }) {
+export function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced = [], act, locked, ours = false }) {
   const [confirm, setConfirm] = useState(null)
   const [note, setNote] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -184,7 +184,9 @@ export function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced = [], ac
   // An empty car without its driver's own student aboard takes its first two
   // riders together (the one-child rule). A family claim of the first seat
   // would be refused, so it is not offered; a mentor seats two at once.
-  const emptyPair = !!car.needs_two && car.riders_count === 0
+  // A brother or sister's family car (0009) takes this student alone: the
+  // driver is their parent too.
+  const emptyPair = !!car.needs_two && car.riders_count === 0 && !ours
   const [pairA, setPairA] = useState('')
   const [pairB, setPairB] = useState('')
 
@@ -226,7 +228,8 @@ export function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced = [], ac
           {car.problem === 'single_pickup' ? 'Needs a second pickup rider' : 'Needs a second rider'}
         </p>
       )}
-      {car.needs_two && !car.problem && viewer !== 'member' && (
+      {ours && viewer === 'family' && <p className="eh-ok-line" data-testid="eh-our-car">Your family's car</p>}
+      {car.needs_two && !car.problem && viewer !== 'member' && !ours && (
         <p className="eh-pair-note" data-testid="eh-needs-two"><IconShield size={16} />
           <span>{viewer === 'staff'
             ? (emptyPair ? 'Needs two students together (one-child rule). Seat two at once below.' : 'Takes two or more riders (one-child rule).')

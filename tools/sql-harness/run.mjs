@@ -237,6 +237,12 @@ function main() {
     const p = checks.filter((c) => c.result === 'PASS').length;
     const fl = checks.filter((c) => c.result === 'FAIL');
     const sk = checks.filter((c) => c.result === 'SKIP').length;
+    // The summary row is what a person reads in the SQL editor, so a summary
+    // that says FAIL fails the file even when every check row passed (its
+    // expected check count was not raised when a check was added: 0008,
+    // 2026-10-06, read live as 42 PASS under a FAIL summary).
+    const summary = rows.find((c) => /^summary$/i.test(c.name));
+    if (summary && summary.result !== 'PASS') fl.push({ n: '999', name: 'summary', detail: summary.detail });
     for (const c of fl) console.log(`FAIL ${path.basename(t)} ${c.n ? `#${c.n} ` : ''}${c.name}${c.detail ? ` -- ${c.detail}` : ''}`);
     if (errored) console.log(`ERROR ${path.basename(t)}: ${(res.stderr || '').trim().split('\n').slice(-3).join(' | ')}`);
     console.log(`${path.relative(REPO, t)}: ${p} PASS, ${fl.length} FAIL, ${sk} SKIP${raiseStyle ? ' (raise-style test)' : ''}${errored ? ' (the script errored)' : ''}`);

@@ -3,7 +3,7 @@ title: "Event family hub (Beach Blitz 2026): family form, carpool board, food bo
 date: 2026-10-04
 branches: [claude/brave-noether-tyn6cb]
 commits: []
-migrations: ["0005_event_family_hub.sql", "0005_event_family_hub_rls_test.sql", "0006_beach_blitz_seed.sql", "0007_event_hub_open_link.sql", "0007_event_hub_open_link_rls_test.sql", "0008_event_hub_families.sql", "0008_event_hub_families_rls_test.sql"]
+migrations: ["0005_event_family_hub.sql", "0005_event_family_hub_rls_test.sql", "0006_beach_blitz_seed.sql", "0007_event_hub_open_link.sql", "0007_event_hub_open_link_rls_test.sql", "0008_event_hub_families.sql", "0008_event_hub_families_rls_test.sql", "0009_event_hub_households.sql", "0009_event_hub_households_rls_test.sql"]
 subsystems: ["Schedule", "Testing", "Documentation"]
 ---
 
@@ -507,3 +507,57 @@ phone.
    Contacts now lists the people on the page, and Rides asks, per day, whether
    a parent can help drive other students. The mentor page's Setup shows
    "One-child rule: always on".
+
+## 2026-10-06: households (0009), and two fixes from pasting 0008
+
+Pasting 0008 live: the migration went in, and the test first failed in the
+Supabase editor with "unterminated dollar-quoted string" at `$pre$`. Postgres
+ignores comments, but the editor's statement splitter does not, and an odd
+number of apostrophes in `--` comments ("A rule's", "person's") made it cut the
+file mid block. Every comment apostrophe was taken out of both 0008 files (and
+0009 was written without any); `supabase/migrations/README.md` now says so.
+Pasted again, the live test returned 42 PASS under a summary reading FAIL: the
+summary still expected 41 checks after check 42 was added. The harness skipped
+summary rows, which is how that got past it; it now fails a file whose summary
+is not PASS.
+
+Mr. Pina, the same night: "build out the functionality for parents with more
+than one student immediately. Must be live as soon as possible."
+
+**0009** (`supabase/migrations/0009_event_hub_households.sql`): families in one
+event that share an email are siblings. The one-child rule now treats a brother
+or sister as the driver's own child, so a parent may drive their second student
+alone (before, that was refused as "one student alone with an adult who is not
+their parent"). Every family page carries `household`, the sibling families
+with whether this link can open them and the cars they drive, and
+`hub_household_open(token, invite)` mints a link to a sibling page for the
+email on the link in use, only when that email is on the sibling family.
+Called from the browser with the anon key; no function redeploy.
+
+**The page**: a "Your students on this trip" card under the header (a one-line
+version on Rides, Food and Contacts) with "Open Skyler's page" and "Add another
+student", which opens the sign-up with the name, email and guardian tick filled
+in; "Copy from Dakota's page" on Contacts (only empty answers are filled); a
+note on Who is coming to count adults on one student's page only; and the
+family car offered first and labelled "Your family's car" on the sibling's
+page, where it takes the student alone.
+
+Verified: the 0009 test 10/10 on the harness (two permissive mutants, everyone
+a sibling and any page openable, each caught), with 0005 69/69 (check 5's list
+of later functions extended), 0007 17/17 and 0008 42/42; `event-hub` 166/166
+(the new households step: the prefilled sign-up, both pages listing each other,
+open, the family car taking the sibling alone against an outsider seeing it
+closed, copying contacts, the adults note, and no card without 0009). Not
+verified: the live database (0009 not yet applied there) and email delivery.
+
+## MR. PINA'S STEPS for 0009 (2026-10-06)
+
+1. SQL editor (https://supabase.com/dashboard/project/pbuogcrhdywpzvcxbwsd/sql/new),
+   one tab each, in order:
+   1. `supabase/migrations/0009_event_hub_households.sql`: "Success. No rows returned".
+   2. `supabase/migrations/0009_event_hub_households_rls_test.sql`: 10 rows,
+      "setup" and "summary", all PASS. It rolls itself back.
+2. No function redeploy.
+3. Open your own family page, press "Add another student", and check that both
+   pages list each other.
+
