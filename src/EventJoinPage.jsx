@@ -9,18 +9,25 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from './supabase'
 import { isSchemaMissing } from './schemaMissing'
-import { fmtDate, serviceHoursSpots } from './eventHub'
+import { fmtDate, forgetSavedFamily, readSavedFamily, serviceHoursSpots, writeSavedFamily } from './eventHub'
 import { ServiceHoursLine } from './EventHubControls'
 import './EventHub.css'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-const savedKey = (eventId) => `techmen:hub-family:${eventId}`
 
-function readSaved(eventId) {
-  try { return JSON.parse(localStorage.getItem(savedKey(eventId)) || 'null') } catch { return null }
-}
-function writeSaved(eventId, v) {
-  try { localStorage.setItem(savedKey(eventId), JSON.stringify(v)) } catch { /* private mode: fine */ }
+// Is a remembered family link still good? Only the event-family function's
+// own "not_found" answer means dead; anything else (offline, a 5xx) keeps it.
+async function savedLinkDead(token) {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/event-family`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, action: 'fetch' }),
+    })
+    if (res.status !== 404) return false
+    const body = await res.json().catch(() => null)
+    return body?.error === 'not_found'
+  } catch {
+    return false
+  }
 }
 
 function refusal(error) {
@@ -73,7 +80,21 @@ export default function EventJoinPage() {
 
   const info = state.info
   const ev = info?.event
-  const saved = ev && !fresh ? readSaved(ev.id) : null
+  const [checked, setChecked] = useState({})   // token -> 'ok' | 'dead'
+  const remembered = ev && !fresh ? readSavedFamily(ev.id) : null
+  const saved = remembered?.token && checked[remembered.token] === 'ok' ? remembered : null
+  const checking = !!remembered?.token && !checked[remembered.token]
+  // Offer "Continue" only for a link that still opens; forget one that does not.
+  useEffect(() => {
+    if (!ev || !remembered?.token || checked[remembered.token]) return undefined
+    let live = true
+    savedLinkDead(remembered.token).then((dead) => {
+      if (!live) return
+      if (dead) forgetSavedFamily(ev.id)
+      setChecked((c) => ({ ...c, [remembered.token]: dead ? 'dead' : 'ok' }))
+    })
+    return () => { live = false }
+  }, [ev, remembered?.token, checked]) // eslint-disable-line react-hooks/exhaustive-deps
   const students = useMemo(() => {
     const all = info?.students ?? []
     const t = q.trim().toLowerCase()
@@ -97,14 +118,14 @@ export default function EventJoinPage() {
     }
     sendQueuedMail()
     if (data.status === 'in' && data.token) {
-      writeSaved(ev.id, { token: data.token, student: data.student })
+      writeSavedFamily(ev.id, { token: data.token, student: data.student })
       navigate(`/e/${data.token}`, { state: { joined: { email: email.trim(), student: data.student } } })
       return
     }
     setDone(data)
   }
 
-  if (state.mode === 'loading') {
+  if (state.mode === 'loading' || (state.mode === 'ready' && checking)) {
     return <div className="eh-page"><p className="eh-hint" role="status">Loading…</p></div>
   }
   if (state.mode !== 'ready') {
@@ -160,6 +181,8 @@ export default function EventJoinPage() {
             <Link className="eh-btn eh-btn-primary" to={`/e/${saved.token}`}>Continue for {saved.student}</Link>
             <button type="button" className="eh-btn" onClick={() => setFresh(true)}>Sign up another student</button>
           </div>
+          <button type="button" className="eh-btn eh-btn-quiet" data-testid="eh-join-forget"
+                  onClick={() => { forgetSavedFamily(ev.id); setFresh(true) }}>Not your family? Forget this on this device</button>
         </section>
       )}
 

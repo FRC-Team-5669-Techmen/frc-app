@@ -512,3 +512,37 @@ export function serviceHoursRecords(rows) {
   }
   return out
 }
+
+// ── the family link this device remembers (/join "Welcome back") ────────────
+// /join keeps the family page link it opened, per event, in this browser only,
+// so a parent coming back goes straight to their page. Nothing in the database
+// knows about it. A remembered link that no longer opens (the family was
+// removed, or its links were reset) is forgotten by forgetFamilyToken, which
+// the family page calls when the server says the link is not found and /join
+// calls after checking the link before it offers "Continue".
+
+const SAVED_PREFIX = 'techmen:hub-family:'
+
+export function readSavedFamily(eventId) {
+  try { return JSON.parse(localStorage.getItem(SAVED_PREFIX + eventId) || 'null') } catch { return null }
+}
+export function writeSavedFamily(eventId, v) {
+  try { localStorage.setItem(SAVED_PREFIX + eventId, JSON.stringify(v)) } catch { /* private mode: fine */ }
+}
+export function forgetSavedFamily(eventId) {
+  try { localStorage.removeItem(SAVED_PREFIX + eventId) } catch { /* private mode: fine */ }
+}
+/** Forget every remembered family link that is this token. Returns how many. */
+export function forgetFamilyToken(token) {
+  let n = 0
+  try {
+    for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+      const k = localStorage.key(i)
+      if (!k?.startsWith(SAVED_PREFIX)) continue
+      let v = null
+      try { v = JSON.parse(localStorage.getItem(k) || 'null') } catch { /* not ours */ }
+      if (v?.token === token) { localStorage.removeItem(k); n += 1 }
+    }
+  } catch { /* private mode: nothing remembered */ }
+  return n
+}

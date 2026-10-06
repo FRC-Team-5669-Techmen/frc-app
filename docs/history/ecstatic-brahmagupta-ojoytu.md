@@ -142,6 +142,32 @@ particular that 0011 applies cleanly over whatever has actually been pasted
 there, and the real `event-family` function passing `parent_service_hours_note`
 through. It forwards `hub_family_call`'s JSON as it is, which was read, not run.
 
+## Follow-up the same day: a dead "Welcome back" on /join
+
+Reported from the live app: `/join` showed "Welcome back, you already started
+for <a test student>", and Continue opened "This link does not work". The card
+is browser memory only (`techmen:hub-family:<event id>` in localStorage,
+written when `/join` opens a family page); nothing ever forgot a remembered
+link once it stopped opening (a family removed, its links reset). Now:
+
+- `/join` checks a remembered link with the event-family function before
+  offering Continue, and forgets it only on the function's own
+  `{ error: 'not_found' }` 404 (offline or a 5xx keeps it).
+- The family page forgets the link it was opened with when the server says it
+  is not found (`forgetFamilyToken`), so "Open the sign-up form" lands on the
+  form.
+- The card has "Not your family? Forget this on this device".
+- The helpers moved into `src/eventHub.js` (`readSavedFamily`,
+  `writeSavedFamily`, `forgetSavedFamily`, `forgetFamilyToken`).
+
+`npm run test:features` event-hub "remembered link" step, both widths: a live
+remembered link keeps the card (1) and the key; a dead one shows the form (card
+0, form 1) and the key is gone; the dead-link page clears it; Forget clears a
+live one.
+
+The test FAMILY itself, if it still exists, is data in the live database and is
+removed on the mentor page (Families, Delete), not by code.
+
 ## MR. PINA'S STEPS for 0011 (2026-10-06)
 
 In the Supabase SQL editor

@@ -1132,6 +1132,47 @@ export default {
         adultsOnce === 1 && hhNo === 0 && hhYes === 1, `adults note ${adultsOnce}; card without ${hhNo}, with ${hhYes}`);
     });
 
+    // ════ the link this device remembers ══════════════════════════════════
+    // /join's "Welcome back" is browser memory only. A remembered link that no
+    // longer opens must be forgotten (by /join after checking it, and by the
+    // family page that finds it dead); a live one must still be offered.
+    await t.step('remembered link', async () => {
+      const KEY = `techmen:hub-family:${EH.event}`;
+      const DEAD = 'FxDeadLink000000000099';
+      const JOIN = `/join/${EH.event}`;
+      const remember = (token) => t.evaluate(({ k, v }) => localStorage.setItem(k, JSON.stringify(v)), { k: KEY, v: { token, student: 'Old Test' } });
+      const stored = () => t.evaluate((k) => localStorage.getItem(k), KEY);
+      const landing = '[data-testid="eh-join-form"], [data-testid="eh-join-saved"]';
+
+      await t.open(JOIN, { persona: 'signedout', mig: 'all', reset: true, ready: landing });
+      await remember(TOK.sam);
+      await t.open(JOIN, { persona: 'signedout', ready: landing });
+      const liveCard = await t.count('[data-testid="eh-join-saved"]');
+      const liveKept = await stored();
+      t.as('a dead remembered link');
+      await remember(DEAD);
+      await t.open(JOIN, { persona: 'signedout', ready: landing });
+      const deadCard = await t.count('[data-testid="eh-join-saved"]');
+      const deadForm = await t.count('[data-testid="eh-join-form"]');
+      const deadKept = await stored();
+      t.check('/join offers Continue for a remembered link that opens, and forgets one that does not and shows the form',
+        liveCard === 1 && !!liveKept && deadCard === 0 && deadForm === 1 && deadKept === null,
+        `live: card ${liveCard}, kept ${!!liveKept}; dead: card ${deadCard}, form ${deadForm}, kept ${deadKept}`);
+
+      await remember(DEAD);
+      await t.open(`/e/${DEAD}`, { persona: 'signedout', ready: '[data-testid="eh-lost"]' });
+      const lostForgot = await stored();
+      await remember(TOK.sam);
+      await t.open(JOIN, { persona: 'signedout', ready: '[data-testid="eh-join-saved"]' });
+      await t.tapTargets(CONTROLS, '44px floor on the welcome-back card');
+      await t.press('[data-testid="eh-join-forget"]');
+      await t.settle({ quietMs: 200 });
+      const forgot = await stored();
+      const formAfter = await t.count('[data-testid="eh-join-form"]');
+      t.check('the dead-link page forgets that link; "Forget this on this device" forgets a live one and shows the form',
+        lostForgot === null && forgot === null && formAfter === 1, `after dead page ${lostForgot}; after Forget ${forgot}, form ${formAfter}`);
+    });
+
     // ════ parent service hours (0011) ═════════════════════════════════════
     // The five spots, counted for the seeded note, then after a mentor clears
     // it in Setup (blank saves as null), and without 0011 at all; the service

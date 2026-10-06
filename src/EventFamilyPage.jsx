@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { createSaver, fmtDate, fmtDay, serviceHoursSpots, statusLine } from './eventHub'
+import { createSaver, fmtDate, fmtDay, forgetFamilyToken, serviceHoursSpots, statusLine } from './eventHub'
 import { supabase } from './supabase'
 import { EventInfo } from './EventHubBoards'
 import { ServiceHoursLine } from './EventHubControls'
@@ -550,7 +550,9 @@ export default function EventFamilyPage() {
   const transport = useMemo(() => (token ? familyTransport(token) : null), [token])
   const [invalid, setInvalid] = useState(false)
   const [over, setOver] = useState(false)
-  const onInvalid = useCallback(() => setInvalid(true), [])
+  // A link that does not open is forgotten on this device, so /join stops
+  // offering "Continue" to it.
+  const onInvalid = useCallback(() => { setInvalid(true); forgetFamilyToken(token) }, [token])
   const onOver = useCallback(() => setOver(true), [])
   if (!transport) return <Navigate to="/join" replace />
   const joined = location.state?.joined
