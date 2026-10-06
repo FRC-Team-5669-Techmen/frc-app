@@ -239,14 +239,18 @@ export function CountPicker({ k, label, info, hint, value, onPick, ctx, disabled
 }
 
 /** A collapsible block: a big header row that opens and closes the body. */
-export function Fold({ title, icon: Icon, children, defaultOpen = false, tone, testid, sub }) {
+export function Fold({ title, icon: Icon, children, defaultOpen = false, tone, testid, sub, feature = false }) {
   const [open, setOpen] = useState(defaultOpen)
   const id = useId()
+  // feature: a fold that holds something people need (the carpool board, the
+  // food sign-up), drawn as a coloured card with an Open / Close label so it
+  // does not read as a footnote.
   return (
-    <section className={`eh-fold${open ? ' eh-fold-open' : ''}${tone ? ` eh-tone-${tone}` : ''}`} data-testid={testid}>
+    <section className={`eh-fold${open ? ' eh-fold-open' : ''}${tone ? ` eh-tone-${tone}` : ''}${feature ? ' eh-fold-feature' : ''}`} data-testid={testid}>
       <button type="button" className="eh-fold-head" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
         {Icon && <span className="eh-fold-icon"><Icon size={20} /></span>}
         <span className="eh-fold-title">{title}{sub && <span className="eh-fold-sub">{sub}</span>}</span>
+        {feature && <span className="eh-fold-cta" aria-hidden="true">{open ? 'Close' : 'Open'}</span>}
         <span className="eh-fold-chev" aria-hidden="true"><IconChevron size={20} /></span>
       </button>
       {open && <div className="eh-fold-body" id={id}>{children}</div>}

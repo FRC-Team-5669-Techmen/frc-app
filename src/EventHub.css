@@ -722,3 +722,35 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .eh-household-here { border-color: var(--gold-dim); }
 .eh-household-name { font-weight: 700; }
 .eh-household-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 12px; color: var(--steel); }
+
+/* Event info and the parent GroupMe, on every page of the form. */
+.eh-infobar { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 0 0 16px; }
+.eh-infobar-btn {
+  display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 14px; border-radius: var(--radius);
+  font: inherit; text-align: left; text-decoration: none; cursor: pointer; color: var(--text);
+  border: 2px solid var(--tone); background: color-mix(in srgb, var(--tone) 16%, var(--surface));
+}
+.eh-infobar-btn > svg:first-child { color: var(--tone); flex: none; }
+.eh-infobar-btn > svg:last-child { margin-left: auto; color: var(--tone); flex: none; }
+.eh-infobar-btn span { display: flex; flex-direction: column; }
+.eh-infobar-btn strong { font-size: 1.05rem; }
+.eh-infobar-btn small { color: var(--steel); font-size: 0.85rem; }
+.eh-infobar-btn:hover, .eh-infobar-btn:focus-visible { background: color-mix(in srgb, var(--tone) 28%, var(--surface)); }
+.eh-infobar-info { --tone: var(--hr-outreach); }
+.eh-infobar-chat { --tone: var(--hr-volunteer); }
+
+/* A fold that holds something people need: a coloured card, not a footnote. */
+.eh-fold.eh-fold-feature { border: 2px solid var(--tone, var(--gold-dim)); background: color-mix(in srgb, var(--tone, var(--gold-dim)) 12%, var(--surface)); }
+.eh-fold-feature > .eh-fold-head { min-height: 64px; }
+.eh-fold-feature .eh-fold-title { font-size: 1.1rem; }
+.eh-fold-feature .eh-fold-icon { color: var(--tone); }
+.eh-fold-cta {
+  flex: none; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--tone, var(--gold-dim));
+  color: var(--tone, var(--gold)); font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase;
+}
+
+/* Event info: the event's own links first. */
+.eh-quick-links { display: grid; gap: 8px; }
+.eh-btn-groupme { border-color: var(--hr-volunteer); color: var(--hr-volunteer); }
+.ehm-edit-head { margin: 18px 0 6px; font-size: 1.05rem; }
+.ehm-del-cell { text-align: right; }

@@ -271,7 +271,7 @@ function Removals({ selected, inviteId, onGone, reload }) {
   }
   return (
     <section className="eh-card" data-testid="ehm-removals">
-      <h3 className="eh-label">Parents and guardians on this family</h3>
+      <h3 className="eh-label">People on this sign-up, and deleting it</h3>
       <ul className="eh-people-list">
         {(selected.emails ?? []).map((e) => (
           <li key={e} className="eh-person">
@@ -290,11 +290,11 @@ function Removals({ selected, inviteId, onGone, reload }) {
         {(selected.emails ?? []).length === 0 && <li className="eh-quiet">No email on this family.</li>}
       </ul>
       {arm !== 'family'
-        ? <button type="button" className="eh-btn eh-btn-danger" disabled={busy} onClick={() => setArm('family')} data-testid="ehm-remove-family">Remove this family from the trip</button>
+        ? <button type="button" className="eh-btn eh-btn-danger" disabled={busy} onClick={() => setArm('family')} data-testid="ehm-remove-family">Delete this sign-up</button>
         : (
           <div className="eh-confirm-inline">
             <span>Remove {selected.name}'s family? Their answers, seats, car and food claims go; drivers and mentors are told. They can sign up again on the open link.</span>
-            <button type="button" className="eh-btn eh-btn-danger" disabled={busy} onClick={dropFamily} data-testid="ehm-remove-family-yes">Yes, remove the family</button>
+            <button type="button" className="eh-btn eh-btn-danger" disabled={busy} onClick={dropFamily} data-testid="ehm-remove-family-yes">Yes, delete it</button>
             <button type="button" className="eh-btn" onClick={() => setArm(null)}>Keep them</button>
           </div>
         )}
@@ -305,6 +305,19 @@ function Removals({ selected, inviteId, onGone, reload }) {
 
 function Families({ ov, inviteId, setInviteId, reload }) {
   const [q, setQ] = useState('')
+  // Delete straight from the list (Mr. Pina, 2026-10-06: opening a family to
+  // delete it landed in its form). Two clicks: Delete, then Yes.
+  const [armDel, setArmDel] = useState(null)
+  const [delNote, setDelNote] = useState(null)
+  const [delBusy, setDelBusy] = useState(false)
+  async function deleteFamily(f) {
+    setDelBusy(true)
+    const r = await staffRpc('hub_staff_remove_family', { p_invite: f.invite_id })
+    setDelBusy(false); setArmDel(null)
+    setDelNote(r.kind === 'ok' ? { text: `${f.name}'s sign-up was deleted. Drivers and mentors were told.` }
+      : { bad: true, text: r.kind === 'missing' ? 'Deleting needs the 0008 update pasted first.' : (r.message || 'Not deleted.') })
+    reload()
+  }
   const fam = (ov.families ?? []).filter((f) => f.name.toLowerCase().includes(q.trim().toLowerCase()))
   const selected = (ov.families ?? []).find((f) => f.invite_id === inviteId)
   const transport = useMemo(() => (inviteId ? staffTransport(inviteId) : null), [inviteId])
@@ -316,6 +329,7 @@ function Families({ ov, inviteId, setInviteId, reload }) {
     return (
       <div data-testid="ehm-family">
         <button type="button" className="eh-btn" onClick={() => { setInviteId(null); reload() }}>All families</button>
+        <Removals selected={selected} inviteId={inviteId} onGone={() => { setInviteId(null); reload() }} reload={reload} />
         <section className="eh-card">
           <h3 className="eh-label">Invite emails</h3>
           <div className="eh-inline">
@@ -333,7 +347,7 @@ function Families({ ov, inviteId, setInviteId, reload }) {
           <p className="eh-mono">Invite: {selected.invite_status}</p>
           {note && <p className={`eh-note${note.bad ? ' eh-note-bad' : ''}`}>{note.text}</p>}
         </section>
-        <Removals selected={selected} inviteId={inviteId} onGone={() => { setInviteId(null); reload() }} reload={reload} />
+        <h3 className="ehm-edit-head" data-testid="ehm-edit-head">Edit {selected.name}'s answers</h3>
         <FamilyHub key={inviteId} transport={transport} standalone={false} />
       </div>
     )
@@ -342,7 +356,7 @@ function Families({ ov, inviteId, setInviteId, reload }) {
     <div>
       <input className="eh-input ehm-search" placeholder="Search students" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search students" />
       <table className="ehm-table" data-testid="ehm-families">
-        <thead><tr><th>Student</th><th>Sign-up</th><th>Lock-in</th><th>Invite</th></tr></thead>
+        <thead><tr><th>Student</th><th>Sign-up</th><th>Lock-in</th><th>Invite</th><th aria-label="Delete" /></tr></thead>
         <tbody>
           {fam.map((f) => (
             <tr key={f.invite_id}>
@@ -350,10 +364,23 @@ function Families({ ov, inviteId, setInviteId, reload }) {
               <td>{f.phase1_done ? 'Done' : `${f.missing} to go`}</td>
               <td>{f.lockin_done ? 'Done' : '-'}</td>
               <td>{f.emails.length ? f.invite_status : 'No email'}</td>
+              <td className="ehm-del-cell">
+                {armDel !== f.invite_id
+                  ? <button type="button" className="eh-btn eh-btn-quiet" disabled={delBusy} onClick={() => { setArmDel(f.invite_id); setDelNote(null) }}
+                            data-testid="ehm-row-delete">Delete</button>
+                  : (
+                    <span className="eh-confirm-inline">
+                      <span>Delete {f.name}'s sign-up?</span>
+                      <button type="button" className="eh-btn eh-btn-danger" disabled={delBusy} onClick={() => deleteFamily(f)} data-testid="ehm-row-delete-yes">Yes, delete</button>
+                      <button type="button" className="eh-btn" onClick={() => setArmDel(null)}>Keep</button>
+                    </span>
+                  )}
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+      {delNote && <p className={`eh-note${delNote.bad ? ' eh-note-bad' : ''}`} role="status" data-testid="ehm-delete-note">{delNote.text}</p>}
       {(ov.families ?? []).length === 0 && <p className="eh-empty">No families yet. Use Responses, Add them.</p>}
     </div>
   )

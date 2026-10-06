@@ -7,7 +7,7 @@
 import { Fragment, useState } from 'react'
 import { supabase } from './supabase'
 import {
-  ALLERGENS, fmtDate, fmtDay, fmtPhone, fmtTime, formDays, isoToZoned, needsSeat, nightOptions, sameNights, zonedToIso,
+  ALLERGENS, fmtDate, fmtDay, fmtPhone, fmtTime, isoToZoned, needsSeat, nightOptions, sameNights, zonedToIso,
 } from './eventHub'
 import { CarCard, CarpoolBoard, FoodBoard, PickupRequests } from './EventHubBoards'
 import { Choice, CountPicker, Fold, InfoTip, Options, Q, Text, Tick } from './EventHubControls'
@@ -110,7 +110,9 @@ const ATTEND = [
 
 export function PartDays({ view, ctx }) {
   const first = view.student.first
-  const days = formDays(view.board.days)
+  // Date order (decision 45, Mr. Pina 2026-10-06): Friday after Saturday and
+  // Sunday was confusing. A day's intro card still comes before its question.
+  const days = [...(view.board.days ?? [])].sort((x, y) => String(x.date).localeCompare(String(y.date)))
   const a = view.answers
   const nights = nightOptions(view.board.days)
   const coming = days.filter((d) => a.days[d.id]?.attending === 'yes')
@@ -468,7 +470,8 @@ export function PartRides({ view, ctx, act, viewer }) {
         </section>
       )}
 
-      <Fold title="See every car on the team carpool" icon={IconUsers} testid="eh-board-fold">
+      <Fold title="See every car on the team carpool" icon={IconCar} testid="eh-board-fold" tone="green" feature
+            sub="Who is driving, who has room, and who still needs a seat, day by day.">
         <CarpoolBoard board={view.board} tz={ctx.tz} viewer={viewer} myDays={a.days} act={act} locked={ctx.locked} />
       </Fold>
     </div>
@@ -526,8 +529,8 @@ export function PartFood({ view, ctx, act, viewer }) {
             : <p className="eh-hint">A mentor will follow up about the medication form.</p>)}
         </Choice>
       </section>
-      <Fold title="Bring food for a team meal (optional)" icon={IconUtensils} testid="eh-food-fold"
-            sub="Pick a dish, or say what you will bring. Change or drop it until that meal starts.">
+      <Fold title="Bring food for a team meal (optional)" icon={IconUtensils} testid="eh-food-fold" tone="orange" feature
+            sub="See what each meal still needs and sign up to bring a dish. Change or drop it until that meal starts.">
         <FoodBoard board={view.board} tz={ctx.tz} viewer={viewer} act={act} locked={ctx.locked} />
       </Fold>
     </div>
@@ -637,14 +640,15 @@ function LeaveTrip({ view, family, onRemoved }) {
     onRemoved()
   }
   return (
-    <Fold title="Take our family off this trip" icon={IconTrash} tone="danger" testid="eh-leave-fold">
+    <Fold title="Delete our sign-up" icon={IconTrash} tone="danger" testid="eh-leave-fold"
+          sub={`Takes ${first} off ${view.event.title}`}>
       <p>This removes {first} from {view.event.title}: every answer, any car seat, any car you offered and any food you claimed. Drivers and mentors are told. If you change your mind, open the sign-up link again and start over.</p>
       {!arm
-        ? <button type="button" className="eh-btn eh-btn-danger" disabled={busy || family.locked} onClick={() => setArm(true)} data-testid="eh-leave">Remove our family</button>
+        ? <button type="button" className="eh-btn eh-btn-danger" disabled={busy || family.locked} onClick={() => setArm(true)} data-testid="eh-leave">Delete our sign-up</button>
         : (
           <div className="eh-confirm-inline">
-            <span>Remove {first}'s family from this trip?</span>
-            <button type="button" className="eh-btn eh-btn-danger" disabled={busy} onClick={go} data-testid="eh-leave-yes">Yes, remove us</button>
+            <span>Delete {first}'s sign-up and take {first} off this trip?</span>
+            <button type="button" className="eh-btn eh-btn-danger" disabled={busy} onClick={go} data-testid="eh-leave-yes">Yes, delete it</button>
             <button type="button" className="eh-btn" onClick={() => setArm(false)}>Keep us on the trip</button>
           </div>
         )}
@@ -780,7 +784,7 @@ function DayPlan({ view, d }) {
   )
 }
 
-export function Summary({ view, ctx, act, goPart, goInfo }) {
+export function Summary({ view, ctx, act, goPart, goInfo, family }) {
   const ev = view.event
   const p = view.progress
   const first = view.student.first
@@ -898,6 +902,7 @@ export function Summary({ view, ctx, act, goPart, goInfo }) {
         </ul>
       </section>
       <button type="button" className="eh-btn eh-btn-wide" onClick={goInfo}><IconInfo size={18} />Event info: times, places and links</button>
+      {family?.canLeave && <LeaveTrip view={view} family={family} onRemoved={family.onRemoved} />}
     </div>
   )
 }

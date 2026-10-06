@@ -1,7 +1,8 @@
 # 45 Should the family page list the days in date order (Friday, Saturday, Sunday)?
 - Raised: 2026-10-05 by the event family hub session (ledger 0003), from a usability review of the rebuilt family page
-- Status: open
-- Default if nobody decides: Part 1 (Who is coming) keeps the order the event's days are given in Setup (`hub_days.position`). For Beach Blitz 2026 that is Saturday, Sunday, then Friday, as 0006 seeded it. Rides, Finish and every board stay in date order, as they always were.
+- Status: decided
+- Decided: 2026-10-06, Mr. Pina: "its confusing that friday is listed after saturday and sunday on the who is coming page." Who is coming now lists the days in date order on every event, whatever `position` says; Friday's explanation card still comes before its question.
+- Default before the decision: Part 1 (Who is coming) keeps the order the event's days are given in Setup (`hub_days.position`). For Beach Blitz 2026 that is Saturday, Sunday, then Friday, as 0006 seeded it. Rides, Finish and every board stay in date order, as they always were.
 
 ## What is actually true right now
 

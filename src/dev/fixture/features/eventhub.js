@@ -1083,7 +1083,7 @@ function seedRows({ now }) {
     map_url: 'https://www.google.com/maps/search/?api=1&query=26301+Via+Escolar', timezone: TZ,
     phase1_due_at: iso(t + 2 * 24 * H), lockin_opens_at: iso(t - 24 * H), lockin_due_at: iso(t + 5 * 24 * H),
     one_minor_rule: true, driver_paperwork_required: false, alert_emails: [],
-    links: { site: 'https://beachblitz.org/', stream: 'https://twitch.tv/ocfirst', hotel: 'https://group.hamptoninn.com/lj95ci', first_registration: 'https://www.firstinspires.org/programs/youth-registration', team_list: '', school_form: '', medication_form: '', parent_channel: '' },
+    links: { site: 'https://beachblitz.org/', stream: 'https://twitch.tv/ocfirst', hotel: 'https://group.hamptoninn.com/lj95ci', first_registration: 'https://www.firstinspires.org/programs/youth-registration', team_list: '', school_form: '', medication_form: '', parent_channel: 'https://groupme.com/join_group/fixture-parents' },
     info: { sections: [
       { key: 'drive', title: 'Drive from Bosco Tech', lines: ['To the venue | I-5 S, 48.1 mi', 'Sat, arrive 7:00 AM | 45 min to 1 hr'] },
       { key: 'agenda_sat', title: 'Saturday', lines: ['8:00 AM | Venue opens', '9:35 AM to 12:00 PM | Qualification matches'] },

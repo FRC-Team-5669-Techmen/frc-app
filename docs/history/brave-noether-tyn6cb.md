@@ -561,3 +561,38 @@ verified: the live database (0009 not yet applied there) and email delivery.
 3. Open your own family page, press "Add another student", and check that both
    pages list each other.
 
+## 2026-10-06, later: feedback on the live form
+
+Mr. Pina, after filling it in: Friday after Saturday and Sunday was confusing;
+the "bring food" and carpool dropdowns needed more weight; Event info took a
+while to notice and should be on every page; the parent GroupMe link went
+unnoticed; the Beach Blitz website should be much higher in the list; and
+deleting his test sign-up from the mentor page "jumped into editing the form
+instead of deleting".
+
+- **Date order** on Who is coming (decision 45, decided): Friday, Saturday,
+  Sunday, with Friday's card still before its question.
+- **An Event info / Parent GroupMe bar on every page of the form**, under the
+  tracker, as two large coloured buttons (the GroupMe one only when the event
+  has a link). Event info itself now opens with a quick-links card (the event
+  website, the GroupMe, the agenda) ahead of every section, and the event's
+  own links section is listed first.
+- **The carpool board and the food sign-up are feature cards**: a coloured
+  border and fill, a larger title, a line saying what is inside, and an
+  Open / Close label.
+- **Deleting a sign-up.** The jump was real: opening a family on the mentor
+  page mounts its whole form under the Delete card, and the form scrolled
+  itself into view on load, past the card. It now scrolls only when the part
+  changes. The Families list has a Delete button on each row (Delete, then
+  Yes); an opened family shows its Delete card first, then "Edit <name>'s
+  answers". For families, "Take our family off this trip" is now "Delete our
+  sign-up", on Contacts and on Finish.
+- The household prompt is one line for a family with one student, and the
+  card only when there is more than one.
+
+Verified: `event-hub` 177/177 at 375 and 1440 (a new "always in reach" step:
+the bar and the GroupMe on all five pages, the feature cards, quick links
+before every section, no GroupMe button on an event without one; the Delete
+card on screen when a family is opened; delete from the list asking first).
+No SQL changed.
+

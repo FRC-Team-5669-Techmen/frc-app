@@ -591,7 +591,15 @@ function infoIcon(key = '') {
 
 export function EventInfo({ event }) {
   const links = event?.links ?? {}
+  // The event's own links lead the list (Mr. Pina, 2026-10-06: the event
+  // website was the last of thirteen sections).
   const sections = visibleSections(event?.info, links).filter((s) => s.key !== 'where')
+    .sort((x, y) => Number(y.key === 'links') - Number(x.key === 'links'))
+  const quick = [
+    links.site && { key: 'site', href: links.site, label: `${event.title} website`, icon: IconLink, cls: 'eh-btn-primary' },
+    links.parent_channel && { key: 'groupme', href: links.parent_channel, label: 'Parent GroupMe chat', icon: IconUsers, cls: 'eh-btn-groupme' },
+    links.agenda && { key: 'agenda', href: links.agenda, label: 'Agenda', icon: IconClipboard, cls: '' },
+  ].filter(Boolean)
   return (
     <div className="eh-event-info">
       {(event?.venue_name || event?.venue_address) && (
@@ -602,6 +610,14 @@ export function EventInfo({ event }) {
             {event.venue_address && <p className="eh-quiet">{event.venue_address}</p>}
             {event.map_url && <a className="eh-btn eh-btn-primary" href={event.map_url} target="_blank" rel="noopener noreferrer"><IconPin size={18} />Open the map</a>}
           </div>
+        </section>
+      )}
+      {quick.length > 0 && (
+        <section className="eh-card eh-quick-links" data-testid="eh-quick-links">
+          {quick.map((q) => (
+            <a key={q.key} className={`eh-btn eh-btn-wide ${q.cls}`} href={q.href} target="_blank" rel="noopener noreferrer" data-testid={`eh-quick-${q.key}`}>
+              <q.icon size={18} />{q.label}</a>
+          ))}
         </section>
       )}
       <p className="eh-hint">Tap a heading to open it.</p>

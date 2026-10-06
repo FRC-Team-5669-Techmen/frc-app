@@ -106,6 +106,8 @@ async function familyBoard(t, key, short, run = 'to') {
 const driverIs = (t, driver) => t.page.locator('.eh-car-driver', { hasText: new RegExp(`^${driver}$`) });
 /** A car on a board (the family board fold, /trips, the mentor page). */
 const car = (t, driver) => t.page.locator('.eh-board [data-testid="eh-car"]', { has: driverIs(t, driver) });
+/** One day's card in Who is coming, by weekday. */
+const whoDay = (t, weekday) => t.page.locator('[data-testid="eh-day-q"]', { has: t.page.locator('.eh-day-badge', { hasText: new RegExp(`^${weekday}`) }) });
 /** One day's card in Rides, by weekday. */
 const rideDay = (t, weekday) => t.page.locator('[data-testid="eh-getting-day"]', { has: t.page.locator('.eh-day-badge', { hasText: new RegExp(`^${weekday}`) }) });
 /** A car in the seat picker right under the ride question. */
@@ -195,10 +197,10 @@ export default {
         count0 === '0 of 4 parts done' && step0 === 'Part 1 of 4' && /^Sign-up due [A-Z][a-z]{2}, [A-Z][a-z]{2} \d+\.$/.test(status0), `${count0}; ${step0}; ${status0}`);
       const cards = t.page.locator('[data-testid="eh-day-q"]');
       const titles = await t.texts('[data-testid="eh-day-q"] .eh-day-badge');
-      t.check('days in form order: Saturday, Sunday, then Friday', titles.length === 3 && /^Saturday/.test(titles[0]) && /^Sunday/.test(titles[1]) && /^Friday/.test(titles[2]),
+      t.check('days in date order: Friday, Saturday, Sunday (decision 45)', titles.length === 3 && /^Friday/.test(titles[0]) && /^Saturday/.test(titles[1]) && /^Sunday/.test(titles[2]),
         titles.map((x) => x.split(',')[0]).join(' / '));
       const introFirst = await t.evaluate(() => {
-        const card = [...document.querySelectorAll('[data-testid="eh-day-q"]')][2];
+        const card = [...document.querySelectorAll('[data-testid="eh-day-q"]')][0];
         const intro = card?.querySelector('[data-testid="eh-day-intro"]');
         const q = card?.querySelector('[data-testid="eh-attending"]');
         return !!intro && !!q && !!(intro.compareDocumentPosition(q) & Node.DOCUMENT_POSITION_FOLLOWING);
@@ -207,7 +209,7 @@ export default {
       t.check('Friday\'s card comes before its question; the other days have none', introFirst && introCount === 1, `intro cards ${introCount}, before the question: ${introFirst}`);
 
       // An info card: closed, opened by a tap, closed by "Got it".
-      const tip = cards.nth(0).locator('[data-testid="eh-tip-btn"]').first();
+      const tip = cards.nth(1).locator('[data-testid="eh-tip-btn"]').first();
       const before = await t.count('[data-testid="eh-tip-card"]');
       await t.press(tip);
       const during = await t.text('[data-testid="eh-tip-card"]');
@@ -217,14 +219,14 @@ export default {
       t.check('every question has an (i): one opens on a tap with its explanation and closes on "Got it"',
         before === 0 && /Not sure yet/.test(during ?? '') && after === 0 && tipsTotal >= 4, `cards before ${before}, open "${(during ?? '').slice(0, 40)}...", after ${after}; (i) buttons on the part ${tipsTotal}`);
 
-      await pick(t, cards.nth(0), 'Coming');
-      await waitSaved(t, '[data-testid="eh-day-q"]');
-      const saved = await t.text('[data-testid="eh-day-q"] [data-testid="eh-save"]');
+      await pick(t, whoDay(t, 'Saturday'), 'Coming');
+      await waitSaved(t);
+      const saved = ((await whoDay(t, 'Saturday').locator('[data-testid="eh-save"]').first().textContent()) ?? '').trim();
       const ans = (await store(t, 'hub_day_answers')).find((a) => a.day_id === EH.sat && a.invite_id.endsWith('400'));
       t.check('a tap saves at once and says "Saved h:mm"; the store holds it', /^Saved \d{1,2}:\d{2} (AM|PM)$/.test(saved) && ans?.attending === 'yes',
         `note "${saved}"; store attending ${ans?.attending}`);
-      await pick(t, cards.nth(1), 'Not coming');
-      await pick(t, cards.nth(2), 'Not coming');
+      await pick(t, whoDay(t, 'Sunday'), 'Not coming');
+      await pick(t, whoDay(t, 'Friday'), 'Not coming');
       const stay = t.page.locator('.eh-card', { hasText: 'staying near the venue overnight' });
       const nightLabels = (await stay.locator('.eh-chip').allTextContents()).map((x) => x.trim());
       t.eq('staying options come from the days', nightLabels, ['No, we go home each night', 'Friday night', 'Saturday night', 'Friday and Saturday nights']);
@@ -368,6 +370,45 @@ export default {
       await part(t, 'Rides');
       await t.tapTargets(CONTROLS, '44px floor on every control in Rides');
       await t.noHScroll('no horizontal scroll in Rides');
+    });
+
+    // ════ always in reach: event info, the parent GroupMe, the boards ═════
+    await t.step('always in reach', async () => {
+      await t.open(fam('sam'), { persona: 'signedout', mig: 'all', reset: true, ready: '[data-testid="eh-status"]' });
+      t.as('every page of the form');
+      const seen = [];
+      for (const tile of ['Who', 'Rides', 'Food', 'Contacts', 'Finish']) {
+        await part(t, tile);
+        seen.push(`${tile} ${await t.count('[data-testid="eh-infobar-open"]')}/${await t.count('[data-testid="eh-groupme"]')}`);
+      }
+      const chat = await t.page.locator('[data-testid="eh-groupme"]').getAttribute('href');
+      t.check('Event info and the parent GroupMe are on every page of the form', seen.every((x) => / 1\/1$/.test(x)) && /groupme\.com/.test(chat ?? ''),
+        `${seen.join(', ')}; GroupMe ${chat}`);
+      const leaveOnFinish = await t.count('[data-testid="eh-leave-fold"]');
+      await part(t, 'Rides');
+      const board = await t.count('[data-testid="eh-board-fold"].eh-fold-feature');
+      await part(t, 'Food');
+      const food = await t.count('[data-testid="eh-food-fold"].eh-fold-feature');
+      const plainFolds = await t.count('.eh-fold:not(.eh-fold-feature)');
+      t.check('the carpool board and the food sign-up are drawn as feature cards with an Open label; "Delete our sign-up" is on Finish too',
+        board === 1 && food === 1 && (await t.count('[data-testid="eh-food-fold"] .eh-fold-cta')) === 1 && leaveOnFinish === 1,
+        `board ${board}, food ${food} (plain folds on Food ${plainFolds}); delete on Finish ${leaveOnFinish}`);
+      await t.press('[data-testid="eh-infobar-open"]');
+      await t.waitFor('[data-testid="eh-info-page"]');
+      const site = await t.page.locator('[data-testid="eh-quick-site"]').getAttribute('href');
+      const first = await t.evaluate(() => {
+        const q = document.querySelector('[data-testid="eh-quick-links"]');
+        const f = document.querySelector('[data-testid="eh-info-section"]');
+        return !!q && !!f && !!(q.compareDocumentPosition(f) & Node.DOCUMENT_POSITION_FOLLOWING);
+      });
+      const chatQuick = await t.count('[data-testid="eh-quick-groupme"]');
+      t.check('Event info opens with the event website and the GroupMe ahead of every section', /beachblitz\.org/.test(site ?? '') && first && chatQuick === 1,
+        `site ${site}; links first ${first}; GroupMe ${chatQuick}`);
+      await t.tapTargets(CONTROLS + ', .eh-infobar-btn', '44px floor with the info bar');
+      await familyPage(t, 'past');
+      const pastChat = await t.count('[data-testid="eh-groupme"]');
+      const pastInfo = await t.count('[data-testid="eh-infobar-open"]');
+      t.check('an event with no GroupMe link shows no GroupMe button; Event info is still there', pastChat === 0 && pastInfo === 1, `GroupMe ${pastChat}, info ${pastInfo}`);
     });
 
     // ════ autosave survives failure ═══════════════════════════════════════
@@ -828,16 +869,32 @@ export default {
       t.as('a mentor removes a family; the rule is always on');
       await t.open(MANAGE, { persona: 'admin', ready: '[data-testid="ehm-page"]' });
       await tab(t, 'Families');
-      const rowsBefore = await t.count('[data-testid="ehm-families"] tbody tr');
-      await t.press(t.page.locator('[data-testid="ehm-families"] .ehm-name-btn', { hasText: /^Jordan Okafor$/ }));
+      // Opening a family lands on its Delete card, not scrolled into its form.
+      await t.press(t.page.locator('[data-testid="ehm-families"] .ehm-name-btn', { hasText: /^Avery Chen$/ }));
       await t.waitFor('[data-testid="ehm-removals"]');
-      await t.press('[data-testid="ehm-remove-family"]');
-      await t.press('[data-testid="ehm-remove-family-yes"]');
+      await t.settle({ quietMs: 500 });
+      const where = await t.evaluate(() => {
+        const r = document.querySelector('[data-testid="ehm-removals"]').getBoundingClientRect();
+        const f = document.querySelector('[data-testid="ehm-edit-head"]').getBoundingClientRect();
+        return { top: Math.round(r.top), vh: innerHeight, before: r.top < f.top };
+      });
+      t.check('opening a family shows its Delete card on screen, above "Edit <name>\'s answers", with no jump into the form',
+        where.top >= 0 && where.top < where.vh && where.before, `Delete card at ${where.top}px of ${where.vh}; above the form ${where.before}`);
+      await t.press(t.page.locator('button', { hasText: /^All families$/ }));
       await t.waitFor('[data-testid="ehm-families"]');
+      await t.settle({ quietMs: 300 });
+      const rowsBefore = await t.count('[data-testid="ehm-families"] tbody tr');
+      const row = t.page.locator('[data-testid="ehm-families"] tbody tr', { has: t.page.locator('.ehm-name-btn', { hasText: /^Jordan Okafor$/ }) });
+      await t.press(row.locator('[data-testid="ehm-row-delete"]'));
+      const armed = await row.locator('[data-testid="ehm-row-delete-yes"]').count();
+      const stillThere = (await t.rows('hub_invites')).filter((i) => i.student_id === '00000000-0000-0000-0000-0000000000c4').length;
+      await t.press(row.locator('[data-testid="ehm-row-delete-yes"]'));
+      await t.waitFor('[data-testid="ehm-delete-note"]');
       await t.settle({ quietMs: 400 });
       const rowsAfter = await t.count('[data-testid="ehm-families"] tbody tr');
       const jordan = (await t.rows('hub_invites')).filter((i) => i.student_id === '00000000-0000-0000-0000-0000000000c4').length;
-      t.check('a mentor removes a family from its page: one row fewer, and the family is gone', rowsAfter === rowsBefore - 1 && jordan === 0, `rows ${rowsBefore} -> ${rowsAfter}; Jordan's family ${jordan}`);
+      t.check('a mentor deletes a sign-up from the list: Delete asks first (nothing gone yet), Yes removes the row and the family',
+        armed === 1 && stillThere === 1 && rowsAfter === rowsBefore - 1 && jordan === 0, `asked ${armed}, still there before yes ${stillThere}; rows ${rowsBefore} -> ${rowsAfter}; Jordan's family ${jordan}`);
       await tab(t, 'Setup');
       const always = await t.count('[data-testid="ehm-one-child"]');
       const toggle = await t.count('.ehm-setup button:has-text("One-minor"), .ehm-setup button:has-text("one-child")');
@@ -852,7 +909,7 @@ export default {
       const peopleNo = await t.count('[data-testid="eh-person"]');
       const addStill = await t.count('[data-testid="eh-add-parent"]');
       await t.open(fam('sam'), { persona: 'signedout', mig: without0008, ready: '[data-testid="eh-status"]' });
-      await pick(t, t.page.locator('[data-testid="eh-day-q"]').nth(0), 'Coming');
+      await pick(t, whoDay(t, 'Saturday'), 'Coming');
       await t.settle({ quietMs: 400 });
       const moreNo = await t.count('[data-testid="eh-count-more"]');
       await t.open(fam('sam'), { persona: 'signedout', mig: 'all', ready: '[data-testid="eh-status"]' });
@@ -902,7 +959,7 @@ export default {
 
       t.as('the family car takes a brother or sister alone, and not an outsider');
       // Dakota is not coming Saturday; Dana drives for the team anyway.
-      await pick(t, t.page.locator('[data-testid="eh-day-q"]').nth(0), 'Not coming');
+      await pick(t, whoDay(t, 'Saturday'), 'Not coming');
       await part(t, 'Rides');
       const sat = rideDay(t, 'Saturday');
       await t.press(sat.locator('[data-testid="eh-drive-fold"] > .eh-fold-head'));
@@ -945,7 +1002,7 @@ export default {
       // Skyler, the brother or sister, takes it alone.
       await t.open(skylerUrl, { persona: 'signedout', ready: '[data-testid="eh-status"]' });
       await part(t, 'Who');
-      await pick(t, t.page.locator('[data-testid="eh-day-q"]').nth(0), 'Coming');
+      await pick(t, whoDay(t, 'Saturday'), 'Coming');
       await part(t, 'Rides');
       await t.press(option(rideDay(t, 'Saturday').locator('[data-testid="eh-to-mode"]'), 'Skyler rides with another driver'));
       await t.settle({ quietMs: 600 });

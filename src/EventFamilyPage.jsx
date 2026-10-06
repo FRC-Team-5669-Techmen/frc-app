@@ -207,6 +207,25 @@ function Tracker({ view, part, go }) {
   )
 }
 
+/** Event info and the parent GroupMe, on every page of the form (Mr. Pina,
+ *  2026-10-06: the header button took a while to notice, and the GroupMe link
+ *  is how families talk to each other, so neither may hide in a list). */
+function InfoBar({ view, onInfo }) {
+  const chat = view.event.links?.parent_channel
+  return (
+    <div className="eh-infobar" data-testid="eh-infobar">
+      <button type="button" className="eh-infobar-btn eh-infobar-info" onClick={onInfo} data-testid="eh-infobar-open">
+        <IconInfo size={22} /><span><strong>Event info</strong><small>Times, places, hotel, links</small></span><IconArrowRight size={18} />
+      </button>
+      {chat && (
+        <a className="eh-infobar-btn eh-infobar-chat" href={chat} target="_blank" rel="noopener noreferrer" data-testid="eh-groupme">
+          <IconUsers size={22} /><span><strong>Parent GroupMe</strong><small>Join the parents' chat</small></span><IconArrowRight size={18} />
+        </a>
+      )}
+    </div>
+  )
+}
+
 function PartHead({ pt, index, first }) {
   const I = pt.icon
   return (
@@ -273,12 +292,20 @@ function Household({ view, family, compact = false }) {
       </div>
     )
   }
+  const add = () => navigate(`/join/${view.event.id}`, { state: { another: { name: myName, email: me, from: view.student.name } } })
+  // Most families have one student: a single line, not a card.
+  if (!hh.length) {
+    return (
+      <div className="eh-household-line eh-household-solo" data-testid="eh-household">
+        <IconUsers size={16} /><span>More than one student on the team?</span>
+        <button type="button" className="eh-btn eh-btn-quiet" onClick={add} data-testid="eh-household-add"><IconUserPlus size={16} />Add another student</button>
+      </div>
+    )
+  }
   return (
     <section className="eh-card eh-household" data-testid="eh-household">
-      <h2 className="eh-card-title eh-with-icon"><IconUsers size={20} />{hh.length ? 'Your students on this trip' : 'More than one student on the team?'}</h2>
-      {hh.length === 0
-        ? <p className="eh-hint">Each student has their own page. Add your other student and you can switch between their pages here, copy your contact details over, and seat them in your car.</p>
-        : (
+      <h2 className="eh-card-title eh-with-icon"><IconUsers size={20} />Your students on this trip</h2>
+      {(
           <ul className="eh-household-list">
             <li className="eh-household-item eh-household-here"><span className="eh-household-name">{view.student.name}</span><span className="eh-tag">This page</span></li>
             {hh.map((h) => (
@@ -292,8 +319,7 @@ function Household({ view, family, compact = false }) {
             ))}
           </ul>
         )}
-      <button type="button" className="eh-btn" data-testid="eh-household-add"
-              onClick={() => navigate(`/join/${view.event.id}`, { state: { another: { name: myName, email: me, from: view.student.name } } })}>
+      <button type="button" className="eh-btn" data-testid="eh-household-add" onClick={add}>
         <IconUserPlus size={18} />Add another student
       </button>
       {note && <p className="eh-note eh-note-bad" role="alert">{note}</p>}
@@ -367,7 +393,15 @@ export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
     return r
   }, [transport, load])
 
-  useEffect(() => { if (part) topRef.current?.scrollIntoView?.({ block: 'start' }) }, [part])
+  // Scroll to the top of the form when the part CHANGES, never when it is
+  // first set: on the mentor page the form sits under the family's Delete
+  // card, and scrolling on load jumped past it into the form.
+  const firstPart = useRef(true)
+  useEffect(() => {
+    if (!part) return
+    if (firstPart.current) { firstPart.current = false; return }
+    topRef.current?.scrollIntoView?.({ block: 'start' })
+  }, [part])
 
   if (mode === 'removed' || mode === 'left') {
     return (
@@ -434,6 +468,7 @@ export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
         <Household view={view} family={family} compact={part !== 'days' && part !== 'summary'} />
       )}
       {!ev.over && part !== 'info' && <Tracker view={view} part={part} go={go} />}
+      {part !== 'info' && <InfoBar view={view} onInfo={goInfo} />}
 
       {pt && (
         <div className={`eh-part eh-tone-${pt.tone}`} data-testid="eh-steps">
@@ -445,7 +480,7 @@ export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
           <PartNav index={index} go={go} />
         </div>
       )}
-      {part === 'summary' && <Summary view={view} ctx={ctx} act={act} goPart={go} goInfo={goInfo} />}
+      {part === 'summary' && <Summary view={view} ctx={ctx} act={act} goPart={go} goInfo={goInfo} family={family} />}
       {part === 'info' && (
         <div className="eh-part" data-testid="eh-info-page">
           <button type="button" className="eh-btn eh-btn-big" onClick={() => setPart(infoBack || 'summary')} data-testid="eh-info-back">
