@@ -153,3 +153,9 @@ twice:
   once nothing calls it.
 - **Test against seeded PRE-migration data,** not only against an empty chain. A
   backfill run over an empty database is correct in every row and proves nothing.
+
+**No apostrophes in SQL comments.** Postgres ignores them, but the Supabase
+SQL editor's statement splitter does not: an odd number of `'` in `--`
+comments made it cut `0008_event_hub_families_rls_test.sql` mid `$pre$` block
+("unterminated dollar-quoted string", 2026-10-06). Write "the rules", not
+"the rule's".

@@ -12,22 +12,22 @@
 --
 --   2. A PARENT MAY DRIVE STUDENTS WITHOUT DRIVING THEIR OWN. New day answers
 --      drive_to / drive_home mean "a parent drives a car for the team on this
---      run", whatever the family's own student does that day: rides the
+--      run", whatever the familys own student does that day: rides the
 --      carpool, goes another way, or is not coming at all. A family car
 --      exists for a run when its offer and both driver checks are complete
---      AND (the student is coming and that run's mode is "driving", OR that
---      run's flag is on). One car per run, whichever answer made it.
+--      AND (the student is coming and that runs mode is "driving", OR that
+--      runs flag is on). One car per run, whichever answer made it.
 --      Clearing the flag withdraws the car exactly as switching off "driving"
 --      always has (riders dropped and emailed, pickups released, refused once
 --      the car has left). _hub_own_aboard is UNCHANGED, so a flag car without
---      the family's own student falls under the one-child rule like a
---      mentor's car: one rider alone is refused, two are fine. Progress asks
+--      the familys own student falls under the one-child rule like a
+--      mentors car: one rider alone is refused, two are fine. Progress asks
 --      for the car offer and the driver checks on any day a flag is on,
 --      coming or not. Four consequences, each because 0005 could never have
---      a family car without the family's own student in it:
---        * that car can now turn red because the driver's OWN student left it
---          (the run's mode moved off "driving" with the flag still on and one
---          rider aboard). _hub_save emails mentors when one of the family's
+--      a family car without the familys own student in it:
+--        * that car can now turn red because the drivers OWN student left it
+--          (the runs mode moved off "driving" with the flag still on and one
+--          rider aboard). _hub_save emails mentors when one of the familys
 --          cars turns red on a save, the way a rider leaving always has;
 --        * withdrawing a car with two or more riders passes through "one
 --          rider left" on its way to empty, so _hub_alert_if_red is told, by
@@ -35,7 +35,7 @@
 --          "needs a second rider" about a car that is being deleted;
 --        * a car that has left no longer blocks a change to the attending
 --          answer when that change would not remove it (the flag keeps it);
---        * the mentor page's driver list (_hub_overview) lists flag drivers,
+--        * the mentor pages driver list (_hub_overview) lists flag drivers,
 --          so their paperwork can be marked on file.
 --
 --   3. THE ONE-CHILD RULE IS ALWAYS ON. Salesian policy (Archdiocese of Los
@@ -59,24 +59,24 @@
 --          the old single key (a reminder that went out before this file) is
 --          not sent it again, and neither is someone already sent it under
 --          their own key when they are later the only address left;
---        * hub_join records the joining parent's name; hub_add_parent takes
---          the new parent's name;
+--        * hub_join records the joining parents name; hub_add_parent takes
+--          the new parents name;
 --        * hub_remove_guardian(token, email), from the family page, takes one
 --          person off: their links stop working, mail to them that has not
---          gone out is cancelled, and if theirs was the family's contact
+--          gone out is cancelled, and if theirs was the familys contact
 --          email it is cleared (a "lost your link" request matches it). A
 --          family cannot remove its last address;
 --          hub_staff_remove_guardian(invite, email) can;
---        * the family page (hub_family_call) carries 'me', the email on the
---          link it was opened with, and 'guardians', [{email, name}] in the
---          family's order.
---      _hub_invite_status no longer reads the 'invite:<id>' dedupe key, which
---      only the mentor's "Send invites" ever wrote: a family that came in
---      through the open link (0007) read 'none' forever and so was never
+--        * the family page (hub_family_call) carries me, the email on the
+--          link it was opened with, and guardians, [{email, name}] in the
+--          familys order.
+--      _hub_invite_status no longer reads the invite:<id> dedupe key, which
+--      only the mentors "Send invites" ever wrote: a family that came in
+--      through the open link (0007) read none forever and so was never
 --      reminded by hub_cron_enqueue. It now reads every email that gave the
 --      family its link (invite, welcome, added, join_request, resend,
---      lockin_open): 'sent', else 'pending' (pending or sending), else
---      'failed', else 'none'.
+--      lockin_open): sent, else pending (pending or sending), else
+--      failed, else none.
 --
 --   5. REMOVING A FAMILY FROM THE TRIP. hub_remove_family(token) from the
 --      family page, hub_staff_remove_family(invite) from the mentor page. Its
@@ -92,15 +92,15 @@
 --      Team carpool default as an answer, so a parent who drove their own
 --      student and skimmed past the question was recorded as carpool and
 --      planned a seat. On a day the student is coming, each run now needs
---      a mode the family chose (missing keys 'ride_to' / 'ride_home', step
---      'getting'); staying nearby that night answers it. "How will they get
+--      a mode the family chose (missing keys ride_to / ride_home, step
+--      getting); staying nearby that night answers it. "How will they get
 --      to Bosco Tech" is asked once the family has chosen the carpool
 --      there. The default still plans the seat until they answer.
 --
---   7. MENTORS SEAT TWO AT ONCE. A car without its driver's own student (a
---      mentor's van, or a drive-flag car from 2) refuses its FIRST rider
+--   7. MENTORS SEAT TWO AT ONCE. A car without its drivers own student (a
+--      mentors van, or a drive-flag car from 2) refuses its FIRST rider
 --      under the one-child rule, which is right, but it left such a car
---      unfillable: a family's first claim is refused, and a mentor's 'move'
+--      unfillable: a familys first claim is refused, and a mentors move
 --      needs an override reason that then stays on the car and stops it ever
 --      turning red. hub_staff_place_pair(car, first, second) seats two
 --      students into an EMPTY car in one call, through _hub_claim for each,
@@ -116,11 +116,11 @@
 -- anon key for families, the signed-in session for staff), and
 -- hub_outbox_mint_link keeps its signature, so NO Edge Function redeploy is
 -- needed. hub_add_parent(text, text) is replaced by hub_add_parent(text,
--- text, text default null); the deployed page's two-argument call resolves
+-- text, text default null); the deployed pages two-argument call resolves
 -- to it unchanged.
 --
 -- RE-PASTING AN EARLIER FILE AFTER THIS ONE reverts what this file
--- redefines: 0005 and 0007 `create or replace` the same functions, 0005's
+-- redefines: 0005 and 0007 `create or replace` the same functions, 0005s
 -- grant block revokes every hub function before granting its own list, and
 -- 0007 would bring back a two-argument hub_add_parent beside this one,
 -- making a two-argument call ambiguous. Paste 0008 again afterwards and all
@@ -209,7 +209,7 @@ begin
 end
 $constraints$;
 
--- Invite status and removing a family both look an invite's mail up by its
+-- Invite status and removing a family both look an invites mail up by its
 -- link, and deleting an invite cascades to that mail.
 create index if not exists hub_outbox_link_invite_idx
   on public.hub_outbox (link_invite_id) where link_invite_id is not null;
@@ -221,7 +221,7 @@ create index if not exists hub_outbox_link_invite_idx
 
 -- ── 2. A parent driving for the team ────────────────────────────────────────
 
--- 0005's _hub_alert_if_red, plus: no "needs a second rider" email about a
+-- 0005s _hub_alert_if_red, plus: no "needs a second rider" email about a
 -- car that is being withdrawn (hub.withdrawing_car, set by _hub_sync_cars and
 -- _hub_remove_family while they drop its riders one by one).
 create or replace function public._hub_alert_if_red(p_car uuid)
@@ -244,9 +244,9 @@ begin
 end
 $fn$;
 
--- 0005's _hub_sync_cars, with the drive flags: a run has a family car when
+-- 0005s _hub_sync_cars, with the drive flags: a run has a family car when
 -- the offer and both driver checks are complete AND (the student is coming
--- and the run's mode is "driving", OR the run's flag is on). Withdrawing a car
+-- and the runs mode is "driving", OR the runs flag is on). Withdrawing a car
 -- marks it hub.withdrawing_car while its riders are dropped.
 create or replace function public._hub_sync_cars(p_invite uuid, p_day uuid)
 returns void language plpgsql security definer set search_path = public, pg_temp as $fn$
@@ -297,7 +297,7 @@ begin
 end
 $fn$;
 
--- 0005's _hub_progress: the car offer and the driver checks are asked on a
+-- 0005s _hub_progress: the car offer and the driver checks are asked on a
 -- day where "driving" is an effective mode on a coming day, OR either drive
 -- flag is on (whatever attending is). Same missing keys, same step.
 create or replace function public._hub_progress(p_invite uuid)
@@ -341,7 +341,7 @@ begin
   loop
     -- 0008: a family that drives for the team (drive_to / drive_home) is
     -- asked for its car offer and driver checks on that day, whatever its
-    -- own student's answer.
+    -- own students answer.
     v_needs_car := coalesce(d.drive_to, false) or coalesce(d.drive_home, false);
     if d.attending is null then
       s_days := false;
@@ -446,10 +446,10 @@ begin
 end
 $fn$;
 
--- 0005's _hub_save, with: adults 0..30; the day fields drive_to and
+-- 0005s _hub_save, with: adults 0..30; the day fields drive_to and
 -- drive_home; the new car_required sentence; a car that has left blocks a
 -- change of attending only when that change would remove it; and mentors
--- emailed when a save turns one of the family's own cars red.
+-- emailed when a save turns one of the familys own cars red.
 create or replace function public._hub_save(p_invite uuid, p_staff uuid, p_field text, p_value jsonb, p_day uuid default null)
 returns void language plpgsql security definer set search_path = public, pg_temp as $fn$
 declare
@@ -576,8 +576,8 @@ begin
   insert into public.hub_day_answers (invite_id, day_id) values (p_invite, p_day)
   on conflict (invite_id, day_id) do nothing;
   select * into a from public.hub_day_answers where invite_id = p_invite and day_id = p_day;
-  -- 0008: which of the family's own cars are red before this save (a car
-  -- without the family's own student can turn red when that student leaves).
+  -- 0008: which of the familys own cars are red before this save (a car
+  -- without the familys own student can turn red when that student leaves).
   v_red := array(select c.id from public.hub_cars c
                   where c.driver_invite_id = p_invite and c.day_id = p_day
                     and public._hub_car_problem(c.id) is not null);
@@ -742,7 +742,7 @@ begin
       perform public._hub_refuse('unknown_field', 'That answer is not part of this form.');
   end case;
 
-  -- 0008: one of the family's own cars turned red on this save; mentors are
+  -- 0008: one of the familys own cars turned red on this save; mentors are
   -- told, as when a rider leaves.
   for s in select c.id from public.hub_cars c
             where c.driver_invite_id = p_invite and c.day_id = p_day and not (c.id = any(v_red))
@@ -756,7 +756,7 @@ begin
 end
 $fn$;
 
--- 0005's _hub_family_view, with drive_to and drive_home on each day.
+-- 0005s _hub_family_view, with drive_to and drive_home on each day.
 create or replace function public._hub_family_view(p_invite uuid, p_viewer text)
 returns jsonb language plpgsql stable security definer set search_path = public, pg_temp as $fn$
 declare i public.hub_invites; r public.hub_responses; v_days jsonb; v_food jsonb; v_name text;
@@ -816,7 +816,7 @@ begin
 end
 $fn$;
 
--- 0005's _hub_overview: the driver list (paperwork) includes flag drivers.
+-- 0005s _hub_overview: the driver list (paperwork) includes flag drivers.
 create or replace function public._hub_overview(p_event uuid)
 returns jsonb language plpgsql stable security definer set search_path = public, pg_temp as $fn$
 declare
@@ -918,7 +918,7 @@ $fn$;
 
 -- ── 3. Mail: one row, and one link, per person ──────────────────────────────
 
--- 0005's _hub_mint_token, recording whose link it is.
+-- 0005s _hub_mint_token, recording whose link it is.
 create or replace function public._hub_mint_token_for(p_invite uuid, p_email text)
 returns text language plpgsql volatile security definer set search_path = public, pg_temp as $fn$
 declare v text;
@@ -931,7 +931,7 @@ end
 $fn$;
 
 -- One outbox row per recipient when an email carries a link to more than one
--- person, so each person's link is their own (and can be revoked on its
+-- person, so each persons link is their own (and can be revoked on its
 -- own). Without a link, or for one person, one row exactly as 0005 wrote it.
 create or replace function public._hub_enqueue(p_event uuid, p_kind text, p_to text[], p_subject text,
                                                p_body text, p_link_invite uuid default null,
@@ -1005,7 +1005,7 @@ $fn$;
 -- ── 4. Guardians ────────────────────────────────────────────────────────────
 
 -- What the family page adds to every view: who is reading (the email on the
--- link it was opened with, or null) and the family's parents and guardians.
+-- link it was opened with, or null) and the familys parents and guardians.
 create or replace function public._hub_family_extras(p_invite uuid, p_token text)
 returns jsonb language sql stable security definer set search_path = public, pg_temp as $fn$
   select coalesce((
@@ -1018,7 +1018,7 @@ returns jsonb language sql stable security definer set search_path = public, pg_
       from public.hub_invites i where i.id = p_invite), '{}'::jsonb)
 $fn$;
 
--- 0005's hub_family_call: every page it returns carries 'me' and 'guardians'.
+-- 0005s hub_family_call: every page it returns carries me and guardians.
 create or replace function public.hub_family_call(p_token text, p_action text, p_args jsonb default '{}'::jsonb)
 returns jsonb language plpgsql security definer set search_path = public, pg_temp as $fn$
 declare v_invite uuid; v jsonb; a jsonb := coalesce(p_args, '{}'::jsonb);
@@ -1059,7 +1059,7 @@ begin
 end
 $fn$;
 
--- 0007's hub_join: going straight in mints a link for the joining parent's
+-- 0007s hub_join: going straight in mints a link for the joining parents
 -- email and records their name.
 create or replace function public.hub_join(p_event uuid, p_student uuid, p_name text, p_email text,
                                            p_guardian boolean)
@@ -1131,7 +1131,7 @@ begin
 end
 $fn$;
 
--- 0007's hub_add_parent, taking the new parent's name.
+-- 0007s hub_add_parent, taking the new parents name.
 drop function if exists public.hub_add_parent(text, text);
 
 create or replace function public.hub_add_parent(p_token text, p_email text, p_name text default null)
@@ -1208,8 +1208,8 @@ begin
   update public.hub_outbox set to_emails = array_remove(to_emails, v_email)
    where link_invite_id = p_invite and status in ('pending', 'failed')
      and v_email = any(to_emails) and cardinality(to_emails) > 1;
-  -- "Lost your link?" matches the family's contact email as well as its
-  -- addresses, so theirs stops being the family's contact.
+  -- "Lost your link?" matches the familys contact email as well as its
+  -- addresses, so theirs stops being the familys contact.
   update public.hub_responses
      set parent_email = null, updated_at = now(), staff_updated_by = coalesce(p_staff, staff_updated_by)
    where invite_id = p_invite and lower(btrim(parent_email)) = v_email;
@@ -1343,11 +1343,11 @@ $fn$;
 
 -- ── 6. Mentors seat two at once ─────────────────────────────────────────────
 
--- Two students into an empty car, so a car without its driver's own student
+-- Two students into an empty car, so a car without its drivers own student
 -- is never left holding one. The first seat goes in under a temporary
 -- override ("pair placement"), the second claim lifts the car to two, and the
 -- override is cleared, so the car turns red again the moment one of the two
--- leaves. (_hub_claim already clears the car's override when the second seat
+-- leaves. (_hub_claim already clears the cars override when the second seat
 -- needs none; the explicit clear below is the contract, stated where it is
 -- relied on.) Any refusal from either claim aborts the call: nobody is seated
 -- and a student moved out of another car is back in it.
@@ -1375,12 +1375,12 @@ end
 $fn$;
 
 -- ── 7. Function grants ──────────────────────────────────────────────────────
--- Supabase's default privileges grant EXECUTE on every new public function to
+-- Supabases default privileges grant EXECUTE on every new public function to
 -- anon, authenticated and service_role directly, so each new one is revoked
 -- BY NAME and granted back to exactly who calls it. The internal helpers are
 -- revoked from service_role too, as 0005 does: they run only inside the
 -- SECURITY DEFINER entry points. The functions this file redefines keep the
--- grants 0005 and 0007 gave them (create or replace keeps a function's ACL).
+-- grants 0005 and 0007 gave them (create or replace keeps a functions ACL).
 --   anon, authenticated, service_role   hub_add_parent, hub_remove_guardian,
 --                                       hub_remove_family (the family page,
 --                                       PostgREST /rpc with the anon key)

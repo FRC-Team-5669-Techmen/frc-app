@@ -8,7 +8,7 @@
 -- a current-season application (the open link lists only those) and two
 -- more non-staff accounts to act as other families.
 --
--- Outcomes read ok, <value>, or err:<SQLSTATE>:<message>|<detail>. A rule's
+-- Outcomes read ok, <value>, or err:<SQLSTATE>:<message>|<detail>. A rules
 -- refusal is err:P0001:hub:<code>|<the sentence a family reads>; an unknown
 -- link err:P0002:hub:not_found; a missing EXECUTE or table grant err:42501.
 --
@@ -27,8 +27,8 @@
 --          minted link records its one recipient
 --   18-20  invite status from every link email, the open-link family
 --          included, and the hourly tick reminds it
---   21-27  guardians: name stored, 'me' and 'guardians' on the page, not on
---          the family, exactly one person's links revoked, removing yourself,
+--   21-27  guardians: name stored, me and guardians on the page, not on
+--          the family, exactly one persons links revoked, removing yourself,
 --          the last guardian, staff removal
 --   28-33  removing a family: after the event, once a car left, the removal
 --          itself and everyone told, nothing left behind, the student free
@@ -141,7 +141,7 @@ create function pg_temp.anon(p_sql text) returns text language sql as $fn$
   select pg_temp.val_as('anon', null, p_sql)
 $fn$;
 
--- A family's call exactly as the event-family Edge Function makes it.
+-- A familys call exactly as the event-family Edge Function makes it.
 create function pg_temp.fam(p_token text, p_action text, p_args jsonb default '{}'::jsonb)
 returns jsonb language plpgsql as $fn$
 declare v jsonb; d text;
@@ -179,7 +179,7 @@ begin
 end
 $fn$;
 
--- Does this link open its family's page?
+-- Does this link open its familys page?
 create function pg_temp.opens(p_token text) returns boolean language sql as $fn$
   select pg_temp.fam(p_token, 'fetch') ->> 'invite_id' is not null
 $fn$;
@@ -558,7 +558,7 @@ begin
       and p like 'err:P0001:hub:name%',
     format('add: %s; long name: %s; names %s', left(o, 60), left(p, 40), (select guardian_names from public.hub_invites where id = f.ij)));
 
-  -- Sam's link as the send would mint it; a second link for Pat; a link
+  -- Sams link as the send would mint it; a second link for Pat; a link
   -- minted before 0008 (no email on it).
   select id into ob from public.hub_outbox where kind = 'added' and link_invite_id = f.ij and to_emails = array[sam];
   update public.hub_outbox set status = 'sending' where id = ob;
@@ -744,7 +744,7 @@ end
 $remove$;
 
 -- -- 36-41. Mentors seat two at once -----------------------------------------
--- A mentor's van on day 1's run home (no driver's own student, so it needs
+-- A mentors van on day 1s run home (no drivers own student, so it needs
 -- two), and a one-seat car. A, B and C are coming that day with no seat home.
 do $pair$
 declare f t8_fx; v jsonb; van uuid; coupe uuid; o text; p text; q text; r text; s text;
@@ -862,7 +862,7 @@ begin
          (dy, ev, (now() + interval '12 days')::date, 2, now() + interval '12 days 10 hours', true);
   insert into public.hub_invites (id, event_id, student_id, emails) values (inv, ev, f.sa, array['rides-0008@example.invalid']);
   tok := public._hub_mint_token(inv);
-  -- The 'getting' keys (only the second day is coming), as one sorted string.
+  -- The getting keys (only the second day is coming), as one sorted string.
   perform pg_temp.must('R', pg_temp.save(tok, 'attending', '"yes"', dy));
   select coalesce(string_agg(m ->> 'key', ',' order by m ->> 'key'), '') into m0
     from jsonb_array_elements(pg_temp.fam(tok, 'fetch') -> 'progress' -> 'missing') m where m ->> 'step' = 'getting';
