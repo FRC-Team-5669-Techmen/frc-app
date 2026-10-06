@@ -140,23 +140,22 @@ export function isoToZoned(iso, tz = DEFAULT_TZ) {
 
 /**
  * One line at the top of the family page, from the progress the database
- * computed. Clock dates only, no em dashes.
+ * computed. Clock dates only, no em dashes. No running count of answers:
+ * saying Coming adds that day's questions, so a count went UP after an
+ * answer and read as a mistake. The tracker under it says what is left.
+ * "Final check" is the family's word for lock-in.
  */
 export function statusLine(view) {
   const ev = view?.event ?? {}
   const p = view?.progress ?? {}
   const tz = ev.timezone || DEFAULT_TZ
   if (ev.over) return `${ev.title || 'This event'} is over. Thank you!`
-  if (!p.phase1_done) {
-    const left = Array.isArray(p.missing) ? p.missing.length : 0
-    const due = ev.phase1_due_at ? `Sign-up due ${fmtDay(ev.phase1_due_at, tz)}.` : 'Sign-up is open.'
-    return left ? `${due} ${left} ${left === 1 ? 'answer' : 'answers'} to go.` : due
-  }
+  if (!p.phase1_done) return ev.phase1_due_at ? `Sign-up due ${fmtDay(ev.phase1_due_at, tz)}.` : 'Sign-up is open.'
   if (!ev.lockin_open) {
-    return ev.lockin_opens_at ? `Sign-up done. Lock-in opens ${fmtDay(ev.lockin_opens_at, tz)}.` : 'Sign-up done.'
+    return ev.lockin_opens_at ? `Sign-up done. Final check opens ${fmtDay(ev.lockin_opens_at, tz)}.` : 'Sign-up done.'
   }
   if (!p.lockin_done) {
-    return ev.lockin_due_at ? `Sign-up done. Lock-in due ${fmtDay(ev.lockin_due_at, tz)}.` : 'Sign-up done. Please lock in.'
+    return ev.lockin_due_at ? `Sign-up done. Final check due ${fmtDay(ev.lockin_due_at, tz)}.` : 'Sign-up done. Please do the final check.'
   }
   return ev.starts_on ? `All set. See you ${fmtDate(ev.starts_on, 'medium')}.` : 'All set.'
 }
@@ -188,9 +187,10 @@ export const runTitle = (run) => (run === 'to' ? 'To venue' : 'Home')
 export function nightOptions(days) {
   const dates = [...(days ?? [])].map((d) => String(d.date)).sort()
   const nights = dates.slice(0, -1)
-  const opts = [{ key: 'none', value: [], label: 'No, driving each day' }]
-  for (const n of nights) opts.push({ key: n, value: [n], label: `${fmtDate(n, 'long').split(',')[0]} night` })
-  if (nights.length > 1) opts.push({ key: 'all', value: nights, label: nights.length === 2 ? 'Both' : 'Every night' })
+  const opts = [{ key: 'none', value: [], label: 'No, we go home each night' }]
+  const name = (n) => fmtDate(n, 'long').split(',')[0]
+  for (const n of nights) opts.push({ key: n, value: [n], label: `${name(n)} night` })
+  if (nights.length > 1) opts.push({ key: 'all', value: nights, label: nights.length === 2 ? `${name(nights[0])} and ${name(nights[1])} nights` : 'Every night' })
   return opts
 }
 
@@ -207,14 +207,15 @@ export function needsSeat(dayAnswers, run) {
   return (run === 'to' ? dayAnswers.eff_to : dayAnswers.eff_home) === 'carpool'
 }
 
-/** Pending / Filling / Full / Left 6:02 AM / Arrived 6:58 AM. */
+/** Not ready / Has room / Full / Departed 6:02 AM / Arrived 6:58 AM, in words
+ *  a parent reads at a glance ("Left" read as "seats left"). */
 export function carStatus(car, tz = DEFAULT_TZ) {
   switch (car?.status) {
-    case 'pending': return { key: 'pending', label: 'Pending' }
-    case 'left': return { key: 'left', label: `Left ${fmtTime(car.left_at, tz)}` }
+    case 'pending': return { key: 'pending', label: 'Not ready' }
+    case 'left': return { key: 'left', label: `Departed ${fmtTime(car.left_at, tz)}` }
     case 'arrived': return { key: 'arrived', label: `Arrived ${fmtTime(car.arrived_at, tz)}` }
     case 'full': return { key: 'full', label: 'Full' }
-    default: return { key: 'filling', label: 'Filling' }
+    default: return { key: 'filling', label: 'Has room' }
   }
 }
 

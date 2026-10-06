@@ -191,8 +191,8 @@ export default {
       const count0 = await t.text('[data-testid="eh-tracker-count"]');
       const step0 = await t.text('[data-testid="eh-step-count"]');
       t.eq('four parts and a Finish tile, in order', tiles, ['Who', 'Rides', 'Food', 'Contacts', 'Finish']);
-      t.check('a fresh family starts on part 1 with nothing done, and the status counts what is left',
-        count0 === '0 of 4 parts done' && step0 === 'Part 1 of 4' && /^Sign-up due .+ \d+ answers to go\.$/.test(status0), `${count0}; ${step0}; ${status0}`);
+      t.check('a fresh family starts on part 1 with nothing done; the status names the due date and keeps no running count',
+        count0 === '0 of 4 parts done' && step0 === 'Part 1 of 4' && /^Sign-up due [A-Z][a-z]{2}, [A-Z][a-z]{2} \d+\.$/.test(status0), `${count0}; ${step0}; ${status0}`);
       const cards = t.page.locator('[data-testid="eh-day-q"]');
       const titles = await t.texts('[data-testid="eh-day-q"] .eh-day-badge');
       t.check('days in form order: Saturday, Sunday, then Friday', titles.length === 3 && /^Saturday/.test(titles[0]) && /^Sunday/.test(titles[1]) && /^Friday/.test(titles[2]),
@@ -227,8 +227,8 @@ export default {
       await pick(t, cards.nth(2), 'Not coming');
       const stay = t.page.locator('.eh-card', { hasText: 'staying near the venue overnight' });
       const nightLabels = (await stay.locator('.eh-chip').allTextContents()).map((x) => x.trim());
-      t.eq('staying options come from the days', nightLabels, ['No, driving each day', 'Friday night', 'Saturday night', 'Both']);
-      await pick(t, stay, 'No, driving each day');
+      t.eq('staying options come from the days', nightLabels, ['No, we go home each night', 'Friday night', 'Saturday night', 'Friday and Saturday nights']);
+      await pick(t, stay, 'No, we go home each night');
 
       // Adults: 0 to 4 as chips, then "5 or more" for any number.
       const adults = t.page.locator('[data-testid="eh-adults"]');
@@ -261,11 +261,20 @@ export default {
         `${step2}; rule ${rule}; day cards ${dayCards}`);
       const sat = rideDay(t, 'Saturday');
       const toQ = sat.locator('[data-testid="eh-to-mode"]');
-      const assumed = await toQ.locator('[data-testid="eh-assumed"]').count();
       const toOpts = await toQ.locator('.eh-option').count();
-      const carpoolOn = await option(toQ, 'Team carpool').getAttribute('aria-checked');
-      t.check('the ride question says Team carpool was picked for them, with all three cards showing', assumed === 1 && toOpts === 3 && carpoolOn === 'true',
-        `assumed note ${assumed}; cards ${toOpts}; carpool chosen ${carpoolOn}`);
+      const picked0 = await toQ.locator('.eh-option[aria-checked="true"]').count();
+      const school0 = await sat.locator('[data-testid="eh-school-mode"]').count();
+      const seats0 = await sat.locator('[data-testid="eh-seat-picker"]').count();
+      const todo0 = (await t.evaluate(() => [...document.querySelectorAll('[data-testid="eh-part-tile"]')][1].textContent));
+      await t.press(option(toQ, 'Sam rides with another driver'));
+      await t.settle({ quietMs: 400 });
+      const picked1 = await toQ.locator('.eh-option[aria-checked="true"]').count();
+      const school1 = await sat.locator('[data-testid="eh-school-mode"]').count();
+      const seats1 = await sat.locator('.eh-run-to [data-testid="eh-seat-picker"]').count();
+      const mode1 = (await store(t, 'hub_day_answers')).find((a) => a.day_id === EH.sat && a.invite_id.endsWith('400'))?.to_mode;
+      t.check('the way there starts with nothing picked (no default counted as an answer); choosing the carpool brings the Bosco Tech question and the seat picker',
+        toOpts === 3 && picked0 === 0 && school0 === 0 && seats0 === 0 && /2 left/.test(todo0) && picked1 === 1 && school1 === 1 && seats1 === 1 && mode1 === 'carpool',
+        `cards ${toOpts}, picked ${picked0} -> ${picked1}; Bosco Tech question ${school0} -> ${school1}; seat picker ${seats0} -> ${seats1}; Rides tile "${todo0.trim()}"; stored ${mode1}`);
       const school = sat.locator('[data-testid="eh-school-mode"]');
       const schoolBefore = await school.locator('.eh-option').count();
       await t.press(option(school, 'We drop off at Bosco Tech'));
@@ -275,6 +284,8 @@ export default {
       const stored = (await store(t, 'hub_day_answers')).find((a) => a.day_id === EH.sat && a.invite_id.endsWith('400'))?.school_mode;
       t.check('an answered question shrinks to the chosen card and a Change button', schoolBefore === 2 && schoolAfter === 1 && change === 1 && stored === 'self',
         `cards ${schoolBefore} -> ${schoolAfter}; Change ${change}; stored ${stored}`);
+      await t.press(option(sat.locator('[data-testid="eh-home-mode"]'), 'Sam rides with another driver'));
+      await t.settle({ quietMs: 400 });
 
       // Skipping ahead: Finish lists what is left and flags the missing seat.
       await part(t, 'Finish');
@@ -282,7 +293,7 @@ export default {
       const todos = await t.texts('[data-testid="eh-todo"] .eh-todo-text');
       const needs0 = await t.count('[data-testid="eh-needs-seat"]');
       t.check('Finish before the end says what is left, one tappable line each, and flags that Sam has no seat',
-        /^Almost there: \d+ answers left$/.test(bannerTodo) && todos.some((x) => x.startsWith('Food allergies')) && todos.some((x) => x.startsWith('Emergency contact name')) && needs0 === 1,
+        /^\d+ answers still needed$/.test(bannerTodo) && todos.some((x) => x.startsWith('Food allergies')) && todos.some((x) => x.startsWith('Emergency contact name')) && needs0 === 1,
         `"${bannerTodo}"; ${todos.length} lines; needs-seat ${needs0}`);
       await t.press('[data-testid="eh-needs-seat"]');
       await t.settle({ quietMs: 300 });
@@ -302,7 +313,7 @@ export default {
       t.check('the seat flag leads back to Rides, where the seat picker sits under the question: the empty mentor van offers no Claim and says why, a family car offers one',
         backTo === 'Part 2 of 4' && vanClaim === 0 && vanNote === 1 && kimClaim === 1, `${backTo}; van Claim ${vanClaim}, van note ${vanNote}, Kim Claim ${kimClaim}`);
       t.check('claiming the seat there also seats Sam home in the same family\'s car; each run then lists only Sam\'s car',
-        seat.length === 2 && seat.some((x) => x.car_id === EH.carTaylorSatTo && x.run === 'to') && seat.some((x) => x.run === 'home') && /^Sam's seat there/.test(mineLabel) && /^Sam's seat home/.test(homeLabel) && listed === 1,
+        seat.length === 2 && seat.some((x) => x.car_id === EH.carTaylorSatTo && x.run === 'to') && seat.some((x) => x.run === 'home') && /^Sam's seat for the drive there/.test(mineLabel) && /^Sam's seat for the drive home/.test(homeLabel) && listed === 1,
         `seats ${seat.map((x) => `${x.run}:${x.car_id.slice(-3)}`).join(', ')}; "${mineLabel}" / "${homeLabel}"; listed ${listed}`);
       await t.shot('sam-rides');
 
@@ -322,7 +333,7 @@ export default {
       await em.nth(0).fill('Lee Parent');
       await em.nth(1).fill('5555550142');
       await em.nth(1).blur();
-      await pick(t, t.page.locator('fieldset', { hasText: 'FIRST registration for this season' }), 'Done');
+      await pick(t, t.page.locator('fieldset', { hasText: 'registered with FIRST this season' }), 'Yes, done');
       await t.page.waitForTimeout(1200);
       await t.settle({ quietMs: 400 });
       const shown = await em.nth(1).inputValue();
@@ -330,7 +341,7 @@ export default {
       t.check('part 4: a phone typed as digits is shown formatted and stored as typed', step4 === 'Part 4 of 4' && shown === '(555) 555-0142' && r?.emergency_phone === '5555550142',
         `${step4}; shown "${shown}"; stored "${r?.emergency_phone}"`);
       const status1 = await t.text('[data-testid="eh-status"]');
-      t.check('every required answer saved: the status says sign-up is done and lock-in is due', /^Sign-up done\. Lock-in due /.test(status1), status1);
+      t.check('every required answer saved: the status says sign-up is done and the final check is due', /^Sign-up done\. Final check due /.test(status1), status1);
 
       t.as('Sam: Finish');
       await t.press('[data-testid="eh-finish"]');
@@ -340,13 +351,18 @@ export default {
       t.check('Finish lands on lock-in, one card per day, with the plan in words', lockCards === 3 && plan[0] === "Kim Nguyen's car" && plan[1] === "Kim Nguyen's car",
         `${lockCards} day cards; Saturday there "${plan[0]}", home "${plan[1]}"`);
       await t.shot('sam-lockin');
+      const finishTile = () => t.evaluate(() => [...document.querySelectorAll('[data-testid="eh-part-tile"]')][4].querySelector('.eh-tile-state').textContent);
+      const finish0 = await finishTile();
       await t.press('[data-testid="eh-confirm-day"]');
       await t.settle({ quietMs: 400 });
       const status2 = await t.text('[data-testid="eh-status"]');
       const banner = await t.text('[data-testid="eh-summary-banner"] .eh-banner-title');
       const count4 = await t.text('[data-testid="eh-tracker-count"]');
-      t.check('one tap confirms the day: "All set", every part done', /^All set\. See you /.test(status2) && banner === 'You are all set' && count4 === '4 of 4 parts done' && (await t.count('[data-testid="eh-confirmed"]')) === 1,
-        `${status2}; "${banner}"; ${count4}`);
+      const finish1 = await finishTile();
+      t.check('one tap confirms the day: "All set", every part done, and the Finish tile goes from Confirm to Done',
+        /^All set\. See you /.test(status2) && banner === 'You are all set' && count4 === '4 of 4 parts done' && (await t.count('[data-testid="eh-confirmed"]')) === 1
+          && finish0 === 'Confirm' && finish1 === 'Done',
+        `${status2}; "${banner}"; ${count4}; Finish tile ${finish0} -> ${finish1}`);
       await t.tapTargets(CONTROLS, '44px floor on every family-page control (lock-in done)');
       await t.noHScroll('no horizontal scroll on the family page');
       await part(t, 'Rides');
@@ -390,13 +406,9 @@ export default {
       await waitSaved(t);
       await t.settle({ quietMs: 300 });
       const r2 = (await store(t, 'hub_responses')).find((x) => x.invite_id.endsWith('400'));
-      const bar2 = await t.text('[data-testid="eh-savebar"]');
-      await t.page.clock.fastForward(3000);
-      await t.page.waitForTimeout(150);
-      const barGone = await t.count('[data-testid="eh-savebar"]');
-      t.check('without a failure the next save lands at once; the foot of the screen says all changes are saved, then the note goes',
-        r2?.parent_phone === '5555550188' && bar2 === 'All changes saved' && barGone === 0,
-        `store "${r2?.parent_phone}"; foot "${bar2}", then ${barGone} after 3 s`);
+      const bar2 = await t.count('[data-testid="eh-savebar"]');
+      t.check('without a failure the next save lands at once, and the failure note at the foot of the screen is gone',
+        r2?.parent_phone === '5555550188' && bar2 === 0, `store "${r2?.parent_phone}"; failure notes ${bar2}`);
     });
 
     // ════ phones, pickup spots, allergy names ═════════════════════════════
@@ -449,11 +461,23 @@ export default {
       t.as('Jordan and Avery, one seat, from the seat picker');
       await familyPage(t, 'jordan');
       await part(t, 'Rides');
+      await t.press(option(rideDay(t, 'Saturday').locator('[data-testid="eh-to-mode"]'), 'Jordan rides with another driver'));
+      await t.settle({ quietMs: 400 });
       const other = await t.context.newPage();
+      const oc = async (label, loc) => {
+        try { await loc.first().click({ timeout: 10_000 }); } catch (e) {
+          const body = (await other.evaluate(() => document.body.textContent.replace(/\s+/g, ' ').slice(0, 300)).catch(() => ''));
+          throw new Error(`second page, ${label}: ${String(e.message).split('\n')[0]} | page: ${body}`);
+        }
+      };
       await other.goto(t.origin + fam('avery'));
       await waitForFixture(other);
       await other.waitForSelector('[data-testid="eh-status"]');
-      await other.locator('[data-testid="eh-part-tile"]', { has: other.locator('.eh-tile-label', { hasText: /^Rides$/ }) }).click();
+      await oc('Rides tile', other.locator('[data-testid="eh-part-tile"]', { has: other.locator('.eh-tile-label', { hasText: /^Rides$/ }) }));
+      await oc('carpool option', other.locator('[data-testid="eh-to-mode"] .eh-option-title', { hasText: 'Avery rides with another driver' }));
+      // Let that answer's reload land BEFORE Jordan claims, so Avery's page
+      // still shows the seat as open when Avery taps it: the race.
+      await other.waitForTimeout(1500);
       await other.waitForSelector('[data-testid="eh-seat-picker"]');
       const c1 = seatCar(t, 'Saturday', 'to', 'Morgan Exempt');
       const c2 = other.locator('[data-testid="eh-getting-day"] .eh-run-to [data-testid="eh-seat-picker"] [data-testid="eh-car"]', { has: other.locator('.eh-car-driver', { hasText: /^Morgan Exempt$/ }) });
@@ -462,8 +486,8 @@ export default {
       const confirmText = await c1.locator('[data-testid="eh-claim-confirm"]').textContent().catch(() => '');
       await t.press(c1.locator('[data-testid="eh-claim-yes"]'));
       await t.settle({ quietMs: 400 });
-      await c2.locator('[data-testid="eh-claim"]').click();
-      await c2.locator('[data-testid="eh-claim-yes"]').click();
+      await oc('claim', c2.locator('[data-testid="eh-claim"]'));
+      await oc('claim yes', c2.locator('[data-testid="eh-claim-yes"]'));
       await other.waitForSelector('[data-testid="eh-seat-picker"] .eh-note-bad', { timeout: 8000 });
       const loser = (await other.locator('[data-testid="eh-seat-picker"] [data-testid="eh-car"] .eh-note-bad').first().textContent()).trim();
       const seats = (await store(t, 'hub_seats')).filter((s) => s.car_id === EH.carCaseySatTo);
@@ -480,6 +504,8 @@ export default {
       t.as('Rowan and the empty mentor van');
       await familyPage(t, 'rowan');
       await part(t, 'Rides');
+      await t.press(option(rideDay(t, 'Saturday').locator('[data-testid="eh-to-mode"]'), 'Rowan rides with another driver'));
+      await t.settle({ quietMs: 400 });
       const ruleText = await t.text('[data-testid="eh-one-child-rule"]');
       const van = seatCar(t, 'Saturday', 'to', 'Coach Max');
       const vanClaim = await van.locator('[data-testid="eh-claim"]').count();
@@ -488,7 +514,7 @@ export default {
       const forced = await rawFamilyCall(t, TOK.rowan, 'claim_seat', { car_id: EH.carMentorSat, day_id: EH.sat, run: 'to' });
       const vanRiders = (await store(t, 'hub_seats')).filter((s) => s.car_id === EH.carMentorSat).length;
       t.check('the rule is stated at the top of Rides; the empty van offers no Claim and says a mentor seats two; a claim forced past the page is refused',
-        /one-child rule/i.test(ruleText) && vanClaim === 0 && /mentor seats the first two/.test(vanNote) && forced.status === 409 && /alone with an adult who is not their parent/.test(forced.body?.message ?? '') && vanRiders === 0,
+        /one-child rule/i.test(ruleText) && vanClaim === 0 && /mentor puts the first two students in this car/.test(vanNote) && forced.status === 409 && /alone with an adult who is not their parent/.test(forced.body?.message ?? '') && vanRiders === 0,
         `rule shown ${!!ruleText}; van Claim ${vanClaim}; forced ${forced.status} "${(forced.body?.message ?? '').slice(0, 40)}"; riders ${vanRiders}`);
       await claimIn(t, seatCar(t, 'Saturday', 'to', 'Kim Nguyen'));
       const kim = (await store(t, 'hub_seats')).filter((s) => s.car_id === EH.carTaylorSatTo).length;
@@ -514,8 +540,13 @@ export default {
       const redBefore = (await store(t, 'hub_outbox')).filter((o) => o.kind === 'car_red').length;
       await familyPage(t, 'quinn');
       await part(t, 'Rides');
-      await t.press(seatCar(t, 'Sunday', 'to', 'Coach Max').locator('button', { hasText: /^Leave this car$/ }));
+      const coach = seatCar(t, 'Sunday', 'to', 'Coach Max');
+      await t.press(coach.locator('[data-testid="eh-give-up"]'));
+      const asked = await coach.locator('[data-testid="eh-give-up-confirm"]').textContent();
+      const stillIn = (await store(t, 'hub_seats')).filter((x) => x.car_id === EH.carMentorSun).length;
+      await t.press(coach.locator('[data-testid="eh-give-up-yes"]'));
       await t.settle({ quietMs: 400 });
+      t.check('giving up a seat asks first, and nothing changes until "Yes"', /Give up this seat\?/.test(asked) && stillIn === 2, `"${asked.trim().slice(0, 40)}"; riders before yes ${stillIn}`);
       await openFold(t, 'eh-board-fold');
       await day(t, 'Sun');
       const red = await car(t, 'Coach Max').locator('[data-testid="eh-car-problem"]').textContent().catch(() => '');
@@ -546,10 +577,10 @@ export default {
       await familyPage(t, 'riley');
       await part(t, 'Rides');
       const fri = seatCar(t, 'Friday', 'to', 'Morgan Exempt');
-      const leaveFri = await fri.locator('button', { hasText: /^Leave this car$/ }).count();
+      const leaveFri = await fri.locator('[data-testid="eh-give-up"]').count();
       const statusFri = await fri.locator('[data-testid="eh-car-status"]').textContent();
-      const leaveSat = await seatCar(t, 'Saturday', 'to', 'Morgan Exempt').locator('button', { hasText: /^Leave this car$/ }).count();
-      t.check('a car marked Left offers no Leave; the same family\'s car that has not left does', leaveFri === 0 && leaveSat === 1 && /^Left \d/.test(statusFri),
+      const leaveSat = await seatCar(t, 'Saturday', 'to', 'Morgan Exempt').locator('[data-testid="eh-give-up"]').count();
+      t.check('a car that departed offers no "Give up this seat"; the same family\'s car that has not left does', leaveFri === 0 && leaveSat === 1 && /^Departed \d/.test(statusFri),
         `Friday (${statusFri}) ${leaveFri}, Saturday ${leaveSat}`);
       const leavingNow = await t.count('[data-testid="eh-leaving"]');
       t.check('a family is not offered "Leaving now" weeks before the day', leavingNow === 0, `${leavingNow}`);
@@ -596,7 +627,7 @@ export default {
       t.as('student on /trips/<id>');
       await day(t, 'Sat');
       const names = await t.count('[data-testid="eh-rider"]');
-      const writes = await t.count('[data-testid="eh-claim"], [data-testid="eh-leaving"], [data-testid="eh-pair"], button:has-text("Leave this car")');
+      const writes = await t.count('[data-testid="eh-claim"], [data-testid="eh-leaving"], [data-testid="eh-pair"], [data-testid="eh-give-up"]');
       const phones = await t.count('[data-testid="eh-driver-phone"], [data-testid="eh-rider-phone"], [data-testid="eh-spot"]');
       await t.open(BOARD, { persona: 'mentor', ready: '[data-testid="trip-board"]' });
       await day(t, 'Sat');

@@ -378,6 +378,12 @@ begin
   perform pg_temp.must('A', pg_temp.save(f.ta, 'attending', '"yes"', f.d1));
   perform pg_temp.must('A', pg_temp.save(f.ta, 'attending', '"yes"', f.d2));
   perform pg_temp.must('A', pg_temp.save(f.ta, 'attending', '"no"', f.d3));
+  -- Each run's way there and home chosen explicitly (0008 requires it;
+  -- under 0005 alone it is the same plan as the carpool default).
+  perform pg_temp.must('A', pg_temp.save(f.ta, 'to_mode', '"carpool"', f.d1));
+  perform pg_temp.must('A', pg_temp.save(f.ta, 'home_mode', '"carpool"', f.d1));
+  perform pg_temp.must('A', pg_temp.save(f.ta, 'to_mode', '"carpool"', f.d2));
+  perform pg_temp.must('A', pg_temp.save(f.ta, 'home_mode', '"carpool"', f.d2));
   perform pg_temp.must('A', pg_temp.save(f.ta, 'adults', '1', f.d1));
   perform pg_temp.must('A', pg_temp.save(f.ta, 'adults', '0', f.d2));
   perform pg_temp.must('A', pg_temp.save(f.ta, 'pit_setup', 'false', f.d1));
@@ -404,6 +410,10 @@ begin
   perform pg_temp.must('B', pg_temp.save(f.tb, 'attending', '"yes"', f.d1));
   perform pg_temp.must('B', pg_temp.save(f.tb, 'attending', '"yes"', f.d2));
   perform pg_temp.must('B', pg_temp.save(f.tb, 'attending', '"unsure"', f.d3));
+  perform pg_temp.must('B', pg_temp.save(f.tb, 'to_mode', '"carpool"', f.d1));
+  perform pg_temp.must('B', pg_temp.save(f.tb, 'home_mode', '"carpool"', f.d1));
+  perform pg_temp.must('B', pg_temp.save(f.tb, 'to_mode', '"carpool"', f.d2));
+  perform pg_temp.must('B', pg_temp.save(f.tb, 'home_mode', '"carpool"', f.d2));
   perform pg_temp.must('B', pg_temp.save(f.tb, 'adults', '0', f.d1));
   perform pg_temp.must('B', pg_temp.save(f.tb, 'adults', '2', f.d2));
   perform pg_temp.must('B', pg_temp.save(f.tb, 'pit_setup', 'true', f.d1));

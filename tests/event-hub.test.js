@@ -56,10 +56,12 @@ describe('the status line', () => {
   const line = (event, progress) => statusLine({ event: { ...ev, ...event }, progress })
 
   test('one line per state, each from the progress the database computed', () => {
-    expect(line({ lockin_open: false }, { phase1_done: false, missing: [{}, {}, {}] })).toBe('Sign-up due Fri, Oct 23. 3 answers to go.')
-    expect(line({ lockin_open: false }, { phase1_done: false, missing: [{}] })).toBe('Sign-up due Fri, Oct 23. 1 answer to go.')
-    expect(line({ lockin_open: false }, { phase1_done: true })).toBe('Sign-up done. Lock-in opens Sat, Oct 24.')
-    expect(line({ lockin_open: true }, { phase1_done: true, lockin_done: false })).toBe('Sign-up done. Lock-in due Wed, Oct 28.')
+    // No running count: saying Coming adds questions, and a count that rose
+    // after an answer read as a mistake. The tracker says what is left.
+    expect(line({ lockin_open: false }, { phase1_done: false, missing: [{}, {}, {}] })).toBe('Sign-up due Fri, Oct 23.')
+    expect(line({ lockin_open: false }, { phase1_done: false, missing: [{}] })).toBe('Sign-up due Fri, Oct 23.')
+    expect(line({ lockin_open: false }, { phase1_done: true })).toBe('Sign-up done. Final check opens Sat, Oct 24.')
+    expect(line({ lockin_open: true }, { phase1_done: true, lockin_done: false })).toBe('Sign-up done. Final check due Wed, Oct 28.')
     expect(line({ lockin_open: true }, { phase1_done: true, lockin_done: true })).toBe('All set. See you Fri, Oct 30.')
     expect(line({ over: true }, { phase1_done: true, lockin_done: true })).toBe('Beach Blitz 2026 is over. Thank you!')
   })
@@ -86,7 +88,7 @@ describe('days, runs and the board view model', () => {
 
   test('the form follows position (Sat, Sun, Fri); the nights follow the calendar', () => {
     expect(formDays(days).map((d) => d.id)).toEqual(['sat', 'sun', 'fri'])
-    expect(nightOptions(days).map((o) => o.label)).toEqual(['No, driving each day', 'Friday night', 'Saturday night', 'Both'])
+    expect(nightOptions(days).map((o) => o.label)).toEqual(['No, we go home each night', 'Friday night', 'Saturday night', 'Friday and Saturday nights'])
     expect(nightOptions(days)[3].value).toEqual(['2026-10-30', '2026-10-31'])
     expect(sameNights(['2026-10-31', '2026-10-30'], ['2026-10-30', '2026-10-31'])).toBe(true)
     expect(sameNights([], ['2026-10-30'])).toBe(false)
@@ -101,11 +103,11 @@ describe('days, runs and the board view model', () => {
   })
 
   test('car status labels and the gap read what the database decided', () => {
-    expect(carStatus({ status: 'left', left_at: '2026-10-31T13:02:00Z' }, TZ).label).toBe('Left 6:02 AM')
+    expect(carStatus({ status: 'left', left_at: '2026-10-31T13:02:00Z' }, TZ).label).toBe('Departed 6:02 AM')
     expect(carStatus({ status: 'arrived', arrived_at: '2026-10-31T13:58:00Z' }, TZ).label).toBe('Arrived 6:58 AM')
-    expect(carStatus({ status: 'pending' }).label).toBe('Pending')
+    expect(carStatus({ status: 'pending' }).label).toBe('Not ready')
     expect(carStatus({ status: 'full' }).label).toBe('Full')
-    expect(carStatus({ status: 'filling' }).label).toBe('Filling')
+    expect(carStatus({ status: 'filling' }).label).toBe('Has room')
     expect(gapLine({ needs_seat: 3, open_seats: 5 })).toMatchObject({ text: 'Needs a seat: 3 · Open seats: 5', covered: true })
     expect(gapLine({ needs_seat: 4, open_seats: 2 }).covered).toBe(false)
   })

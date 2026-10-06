@@ -34,6 +34,7 @@
 --          itself and everyone told, nothing left behind, the student free
 --          on the open link again, staff removal
 --   34-35  anon reads nothing; who may execute each new function
+--   42     the way there and home are answers, not the carpool default
 --   36-41  mentors seat two at once: an empty needs-two car takes a pair
 --          and keeps no override (one leaving turns it red), students and
 --          anon refused, the same student twice refused, a one-seat car
@@ -846,6 +847,44 @@ begin
            coalesce(to_regprocedure('public.hub_add_parent(text,text)')::text, 'gone')));
 end
 $grants$;
+
+-- -- 42. the way there and home are answers, not the carpool default -------------
+do $rides$
+declare
+  f t8_fx; ev uuid := gen_random_uuid(); dy uuid := gen_random_uuid(); inv uuid := gen_random_uuid();
+  tok text; m0 text; m1 text; m2 text; m3 text;
+begin
+  select * into f from t8_fx;
+  insert into public.hub_events (id, title, alert_emails) values (ev, 'RLS0008 rides', array['mentors-0008@example.invalid']);
+  -- Two days, so the night between them is one a family can stay.
+  insert into public.hub_days (id, event_id, day_date, position, venue_closes_at, ask_school_ride)
+  values (gen_random_uuid(), ev, (now() + interval '11 days')::date, 1, now() + interval '11 days 10 hours', true),
+         (dy, ev, (now() + interval '12 days')::date, 2, now() + interval '12 days 10 hours', true);
+  insert into public.hub_invites (id, event_id, student_id, emails) values (inv, ev, f.sa, array['rides-0008@example.invalid']);
+  tok := public._hub_mint_token(inv);
+  -- The 'getting' keys (only the second day is coming), as one sorted string.
+  perform pg_temp.must('R', pg_temp.save(tok, 'attending', '"yes"', dy));
+  select coalesce(string_agg(m ->> 'key', ',' order by m ->> 'key'), '') into m0
+    from jsonb_array_elements(pg_temp.fam(tok, 'fetch') -> 'progress' -> 'missing') m where m ->> 'step' = 'getting';
+  perform pg_temp.must('R', pg_temp.save(tok, 'to_mode', '"carpool"', dy));
+  select coalesce(string_agg(m ->> 'key', ',' order by m ->> 'key'), '') into m1
+    from jsonb_array_elements(pg_temp.fam(tok, 'fetch') -> 'progress' -> 'missing') m where m ->> 'step' = 'getting';
+  perform pg_temp.must('R', pg_temp.save(tok, 'school_mode', '"self"', dy));
+  perform pg_temp.must('R', pg_temp.save(tok, 'home_mode', '"self"', dy));
+  select coalesce(string_agg(m ->> 'key', ',' order by m ->> 'key'), '') into m2
+    from jsonb_array_elements(pg_temp.fam(tok, 'fetch') -> 'progress' -> 'missing') m where m ->> 'step' = 'getting';
+  -- Staying nearby the night before answers the way there.
+  perform pg_temp.must('R', pg_temp.save(tok, 'to_mode', 'null', dy));
+  perform pg_temp.must('R', pg_temp.save(tok, 'staying_nights', to_jsonb(array[((now() + interval '11 days')::date)::text])));
+  select coalesce(string_agg(m ->> 'key', ',' order by m ->> 'key'), '') into m3
+    from jsonb_array_elements(pg_temp.fam(tok, 'fetch') -> 'progress' -> 'missing') m where m ->> 'step' = 'getting';
+  perform pg_temp.rec(42, 'the way there and home are each an answer: both asked on a coming day, "Getting to Bosco Tech" only once the carpool is chosen, neither once answered, and staying nearby answers the way there',
+    m0 = 'ride_home,ride_to' and m1 = 'ride_home,school_mode' and m2 = '' and m3 = ''
+      and not exists (select 1 from t8_log where label = 'R'),
+    format('nothing chosen [%s]; carpool there [%s]; both answered [%s]; staying nearby, way there cleared [%s]; setup %s',
+           m0, m1, m2, m3, coalesce((select string_agg(outcome, ' | ') from t8_log where label = 'R'), 'ok')));
+end
+$rides$;
 
 select n, check_name as check, result, detail from t8_results
 union all

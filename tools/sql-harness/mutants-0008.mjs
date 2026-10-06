@@ -53,7 +53,16 @@ const RMG = 'public._hub_remove_guardian(uuid,text,uuid)';
 const RMF = 'public._hub_remove_family(uuid,uuid)';
 const PAIR = 'public.hub_staff_place_pair(uuid,uuid,uuid)';
 
+const PROG = 'public._hub_progress(uuid)';
+
 const MUTANTS = [
+  // 0. the way there and home are answers
+  fn('the carpool default counted as an answer for the way there', PROG,
+    'if d.to_mode is null and not d.nb_before then', 'if false then', [42]),
+  fn('"Getting to Bosco Tech" asked before the carpool is chosen', PROG,
+    "if d.ask_school_ride and not d.nb_before and d.to_mode = 'carpool' then",
+    "if d.ask_school_ride and not d.nb_before and coalesce(d.to_mode, 'carpool') = 'carpool' then", [42]),
+
   // 1. adults
   fn('adults 31 accepted by the save rule', SAVE,
     'not between 0 and 30 then', 'not between 0 and 31 then', [1]),

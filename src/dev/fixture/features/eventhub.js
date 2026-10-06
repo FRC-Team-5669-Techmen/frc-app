@@ -217,7 +217,10 @@ function progress(db, inv) {
     if (!a.confirmed_at) unconfirmed += 1
     if (a.adults == null) miss('days', 'adults', d.id)
     if (d.ask_pit_setup && a.pit_setup == null) miss('days', 'pit_setup', d.id)
-    if (d.ask_school_ride && !p.nearby_before && p.eff_to === 'carpool') {
+    // 0008: each run's mode is an answer; the carpool default is not one.
+    if (V8 && a.to_mode == null && !p.nearby_before) miss('getting', 'ride_to', d.id)
+    if (V8 && a.home_mode == null && !p.nearby_after) miss('getting', 'ride_home', d.id)
+    if (d.ask_school_ride && !p.nearby_before && (V8 ? a.to_mode === 'carpool' : p.eff_to === 'carpool')) {
       if (a.school_mode == null) miss('getting', 'school_mode', d.id)
       else if (a.school_mode === 'pickup' && !one(db, 'hub_pickups', (k) => k.invite_id === inv && k.day_id === d.id && k.spot)) miss('getting', 'pickup', d.id)
     }
@@ -1114,16 +1117,17 @@ function seedRows({ now }) {
   const A = (k, dayId, extra) => ({ invite_id: INVITE[k], day_id: dayId, attending: 'yes', adults: 0, pit_setup: dayId === EH.fri ? false : null, school_mode: dayId === EH.fri ? null : 'self', updated_at: iso(t - 4 * 24 * H), ...extra })
   const no = (k, dayId) => ({ invite_id: INVITE[k], day_id: dayId, attending: 'no', updated_at: iso(t - 4 * 24 * H) })
   const hub_day_answers = [
-    A('riley', EH.fri), A('riley', EH.sat), no('riley', EH.sun),
+    // A seated rider carries the mode a claim records (0008 asks for it).
+    A('riley', EH.fri, { to_mode: 'carpool', home_mode: 'carpool' }), A('riley', EH.sat, { to_mode: 'carpool', home_mode: 'carpool' }), no('riley', EH.sun),
     A('casey', EH.fri, { to_mode: 'driving', home_mode: 'driving', offer_seats: 2, offer_description: 'silver Odyssey', offer_leave_by: at(fri, 21), offer_takes_pickups: false }),
     A('casey', EH.sat, { to_mode: 'driving', home_mode: 'driving', offer_seats: 2, offer_description: 'silver Odyssey', offer_leave_by: at(sat, 15), offer_takes_pickups: true }),
     no('casey', EH.sun),
     no('jordan', EH.fri), A('jordan', EH.sat), no('jordan', EH.sun),
     no('avery', EH.fri), A('avery', EH.sat), no('avery', EH.sun),
     no('taylor', EH.fri), A('taylor', EH.sat, { to_mode: 'driving', home_mode: 'driving', offer_seats: 3, offer_description: 'red sedan', offer_leave_by: at(sat, 18, 15), offer_takes_pickups: false }), no('taylor', EH.sun),
-    no('morgan', EH.fri), A('morgan', EH.sat, { school_mode: 'pickup' }), no('morgan', EH.sun),
-    no('quinn', EH.fri), no('quinn', EH.sat), A('quinn', EH.sun),
-    no('jamie', EH.fri), no('jamie', EH.sat), A('jamie', EH.sun),
+    no('morgan', EH.fri), A('morgan', EH.sat, { school_mode: 'pickup', to_mode: 'carpool', home_mode: 'carpool' }), no('morgan', EH.sun),
+    no('quinn', EH.fri), no('quinn', EH.sat), A('quinn', EH.sun, { to_mode: 'carpool', home_mode: 'carpool' }),
+    no('jamie', EH.fri), no('jamie', EH.sat), A('jamie', EH.sun, { to_mode: 'carpool', home_mode: 'carpool' }),
     no('rowan', EH.fri), A('rowan', EH.sat), no('rowan', EH.sun),
     { invite_id: PAST_INVITE, day_id: EH.pastDay, attending: 'yes', adults: 1, updated_at: iso(t - 10 * 24 * H) },
   ]

@@ -168,12 +168,12 @@ export default function EventJoinPage() {
             <legend className="eh-q-label">Your student</legend>
             {student ? (
               <div className="eh-inline">
-                <span className="eh-join-picked" data-testid="eh-join-picked">{student.name}</span>
+                <span className="eh-join-picked" data-testid="eh-join-picked">Selected: {student.name}</span>
                 <button type="button" className="eh-btn" onClick={() => setStudent(null)}>Change</button>
               </div>
             ) : (
               <>
-                <input className="eh-input" placeholder="Type your student's name" value={q}
+                <input className="eh-input" placeholder="Type your student's first or last name" value={q}
                        onChange={(e) => setQ(e.target.value)} aria-label="Search for your student" />
                 <div className="eh-join-list" role="listbox" aria-label="Students">
                   {students.map((s) => (
@@ -207,7 +207,8 @@ export default function EventJoinPage() {
       )}
 
       <p className="eh-hint eh-join-mentor">
-        Mentor driving to this event? <Link to={`/trips/${ev.id}/manage`}>Sign in and add your car</Link> on the Carpool tab.
+        Team mentors and staff only: <Link to={`/trips/${ev.id}/manage`}>sign in to add your car</Link> on the Carpool tab.
+        Parents who will drive: pick your student above and press Start. You add your car in Rides.
       </p>
     </div>
   )

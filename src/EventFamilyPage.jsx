@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import { createSaver, fmtDate, fmtDay, statusLine } from './eventHub'
 import { EventInfo } from './EventHubBoards'
-import { PARTS, PartContacts, PartDays, PartFood, PartRides, Summary } from './EventFamilyParts'
+import { PARTS, PartContacts, PartDays, PartFood, PartRides, Summary, hasV8, seatsMissing } from './EventFamilyParts'
 import {
-  IconArrowLeft, IconArrowRight, IconCalendar, IconCheck, IconClock, IconFlag, IconInfo, IconPin, IconSave, IconWifiOff,
+  IconArrowLeft, IconArrowRight, IconCalendar, IconCheck, IconClock, IconFlag, IconInfo, IconPin, IconWifiOff,
 } from './eventIcons'
 import './EventHub.css'
 
@@ -98,32 +98,34 @@ function landing(view) {
 }
 
 /** A part counts as done when nothing is missing from it. Rides has nothing
- *  to ask until a day is answered, so it is not done before Who is coming. */
+ *  to ask until a day is answered, so it is not done before Who is coming,
+ *  and it is not done while a carpool run still has no seat (the database
+ *  does not require one, since mentors place students, but a green "Done"
+ *  above "still needs a seat" was read as all clear). */
 function partDone(view, pt) {
   const steps = view.progress?.steps ?? {}
-  return !!steps[pt.progressKey] && (pt.key !== 'rides' || !!steps.days)
+  if (!steps[pt.progressKey]) return false
+  if (pt.key !== 'rides') return true
+  return !!steps.days && seatsMissing(view).length === 0
 }
 
+function tileState(view, pt) {
+  if (partDone(view, pt)) return 'Done'
+  const n = (view.progress?.missing ?? []).filter((m) => m.step === pt.progressKey).length
+  if (n) return `${n} left`
+  if (pt.key === 'rides' && seatsMissing(view).length) return 'No seat'
+  return 'To do'
+}
+
+/** Only while a save is failing: each question already says "Saved 2:41 PM",
+ *  and a pill that popped up after every tap covered the buttons. */
 function SaveBar({ states }) {
-  const all = Object.values(states)
-  const retrying = all.some((s) => s.state === 'retrying')
-  const saving = all.some((s) => s.state === 'saving')
-  // "All changes saved" shows for a moment after each save and then goes;
-  // "Saving" and "Not saved yet" stay up for as long as they are true.
-  const [fresh, setFresh] = useState(false)
-  useEffect(() => {
-    if (all.length === 0 || retrying || saving) return undefined
-    setFresh(true)
-    const id = setTimeout(() => setFresh(false), 2500)
-    return () => clearTimeout(id)
-  }, [states]) // eslint-disable-line react-hooks/exhaustive-deps
-  if (all.length === 0 || (!retrying && !saving && !fresh)) return null
-  const cls = retrying ? 'eh-savebar-bad' : saving ? 'eh-savebar-busy' : 'eh-savebar-ok'
+  const retrying = Object.values(states).some((s) => s.state === 'retrying')
+  if (!retrying) return null
   return (
     <div className="eh-savebar" aria-live="polite">
-      <span className={`eh-savebar-pill ${cls}`} data-testid="eh-savebar">
-        {retrying ? <IconWifiOff size={16} /> : saving ? <IconSave size={16} /> : <IconCheck size={16} />}
-        {retrying ? 'Not saved yet, retrying' : saving ? 'Saving' : 'All changes saved'}
+      <span className="eh-savebar-pill eh-savebar-bad" data-testid="eh-savebar">
+        <IconWifiOff size={16} />Not saved yet, retrying
       </span>
     </div>
   )
@@ -157,6 +159,10 @@ function Hero({ view, standalone, onInfo }) {
 function Tracker({ view, part, go }) {
   const ev = view.event
   const done = PARTS.filter((pt) => partDone(view, pt)).length
+  // Finish: Review until sign-up is done, Confirm while the final check is
+  // open and not done, then Done.
+  const p = view.progress ?? {}
+  const finish = !p.phase1_done ? 'Review' : ev.lockin_open && !p.lockin_done ? 'Confirm' : 'Done'
   return (
     <nav className="eh-tracker" aria-label="Sign-up progress" data-testid="eh-tracker">
       <div className="eh-tracker-top">
@@ -172,27 +178,27 @@ function Tracker({ view, part, go }) {
       <ol className="eh-tiles">
         {PARTS.map((pt, i) => {
           const ok = partDone(view, pt)
-          const n = (view.progress?.missing ?? []).filter((m) => m.step === pt.progressKey).length
+          const state = tileState(view, pt)
           const I = pt.icon
           return (
             <li key={pt.key}>
               <button type="button" className={`eh-tile eh-tone-${pt.tone}${part === pt.key ? ' eh-tile-on' : ''}${ok ? ' eh-tile-done' : ''}`}
                       aria-current={part === pt.key ? 'step' : undefined} onClick={() => go(pt.key)} data-testid="eh-part-tile"
-                      aria-label={`Part ${i + 1}, ${pt.label}: ${ok ? 'done' : n ? `${n} left` : 'to do'}`}>
+                      aria-label={`Part ${i + 1}, ${pt.label}: ${state}`}>
                 <span className="eh-tile-icon"><I size={22} />{ok && <span className="eh-tile-check"><IconCheck size={12} /></span>}</span>
                 <span className="eh-tile-label">{pt.short}</span>
-                <span className="eh-tile-state">{ok ? 'Done' : n ? `${n} left` : 'To do'}</span>
+                <span className={`eh-tile-state${state === 'No seat' ? ' eh-tile-warn' : ''}`}>{state}</span>
               </button>
             </li>
           )
         })}
         <li>
-          <button type="button" className={`eh-tile eh-tone-gold${part === 'summary' ? ' eh-tile-on' : ''}${view.progress?.phase1_done ? ' eh-tile-done' : ''}`}
+          <button type="button" className={`eh-tile eh-tone-gold${part === 'summary' ? ' eh-tile-on' : ''}${finish === 'Done' ? ' eh-tile-done' : ''}`}
                   aria-current={part === 'summary' ? 'step' : undefined} onClick={() => go('summary')} data-testid="eh-part-tile"
-                  aria-label="Finish: review your answers">
-            <span className="eh-tile-icon"><IconFlag size={22} />{view.progress?.phase1_done && <span className="eh-tile-check"><IconCheck size={12} /></span>}</span>
+                  aria-label={`Finish: ${finish}`}>
+            <span className="eh-tile-icon"><IconFlag size={22} />{finish === 'Done' && <span className="eh-tile-check"><IconCheck size={12} /></span>}</span>
             <span className="eh-tile-label">Finish</span>
-            <span className="eh-tile-state">{view.progress?.phase1_done ? 'Done' : 'Review'}</span>
+            <span className={`eh-tile-state${finish === 'Confirm' ? ' eh-tile-warn' : ''}`}>{finish}</span>
           </button>
         </li>
       </ol>
@@ -331,7 +337,7 @@ export function FamilyHub({ transport, standalone = true, onInvalid, onOver }) {
   const ev = view.event
   const tz = ev.timezone
   // 0008 is live when the page carries its fields (drive_to on a day).
-  const v8 = Object.values(view.answers?.days ?? {}).some((d) => d && 'drive_to' in d)
+  const v8 = hasV8(view)
   const ctx = {
     tz, states, locked: !!ev.over, v8,
     save: (k, payload) => { setView((v) => applyLocal(v, payload)); saver.save(k, payload) },

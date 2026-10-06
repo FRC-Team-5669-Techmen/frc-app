@@ -88,7 +88,16 @@
 --      again. A family cannot remove itself after the event, or once a car it
 --      is in has left; a mentor can.
 --
---   6. MENTORS SEAT TWO AT ONCE. A car without its driver's own student (a
+--   6. THE WAY THERE AND HOME ARE ANSWERS. Progress used to accept the
+--      Team carpool default as an answer, so a parent who drove their own
+--      student and skimmed past the question was recorded as carpool and
+--      planned a seat. On a day the student is coming, each run now needs
+--      a mode the family chose (missing keys 'ride_to' / 'ride_home', step
+--      'getting'); staying nearby that night answers it. "How will they get
+--      to Bosco Tech" is asked once the family has chosen the carpool
+--      there. The default still plans the seat until they answer.
+--
+--   7. MENTORS SEAT TWO AT ONCE. A car without its driver's own student (a
 --      mentor's van, or a drive-flag car from 2) refuses its FIRST rider
 --      under the one-child rule, which is right, but it left such a car
 --      unfillable: a family's first claim is refused, and a mentor's 'move'
@@ -355,7 +364,20 @@ begin
 
       v_eff_to := coalesce(d.to_mode, case when d.nb_before then 'self' else 'carpool' end);
       v_eff_home := coalesce(d.home_mode, case when d.nb_after then 'self' else 'carpool' end);
-      if d.ask_school_ride and not d.nb_before and v_eff_to = 'carpool' then
+      -- 0008: how the student gets there, and home, is each an answer the
+      -- family gives. The Team carpool default plans a seat but no longer
+      -- counts as an answer (a parent who drives and skimmed past it was
+      -- recorded as carpool). Staying nearby that night answers it.
+      if d.to_mode is null and not d.nb_before then
+        s_getting := false;
+        missing := missing || jsonb_build_object('step', 'getting', 'key', 'ride_to', 'day_id', d.id);
+      end if;
+      if d.home_mode is null and not d.nb_after then
+        s_getting := false;
+        missing := missing || jsonb_build_object('step', 'getting', 'key', 'ride_home', 'day_id', d.id);
+      end if;
+      -- Asked once the family has chosen the carpool there.
+      if d.ask_school_ride and not d.nb_before and d.to_mode = 'carpool' then
         if d.school_mode is null then
           s_getting := false;
           missing := missing || jsonb_build_object('step', 'getting', 'key', 'school_mode', 'day_id', d.id);

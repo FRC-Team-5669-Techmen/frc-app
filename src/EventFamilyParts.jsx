@@ -4,7 +4,7 @@
 // seats picked in ONE place, and nothing here decides a rule. Each control
 // sends an answer; the database (0005, 0007, 0008) decides and the page shows
 // what it said.
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { supabase } from './supabase'
 import {
   ALLERGENS, fmtDate, fmtDay, fmtPhone, fmtTime, formDays, isoToZoned, needsSeat, nightOptions, sameNights, zonedToIso,
@@ -23,23 +23,46 @@ import {
  *  _hub_progress uses for it. */
 export const PARTS = Object.freeze([
   { key: 'days', progressKey: 'days', label: 'Who is coming', short: 'Who', icon: IconCalendar, tone: 'blue',
-    intro: (f) => `Which days ${f} is coming, and who from your family comes along.` },
+    intro: (f) => `Which days ${f} is coming, and who from your family comes along. Saying Coming adds a few questions for that day.` },
   { key: 'rides', progressKey: 'getting', label: 'Rides', short: 'Rides', icon: IconCar, tone: 'green',
     intro: (f) => `How ${f} gets to the venue and back each day. Pick a seat in a car right here.` },
   { key: 'food', progressKey: 'food', label: 'Food and health', short: 'Food', icon: IconUtensils, tone: 'orange',
     intro: (f) => `Allergies and medicine, so mentors keep ${f} safe. Bringing food is optional.` },
   { key: 'contacts', progressKey: 'contacts', label: 'Contacts and forms', short: 'Contacts', icon: IconPhone, tone: 'violet',
-    intro: () => 'How to reach you, an emergency contact, the two forms, and who else can use this page.' },
+    intro: () => 'How to reach you, an emergency contact, the forms, and who else can use this page.' },
 ])
 
 export const partByKey = (k) => PARTS.find((p) => p.key === k)
+
+/** 0008 is live when the page carries its fields (drive_to on a day). */
+export const hasV8 = (view) => Object.values(view?.answers?.days ?? {}).some((d) => d && 'drive_to' in d)
+
+/** Each run a student still needs a seat for: the family chose the carpool
+ *  (before 0008, was left on it) and no car has the student yet. */
+export function seatsMissing(view) {
+  const v8 = hasV8(view)
+  const out = []
+  for (const d of view.board?.days ?? []) {
+    const ad = view.answers.days[d.id]
+    for (const run of ['to', 'home']) {
+      if (!needsSeat(ad, run)) continue
+      if (v8 && (run === 'to' ? ad.to_mode : ad.home_mode) == null) continue
+      if ((d.runs?.find((x) => x.run === run)?.cars ?? []).some((c) => c.my_seat)) continue
+      out.push({ day: d, run })
+    }
+  }
+  return out
+}
 export const partOfStep = (step) => PARTS.find((p) => p.progressKey === step)
 
 /** One missing answer, in words. */
 export function missingLabel(m, view) {
   const day = m.day_id ? (view.board.days ?? []).find((d) => d.id === m.day_id) : null
   const on = day ? ` on ${fmtDate(day.date, 'medium')}` : ''
+  const first = view.student?.first ?? 'Your student'
   switch (m.key) {
+    case 'ride_to': return `How ${first} gets there${on}`
+    case 'ride_home': return `How ${first} gets home${on}`
     case 'staying': return 'Staying near the venue?'
     case 'attending': return `Coming${on}?`
     case 'adults': return `Adults coming${on}`
@@ -69,8 +92,9 @@ function DayHead({ d, tz, children }) {
       {d.over && <span className="eh-pill eh-pill-left">Over</span>}
       {children}
       {d.meet_at && (
-        <span className="eh-day-meet"><IconClock size={16} />Meet {fmtTime(d.meet_at, tz)}{d.meet_place ? ` at ${d.meet_place}` : ''}
-          {d.last_car_out_at ? `, last car out ${fmtTime(d.last_car_out_at, tz)}` : ''}</span>
+        <span className="eh-day-meet"><IconClock size={16} />
+          Be at {d.meet_place || 'the meeting spot'} by {fmtTime(d.meet_at, tz)}.
+          {d.last_car_out_at ? ` Cars leave at ${fmtTime(d.last_car_out_at, tz)}.` : ''}</span>
       )}
     </header>
   )
@@ -134,7 +158,7 @@ export function PartDays({ view, ctx }) {
       {coming.length > 0 && (
         <section className="eh-card" data-testid="eh-adults">
           <h3 className="eh-card-title eh-with-icon"><IconUsers size={20} />Adults from your family</h3>
-          <p className="eh-hint">Parents, guardians and other grown-ups from your family who will be there. It sets how much food is planned.</p>
+          <p className="eh-hint">Parents, guardians and other grown-ups from your family who will be there. Count yourself if you are going; pick 0 if only {first} goes. It sets how much food is planned.</p>
           {coming.map((d) => (
             <CountPicker key={d.id} k={`adults:${d.id}`} ctx={ctx} disabled={ctx.locked || d.over} label={fmtDate(d.date)}
                          max={ctx.v8 ? 30 : 4} value={a.days[d.id]?.adults ?? null}
@@ -156,8 +180,8 @@ export function OneChildRule() {
     <aside className="eh-rule" data-testid="eh-one-child-rule">
       <span className="eh-rule-icon"><IconShield size={22} /></span>
       <div>
-        <p className="eh-rule-title">The one-child rule (Salesian safe environment)</p>
-        <p>No adult may be alone in a car with one student who is not their own child. A driver with their own student in the car may take any number of others. A driver without their own student takes two or more, never just one. The carpool enforces this for every car.</p>
+        <p className="eh-rule-title">Safety rule: the one-child rule (Salesian safe environment)</p>
+        <p>An adult is never alone in a car with one student who is not their own child. So a car without the driver's own student takes two or more students, and a mentor seats the first two. The carpool checks this for you; you do not need to do anything.</p>
       </div>
     </aside>
   )
@@ -166,17 +190,17 @@ export function OneChildRule() {
 function modeOptions(first, run, nearby) {
   const there = run === 'to'
   return [
-    { value: 'driving', icon: IconCar, label: 'In our car',
-      sub: there ? `A parent drives ${first} there, and can take other students too` : `A parent drives ${first} home, and can take other students too` },
-    { value: 'carpool', icon: IconUsers, label: 'Team carpool',
-      sub: `${first} rides in another family's car or a mentor's car` },
-    { value: 'self', icon: nearby ? IconBed : IconFlag, label: nearby ? 'We are staying nearby' : 'On our own',
-      sub: there ? (nearby ? 'We are already near the venue' : 'We get there ourselves. No seat needed')
-        : (nearby ? 'We stay near the venue tonight' : 'We get home ourselves. No seat needed') },
+    { value: 'driving', icon: IconCar, label: `We drive ${first}, and can take others`,
+      sub: 'Our car also takes other students who need a ride' },
+    { value: 'carpool', icon: IconUsers, label: `${first} rides with another driver`,
+      sub: "In another family's car or a mentor's car. You pick the car" },
+    { value: 'self', icon: nearby ? IconBed : IconFlag, label: nearby ? 'We are staying nearby' : `We drive ${first} ourselves, no one else`,
+      sub: there ? (nearby ? 'We are already near the venue' : `Or ${first} gets there another way. No seat needed`)
+        : (nearby ? 'We stay near the venue tonight' : `Or ${first} gets home another way. No seat needed`) },
   ]
 }
 
-const MODE_INFO = 'In our car: a parent drives your student, and we ask how many extra students fit. Team carpool: your student rides with another driver, and you pick the car just below. On our own: you handle it and no seat is planned. You can change this until the car leaves.'
+const MODE_INFO = 'Choose the one that fits this trip. "We drive, and can take others" lists your car for other students and asks a few questions about it. "Rides with another driver" lets you pick a seat in a car just below. "We drive ourselves, no one else" means no seat is planned and your car is not listed. You can change this until the car leaves.'
 
 function PickupBlock({ d, ad, ctx, off, first }) {
   const saved = ad.pickup
@@ -217,7 +241,7 @@ function SeatPicker({ d, run, ad, ctx, act, viewer, first }) {
   return (
     <div className="eh-seats" data-testid="eh-seat-picker">
       <div className="eh-q-head">
-        <span className="eh-q-label">{mine ? `${first}'s seat ${run === 'to' ? 'there' : 'home'}` : `Pick a seat for ${first}`}</span>
+        <span className="eh-q-label">{mine ? `${first}'s seat for the drive ${run === 'to' ? 'there' : 'home'}` : `Pick a seat for the drive ${run === 'to' ? 'there' : 'home'}`}</span>
         <InfoTip>Tap Claim a seat on a car with room. You can leave it and pick another until the car leaves. If no car has room yet, check back later. Mentors make sure every student has a seat before the event.</InfoTip>
       </div>
       {mine && <CarCard car={mine} day={d} tz={ctx.tz} viewer={viewer} myDay={ad} runKey={run} unplaced={[]} act={act} locked={ctx.locked} />}
@@ -275,11 +299,11 @@ function DriveExtra({ d, ad, ctx, off, first, coming }) {
   // by itself once a parent has said yes.
   return (
     <Fold icon={IconCar} testid="eh-drive-fold" defaultOpen={v === 'to' || v === 'home' || v === 'both'}
-          title={coming ? `Can you help drive other students on ${day}?` : `Can a parent still drive students on ${day}?`}
-          sub={coming ? `Optional. For a car without ${first} in it.` : `Optional. ${first} is not coming that day.`}>
+          title={coming ? `Driving to the event anyway on ${day}?` : `Can a parent still drive students on ${day}?`}
+          sub={coming ? `Optional. Offer your empty seats while ${first} rides with someone else.` : `Optional. ${first} is not coming that day.`}>
       <Choice k={`drive_to:${d.id}`} ctx={ctx} disabled={off} testid="eh-drive-extra"
               label={coming ? `Will a parent drive other students on ${day}, without ${first} in the car?` : `Will a parent drive students on ${day}?`}
-              info={`Extra drivers help the whole team. Because ${first} would not be in that car, the one-child rule applies: it takes two or more students together, never just one, and a mentor seats the first two. You will be asked about the car below.`}
+              info={`Extra drivers help the whole team. If ${first} rides with you, choose "We drive ${first}, and can take others" above instead. Because ${first} would not be in this car, the one-child rule applies: it takes two or more students together, and a mentor seats the first two. You will be asked about the car below.`}
               options={opts} value={v} onPick={pick} />
     </Fold>
   )
@@ -317,16 +341,23 @@ function RunPlan({ d, ad, run, ctx, act, viewer, first }) {
   const eff = there ? ad.eff_to : ad.eff_home
   const nearby = there ? ad.nearby_before : ad.nearby_after
   const field = there ? 'to_mode' : 'home_mode'
-  const showSchool = there && eff === 'carpool' && d.ask_school_ride && !ad.nearby_before
+  // With 0008 the way there and home are answers: nothing is picked until the
+  // family picks it (staying nearby answers it). Before 0008 the carpool
+  // default stands and the page says it was assumed.
+  const raw = ad[field]
+  const value = ctx.v8 && raw == null && !nearby ? null : eff
+  const carpool = value === 'carpool'
+  const showSchool = there && carpool && d.ask_school_ride && !ad.nearby_before
   return (
     <div className={`eh-run eh-run-${run}`}>
       <p className="eh-run-tag">{there ? <><IconPin size={16} />Going there</> : <><IconHome size={16} />Coming home</>}</p>
       <Options k={`${field}:${d.id}`} ctx={ctx} disabled={off} testid={there ? 'eh-to-mode' : 'eh-home-mode'}
                label={there ? `How will ${first} get to the venue?` : `How will ${first} get home?`}
-               info={MODE_INFO} options={modeOptions(first, run, nearby)} value={eff}
-               assumed={ad[field] == null
-                 ? (nearby ? 'We started you on this from your answer about staying nearby. Tap the card that is right.'
-                   : 'We started you on Team carpool. Tap the card that is right.')
+               info={MODE_INFO} options={modeOptions(first, run, nearby)} value={value}
+               hint={value == null ? 'Choose one.' : null}
+               assumed={raw == null && value != null
+                 ? (nearby ? 'Filled in from your answer about staying nearby. Tap another card if that is not right.'
+                   : `We started you on "${first} rides with another driver". Tap the card that is right.`)
                  : null}
                onPick={(v) => ctx.save(`${field}:${d.id}`, { field, value: v, day_id: d.id })} />
       {showSchool && (
@@ -342,9 +373,37 @@ function RunPlan({ d, ad, run, ctx, act, viewer, first }) {
           {ad.school_mode === 'pickup' && <PickupBlock d={d} ad={ad} ctx={ctx} off={off} first={first} />}
         </Options>
       )}
-      {eff === 'carpool' && <SeatPicker d={d} run={run} ad={ad} ctx={ctx} act={act} viewer={viewer} first={first} />}
+      {carpool && <SeatPicker d={d} run={run} ad={ad} ctx={ctx} act={act} viewer={viewer} first={first} />}
+      {!there && carpool && d.drive_home_range && (
+        <p className="eh-hint">The drive home takes about {d.drive_home_range}. Each car shows when it heads home.</p>
+      )}
       <MyCar d={d} run={run} ctx={ctx} act={act} viewer={viewer} />
     </div>
+  )
+}
+
+function DriverChecks({ view, ctx }) {
+  const r = view.answers.response
+  return (
+    <section className="eh-card eh-tone-green" data-testid="eh-driver-checks">
+      <h3 className="eh-card-title eh-with-icon"><IconShield size={20} />For drivers</h3>
+      <p className="eh-hint">The school requires the first two for every driver. Until both are ticked and your car's details are filled in, other families cannot see your car.</p>
+      <Tick k="driver_25" ctx={ctx} disabled={ctx.locked} checked={r.driver_25} label="I am 25 or older."
+            onToggle={(v) => ctx.save('driver_25', { field: 'driver_25', value: v })} />
+      <Tick k="driver_licensed" ctx={ctx} disabled={ctx.locked} checked={r.driver_licensed}
+            label="I have a valid California driver's license and car insurance."
+            onToggle={(v) => ctx.save('driver_licensed', { field: 'driver_licensed', value: v })} />
+      <Tick k="driver_phone_consent" ctx={ctx} disabled={ctx.locked} checked={r.driver_phone_consent} testid="eh-driver-consent"
+            label="Share my phone number with the families of students riding with me."
+            info="Riders' families can call you on the day. If you leave this off, they are told to contact you through the mentors."
+            onToggle={(v) => ctx.save('driver_phone_consent', { field: 'driver_phone_consent', value: v })} />
+      {view.event.driver_paperwork_required && (
+        <p className={r.driver_paperwork_on_file ? 'eh-ok-line' : 'eh-hint eh-hint-warn'}>
+          {r.driver_paperwork_on_file ? 'Your license and insurance are on file.'
+            : 'A mentor needs a copy of your license and insurance. Until then your car shows Not ready.'}
+        </p>
+      )}
+    </section>
   )
 }
 
@@ -357,6 +416,9 @@ export function PartRides({ view, ctx, act, viewer }) {
   const anyCar = days.some((d) => hasCar(a.days[d.id] ?? {}, a.days[d.id]?.attending === 'yes'))
   const anyCarpool = days.some((d) => ['to', 'home'].some((run) => needsSeat(a.days[d.id], run)))
   const answered = days.some((d) => a.days[d.id]?.attending)
+  // The driver checks sit right under the first day with a car, where the
+  // parent who just said they drive is looking, not at the foot of the page.
+  const firstCarDay = days.find((d) => hasCar(a.days[d.id] ?? {}, a.days[d.id]?.attending === 'yes'))?.id
   return (
     <div className="eh-part-body">
       <OneChildRule />
@@ -367,7 +429,8 @@ export function PartRides({ view, ctx, act, viewer }) {
         const coming = ad.attending === 'yes'
         if (!ad.attending) return null
         return (
-          <section key={d.id} className={`eh-card eh-dayq${coming ? '' : ' eh-dayq-quiet'}`} data-testid="eh-getting-day">
+          <Fragment key={d.id}>
+          <section className={`eh-card eh-dayq${coming ? '' : ' eh-dayq-quiet'}`} data-testid="eh-getting-day">
             <DayHead d={d} tz={ctx.tz}>
               {!coming && <span className="eh-pill">{ad.attending === 'no' ? `${first} is not coming` : 'Not sure yet'}</span>}
             </DayHead>
@@ -387,35 +450,16 @@ export function PartRides({ view, ctx, act, viewer }) {
               </>
             )}
           </section>
+          {anyCar && d.id === firstCarDay && <DriverChecks view={view} ctx={ctx} />}
+          </Fragment>
         )
       })}
-
-      {anyCar && (
-        <section className="eh-card eh-tone-green" data-testid="eh-driver-checks">
-          <h3 className="eh-card-title eh-with-icon"><IconShield size={20} />For drivers</h3>
-          <p className="eh-hint">The school requires both for anyone who drives students. Your car is listed for others once both are ticked and its details are filled in.</p>
-          <Tick k="driver_25" ctx={ctx} disabled={ctx.locked} checked={r.driver_25} label="I am 25 or older."
-                onToggle={(v) => ctx.save('driver_25', { field: 'driver_25', value: v })} />
-          <Tick k="driver_licensed" ctx={ctx} disabled={ctx.locked} checked={r.driver_licensed}
-                label="I have a valid California driver's license and car insurance."
-                onToggle={(v) => ctx.save('driver_licensed', { field: 'driver_licensed', value: v })} />
-          <Tick k="driver_phone_consent" ctx={ctx} disabled={ctx.locked} checked={r.driver_phone_consent} testid="eh-driver-consent"
-                label="Share my phone number with the families of students riding with me."
-                info="Riders' families can call you on the day. If you leave this off, they are told to contact you through the mentors."
-                onToggle={(v) => ctx.save('driver_phone_consent', { field: 'driver_phone_consent', value: v })} />
-          {view.event.driver_paperwork_required && (
-            <p className={r.driver_paperwork_on_file ? 'eh-ok-line' : 'eh-hint eh-hint-warn'}>
-              {r.driver_paperwork_on_file ? 'Your license and insurance are on file.'
-                : 'A mentor needs a copy of your license and insurance. Until then your car shows Pending.'}
-            </p>
-          )}
-        </section>
-      )}
 
       {anyCarpool && (
         <section className="eh-card">
           <Tick k="rider_phone_consent" ctx={ctx} disabled={ctx.locked} checked={r.rider_phone_consent}
                 label={`Share our phone number with ${first}'s driver.`}
+                hint="If you leave this off, the driver cannot call you if plans change."
                 info="So the driver can call you if they are running late or cannot find your student."
                 onToggle={(v) => ctx.save('rider_phone_consent', { field: 'rider_phone_consent', value: v })} />
         </section>
@@ -439,6 +483,7 @@ export function PartFood({ view, ctx, act, viewer }) {
     <div className="eh-part-body">
       <section className="eh-card" data-testid="eh-allergies">
         <Q label={`Does ${first} have any food allergies?`} s={ctx.states.allergens ?? ctx.states.allergies_none} tz={ctx.tz}
+           hint={has.size ? `Tap every one that applies. Picked: ${ALLERGENS.filter((x) => has.has(x.key)).map((x) => x.label).join(', ')}.` : 'Tap every one that applies.'}
            info="Mentors see who has which allergy so team meals are safe. Other families only ever see how many people have each allergy, never names.">
           <div className="eh-chips">
             <button type="button" role="checkbox" aria-checked={!!r.allergies_none} disabled={ctx.locked}
@@ -524,9 +569,8 @@ function People({ view, family, onRemovedSelf }) {
   }
   return (
     <section className="eh-card" data-testid="eh-people">
-      <h3 className="eh-card-title eh-with-icon"><IconUsers size={20} />People on this page
-        <InfoTip>Everyone listed has their own link to this page and can change answers. Remove someone and their link stops working right away.</InfoTip>
-      </h3>
+      <h3 className="eh-card-title eh-with-icon"><IconUsers size={20} />Who can open this page</h3>
+      <p className="eh-hint">Each person below has their own link and can change answers. Remove someone and their link stops working right away.</p>
       {Array.isArray(guardians) && (
         <ul className="eh-people-list">
           {guardians.map((g) => (
@@ -625,9 +669,8 @@ export function PartContacts({ view, ctx, family }) {
               onCommit={(v) => ctx.save('parent_email', { field: 'parent_email', value: v })} />
       </section>
       <section className="eh-card">
-        <h3 className="eh-card-title eh-with-icon"><IconHeart size={20} />Emergency contact
-          <InfoTip>Someone we can call if we cannot reach you. Best if it is a person who is not at the event with you.</InfoTip>
-        </h3>
+        <h3 className="eh-card-title eh-with-icon"><IconHeart size={20} />Emergency contact</h3>
+        <p className="eh-hint">Someone other than you, ideally not at the event, whom we can call if we cannot reach you.</p>
         <Text k="emergency_name" ctx={ctx} disabled={ctx.locked} label="Their name" value={r.emergency_name ?? ''} maxLength={120}
               onCommit={(v) => ctx.save('emergency_name', { field: 'emergency_name', value: v })} />
         <Text k="emergency_phone" ctx={ctx} disabled={ctx.locked} label="Their phone" type="tel" inputMode="tel"
@@ -636,9 +679,10 @@ export function PartContacts({ view, ctx, family }) {
       </section>
       <section className="eh-card">
         <h3 className="eh-card-title eh-with-icon"><IconClipboard size={20} />Forms</h3>
-        <Choice k="first_reg_done" ctx={ctx} disabled={ctx.locked} label="FIRST registration for this season"
-                info="Every student must be registered with FIRST (the robotics program) each season, with a parent's online consent. It is free and takes about ten minutes."
-                options={[{ value: true, label: 'Done' }, { value: false, label: 'Not done yet' }]} value={r.first_reg_done ?? null}
+        <Choice k="first_reg_done" ctx={ctx} disabled={ctx.locked} label={`Is ${view.student.first} registered with FIRST this season?`}
+                hint="FIRST is the robotics program. A parent signs its consent online once a year."
+                info="Every student must be registered with FIRST each season, with a parent's online consent. It is free and takes about ten minutes. Not sure? Choose Not yet and open the link below to check."
+                options={[{ value: true, label: 'Yes, done' }, { value: false, label: 'Not yet' }]} value={r.first_reg_done ?? null}
                 onPick={(v) => ctx.save('first_reg_done', { field: 'first_reg_done', value: v })}>
           {links.first_registration && <a className="eh-link eh-with-icon" href={links.first_registration} target="_blank" rel="noopener noreferrer"><IconFlag size={18} />Open FIRST registration</a>}
         </Choice>
@@ -663,6 +707,7 @@ function runText(view, d, run) {
   const ad = view.answers.days[d.id] ?? {}
   const mode = run === 'to' ? ad.eff_to : ad.eff_home
   const nearby = run === 'to' ? ad.nearby_before : ad.nearby_after
+  if (hasV8(view) && !nearby && (run === 'to' ? ad.to_mode : ad.home_mode) == null) return { text: 'Not chosen yet', icon: IconAlert, warn: true }
   const car = (d.runs?.find((x) => x.run === run)?.cars ?? []).find((c) => c.my_seat || c.mine)
   if (mode === 'driving') return { text: 'In your car', icon: IconCar }
   if (nearby) return { text: 'Staying nearby', icon: IconBed }
@@ -694,15 +739,20 @@ export function Summary({ view, ctx, act, goPart, goInfo }) {
   const days = [...view.board.days].sort((x, y) => String(x.date).localeCompare(String(y.date)))
   const [note, setNote] = useState(null)
   const lockin = !ev.over && ev.lockin_open && p.phase1_done && !p.lockin_done
-  const needs = days.some((d) => ['to', 'home'].some((run) => needsSeat(view.answers.days[d.id], run)
-    && !(d.runs?.find((x) => x.run === run)?.cars ?? []).some((c) => c.my_seat)))
+  const missingSeats = seatsMissing(view)
+  const needs = missingSeats.length > 0
+  // The list in page order: by part, then by day.
+  const dayAt = Object.fromEntries(days.map((d, i) => [d.id, i]))
+  const todo = [...(p.missing ?? [])].sort((x, y) =>
+    PARTS.findIndex((pt) => pt.progressKey === x.step) - PARTS.findIndex((pt) => pt.progressKey === y.step)
+    || (dayAt[x.day_id] ?? -1) - (dayAt[y.day_id] ?? -1))
   const state = ev.over ? 'over' : !p.phase1_done ? 'todo' : lockin ? 'lockin' : p.lockin_done ? 'locked' : 'signed'
   const banner = {
     over: { icon: IconFlag, title: `${ev.title} is over`, text: 'Everything here is read-only now. Thank you for helping the team!' },
-    todo: { icon: IconAlert, title: `Almost there: ${p.missing.length} ${p.missing.length === 1 ? 'answer' : 'answers'} left`, text: 'Tap one below to finish it. Everything you entered is saved.' },
-    lockin: { icon: IconCheckCircle, title: 'Lock-in: please confirm each day', text: `${ev.lockin_due_at ? `Due ${fmtDay(ev.lockin_due_at, ctx.tz)}. ` : ''}A day with no changes is one tap. You can still change things afterward.` },
+    todo: { icon: IconAlert, title: `${p.missing.length} ${p.missing.length === 1 ? 'answer' : 'answers'} still needed`, text: 'Tap one below to answer it. Everything you entered is saved.' },
+    lockin: { icon: IconCheckCircle, title: 'Final check: please confirm each day', text: `${ev.lockin_due_at ? `Due ${fmtDay(ev.lockin_due_at, ctx.tz)}. ` : ''}A day that is right is one tap. You can still change things afterward.` },
     locked: { icon: IconCheckCircle, title: 'You are all set', text: ev.starts_on ? `See you ${fmtDate(ev.starts_on, 'medium')}! You can still change answers until each day.` : 'You can still change answers until each day.' },
-    signed: { icon: IconCheckCircle, title: 'Sign-up is done. Thank you!', text: ev.lockin_opens_at ? `Come back on ${fmtDay(ev.lockin_opens_at, ctx.tz)} to confirm each day (we will email you). You can change answers any time before then.` : 'You can change answers any time.' },
+    signed: { icon: IconCheckCircle, title: 'Sign-up is done. Thank you!', text: ev.lockin_opens_at ? `Come back on ${fmtDay(ev.lockin_opens_at, ctx.tz)} for a final check of each day (we will email you). You can change answers any time before then.` : 'You can change answers any time.' },
   }[state]
   const B = banner.icon
   return (
@@ -718,7 +768,7 @@ export function Summary({ view, ctx, act, goPart, goInfo }) {
       {state === 'todo' && (
         <section className="eh-card" data-testid="eh-todo">
           <ul className="eh-todo-list">
-            {p.missing.map((m, i) => {
+            {todo.map((m, i) => {
               const part = partOfStep(m.step)
               const I = part?.icon ?? IconEdit
               return (
@@ -726,7 +776,7 @@ export function Summary({ view, ctx, act, goPart, goInfo }) {
                   <button type="button" className={`eh-todo eh-tone-${part?.tone}`} onClick={() => goPart(part?.key ?? 'days')}>
                     <span className="eh-todo-icon"><I size={18} /></span>
                     <span className="eh-todo-text">{missingLabel(m, view)}<span className="eh-todo-part">{part?.label}</span></span>
-                    <span className="eh-todo-go">Fix</span>
+                    <span className="eh-todo-go">Answer</span>
                   </button>
                 </li>
               )
@@ -737,7 +787,7 @@ export function Summary({ view, ctx, act, goPart, goInfo }) {
 
       {needs && !ev.over && (
         <button type="button" className="eh-callout" onClick={() => goPart('rides')} data-testid="eh-needs-seat">
-          <IconAlert size={20} /><span>{first} still needs a car seat. Pick one in Rides.</span>
+          <IconAlert size={20} /><span>{first} still needs {missingSeats.length === 1 ? 'a car seat' : `${missingSeats.length} car seats`}. Pick {missingSeats.length === 1 ? 'it' : 'them'} in Rides →</span>
         </button>
       )}
 
@@ -748,7 +798,7 @@ export function Summary({ view, ctx, act, goPart, goInfo }) {
           <section key={d.id} className="eh-card eh-dayq" data-testid={lockin ? 'eh-lockin-day' : 'eh-summary-day'}>
             <DayHead d={d} tz={ctx.tz}>
               <span className={`eh-pill${ad.attending === 'yes' ? ' eh-pill-ok' : ''}`}>
-                {ad.attending === 'yes' ? 'Coming' : ad.attending === 'no' ? 'Not coming' : 'Not sure yet'}
+                {ad.attending === 'yes' ? 'Coming' : ad.attending === 'no' ? 'Not coming' : ad.attending === 'unsure' ? 'Not sure yet' : 'Not answered yet'}
               </span>
             </DayHead>
             {lockin && (ad.attending === 'unsure' || ad.attending == null) && (
@@ -757,6 +807,12 @@ export function Summary({ view, ctx, act, goPart, goInfo }) {
                       onPick={(v) => ctx.save(`attending:${d.id}`, { field: 'attending', value: v, day_id: d.id })} />
             )}
             {ad.attending === 'yes' && <DayPlan view={view} d={d} />}
+            {lockin && ad.attending === 'no' && <p className="eh-hint">Not coming. Nothing to confirm.</p>}
+            {!ev.over && ad.attending === 'yes' && missingSeats.some((m) => m.day.id === d.id) && (
+              <button type="button" className="eh-callout" onClick={() => goPart('rides')} data-testid="eh-day-needs-seat">
+                <IconAlert size={18} /><span>No seat {missingSeats.filter((m) => m.day.id === d.id).map((m) => (m.run === 'to' ? 'there' : 'home')).join(' or ')} yet. Pick one in Rides →</span>
+              </button>
+            )}
             {ad.attending === 'yes' && ad.confirmed && <p className="eh-ok-line" data-testid="eh-confirmed"><IconCheckCircle size={18} />Confirmed</p>}
             {lockin && ad.attending === 'yes' && !ad.confirmed && (
                 <button type="button" className="eh-btn eh-btn-primary eh-btn-wide" disabled={off} data-testid="eh-confirm-day"
@@ -783,8 +839,9 @@ export function Summary({ view, ctx, act, goPart, goInfo }) {
                   <span className={n ? 'eh-review-left' : 'eh-review-ok'}>{n ? `${n} left` : 'Done'}</span>
                 </span>
                 {!ev.over && (
-                  <button type="button" className="eh-btn" onClick={() => goPart(part.key)} data-testid="eh-review-change">
-                    <IconEdit size={18} />{n ? 'Finish' : 'Change'}
+                  <button type="button" className="eh-btn" onClick={() => goPart(part.key)} data-testid="eh-review-change"
+                          aria-label={`Go to ${part.label}`}>
+                    <IconEdit size={18} />{n ? 'Answer' : 'Change'}
                   </button>
                 )}
               </li>

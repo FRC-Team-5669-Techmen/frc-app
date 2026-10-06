@@ -217,8 +217,8 @@ export function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced = [], ac
 
       <div className="eh-car-line">
         <SeatDots seats={car.seats} filled={car.riders_count} />
-        <span className="eh-mono">{car.riders_count} of {car.seats}</span>
-        {car.leave_by && <span className="eh-mono">Leaves venue by {fmtTime(car.leave_by, tz)}</span>}
+        <span className="eh-mono">{car.riders_count} of {car.seats} seats taken</span>
+        {car.leave_by && <span className="eh-mono">Heads home at {fmtTime(car.leave_by, tz)}</span>}
       </div>
 
       {car.problem && (
@@ -232,20 +232,21 @@ export function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced = [], ac
             ? (emptyPair ? 'Needs two students together (one-child rule). Seat two at once below.' : 'Takes two or more riders (one-child rule).')
             : car.mine
               ? 'Your car takes two or more students together (one-child rule). A mentor seats the first two, then families can pick it.'
-              : emptyPair ? 'Takes two students together (one-child rule). A mentor seats the first two; then you can pick it.'
+              : emptyPair ? 'Not open yet. A mentor puts the first two students in this car (one-child rule). After that you can pick a seat here.'
                 : 'Takes two or more riders (one-child rule).'}</span>
         </p>
       )}
       {car.override_reason && <p className="eh-quiet eh-small">Override: {car.override_reason}</p>}
 
       {car.riders?.length > 0 && (
-        <ul className="eh-riders">
+        <ul className="eh-riders" aria-label="Riding in this car">
+          <li className="eh-riders-label">Riding</li>
           {car.riders.map((x, i) => (
             <li key={x.invite_id ?? i} className={x.mine ? 'eh-name-mine' : ''} data-testid="eh-rider">
               <span>{x.name}</span>
               {x.pickup && <span className="eh-tag">Pickup</span>}
               {x.spot && <span className="eh-rider-detail" data-testid="eh-spot">{x.spot}</span>}
-              {x.parent_phone && <a className="eh-rider-detail" href={`tel:${x.parent_phone}`} data-testid="eh-rider-phone">{fmtPhone(x.parent_phone)}</a>}
+              {x.parent_phone && <span className="eh-rider-detail">Parent <a href={`tel:${x.parent_phone}`} data-testid="eh-rider-phone">{fmtPhone(x.parent_phone)}</a></span>}
               {viewer === 'staff' && !frozen && !locked && x.invite_id && (
                 <button type="button" className="eh-mini" disabled={busy}
                         onClick={() => go('move', { invite_id: x.invite_id, day_id: day.id, run: runKey, car_id: null }, 'Taken out of the car.')}>
@@ -263,9 +264,17 @@ export function CarCard({ car, day, tz, viewer, myDay, runKey, unplaced = [], ac
       {!car.driver_phone && car.phone_note === 'contact_mentors' && <p className="eh-phone eh-quiet">Contact through mentors</p>}
 
       <div className="eh-car-actions">
-        {canClaim && car.my_seat && (
-          <button type="button" className="eh-btn" disabled={busy}
-                  onClick={() => go('unclaim_seat', { car_id: car.id }, 'Seat released.')}>Leave this car</button>
+        {canClaim && car.my_seat && confirm !== 'leave' && (
+          <button type="button" className="eh-btn" disabled={busy} data-testid="eh-give-up"
+                  onClick={() => setConfirm('leave')}>Give up this seat</button>
+        )}
+        {confirm === 'leave' && (
+          <div className="eh-confirm" data-testid="eh-give-up-confirm">
+            <p className="eh-confirm-text">Give up this seat? Your student will need another one.</p>
+            <button type="button" className="eh-btn eh-btn-primary" disabled={busy} data-testid="eh-give-up-yes"
+                    onClick={() => go('unclaim_seat', { car_id: car.id }, 'Seat given up.')}>Yes, give it up</button>
+            <button type="button" className="eh-btn" onClick={() => setConfirm(null)}>Keep the seat</button>
+          </div>
         )}
         {canClaim && !car.my_seat && !emptyPair && car.status !== 'pending' && car.status !== 'full' && confirm !== 'claim' && (
           <button type="button" className="eh-btn eh-btn-primary" disabled={busy} data-testid="eh-claim"

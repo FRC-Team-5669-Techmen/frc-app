@@ -434,6 +434,63 @@ build, `npm test` (675), `ds:audit`, `discord:calendar:test` and
 `history:verify`. Not verified: anything on the live database (0008 is not
 applied), email delivery, a real phone.
 
+## 2026-10-05, later: a usability review, and what it changed
+
+Before calling the page done, an independent agent reviewed screenshots of
+every screen at phone width, reading as the hardest user Mr. Pina named: a
+parent in their sixties who rarely uses technology, reads every word and
+calls the coach when unsure. It returned 25 findings. These changed:
+
+- **The way there and home are now answers, not a default** (0008, `_hub_progress`
+  keys `ride_to` / `ride_home`, test check 42, two more mutants). The page
+  used to start every ride question on "Team carpool" with a gold tick, and
+  that counted as answered, so a parent who drives and skimmed past it was
+  recorded as carpool and planned a seat. Now nothing is picked until the
+  parent picks; staying nearby that night answers it; "How will they get to
+  Bosco Tech" waits for the carpool choice. The 0005 test's two families now
+  choose their modes, which is the same plan under 0005 alone.
+- **Ride choices say what they mean**: "We drive Sam, and can take others",
+  "Sam rides with another driver", "We drive Sam ourselves, no one else"
+  ("In our car" and "On our own" read as the same thing).
+- **"Leave this car" is "Give up this seat", and asks first.**
+- **Rides is not "Done" while a carpool run has no seat**; its tile reads "No
+  seat", the Finish tile reads "Confirm" until the final check is done, and
+  a day with no seat says so beside its Confirm button.
+- **No running count in the status line** (saying Coming added questions, so
+  the count rose after an answer). "Lock-in" is "Final check" to families.
+- Car cards: "Has room" (was "Filling"), "Departed 6:02 AM" (was "Left",
+  read as seats left), "1 of 2 seats taken", "Heads home at 3:00 PM", a
+  "Riding" label, "Parent" before a rider's phone, and a needs-two car says
+  "Not open yet. A mentor puts the first two students in this car."
+- Seat headings name the drive ("Pick a seat for the drive there"); the
+  driver checks sit under the first day with a car, not at the foot of the
+  page; the optional "drive other students" question is "Driving to the
+  event anyway on Saturday?"; allergies say "Tap every one that applies" and
+  list what is picked; the emergency contact says "someone other than you"
+  in plain view; FIRST is asked as "Is Sam registered with FIRST this
+  season?" with a line saying what FIRST is; overnight options read "No, we
+  go home each night" and "Friday and Saturday nights"; the meet line reads
+  "Be at Bosco Tech front parking lot by 5:45 AM. Cars leave at 6:00 AM.";
+  the Finish list is in page order and says "Answer"; an unanswered day reads
+  "Not answered yet"; the save pill shows only while a save is failing (each
+  question already says "Saved"); the open link has no inner scroll box and
+  tells parents, not only mentors, where a driver adds a car.
+
+Not changed, and recorded as **decision 45**: the reviewer found the Who is
+coming order (Saturday, Sunday, then Friday, from 0006's `position`)
+confusing. It came with the original prompt, so it stays until Mr. Pina
+says otherwise. A mentor can change it in Setup with no code. Also not
+changed: an "I'm not sure" answer for FIRST (the column is yes/no), and a
+"same car home" shortcut (claiming a seat there already seats the student
+home in the same family's car when that car has room).
+
+Verified after this round, on the tree pushed: the SQL harness 239/239 (0005
+69/69, 0007 17/17, 0008 42/42); mutants 0008 39/39; `test:features`
+1108/1108 (`event-hub` 151/151); `test:checkin` 51/51; the build, `npm test`
+(675), `ds:audit`, `discord:calendar:test` and `history:verify`. Not verified:
+the live database (neither 0007 nor 0008 is applied there yet) and a real
+phone.
+
 ## MR. PINA'S STEPS for 0008 (2026-10-05)
 
 0007 must be in first (the steps above). Then:
@@ -441,7 +498,7 @@ applied), email delivery, a real phone.
 1. SQL editor (https://supabase.com/dashboard/project/pbuogcrhdywpzvcxbwsd/sql/new),
    one tab each, in order:
    1. `supabase/migrations/0008_event_hub_families.sql`: "Success. No rows returned".
-   2. `supabase/migrations/0008_event_hub_families_rls_test.sql`: 41 rows plus
+   2. `supabase/migrations/0008_event_hub_families_rls_test.sql`: 42 rows plus
       "summary", all PASS. It rolls itself back. It needs one staff member, one
       approved student, two students with this season's application and two
       more non-staff accounts.

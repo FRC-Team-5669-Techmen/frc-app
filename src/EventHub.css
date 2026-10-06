@@ -327,7 +327,8 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .ehm-section-edit textarea { margin-top: 6px; }
 
 /* The open link (/join, migration 0007). */
-.eh-join-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; max-height: 50vh; overflow-y: auto; }
+/* No inner scroll box: an inner scroller is easy to miss; the search narrows the list. */
+.eh-join-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
 .eh-join-opt { width: 100%; justify-content: flex-start; text-align: left; min-height: 44px; }
 .eh-join-picked { font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; }
 .eh-join-go { width: 100%; min-height: 48px; margin-top: 8px; }
@@ -708,3 +709,8 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .eh-pair-note { display: flex; gap: 8px; align-items: flex-start; margin: 6px 0; color: var(--steel); font-size: 0.95rem; }
 .eh-pair-note svg { flex: none; margin-top: 2px; color: var(--hr-outreach); }
 .eh-pair { display: grid; gap: 6px; }
+.eh-riders .eh-riders-label { min-height: 0; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); }
+/* Numbers read in the UI face: the mono zero is slashed and reads like "Ø". */
+.eh-chip-num { font-family: var(--font-ui); }
+.eh-tile .eh-tile-state.eh-tile-warn { color: var(--gold); }
+.eh-rider-detail a { color: var(--gold); }
