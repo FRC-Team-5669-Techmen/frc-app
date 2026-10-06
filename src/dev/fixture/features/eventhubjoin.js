@@ -4,39 +4,23 @@
 // hub_add_parent over the tables eventhub.js seeds (0005), so the /join page
 // can be driven in a browser. It is NOT the rule: production runs the SQL,
 // proven by 0007_event_hub_open_link_rls_test.sql on tools/sql-harness/.
+// Who is listed and how they are named come from eventhub.js (rosterStudent,
+// studentName), which answers as 0007 or as 0010, whichever is applied.
+import { hubFixture } from './eventhub.js'
 
-const STAFF_ROLES = ['mentor', 'lead', 'admin']
-const TZ = 'America/Los_Angeles'
+const { rosterStudent, studentName, setV8 } = hubFixture
 const T = (db, n) => (Array.isArray(db[n]) ? db[n] : (db[n] = []))
 const one = (db, n, pred) => T(db, n).find(pred) ?? null
 const nowMs = (now) => (now instanceof Date ? now.getTime() : Number(now) || Date.now())
 const iso = (ms) => new Date(ms).toISOString()
-const roles = (db, id) => T(db, 'member_roles').filter((r) => r.member_id === id).map((r) => r.role)
 const isEmail = (s) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/i.test(String(s ?? '').trim())
-const laDate = (ms) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms))
 const refusal = (code, details, state = 'P0001') => ({ data: null, error: { code: state, message: `hub:${code}`, details, hint: null } })
 
 function eventEnd(db, ev) {
   const t = T(db, 'hub_days').filter((d) => d.event_id === ev).map((d) => new Date(d.venue_closes_at).getTime())
   return t.length ? Math.max(...t) : -Infinity
 }
-function studentName(db, id) {
-  const p = one(db, 'profiles', (x) => x.id === id)
-  return (p?.full_name || '').trim() || (p?.nickname || '').trim() || 'A student'
-}
-function currentSeason(db, t) {
-  const today = laDate(t)
-  return T(db, 'seasons').filter((s) => s.start_date <= today && (!s.end_date || s.end_date >= today))
-    .sort((a, b) => String(b.start_date).localeCompare(String(a.start_date)))[0]?.id ?? null
-}
-function eligible(db, id, t) {
-  const p = one(db, 'profiles', (x) => x.id === id)
-  if (!p || p.approved === false || (p.status ?? 'active') !== 'active') return false
-  const r = roles(db, id)
-  if (!r.includes('student') || r.some((x) => STAFF_ROLES.includes(x))) return false
-  const season = currentSeason(db, t)
-  return T(db, 'member_applications').some((m) => m.member_id === id && m.season_id === season)
-}
+const eligible = (db, id, t) => rosterStudent(db, id, t, { needApp: true })
 function joinEvent(db, ev, t) {
   return T(db, 'hub_events')
     .filter((e) => (!ev || e.id === ev) && T(db, 'hub_days').some((d) => d.event_id === e.id) && t < eventEnd(db, e.id))
@@ -64,7 +48,8 @@ export default {
   migration: '0007',
   creates: { rpcs: ['hub_join_info', 'hub_join', 'hub_add_parent'] },
   rpcs: {
-    hub_join_info: ({ args, db, now }) => {
+    hub_join_info: ({ args, db, now, engine }) => {
+      setV8(engine)
       const t = nowMs(now)
       const e = joinEvent(db, args?.p_event ?? null, t)
       if (!e) return refusal('not_open', 'This sign-up is closed or the link is not right. Ask the team for the current link.')
@@ -78,7 +63,8 @@ export default {
         error: null,
       }
     },
-    hub_join: ({ args, db, now }) => {
+    hub_join: ({ args, db, now, engine }) => {
+      setV8(engine)
       const t = nowMs(now)
       const e = joinEvent(db, args?.p_event ?? null, t)
       const email = String(args?.p_email ?? '').trim().toLowerCase()

@@ -77,7 +77,8 @@ that thought it was checking UPDATE was checking SELECT again.
 
 Three of the frozen SQL files have a test sibling; every numbered migration has
 had one since `0001`, which made seven on 2026-10-01, eight on 2026-10-04, nine on 2026-10-05 with
-`0007`, ten later that day with `0008`, and eleven on 2026-10-06 with `0009`
+`0007`, ten later that day with `0008`, eleven on 2026-10-06 with `0009`, and
+twelve the same day with `0010`
 (a pure data seed such as `0006` has no boundary to test). That is the number
 this rule exists to move.
 

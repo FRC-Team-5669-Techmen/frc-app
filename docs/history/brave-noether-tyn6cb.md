@@ -3,7 +3,7 @@ title: "Event family hub (Beach Blitz 2026): family form, carpool board, food bo
 date: 2026-10-04
 branches: [claude/brave-noether-tyn6cb]
 commits: []
-migrations: ["0005_event_family_hub.sql", "0005_event_family_hub_rls_test.sql", "0006_beach_blitz_seed.sql", "0007_event_hub_open_link.sql", "0007_event_hub_open_link_rls_test.sql", "0008_event_hub_families.sql", "0008_event_hub_families_rls_test.sql", "0009_event_hub_households.sql", "0009_event_hub_households_rls_test.sql"]
+migrations: ["0005_event_family_hub.sql", "0005_event_family_hub_rls_test.sql", "0006_beach_blitz_seed.sql", "0007_event_hub_open_link.sql", "0007_event_hub_open_link_rls_test.sql", "0008_event_hub_families.sql", "0008_event_hub_families_rls_test.sql", "0009_event_hub_households.sql", "0009_event_hub_households_rls_test.sql", "0010_event_hub_roster_names.sql", "0010_event_hub_roster_names_rls_test.sql"]
 subsystems: ["Schedule", "Testing", "Documentation"]
 ---
 
@@ -596,3 +596,154 @@ before every section, no GroupMe button on an event without one; the Delete
 card on screen when a family is opened; delete from the list asking first).
 No SQL changed.
 
+
+## 2026-10-06: student leads on the roster, names from the application (0010, ledger 0004)
+
+Two faults on the live Beach Blitz sign-up, reported the night the link went
+to parents. **Student leads were missing**: Seraj Arteaga and Marcos Posada
+are students who hold lead and filed this season's application, and their
+families could not pick them. **Students showed as email addresses**:
+`_hub_student_name` read `profiles.full_name` then `nickname`, and five
+profiles carry a sign-in email or junk there (one nickname is a joke title).
+
+**Where the roster rule lived.** Three copies, all excluding lead: 0005
+`_hub_sync_invites` (Add them on the mentor page), 0005 `_hub_overview`
+redefined by 0008 (the readiness roster count and "N students on the roster
+without an invite"), and 0007 `_hub_join_eligible` (the open link list and
+`hub_join`). The prompt also named the invite send, the mentor Families page
+and the boards: none of those filter the roster, they read the invites, so
+they needed no change for the first fault. 0010 adds
+`_hub_roster_student(student)`, the only copy of the rule (approved, active,
+the student role, neither mentor nor admin, this season's application), and
+the three sites call it; `_hub_join_eligible` stays by name as a one-line
+call, because `hub_join_info` and `hub_join` call it.
+
+**Where names came from.** Every server-side place the hub names a student
+already called `_hub_student_name` (the picker, the family page, the boards,
+the emails, the mentor Families list, the CSV and the day sheet are built from
+its output), except `_hub_family_surname` ("Claimed by the X family"), which
+read `profiles.full_name` itself. 0010 redefines `_hub_student_name` (the
+application's legal first and last name, this season first, else the latest;
+the profile only when the student has no application at all) and
+`_hub_family_surname` (the parent's last word, else the surname from
+`_hub_student_name`). `_hub_clean_name` refuses a name containing an at sign
+or shaped like an email local part (`jdoe.2029`), so with nothing usable a
+student reads "A student". The one client-side naming site is the Setup tab's
+day-captain picker, which lists staff (leads included) from `profiles`; no
+RPC exposes `_hub_student_name` to the client, so it now only refuses an
+email there, and the board names the chosen captain through the server.
+
+**Choices made under the prompt.** The rule keeps "approved and active",
+which every earlier copy required; the prompt's wording was "anyone with this
+season's application and role student, excluding only mentor and admin", and
+an unapproved or alumni account is not someone a parent should sign up. Add
+them now ALSO requires this season's application, which it did not before; an
+invite it made earlier is never removed. Parents now see legal names, and the
+open link's search matches them, so a student who goes by another name is
+listed under the name on their application.
+
+**A lead who is also a hub family.** A lead is `is_staff()`. Nothing on the
+family path reads the signed-in user: `hub_family_call` runs from the Edge
+Function as the service role, and `hub_join`, `hub_add_parent` and
+`hub_household_open` decide on the token and their arguments alone. So a lead
+signed in on the same phone gets family scope on a family link. Their own
+signed-in `/trips` view is unchanged: the staff board, as before. The test
+proves both.
+
+**Verified.**
+- `tools/sql-harness/run.mjs`: 262/262 across 12 test files with every
+  migration applied, including `0010_event_hub_roster_names_rls_test.sql` at
+  12/12; and 251/251 across 11 files with 0010 applied WITHOUT 0009, so the
+  two can be pasted in either order. Its rows: the lead-student listed and
+  started on the open link; a mentor-student and an admin-student not listed
+  and refused (`hub:student`); two of the four listed; Add them invites the
+  lead and the plain student only, and the readiness roster count equals the
+  open page list and the rule (2, 2, 2); "Lena Testcase" from the application
+  on the open page, the family page, the mentor list, the welcome subject and
+  the surname, against a profile holding an email and a joke nickname; no
+  listed name with an at sign; with no application the nickname when the full
+  name is an email, the full name when clean, "A student" when both are junk;
+  the lead's family link gives the family view with 0 other families' invite
+  ids, signed in or not, against 2 on the staff board, and refuses a staff
+  action; the lead signed in still gets the staff board (2 invite ids) and a
+  plain student the member board (0); the helpers executable by nobody.
+- `tools/sql-harness/mutants-0010.mjs`: 12/12 caught, permissive first (the
+  mentor and admin exclusion dropped, admin alone dropped, Add them handed
+  every approved account, the readiness count with its own copy of the old
+  rule, the at-sign guard removed, the profile preferred over the
+  application, the surname from the profile, a family link opening the staff
+  view for a signed-in staff member, a helper granted to anon or
+  authenticated), plus lead excluded again. Building it found that the test
+  raised outright when a mutant broke the open link (an error string cast to
+  jsonb), so a mutant counted as missed; every cast now goes through a helper
+  and each check fails on its own row.
+- `event-hub` in fixture mode: a new "roster and names (0010)" step at 375
+  and 1440. The seed (`eventhubroster.js`) adds Jesse Vega, whose profile name
+  is `jvega.2029@boscotech.edu` and nickname a joke title, and Drew Nakamura,
+  a student who also holds mentor; Robin Park, lead and student, was already
+  in the core seed. With 0010: Robin 1 and Jesse Vega 1 listed, Drew 0 and
+  Max/Ada 0, no listed name with an at sign; a parent starts Robin's family
+  and lands on the page; Jesse's family page says "Jesse Vega" with no email
+  or nickname anywhere on it; Add them invites Robin and Jesse and not Drew,
+  and the Families list names them from the application. Without 0010 the
+  same page leaves Robin out and lists `jvega.2029@boscotech.edu`, which is
+  the fault. The open link step's old check ("Robin is a lead, so not
+  listed") was turned round.
+- Looked at `/join` and Jesse's family page at 375 and 1440, and the mentor
+  Families tab at both. **That found one more thing, and it is fixed**: the
+  mentor page was 379px wide at 375 on the Families tab, the same with and
+  without 0010. `margin: 0 auto` on a column flex item turns off stretch, so
+  the page shrank to its content's minimum width, which the table set. The
+  page is now full-width border-box, and the table scrolls in its own box.
+
+**Not verified.** Nothing here reached the live project: 0010 is not applied,
+and whether each of the five profiles named in the report now reads cleanly
+depends on their applications, which only the query below can show. The 0007
+test's check 3 picks the lowest-id mentor, lead or admin account and requires
+it NOT to be listed; on a database where that account is a lead-student with
+this season's application, it now reads FAIL, correctly, because 0010 lists
+such a student. 0010's own checks 1 to 5 replace it. Test files for 0005 to
+0009 were not edited (ledger 0004).
+
+**Found, not fixed (outside ledger 0004).** The first full features run went
+red in `display-history` at 375 only: the Team Hours matrix names members by
+NICKNAME in a sticky first column, and the seed's joke nickname "Supreme
+Overlord of Wires" widened that column until it covered the day cells, so the
+spec could not tap one. Reproduced twice, then gone with a shorter nickname
+("Supreme Leader", which is what the seed now carries). Live profiles carry
+joke nicknames too, so on a phone a long one can do the same to that matrix.
+That is Team Hours, not the hub, and is left for its own task.
+
+## MR. PINA'S STEPS for 0010 (2026-10-06)
+
+In the Supabase SQL editor
+(https://supabase.com/dashboard/project/pbuogcrhdywpzvcxbwsd/sql/new), one
+paste per run, in this order:
+
+1. `supabase/migrations/0010_event_hub_roster_names.sql`. It needs 0005, 0007
+   and 0008; 0009 may be before or after it. No Edge Function redeploy.
+2. `supabase/migrations/0010_event_hub_roster_names_rls_test.sql`. It rolls
+   back. Expect 13 rows: checks 1 to 12 PASS and `summary` PASS ("12 PASS, 0
+   FAIL, 0 SKIP of 12 checks").
+3. The roster the open link now shows parents, one row per student:
+
+```sql
+select s ->> 'name' as student,
+       exists (select 1 from public.member_roles r
+                where r.member_id = (s ->> 'id')::uuid and r.role = 'lead') as is_lead,
+       position('@' in s ->> 'name') > 0 as has_at_sign
+  from jsonb_array_elements(
+         public.hub_join_info('b1b12026-0000-4000-8000-000000000001') -> 'students') s
+ order by 1;
+```
+
+   Seraj Arteaga and Marcos Posada should be there with `is_lead` true, every
+   row should read `has_at_sign` false, and no row should be a joke title.
+   If a name is still wrong, it is wrong on that student's application, which
+   is now the source.
+
+After that, families of student leads can sign up on the open link with no
+other step. On the mentor page, Readiness may now say a few students are on
+the roster without an invite; Add them makes theirs, which only matters for
+emailing invites. Pasting 0005, 0007 or 0008 again later puts the old rule and
+names back; paste 0010 again after it.

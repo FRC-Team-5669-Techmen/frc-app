@@ -90,7 +90,8 @@ const STAFF_ROLES = ['mentor', 'lead', 'admin']
 // or as 0005 plus 0008, whichever the fixture is set to.
 let V8 = false
 let V9 = false
-const setV8 = (engine) => { V8 = !!engine?.applied?.('0008'); V9 = !!engine?.applied?.('0009') }
+let V10 = false
+const setV8 = (engine) => { V8 = !!engine?.applied?.('0008'); V9 = !!engine?.applied?.('0009'); V10 = !!engine?.applied?.('0010') }
 // 0009: two families in one event sharing an email are brothers and sisters.
 function siblings(db, a, b) {
   if (!a || !b || a === b) return false
@@ -142,15 +143,47 @@ function eventEnd(db, ev) {
   const t = T(db, 'hub_days').filter((d) => d.event_id === ev).map((d) => ms(d.venue_closes_at))
   return t.length ? Math.max(...t) : Infinity
 }
+// 0010: the application legal name first (this season, else the latest),
+// the profile only when there is no application, never anything shaped like
+// an email. Before 0010: the profile full name, then the nickname.
+const cleanName = (s) => {
+  const v = String(s ?? '').replace(/\s+/g, ' ').trim()
+  return !v || v.includes('@') || /^[a-z0-9._-]+\.[0-9]{2,4}$/i.test(v) ? null : v
+}
 function studentName(db, id) {
   const p = one(db, 'profiles', (x) => x.id === id)
-  return (p?.full_name || '').trim() || (p?.nickname || '').trim() || 'A student'
+  if (!V10) return (p?.full_name || '').trim() || (p?.nickname || '').trim() || 'A student'
+  const season = currentSeason(db, Date.now())
+  const apps = T(db, 'member_applications').filter((m) => m.member_id === id)
+    .sort((a, b) => (b.season_id === season) - (a.season_id === season) || String(b.submitted_at).localeCompare(String(a.submitted_at)))
+  if (apps.length) return cleanName(`${apps[0].legal_first_name ?? ''} ${apps[0].legal_last_name ?? ''}`) || 'A student'
+  return cleanName(p?.full_name) || cleanName(p?.nickname) || 'A student'
+}
+// The hub roster. 0010 (_hub_roster_student): approved, active, a student,
+// neither mentor nor admin, with an application for the current season.
+// Before 0010 every copy excluded lead too, and only the open link (0007)
+// required the application.
+function currentSeason(db, t) {
+  const today = laDateOf(t)
+  return T(db, 'seasons').filter((s) => s.start_date <= today && (!s.end_date || s.end_date >= today))
+    .sort((a, b) => String(b.start_date).localeCompare(String(a.start_date)))[0]?.id ?? null
+}
+function rosterStudent(db, id, t, { needApp = true } = {}) {
+  const p = one(db, 'profiles', (x) => x.id === id)
+  if (!p || p.approved === false || (p.status ?? 'active') !== 'active') return false
+  const r = roles(db, id)
+  if (!r.includes('student') || r.some((x) => (V10 ? ['mentor', 'admin'] : STAFF_ROLES).includes(x))) return false
+  if (!V10 && !needApp) return true
+  const season = currentSeason(db, t)
+  return T(db, 'member_applications').some((m) => m.member_id === id && m.season_id === season)
 }
 const inviteName = (db, inv) => studentName(db, one(db, 'hub_invites', (i) => i.id === inv)?.student_id)
 const lastWord = (s) => String(s ?? '').trim().split(/\s+/).pop()
 function familySurname(db, inv) {
   const r = one(db, 'hub_responses', (x) => x.invite_id === inv)
-  return lastWord(r?.parent_name) || lastWord(inviteName(db, inv)) || 'Team'
+  if (!V10) return lastWord(r?.parent_name) || lastWord(inviteName(db, inv)) || 'Team'
+  const student = inviteName(db, inv)
+  return lastWord(cleanName(r?.parent_name)) || (student === 'A student' ? '' : lastWord(student)) || 'Team'
 }
 function driverName(db, car) {
   const c = one(db, 'hub_cars', (x) => x.id === car)
@@ -800,8 +833,7 @@ function overview(db, ev, now) {
   const invites = T(db, 'hub_invites').filter((i) => i.event_id === ev)
   const days = T(db, 'hub_days').filter((d) => d.event_id === ev).sort((a, b) => a.day_date.localeCompare(b.day_date))
   const rows = plan(db, ev)
-  const roster = T(db, 'profiles').filter((p) => p.approved !== false && (p.status ?? 'active') === 'active'
-    && roles(db, p.id).includes('student') && !roles(db, p.id).some((r) => STAFF_ROLES.includes(r)))
+  const roster = T(db, 'profiles').filter((p) => rosterStudent(db, p.id, nowMs(now), { needApp: false }))
   const familyRows = invites.map((i) => {
     const pr = progress(db, i.id); const r = response(db, i.id) ?? {}
     return { invite_id: i.id, student_id: i.student_id, name: studentName(db, i.student_id), emails: i.emails ?? [],
@@ -933,7 +965,7 @@ function staffCall(db, user, action, args, now) {
     case 'food_drop': foodChange(db, a.claim_id, null, staff, true, null, null, null, now); break
     case 'sync_invites': {
       let created = 0
-      for (const p of T(db, 'profiles').filter((x) => x.approved !== false && roles(db, x.id).includes('student') && !roles(db, x.id).some((r) => STAFF_ROLES.includes(r)))) {
+      for (const p of T(db, 'profiles').filter((x) => rosterStudent(db, x.id, now, { needApp: false }))) {
         if (T(db, 'hub_invites').some((i) => i.event_id === a.event_id && i.student_id === p.id)) continue
         const app = T(db, 'member_applications').find((m) => m.member_id === p.id)
         T(db, 'hub_invites').push({ id: newId(), event_id: a.event_id, student_id: p.id, emails: app?.parent_email ? [String(app.parent_email).toLowerCase()] : [], created_at: iso(now) })
@@ -1049,7 +1081,7 @@ export function removeGuardian(db, inv, email, staff, callerEmail, now) {
   return { ok: true, self: callerEmail === e }
 }
 
-export const hubFixture = { T, one, nowMs, txn, Refusal, tokenInvite, isStaff, claim, seatsIn, refuse, setV8 }
+export const hubFixture = { T, one, nowMs, txn, Refusal, tokenInvite, isStaff, claim, seatsIn, refuse, setV8, rosterStudent, studentName }
 
 const refusalAnswer = (e) => ({ data: null, error: { code: e.state, message: `hub:${e.code}`, details: e.message, hint: null } })
 

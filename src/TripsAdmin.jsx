@@ -355,31 +355,33 @@ function Families({ ov, inviteId, setInviteId, reload }) {
   return (
     <div>
       <input className="eh-input ehm-search" placeholder="Search students" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search students" />
-      <table className="ehm-table" data-testid="ehm-families">
-        <thead><tr><th>Student</th><th>Sign-up</th><th>Lock-in</th><th>Invite</th><th aria-label="Delete" /></tr></thead>
-        <tbody>
-          {fam.map((f) => (
-            <tr key={f.invite_id}>
-              <td><button type="button" className="ehm-name-btn" onClick={() => setInviteId(f.invite_id)}>{f.name}</button></td>
-              <td>{f.phase1_done ? 'Done' : `${f.missing} to go`}</td>
-              <td>{f.lockin_done ? 'Done' : '-'}</td>
-              <td>{f.emails.length ? f.invite_status : 'No email'}</td>
-              <td className="ehm-del-cell">
-                {armDel !== f.invite_id
-                  ? <button type="button" className="eh-btn eh-btn-quiet" disabled={delBusy} onClick={() => { setArmDel(f.invite_id); setDelNote(null) }}
-                            data-testid="ehm-row-delete">Delete</button>
-                  : (
-                    <span className="eh-confirm-inline">
-                      <span>Delete {f.name}'s sign-up?</span>
-                      <button type="button" className="eh-btn eh-btn-danger" disabled={delBusy} onClick={() => deleteFamily(f)} data-testid="ehm-row-delete-yes">Yes, delete</button>
-                      <button type="button" className="eh-btn" onClick={() => setArmDel(null)}>Keep</button>
-                    </span>
-                  )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="ehm-table-wrap">
+        <table className="ehm-table" data-testid="ehm-families">
+          <thead><tr><th>Student</th><th>Sign-up</th><th>Lock-in</th><th>Invite</th><th aria-label="Delete" /></tr></thead>
+          <tbody>
+            {fam.map((f) => (
+              <tr key={f.invite_id}>
+                <td><button type="button" className="ehm-name-btn" onClick={() => setInviteId(f.invite_id)}>{f.name}</button></td>
+                <td>{f.phase1_done ? 'Done' : `${f.missing} to go`}</td>
+                <td>{f.lockin_done ? 'Done' : '-'}</td>
+                <td>{f.emails.length ? f.invite_status : 'No email'}</td>
+                <td className="ehm-del-cell">
+                  {armDel !== f.invite_id
+                    ? <button type="button" className="eh-btn eh-btn-quiet" disabled={delBusy} onClick={() => { setArmDel(f.invite_id); setDelNote(null) }}
+                              data-testid="ehm-row-delete">Delete</button>
+                    : (
+                      <span className="eh-confirm-inline">
+                        <span>Delete {f.name}'s sign-up?</span>
+                        <button type="button" className="eh-btn eh-btn-danger" disabled={delBusy} onClick={() => deleteFamily(f)} data-testid="ehm-row-delete-yes">Yes, delete</button>
+                        <button type="button" className="eh-btn" onClick={() => setArmDel(null)}>Keep</button>
+                      </span>
+                    )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {delNote && <p className={`eh-note${delNote.bad ? ' eh-note-bad' : ''}`} role="status" data-testid="ehm-delete-note">{delNote.text}</p>}
       {(ov.families ?? []).length === 0 && <p className="eh-empty">No families yet. Use Responses, Add them.</p>}
     </div>
@@ -519,7 +521,11 @@ function Setup({ eventId, ov, reload }) {
     const ids = [...new Set((roles.data ?? []).map((r) => r.member_id))]
     if (ids.length) {
       const { data: people } = await supabase.from('profiles').select('id, full_name, nickname').in('id', ids)
-      setStaff((people ?? []).map((p) => ({ id: p.id, name: p.full_name || p.nickname || 'Staff' })).sort((a, b) => a.name.localeCompare(b.name)))
+      // The captain picker names staff (leads are students too) from their
+      // profile, which can hold a sign-in email. Never show one; the board
+      // names the chosen captain through _hub_student_name (0010).
+      const shown = (s) => (s && !s.includes('@') ? s.trim() : '')
+      setStaff((people ?? []).map((p) => ({ id: p.id, name: shown(p.full_name) || shown(p.nickname) || 'Staff' })).sort((a, b) => a.name.localeCompare(b.name)))
     }
   }, [eventId])
   useEffect(() => { load() }, [load])

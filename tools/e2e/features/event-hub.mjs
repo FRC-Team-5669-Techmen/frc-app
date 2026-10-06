@@ -47,6 +47,11 @@
  *    staff not; the guardian tick required; straight in for the first person,
  *    the link emailed to the family that already started; a second parent
  *    added with a name from Contacts; a dead link points to /join;
+ *  - the roster and names (0010): a student lead is listed and can be started,
+ *    a student who is a mentor is not; Add them follows the same rule; the
+ *    picker, the family page and the mentor list name a student from the
+ *    application, never a profile email or nickname; without 0010 the lead
+ *    is missing and the email shows;
  *  - families (0008): a parent drives other students without their own; one
  *    guardian removes another, whose link stops; a family takes itself off
  *    the trip and the student can be signed up again; a mentor removes a
@@ -57,6 +62,7 @@
  *  - 44px floor on every control at 375, no horizontal scroll, 0 console errors.
  */
 import { EH } from '../../../src/dev/fixture/features/eventhub.js';
+import { ROSTER_FIXTURE } from '../../../src/dev/fixture/features/eventhubroster.js';
 import { waitForFixture } from '../lib.mjs';
 
 const TOK = EH.tokens;
@@ -65,6 +71,7 @@ const BOARD = `/trips/${EH.event}`;
 const MANAGE = `/trips/${EH.event}/manage`;
 const CONTROLS = '.eh-chip, .eh-btn, .eh-seg-btn, .eh-tick, .eh-input, .eh-option, .eh-tile, .eh-tip-btn, .eh-fold-head, .eh-todo, .eh-mini';
 const DAKOTA = '00000000-0000-0000-0000-0000000000cc';
+const IDS_LEAD = '00000000-0000-0000-0000-0000000000b2';
 
 async function familyPage(t, key, opts = {}) {
   await t.open(fam(key), { ready: '[data-testid="eh-status"], [data-testid="eh-lost"], .eh-card', ...opts });
@@ -81,6 +88,13 @@ async function openFold(t, testid) {
   const head = t.page.locator(`[data-testid="${testid}"] > .eh-fold-head`);
   if ((await head.getAttribute('aria-expanded')) !== 'true') await t.press(head);
   await t.settle({ quietMs: 250 });
+}
+
+/** /join on a phone that may remember a family: always the empty form. */
+async function joinForm(t, opts) {
+  await t.open('/join', { persona: 'signedout', ...opts, ready: '[data-testid="eh-join-form"], [data-testid="eh-join-saved"]' });
+  if (await t.count('[data-testid="eh-join-saved"]')) await t.press(t.page.locator('[data-testid="eh-join-saved"] button', { hasText: 'Sign up another student' }));
+  await t.waitFor('[data-testid="eh-join-form"]');
 }
 
 /** The mentor page's tabs. */
@@ -682,8 +696,8 @@ export default {
       t.as('a parent on /join, signed out');
       await t.open('/join', { persona: 'signedout', reset: true, ready: '[data-testid="eh-join-form"]' });
       const names = await t.texts('.eh-join-opt');
-      t.check('the open link lists students with this season\'s application, and no staff (Robin is a lead and a student)',
-        names.includes('Dakota Hale') && names.includes('Riley Student') && !names.includes('Robin Park') && !names.some((n) => /Max|Ada/.test(n)),
+      t.check('the open link lists students with this season\'s application, a student lead among them, and no mentor or admin',
+        names.includes('Dakota Hale') && names.includes('Riley Student') && names.includes('Robin Park') && !names.some((n) => /Max|Ada|Nakamura/.test(n)),
         `${names.length} listed: ${names.slice(0, 4).join(', ')}...`);
       await t.tapTargets(CONTROLS + ', .eh-join-mentor a', '44px floor on every control of the open link');
       await t.noHScroll('no horizontal scroll on the open link');
@@ -770,6 +784,77 @@ export default {
       await t.open(`/join/${EH.event}`, { persona: 'signedout', ready: '.eh-join-mentor' });
       const mentorLink = await t.count(`.eh-join-mentor a[href="/trips/${EH.event}/manage"]`);
       t.check('the open link tells a driving mentor where to add a car', mentorLink === 1, `${mentorLink}`);
+    });
+
+    // ════ the roster and names (0010) ══════════════════════════════════════
+    await t.step('roster and names (0010)', async () => {
+      // Robin Park is a student who also holds lead. Drew Nakamura is a student
+      // who also holds mentor. Jesse Vega's profile name is a sign-in email and
+      // the nickname a joke title; the application says Jesse Vega.
+      t.as('a parent on /join, signed out, with 0010');
+      await joinForm(t, { mig: 'all', reset: true });
+      const names = await t.texts('.eh-join-opt');
+      const has = (n) => names.filter((x) => x === n).length;
+      const at = names.filter((n) => n.includes('@')).length;
+      t.check('with 0010 the lead-student and the student named by the application are listed; the mentor-student, the mentor and the admin are not',
+        has('Robin Park') === 1 && has('Jesse Vega') === 1 && has('Drew Nakamura') === 0 && names.filter((n) => /Max|Ada/.test(n)).length === 0,
+        `Robin ${has('Robin Park')}, Jesse Vega ${has('Jesse Vega')}; Drew (mentor) ${has('Drew Nakamura')}, Max/Ada ${names.filter((n) => /Max|Ada/.test(n)).length}; ${names.length} listed`);
+      t.check('no name on the open link contains an at sign or the joke nickname (the list is not empty)',
+        names.length >= 10 && at === 0 && !names.some((n) => /Supreme|jvega/.test(n)), `${names.length} names, ${at} with an at sign`);
+
+      // The lead-student can be started, straight into the family page.
+      await t.press(t.page.locator('.eh-join-opt', { hasText: /^Robin Park$/ }));
+      await t.page.locator('input[autocomplete="name"]').fill('Lee Park');
+      await t.page.locator('input[type="email"]').fill('lee.park@example.com');
+      await t.press('[data-testid="eh-join-guardian"]');
+      await t.press('button[type="submit"]');
+      await t.waitFor('[data-testid="eh-status"]');
+      const robin = await t.text('[data-testid="eh-student"]');
+      const robinInvites = (await t.rows('hub_invites')).filter((i) => i.student_id === IDS_LEAD).length;
+      t.check('a parent starts the lead-student family on the open link and lands on the family page',
+        robin === 'Robin Park' && robinInvites === 1 && /\/e\//.test(new URL(t.page.url()).pathname), `student "${robin}"; Robin invites ${robinInvites}`);
+
+      // Jesse: named by the application on the family page.
+      await joinForm(t, {});
+      await t.press(t.page.locator('.eh-join-opt', { hasText: /^Jesse Vega$/ }));
+      await t.page.locator('input[autocomplete="name"]').fill('Alex Vega');
+      await t.page.locator('input[type="email"]').fill('alex.vega@example.com');
+      await t.press('[data-testid="eh-join-guardian"]');
+      await t.press('button[type="submit"]');
+      await t.waitFor('[data-testid="eh-status"]');
+      const jesse = await t.text('[data-testid="eh-student"]');
+      const page = await t.bodyText();
+      t.check('the family page names the student from the application, never the profile email or nickname',
+        jesse === 'Jesse Vega' && !/jvega|Supreme/.test(page), `student "${jesse}"; profile email on page ${/jvega/.test(page)}, nickname ${/Supreme/.test(page)}`);
+      await t.shot('roster-names-family');
+
+      // The mentor page: the same names, and Add them follows the same rule.
+      await t.open(MANAGE, { persona: 'mentor', ready: '[data-testid="ehm-page"]' });
+      await t.press('[data-testid="ehm-line-responses"] .ehm-line-head');
+      await t.settle({ quietMs: 300 });
+      const addBtn = t.page.locator('[data-testid="ehm-line-responses"] button', { hasText: /^Add them$/ });
+      const offered = await addBtn.count();
+      if (offered) { await t.press(addBtn); await t.settle({ quietMs: 600 }); }
+      const inv = (await t.rows('hub_invites')).filter((i) => i.event_id === EH.event);
+      const invited = (id) => inv.filter((i) => i.student_id === id).length;
+      await tab(t, 'Families');
+      const famNames = await t.texts('[data-testid="ehm-families"] .ehm-name-btn');
+      t.check('Add them makes invites by the same rule (Robin and Jesse in, the mentor-student out), and the Families list names them from the application',
+        offered === 1 && invited(IDS_LEAD) === 1 && invited(ROSTER_FIXTURE.JESSE) === 1 && invited(ROSTER_FIXTURE.DREW) === 0
+          && famNames.includes('Jesse Vega') && famNames.includes('Robin Park') && famNames.filter((n) => n.includes('@')).length === 0 && !famNames.includes('Drew Nakamura'),
+        `Add them offered ${offered}; invites Robin ${invited(IDS_LEAD)}, Jesse ${invited(ROSTER_FIXTURE.JESSE)}, Drew ${invited(ROSTER_FIXTURE.DREW)}; ${famNames.length} families, ${famNames.filter((n) => n.includes('@')).length} with an at sign`);
+      await t.noHScroll('no horizontal scroll on the mentor Families list');
+
+      // Before 0010: the lead and the mentor-student are left out, and Jesse
+      // shows as the profile email. That is the bug 0010 fixes.
+      const without0010 = migs.filter((m) => m !== '0010').join(',');
+      t.as(`mig ${without0010}`);
+      await joinForm(t, { mig: without0010, reset: true });
+      const before = await t.texts('.eh-join-opt');
+      t.check('without 0010: Robin is not listed and Jesse shows as the profile email (the two faults 0010 fixes); the mentor-student is still not listed',
+        !before.includes('Robin Park') && before.includes('jvega.2029@boscotech.edu') && !before.includes('Jesse Vega') && !before.includes('Drew Nakamura'),
+        `${before.length} listed; Robin ${before.includes('Robin Park')}; Jesse as email ${before.includes('jvega.2029@boscotech.edu')}`);
+      await joinForm(t, { mig: 'all', reset: true });
     });
 
     // ════ families (0008) ═════════════════════════════════════════════════
