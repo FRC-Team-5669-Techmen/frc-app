@@ -15,7 +15,8 @@ same day. `0009` (households: a parent with more than one student, with its
 test) landed on 2026-10-06, and `0010` (the hub roster and names, with
 its test) and `0011` (the parent service hours note and export) the same
 day. `0011` changes no grant or policy, so it has no `_rls_test.sql`; it is
-proven by `tools/sql-harness/check-0011.mjs`.
+proven by `tools/sql-harness/check-0011.mjs`. `0012` (job claiming gated
+on the IDEA certifications mirror, with its test) landed on 2026-10-16.
 
 **Every numbered test can now be run here, before anyone pastes it.**
 `node tools/sql-harness/run.mjs` builds a throwaway PostgreSQL 16 with Supabase
@@ -81,7 +82,7 @@ that thought it was checking UPDATE was checking SELECT again.
 Three of the frozen SQL files have a test sibling; every numbered migration has
 had one since `0001`, which made seven on 2026-10-01, eight on 2026-10-04, nine on 2026-10-05 with
 `0007`, ten later that day with `0008`, eleven on 2026-10-06 with `0009`, and
-twelve the same day with `0010`
+twelve the same day with `0010`, and thirteen on 2026-10-16 with `0012`
 (a pure data seed such as `0006` has no boundary to test). That is the number
 this rule exists to move.
 

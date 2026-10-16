@@ -32,21 +32,16 @@ const MyHoursPage = lazy(() => import('./MyHoursPage'))
 const HoursBoard  = lazy(() => import('./HoursBoard'))
 const RosterPage     = lazy(() => import('./RosterPage'))
 const ProfilePage    = lazy(() => import('./ProfilePage'))
-const SkillsCatalog  = lazy(() => import('./SkillsCatalog'))
 const CertificationsPage = lazy(() => import('./CertificationsPage'))
-const MemberSkillsHome = lazy(() => import('./MemberSkillsHome'))
 const MemberPage     = lazy(() => import('./MemberPage'))
 const CheckinPage    = lazy(() => import('./CheckinPage'))
 const VolunteerCheckinPage = lazy(() => import('./VolunteerCheckinPage'))
-const CertifyPage      = lazy(() => import('./CertifyPage'))
-const CoverageMatrix   = lazy(() => import('./CoverageMatrix'))
 const LogHoursPage     = lazy(() => import('./LogHoursPage'))
 const VerifyHoursPage  = lazy(() => import('./VerifyHoursPage'))
 const ActivityPage     = lazy(() => import('./ActivityPage'))
 const AccessGate       = lazy(() => import('./AccessGate'))
 const JobsPage         = lazy(() => import('./JobsPage'))
 const ReadinessPage    = lazy(() => import('./ReadinessPage'))
-const StudyPage        = lazy(() => import('./StudyPage'))
 const SquadPage        = lazy(() => import('./SquadPage'))
 const PresenceBoard    = lazy(() => import('./PresenceBoard'))
 const AccessRequestsPage = lazy(() => import('./AccessRequestsPage'))
@@ -376,17 +371,22 @@ export default function App() {
           <Route path="/log-hours" element={<LogHoursPage session={session} />} />
           <Route path="/hours"     element={<HoursBoard hasRole={hasRole} />} />
           <Route path="/roster"    element={<RosterPage />} />
-          <Route path="/skills"      element={isStaffUser ? <SkillsCatalog hasRole={hasRole} /> : <MemberSkillsHome session={session} hasRole={hasRole} />} />
+          {/* The old skills certification system and the Study page are
+              retired (decision 27, 2026-10-14). Their addresses stay as
+              redirects so a bookmark, an old push notification or a link in
+              a chat lands on the official IDEA certifications instead of the
+              landing page. The tables behind them are kept, unread. */}
+          <Route path="/skills"   element={<Navigate to="/certifications" replace />} />
+          <Route path="/certify"  element={<Navigate to="/certifications" replace />} />
+          <Route path="/coverage" element={<Navigate to="/certifications" replace />} />
+          <Route path="/study"    element={<Navigate to="/certifications" replace />} />
           {/* Read-only mirror of IDEA Classroom certifications (migration 0001). Not
               role-gated: the page picks its own staff / member / parent view and
               RLS decides the rows. */}
           <Route path="/certifications" element={<CertificationsPage session={session} hasRole={hasRole} />} />
           <Route path="/jobs"        element={<JobsPage session={session} hasRole={hasRole} />} />
-          <Route path="/study"       element={<StudyPage session={session} hasRole={hasRole} />} />
           <Route path="/members/:id" element={<MemberPage session={session} hasRole={hasRole} />} />
           <Route path="/profile"     element={<ProfilePage session={session} hasRole={hasRole} />} />
-          <Route path="/certify"     element={<CertifyPage session={session} hasRole={hasRole} />} />
-          <Route path="/coverage"    element={<CoverageMatrix hasRole={hasRole} />} />
           <Route path="/verify-hours" element={<VerifyHoursPage session={session} hasRole={hasRole} />} />
           <Route path="/reports"     element={<ReportsPage session={session} hasRole={hasRole} />} />
           <Route path="/activity"    element={<ActivityPage hasRole={hasRole} />} />

@@ -92,13 +92,12 @@ export default function ParentHomePage({ session }) {
     }
 
     // Per-student detail.
-    const [{ data: profs }, { data: allEvents }, { data: certs }, { data: logged }] = await Promise.all([
+    const [{ data: profs }, { data: allEvents }, { data: logged }] = await Promise.all([
       supabase.from('profiles').select('id, full_name, nickname, subteams, avatar_url').in('id', studentIds),
       // Every page (src/fetchAllRows.js): a student's whole ledger passes the
       // API's 1000-row cap in a couple of years, two students sooner, and an
       // unranged read would drop rows from the season total without a word.
       fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time').in('user_id', studentIds).order('event_time').order('id')),
-      supabase.from('member_skills').select('member_id, skill_id, updated_at, skills(name)').eq('status', 'certified').in('member_id', studentIds),
       supabase.from('logged_hours').select('member_id, hours, type').eq('status', 'verified').in('member_id', studentIds),
     ])
 
@@ -110,11 +109,6 @@ export default function ParentHomePage({ session }) {
     const students = (profs ?? []).map(p => {
       const evs = eventsByStudent[p.id] ?? []
       const todayEvs = evs.filter(e => e.event_time >= todayISO)
-      const certNames = [...new Set((certs ?? [])
-        .filter(c => c.member_id === p.id)
-        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-        .map(c => c.skills?.name)
-        .filter(Boolean))]
       return {
         id: p.id,
         name: displayName(p),
@@ -124,7 +118,6 @@ export default function ParentHomePage({ session }) {
         todayHours: fmtDuration(computeHoursMs(todayEvs)),
         seasonHours: fmtDuration(computeHoursMs(evs)),
         loggedHours: loggedByStudent[p.id] ?? 0,
-        certs: certNames.slice(0, 6),
       }
     }).sort((a, b) => a.name.localeCompare(b.name))
 
@@ -205,13 +198,13 @@ export default function ParentHomePage({ session }) {
                     </div>
                   </div>
 
+                  {/* The old skills chips were retired with the old skills
+                      system (decision 27). A parent sees their student's
+                      official IDEA certifications on /certifications, which
+                      RLS narrows to their linked students. */}
                   <div className="ph-certs">
                     <span className="ph-certs-label">Certifications</span>
-                    {s.certs.length === 0
-                      ? <span className="ph-certs-none">None yet</span>
-                      : <div className="ph-cert-chips">
-                          {s.certs.map(c => <span key={c} className="ph-cert-chip">{c}</span>)}
-                        </div>}
+                    <Link to="/certifications" className="ph-certs-none" data-testid="ph-certs-link">IDEA certifications →</Link>
                   </div>
                 </section>
               )

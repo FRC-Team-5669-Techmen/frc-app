@@ -8,6 +8,14 @@ import { displayName } from './names'
 import { SUBTEAMS, isSubteam } from './subteams'
 import { fetchAllRows } from './fetchAllRows'
 import { laDateKey } from './hoursUtils'
+// Job certification gate. With migration 0012 applied a job names one IDEA
+// certification code and the claim path checks the IDEA mirror; before it,
+// the page keeps the old member_skills path unchanged (src/jobCerts.js).
+import {
+  JOB_CERT_REQ_SELECT, JOB_CERT_CATALOG_SELECT, JOB_CERT_HOLDER_SELECT, IDEA_CERTS_URL,
+  jobCertMode, requirementMap, requiredCode, heldCodes, canClaimIdea, describeRequirement, pickerOptions,
+} from './jobCerts'
+import { normEmail } from './ideaCerts'
 import './JobsPage.css'
 
 // Derived display status (richer than tasks.status) → label + color class.
@@ -66,7 +74,7 @@ function sessionMsForJob(events, taskId) {
 }
 
 const EMPTY_FORM = {
-  title: '', description: '', subteam: '', skillIds: [], group: false,
+  title: '', description: '', subteam: '', skillIds: [], certCode: '', group: false,
   maxClaimants: '', dueDate: '', links: [], images: [],
 }
 
@@ -74,6 +82,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const isAdmin = hasRole('admin')
   const uid = session.user.id
+  const myEmail = normEmail(session.user.email)
 
   const [tasks, setTasks]     = useState(null)
   const [reqMap, setReqMap]   = useState({})        // task_id -> [skill_id]
@@ -81,6 +90,11 @@ export default function JobsPage({ session, hasRole = () => false }) {
   const [myCerts, setMyCerts] = useState(new Set()) // skill_ids the member is certified in
   const [claimsMap, setClaimsMap] = useState({})    // task_id -> [claim rows]
   const [certsByMember, setCertsByMember] = useState({}) // member_id -> Set(certified skill_ids); claimants only
+  // IDEA gate (0012). certMode 'old' = the member_skills path above, 'idea' = the mirror.
+  const [certMode, setCertMode]   = useState('old')
+  const [certReq, setCertReq]     = useState(() => new Map())  // task_id -> { code, source }
+  const [ideaCatalog, setIdeaCatalog] = useState([])            // idea_cert_catalog rows
+  const [heldIdea, setHeldIdea]   = useState(() => new Set())   // codes the viewer holds now
   const [viewerTeam, setViewerTeam] = useState({ subteams: [], disciplines: [] }) // for "For you" relevance
   const [busy, setBusy]       = useState({})
   const [error, setError]     = useState('')
@@ -105,43 +119,68 @@ export default function JobsPage({ session, hasRole = () => false }) {
   const [imgBusy, setImgBusy]             = useState(false)
 
   const load = useCallback(async () => {
-    const [tRes, trsRes, skRes, msRes, tcRes, pfRes] = await Promise.all([
+    const [tRes, tcRes, pfRes, reqRes] = await Promise.all([
       supabase.from('tasks').select('*').order('created_at', { ascending: false }),
-      supabase.from('task_required_skills').select('task_id, skill_id'),
-      supabase.from('skills').select('id, name, safety_critical').order('name'),
-      supabase.from('member_skills').select('skill_id').eq('member_id', uid).eq('status', 'certified'),
       supabase.from('task_claims').select('task_id, member_id, status, profiles!task_claims_member_id_fkey(full_name, nickname, avatar_url)'),
       supabase.from('profiles').select('subteams, disciplines').eq('id', uid).single(),
+      supabase.from('task_idea_cert_requirements').select(JOB_CERT_REQ_SELECT),
     ])
     if (tRes.error) { setError(tRes.error.message); setTasks([]); return }
 
-    const rm = {}
-    for (const r of trsRes.data ?? []) (rm[r.task_id] ??= []).push(r.skill_id)
-    const sk = {}
-    for (const s of skRes.data ?? []) sk[s.id] = { name: s.name, safety_critical: s.safety_critical }
     const cm = {}
     for (const c of tcRes.data ?? []) (cm[c.task_id] ??= []).push(c)
+    const mode = jobCertMode(reqRes.error)
 
-    // Certified skills for everyone who has claimed a job — needed to compute
-    // collective cert coverage (which claimant covers which required cert).
-    const claimantIds = [...new Set((tcRes.data ?? []).map(c => c.member_id))]
-    const cbRes = claimantIds.length
-      ? await supabase.from('member_skills').select('member_id, skill_id').eq('status', 'certified').in('member_id', claimantIds)
-      : { data: [] }
-    const cbm = {}
-    for (const r of cbRes.data ?? []) (cbm[r.member_id] ??= new Set()).add(r.skill_id)
+    if (mode === 'idea') {
+      // 0012 applied: the requirement table, the IDEA catalog for names, and
+      // the viewer's OWN mirror rows (by sign-in email) for "you hold it".
+      const [catRes, holdRes] = await Promise.all([
+        supabase.from('idea_cert_catalog').select(JOB_CERT_CATALOG_SELECT).order('code'),
+        myEmail
+          ? supabase.from('idea_cert_holders').select(JOB_CERT_HOLDER_SELECT).eq('email', myEmail)
+          : Promise.resolve({ data: [], error: null }),
+      ])
+      if (reqRes.error) setError(`Could not load job certifications: ${reqRes.error.message}`)
+      setCertReq(requirementMap(reqRes.data ?? []))
+      setIdeaCatalog(catRes.error ? [] : (catRes.data ?? []))
+      setHeldIdea(heldCodes(holdRes.error ? [] : (holdRes.data ?? []), myEmail))
+      setReqMap({}); setSkills({}); setMyCerts(new Set()); setCertsByMember({})
+    } else {
+      // 0012 not applied yet: the old member_skills gate, exactly as before.
+      const [trsRes, skRes, msRes] = await Promise.all([
+        supabase.from('task_required_skills').select('task_id, skill_id'),
+        supabase.from('skills').select('id, name, safety_critical').order('name'),
+        supabase.from('member_skills').select('skill_id').eq('member_id', uid).eq('status', 'certified'),
+      ])
+      const rm = {}
+      for (const r of trsRes.data ?? []) (rm[r.task_id] ??= []).push(r.skill_id)
+      const sk = {}
+      for (const sr of skRes.data ?? []) sk[sr.id] = { name: sr.name, safety_critical: sr.safety_critical }
 
-    setReqMap(rm)
-    setSkills(sk)
-    setMyCerts(new Set((msRes.data ?? []).map(m => m.skill_id)))
+      // Certified skills for everyone who has claimed a job — needed to compute
+      // collective cert coverage (which claimant covers which required cert).
+      const claimantIds = [...new Set((tcRes.data ?? []).map(c => c.member_id))]
+      const cbRes = claimantIds.length
+        ? await supabase.from('member_skills').select('member_id, skill_id').eq('status', 'certified').in('member_id', claimantIds)
+        : { data: [] }
+      const cbm = {}
+      for (const r of cbRes.data ?? []) (cbm[r.member_id] ??= new Set()).add(r.skill_id)
+
+      setReqMap(rm)
+      setSkills(sk)
+      setMyCerts(new Set((msRes.data ?? []).map(m => m.skill_id)))
+      setCertsByMember(cbm)
+      setCertReq(new Map()); setIdeaCatalog([]); setHeldIdea(new Set())
+    }
+
+    setCertMode(mode)
     setClaimsMap(cm)
-    setCertsByMember(cbm)
     setViewerTeam({
       subteams:    pfRes.data?.subteams    ?? [],
       disciplines: pfRes.data?.disciplines ?? [],
     })
     setTasks(tRes.data ?? [])
-  }, [uid])
+  }, [uid, myEmail])
 
   useEffect(() => { load() }, [load])
 
@@ -241,9 +280,15 @@ export default function JobsPage({ session, hasRole = () => false }) {
   // The current member may claim a cert-gated job if they hold AT LEAST ONE of
   // its required certs (none required → open to all).
   function canClaimCerts(taskId) {
+    if (certMode === 'idea') return canClaimIdea(requiredCode(certReq, taskId), heldIdea)
     const reqIds = reqMap[taskId] ?? []
     return reqIds.length === 0 || reqIds.some(id => myCerts.has(id))
   }
+  const ideaByCode = useMemo(() => new Map(ideaCatalog.map(c => [c.code, c])), [ideaCatalog])
+  // The job's IDEA requirement as the page describes it (idea mode only).
+  const ideaReqFor = taskId => certMode === 'idea'
+    ? describeRequirement(requiredCode(certReq, taskId), ideaByCode)
+    : null
 
   // ── Member / staff transitions, all via SECURITY DEFINER RPCs ──
   async function runRpc(fn, args, taskId) {
@@ -280,6 +325,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
       description: t.description ?? '',
       subteam: t.subteam ?? '',
       skillIds: reqMap[t.id] ?? [],
+      certCode: requiredCode(certReq, t.id) ?? '',
       group: t.max_claimants !== 1,                                  // null (unlimited) or >1
       maxClaimants: (t.max_claimants && t.max_claimants > 1) ? String(t.max_claimants) : '',
       dueDate: t.due_date ?? '',
@@ -338,8 +384,8 @@ export default function JobsPage({ session, hasRole = () => false }) {
         .eq('id', editTarget.id)
       if (error) { setSaving(false); setError(error.message); return }
       taskId = editTarget.id
-      // Resync required skills: clear then re-insert the selection
-      await supabase.from('task_required_skills').delete().eq('task_id', taskId)
+      // Resync required skills: clear then re-insert the selection (old path only)
+      if (certMode === 'old') await supabase.from('task_required_skills').delete().eq('task_id', taskId)
     } else {
       const { data, error } = await supabase.from('tasks')
         .insert({ ...payload, created_by: uid }).select('id').single()
@@ -347,10 +393,18 @@ export default function JobsPage({ session, hasRole = () => false }) {
       taskId = data.id
     }
 
-    if (form.skillIds.length) {
+    if (certMode === 'old' && form.skillIds.length) {
       const rows = form.skillIds.map(skill_id => ({ task_id: taskId, skill_id }))
       const { error } = await supabase.from('task_required_skills').insert(rows)
       if (error) { setSaving(false); setError(error.message); return }
+    }
+
+    // IDEA requirement: admins only, through admin_set_task_cert (0012), and
+    // only when it changed, so an edit that leaves it alone writes nothing.
+    const priorCode = editTarget ? (requiredCode(certReq, taskId) ?? '') : ''
+    if (certMode === 'idea' && isAdmin && form.certCode !== priorCode) {
+      const { error } = await supabase.rpc('admin_set_task_cert', { p_task: taskId, p_code: form.certCode || null })
+      if (error) { setSaving(false); setError(`Job saved, but its certification was not: ${error.message}`); load(); return }
     }
 
     setSaving(false)
@@ -411,7 +465,9 @@ export default function JobsPage({ session, hasRole = () => false }) {
 
   // Search → filter → group by subteam → sort within each group.
   const q = query.trim().toLowerCase()
-  const certKey = t => requiredSkillsFor(t.id).map(s => s.name).sort().join(', ')
+  const certKey = t => certMode === 'idea'
+    ? (requiredCode(certReq, t.id) ?? '')
+    : requiredSkillsFor(t.id).map(s => s.name).sort().join(', ')
   const filtered = tasks.filter(t => !q || t.title.toLowerCase().includes(q))
   function cmp(a, b) {
     const dir = sort.dir === 'desc' ? -1 : 1
@@ -524,6 +580,31 @@ export default function JobsPage({ session, hasRole = () => false }) {
                 />
               </div>
 
+              {certMode === 'idea' ? (
+              <div className="jobs-field" data-testid="jobs-idea-cert-field">
+                <label className="jobs-label" htmlFor="job-cert">Required IDEA certification</label>
+                {isAdmin ? (
+                  <select
+                    id="job-cert"
+                    className="jobs-input"
+                    value={form.certCode}
+                    onChange={e => setForm(f => ({ ...f, certCode: e.target.value }))}
+                  >
+                    <option value="">None</option>
+                    {pickerOptions(ideaCatalog, form.certCode || null).map(o => (
+                      <option key={o.code} value={o.code}>{o.label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="jobs-none" data-testid="jobs-idea-cert-readonly">
+                    {form.certCode ? `${form.certCode} (an admin sets this)` : 'None. An admin can require one.'}
+                  </span>
+                )}
+                {isAdmin && ideaCatalog.length === 0 && (
+                  <span className="jobs-none">No IDEA certifications have synced yet.</span>
+                )}
+              </div>
+              ) : (
               <div className="jobs-field">
                 <label className="jobs-label">Required certifications</label>
                 {allSkills.length === 0
@@ -542,6 +623,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
                       ))}
                     </div>}
               </div>
+              )}
 
               <div className="jobs-field">
                 <label className="jobs-label">Reference links</label>
@@ -667,6 +749,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
                     const meta      = STATUS_META[ds]
                     const reqs      = requiredSkillsFor(t.id)
                     const uncovered = coverageFor(t.id).filter(c => c.coverers.length === 0)
+                    const ideaReq   = ideaReqFor(t.id)
                     const claims    = claimsMap[t.id] ?? []
                     const max     = t.max_claimants
                     const isGroup = max === null || max > 1
@@ -694,6 +777,17 @@ export default function JobsPage({ session, hasRole = () => false }) {
                               : `${claims.length}/${max}`}
                             {isGroup && <span className="jobs-row-grouptag">grp</span>}
                           </span>
+                          {ideaReq && (
+                            <span
+                              className={`jobs-row-cert${heldIdea.has(ideaReq.code) ? '' : ' locked'}`}
+                              data-testid="jobs-row-idea"
+                              title={heldIdea.has(ideaReq.code)
+                                ? `Needs IDEA ${ideaReq.code}: you hold it`
+                                : `Needs IDEA ${ideaReq.code}: you do not hold it`}
+                            >
+                              {heldIdea.has(ideaReq.code) ? '✓' : '🔒'} {ideaReq.code}
+                            </span>
+                          )}
                           {reqs.length > 0 && (
                             <span
                               className={`jobs-row-cert${uncovered.length > 0 ? ' locked' : ''}`}
@@ -726,6 +820,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
         const uncovered = coverage.filter(c => c.coverers.length === 0)
         const fullyCovered = reqs.length === 0 || uncovered.length === 0
         const canClaim = canClaimCerts(t.id)
+        const ideaReq  = ideaReqFor(t.id)
         const claims  = claimsMap[t.id] ?? []
         const myClaim = claims.find(c => c.member_id === uid)
         const max     = t.max_claimants
@@ -783,6 +878,28 @@ export default function JobsPage({ session, hasRole = () => false }) {
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {ideaReq && (
+                <div className="jobs-coverage" data-testid="jobs-idea-req">
+                  <div className="jobs-coverage-head">
+                    <span className="jobs-coverage-title">Required certification</span>
+                    <span className={`jobs-coverage-state${heldIdea.has(ideaReq.code) ? ' ok' : ' gap'}`} data-testid="jobs-idea-req-state">
+                      {heldIdea.has(ideaReq.code) ? 'You hold it ✓' : 'You do not hold it'}
+                    </span>
+                  </div>
+                  <p className="jobs-idea-req-line">
+                    <span className="hud-mono">{ideaReq.code}</span>{ideaReq.name ? ` · ${ideaReq.name}` : ''}
+                    {ideaReq.state === 'retired' && ' (retired in IDEA)'}
+                    {ideaReq.state === 'missing' && ' (no longer in the IDEA catalog, so nobody can claim this until an admin changes it)'}
+                  </p>
+                  {!heldIdea.has(ideaReq.code) && (
+                    <p className="jobs-idea-req-line">
+                      IDEA certifications are earned and awarded only at{' '}
+                      <a href={IDEA_CERTS_URL} target="_blank" rel="noopener noreferrer">ideabosco.com/certifications</a>.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -863,7 +980,11 @@ export default function JobsPage({ session, hasRole = () => false }) {
                   full
                     ? <span className="jobs-note">Full</span>
                     : !canClaim
-                      ? <span className="jobs-locked">🔒 Needs one of: {reqs.map(s => s.name).join(', ')}</span>
+                      ? <span className="jobs-locked" data-testid="jobs-locked">
+                          {certMode === 'idea'
+                            ? `🔒 Needs IDEA ${ideaReq?.code ?? ''}`
+                            : `🔒 Needs one of: ${reqs.map(s => s.name).join(', ')}`}
+                        </span>
                       : <button className="jobs-btn jobs-btn-claim" disabled={!!busy[t.id]} onClick={() => claim(t.id)}>Claim</button>
                 ) : (
                   <span className="jobs-note">{t.status === 'completed' ? 'Completed ✓' : 'Closed'}</span>

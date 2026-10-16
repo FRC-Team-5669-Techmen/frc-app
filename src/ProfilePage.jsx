@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
-import MemberSkillsPanel from './MemberSkillsPanel'
+import { Link } from 'react-router-dom'
 import NotificationsPanel from './NotificationsPanel'
 import { RoleBadge, ROLE_ORDER } from './roles'
 import { displayName } from './names'
@@ -366,13 +366,14 @@ export default function ProfilePage({ session, hasRole = () => false }) {
 
         <NotificationsPanel session={session} />
 
-        <p className="profile-section-heading">Skills</p>
-        <MemberSkillsPanel
-          memberId={session.user.id}
-          currentUserId={session.user.id}
-          canEdit={true}
-          canCertify={false}
-        />
+        {/* The old skills panel was retired with the old skills system
+            (decision 27). Certifications are the official IDEA ones. */}
+        <p className="profile-section-heading">Certifications</p>
+        <p className="profile-cert-note">
+          Your certifications are the official IDEA certifications, earned at{' '}
+          <a href="https://ideabosco.com/certifications" target="_blank" rel="noopener noreferrer">ideabosco.com/certifications</a>.
+          See yours on <Link to="/certifications">Certifications</Link>.
+        </p>
 
       </div>
     </div>

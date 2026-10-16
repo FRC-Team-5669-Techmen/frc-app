@@ -424,3 +424,6 @@
   color: var(--muted);
   letter-spacing: 0.02em;
 }
+
+.profile-cert-note { margin: 0.25rem 0 0; color: var(--steel); font-size: 0.9rem; }
+.profile-cert-note a { color: var(--gold); }

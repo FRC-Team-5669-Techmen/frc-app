@@ -6,6 +6,8 @@ import {
   ownCertifications, groupByHolder, syncSummary, statusLabel, normEmail,
   fmtDate, fmtDateTime, readAllPages, pageOf,
 } from './ideaCerts'
+import { IDEA_CERTS_URL, ideaVerifyUrl } from './jobCerts'
+import { buildSyncLogExport } from './ideaSyncLogExport'
 import './CertificationsPage.css'
 
 // The official IDEA certifications (/certifications), read from the mirror.
@@ -43,7 +45,14 @@ function HolderLine({ row, me, showName = true, showCode = false, nameOf }) {
         <StatusPill status={row.effective} />
       </div>
       <div className="ic-holder-meta hud-mono">
-        <span>Serial {row.serial}</span>
+        {/* Proof lives at IDEA: every serial opens its verify page. */}
+        <a
+          className="ic-verify"
+          href={ideaVerifyUrl(row.serial)}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="ic-verify"
+        >Serial {row.serial} · Verify</a>
         <span>Awarded {fmtDate(row.awarded_at)}</span>
         <span>{row.expires_at ? `Expires ${fmtDate(row.expires_at)}` : 'No expiry'}</span>
       </div>
@@ -54,11 +63,13 @@ function HolderLine({ row, me, showName = true, showCode = false, nameOf }) {
 export default function CertificationsPage({ session, hasRole = () => false }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const isParent = hasRole('parent') && !isStaff
+  const isAdmin = hasRole('admin')
   const mode = viewModeFor({ isStaff, isParent })
   const me = normEmail(session?.user?.email)
 
   const [load, setLoad] = useState({ status: 'loading' })
   const [open, setOpen] = useState(() => new Set())
+  const [exp, setExp] = useState({ state: 'idle' })
 
   useEffect(() => {
     let active = true
@@ -116,6 +127,34 @@ export default function CertificationsPage({ session, hasRole = () => false }) {
     })
   }
 
+  // Decision 34: an admin downloads the WHOLE sync log (every page, not the
+  // ten rows the readout shows) as README + JSON + CSV in one zip, to hand to a
+  // Claude chat. Read through the admin's own client, so RLS (staff read) is
+  // still the boundary.
+  async function exportSyncLog() {
+    setExp({ state: 'busy' })
+    try {
+      const { data, error } = await readAllPages(
+        (from, size) => pageOf(supabase.from('idea_cert_sync_log').select(SYNC_LOG_SELECT).order('id'), from, size), 'id')
+      if (error) { setExp({ state: 'error', message: error.message || 'could not read the sync log' }); return }
+      const out = buildSyncLogExport(data ?? [], {
+        exportedAt: new Date(),
+        exportedBy: session?.user?.email ?? '',
+      })
+      const url = URL.createObjectURL(new Blob([out.bytes], { type: 'application/zip' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = out.name
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 10_000)
+      setExp({ state: 'done', count: out.count, name: out.name })
+    } catch (err) {
+      setExp({ state: 'error', message: err?.message || String(err) })
+    }
+  }
+
   const nameOf = (code) => derived?.byCode.get(code)?.name ?? ''
   const empty = load.status === 'not_set_up' || load.status === 'not_synced'
 
@@ -129,6 +168,10 @@ export default function CertificationsPage({ session, hasRole = () => false }) {
               The official IDEA certifications, awarded in IDEA Classroom. This page is a read-only copy.
             </p>
           )}
+          <p className="ic-earned" data-testid="ic-earned">
+            Certifications are earned and awarded only at{' '}
+            <a href={IDEA_CERTS_URL} target="_blank" rel="noopener noreferrer">ideabosco.com/certifications</a>.
+          </p>
         </header>
 
         {load.status === 'loading' && <p className="ic-muted hud-mono">Loading…</p>}
@@ -162,6 +205,25 @@ export default function CertificationsPage({ session, hasRole = () => false }) {
                 Latest attempt refused {fmtDateTime(sync.lastAttempt.received_at)}: {sync.lastAttempt.error}
               </p>
             )}
+          </div>
+        )}
+
+        {/* Admin only, and offered whenever the mirror exists, even before a
+            sync has been accepted: a log of nothing but refusals is exactly
+            the one worth handing over. */}
+        {isAdmin && (load.status === 'ready' || load.status === 'not_synced') && (
+          <div className="ic-export" data-testid="ic-export">
+            <button
+              type="button"
+              className="ic-export-btn"
+              onClick={exportSyncLog}
+              disabled={exp.state === 'busy'}
+            >{exp.state === 'busy' ? 'Exporting…' : 'Export sync log'}</button>
+            <span className="ic-export-note hud-mono" role="status">
+              {exp.state === 'done' && `Downloaded ${exp.name}: ${exp.count} row${exp.count === 1 ? '' : 's'}, JSON and CSV with a README.`}
+              {exp.state === 'error' && `Could not export: ${exp.message}`}
+              {exp.state === 'idle' && 'The full log as JSON and CSV with a README, in one zip.'}
+            </span>
           </div>
         )}
 

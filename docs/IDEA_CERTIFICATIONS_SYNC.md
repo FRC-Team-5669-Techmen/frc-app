@@ -275,5 +275,11 @@ email.
 - No partial or delta updates.
 - No per-row acknowledgement: the response is for the whole snapshot.
 - No team roles (driver, drive team and so on); those stay in the Techmen app.
-- The Techmen app's older skills / certify system (`skills`, `member_skills`, `cert_requests`) is
-  untouched by this and still runs beside it. Retiring it is a separate, later decision.
+- The Techmen app's older skills / certify system (`skills`, `member_skills`, `cert_requests`) was
+  retired from the app on 2026-10-14 (decision 27): its pages redirect to `/certifications`, and
+  its tables keep their rows, unread. Job claiming now reads this mirror (migration 0012,
+  `task_idea_cert_requirements` and `claim_task`): a job may name one IDEA code, and a member may
+  claim it only while this mirror holds an active, unexpired row for their lowercased sign-in
+  email and that code. Nothing in that path writes the mirror.
+- Proof of a certification is IDEA's own page: every holder row on `/certifications` links to
+  `https://ideabosco.com/certifications/verify?serial=<serial>`.

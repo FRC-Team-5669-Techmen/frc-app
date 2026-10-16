@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { displayName } from './names'
-import MemberSkillsPanel from './MemberSkillsPanel'
 import './MemberPage.css'
 
 export default function MemberPage({ session, hasRole }) {
   const { id }  = useParams()
-  const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const [member, setMember] = useState(null)
   const [positions, setPositions] = useState([])
 
@@ -70,19 +68,16 @@ export default function MemberPage({ session, hasRole }) {
                 ))}
               </div>
             )}
-            <span className="mp-subtitle">
-              {isStaff ? 'Staff view — certify skills from the in-progress or not-started rows' : 'Skills progress (read-only)'}
-            </span>
           </div>
         </div>
 
-        <p className="mp-section-heading">Skills</p>
-        <MemberSkillsPanel
-          memberId={id}
-          currentUserId={session.user.id}
-          canEdit={false}
-          canCertify={isStaff}
-        />
+        {/* The old skills panel was retired with the old skills system
+            (decision 27). Certifications are the official IDEA ones. */}
+        <p className="mp-section-heading">Certifications</p>
+        <p className="mp-cert-note">
+          Certifications are the official IDEA certifications. See them on{' '}
+          <Link to="/certifications">Certifications</Link>.
+        </p>
 
       </div>
     </div>

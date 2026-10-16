@@ -540,7 +540,7 @@ export default function RosterPage() {
                     </div>
                     <div className="roster-detail-row">
                       <span className="roster-detail-label">Profile</span>
-                      <Link to={`/members/${m.id}`} className="roster-skills-link">View skills</Link>
+                      <Link to={`/members/${m.id}`} className="roster-skills-link">View member</Link>
                     </div>
                     <div className="roster-detail-row">
                       <span className="roster-detail-label">Danger zone</span>

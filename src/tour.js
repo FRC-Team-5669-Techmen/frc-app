@@ -42,8 +42,8 @@ function tourSteps(isStaff, isParent) {
     popover: {
       title: 'Jobs',
       description: isStaff
-        ? 'Post jobs and sign off finished work per claimant. Click a job for its detail — links, images, a progress thread, and time logged per member (admins can undo an approval). Cert-gated group jobs are covered collectively: the detail shows who covers each required cert and what\'s still uncovered.'
-        : 'Claim team jobs — solo or group. On a cert-gated group job the required certs are covered by the team together, so you can claim if you hold at least one; the detail shows per-cert coverage and any gaps. Post progress updates, tap "I\'m on this job" while checked in to log time, and submit when done for sign-off.',
+        ? 'Post jobs and sign off finished work per claimant. Click a job for its detail — links, images, a progress thread, and time logged per member (admins can undo an approval, and set the IDEA certification a job requires).'
+        : 'Claim team jobs — solo or group. A job that names an IDEA certification can be claimed only by someone who holds it. Post progress updates, tap "I\'m on this job" while checked in to log time, and submit when done for sign-off.',
     },
   }
   const hours = {
@@ -56,12 +56,10 @@ function tourSteps(isStaff, isParent) {
     },
   }
   const skills = {
-    element: '[data-tour="nav-skills"]',
+    element: '[data-tour="nav-certs"]',
     popover: {
-      title: 'Skills',
-      description: isStaff
-        ? 'Manage the skills catalog and disciplines, in collapsible categories. Certify members from the Certify tool, and check team gaps on Skill Coverage — both in your avatar menu.'
-        : 'Your personal Skills dashboard — your own certifications and in-progress skills. Request a cert sign-off when you\'re ready, and use the toggle to view the team coverage matrix read-only.',
+      title: 'Certifications',
+      description: 'The official IDEA certifications, a read-only copy. They are earned and awarded only at ideabosco.com/certifications; each holder row links there for proof.',
     },
   }
   // Parent-only: present only on the parent dashboard, so it self-filters for
@@ -70,18 +68,18 @@ function tourSteps(isStaff, isParent) {
     element: '[data-tour="parent-link"]',
     popover: {
       title: 'Link your student',
-      description: 'Search for your student and send a link request. A mentor approves it, then their live status, hours, and certs appear here.',
+      description: 'Search for your student and send a link request. A mentor approves it, then their live status and hours appear here.',
     },
   }
   const profile = {
     element: '[data-tour="nav-profile"]',
     popover: {
-      title: isStaff ? 'Profile, study & staff tools' : 'Profile & menu',
+      title: isStaff ? 'Profile & staff tools' : 'Profile & menu',
       description: isStaff
-        ? 'Edit your details and notifications, open Self-study, replay this tour, or sign out. Your staff tools live in this menu — readiness, activity, squad, roster (search, sort, color-coded roles), verify hours, certify, coverage, and Access Requests, which now holds three queues (access, parent-link, and cert requests), each with approve/deny.'
+        ? 'Edit your details and notifications, replay this tour, or sign out. Your staff tools live in this menu — readiness, activity, squad, roster (search, sort, color-coded roles), and Access Requests, which holds two queues (access and parent-link requests), each with approve/deny.'
         : isParent
           ? 'Edit your details and notification settings, replay this tour, or sign out — all from here.'
-          : 'Edit your details and notifications, open Self-study (moved here from the tab bar), replay this tour, or sign out — all from here.',
+          : 'Edit your details and notifications, take the weekly survey, replay this tour, or sign out — all from here.',
     },
   }
 

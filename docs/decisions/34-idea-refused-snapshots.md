@@ -1,14 +1,20 @@
 # 34 When IDEA sends a snapshot the mirror refuses, should the refusal be logged, and should a wrong secret be?
 - Raised: 2026-10-01 by the overnight session (the IDEA certifications mirror, workstream A)
-- Status: open
-- Default if nobody decides: **as migration 0001 builds it: a call with the
+- Status: answered
+- Default before the decision: **as migration 0001 builds it: a call with the
   right secret but a bad snapshot changes nothing in the mirror, writes one
   `idea_cert_sync_log` row with `ok = false` and the reason, and answers with
   HTTP 422. A call with a wrong or missing secret is refused with one generic
   error (SQLSTATE 28000) and writes nothing at all.**
-- Decided: --
+- Decided: 2026-10-14, Mr. Pina: yes, log rejected syncs, and do not log
+  wrong-secret calls (option A, which migration 0001 already does). One
+  addition: an admin-only "Export sync log" button that downloads the full
+  `idea_cert_sync_log` as JSON plus CSV with a short README, so he can hand
+  it to a Claude chat. Built by ledger 0006 on `/certifications`
+  (`src/ideaSyncLogExport.js`): one zip holding `README.txt`,
+  `sync-log.json` and `sync-log.csv`.
 
-## What is actually true right now
+## What was true when it was raised
 
 - The sync function is callable without signing in on purpose, behind the
   secret. Validation is strict: every documented key must be present, a

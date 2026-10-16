@@ -20,7 +20,10 @@ const CATEGORIES = [
   { key: 'schedule_change', label: 'Schedule changes',   hint: 'When an event is added, edited, or canceled',   wired: true },
   { key: 'shop_status',     label: 'Shop hours',         hint: 'When the shop opens or closes',                 wired: true },
   // { key: 'job_assignment',  label: 'Job assignments',    hint: 'When you’re assigned a new job or task',        wired: false },
-  { key: 'skill_signoff',   label: 'Skill sign-offs',    hint: 'When a skill is certified',                     wired: true },
+  // Skill sign-offs: hidden since the old skills system was retired
+  // (decision 27). Nothing in the app certifies member_skills any more, so the
+  // trigger has nothing to fire on; the prefs key stays.
+  // { key: 'skill_signoff',   label: 'Skill sign-offs',    hint: 'When a skill is certified',                     wired: true },
   { key: 'checkin_reminder',label: 'Check-in reminders', hint: 'A nudge if you forget to check out',            wired: true },
   { key: 'parent_digest',   label: 'Daily family recap', hint: 'One evening summary of your students’ day',     wired: true },
   // { key: 'announcements',   label: 'Team announcements', hint: 'Important messages from mentors',               wired: false },

@@ -8,6 +8,7 @@ import { startOfTodayISO, fmtClock } from './presence'
 import { displayName } from './names'
 import { currentStatus } from './attendanceState'
 import { checkOutFromDashboard } from './attendanceCheckout'
+import { normEmail, isHeld, syncSummary } from './ideaCerts'
 import './HomePage.css'
 
 function fmtClock12(iso) {
@@ -16,9 +17,10 @@ function fmtClock12(iso) {
 
 // ── Role-aware tile metrics ────────────────────────────────────────────────
 // One effect, branched on isStaff. Every query / RPC is one already used by an
-// existing page (jobs, skills, study_summary, readiness_summary, the NavBar
-// pending counts, coverage); nothing new is introduced here.
-function useTileMetrics(uid, isStaff) {
+// existing page (jobs, readiness_summary, the NavBar pending counts, the IDEA
+// certifications mirror); nothing new is introduced here. The old skills tile,
+// coverage tile and study tile went with the old skills system (decision 27).
+function useTileMetrics(uid, isStaff, email) {
   const [m, setM] = useState(null)
 
   useEffect(() => {
@@ -30,69 +32,61 @@ function useTileMetrics(uid, isStaff) {
         .select('id', { count: 'exact', head: true }).eq('status', 'active').eq('approved', true)
 
       if (isStaff) {
-        const [access, plinks, certs, total, readiness, skills, memberSkills, activeProfiles, feed] = await Promise.all([
+        const [access, plinks, total, readiness, catalog, syncLog, feed] = await Promise.all([
           supabase.from('access_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
           supabase.from('parent_link_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-          supabase.from('cert_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
           totalP,
           supabase.rpc('readiness_summary'),
-          supabase.from('skills').select('id'),
-          supabase.from('member_skills').select('member_id, skill_id, status').eq('status', 'certified'),
-          supabase.from('profiles').select('id').eq('status', 'active').eq('approved', true),
+          supabase.from('idea_cert_catalog').select('code', { count: 'exact', head: true }),
+          supabase.from('idea_cert_sync_log').select('received_at, ok')
+            .order('received_at', { ascending: false }).limit(10),
           supabase.from('attendance_events')
             .select('id, user_id, type, event_time, profiles!attendance_events_user_fkey(full_name, nickname, subteams)')
             .order('event_time', { ascending: false }).limit(6),
         ])
         if (!active) return
 
-        // Coverage gap = catalog skills with zero certified ACTIVE members.
-        const activeIds = new Set((activeProfiles.data ?? []).map(p => p.id))
-        const certBySkill = {}
-        for (const r of memberSkills.data ?? []) {
-          if (activeIds.has(r.member_id)) (certBySkill[r.skill_id] ??= new Set()).add(r.member_id)
-        }
-        const gap = (skills.data ?? []).filter(s => !(certBySkill[s.id]?.size)).length
+        // IDEA mirror: how many certifications it holds and when it last
+        // accepted a sync. A missing mirror (0001 not applied) reads as null.
+        const sync = syncSummary(syncLog.error ? [] : (syncLog.data ?? []))
 
         setM({
-          pending: (access.count ?? 0) + (plinks.count ?? 0) + (certs.count ?? 0),
+          pending: (access.count ?? 0) + (plinks.count ?? 0),
           flags: readiness.data?.action_queue?.total ?? 0,
-          gap,
+          certCatalog: catalog.error ? null : (catalog.count ?? 0),
+          certLastSync: sync.lastOk?.received_at ?? null,
+          certFailing: sync.failing,
           total: total.count ?? 0,
           feed: feed.data ?? [],
         })
       } else {
-        const [openJobs, myClaims, skills, memberSkills, study, total] = await Promise.all([
+        const me = normEmail(email)
+        const [openJobs, myClaims, mine, total] = await Promise.all([
           supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('status', 'open'),
           supabase.from('task_claims').select('status').eq('member_id', uid).in('status', ['claimed', 'submitted']),
-          supabase.from('skills').select('id, name, sort_order').order('sort_order'),
-          supabase.from('member_skills').select('skill_id, status').eq('member_id', uid),
-          supabase.rpc('study_summary'),
+          // The member's OWN IDEA rows, by sign-in email (decision 33).
+          me
+            ? supabase.from('idea_cert_holders').select('code, status, expires_at').eq('email', me)
+            : Promise.resolve({ data: [], error: null }),
           totalP,
         ])
         if (!active) return
 
-        const cat = skills.data ?? []
-        const mine = memberSkills.data ?? []
-        const certified = mine.filter(r => r.status === 'certified').length
-        const inProgIds = new Set(mine.filter(r => r.status === 'in_progress').map(r => r.skill_id))
-        const doneIds = new Set(mine.filter(r => r.status === 'certified').map(r => r.skill_id))
-        // Next cert: the first in-progress skill, else the first not-yet-touched one.
-        const nextCert = cat.find(s => inProgIds.has(s.id)) || cat.find(s => !doneIds.has(s.id) && !inProgIds.has(s.id))
+        // Held = active and unexpired (src/ideaCerts.js), counted once per code.
+        const now = Date.now()
+        const held = mine.error ? null : new Set((mine.data ?? []).filter(h => isHeld(h, now)).map(h => h.code)).size
 
         setM({
           jobsOpen: openJobs.count ?? 0,
           jobsClaimed: (myClaims.data ?? []).length,
-          certified,
-          skillTotal: cat.length,
-          nextCert: nextCert?.name ?? null,
-          streak: study.data?.streak ?? 0,
+          certsHeld: held,
           total: total.count ?? 0,
         })
       }
     }
     load()
     return () => { active = false }
-  }, [uid, isStaff])
+  }, [uid, isStaff, email])
 
   return m
 }
@@ -109,7 +103,7 @@ export default function HomePage({ session, hasRole = () => false }) {
   const [rsvping, setRsvping] = useState(false)
 
   const glance = useGlance()
-  const metrics = useTileMetrics(uid, isStaff)
+  const metrics = useTileMetrics(uid, isStaff, session?.user?.email)
 
   // Newest first: past the API's row cap an ascending read drops TODAY's rows,
   // the ones the status depends on. A failed read keeps whatever was shown
@@ -301,7 +295,6 @@ export default function HomePage({ session, hasRole = () => false }) {
 
 // ── Student tiles ──
 function StudentTiles({ m, present }) {
-  const certPct = m && m.skillTotal ? Math.round((m.certified / m.skillTotal) * 100) : 0
   return (
     <>
       <Link to="/jobs" className="mb-tile mb-link-tile mb-role-student">
@@ -310,17 +303,10 @@ function StudentTiles({ m, present }) {
         <span className="mb-tile-foot hud-mono">claimed · <span className="hud-tnum">{m ? m.jobsOpen : '—'}</span> open</span>
       </Link>
 
-      <Link to="/skills" className="mb-tile mb-link-tile mb-role-student">
-        <span className="mb-tile-eyebrow">Skills</span>
-        <span className="mb-tile-big hud-tnum">{m ? `${m.certified}/${m.skillTotal}` : '—'}</span>
-        <div className="mb-bar-track"><div className="mb-bar-fill" style={{ width: `${certPct}%` }} /></div>
-        <span className="mb-tile-foot hud-mono">{m?.nextCert ? `Next: ${m.nextCert}` : 'All certified ✓'}</span>
-      </Link>
-
-      <Link to="/study" className="mb-tile mb-link-tile mb-role-student">
-        <span className="mb-tile-eyebrow">Study</span>
-        <span className="mb-tile-big hud-tnum">{m ? m.streak : '—'}</span>
-        <span className="mb-tile-foot hud-mono">day streak</span>
+      <Link to="/certifications" className="mb-tile mb-link-tile mb-role-student" data-testid="mb-certs-tile">
+        <span className="mb-tile-eyebrow">Certifications</span>
+        <span className="mb-tile-big hud-tnum">{m && m.certsHeld != null ? m.certsHeld : '—'}</span>
+        <span className="mb-tile-foot hud-mono">IDEA certs held →</span>
       </Link>
 
       <Link to="/display" className="mb-tile mb-link-tile mb-role-student">
@@ -336,7 +322,6 @@ function StudentTiles({ m, present }) {
 function StaffTiles({ m, present }) {
   const pending = m?.pending ?? 0
   const flags = m?.flags ?? 0
-  const gap = m?.gap ?? 0
   return (
     <>
       <Link to="/access-requests" className={`mb-tile mb-link-tile${pending > 0 ? ' mb-alert' : ''}`}>
@@ -351,10 +336,12 @@ function StaffTiles({ m, present }) {
         <span className="mb-tile-foot hud-mono">{flags > 0 ? 'items waiting' : 'all clear'}</span>
       </Link>
 
-      <Link to="/coverage" className={`mb-tile mb-link-tile${gap > 0 ? ' mb-alert' : ''}`}>
-        <span className="mb-tile-eyebrow">Coverage</span>
-        <span className={`mb-tile-big hud-tnum${gap > 0 ? ' mb-fault' : ''}`}>{m ? gap : '—'}</span>
-        <span className="mb-tile-foot hud-mono">{gap === 1 ? 'skill gap' : 'skill gaps'}</span>
+      <Link to="/certifications" className={`mb-tile mb-link-tile${m?.certFailing ? ' mb-alert' : ''}`} data-testid="mb-certs-tile">
+        <span className="mb-tile-eyebrow">Certifications</span>
+        <span className="mb-tile-big hud-tnum">{m && m.certCatalog != null ? m.certCatalog : '—'}</span>
+        <span className="mb-tile-foot hud-mono">
+          {m?.certFailing ? 'last sync refused' : m?.certLastSync ? 'IDEA certs · synced' : 'IDEA · not synced yet'}
+        </span>
       </Link>
 
       <Link to="/display" className="mb-tile mb-link-tile mb-pulse-tile">

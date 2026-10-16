@@ -25,9 +25,7 @@ const CONTEXT_TAGS = [
   ['/my-hours',    'HRS//SELF'],
   ['/hours',       'HRS//TEAM'],
   ['/log-hours',   'HRS//LOG'],
-  ['/skills',      'SKILLS'],
   ['/jobs',        'TASKING'],
-  ['/study',       'TRAINING'],
   ['/members/',    'PERSONNEL'],
   ['/profile',     'PROFILE'],
   ['/readiness',   'READINESS'],
@@ -43,10 +41,8 @@ const CONTEXT_TAGS = [
   ['/trips',       'TRIPS'],
   ['/verify-hours','HRS//VERIFY'],
   ['/reports',     'REPORTS'],
-  ['/certify',     'CERTIFY'],
   ['/certifications', 'CERTS'],
   ['/announce',    'ANNOUNCE'],
-  ['/coverage',    'COVERAGE'],
 ]
 function contextTag(pathname) {
   const hit = CONTEXT_TAGS.find(([p]) => pathname === p || pathname.startsWith(p))
@@ -134,12 +130,9 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
           <div className="nav-dropdown-divider" />
           <NavLink to="/profile" className={itemClass}>My Profile</NavLink>
           <NavLink to="/certifications" className={itemClass}>Certifications</NavLink>
-          {!isParent && (
-            <NavLink to="/study" data-tour="nav-study" className={itemClass}>Study</NavLink>
-          )}
-          {/* Weekly survey. Sits beside Study because it is the same audience
-              -- a member tool, not staff chrome -- and because a sixth item in
-              the primary row does not survive a phone. */}
+          {/* Weekly survey: a member tool, not staff chrome, and a sixth item
+              in the primary row does not survive a phone. (Study sat beside it
+              until the old training page was retired, decision 27.) */}
           {!isParent && (
             <NavLink to="/survey" className={itemClass}>Weekly Survey</NavLink>
           )}
@@ -219,10 +212,8 @@ export default function NavBar({ hasRole = () => false, session = null }) {
         .select('id', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('parent_link_requests')
         .select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('cert_requests')
-        .select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-    ]).then(([a, b, c]) => {
-      if (active) setPendingAccess((a.count ?? 0) + (b.count ?? 0) + (c.count ?? 0))
+    ]).then(([a, b]) => {
+      if (active) setPendingAccess((a.count ?? 0) + (b.count ?? 0))
     })
     return () => { active = false }
   }, [isStaff, pathname])
@@ -279,17 +270,12 @@ export default function NavBar({ hasRole = () => false, session = null }) {
             {isStaff && <NavLink to="/reports"      className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Reports</NavLink>}
           </Dropdown>
 
-          {isStaff ? (
-            <Dropdown label={<><IconSkills />Skills</>} tourId="nav-skills" paths={['/skills', '/certify', '/coverage']}>
-              <NavLink to="/skills"   className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Catalog</NavLink>
-              <NavLink to="/certify"  className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Certify</NavLink>
-              <NavLink to="/coverage" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Coverage</NavLink>
-            </Dropdown>
-          ) : (
-            <NavLink to="/skills" data-tour="nav-skills" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-              <IconSkills />Skills
-            </NavLink>
-          )}
+          {/* The official IDEA certifications (read-only mirror). The old
+              Skills catalog, Certify and Coverage pages were retired with the
+              old skills system (decision 27); their addresses redirect here. */}
+          <NavLink to="/certifications" data-tour="nav-certs" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <IconSkills />Certs
+          </NavLink>
           </>)}
         </div>
 

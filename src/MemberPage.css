@@ -157,3 +157,6 @@
   margin: 0.25rem 0 0.25rem;
   opacity: 1;
 }
+
+.mp-cert-note { margin: 0.25rem 0 0; color: var(--steel); font-size: 0.9rem; }
+.mp-cert-note a { color: var(--gold); }

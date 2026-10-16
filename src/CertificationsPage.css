@@ -316,3 +316,39 @@
   .ic-facts { grid-template-columns: 9rem 1fr; column-gap: 1rem; }
   .ic-facts dt { margin-top: 0.15rem; }
 }
+
+/* ── Where certifications are earned, proof links, sync-log export ── */
+.ic-earned {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--steel);
+}
+.ic-earned a,
+.ic-verify { color: var(--gold); }
+.ic-verify { text-decoration: underline; text-underline-offset: 2px; }
+
+.ic-export {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+  margin: 0.75rem 0 0;
+}
+.ic-export-btn {
+  min-height: 44px;
+  padding: 0 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gold);
+  background: var(--surface);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.ic-export-btn:hover:not(:disabled),
+.ic-export-btn:focus-visible { background: var(--gold); color: var(--bg); }
+.ic-export-btn:disabled { opacity: 0.6; cursor: default; }
+.ic-export-note { font-size: 0.72rem; color: var(--muted); overflow-wrap: anywhere; }

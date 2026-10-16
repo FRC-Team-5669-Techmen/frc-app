@@ -1,7 +1,7 @@
 # 33 Should the IDEA certifications mirror know a student only by their lowercased school sign-in email, and who may read it?
 - Raised: 2026-10-01 by the overnight session (the IDEA certifications mirror, workstream A)
-- Status: open
-- Default if nobody decides: **email only, as migration
+- Status: answered
+- Default before the decision: **email only, as migration
   `supabase/migrations/0001_idea_certifications_mirror.sql` builds it.** A
   holder row carries the holder's lowercased email and no member id. So IDEA
   Classroom must record each student's school sign-in email, or that student
@@ -9,9 +9,13 @@
   approved member, whatever their status, reads the catalog and every holder;
   a parent-only account reads the catalog and only their linked students'
   holder rows; an account with no approved profile reads nothing.
-- Decided: --
+- Decided: 2026-10-14, Mr. Pina: confirmed. The lowercased school Google
+  sign-in email is the single link between a certificate and a person.
+  Option A. Job gating (migration 0012, ledger 0006) reads the caller's email
+  from `auth.users` by `auth.uid()` inside a SECURITY DEFINER function and
+  matches it to `idea_cert_holders.email`; no member id was added.
 
-## What is actually true right now
+## What was true when it was raised
 
 - A holder need not have an app account, which is why the mirror does not key
   on a member id; a second key could also disagree with the first.

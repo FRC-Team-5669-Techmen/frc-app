@@ -888,3 +888,11 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+/* IDEA certification requirement (migration 0012) in the job detail. */
+.jobs-idea-req-line {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--steel);
+}
+.jobs-idea-req-line a { color: var(--gold); }

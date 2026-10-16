@@ -129,13 +129,6 @@ export const REVIEW_STATES = [
     },
   },
   {
-    name: 'state-skills-coverage', personas: ['student'], url: '/skills',
-    run: async (page) => {
-      await page.locator('.msh-toggle-btn', { hasText: 'Team coverage' }).first().click();
-      await page.waitForSelector('.cm-toggle-label', { timeout: 10_000 });
-    },
-  },
-  {
     name: 'state-jobs-new', personas: ['student', 'admin'], url: '/jobs',
     run: async (page) => {
       await page.locator('.jobs-add-btn').first().click();
@@ -161,21 +154,6 @@ export const REVIEW_STATES = [
     run: async (page) => {
       await page.locator('.sa-tab', { hasText: 'Settings' }).first().click();
       await page.waitForSelector('.sa-manage-row', { timeout: 10_000 });
-    },
-  },
-  {
-    name: 'state-certify-member', personas: ['admin'], url: '/certify',
-    run: async (page) => {
-      const value = await page.locator('.cp-picker-select option').nth(1).getAttribute('value');
-      await page.locator('.cp-picker-select').selectOption(value);
-      await page.waitForSelector('.cp-category', { timeout: 10_000 });
-    },
-  },
-  {
-    name: 'state-catalog-open', personas: ['admin'], url: '/skills',
-    run: async (page) => {
-      await page.locator('.sc-cat-header').first().click();
-      await page.waitForSelector('.sc-table-wrap', { timeout: 10_000 });
     },
   },
   {
