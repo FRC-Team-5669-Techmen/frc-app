@@ -2,14 +2,14 @@
 title: "Sign-out requests with mentor approval, meeting check-in, the 12-hour cap, and quick pulse (0014)"
 date: 2026-10-19
 branches: [main]
-commits: []
+commits: [7b7118f]
 migrations: ["0014_session_signout.sql", "0014_session_signout_rls_test.sql"]
 subsystems: ["Check-in", "Presence board", "Dashboard", "Roster", "Testing"]
 ---
 
 One solo session, ledger entry 0009, round 1 of making every function the
 member handbook describes work in the app. Mr. Pina noticed the check-out note
-had never been built. **0014 has not been applied to the live project.**
+had never been built. **0014 was pasted by Mr. Pina the same day; its RLS test ran on the live project 23/23 PASS.**
 
 ## What shipped
 
