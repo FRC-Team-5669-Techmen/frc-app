@@ -12,6 +12,8 @@ export const CLOCK_START = new Date('2026-10-01T16:00:00-07:00');
 // Every migration before 0014 (sign-out requests): the one-tap check-out the
 // app has until 0014 is pasted.
 export const PRE_0014 = '0001,0002,0003,0004,0005,0006,0007,0008,0009,0010,0011,0012,0013';
+// Every migration before 0015 (member standing).
+export const PRE_0015 = `${PRE_0014},0014`;
 
 // src/dev/fixture/personas.js, by key. Copied rather than imported so a spec
 // cannot pass merely because it read the same table as the page.

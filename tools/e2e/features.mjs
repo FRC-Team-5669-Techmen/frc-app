@@ -68,6 +68,7 @@ const FEATURES = Object.freeze([
   'job-certs',
   'handbook',
   'signout',
+  'standing',
 ]);
 
 

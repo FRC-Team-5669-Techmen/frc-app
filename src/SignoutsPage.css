@@ -106,3 +106,5 @@
   .sop-actions { flex-direction: row; }
   .sop-actions .sop-btn { flex: 1; }
 }
+.sop-link { min-height: 44px; background: none; border: 0; color: var(--gold); font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
+.sop-void { display: flex; flex-wrap: wrap; gap: 0.4rem; width: 100%; }

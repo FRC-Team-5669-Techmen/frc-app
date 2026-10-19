@@ -1,0 +1,82 @@
+/* /standing and /standing/team (0015). Theme tokens only. */
+.st-wrap { max-width: 60rem; width: 100%; min-width: 0; margin: 0 auto; padding: 1.25rem 1rem 3rem; box-sizing: border-box; }
+.st-wide { max-width: 72rem; }
+.st-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0.75rem; margin-bottom: 1rem; }
+.st-title { margin: 0; font-family: var(--font-ui); font-size: 1.35rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); }
+.st-sub { margin: 0.25rem 0 0; color: var(--steel); font-size: 0.9rem; }
+.st-muted { margin: 0.3rem 0; color: var(--muted); font-size: 0.88rem; }
+.st-error { margin: 0.3rem 0; color: var(--fault); }
+.st-msg { font-family: var(--font-mono); font-size: 0.85rem; color: var(--gold); }
+.st-ok { color: var(--steel); margin: 0.2rem 0; }
+.st-warn { color: var(--gold); }
+.st-pre { white-space: pre-wrap; margin: 0.2rem 0; overflow-wrap: anywhere; }
+.st-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.st-grid > .st-card { margin-bottom: 0; }
+.st-card { padding: 0.9rem; margin-bottom: 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); min-width: 0; }
+.st-alert { border-color: var(--gold-dim); }
+.st-h2 { margin: 0 0 0.5rem; font-family: var(--font-mono); font-size: 0.82rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--steel); }
+.st-big { margin: 0.1rem 0; font-family: var(--font-ui); font-size: 1.7rem; font-weight: 700; }
+.st-of { font-size: 1rem; color: var(--muted); font-weight: 400; }
+.st-bar { height: 8px; border-radius: 4px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; margin: 0.35rem 0; }
+.st-bar span { display: block; height: 100%; background: var(--gold-dim); }
+.st-bar span.ok { background: var(--gold); }
+.st-badge {
+  display: inline-block; padding: 0.3rem 0.65rem; border-radius: var(--radius);
+  font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
+  border: 1px solid var(--border-strong); color: var(--steel);
+}
+.st-badge-probation { color: var(--gold); border-color: var(--gold); }
+.st-badge-removed { color: var(--fault); border-color: var(--fault); }
+.st-chip { display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.1rem 0.4rem; border: 1px solid var(--border-strong); border-radius: var(--radius); color: var(--steel); }
+.st-chip-approved { color: var(--steel); }
+.st-chip-pending { color: var(--gold); border-color: var(--gold-dim); }
+.st-chip-denied { color: var(--fault); border-color: var(--fault); }
+.st-list { list-style: none; margin: 0; padding: 0; }
+.st-list > li { padding: 0.5rem 0; border-bottom: 1px solid var(--border); }
+.st-list > li:last-child { border-bottom: 0; }
+.st-list > li.unread { border-left: 3px solid var(--gold); padding-left: 0.5rem; }
+.st-list > li.bad { color: var(--gold); }
+.st-sublist { list-style: none; margin: 0.3rem 0 0; padding: 0 0 0 0.75rem; }
+.st-weeks > li { display: flex; justify-content: space-between; gap: 0.5rem; }
+.st-queue > li { display: flex; flex-direction: column; gap: 0.3rem; }
+.st-form { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; }
+.st-label { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel); display: flex; flex-direction: column; gap: 0.25rem; }
+.st-input {
+  min-height: 44px; font: inherit; color: var(--text); background: var(--bg);
+  border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 0.4rem 0.6rem; min-width: 0; box-sizing: border-box;
+}
+textarea.st-input, select.st-input { width: 100%; max-width: 100%; }
+.st-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.st-row > .st-input { flex: 1 1 12rem; }
+.st-row-between { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.st-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.25rem 0; }
+.st-pick {
+  min-height: 44px; padding: 0.4rem 0.8rem; font: inherit; font-size: 0.92rem; color: var(--text);
+  background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer;
+}
+.st-pick.on { color: #0A0B0D; background: var(--gold); border-color: var(--gold); }
+.st-pick:disabled { opacity: 0.5; cursor: default; }
+.st-check { display: flex; gap: 0.5rem; align-items: flex-start; min-height: 44px; font-size: 0.92rem; cursor: pointer; }
+.st-check input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--gold); flex: 0 0 auto; }
+.st-btn {
+  min-height: 44px; padding: 0.45rem 1rem; font-family: var(--font-ui); font-weight: 700; font-size: 0.9rem;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer;
+}
+.st-btn:disabled { opacity: 0.55; cursor: default; }
+.st-btn-primary { color: #0A0B0D; background: var(--gold); border-color: var(--gold); }
+.st-btn-wide { width: 100%; margin-bottom: 1rem; }
+.st-link { min-height: 44px; background: none; border: 0; color: var(--gold); font: inherit; font-size: 0.88rem; cursor: pointer; padding: 0 0.25rem; text-decoration: underline; }
+.st-tabs { display: flex; gap: 0.35rem; overflow-x: auto; margin-bottom: 1rem; padding-bottom: 0.25rem; }
+.st-tab {
+  flex: 0 0 auto; min-height: 44px; padding: 0.4rem 0.85rem; font-family: var(--font-mono); font-size: 0.8rem;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel); background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;
+}
+.st-tab.on { color: #0A0B0D; background: var(--gold); border-color: var(--gold); }
+.st-table-wrap { overflow-x: auto; width: 100%; max-width: calc(100vw - 2rem); }
+.st-tabs { max-width: calc(100vw - 2rem); }
+.st-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.st-table th { text-align: left; font-family: var(--font-mono); font-weight: 400; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); padding: 0.5rem; border-bottom: 1px solid var(--border-strong); }
+.st-table td { padding: 0.5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.st-table a { color: var(--text); }

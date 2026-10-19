@@ -31,7 +31,8 @@ function laMidnightISO() {
   return new Date(la.getTime() + offset).toISOString()
 }
 
-export default function SignoutsPage({ session }) {
+export default function SignoutsPage({ session, hasRole = () => false }) {
+  const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const uid = session?.user?.id
   const [allowed, setAllowed] = useState(undefined)   // undefined loading, null not set up, bool
   const [pending, setPending] = useState([])
@@ -194,6 +195,7 @@ export default function SignoutsPage({ session }) {
                 <li key={m.id}>
                   <span>{m.name}</span>
                   <span className="hud-mono sop-meta">{m.waiting ? 'waiting · ' : ''}since {fmtClock(m.since)}</span>
+                  {isStaff && m.id !== uid && <VoidIdle member={m} onDone={(t) => { setMsg(t); load() }} />}
                 </li>
               ))}
             </ul>
@@ -214,5 +216,28 @@ export default function SignoutsPage({ session }) {
         </section>
       </div>
     </div>
+  )
+}
+
+// Handbook Section 7: idle time is voided. A lead or mentor ends the session
+// and voids it, and the reason goes to the student (staff_void_session, 0015).
+function VoidIdle({ member, onDone }) {
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState('')
+  const [busy, setBusy] = useState(false)
+  if (!open) return <button className="sop-link" onClick={() => setOpen(true)}>Void</button>
+  async function go() {
+    if (reason.trim().length < 3) return
+    setBusy(true)
+    const { error } = await supabase.rpc('staff_void_session', { p_member: member.id, p_reason: reason.trim() })
+    setBusy(false)
+    onDone(error ? `Not voided${error.code ? ` (${error.code})` : ''}: ${error.message}` : `${member.name}: session voided, reason sent.`)
+    if (!error) { setOpen(false); setReason('') }
+  }
+  return (
+    <span className="sop-void">
+      <input className="sop-input" value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why (sent to the student)" aria-label={`Reason to void ${member.name}`} />
+      <button className="sop-btn" onClick={go} disabled={busy || reason.trim().length < 3}>Void session</button>
+    </span>
   )
 }

@@ -71,6 +71,9 @@ export default {
     await t.press('.hb-lesson.open .hb-term');
     t.check('a tapped term opens its glossary line', (await t.count('.hb-term-pop')) === 1 && ((await t.text('.hb-term-def')) || '').length > 10, await t.text('.hb-term-pop'));
     await t.shot('term');
+    // Centre the rule first: at 375 the sticky tab bar can sit over a rule
+    // near the top, and a tap there lands on a tab instead.
+    await t.evaluate(() => document.querySelector('.hb-lesson.open .hb-rule')?.scrollIntoView({ block: 'center' }));
     await t.press('.hb-lesson.open .hb-rule');
     t.eq('a tap elsewhere closes it', await t.count('.hb-term-pop'), 0);
     await t.tapTargets('.hb-lesson-head', 'lesson heads at least 44px on the phone');

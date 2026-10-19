@@ -45,3 +45,9 @@ verify_jwt = false
 # EVENT_HUB_CRON_SECRET function secret (x-cron-secret header), and the staff
 # "send now" action verifies the caller's own JWT inside the function.
 verify_jwt = false
+
+[functions.notice-mail]
+# Invoked by pg_cron via pg_net (public.invoke_notice_mail, 0015) with a shared
+# secret in the x-cron-secret header, checked against NOTICE_MAIL_SECRET and
+# supplied from private.notice_mail_config.hook_secret -- not a user JWT.
+verify_jwt = false

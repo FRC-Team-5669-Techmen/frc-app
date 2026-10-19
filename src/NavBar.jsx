@@ -45,6 +45,7 @@ const CONTEXT_TAGS = [
   ['/handbook',    'HANDBOOK'],
   ['/announce',    'ANNOUNCE'],
   ['/signouts',    'SIGN-OUTS'],
+  ['/standing',    'STANDING'],
 ]
 function contextTag(pathname) {
   const hit = CONTEXT_TAGS.find(([p]) => pathname === p || pathname.startsWith(p))
@@ -133,6 +134,10 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
           <NavLink to="/profile" className={itemClass}>My Profile</NavLink>
           <NavLink to="/certifications" className={itemClass}>Certifications</NavLink>
           <NavLink to="/handbook" className={itemClass}>Handbook</NavLink>
+          {/* Member standing (0015): a student's own record; staff open the team view below. */}
+          {!isParent && !isStaff && (
+            <NavLink to="/standing" end className={itemClass}>My standing</NavLink>
+          )}
           {/* Sign-out approvals: staff and the students given signout.approve
               (0014). null until 0014 is pasted or for anyone else. */}
           {signouts !== null && (
@@ -159,6 +164,7 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
             <>
               <div className="nav-dropdown-divider" />
               <NavLink to="/readiness" className={itemClass}>Readiness</NavLink>
+              <NavLink to="/standing/team" className={itemClass}>Team standing</NavLink>
               {/* Admin-only, not staff-wide: a report can quote whatever the
                   member had on screen, and the table's RLS is is_admin(). */}
               {isAdmin && (
