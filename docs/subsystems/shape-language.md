@@ -1,0 +1,5 @@
+# Shape language
+
+Moved verbatim from `CLAUDE.md` (The subsystems) on 2026-10-19, so `CLAUDE.md` stays short. `CLAUDE.md` links here; keep this file current in the same commit as any change to what it describes.
+
+- **The shape language** (`src/plate.js`, `src/plate.css`, `docs/SHAPES.md`, `tools/e2e/plate/`; 2026-10-01). IDEA Classroom's Plate v3 geometry with every colour from `src/theme.css`: raised keys, recessed chips that never look pressable, wells, panels, housings, nav pads with an LED, hazard title bars, mono labels, and a 44px floor on every student control (0 of 708 student targets under 44px at 375 and at 1440 with it on; 417 and 298 with it off). Every rule is keyed on `:root.tm-plate`, set from the one constant `APP_PLATE = 'tm-plate'` in `src/plate.js`, and **setting it to `''` is the whole revert** (196 of 196 screenshots byte-identical to the pre-plate base with the constant empty). No component file was edited, `/_ds` is untouched, and the check-in path's entry stylesheet grew by 6.2 kB gzip. Dense staff-only controls keep their size (decision 23).
