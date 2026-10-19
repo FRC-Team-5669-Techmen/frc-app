@@ -44,6 +44,7 @@ const CONTEXT_TAGS = [
   ['/certifications', 'CERTS'],
   ['/handbook',    'HANDBOOK'],
   ['/announce',    'ANNOUNCE'],
+  ['/signouts',    'SIGN-OUTS'],
 ]
 function contextTag(pathname) {
   const hit = CONTEXT_TAGS.find(([p]) => pathname === p || pathname.startsWith(p))
@@ -93,7 +94,7 @@ function Dropdown({ label, paths = [], tourId, align = 'left', badge = 0, childr
   )
 }
 
-function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false, isParent = false, pendingAccess = 0, openFeedback = 0 }) {
+function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false, isParent = false, pendingAccess = 0, openFeedback = 0, signouts = null }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -132,6 +133,14 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
           <NavLink to="/profile" className={itemClass}>My Profile</NavLink>
           <NavLink to="/certifications" className={itemClass}>Certifications</NavLink>
           <NavLink to="/handbook" className={itemClass}>Handbook</NavLink>
+          {/* Sign-out approvals: staff and the students given signout.approve
+              (0014). null until 0014 is pasted or for anyone else. */}
+          {signouts !== null && (
+            <NavLink to="/signouts" className={itemClass}>
+              Sign-outs
+              {signouts > 0 && <span className="nav-badge">{signouts}</span>}
+            </NavLink>
+          )}
           {/* Weekly survey: a member tool, not staff chrome, and a sixth item
               in the primary row does not survive a phone. (Study sat beside it
               until the old training page was retired, decision 27.) */}
@@ -235,6 +244,21 @@ export default function NavBar({ hasRole = () => false, session = null }) {
     return () => { active = false }
   }, [isAdmin, pathname])
 
+  // Sign-out requests waiting, for approvers only (0014). The RPC answers false
+  // for everyone else and errors before 0014; either way the entry stays hidden.
+  const [signouts, setSignouts] = useState(null)
+  useEffect(() => {
+    if (isParent) return
+    let active = true
+    supabase.rpc('can_approve_signouts').then(async ({ data, error }) => {
+      if (!active || error || data !== true) { if (active) setSignouts(null); return }
+      const { count } = await supabase.from('signout_requests')
+        .select('id', { count: 'exact', head: true }).eq('status', 'pending')
+      if (active) setSignouts(count ?? 0)
+    })
+    return () => { active = false }
+  }, [isParent, pathname])
+
   return (
     <nav className="navbar">
       <div className="navbar-shell">
@@ -282,7 +306,7 @@ export default function NavBar({ hasRole = () => false, session = null }) {
         </div>
 
         <div className="navbar-account">
-          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isAdmin={isAdmin} isParent={isParent} pendingAccess={pendingAccess} openFeedback={openFeedback} />
+          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isAdmin={isAdmin} isParent={isParent} pendingAccess={pendingAccess} openFeedback={openFeedback} signouts={signouts} />
         </div>
       </div>
     </nav>

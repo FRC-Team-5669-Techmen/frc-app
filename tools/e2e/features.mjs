@@ -67,6 +67,7 @@ const FEATURES = Object.freeze([
   'event-hub',
   'job-certs',
   'handbook',
+  'signout',
 ]);
 
 

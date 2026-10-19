@@ -6,8 +6,9 @@
  * Claims under test, each in both directions and in both migration states
  * (lane d has no migration, so `mig:all` and `mig:none` must read the same):
  *  - staff (mentor, admin): every board name is a real button (44px at 375),
- *    keyboard-reachable with the gold focus ring, and opens a READ-ONLY
- *    history dialog -- exactly one button in it, Close -- that takes focus,
+ *    keyboard-reachable with the gold focus ring, and opens a history dialog
+ *    whose sessions are read-only -- two buttons, the quick sign in/out and
+ *    Close -- that takes focus,
  *    closes on Escape (focus back on the same name) and on the backdrop;
  *  - non-staff (student, student2, parent): the same rows, names and counts,
  *    0 buttons and 0 tabindex on the board, names are spans, a click opens
@@ -170,7 +171,10 @@ export default {
           chipH.every((x) => x != null) && totalH != null && Math.abs(Math.round(totalH * 60) - Math.round(chipH.reduce((a, x) => a + x, 0) * 60)) <= 2,
           JSON.stringify(h?.chips));
         t.check('lane d\'s own 17h 40m of sessions is inside the total (the core seed adds more)', totalH != null && totalH >= 17 + 40 / 60 - 1 / 60, `Total ${h?.chips?.Total}`);
-        t.eq('read-only: exactly one button in the dialog, Close (no + Manual session, Edit or Void)', h?.buttons, ['Close']);
+        // Quick pulse (2026-10-19) adds ONE sign in/out button; the history
+        // itself stays read-only. tools/e2e/features/signout.mjs drives it.
+        t.check('two buttons: the quick sign in/out and Close (no + Manual session, Edit or Void)',
+          h?.buttons?.length === 2 && h.buttons[0] === 'Close' && /^(Sign (in|out) now|Approve sign-out)$/.test(h.buttons[1]), JSON.stringify(h?.buttons));
         t.check('the history read is this one member\'s: seasons, attendance_events, session_reviews', ['attendance_events', 'seasons', 'session_reviews'].every((x) => reads.includes(x)), reads.join(', '));
         const histCols = (await t.calls()).slice(callsBefore).filter((c) => c.table === 'attendance_events').map((c) => c.columns);
         t.check('positive control: a staff click DOES read a history (columns differ from the board\'s)', histCols.length > 0 && histCols.every((c) => c !== BOARD_COLUMNS), histCols.join(' | '));

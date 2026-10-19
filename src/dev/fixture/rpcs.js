@@ -272,7 +272,7 @@ export const CORE_RPCS = {
     if (!profileOf(db, args.p_member)) return raise('Member not found')
     const row = engine.insertRow('attendance_events', {
       user_id: args.p_member, type: args.p_type, event_time: args.p_event_time, category: args.p_category ?? 'build',
-      method: 'manual', location: 'manual', manual_entry: true, verified: true,
+      method: 'manual', location: 'manual', manual_entry: true, verified: true, overridden_by: user.id,
     })
     audit(engine, { event: row.id, member: args.p_member, actor: user.id, action: 'insert', reason: args.p_reason, newValue: snapshot(row) })
     return ok(row.id)

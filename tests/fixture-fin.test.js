@@ -107,9 +107,9 @@ describe('features/d.js: lane d\'s history on its own member', () => {
     expect(s.filter((x) => x.review)).toHaveLength(1)
     expect(s.filter((x) => x.manual)).toHaveLength(1)
     expect(s.filter((x) => x.inLoc === 'shop' && x.outLoc === 'side-door')).toHaveLength(1)
-    // 2.5 + 1.5 + 3 + 10 (capped) + 40m, the review session excluded: 17h 40m.
+    // 2.5 + 1.5 + 3 + 12 (capped) + 40m, the review session excluded: 19h 40m.
     const counted = s.filter((x) => !x.review).reduce((n, x) => n + x.ms, 0)
-    expect(Math.round(counted / 60_000)).toBe(17 * 60 + 40)
+    expect(Math.round(counted / 60_000)).toBe(19 * 60 + 40)
   })
 
   it('the one OUT at side-door in the whole store is this member\'s (how display-history.mjs finds them)', () => {

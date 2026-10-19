@@ -7,6 +7,11 @@ import {
   DUPLICATE_WINDOW_MS, ARRIVAL_HANDLED, isRevisit, nextNfcAction, statusWindowStartISO,
   readLocalTap, receiptHolds, recordLocalTap, whenForeground,
 } from './attendanceState'
+import {
+  loadMySignout, requestSignout, withdrawSignout, insertOutWithNote, isStaffMember,
+  liveMeeting, myMeetingCheckin, meetingCheckin,
+} from './signout'
+import SignoutForm from './SignoutForm'
 import './CheckinPage.css'
 
 // Screens a member can leave the tab sitting on. When the tab comes back after
@@ -15,7 +20,10 @@ import './CheckinPage.css'
 // stays up while the status still agrees with it, and is replaced only when it
 // no longer does, so a tab the browser re-surfaces is neither a stale "checked
 // in" from hours ago nor a "CHECKED OUT" that turns into the check-in prompt.
-const RESTING = new Set(['success', 'duplicate', 'confirm', 'confirm-out', 'unknown'])
+const RESTING = new Set(['success', 'duplicate', 'confirm', 'confirm-out', 'unknown', 'signout', 'pending', 'meeting'])
+
+// How often the waiting screen looks for the approval.
+const PENDING_POLL_MS = 10000
 
 // Times on this route read in the team's zone.
 function fmtClockLA(t) {
@@ -79,6 +87,13 @@ export default function CheckinPage({ session }) {
   // The code (or message) of the error behind a 'System fault', shown on that
   // screen so a student has something specific to tell a mentor.
   const [fault, setFault] = useState(null)
+  // Sign-out requests (0014). `returned` is the reason a mentor sent the last
+  // request back ('' when none was given), null when nothing was sent back.
+  const [returned, setReturned] = useState(null)
+  const [pending, setPending] = useState(null)
+  const [soError, setSoError] = useState(null)
+  const [staffSelf, setStaffSelf] = useState(false)
+  const [meeting, setMeeting] = useState(null)   // { title, status: present|late, at }
   // True once this history entry has acted on its arrival. Starts true when the
   // entry already carries the marker: a reload, a back/forward, a restored tab.
   const handled = useRef(isRevisit(location.state))
@@ -103,12 +118,16 @@ export default function CheckinPage({ session }) {
   // tag → DEFAULT_CATEGORY) + geo_ok (true = geofence verified, false = exempt
   // member skipped the fence); a check-OUT just closes the open session (the math
   // attributes a session by its IN category, so the OUT need not carry either).
-  async function insertEvent(newType, geoVerified = null) {
+  async function insertEvent(newType, geoVerified = null, signout = null) {
     const now = new Date()
     const row = { user_id: session.user.id, type: newType, location: loc, method: 'nfc' }
     if (newType === 'in') { row.category = DEFAULT_CATEGORY; row.geo_ok = geoVerified }
-    const { error } = await supabase.from('attendance_events').insert(row)
-    if (error) throw error
+    if (signout) {
+      await insertOutWithNote(supabase, row, signout)
+    } else {
+      const { error } = await supabase.from('attendance_events').insert(row)
+      if (error) throw error
+    }
     recordLocalTap(deviceStore(), session.user.id, newType)
     setEventType(newType)
     setEventTime(now)
@@ -158,6 +177,12 @@ export default function CheckinPage({ session }) {
       // geo_ok: true when the fence was verified, false when an exempt member
       // skipped it (location not proven — surfaced if the exemption is removed).
       await insertEvent('in', !exempt)
+      // A team meeting on now: the same scan logs present or late (0014).
+      const m = await liveMeeting(supabase)
+      if (m) {
+        const r = await meetingCheckin(supabase, m.id)
+        if (r) setMeeting({ title: m.title, status: r.status, at: r.scanned_at })
+      }
     } catch (err) {
       console.error(err)
       setFault(err?.code || err?.message || null)
@@ -166,6 +191,102 @@ export default function CheckinPage({ session }) {
       setActing(false)
     }
   }
+
+  // A member with a session open, once 0014 is there: a meeting scan, the
+  // waiting screen, or the sign-out note. Before 0014 (`legacy`) this does
+  // what the tag always did. `fresh` is a new tap; a page shown again never
+  // writes anything, the meeting check-in included.
+  async function openSession(next, fresh) {
+    const uid = session.user.id
+    const so = await loadMySignout(supabase, uid)
+    if (!mounted.current) return
+    if (so.legacy) {
+      if (fresh) { await insertEvent('out'); return }
+      setSince(next.status.since)
+      setStatus('confirm-out')
+      return
+    }
+    setSince(next.status.since)
+    if (so.pending) { setPending(so.pending); setStatus('pending'); return }
+    const staff = await isStaffMember(supabase, uid)
+    setStaffSelf(staff)
+    if (fresh) {
+      const m = await liveMeeting(supabase)
+      if (m) {
+        const mine = await myMeetingCheckin(supabase, m.id, uid)
+        if (mine === null) {
+          const r = await meetingCheckin(supabase, m.id)
+          if (r) { setMeeting({ title: m.title, status: r.status, at: r.scanned_at }); setStatus('meeting'); return }
+        }
+      }
+    }
+    // A request sent back during THIS session is shown with its reason.
+    const sentBack = so.returned && Date.parse(so.returned.decided_at) >= Date.parse(next.status.since)
+    setReturned(sentBack ? (so.returned.reason ?? '') : null)
+    setSoError(null)
+    setStatus('signout')
+  }
+
+  async function submitSignout({ note, cleanup }) {
+    if (acting) return
+    setActing(true)
+    setSoError(null)
+    try {
+      if (staffSelf) { await insertEvent('out', null, { note, cleanup }); return }
+      const r = await requestSignout(supabase, { note, cleanup, location: loc, source: 'nfc' })
+      if (r.mode === 'legacy') { await insertEvent('out'); return }
+      setPending(r.row)
+      setStatus('pending')
+    } catch (err) {
+      console.error(err)
+      if (err?.code === 'P0002') { setActing(false); arrive({ revisit: true }); return }
+      setSoError(`Not sent${err?.code ? ` (${err.code})` : ''}. Try again.`)
+    } finally {
+      setActing(false)
+    }
+  }
+
+  async function withdraw() {
+    if (acting) return
+    setActing(true)
+    try {
+      await withdrawSignout(supabase)
+      setPending(null)
+      setReturned(null)
+      setStatus('signout')
+    } catch (err) {
+      setSoError(`Could not withdraw${err?.code ? ` (${err.code})` : ''}.`)
+    } finally {
+      setActing(false)
+    }
+  }
+
+  // While waiting: approved shows the check-out receipt, sent back shows the
+  // form with the reason. Reads only.
+  async function checkPending() {
+    const uid = session.user.id
+    const { data } = await supabase.from('signout_requests')
+      .select('status, reason, decided_at, out_event_id').eq('member_id', uid)
+      .order('requested_at', { ascending: false }).limit(1)
+    const row = data?.[0]
+    if (!row || row.status === 'pending' || !mounted.current) return
+    if (row.status === 'approved') {
+      setEventType('out')
+      setEventTime(row.decided_at ? new Date(row.decided_at) : new Date())
+      setStatus('success')
+    } else if (row.status === 'returned') {
+      setReturned(row.reason ?? '')
+      setStatus('signout')
+    } else {
+      setStatus('signout')
+    }
+  }
+
+  useEffect(() => {
+    if (status !== 'pending') return
+    const t = setInterval(checkPending, PENDING_POLL_MS)
+    return () => clearInterval(t)
+  }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // One arrival: read the member's status and act on it through the shared rule
   // (attendanceState.nextNfcAction). `revisit` forces the no-auto-write path;
@@ -213,6 +334,11 @@ export default function CheckinPage({ session }) {
       if (!mounted.current) return
       // A receipt the re-read still agrees with stays up (attendanceState.receiptHolds).
       if (receipt && receiptHolds(next, receipt)) return
+      // The waiting screen came back and the session is closed: approved.
+      if (receipt === 'pending' && next.action !== 'unknown' && !next.status.checkedIn) {
+        await checkPending()
+        return
+      }
 
       if (next.action === 'unknown') {
         console.error(readErr)
@@ -227,13 +353,12 @@ export default function CheckinPage({ session }) {
         setEventTime(new Date(next.duplicate.at))
         setStatus('duplicate')
       } else if (next.action === 'check_out') {
-        // A fresh tap with a session open: automatic and unrestricted, as before.
-        await insertEvent('out')
+        // A fresh tap with a session open. Before 0014: automatic, as before.
+        await openSession(next, true)
       } else if (next.action === 'confirm_check_out') {
         // This page was shown again (reload, back-swipe, restored tab): show the
         // open session and let the member choose. Never written on its own.
-        setSince(next.status.since)
-        setStatus('confirm-out')
+        await openSession(next, false)
       } else {
         // Check-in: don't call geolocation on load (iOS treats it as
         // low-priority and it often never resolves). Wait for a tap.
@@ -271,7 +396,7 @@ export default function CheckinPage({ session }) {
   useEffect(() => {
     const resting = RESTING.has(status) && !acting
     // What a receipt screen shows, so the re-read can leave it up when it still holds.
-    const receipt = status === 'success' || status === 'duplicate' ? eventType : null
+    const receipt = status === 'success' || status === 'duplicate' ? eventType : status === 'pending' ? 'pending' : null
     function onVisibility() {
       if (document.visibilityState === 'hidden') { hiddenAt.current = Date.now(); return }
       const away = hiddenAt.current == null ? 0 : Date.now() - hiddenAt.current
@@ -376,6 +501,57 @@ export default function CheckinPage({ session }) {
     )
   }
 
+  if (status === 'signout') {
+    return (
+      <div className="checkin-wrap checkin-idle checkin-signout">
+        <CheckinHeader tag="SIGN-OUT" />
+        <h1 className="checkin-name">{memberName}</h1>
+        {since && <p className="checkin-status">Signed in since {fmtClockLA(since)}</p>}
+        <SignoutForm
+          onSubmit={submitSignout} busy={acting} error={soError} returnedReason={returned}
+          submitLabel={staffSelf ? 'Sign out' : 'Ask to sign out'}
+          hint={staffSelf ? null : 'Your hours stop when a mentor approves. Wait for it before you leave.'}
+        />
+        <Link to="/dashboard" className="checkin-home-link">VIEW STATUS →</Link>
+      </div>
+    )
+  }
+
+  if (status === 'pending') {
+    return (
+      <div className="checkin-wrap checkin-duplicate checkin-pending">
+        <CheckinHeader tag="WAITING" />
+        <div className="checkin-panel checkin-panel-amber">
+          <h1 className="checkin-name">{memberName}</h1>
+          <p className="checkin-status" role="status">WAITING FOR APPROVAL</p>
+          <p className="checkin-loc">Show a mentor your area. Your hours stop when they approve.</p>
+          {pending?.note && <p className="checkin-note">“{pending.note}”</p>}
+        </div>
+        <button onClick={checkPending} style={CONFIRM_BTN_STYLE}>Check again</button>
+        <button onClick={withdraw} disabled={acting} className="checkin-secondary">
+          {acting ? '…' : 'Withdraw, I am staying'}
+        </button>
+        {soError && <p className="checkin-status" role="status">{soError}</p>}
+        <footer className="checkin-footer checkin-footer-amber" aria-hidden="true">STATUS // PENDING APPROVAL</footer>
+      </div>
+    )
+  }
+
+  if (status === 'meeting') {
+    const late = meeting?.status === 'late'
+    return (
+      <div className={`checkin-wrap ${late ? 'checkin-duplicate' : 'checkin-checkout'}`}>
+        <CheckinHeader tag="MEETING" />
+        <div className="checkin-mark" aria-hidden="true">{late ? '!' : '✓'}</div>
+        <h1 className="checkin-name">{memberName}</h1>
+        <p className="checkin-status" role="status">{late ? 'LATE' : 'PRESENT'} · {fmtClockLA(meeting.at)}</p>
+        <p className="checkin-loc">{meeting.title}. You stay signed in.</p>
+        <button onClick={() => setStatus('signout')} className="checkin-secondary">Sign out instead</button>
+        <Link to="/dashboard" className="checkin-home-link">VIEW STATUS →</Link>
+      </div>
+    )
+  }
+
   const timeStr = fmtClockLA(eventTime)
   const verb = eventType === 'in' ? 'IN' : 'OUT'
 
@@ -404,6 +580,9 @@ export default function CheckinPage({ session }) {
       <h1 className="checkin-name">{memberName}</h1>
       <p className="checkin-status" role="alert">CHECKED {verb} · {timeStr}</p>
       <p className="checkin-loc">{locDisplay}</p>
+      {isIn && meeting && (
+        <p className="checkin-meeting">{meeting.status === 'late' ? 'LATE' : 'PRESENT'} · {meeting.title}</p>
+      )}
       <footer className="checkin-footer" aria-hidden="true">STATUS // {isIn ? 'ON DECK' : 'CLEAR'}</footer>
       <Link to="/dashboard" className="checkin-home-link">VIEW STATUS →</Link>
     </div>

@@ -27,6 +27,8 @@ import {
 
 const MIGRATION = readFileSync(
   new URL('../supabase/migrations/0004_member_permissions.sql', import.meta.url), 'utf8')
+const MIGRATION_0014 = readFileSync(
+  new URL('../supabase/migrations/0014_session_signout.sql', import.meta.url), 'utf8')
 
 const HOLDER = 'hhhhhhhh-0000-0000-0000-000000000001'
 const OTHER  = 'oooooooo-0000-0000-0000-000000000002'
@@ -258,7 +260,7 @@ describe('drift: src/permissions.js against 0004_member_permissions.sql', () => 
   })
 
   it('every capability seeded in SQL is in CAPABILITIES with the same label, and vice versa', () => {
-    const seeded = seededCapabilities(MIGRATION)
+    const seeded = [...seededCapabilities(MIGRATION), ...seededCapabilities(MIGRATION_0014)]
     const mirror = CAPABILITIES.map(c => ({ key: c.key, label: c.label }))
     expect(mirror).toEqual(seeded)
   })

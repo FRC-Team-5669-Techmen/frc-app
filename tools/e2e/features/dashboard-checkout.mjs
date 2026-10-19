@@ -9,12 +9,12 @@
  *  - one tap writes EXACTLY one OUT {location 'button', method null} and the
  *    tile flips to "Not checked in" with the NFC hint and no button;
  *  - positive control: Riley, whose only open IN is two days old (stale, past
- *    the 10 h cap), reads "Not checked in" with no button on the same fixture.
+ *    the 12 h cap), reads "Not checked in" with no button on the same fixture.
  *
  * This is the dashboard half only. tools/e2e/checkin.mjs (npm run
  * test:checkin) owns the /checkin and /checkin-volunteer paths.
  */
-import { P } from './_util.mjs';
+import { P, PRE_0014 } from './_util.mjs';
 
 const H = 3_600_000;
 
@@ -39,8 +39,10 @@ const laClock = (ms) => new Date(ms).toLocaleTimeString('en-US', { timeZone: 'Am
 
 export default {
   async run(t) {
-    for (const mig of ['all', 'none']) {
-      t.as(`mig ${mig} · student`);
+    // The one-tap path is the app until 0014 is pasted; with 0014 the button
+    // opens the sign-out note (tools/e2e/features/signout.mjs).
+    for (const [label, mig] of [['pre-0014', PRE_0014], ['none', 'none']]) {
+      t.as(`mig ${label} · student`);
       await t.open('/dashboard', { persona: 'student', mig, reset: true, ready: '.mb-status' });
       await t.settle();
       const sam = (await t.rows('attendance_events')).filter((e) => e.user_id === P.student.id).sort((a, b) => a.event_time.localeCompare(b.event_time));
@@ -53,7 +55,7 @@ export default {
         { status: 'Checked in', since: `since ${laClock(Date.parse(open.event_time))}`, button: 'Check Out', hint: 0, error: 0, retry: 0, unavailable: false, buttonH: undefined });
       t.check('Check Out at least 44px tall', before.buttonH >= 44, `${before.buttonH}px`);
       await t.noHScroll();
-      await t.shot(`checked-in-mig-${mig}`);
+      await t.shot(`checked-in-mig-${label}`);
       const n0 = sam.length;
       await t.press('button.mb-checkout[data-tour=checkout]');
       await t.page.waitForFunction(() => document.querySelector('.mb-status')?.textContent.trim() === 'Not checked in', null, { timeout: 15_000 }).catch(() => {});
@@ -64,9 +66,9 @@ export default {
       const after = await tile(t);
       t.eq('after: Not checked in, the NFC hint, no button, no error', { status: after.status, button: after.button, hint: after.hint, error: after.error },
         { status: 'Not checked in', button: null, hint: 1, error: 0 });
-      await t.shot(`checked-out-mig-${mig}`);
+      await t.shot(`checked-out-mig-${label}`);
 
-      t.as(`mig ${mig} · student2 (positive control)`);
+      t.as(`mig ${label} · student2 (positive control)`);
       await t.open('/dashboard', { persona: 'student2', mig, ready: '.mb-status' });
       await t.settle();
       const riley = await tile(t);

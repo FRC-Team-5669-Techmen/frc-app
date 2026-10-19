@@ -23,7 +23,7 @@
  * mandatory, not yet ended), so a core-seed change cannot silently move them.
  */
 import { APP_PLATE } from '../../../src/plate.js';
-import { P } from './_util.mjs';
+import { P, PRE_0014 } from './_util.mjs';
 
 async function agenda(t) {
   await t.waitFor('.sch-viewtabs');
@@ -171,8 +171,11 @@ export default {
     t.check('positive control: a non-holder sees the new event with no Edit/Delete', !!theirs && !theirs.edit && !theirs.del, JSON.stringify(theirs));
 
     // ════ /roster ══════════════════════════════════════════════════════════
-    t.as('roster · mig all · admin');
-    await t.open('/roster', { persona: 'admin', mig: 'all', ready: '.roster-list' });
+    // The 0004 roster claims run before 0014, which seeds a second capability
+    // (signout.approve, held by Riley); the two-capability roster is checked
+    // after them.
+    t.as('roster · mig pre-0014 · admin');
+    await t.open('/roster', { persona: 'admin', mig: PRE_0014, reset: true, ready: '.roster-list' });
     await t.settle();
     const tagsInDom = await t.count('.roster-perm-tag');
     const tagsShown = await t.visibleCount('.roster-perm-tag');
@@ -200,11 +203,11 @@ export default {
     await t.shot('roster-granted');
 
     t.as('roster grant → schedule · student2');
-    await openSchedule(t, 'student2', 'all');
+    await openSchedule(t, 'student2', PRE_0014);
     t.eq('the grant unlocks "+ New event" for Riley', await t.count('.sch-new-btn'), 1);
 
-    t.as('roster · mig all · admin revokes');
-    await t.open('/roster', { persona: 'admin', mig: 'all', ready: '.roster-list' });
+    t.as('roster · mig pre-0014 · admin revokes');
+    await t.open('/roster', { persona: 'admin', mig: PRE_0014, ready: '.roster-list' });
     await t.settle();
     const riley2 = await rosterExpand(t, 'Riley');
     const rileyBtn2 = (await permRow(riley2)).locator('.roster-perm-toggle');
@@ -212,10 +215,19 @@ export default {
     await t.page.waitForFunction(() => document.querySelectorAll('.roster-perm-tag').length === 1);
     await t.settle();
     t.check('revoking Riley: unpressed, one tag, no grant row', (await rileyBtn2.getAttribute('aria-pressed')) === 'false'
-      && (await t.rows('member_permissions')).filter((r) => r.member_id === P.student2.id).length === 0, `pressed ${await rileyBtn2.getAttribute('aria-pressed')}`);
+      && (await t.rows('member_permissions')).filter((r) => r.member_id === P.student2.id && r.capability === 'events.create').length === 0, `pressed ${await rileyBtn2.getAttribute('aria-pressed')}`);
     t.as('roster revoke → schedule · student2');
-    await openSchedule(t, 'student2', 'all');
+    await openSchedule(t, 'student2', PRE_0014);
     t.eq('the revoke locks "+ New event" again', await t.count('.sch-new-btn'), 0);
+
+    t.as('roster · mig all · two capabilities');
+    await t.open('/roster', { persona: 'admin', mig: 'all', reset: true, ready: '.roster-list' });
+    await t.settle();
+    t.eq('two tags: Riley approves sign-outs, Sam adds events', (await t.texts('.roster-perm-tag')).sort(), ['Adds events', 'Approves sign-outs']);
+    const sam3 = await rosterExpand(t, 'Sam');
+    const samToggles = (await permRow(sam3)).locator('.roster-perm-toggle');
+    t.eq('Sam: both toggles, only calendar pressed', [await samToggles.allTextContents(), await samToggles.evaluateAll((bs) => bs.map((b) => b.getAttribute('aria-pressed')))],
+      [['Can add calendar events', 'Can approve sign-outs'], ['true', 'false']]);
 
     for (const mig of [without0004, 'none']) {
       t.as(`roster · mig ${mig} · admin`);

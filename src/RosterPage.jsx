@@ -45,11 +45,20 @@ export default function RosterPage() {
   const [grants, setGrants]       = useState({})        // member_id -> capability keys
   const [grantState, setGrantState] = useState('loading')
   const [grantError, setGrantError] = useState('')
+  // The capabilities the DATABASE has: a later migration seeds its own (0014
+  // adds signout.approve), so a toggle shows only once its row exists. A failed
+  // read shows every capability this client knows, as before.
+  const [capKeys, setCapKeys]     = useState(null)
+  const caps = capKeys ? CAPABILITIES.filter(c => capKeys.includes(c.key)) : CAPABILITIES
 
   useEffect(() => { load(); loadDomains(); loadLinks(); loadHours(); loadGrants() }, [])
 
   async function loadGrants() {
-    const r = await loadAllGrants(supabase)
+    const [r, known] = await Promise.all([
+      loadAllGrants(supabase),
+      supabase.from('capabilities').select('key'),
+    ])
+    setCapKeys(known.error ? null : (known.data ?? []).map(k => k.key))
     setGrants(r.byMember)
     setGrantState(r.state)
     setGrantError(r.state === 'error' ? (r.error?.message ?? 'Could not load permissions') : '')
@@ -381,7 +390,7 @@ export default function RosterPage() {
                   <span className="roster-member-email">{m.email}</span>
                   <span className="roster-member-tags">
                     {!m.approved && <span className="roster-pending-tag">Pending</span>}
-                    {grantState === 'ok' && CAPABILITIES
+                    {grantState === 'ok' && caps
                       .filter(c => (grants[m.id] ?? []).includes(c.key))
                       .map(c => <span key={c.key} className="roster-perm-tag" title={c.label}>{c.short}</span>)}
                     {role && <RoleBadge role={role} />}
@@ -442,7 +451,7 @@ export default function RosterPage() {
                         <span className="roster-detail-none">Could not load permissions: {grantError}</span>
                       ) : (
                         <div className="roster-perms">
-                          {CAPABILITIES.map(c => {
+                          {caps.map(c => {
                             const on  = (grants[m.id] ?? []).includes(c.key)
                             const key = `${m.id}_cap_${c.key}`
                             return (

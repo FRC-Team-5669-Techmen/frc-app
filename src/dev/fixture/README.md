@@ -145,7 +145,8 @@ export default {
   // Optional row-level read filter, applied to every select on these tables
   // (and to the row lookup of update/delete), so a fixture can model "a
   // student cannot see this" without a database.
-  // ({ table, row, user, persona, db }) -> boolean
+  // ({ table, row, user, persona, db, applied }) -> boolean; applied('0014')
+  // says whether a migration is on, for a seed row that only exists after it.
   visible: { idea_cert_sync_log: ({ persona }) => persona.isStaff },
   // Optional Edge Function stand-ins: ({ body, user, persona, db, now, engine }) -> { data, error, status }
   functions: { 'my-function': () => ({ data: { ok: true }, error: null }) },

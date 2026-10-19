@@ -264,3 +264,28 @@
   .checkin-ring { animation: none; border-top-color: var(--gold); }
   .checkin-success { animation: none; }
 }
+
+/* Sign-out requests and meeting check-in (0014) */
+.checkin-signout { justify-content: flex-start; padding-top: 5rem; }
+.checkin-note { margin: 0.5rem 0 0; font-size: 0.95rem; color: var(--text); overflow-wrap: anywhere; }
+.checkin-meeting {
+  margin: 0;
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  font-size: 0.95rem;
+}
+.checkin-secondary {
+  min-height: 44px;
+  padding: 0.6rem 1.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--steel);
+  background: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.checkin-secondary:disabled { opacity: 0.6; cursor: default; }
+.checkin-success .checkin-meeting { color: #0A0B0D; }

@@ -1,0 +1,90 @@
+/* The sign-out note form (SignoutForm.jsx). Theme tokens only. */
+.so-form {
+  width: 100%;
+  max-width: 26rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  text-align: left;
+}
+.so-label {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+.so-note-row { display: flex; gap: 0.5rem; align-items: stretch; }
+.so-note {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.75rem;
+  resize: vertical;
+}
+.so-note:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+.so-mic {
+  flex: 0 0 48px;
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  color: var(--steel);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.so-mic-on { color: #0A0B0D; background: var(--gold); border-color: var(--gold); }
+.so-listening { margin: 0; font-family: var(--font-mono); font-size: 0.8rem; color: var(--gold); }
+.so-check {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.95rem;
+  color: var(--text);
+  cursor: pointer;
+}
+.so-check input { width: 22px; height: 22px; accent-color: var(--gold); flex: 0 0 auto; }
+.so-problem { margin: 0; color: var(--fault); font-size: 0.9rem; }
+.so-returned {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  color: var(--text);
+  background: var(--gold-a08);
+  font-size: 0.95rem;
+}
+.so-submit {
+  min-height: 48px;
+  font-family: var(--font-ui);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #0A0B0D;
+  background: var(--gold);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.so-submit:disabled { opacity: 0.6; cursor: default; }
+.so-hint { margin: 0; font-family: var(--font-mono); font-size: 0.78rem; color: var(--muted); text-align: center; }
+.so-cancel {
+  min-height: 44px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--steel);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.so-compact .so-submit { min-height: 44px; font-size: 0.95rem; }

@@ -42,7 +42,12 @@ const CHECKS = {
   'the entry is stamped before the automatic check-out write': (s) => {
     const a = fnBody(s, 'arrive')
     const stamp = a.indexOf('markHandled()')
-    const write = a.indexOf("insertEvent('out')")
+    // The automatic write is either in arrive itself or, since 0014, in the
+    // open-session helper arrive calls for a fresh tap (which writes only
+    // before 0014 is pasted).
+    const writes = ["insertEvent('out')", 'openSession(next, true)', 'openFllSession(next, true)']
+      .map((w) => a.indexOf(w)).filter((i) => i > 0)
+    const write = writes.length ? Math.min(...writes) : -1
     return stamp > 0 && write > 0 && stamp < write
   },
   'the stamp is a replace carrying the marker': (s) => {
@@ -74,7 +79,7 @@ const MUTANTS = {
   'the stamp is a replace carrying the marker':
     (s) => s.replace('state: ARRIVAL_HANDLED', 'state: null'),
   'an arrival whose page unmounted acts on nothing (before stamping)':
-    (s) => s.replace('if (!mounted.current) return', ''),
+    (s) => s.replaceAll('if (!mounted.current) return', ''),
   'a receipt that still holds stays up (before stamping or any write)':
     (s) => s.replace('if (receipt && receiptHolds(next, receipt)) return', ''),
 }

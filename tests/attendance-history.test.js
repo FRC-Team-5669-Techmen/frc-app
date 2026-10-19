@@ -177,7 +177,7 @@ describe('grouping sessions by day', () => {
     expect(byIn.i3.manual).toBe(true)
     expect(byIn.i1.manual).toBe(false)                            // positive control
     expect(byIn.i5.wasCapped).toBe(true)
-    expect(hours(byIn.i5)).toBe(10)
+    expect(hours(byIn.i5)).toBe(12)  // MAX_SESSION_HOURS, 12 from 2026-10-19 (handbook Section 7)
     expect(byIn.i1.wasCapped).toBe(false)                         // positive control
     expect(byIn.i7.open).toBe(true)
     expect(byIn.i7.outTime).toBe(null)
@@ -277,16 +277,16 @@ describe('review flags and totals', () => {
 
   test('totals count by the IN category and leave a flagged session out', () => {
     const t = historyTotals(historyByDay(EVENTS, { range: OFFSEASON, excluded: REVIEWED }))
-    // build: 2.5 (i1) + 10 capped (i5) + 2 (i6b) + 2 open (i7); i4's 6.5 is under review
-    expect(t.build).toBeCloseTo(16.5, 10)
+    // build: 2.5 (i1) + 12 capped (i5) + 2 (i6b) + 2 open (i7); i4's 6.5 is under review
+    expect(t.build).toBeCloseTo(18.5, 10)
     expect(t.outreach).toBeCloseTo(1.5, 10)
     expect(t.volunteer).toBeCloseTo(3, 10)
     expect(t.competition).toBe(0)
-    expect(t.total).toBeCloseTo(21, 10)
+    expect(t.total).toBeCloseTo(23, 10)
     // Positive control: the same history with nothing under review counts i4.
     const all = historyTotals(historyByDay(EVENTS, { range: OFFSEASON }))
-    expect(all.build).toBeCloseTo(23, 10)
-    expect(all.total).toBeCloseTo(27.5, 10)
+    expect(all.build).toBeCloseTo(25, 10)
+    expect(all.total).toBeCloseTo(29.5, 10)
   })
 
   test('an empty history totals zero in every bucket', () => {

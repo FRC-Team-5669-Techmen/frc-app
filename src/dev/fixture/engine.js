@@ -422,7 +422,7 @@ export function createEngine({ schema, plugins = [], store, context, now = () =>
     const fns = visibles.get(name)
     if (!fns || !fns.length) return true
     return fns.every((fn) => {
-      try { return fn({ table: name, row, user: c.user ?? null, persona: c.persona ?? null, db: db() }) !== false } catch { return false }
+      try { return fn({ table: name, row, user: c.user ?? null, persona: c.persona ?? null, db: db(), applied }) !== false } catch { return false }
     })
   }
 

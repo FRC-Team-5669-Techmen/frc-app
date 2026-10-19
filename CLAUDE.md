@@ -44,8 +44,8 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 - **Push notifications**: [`docs/subsystems/push-notifications.md`](docs/subsystems/push-notifications.md)
 - **Jobs**: [`docs/subsystems/jobs.md`](docs/subsystems/jobs.md)
 - **PWA and login**: install, OTP and Google OAuth, the login screen. [`docs/subsystems/pwa-and-login.md`](docs/subsystems/pwa-and-login.md)
-- **Check-in**: NFC fast path, geofence, iOS, kiosk (removed), auto-checkout, the one checked-in rule. [`docs/subsystems/checkin.md`](docs/subsystems/checkin.md)
-- **Presence board**: `/display` and its attendance history. [`docs/subsystems/presence-board.md`](docs/subsystems/presence-board.md)
+- **Check-in**: NFC fast path, geofence, iOS, kiosk (removed), auto-checkout, the one checked-in rule, sign-out requests and meeting check-in (0014, `/signouts`). [`docs/subsystems/checkin.md`](docs/subsystems/checkin.md)
+- **Presence board**: `/display`, its attendance history, and quick pulse (staff sign a member in or out). [`docs/subsystems/presence-board.md`](docs/subsystems/presence-board.md)
 - **Landing page and nav**: [`docs/subsystems/landing-and-nav.md`](docs/subsystems/landing-and-nav.md)
 - **Hours**: My Hours, Team Hours, categories, seasons, the LA day rule. [`docs/subsystems/hours.md`](docs/subsystems/hours.md)
 - **Session integrity**: [`docs/subsystems/session-integrity.md`](docs/subsystems/session-integrity.md)
@@ -221,4 +221,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-19. Every subsystem paragraph, the theme tokens, the tooling notes and the instruments table moved verbatim into `docs/subsystems/`; see `docs/history/claude-md-split-frc.md`.
+Last reviewed: 2026-10-19. Sign-out requests, meeting check-in and the 12-hour cap (ledger 0009, migration 0014), and quick pulse on `/display`; see `docs/history/session-signout-0014.md`.

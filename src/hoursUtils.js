@@ -16,7 +16,7 @@ export { CATEGORIES, DEFAULT_CATEGORY, categoryLabel, categoryColor, loggedTypeT
 // stale (open past the cap) or a closed pair exceeds it.
 // The one knob to change: the max hours a single derived session can bank. A
 // forgotten/missing sign-out is clamped to this so it can't run away.
-export const MAX_SESSION_HOURS = 10                          // config constant — change here
+export const MAX_SESSION_HOURS = 12                          // config constant — change here
 export const MAX_SESSION_MS    = MAX_SESSION_HOURS * 60 * 60 * 1000
 
 /**

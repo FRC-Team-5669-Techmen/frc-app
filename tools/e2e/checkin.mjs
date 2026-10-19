@@ -58,6 +58,11 @@ const STUDENT = '00000000-0000-0000-0000-0000000000c1';
 const EXEMPT = '00000000-0000-0000-0000-0000000000c3';
 const MENTOR = '00000000-0000-0000-0000-0000000000b1';
 
+// This suite pins the one-tap check-out path, which is how the app behaves
+// until 0014 (sign-out requests) is pasted. The 0014 path is
+// tools/e2e/features/signout.mjs. So every migration BEFORE 0014 is on.
+const PRE_0014 = '0001,0002,0003,0004,0005,0006,0007,0008,0009,0010,0011,0012,0013';
+
 // Geofence centres from src/geo.js. 0.018 deg of latitude is about 2.0 km.
 const SHOP = { latitude: 34.04155, longitude: -118.086826, accuracy: 10 };
 const FAR = { latitude: 34.04155 + 0.018, longitude: -118.086826, accuracy: 10 };
@@ -182,7 +187,7 @@ async function runViewport(browser, origin, vp) {
   // Browser.setPermission without the context id lands on the default context
   // and changes nothing. 'denied' is what a student who tapped Block gets: an
   // immediate PERMISSION_DENIED.
-  await newTab('/_fixture?__fx=persona:student,mig:all,reset');
+  await newTab(`/_fixture?__fx=persona:student,mig:${PRE_0014},reset`);
   const pageCdp = await context.newCDPSession(page);
   const { targetInfo } = await pageCdp.send('Target.getTargetInfo');
   await pageCdp.detach();
@@ -288,7 +293,7 @@ async function runViewport(browser, origin, vp) {
   // attendance for the two personas this test drives is cleared here, after
   // the reset and before the first step, rather than assumed absent. Today
   // (LA) is exactly what /checkin reads; anything older is at least 16 h old
-  // at the 4 PM clock, past the 10 h session cap, so it cannot read as in.
+  // at the 4 PM clock, past the 12 h session cap, so it cannot read as in.
   const todayStart = new Date('2026-10-01T00:00:00-07:00').toISOString();
   const cleared = await page.evaluate(({ ids, since }) => {
     const db = window.__fx.db;
@@ -966,11 +971,11 @@ async function runViewport(browser, origin, vp) {
 
 // ── M: presence across LA midnight ──────────────────────────────────────────
 // Its own context, because it needs its own clock: 12:30 AM, when a session
-// opened at 11:40 PM is still inside the 10 h cap. The member's tile has always
+// opened at 11:40 PM is still inside the 12 h cap. The member's tile has always
 // read such a session as checked in (attendanceState.currentStatus); the board
 // (/display) and the glance (the Team pulse tile) read attendance from local
 // midnight and so dropped it, until they read from presenceSinceISO(). Control:
-// the same row moved to 1:40 PM the day before (not today, past the cap) reads
+// the same row moved to 11:40 AM the day before (not today, past the cap) reads
 // absent on all three, so "present" is not just every name on the board.
 const MIDNIGHT_CLOCK = new Date('2026-10-01T00:30:00-07:00');
 async function runMidnight(browser, origin, vp) {
@@ -990,7 +995,7 @@ async function runMidnight(browser, origin, vp) {
   const name = 'a check-in at 11:40 PM reads present at 12:30 AM on the tile, the glance and the board; past the cap, absent on all three';
   const t0 = Date.now();
   try {
-    await page.goto(origin + '/_fixture?__fx=persona:student,mig:all,reset');
+    await page.goto(origin + `/_fixture?__fx=persona:student,mig:${PRE_0014},reset`);
     await waitForFixture(page);
     // Sam's newest event must be the planted IN: drop his last 26 h (a feature
     // seed may hold a session for him) and plant one at 11:40 PM.
@@ -1043,8 +1048,8 @@ async function runMidnight(browser, origin, vp) {
     assert(inTile.status === 'Checked in', `tile reads "${inTile.status}" for a session opened at 11:40 PM (${inTile.store})`);
     assert(inBoard.row === 'present', `the board shows ${planted.name} ${inBoard.row} while the tile reads Checked in (${inBoard.store})`);
 
-    // Control: the same row, 1:40 PM the day before.
-    const hits = await page.evaluate(({ rowId, at }) => window.__fx.patch('attendance_events', { id: rowId }, { event_time: at }), { rowId: planted.rowId, at: new Date('2026-09-30T13:40:00-07:00').toISOString() });
+    // Control: the same row, 11:40 AM the day before (12h50m: past the 12 h cap).
+    const hits = await page.evaluate(({ rowId, at }) => window.__fx.patch('attendance_events', { id: rowId }, { event_time: at }), { rowId: planted.rowId, at: new Date('2026-09-30T11:40:00-07:00').toISOString() });
     assert(hits === 1, `the control patch matched ${hits} row(s) (${await storeSays()})`);
     const outTile = await readTile();
     const outBoard = await readBoard();
@@ -1055,7 +1060,7 @@ async function runMidnight(browser, origin, vp) {
     const unexpected = consoleErrors.filter((e) => !EXPECTED_CONSOLE.some((re) => re.test(e.text)));
     assert(unexpected.length === 0, `console: ${unexpected.slice(0, 3).map((e) => e.text).join(' | ')}`);
     results.push({ vp: vp.name, id, name, ok: true, ms: Date.now() - t0,
-      detail: `11:40 PM: tile Checked in, ${planted.name} present on the board (${inBoard.count}), glance ${inTile.glance}; 1:40 PM the day before: Not checked in, absent (${outBoard.count}), glance ${outTile.glance}` });
+      detail: `11:40 PM: tile Checked in, ${planted.name} present on the board (${inBoard.count}), glance ${inTile.glance}; 11:40 AM the day before: Not checked in, absent (${outBoard.count}), glance ${outTile.glance}` });
     log(`  ok   [${vp.name}] ${id}`);
   } catch (e) {
     results.push({ vp: vp.name, id, name, ok: false, detail: e.message, url: page.url(), ms: Date.now() - t0 });

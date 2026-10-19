@@ -18,7 +18,7 @@ import './AttendanceHistory.css'
 // neither, so a history opened on a shared /display screen can never write.
 export default function AttendanceHistory({
   name, subtitle, day = null, groups, loading = false, error = '',
-  onClose, headActions = null, rowActions = null, covered = false,
+  onClose, headActions = null, rowActions = null, covered = false, banner = null,
 }) {
   const titleId = useId()
   const closeRef = useRef(null)
@@ -74,6 +74,7 @@ export default function AttendanceHistory({
             <button ref={closeRef} type="button" className="ah-close" onClick={onClose} aria-label="Close">×</button>
           </div>
         </div>
+        {banner}
         {loading ? (
           <p className="ah-empty">Loading sessions…</p>
         ) : error ? (
@@ -148,7 +149,7 @@ export default function AttendanceHistory({
 // Every page of the member's ledger (src/fetchAllRows.js), so nothing falls off
 // at the API's row cap; a failed page is the error, never a shorter history.
 // Read newest first as before; sessionsFromEvents sorts regardless.
-export function MemberAttendanceHistory({ memberId, name, onClose }) {
+export function MemberAttendanceHistory({ memberId, name, onClose, banner = null, reloadKey = 0 }) {
   const [state, setState] = useState({ loading: true, error: '', groups: null, season: null })
 
   useEffect(() => {
@@ -173,7 +174,7 @@ export function MemberAttendanceHistory({ memberId, name, onClose }) {
       })
     })
     return () => { live = false }
-  }, [memberId])
+  }, [memberId, reloadKey])
 
   const period = state.loading ? '' : state.season ? ` · ${state.season.name}` : ' · All time'
   return (
@@ -184,6 +185,7 @@ export function MemberAttendanceHistory({ memberId, name, onClose }) {
       loading={state.loading}
       error={state.error}
       onClose={onClose}
+      banner={banner}
     />
   )
 }

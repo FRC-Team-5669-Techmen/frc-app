@@ -54,6 +54,7 @@ const ApplicationsPage   = lazy(() => import('./ApplicationsPage'))
 const ParentResponse     = lazy(() => import('./ParentResponse'))
 const FeedbackPage       = lazy(() => import('./FeedbackPage'))
 const AnnouncePage       = lazy(() => import('./AnnouncePage'))
+const SignoutsPage       = lazy(() => import('./SignoutsPage'))
 const SurveyPage         = lazy(() => import('./SurveyPage'))
 const SurveysAdmin       = lazy(() => import('./SurveysAdmin'))
 // Event family hub (migrations 0005/0006). The family page is public, like
@@ -403,6 +404,7 @@ export default function App() {
           {/* Discord announcements composer (migration 0003 + the discord-announce
               Edge Function). The page gates itself on hasRole('admin'). */}
           <Route path="/announce"        element={<AnnouncePage hasRole={hasRole} />} />
+          <Route path="/signouts"        element={<SignoutsPage session={session} />} />
           {/* Weekly survey. The member route resolves whatever survey is open;
               the mentor route authors them and reads results. */}
           <Route path="/survey"          element={<SurveyPage session={session} />} />

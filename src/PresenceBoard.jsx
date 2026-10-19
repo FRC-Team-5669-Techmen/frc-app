@@ -4,6 +4,7 @@ import { computePresence, presenceSinceISO, fmtClock, groupBySubteam } from './p
 import { displayName } from './names'
 import { canOpenHistory } from './attendanceHistory'
 import { MemberAttendanceHistory } from './AttendanceHistory'
+import QuickPulseControl from './QuickPulseControl'
 import './PresenceBoard.css'
 
 // Read-only wall-display board of who is currently present, derived from the
@@ -25,6 +26,7 @@ export default function PresenceBoard({ hasRole } = {}) {
   const [present, setPresent] = useState(new Map()) // user_id -> sinceISO
   const [error, setError] = useState('')
   const [history, setHistory] = useState(null)    // { memberId, name } — staff only
+  const [reloadKey, setReloadKey] = useState(0)    // bumped after a quick sign in/out
   const timer = useRef(null)
 
   const load = useCallback(async () => {
@@ -108,7 +110,7 @@ export default function PresenceBoard({ hasRole } = {}) {
                         type="button"
                         className="pb-name pb-name-btn"
                         aria-haspopup="dialog"
-                        title="Attendance history"
+                        title="Sign in or out, and attendance history"
                         onClick={() => setHistory({ memberId: m.id, name })}
                       >{name}</button>
                     ) : (
@@ -130,6 +132,15 @@ export default function PresenceBoard({ hasRole } = {}) {
           memberId={history.memberId}
           name={history.name}
           onClose={() => setHistory(null)}
+          reloadKey={reloadKey}
+          banner={(
+            <QuickPulseControl
+              memberId={history.memberId}
+              name={history.name}
+              since={present.get(history.memberId) ?? null}
+              onChanged={() => { load(); setReloadKey((k) => k + 1) }}
+            />
+          )}
         />
       )}
     </div>

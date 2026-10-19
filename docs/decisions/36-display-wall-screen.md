@@ -7,7 +7,10 @@
   Team Hours opens on, has no season switcher and does not close itself. A
   non-staff viewer sees the plain board. The board lists approved, active
   profiles, which includes an approved parent-only account.
-- Decided: --
+- Decided: in part, 2026-10-19, Mr. Pina: "tap a name, and then have control
+  over the sign in status of that person." A staff viewer now signs a member in
+  or out from the panel (two taps, through `staff_add_event`, audited). The
+  sessions in the panel stay read-only; Edit and Void stay on Team Hours.
 
 ## What is actually true right now
 

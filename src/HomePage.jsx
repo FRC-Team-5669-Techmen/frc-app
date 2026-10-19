@@ -7,7 +7,9 @@ import { fmtTime, fmtDay } from './shopStatus'
 import { startOfTodayISO, fmtClock } from './presence'
 import { displayName } from './names'
 import { currentStatus } from './attendanceState'
-import { checkOutFromDashboard } from './attendanceCheckout'
+import { checkOutFromDashboard, dashboardCheckoutRow } from './attendanceCheckout'
+import { loadMySignout, requestSignout, withdrawSignout, insertOutWithNote } from './signout'
+import SignoutForm from './SignoutForm'
 import { normEmail, isHeld, syncSummary } from './ideaCerts'
 import { storageKey, cleanProgress, passedCount } from './handbook/sign'
 import { LESSONS } from './handbook/lessons'
@@ -101,6 +103,9 @@ export default function HomePage({ session, hasRole = () => false }) {
   const [readFailed, setReadFailed] = useState(false) // last status read errored
   const [acting, setActing] = useState(false)
   const [checkoutErr, setCheckoutErr] = useState(null)
+  // Sign-out requests (0014): null until read, { legacy } before 0014.
+  const [so, setSo] = useState(null)
+  const [soForm, setSoForm] = useState(false)
   const [myResp, setMyResp] = useState(undefined) // next event: 'going' | 'maybe' | 'declined' | null
   const [rsvping, setRsvping] = useState(false)
 
@@ -113,7 +118,7 @@ export default function HomePage({ session, hasRole = () => false }) {
   const fetchEvents = useCallback(async () => {
     const { data, error } = await supabase
       .from('attendance_events')
-      .select('id, type, event_time, location')
+      .select('id, type, event_time, location, category')
       .eq('user_id', uid)
       .order('event_time', { ascending: false })
     if (error) {
@@ -126,6 +131,11 @@ export default function HomePage({ session, hasRole = () => false }) {
   }, [uid])
 
   useEffect(() => { fetchEvents() }, [fetchEvents])
+
+  const loadSo = useCallback(async () => {
+    try { setSo(await loadMySignout(supabase, uid)) } catch { setSo(null) }
+  }, [uid])
+  useEffect(() => { loadSo() }, [loadSo, allEvents])
 
   // A dashboard tab left open is otherwise frozen at the moment it loaded: a
   // tag tap in another tab would not show here. Re-read when it comes back.
@@ -154,12 +164,43 @@ export default function HomePage({ session, hasRole = () => false }) {
   // The insert's result is read now: a rejected or failed write says so on the
   // tile instead of leaving "Checked in" up with no explanation.
   async function handleCheckOut() {
+    // After 0014 the button opens the note; before it, it checks out at once.
+    if (so && !so.legacy) { setCheckoutErr(null); setSoForm(true); return }
     if (acting) return
     setActing(true)
     setCheckoutErr(null)
     const result = await checkOutFromDashboard(supabase, uid)
     if (!result.ok) setCheckoutErr(result.message)
     await fetchEvents()
+    setActing(false)
+  }
+
+  // The note form's submit. Staff and FLL sessions close directly with the
+  // note; everyone else asks, and the tile shows the request until approved.
+  async function submitSignout({ note, cleanup }, direct) {
+    if (acting) return
+    setActing(true)
+    setCheckoutErr(null)
+    try {
+      if (direct) {
+        await insertOutWithNote(supabase, dashboardCheckoutRow(uid), { note, cleanup })
+      } else {
+        await requestSignout(supabase, { note, cleanup, location: 'button', source: 'button' })
+      }
+      setSoForm(false)
+    } catch (err) {
+      setCheckoutErr(`Not sent${err?.code ? ` (${err.code})` : ''}. Try again, or tap your tag.`)
+    }
+    await fetchEvents()
+    await loadSo()
+    setActing(false)
+  }
+
+  async function handleWithdraw() {
+    if (acting) return
+    setActing(true)
+    try { await withdrawSignout(supabase) } catch { /* the reload shows what holds */ }
+    await loadSo()
     setActing(false)
   }
 
@@ -231,6 +272,20 @@ export default function HomePage({ session, hasRole = () => false }) {
             </div>
             {statusUnknown ? (
               <button className="mb-checkout mb-retry" onClick={fetchEvents}>Retry</button>
+            ) : isIn && so?.pending ? (
+              <div className="mb-so-pending" role="status">
+                <p className="mb-so-wait hud-mono">Sign-out waiting for approval</p>
+                <button className="mb-checkout mb-retry" onClick={handleWithdraw} disabled={acting}>Withdraw</button>
+              </div>
+            ) : isIn && soForm ? (
+              <SignoutForm
+                compact
+                onSubmit={(v) => submitSignout(v, isStaff || status.last?.category === 'volunteer')}
+                busy={acting}
+                submitLabel={isStaff || status.last?.category === 'volunteer' ? 'Sign out' : 'Ask to sign out'}
+                hint={isStaff || status.last?.category === 'volunteer' ? null : 'Your hours stop when a mentor approves.'}
+                onCancel={() => setSoForm(false)}
+              />
             ) : isIn ? (
               <button className="mb-checkout" data-tour="checkout" onClick={handleCheckOut} disabled={acting}>
                 {acting ? '…' : 'Check Out'}

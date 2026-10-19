@@ -37,8 +37,9 @@
 import { isSchemaMissing } from './schemaMissing.js'
 
 export const CAP_EVENTS_CREATE = 'events.create'
+export const CAP_SIGNOUT_APPROVE = 'signout.approve'
 
-// Mirrors the rows 0004 seeds into public.capabilities (key + label must match;
+// Mirrors the rows 0004 and 0014 seed into public.capabilities (key + label must match;
 // the test enforces it). A new capability is a new row there AND here.
 export const CAPABILITIES = Object.freeze([
   Object.freeze({
@@ -46,6 +47,13 @@ export const CAPABILITIES = Object.freeze([
     label: 'Can add calendar events',
     short: 'Adds events',
     hint: 'Add events to the schedule, and edit or delete the ones they added. Cannot mark an event mandatory.',
+  }),
+  // Seeded by 0014_session_signout.sql (handbook Section 7: students Mr. Pina names).
+  Object.freeze({
+    key: CAP_SIGNOUT_APPROVE,
+    label: 'Can approve sign-outs',
+    short: 'Approves sign-outs',
+    hint: 'Approve or send back other members\' sign-out requests on /signouts. Never their own.',
   }),
 ])
 

@@ -1,0 +1,108 @@
+/* /signouts approver page. Theme tokens only. */
+.sop-wrap { max-width: 64rem; margin: 0 auto; padding: 1.25rem 1rem 3rem; box-sizing: border-box; }
+.sop-head { margin-bottom: 0.9rem; }
+.sop-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.sop-sub, .sop-note { margin: 0.3rem 0 0; color: var(--steel); font-size: 0.95rem; }
+.sop-muted { margin: 0.3rem 0; color: var(--muted); font-size: 0.9rem; }
+.sop-error { color: var(--fault); }
+.sop-msg { font-family: var(--font-mono); font-size: 0.85rem; color: var(--gold); }
+.sop-card {
+  padding: 0.9rem;
+  margin-bottom: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  min-width: 0;
+}
+.sop-card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.sop-h2 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+.sop-count { color: var(--text); margin-left: 0.35rem; }
+.sop-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+.sop-row {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+.sop-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start; }
+.sop-row-top { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; align-items: baseline; }
+.sop-name { font-weight: 700; font-size: 1.05rem; }
+.sop-meta { font-size: 0.75rem; color: var(--muted); }
+.sop-text { margin: 0; overflow-wrap: anywhere; }
+.sop-chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-strong);
+}
+.sop-chip-ok { color: var(--steel); }
+.sop-chip-warn { color: var(--gold); border-color: var(--gold-dim); }
+.sop-actions { display: flex; flex-direction: column; gap: 0.4rem; flex: 0 0 auto; }
+.sop-btn {
+  min-height: 44px;
+  min-width: 6.5rem;
+  padding: 0.5rem 0.9rem;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.sop-btn:disabled { opacity: 0.6; cursor: default; }
+.sop-btn-primary { color: #0A0B0D; background: var(--gold); border-color: var(--gold); }
+.sop-return { display: flex; gap: 0.4rem; width: 100%; flex-wrap: wrap; }
+.sop-input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  min-height: 44px;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0 0.6rem;
+}
+.sop-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; }
+.sop-grid .sop-card { margin-bottom: 0; }
+.sop-mini { list-style: none; margin: 0; padding: 0; }
+.sop-mini li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.sop-mini li:last-child { border-bottom: 0; }
+@media (max-width: 520px) {
+  .sop-row { flex-direction: column; }
+  .sop-actions { flex-direction: row; }
+  .sop-actions .sop-btn { flex: 1; }
+}

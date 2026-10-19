@@ -279,3 +279,8 @@
   text-overflow: ellipsis;
 }
 .mb-feed-time { font-size: 0.72rem; color: var(--steel); flex-shrink: 0; }
+
+/* Sign-out request on the YOU tile (0014) */
+.mb-so-pending { display: flex; flex-direction: column; gap: 0.5rem; }
+.mb-so-wait { margin: 0; color: var(--gold); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.mb-you .so-form { max-width: none; }

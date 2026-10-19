@@ -7,6 +7,8 @@ import {
   DUPLICATE_WINDOW_MS, ARRIVAL_HANDLED, isRevisit, nextNfcAction, statusWindowStartISO,
   readLocalTap, receiptHolds, recordLocalTap, whenForeground,
 } from './attendanceState'
+import { loadMySignout, insertOutWithNote, switchToFll } from './signout'
+import SignoutForm from './SignoutForm'
 import './CheckinPage.css'
 
 // Volunteer check-in fast path for summer FLL-room volunteering. Structured like
@@ -19,7 +21,7 @@ const CATEGORY = 'volunteer'
 // Same resting screens and refresh-on-return as CheckinPage: a tab brought back
 // after a minute away re-reads, never writing; a receipt stays up while the
 // status still agrees with it, anything else shows the current status.
-const RESTING = new Set(['success', 'duplicate', 'confirm', 'confirm-out', 'unknown'])
+const RESTING = new Set(['success', 'duplicate', 'confirm', 'confirm-out', 'unknown', 'signout'])
 
 function deviceStore() {
   try { return window.localStorage } catch { return null }
@@ -81,6 +83,7 @@ export default function VolunteerCheckinPage({ session }) {
   const [fault, setFault] = useState(null)
   const [switched, setSwitched] = useState(false) // closed a normal session to open volunteer
   const [since, setSince] = useState(null)        // open session start, for confirm-out
+  const [soError, setSoError] = useState(null)    // the sign-out note form's error
   // True once this history entry has acted on its arrival (see CheckinPage).
   const handled = useRef(isRevisit(location.state))
   const started = useRef(false)
@@ -166,10 +169,19 @@ export default function VolunteerCheckinPage({ session }) {
           return
         }
       }
-      if (switched) await closeNormalSession()
-      // geo_ok mirrors CheckinPage: true when the FLL fence was verified, false
-      // when an exempt member skipped it.
-      const now = await insertEvent('in', !exempt)
+      // After 0014 one call closes the build session and opens this one;
+      // before it, the two writes the page always made.
+      let now
+      const sw = switched ? await switchToFll(supabase, { location: loc, geoOk: !exempt }) : { mode: 'none' }
+      if (sw.mode === 'switch') {
+        now = new Date()
+        recordLocalTap(deviceStore(), session.user.id, 'in')
+      } else {
+        if (switched) await closeNormalSession()
+        // geo_ok mirrors CheckinPage: true when the FLL fence was verified, false
+        // when an exempt member skipped it.
+        now = await insertEvent('in', !exempt)
+      }
       setEventType('in')
       setEventTime(now)
       setStatus('success')
@@ -177,6 +189,41 @@ export default function VolunteerCheckinPage({ session }) {
       console.error(err)
       setFault(err?.code || err?.message || null)
       setStatus('error')
+    } finally {
+      setActing(false)
+    }
+  }
+
+  // FLL sessions sign out directly (no approval), with the note (0014). Before
+  // 0014 the tap checks out exactly as it always has.
+  async function openFllSession(next, fresh) {
+    const so = await loadMySignout(supabase, session.user.id)
+    if (!mounted.current) return
+    setSince(next.status.since)
+    if (!so.legacy) { setSoError(null); setStatus('signout'); return }
+    if (!fresh) { setStatus('confirm-out'); return }
+    const ts = await insertEvent('out')
+    setEventType('out')
+    setEventTime(ts)
+    setStatus('success')
+  }
+
+  async function submitFllSignout({ note, cleanup }) {
+    if (acting) return
+    setActing(true)
+    setSoError(null)
+    try {
+      const now = new Date()
+      await insertOutWithNote(supabase,
+        { user_id: session.user.id, type: 'out', location: loc, method: 'nfc', category: CATEGORY },
+        { note, cleanup })
+      recordLocalTap(deviceStore(), session.user.id, 'out')
+      setEventType('out')
+      setEventTime(now)
+      setStatus('success')
+    } catch (err) {
+      console.error(err)
+      setSoError(`Not recorded${err?.code ? ` (${err.code})` : ''}. Try again.`)
     } finally {
       setActing(false)
     }
@@ -239,16 +286,12 @@ export default function VolunteerCheckinPage({ session }) {
         setEventTime(new Date(next.duplicate.at))
         setStatus('duplicate')
       } else if (next.action === 'check_out') {
-        // Same-tap toggle: open volunteer session → check OUT. Automatic and
-        // unrestricted, exactly like CheckinPage's check-out.
-        const ts = await insertEvent('out')
-        setEventType('out')
-        setEventTime(ts)
-        setStatus('success')
+        // Same-tap toggle on an open volunteer session: the note, or before
+        // 0014 the automatic check-out it always was.
+        await openFllSession(next, true)
       } else if (next.action === 'confirm_check_out') {
         // This page was shown again: show the open session, let the member choose.
-        setSince(next.status.since)
-        setStatus('confirm-out')
+        await openFllSession(next, false)
       } else if (next.action === 'switch') {
         // A NORMAL session is open: auto-switch to volunteer. Both the close and
         // the new check-in are geofenced + tapped, so defer to confirmCheckin.
@@ -347,6 +390,18 @@ export default function VolunteerCheckinPage({ session }) {
           <button onClick={() => arrive()} style={CONFIRM_BTN_STYLE}>Try again</button>
         )}
         <footer className="checkin-footer checkin-footer-fault" aria-hidden="true">STATUS // FAULT</footer>
+      </div>
+    )
+  }
+
+  if (status === 'signout') {
+    return (
+      <div className="checkin-wrap checkin-idle checkin-signout">
+        <CheckinHeader tag="SIGN-OUT" />
+        <h1 className="checkin-name">{memberName}</h1>
+        {since && <p className="checkin-status">FLL since {fmtClockLA(since)}</p>}
+        <SignoutForm onSubmit={submitFllSignout} busy={acting} error={soError} submitLabel="Sign out" hint={null} />
+        <Link to="/dashboard" className="checkin-home-link">VIEW STATUS →</Link>
       </div>
     )
   }

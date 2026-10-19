@@ -45,6 +45,7 @@ export const ROUTES = Object.freeze([
   { path: '/reports', url: '/reports', group: 'staff', label: 'Reports' },
   { path: '/activity', url: '/activity', group: 'staff', label: 'Activity' },
   { path: '/readiness', url: '/readiness', group: 'staff', label: 'Readiness' },
+  { path: '/signouts', url: '/signouts', group: 'staff', label: 'Sign-out approvals' },
   { path: '/squad', url: '/squad', group: 'staff', label: 'Squad' },
   { path: '/access-requests', url: '/access-requests', group: 'staff', label: 'Access Requests' },
   { path: '/applications', url: '/applications', group: 'staff', label: 'Applications' },
