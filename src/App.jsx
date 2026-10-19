@@ -33,6 +33,7 @@ const HoursBoard  = lazy(() => import('./HoursBoard'))
 const RosterPage     = lazy(() => import('./RosterPage'))
 const ProfilePage    = lazy(() => import('./ProfilePage'))
 const CertificationsPage = lazy(() => import('./CertificationsPage'))
+const HandbookPage    = lazy(() => import('./HandbookPage'))
 const MemberPage     = lazy(() => import('./MemberPage'))
 const CheckinPage    = lazy(() => import('./CheckinPage'))
 const VolunteerCheckinPage = lazy(() => import('./VolunteerCheckinPage'))
@@ -384,6 +385,10 @@ export default function App() {
               role-gated: the page picks its own staff / member / parent view and
               RLS decides the rows. */}
           <Route path="/certifications" element={<CertificationsPage session={session} hasRole={hasRole} />} />
+          {/* The member handbook: quick reference, 18 lessons, glossary and
+              signing (migration 0013). Every role reads it; the page picks the
+              agreement a member signs from their roles. */}
+          <Route path="/handbook"    element={<HandbookPage session={session} hasRole={hasRole} />} />
           <Route path="/jobs"        element={<JobsPage session={session} hasRole={hasRole} />} />
           <Route path="/members/:id" element={<MemberPage session={session} hasRole={hasRole} />} />
           <Route path="/profile"     element={<ProfilePage session={session} hasRole={hasRole} />} />

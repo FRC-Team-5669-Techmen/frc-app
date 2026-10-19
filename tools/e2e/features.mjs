@@ -66,6 +66,7 @@ const FEATURES = Object.freeze([
   'dashboard-checkout',
   'event-hub',
   'job-certs',
+  'handbook',
 ]);
 
 

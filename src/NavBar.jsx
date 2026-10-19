@@ -42,6 +42,7 @@ const CONTEXT_TAGS = [
   ['/verify-hours','HRS//VERIFY'],
   ['/reports',     'REPORTS'],
   ['/certifications', 'CERTS'],
+  ['/handbook',    'HANDBOOK'],
   ['/announce',    'ANNOUNCE'],
 ]
 function contextTag(pathname) {
@@ -130,6 +131,7 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
           <div className="nav-dropdown-divider" />
           <NavLink to="/profile" className={itemClass}>My Profile</NavLink>
           <NavLink to="/certifications" className={itemClass}>Certifications</NavLink>
+          <NavLink to="/handbook" className={itemClass}>Handbook</NavLink>
           {/* Weekly survey: a member tool, not staff chrome, and a sixth item
               in the primary row does not survive a phone. (Study sat beside it
               until the old training page was retired, decision 27.) */}

@@ -9,6 +9,8 @@ import { displayName } from './names'
 import { currentStatus } from './attendanceState'
 import { checkOutFromDashboard } from './attendanceCheckout'
 import { normEmail, isHeld, syncSummary } from './ideaCerts'
+import { storageKey, cleanProgress, passedCount } from './handbook/sign'
+import { LESSONS } from './handbook/lessons'
 import './HomePage.css'
 
 function fmtClock12(iso) {
@@ -285,7 +287,7 @@ export default function HomePage({ session, hasRole = () => false }) {
           {/* ── Role-aware tile row ── */}
           {isStaff
             ? <StaffTiles m={metrics} present={present} />
-            : <StudentTiles m={metrics} present={present} />}
+            : <StudentTiles m={metrics} present={present} uid={uid} />}
 
         </div>
       </div>
@@ -294,9 +296,22 @@ export default function HomePage({ session, hasRole = () => false }) {
 }
 
 // ── Student tiles ──
-function StudentTiles({ m, present }) {
+// Handbook lessons passed on this device (the handbook page keeps them in
+// localStorage; a private window simply reads 0).
+function handbookPassed(uid) {
+  try { return passedCount(cleanProgress(JSON.parse(localStorage.getItem(storageKey(uid)) || 'null'))) } catch { return 0 }
+}
+
+function StudentTiles({ m, present, uid }) {
+  const hb = handbookPassed(uid)
   return (
     <>
+      <Link to="/handbook" className="mb-tile mb-link-tile mb-role-student" data-testid="mb-handbook-tile">
+        <span className="mb-tile-eyebrow">Handbook</span>
+        <span className="mb-tile-big hud-tnum">{hb}<span className="mb-tile-big-sub">/{LESSONS.length}</span></span>
+        <span className="mb-tile-foot hud-mono">{hb === LESSONS.length ? 'all lessons passed →' : 'lessons passed →'}</span>
+      </Link>
+
       <Link to="/jobs" className="mb-tile mb-link-tile mb-role-student">
         <span className="mb-tile-eyebrow">My Jobs</span>
         <span className="mb-tile-big hud-tnum">{m ? m.jobsClaimed : '—'}</span>
