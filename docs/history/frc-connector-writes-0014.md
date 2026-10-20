@@ -14,9 +14,9 @@ Kept current so a restarted session can resume. Each milestone is a local commit
 - [x] M0 ledger 0014 written; numbers read: ledger 0014 free, migrations 0019 and 0020 free (highest 0018)
 - [x] M1 src/writeVia.js and its test
 - [x] M2 0019_connector_writes.sql
-- [ ] M3 every page converted; no direct write left under src/
-- [ ] M4 registry: exclusions removed, coverage guard, create_event and its undo
-- [ ] M5 0019 test (differential, live-safe) passing in the harness; mutants
+- [x] M3 every page converted; no direct write left under src/
+- [x] M4 registry: exclusions removed, coverage guard, create_event and its undo
+- [x] M5 0019 test (differential, live-safe) 72/72 in the harness; mutants-0019 14/14 caught
 - [ ] M6 0020 set name and merge, test and harness proof
 - [ ] M7 docs
 - [ ] M8 full gate, rebase, push
