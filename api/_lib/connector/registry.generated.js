@@ -5,11 +5,11 @@ export default {
  "measured": "2026-10-19",
  "counts": {
   "functions_called": 103,
-  "registry_functions": 104,
-  "reachable": 94,
-  "read": 13,
+  "registry_functions": 109,
+  "reachable": 99,
+  "read": 15,
   "undo": 2,
-  "confirm": 77,
+  "confirm": 80,
   "by_argument": 2,
   "generated": 86,
   "excluded_functions": 10,
@@ -749,7 +749,16 @@ export default {
       "p_grant": false
      }
     }
-   ]
+   ],
+   "before": {
+    "rpc": "admin_get_members",
+    "find": {
+     "id": "$args.p_member"
+    },
+    "has": {
+     "roles": "$args.p_role"
+    }
+   }
   },
   "admin_set_task_cert": {
    "name": "admin_set_task_cert",
@@ -1019,6 +1028,130 @@ export default {
    ],
    "describe": "Clear hour goal (a change: asks first).",
    "level": "confirm"
+  },
+  "connector_admin_audit": {
+   "name": "connector_admin_audit",
+   "source": "hand",
+   "forms": [
+    {
+     "args": [
+      {
+       "name": "p_tool",
+       "spoken": "tool",
+       "type": "text",
+       "optional": true
+      },
+      {
+       "name": "p_day",
+       "spoken": "day",
+       "type": "date",
+       "optional": true
+      },
+      {
+       "name": "p_limit",
+       "spoken": "limit",
+       "type": "integer",
+       "optional": true
+      }
+     ],
+     "returns": "jsonb",
+     "retset": false
+    }
+   ],
+   "writes": false,
+   "gates": [
+    "is_admin"
+   ],
+   "called_from": [],
+   "describe": "The connector's audit log, every change made through Claude, newest first.",
+   "level": "read"
+  },
+  "connector_admin_disconnect": {
+   "name": "connector_admin_disconnect",
+   "source": "hand",
+   "forms": [
+    {
+     "args": [
+      {
+       "name": "p_token_id",
+       "spoken": "token_id",
+       "type": "uuid",
+       "optional": false
+      }
+     ],
+     "returns": "jsonb",
+     "retset": false
+    }
+   ],
+   "writes": true,
+   "gates": [
+    "is_admin"
+   ],
+   "called_from": [],
+   "describe": "Disconnect one Claude connection.",
+   "level": "confirm"
+  },
+  "connector_admin_disconnect_all": {
+   "name": "connector_admin_disconnect_all",
+   "source": "hand",
+   "forms": [
+    {
+     "args": [],
+     "returns": "jsonb",
+     "retset": false
+    }
+   ],
+   "writes": true,
+   "gates": [
+    "is_admin"
+   ],
+   "called_from": [],
+   "describe": "Disconnect every Claude connection, this one included.",
+   "level": "confirm"
+  },
+  "connector_admin_set_enabled": {
+   "name": "connector_admin_set_enabled",
+   "source": "hand",
+   "forms": [
+    {
+     "args": [
+      {
+       "name": "p_enabled",
+       "spoken": "enabled",
+       "type": "boolean",
+       "optional": false
+      }
+     ],
+     "returns": "jsonb",
+     "retset": false
+    }
+   ],
+   "writes": true,
+   "gates": [
+    "is_admin"
+   ],
+   "called_from": [],
+   "describe": "Switch the connector on or off. Off ends this chat's access until it is switched on in the app.",
+   "level": "confirm"
+  },
+  "connector_admin_state": {
+   "name": "connector_admin_state",
+   "source": "hand",
+   "forms": [
+    {
+     "args": [],
+     "returns": "jsonb",
+     "retset": false
+    }
+   ],
+   "writes": false,
+   "gates": [
+    "connector_may_connect",
+    "is_admin"
+   ],
+   "called_from": [],
+   "describe": "Whether the connector is on, who may connect, and every connection with when it was last used.",
+   "level": "read"
   },
   "connector_report_gap": {
    "name": "connector_report_gap",

@@ -37,6 +37,7 @@ admin_set_member_role:
         p_member: $args.p_member
         p_role: $args.p_role
         p_grant: false
+  before: {rpc: admin_get_members, find: {id: $args.p_member}, has: {roles: $args.p_role}}
 
 feedback_set_status:
   describe: Move feedback reports to a status.
@@ -72,3 +73,20 @@ admin_get_members:
 member_standing:
   describe: A member's standing, this week's hours against what is required, and this month's meetings.
   level: read
+
+# The connector's own switch and connections (the /connector page calls these).
+connector_admin_state:
+  describe: Whether the connector is on, who may connect, and every connection with when it was last used.
+  level: read
+connector_admin_audit:
+  describe: The connector's audit log, every change made through Claude, newest first.
+  level: read
+connector_admin_set_enabled:
+  describe: Switch the connector on or off. Off ends this chat's access until it is switched on in the app.
+  level: confirm
+connector_admin_disconnect:
+  describe: Disconnect one Claude connection.
+  level: confirm
+connector_admin_disconnect_all:
+  describe: Disconnect every Claude connection, this one included.
+  level: confirm

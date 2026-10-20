@@ -87,6 +87,7 @@ export function buildRegistry(root = ROOT) {
       if (hand.level_when) entry.level_when = hand.level_when;
       entry.level = hand.level ?? (hand.level_when ? 'confirm' : writes.has(name) ? 'confirm' : 'read');
       if (hand.undo) entry.undo = hand.undo;
+      if (hand.before) entry.before = hand.before;
       if (hand.connector_only) entry.connector_only = true;
     } else {
       entry.describe = generatedDescribe(name, writes.has(name));
