@@ -20,7 +20,7 @@ Kept current so a restarted session can resume. Each milestone is a local commit
 - [x] M5b (added mid-session by the coordinator) 0021: deleted rows reach previews and audit rows; a role removal carries its undo; test 8/8, mutants-0021 3/3
 - [x] M6 0020 set name and merge, test 8/8, merge-0020.mjs 903/903 with three mutants caught
 - [x] M7 docs
-- [ ] M8 full gate, rebase, push
+- [x] M8 full gate on the pushed tree (below); origin/main unmoved at 025ad31, ledger 0014 and migrations 0019 to 0021 still free; pushed
 
 ## What was built
 
@@ -59,7 +59,7 @@ Kept current so a restarted session can resume. Each milestone is a local commit
 
 ## Measured, 2026-10-20
 
-- vitest: 54 files, 853 tests (the last full run; see the gate below for the pushed tree).
+- The gate on the pushed tree: build ok; vitest 52 files, 843 tests; ds:audit ok; discord:calendar:test 19/19; history:verify lossless; connector:build leaves no diff; `test:checkin` 51/51 and `test:features` 1591/1591 at 375 and 1440, through the PGRST202 fallback (fixture mode has none of the new functions). The first features run read 1587/1589: the feedback spec required no `feedback_` RPC before 0002, and the legacy move now tries `feedback_set_legacy_status` first. The spec now requires no 0002 RPC and exactly one legacy-function call that answered PGRST202 and fell back.
 - SQL harness, every test file: 501/501 across 22 files (0019 72/72, 0020 8/8, 0021 8/8, every earlier test unchanged).
 - `tools/sql-harness/mutants-0019.mjs` 14/14 caught; `mutants-0021.mjs` 3/3; `merge-0020.mjs` 903/903 (a row in each of 106 moved columns for both accounts, mentor and student refused with nothing changed, three mutants each caught); `tools/connector/harness/proof.mjs` 1175/1175 (15 hand samples, 153 write entries x 3 callers refused); `check-parse.mjs` 340/340 signatures; `mutants-0018.mjs` 12/12 when run alone (after `proof.mjs` in the same server its check 17 reads a registry row proof.mjs left registered, an ordering effect between the two scripts, not a defect).
 

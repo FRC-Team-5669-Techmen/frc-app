@@ -293,7 +293,12 @@ export default {
     const upd = (await t.calls()).filter((c) => c.kind === 'update' && c.table === 'feedback');
     t.check('Seen writes the OLD spelling with a plain update', stored.status === 'reviewed' && stored.reviewed_by === P.admin.id && upd.length === 1 && !upd[0].error,
       `status ${stored.status}, reviewed_by ${stored.reviewed_by === P.admin.id ? 'admin' : stored.reviewed_by}, ${upd.length} update(s) error ${upd[0]?.error ?? null}`);
-    t.eq('no RPC is called without 0002', (await t.calls()).filter((c) => c.kind === 'rpc' && /^feedback_/.test(c.name)).length, 0);
+    // feedback_set_legacy_status (0019) is the old update as a function; it
+    // needs 0002, so here it is always missing and the page falls back to the
+    // plain update above. No 0002 function is called.
+    const rpcs = (await t.calls()).filter((c) => c.kind === 'rpc' && /^feedback_/.test(c.name))
+    t.eq('no 0002 RPC is called without 0002', rpcs.filter((c) => c.name !== 'feedback_set_legacy_status').length, 0);
+    t.check('the legacy move tried its 0019 function once, found it missing, and fell back', rpcs.filter((c) => c.name === 'feedback_set_legacy_status').length === 1 && rpcs[0].error === 'PGRST202', JSON.stringify(rpcs.map((c) => [c.name, c.error])));
     await t.page.keyboard.press('Escape');
     await t.page.waitForSelector('.fbp-modal', { state: 'detached' });
     t.check('the tabs moved one report from New to Seen', (await t.texts('.fbp-tab')).slice(0, 2).join() === `New (${N - 1}),Seen (${tabTexts(rows)[1].match(/\d+/)[0] * 1 + 1})`, (await t.texts('.fbp-tab')).slice(0, 2).join());
