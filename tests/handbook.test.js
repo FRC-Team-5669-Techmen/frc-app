@@ -54,7 +54,7 @@ describe('the handbook text', () => {
   test('the parser reads tables, nested lists and inline links', () => {
     const who = hb.sections.find(s => s.num === 2).blocks.find(b => b.type === 'table')
     expect(who.head).toEqual(['Question', 'Ask', 'How'])
-    expect(who.rows).toHaveLength(7)
+    expect(who.rows).toHaveLength(6)
     const reporting = sectionText(hb.sections.find(s => s.num === 14))
     expect(reporting).toContain('wants to meet outside robotics')
     expect(plain('see [FIRST](https://www.firstinspires.org) now')).toBe('see FIRST now')

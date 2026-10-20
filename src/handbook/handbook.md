@@ -20,13 +20,13 @@ Miss a standard and you go on probation, a fixed warning period. It lasts 4 week
 
 **Who we are.** Team 5669, the Techmen, is Bosco Tech's FRC team. Our students design, build, wire and program the whole robot, bumpers included. FRC is a varsity activity at Bosco Tech, and we run it like one against California's best teams.
 
-- **Who runs the team:** Mr. Pina and Mr. Garza are the mentors. Seraj Arteaga and Marcos Posada are the student team leaders.
+- **Who runs the team:** Mr. Pina runs the team, and everything goes through him. Mr. Garza helps in the background. Seraj Arteaga and Marcos Posada are the student team leaders.
 - **No robotics experience is needed** to apply.
 - **This handbook is the rulebook.** If someone tells you something different, follow the handbook.
 
 ### Your first two weeks
 
-1. **Come to a team meeting** in the IDEA Classroom (Section 4). Ask for Mr. Pina or Mr. Garza.
+1. **Come to a team meeting** in the IDEA Classroom (Section 4). Ask for Mr. Pina.
 2. **Apply** at https://frc-app-liard.vercel.app/, then interview with a mentor.
 3. **Register with FIRST** at https://my.firstinspires.org. A parent accepts the FIRST Consent and Release, a permission form.
 4. **Get the FRC app** at https://frc-app-liard.vercel.app/. Each parent gets a private link by email after the family sign-up, with no account. Anyone with it sees your page, so never share it. A shared link is replaced.
@@ -43,8 +43,7 @@ Miss a standard and you go on probation, a fixed warning period. It lasts 4 week
 
 | Question | Ask | How |
 | --- | --- | --- |
-| Joining, standing, appeals, costs | Mr. Pina | apina@boscotech.edu, (626) 419-9320 |
-| Shop, safety, schedule | Mr. Pina or Mr. Garza | lgarza@boscotech.edu |
+| Anything about the team: joining, standing, appeals, costs, shop, safety, schedule | Mr. Pina | apina@boscotech.edu, (626) 419-9320 |
 | Your tasks | Your sub-team lead | Sub-team Discord channel |
 | Team plans | Team leaders | Team Discord |
 | Someone is hurt | The nearest adult; 911 if serious | In person |

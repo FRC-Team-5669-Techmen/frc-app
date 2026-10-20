@@ -56,6 +56,19 @@ export default {
     await t.noHScroll();
     await t.tapTargets('.hb-tab', 'tabs at least 44px on the phone');
     await t.shot('quick');
+    t.eq('Get help lists Mr. Pina with his email and phone, and no Mr. Garza', [((await t.text('.hb-contacts')) || '').includes('apina@boscotech.edu'), ((await t.text('.hb-contacts')) || '').includes('(626) 419-9320'), ((await t.text('.hb-contacts')) || '').includes('Garza')], [true, true, false]);
+    t.eq('plain /handbook opens no lesson (0, against 1 with ?section=6)', await t.count('.hb-lesson.open'), 0);
+
+    t.as('student · citing a section by link');
+    await t.open('/handbook?section=6', { persona: 'student', mig: 'all', ready: '#sec-6' });
+    await t.settle();
+    t.eq('?section=6 opens the attendance lesson on the Lessons tab', [await t.text('.hb-tab[aria-selected="true"]'), await t.count('.hb-lesson.open'), await t.count('#lesson-attendance.open #sec-6')], ['Lessons', 1, 1]);
+    t.eq('lessons are labelled by section: Section 4 is the week lesson, 6 is attendance, 7 is hours', [await t.text('#lesson-week .hb-lesson-num'), await t.text('#lesson-attendance .hb-lesson-num'), await t.text('#lesson-hours .hb-lesson-num')], ['Sec4-5', 'Sec6', 'Sec7']);
+    t.check('Section 6 holds the sports rule', ((await t.text('#sec-6')) || '').includes('other clubs, sports and activities'), '');
+    t.check('Section 6 is scrolled into view', await t.evaluate(() => { const r = document.getElementById('sec-6').getBoundingClientRect(); return r.top >= 0 && r.top < innerHeight; }), '');
+    await t.open('/handbook?section=4', { persona: 'student', mig: 'all', ready: '#sec-4' });
+    t.check('?section=4 lands on Your week, with the Tuesday and Friday rule', ((await t.text('#sec-4')) || '').includes('Other activities never excuse a team meeting'), '');
+    await t.open('/handbook', { persona: 'student', mig: 'all', ready: '.hb-hero' });
 
     t.as('student · lessons');
     await t.press('.hb-tab:nth-child(2)');

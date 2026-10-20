@@ -254,6 +254,7 @@
   scroll-margin-top: 64px;
 }
 .hb-lesson.open { border-color: var(--muted); }
+.hb-section { scroll-margin-top: 72px; }
 .hb-lesson-passed .hb-lesson-num { color: var(--hr-volunteer); border-color: var(--hr-volunteer); }
 .hb-lesson-head {
   width: 100%;
@@ -271,13 +272,14 @@
   cursor: pointer;
 }
 .hb-lesson-num {
-  width: 2.2rem; height: 2.2rem;
-  display: grid; place-items: center;
+  min-width: 2.6rem; height: 2.6rem; padding: 0 0.3rem;
+  display: grid; place-items: center; align-content: center; line-height: 1;
   font-family: var(--font-mono); font-size: 0.9rem;
   color: var(--gold);
   border: 1px solid var(--gold-dim);
   border-radius: var(--radius-sm);
 }
+.hb-lesson-num small { font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); margin-bottom: 0.15rem; }
 .hb-lesson-titles { display: grid; gap: 0.15rem; min-width: 0; }
 .hb-lesson-title { font-size: 1.05rem; font-weight: 700; }
 .hb-lesson-rule { font-size: 0.88rem; line-height: 1.35; color: var(--steel); }
@@ -499,6 +501,7 @@
   .hb-quick { grid-template-columns: repeat(3, 1fr); }
   .hb-card-pair { grid-column: span 2; }
   .hb-card-pair .hb-contacts { grid-template-columns: repeat(2, 1fr); column-gap: 1.5rem; }
+  .hb-card-pair .hb-contacts .hb-contact-main { grid-column: 1 / -1; }
   .hb-glance { grid-template-columns: 1fr 1.6fr; align-items: center; gap: 1.5rem; }
   .hb-lessons-layout { display: grid; grid-template-columns: 250px 1fr; gap: 1rem; align-items: start; }
   .hb-index {

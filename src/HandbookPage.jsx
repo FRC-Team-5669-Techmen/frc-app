@@ -147,6 +147,9 @@ function saveProgress(userId, p) {
 }
 
 const pad = n => String(n).padStart(2, '0')
+// A lesson is labelled by the handbook sections it holds, so "Section 4" in an
+// email is findable: lesson numbers are never shown, they would not match.
+const secs = l => l.sections.length > 1 ? `${l.sections[0]}-${l.sections[l.sections.length - 1]}` : String(l.sections[0])
 const fmtDate = iso => !iso || Number.isNaN(Date.parse(iso)) ? 'today' : new Date(iso).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', year: 'numeric' })
 
 // ── Quick reference ─────────────────────────────────────────────────────────
@@ -214,8 +217,7 @@ function QuickRef({ goLesson }) {
 
       <Card label="Who to tell" title="Get help" lesson="start" pair>
         <ul className="hb-contacts">
-          <li><span>Joining, standing, costs</span><a href="mailto:apina@boscotech.edu">Mr. Pina</a><a href="tel:+16264199320" className="hb-mono">(626) 419-9320</a></li>
-          <li><span>Shop, safety, schedule</span><a href="mailto:lgarza@boscotech.edu">Mr. Garza</a></li>
+          <li className="hb-contact-main"><span>Anything about the team</span><b>Mr. Pina</b><a href="mailto:apina@boscotech.edu" className="hb-mono">apina@boscotech.edu</a><a href="tel:+16264199320" className="hb-mono">(626) 419-9320</a></li>
           <li><span>You feel unsafe</span><b>Any mentor, teacher or counselor</b></li>
           <li><span>A crisis, any time</span><a href="tel:988" className="hb-mono">Call or text 988</a></li>
         </ul>
@@ -233,7 +235,7 @@ function Lesson({ lesson, index, open, onToggle, progress, onAnswer, onNext, ope
   return (
     <section className={`hb-lesson hb-lesson-${state}${open ? ' open' : ''}`} id={`lesson-${lesson.id}`}>
       <button type="button" className="hb-lesson-head" aria-expanded={open} onClick={onToggle}>
-        <span className="hb-lesson-num" aria-hidden="true">{pad(index + 1)}</span>
+        <span className="hb-lesson-num" aria-label={`Section ${secs(lesson)}`}><small>Sec</small>{secs(lesson)}</span>
         <span className="hb-lesson-titles">
           <span className="hb-lesson-title">{lesson.title}</span>
           <span className="hb-lesson-rule">{lesson.rule}</span>
@@ -245,7 +247,7 @@ function Lesson({ lesson, index, open, onToggle, progress, onAnswer, onNext, ope
         <div className="hb-lesson-body">
           <p className="hb-rule"><span className="hb-rule-label">The rule</span>{lesson.rule}</p>
           {lesson.sections.map(n => (
-            <div key={n} className="hb-section">
+            <div key={n} className="hb-section" id={`sec-${n}`}>
               <h3 className="hb-sec-title"><span className="hb-sec-num">Section {n}</span>{SECTION[n].title}</h3>
               {blocksOf(SECTION[n].blocks, ctx)}
             </div>
@@ -300,15 +302,19 @@ export default function HandbookPage({ session, hasRole }) {
   const signerRole = signerRoleFor(roles)
   const isStaff = signerRole === 'mentor'
   const [params, setParams] = useSearchParams()
-  const tab = TABS.some(([k]) => k === params.get('tab')) ? params.get('tab') : 'quick'
+  // /handbook?section=6 opens the lesson holding Section 6 and scrolls to it,
+  // so an email or message can cite the handbook with a link that lands.
+  const linkSection = Number(params.get('section'))
+  const linkLesson = SECTION[linkSection] ? LESSONS.find(l => l.sections.includes(linkSection)) : null
+  const tab = linkLesson && !params.get('tab') ? 'lessons' : TABS.some(([k]) => k === params.get('tab')) ? params.get('tab') : 'quick'
   const setTab = (k) => setParams(k === 'quick' ? {} : { tab: k }, { replace: true })
 
   const [progress, setProgress] = useState(() => loadProgress(userId))
   useEffect(() => { setProgress(loadProgress(userId)) }, [userId])
-  const [openLesson, setOpenLesson] = useState(null)
+  const [openLesson, setOpenLesson] = useState(() => linkLesson?.id ?? null)
   const [openTerm, setOpenTerm] = useState(null)
   const [q, setQ] = useState('')
-  const scrollTo = useRef(null)
+  const scrollTo = useRef(linkLesson ? `sec-${linkSection}` : null)
 
   const passed = passedCount(progress)
   const allPassed = passed === LESSONS.length
@@ -448,7 +454,7 @@ export default function HandbookPage({ session, hasRole }) {
                 {LESSONS.map((l, i) => (
                   <li key={l.id}>
                     <button type="button" className={`hb-index-item${openLesson === l.id ? ' active' : ''}${progress.passed[l.id] ? ' done' : ''}`} onClick={() => goLesson(l.id)}>
-                      <span className="hb-index-n">{pad(i + 1)}</span>{l.title}
+                      <span className="hb-index-n">Sec {secs(l)}</span>{l.title}
                     </button>
                   </li>
                 ))}
