@@ -1,0 +1,188 @@
+# THE HAND ENTRIES: the connector's own MCP tools, phone first.
+#
+# The only hand-written layer besides functions.yaml and exclusions.yaml.
+# `npm run connector:build` compiles this into
+# api/_lib/connector/registry.generated.json. Edit this file, never that one.
+#
+# Each tool:
+#   describe   one sentence in his words (members, hours, sign-outs, events),
+#              never a table or column name, under 200 characters
+#   say        three or more ways he would actually say it
+#   kind       read      reads as him through `read` steps, writes nothing
+#              function  one database function, through connector_call at
+#                        the function's level (functions.yaml or generated)
+#   args       name -> {type, describe, required, enum, resolve}
+#              resolve: member  -> a name or email, matched against the roster
+#                       event   -> an event title or id, matched against the schedule
+#                       signout -> a pending sign-out, matched by the member's name
+#   function   (kind function) the database function, and `map` from tool
+#              arguments to its arguments
+#   The level and the undo of a function tool are its function entry's
+#   (functions.yaml, or the generated one), never restated here.
+#
+# Anything here may only call a function the app already calls. A tool that
+# would need a direct table write is not here; it is excluded in
+# exclusions.yaml with the reason the coverage test requires.
+
+find_member:
+  describe: Find a team member by name, nickname or email, with their roles and sub-teams.
+  say: ["find Riley", "who is Sam Student", "look up the kid named Jordan", "what's Casey's email"]
+  kind: read
+  args:
+    name: {type: string, describe: "A first name, nickname, last name or email", required: true}
+
+list_members:
+  describe: List team members with their roles, optionally only one role or only active members.
+  say: ["list the team", "who are the mentors", "show me every student", "list the leads"]
+  kind: read
+  args:
+    role: {type: string, describe: "Only members holding this role", enum: [student, mentor, lead, admin, parent]}
+    status: {type: string, describe: "Only members with this status (active by default)", enum: [active, inactive, alumni, all]}
+
+todays_signins:
+  describe: Who checked in today, who is still in the shop, and which sign-outs are waiting.
+  say: ["who's here today", "who signed in today", "who is still in the shop", "any sign-outs waiting"]
+  kind: read
+  args: {}
+
+approve_signout:
+  describe: Approve a member's pending sign-out request; their hours stop now. Reads the note they wrote.
+  say: ["approve Riley's sign-out", "sign Sam out", "okay Jordan's sign out", "approve the sign-out from Casey"]
+  kind: function
+  function: approve_signout
+  args:
+    member: {type: string, describe: "Whose pending sign-out to approve (a name)", required: true, resolve: signout}
+  map:
+    p_request: $resolved.member.request_id
+
+member_hours:
+  describe: A member's hours this week against what is required, their standing, and this month's meetings.
+  say: ["how many hours does Riley have", "what are Sam's hours this week", "is Jordan on track", "check Casey's standing"]
+  kind: read
+  args:
+    member: {type: string, describe: "The member (a name or email)", required: true, resolve: member}
+
+correct_hours:
+  describe: Add or take away hours for a member, in one category, with the reason. Taking hours away always asks first.
+  say: ["give Riley two build hours for the Saturday fix", "add an hour of outreach to Sam for the library demo", "take half an hour off Jordan, double counted", "credit Casey three volunteer hours"]
+  kind: function
+  function: staff_add_hour_adjustment
+  args:
+    member: {type: string, describe: "The member (a name or email)", required: true, resolve: member}
+    hours: {type: number, describe: "Hours to add; negative to take away", required: true}
+    category: {type: string, describe: "Which kind of hours", required: true, enum: [build, outreach, volunteer, competition]}
+    reason: {type: string, describe: "Why, in his words; it is shown to the member", required: true}
+  map:
+    p_member: $resolved.member.id
+    p_category: $args.category
+    p_hours: $args.hours
+    p_reason: $args.reason
+
+list_events:
+  describe: The team schedule between two dates (this week and next by default).
+  say: ["what's on the schedule", "what's happening this week", "list next week's events", "when is the next build"]
+  kind: read
+  args:
+    from: {type: string, describe: "First day, YYYY-MM-DD (today by default)"}
+    to: {type: string, describe: "Last day, YYYY-MM-DD (two weeks from the first by default)"}
+
+create_event:
+  describe: Not available through Claude yet (the schedule page writes events directly). Says so; report_gap files it.
+  say: ["add a build Saturday 9 to 1", "schedule a meeting Tuesday at lunch", "put the outreach event on the calendar"]
+  kind: unavailable
+  gap: "Creating an event writes the events table straight from /schedule; it needs a staff function first (next connector ledger)."
+  args: {}
+
+event_signups:
+  describe: Who said going, maybe or not going to an event.
+  say: ["who's coming Saturday", "who signed up for the outreach event", "how many are going to the build", "who said maybe"]
+  kind: read
+  args:
+    event: {type: string, describe: "The event (a title, a date, or its id)", required: true, resolve: event}
+
+trip_boards:
+  describe: The carpool and food boards for a trip, as staff see them.
+  say: ["show the Beach Blitz carpool", "who is driving to the competition", "what food is still needed for the trip", "carpool board"]
+  kind: read
+  args:
+    trip: {type: string, describe: "The trip (a title); the next one when not said"}
+
+parent_responses:
+  describe: Parent questionnaire answers this season (supervision, meals, driving, employer, donation), one line per family.
+  say: ["what did the parents say", "which parents can drive", "who offered to help with meals", "parent form responses"]
+  kind: read
+  args:
+    member: {type: string, describe: "Only this student's family (a name)", resolve: member}
+
+set_team_role:
+  describe: Give a member a team role or take one away. Taking a role away always asks first.
+  say: ["make Riley a lead", "give Sam the mentor role", "take lead off Jordan", "make Casey a student again"]
+  kind: function
+  function: admin_set_member_role
+  args:
+    member: {type: string, describe: "The member (a name or email)", required: true, resolve: member}
+    role: {type: string, describe: "The role", required: true, enum: [student, mentor, lead, admin, parent]}
+    grant: {type: boolean, describe: "true to give the role, false to take it away", required: true}
+  map:
+    p_member: $resolved.member.id
+    p_role: $args.role
+    p_grant: $args.grant
+
+feedback_inbox:
+  describe: The app feedback inbox, newest first, with who sent it and its status.
+  say: ["any new feedback", "what bugs came in", "read the feedback inbox", "show feedback marked in progress"]
+  kind: read
+  args:
+    status: {type: string, describe: "Only this status (new by default)", enum: [new, seen, in_progress, done, wont_do, spam, all]}
+    limit: {type: integer, describe: "How many (10 by default, at most 50)"}
+
+feedback_set_status:
+  describe: Move feedback reports to a status (seen, in progress, done, won't do, spam, back to new). Undo puts them back.
+  say: ["mark that feedback done", "move those three to in progress", "mark the bug report seen", "that one is spam"]
+  kind: function
+  function: feedback_set_status
+  args:
+    ids: {type: array, items: string, describe: "The report ids from feedback_inbox", required: true}
+    status: {type: string, describe: "The status to move them to", required: true, enum: [new, seen, in_progress, done, wont_do, spam]}
+  map:
+    p_ids: $args.ids
+    p_status: $args.status
+
+feedback_reply:
+  describe: Not available through Claude yet (the inbox has no reply). Says so; report_gap files it.
+  say: ["reply to that feedback", "tell Riley we fixed it", "answer the bug report"]
+  kind: unavailable
+  gap: "The feedback inbox has no reply or comment: no table, no function and no page sends one."
+  args: {}
+
+report_gap:
+  describe: File what the app cannot do to the feedback inbox, marked from the connector, so it gets built.
+  say: ["the app can't do that, log it", "file that as a missing feature", "remember we need a seating chart"]
+  kind: function
+  function: connector_report_gap
+  args:
+    what_is_missing: {type: string, describe: "What the app could not do, in plain words", required: true}
+  map:
+    p_said: $said
+    p_missing: $args.what_is_missing
+
+undo_last:
+  describe: Undo the newest change made through Claude that can be undone.
+  say: ["undo that", "take that back", "undo the last change"]
+  kind: builtin
+  args: {}
+
+find_tool:
+  describe: Find the app action for something not covered by a named tool; answers how to call it with call_app.
+  say: ["is there a way to void a session", "can you log a safety violation", "how do I remind families to sign up"]
+  kind: builtin
+  args:
+    query: {type: string, describe: "What he wants done, in his words", required: true}
+
+call_app:
+  describe: Run any app action find_tool named, as him. Reads run at once; changes preview first when they ask first.
+  say: ["void Sam's last session", "log a safety violation for Riley", "remind the families"]
+  kind: builtin
+  args:
+    name: {type: string, describe: "The action name find_tool gave", required: true}
+    args: {type: object, describe: "Its arguments, by the names find_tool gave", required: true}

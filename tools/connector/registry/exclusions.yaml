@@ -1,0 +1,108 @@
+# WRITTEN EXCLUSIONS: what the connector deliberately does not reach, and why.
+# Every reason is at least twenty characters (tests/connector-coverage.test.js).
+#
+# functions   a database function the app calls that gets no tool
+# edge        a Supabase Edge Function the app invokes
+# routes      a Vercel function under api/
+# table_writes  a direct .from(table).insert/update/upsert/delete in src/ or
+#               api/, by file, table and operation, with how many there are.
+#               A new one (or one more of the same) reddens the coverage test.
+# storage     a direct storage upload or remove
+
+functions:
+  family_call: "acts as whichever family holds the private link token, not as the signed-in account"
+  hub_add_parent: "acts as whichever family holds the event link token, not as the signed-in account"
+  hub_household_open: "acts as whichever family holds the event link token, not as the signed-in account"
+  hub_remove_family: "acts as whichever family holds the event link token, not as the signed-in account"
+  hub_remove_guardian: "acts as whichever family holds the event link token, not as the signed-in account"
+  hub_join: "the open sign-up form a family fills in for its own student; nothing staff do"
+  claim_profile: "runs once at every sign-in to settle the signed-in account's own approval; not an action"
+  get_calendar_token: "reads the calendar feed secret; a secret is never handed to a chat"
+  rotate_calendar_token: "replaces the signed-in account's private calendar feed link; a secret is never handed to a chat"
+  register_driver_document: "records an uploaded license or insurance photo, and the connector carries no file bytes"
+
+edge:
+  calendar-feed: "a calendar feed URL a phone calendar subscribes to; not an action"
+  parent-response: "the public parent questionnaire, answered by a parent with the link; not an action"
+  event-family: "a family's own event page by link, plus the staff mail queue drain; next connector ledger as a hand entry"
+  discord-announce: "posts to the team Discord, which messages people outside the app; next connector ledger as a hand entry at confirm"
+  invite-member: "emails an invite to someone outside the app; next connector ledger as a hand entry at confirm"
+  send-approval-email: "a courtesy email sent after an access request is approved; it follows approve_access_request"
+
+routes:
+  api/discord-week-ahead.js: "the Sunday Discord schedule post, run by the Vercel cron with its own secret; not a person's action"
+
+table_writes:
+  - {file: src/AccessGate.jsx, table: access_requests, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/AnnouncePage.jsx, table: discord_announce_roles, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/AnnouncePage.jsx, table: discord_announce_roles, op: update, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/AnnouncePage.jsx, table: discord_announce_roles, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/App.jsx, table: profiles, op: update, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/CheckinPage.jsx, table: attendance_events, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/CheckinPage.jsx, table: profiles, op: upsert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/FeedbackPage.jsx, table: feedback, op: update, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/FeedbackWidget.jsx, table: feedback, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/HandbookPage.jsx, table: handbook_acknowledgments, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/HomePage.jsx, table: event_signups, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/HomePage.jsx, table: event_signups, op: upsert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/JobsPage.jsx, table: task_updates, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/JobsPage.jsx, table: tasks, op: update, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/JobsPage.jsx, table: task_required_skills, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/JobsPage.jsx, table: tasks, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/JobsPage.jsx, table: task_required_skills, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/JobsPage.jsx, table: tasks, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/LogHoursPage.jsx, table: logged_hours, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/LogHoursPage.jsx, table: logged_hours, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/MemberApplication.jsx, table: member_applications, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/MemberApplication.jsx, table: profiles, op: update, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/NotificationsPanel.jsx, table: profiles, op: update, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/NotificationsPanel.jsx, table: push_subscriptions, op: upsert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/NotificationsPanel.jsx, table: push_subscriptions, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/ProfilePage.jsx, table: profiles, op: update, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/RosterPage.jsx, table: profiles, op: update, count: 3, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/RosterPage.jsx, table: member_roles, op: upsert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/RosterPage.jsx, table: allowed_domains, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/RosterPage.jsx, table: allowed_domains, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/RostersPage.jsx, table: hub_events, op: update, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SchedulePage.jsx, table: event_signups, op: upsert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SchedulePage.jsx, table: event_signups, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SchedulePage.jsx, table: events, op: insert, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SchedulePage.jsx, table: events, op: update, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SchedulePage.jsx, table: events, op: delete, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SquadPage.jsx, table: position_assignments, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SquadPage.jsx, table: position_assignments, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SquadPage.jsx, table: positions, op: update, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SquadPage.jsx, table: positions, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SquadPage.jsx, table: positions, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/StandingTeamPage.jsx, table: fll_teams, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/StandingTeamPage.jsx, table: standing_settings, op: update, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SurveyPage.jsx, table: survey_responses, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SurveyPage.jsx, table: survey_answers, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SurveysAdmin.jsx, table: surveys, op: insert, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SurveysAdmin.jsx, table: surveys, op: update, count: 3, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SurveysAdmin.jsx, table: survey_questions, op: insert, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SurveysAdmin.jsx, table: surveys, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SurveysAdmin.jsx, table: survey_questions, op: update, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/SurveysAdmin.jsx, table: survey_questions, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/TripsAdmin.jsx, table: hub_food_needs, op: update, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/TripsAdmin.jsx, table: hub_food_needs, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/TripsAdmin.jsx, table: hub_food_needs, op: delete, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/TripsAdmin.jsx, table: hub_events, op: update, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/TripsAdmin.jsx, table: hub_days, op: update, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/TripsAdmin.jsx, table: hub_meals, op: update, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/TripsAdmin.jsx, table: hub_days, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/TripsAdmin.jsx, table: hub_meals, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/TripsPage.jsx, table: hub_events, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/VerifyHoursPage.jsx, table: session_reviews, op: update, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/VerifyHoursPage.jsx, table: app_settings, op: update, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/VerifyHoursPage.jsx, table: logged_hours, op: update, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/VolunteerCheckinPage.jsx, table: attendance_events, op: insert, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/VolunteerCheckinPage.jsx, table: profiles, op: upsert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/attendanceCheckout.js, table: attendance_events, op: insert, count: 1, reason: "direct table write, moves to a function in the next connector ledger"}
+  - {file: src/signout.js, table: attendance_events, op: insert, count: 2, reason: "direct table write, moves to a function in the next connector ledger"}
+
+storage:
+  - {file: src/DriverDocsPage.jsx, bucket: driver-docs, op: upload, count: 1, reason: "a file upload from the phone or browser; the connector carries no file bytes"}
+  - {file: src/DriverDocsPage.jsx, bucket: driver-docs, op: remove, count: 2, reason: "a file upload from the phone or browser; the connector carries no file bytes"}
+  - {file: src/FeedbackWidget.jsx, bucket: feedback, op: upload, count: 1, reason: "a file upload from the phone or browser; the connector carries no file bytes"}
+  - {file: src/JobsPage.jsx, bucket: jobs, op: upload, count: 1, reason: "a file upload from the phone or browser; the connector carries no file bytes"}

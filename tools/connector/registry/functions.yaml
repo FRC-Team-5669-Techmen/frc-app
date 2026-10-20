@@ -1,0 +1,74 @@
+# HAND-WRITTEN FUNCTION ENTRIES. A database function named here replaces its
+# generated entry: its level, its words for find_tool, and its undo.
+#
+# Levels (enforced by the server, never by a prompt):
+#   read     runs at once, as him, writes nothing
+#   undo     runs and is logged; names its reverse
+#   confirm  always previews first; writes only on a second call with the
+#            confirm_token, within ten minutes, identical arguments
+#
+# Anything that deletes, lowers a member's hours, removes a role or member, or
+# messages people outside the app is confirm. A write with no reverse is
+# confirm. Every function the app calls and nobody names here gets a generated
+# entry: read when its body writes nothing, transitively, otherwise confirm.
+
+staff_add_hour_adjustment:
+  describe: Add or take away a member's hours in one category, with a reason.
+  level_when:
+    - {if: "p_hours > 0", level: undo}
+    - {else: confirm}
+  undo:
+    - function: staff_add_hour_adjustment
+      args:
+        p_member: $args.p_member
+        p_category: $args.p_category
+        p_hours: {negate: $args.p_hours}
+        p_reason: {concat: ["Undo through Claude: ", $args.p_reason]}
+
+admin_set_member_role:
+  describe: Give a member a team role, or take one away.
+  level_when:
+    - {if: "p_grant = true", level: undo}
+    - {else: confirm}
+  undo:
+    - function: admin_set_member_role
+      when: "!$before.had"
+      args:
+        p_member: $args.p_member
+        p_role: $args.p_role
+        p_grant: false
+
+feedback_set_status:
+  describe: Move feedback reports to a status.
+  level: undo
+  undo:
+    - function: feedback_restore_status
+      args:
+        p_items: {rows: $result, pick: {id: id, status: previous_status, reviewed_by: previous_reviewed_by, reviewed_at: previous_reviewed_at}}
+        p_from: $args.p_status
+
+feedback_restore_status:
+  describe: Put feedback reports back to the status they had before a move.
+  level: confirm
+
+approve_signout:
+  describe: Approve a pending sign-out; the member's hours stop at the approval. There is no un-approve.
+  level: confirm
+
+connector_report_gap:
+  describe: File what the app cannot do to the feedback inbox, marked from the connector.
+  connector_only: true
+  level: undo
+  undo:
+    - function: feedback_set_status
+      args:
+        p_ids: [$result]
+        p_status: wont_do
+
+admin_get_members:
+  describe: Every member with their email, status, roles and sub-teams (admin only).
+  level: read
+
+member_standing:
+  describe: A member's standing, this week's hours against what is required, and this month's meetings.
+  level: read

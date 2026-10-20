@@ -23,7 +23,9 @@
     "ds:capture": "node scripts/design-system/ds-capture.mjs",
     "dev:fixture": "vite --mode fixture",
     "test:checkin": "node tools/e2e/checkin.mjs",
-    "test:features": "node tools/e2e/features.mjs"
+    "test:features": "node tools/e2e/features.mjs",
+    "connector:build": "node tools/connector/build.mjs",
+    "connector:check": "node tools/connector/build.mjs --check"
   },
   "dependencies": {
     "@fontsource/chakra-petch": "^5.2.7",
