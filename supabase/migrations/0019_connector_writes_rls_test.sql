@@ -117,7 +117,7 @@ begin
   -- jobs and a skill
   insert into public.tasks (title, created_by) values ('t0019 job', v_a) returning id into v_id;
   insert into t0019_fx values ('T', v_id::text);
-  insert into public.skills (name) values ('t0019 skill') returning id into v_id;
+  insert into public.skills (name, category) values ('t0019 skill', 'General') returning id into v_id;
   insert into t0019_fx values ('SK', v_id::text);
 
   -- logged hours waiting, a missed check-out, a push subscription, a feedback report
