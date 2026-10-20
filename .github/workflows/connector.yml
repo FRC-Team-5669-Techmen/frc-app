@@ -1,0 +1,111 @@
+name: Connector tools
+
+# THE TECHMEN CONNECTOR PICKS UP EVERY NEW OPERATION BY ITSELF (ledger 0013).
+# Mr. Pina: when an update to the app ships a new operation, the connector
+# picks it up on that same push to main with nobody asked.
+#
+# On a push to `main` that touches the app code or the SQL, this runs
+# `npm run connector:build`, which rescans src/ and api/ for every database
+# function the app calls, reads every signature off the SQL files, and
+# regenerates api/_lib/connector/registry.generated.js (a `call_app` entry for
+# any function no hand entry names: read when it writes nothing, otherwise it
+# asks first). When that changes the file, this checks the result and commits
+# it to `main`; that commit is the deploy that ships the new tool.
+#
+# NO CREDENTIAL IS READ. The build reads files only (tools/connector/sqlchain.mjs
+# parses the SQL; nothing connects to Supabase), the same property ci.yml keeps.
+#
+# SOLO MODE (docs/decisions/05-solo-mode-on-frc-app.md). Every push to `main`
+# deploys the PWA to students who may be mid-check-in, so the commit is made
+# only after the build and the connector tests pass on the exact tree being
+# pushed. It changes one generated file, which only the connector's own
+# Vercel functions import; no page and no check-in path loads it.
+#
+# IT CANNOT LOOP. A push made with the workflow's own GITHUB_TOKEN starts no
+# workflow (GitHub's loop guard), and the job also skips a push whose head
+# commit is its own.
+#
+# IT NEVER FORCES. A push rejected because `main` moved is rebased once and
+# pushed again; a conflict pushes nothing, and the next push to `main` runs
+# this again over the newer tree, which reaches the same answer.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'api/**'
+      - 'supabase/**'
+      - 'sql/**'
+      - 'platform_migration.sql'
+      - 'tools/connector/**'
+      - 'package.json'
+  workflow_dispatch:
+
+concurrency:
+  group: connector-tools
+  cancel-in-progress: false
+
+# contents: write -- commit the regenerated file to main. Nothing else.
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    if: github.event_name == 'workflow_dispatch' || github.event.head_commit.author.email != '41898282+github-actions[bot]@users.noreply.github.com'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Placeholders, exactly as ci.yml sets them: the build needs no real value.
+      VITE_SUPABASE_URL: 'http://127.0.0.1:54329'
+      VITE_SUPABASE_ANON_KEY: 'ci-placeholder-anon-key'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build the connector registry
+        run: npm run connector:build
+
+      - name: Check, then commit what changed
+        env:
+          FILE: api/_lib/connector/registry.generated.js
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- "$FILE"; then
+            echo "The connector registry was already current. Nothing to commit."
+            echo "The connector registry was already current." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # The tree being pushed must pass before it is pushed.
+          npx vitest run tests/connector-coverage.test.js tests/connector-engine.test.js tests/connector-oauth.test.js tests/connector-service-role.test.js
+          npm run build
+          COUNTS="$(node -e "import('./api/_lib/connector/registry.generated.js').then((m) => console.log(m.default.counts.reachable + ' reachable, ' + m.default.counts.generated + ' generated'))")"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "$FILE"
+          git commit -q -m "Connector tools regenerated for the app's newest operations" \
+            -m "Written by .github/workflows/connector.yml from npm run connector:build. ${COUNTS}."
+          if ! git push origin HEAD:refs/heads/main; then
+            git fetch origin main
+            if git rebase origin/main && npm run connector:check; then
+              git push origin HEAD:refs/heads/main
+            else
+              git rebase --abort || true
+              echo "::warning::main moved under this run and the regenerated file no longer matches it; nothing was pushed. The next push to main regenerates it."
+              exit 0
+            fi
+          fi
+          {
+            echo "## Connector tools regenerated"
+            echo
+            echo "${COUNTS} app operations are now reachable through the Techmen connector."
+          } >> "$GITHUB_STEP_SUMMARY"
