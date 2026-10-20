@@ -963,11 +963,26 @@ export default {
    "undo": [
     {
      "function": "admin_set_member_role",
-     "when": "!$before.had",
+     "when": [
+      "$args.p_grant",
+      "!$before.had"
+     ],
      "args": {
       "p_member": "$args.p_member",
       "p_role": "$args.p_role",
       "p_grant": false
+     }
+    },
+    {
+     "function": "admin_set_member_role",
+     "when": [
+      "!$args.p_grant",
+      "$before.had"
+     ],
+     "args": {
+      "p_member": "$args.p_member",
+      "p_role": "$args.p_role",
+      "p_grant": true
      }
     }
    ],

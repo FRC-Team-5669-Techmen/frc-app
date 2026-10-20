@@ -113,10 +113,27 @@ export function resolveTemplate(value, scope) {
   return out
 }
 
+// A `when` is one template or a list that must all hold. A boolean argument
+// that arrived as the text "true" or "false" (call_app passes what Claude
+// sent) reads as the boolean.
+function holds(w, scope) {
+  if (Array.isArray(w)) return w.every((x) => holds(x, scope))
+  if (typeof w === 'string' && /^!{1,2}\$/.test(w)) {
+    const bang = /^!+/.exec(w)[0].length
+    let v = resolveTemplate(w.slice(bang), scope)
+    if (v === undefined) return false
+    if (v === 'true') v = true
+    if (v === 'false') v = false
+    return bang === 2 ? !!v : !v
+  }
+  const v = resolveTemplate(w, scope)
+  return v === 'false' ? false : !!v
+}
+
 /** The reverse of a write: the first alternative whose `when` holds and whose arguments all resolve. */
 export function computeUndo(alternatives, scope) {
   for (const alt of alternatives ?? []) {
-    if (alt.when !== undefined && !resolveTemplate(alt.when, scope)) continue
+    if (alt.when !== undefined && !holds(alt.when, scope)) continue
     const args = {}
     let complete = true
     for (const [k, v] of Object.entries(alt.args ?? {})) {

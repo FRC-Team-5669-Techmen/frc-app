@@ -30,13 +30,24 @@ admin_set_member_role:
   level_when:
     - {if: "p_grant = true", level: undo}
     - {else: confirm}
+  # Giving a role the member did not hold is taken back by removing it;
+  # taking away a role the member held is undone by giving it back (ledger
+  # 0014: found live, a removal had no undo and its preview named no row).
+  # A grant of a role already held, or a removal of one not held, changed
+  # nothing and offers no reverse.
   undo:
     - function: admin_set_member_role
-      when: "!$before.had"
+      when: ["$args.p_grant", "!$before.had"]
       args:
         p_member: $args.p_member
         p_role: $args.p_role
         p_grant: false
+    - function: admin_set_member_role
+      when: ["!$args.p_grant", "$before.had"]
+      args:
+        p_member: $args.p_member
+        p_role: $args.p_role
+        p_grant: true
   before: {rpc: admin_get_members, find: {id: $args.p_member}, has: {roles: $args.p_role}}
 
 feedback_set_status:

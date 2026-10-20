@@ -121,6 +121,33 @@ describe('undo', () => {
     expect(computeUndo(alts, { args: { p_member: 'm', p_role: 'lead', p_grant: true }, before: { found: true, had: false } })).toMatchObject({ args: { p_grant: false } })
     expect(computeUndo(alts, { args: { p_member: 'm', p_role: 'lead', p_grant: true }, before: { found: true, had: true } })).toBeNull()
   })
+  it('a role taken away is given back, only when it was held (found live 2026-10-20: a removal had no undo)', () => {
+    const alts = FUNCTIONS.admin_set_member_role.undo
+    expect(computeUndo(alts, { args: { p_member: 'm', p_role: 'lead', p_grant: false }, before: { found: true, had: true } }))
+      .toEqual({ function: 'admin_set_member_role', args: { p_member: 'm', p_role: 'lead', p_grant: true } })
+    expect(computeUndo(alts, { args: { p_member: 'm', p_role: 'lead', p_grant: false }, before: { found: true, had: false } })).toBeNull()
+    // call_app may pass the boolean as text
+    expect(computeUndo(alts, { args: { p_member: 'm', p_role: 'lead', p_grant: 'false' }, before: { found: true, had: true } })).toMatchObject({ args: { p_grant: true } })
+    expect(computeUndo(alts, { args: { p_member: 'm', p_role: 'lead', p_grant: 'true' }, before: { found: true, had: true } })).toBeNull()
+  })
+  it('taking a role away asks first, the preview carries the removed row, and the confirmed write names its undo', async () => {
+    const real = backend.rpc
+    backend.rpc = async (s, fn, args) => {
+      if (fn === 'admin_get_members') return { data: [{ id: 'm-riley', full_name: 'Riley Student', email: 'r@x', status: 'active', roles: ['student', 'lead'] }], error: null }
+      if (fn === 'connector_call' && args.p_mode === 'preview') {
+        const rows = [{ table: 'member_roles', id: null, deleted: true, row: { member_id: 'm-riley', role: 'lead' } }]
+        return { data: null, error: { code: 'CN001', message: `CONNECTOR_PREVIEW:${JSON.stringify({ result: null, rows, level: 'confirm' })}` } }
+      }
+      return real(s, fn, args)
+    }
+    const p = await runTool(ctx, 'set_team_role', { said: 'take lead off Riley', member: 'Riley', role: 'lead', grant: false })
+    expect(p.status).toBe('preview')
+    expect(p.rows).toEqual([{ table: 'member_roles', id: null, deleted: true, row: { member_id: 'm-riley', role: 'lead' } }])
+    const done = await runTool(ctx, 'set_team_role', { said: 'take lead off Riley', member: 'Riley', role: 'lead', grant: false, confirm_token: p.confirm_token })
+    expect(done.status).toBe('done')
+    expect(done.undo_available).toBe(true)
+    expect(backend.state.audit.at(-1).undo).toEqual({ function: 'admin_set_member_role', args: { p_member: 'm-riley', p_role: 'lead', p_grant: true } })
+  })
   it('templates that resolve to nothing offer no reverse', () => {
     expect(resolveTemplate('$args.missing', { args: {} })).toBeUndefined()
     expect(resolveTemplate({ negate: '$args.p_hours' }, { args: { p_hours: '1.5' } })).toBe(-1.5)
