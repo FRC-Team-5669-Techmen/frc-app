@@ -27,13 +27,20 @@ export function matchScore(q, m) {
   if (email && query === email) return 100
   if (query === nick || query === full) return 90
   const parts = full.split(' ').filter(Boolean)
+  // A nickname like "Mr. Pina" or "Big Brandon Carrillo" is matched word by word too.
+  const nickParts = nick.split(' ').filter((w) => w.length >= 2)
+  // School addresses are first initial + last name ("mposada.2027@..."), so the local
+  // part, its dotted pieces, and the local part minus its first letter name the member.
+  const local = email.split('@')[0] ?? ''
+  const localParts = local.split(/[.\-_]/).filter((w) => w && !/^\d+$/.test(w))
   const tokens = query.split(' ').filter(Boolean)
   if (tokens.length === 1) {
     const t = tokens[0]
     if (t === nick || parts[0] === t) return 70
-    if (parts.includes(t)) return 60
-    if (email.startsWith(`${t}.`) || email.split('@')[0] === t) return 50
-    if (nick.startsWith(t) || parts.some((p) => p.startsWith(t))) return t.length >= 3 ? 30 : 0
+    if (parts.includes(t) || nickParts.includes(t)) return 60
+    if (localParts.includes(t) || local === t) return 50
+    if (t.length >= 4 && localParts.some((w) => w.length > t.length && w.slice(1) === t)) return 45
+    if (nick.startsWith(t) || parts.some((p) => p.startsWith(t)) || nickParts.some((p) => p.startsWith(t))) return t.length >= 3 ? 30 : 0
     return 0
   }
   // "Daniel R": every token starts some part of the name, in order of first and last.

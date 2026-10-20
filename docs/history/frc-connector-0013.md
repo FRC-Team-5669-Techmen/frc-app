@@ -121,3 +121,15 @@ Everything is described in `docs/subsystems/connector.md`; this is the record.
 2. **Add one environment variable in Vercel:** https://vercel.com/dashboard, open the frc-app project, **Settings**, **Environment Variables**. Key `SUPABASE_ANON_KEY`, value: the same anon key as `VITE_SUPABASE_ANON_KEY` (Supabase, **Project Settings**, **API**, "anon public"), environment Production. **Save**, then **Deployments**, the newest, **Redeploy**. `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are already set for the Sunday Discord post.
 3. **Add the connector in Claude:** https://claude.ai/settings/connectors, **Add custom connector**. Name `Techmen`, URL `https://frc-app-liard.vercel.app/mcp`, leave the OAuth fields blank, **Add**, then **Connect**. The app opens on the consent card; sign in with apina@boscotech.edu if asked; press **Connect**. Expected: the connector shows as connected, and in a new chat "who's here today" answers from the app.
 4. To switch it off or disconnect: https://frc-app-liard.vercel.app/connector.
+
+## Live, and the first fixes (2026-10-20)
+
+Mr. Pina pasted 0018 (its test returned 23/23 PASS on the live project), the allowlist (enabled true, apina@boscotech.edu) and connected from Claude. The first connect failed at the consent card with "Not set up yet": the token endpoint and `/mcp` both answered 503 "not set up yet" to harmless probes while the authorize check answered normally, which narrowed it to the service-role half. **`SUPABASE_SERVICE_ROLE_KEY` was not proven present in Vercel** (step 2 above claimed it was, on the strength of `api/discord-week-ahead.js` reading it), and PostgREST had not reloaded its schema. He was asked to confirm the key in Vercel (adding it if missing) and to run `notify pgrst, 'reload schema';`; after that it connected. Which of the two was the cause is not recorded. A future setup step names all three variables and the reload.
+
+A read-only pass from a Claude chat on 2026-10-20 (today's sign-ins, mentors, students, the schedule, the Beach Blitz boards, the feedback inbox, a member's hours, a dry-run hours correction that wrote nothing) found three defects, fixed here:
+
+- **Names in a nickname or a school email did not match.** "Pina" missed "Mr. Pina" (nickname, no full name) and "Posada" missed both `mposada.*` accounts. `matchScore` now matches nickname words, the email's local part and its pieces, and first-initial-plus-last-name addresses; two `mposada` accounts answer ambiguous.
+- **`find_tool` ranked "void a member's session" wrong.** The `s` of the possessive stemmed to an empty string, which prefix-matched every action. Stems under two letters are dropped and a word in the action's own name now outweighs a word in its description.
+- **`trip_boards` returned the whole 58 KB board**, parent phones included, too much for a phone answer. It now returns a summary (seats, riders, unplaced, food open or claimed); `full: true` returns the whole board.
+
+Four tests in `tests/connector-engine.test.js` hold these; all four fail against the previous code (checked by restoring it from a copy).

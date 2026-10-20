@@ -106,6 +106,7 @@ trip_boards:
   kind: read
   args:
     trip: {type: string, describe: "The trip (a title); the next one when not said"}
+    full: {type: boolean, describe: "true for the whole board with phones, pickups and allergy detail; a summary otherwise"}
 
 parent_responses:
   describe: Parent questionnaire answers this season (supervision, meals, driving, employer, donation), one line per family.

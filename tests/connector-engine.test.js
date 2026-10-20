@@ -5,7 +5,7 @@
 // PostgreSQL 16 by tools/connector/harness/proof.mjs.
 import { beforeEach, describe, expect, it } from 'vitest'
 import { write, undoLast, computeUndo, resolveTemplate } from '../api/_lib/connector/engine.js'
-import { runTool, findTools, toolList } from '../api/_lib/connector/tools.js'
+import { runTool, findTools, toolList, summarizeBoard } from '../api/_lib/connector/tools.js'
 import { levelFor, FUNCTIONS, conditionHolds } from '../api/_lib/connector/registry.js'
 import { matchScore } from '../api/_lib/connector/resolve.js'
 import * as dates from '../api/_lib/connector/dates.js'
@@ -159,6 +159,43 @@ describe('the tools', () => {
     expect(out.candidates).toHaveLength(2)
     expect(wrote).toBe(0)
     expect(matchScore('Daniel R', { full_name: 'Daniel Ruiz' })).toBeGreaterThan(matchScore('Daniel R', { full_name: 'Daniel Ortega' }))
+  })
+  it('a word of a nickname, or the last name in a school email, names a member (found live 2026-10-20)', () => {
+    const pina = { full_name: null, nickname: 'Mr. Pina', email: 'apina@boscotech.edu' }
+    const posada = { full_name: null, nickname: null, email: 'mposada.2027@boscotech.net' }
+    const lam = { full_name: 'Carter Lam', nickname: null, email: 'clam.2028@boscotech.net' }
+    expect(matchScore('Pina', pina)).toBeGreaterThan(0)
+    expect(matchScore('Posada', posada)).toBeGreaterThan(0)
+    expect(matchScore('Carter', lam)).toBeGreaterThan(0)
+    // Negative controls: the same queries do not match someone else.
+    expect(matchScore('Pina', lam)).toBe(0)
+    expect(matchScore('Posada', lam)).toBe(0)
+    expect(matchScore('Lam', posada)).toBe(0)
+  })
+  it('two school emails with one last name are ambiguous', async () => {
+    backend.rpc = async (s, fn) => (fn === 'admin_get_members'
+      ? { data: [{ id: 'a', email: 'mposada.2027@x', status: 'active' }, { id: 'b', email: 'mposada.2029@x', status: 'active' }, { id: 'c', full_name: 'Carter Lam', email: 'clam@x', status: 'active' }], error: null }
+      : { data: null, error: null })
+    const out = await runTool(ctx, 'find_member', { said: 'x', name: 'Posada' })
+    expect(out.status).toBe('ambiguous')
+    expect(out.candidates).toHaveLength(2)
+  })
+  it('find_tool ranks by the action name, and a possessive does not match everything', () => {
+    expect(findTools("void a member's session")[0].name).toBe('staff_void_session')
+    expect(findTools('void session')[0].name).toBe('staff_void_session')
+    // Positive control: a query about sign-outs still finds the sign-out action first.
+    expect(findTools('approve sign out')[0].name).toBe('approve_signout')
+  })
+  it('the trip board summary keeps seats, riders and open food, and drops phones', () => {
+    const board = {
+      days: [{ label: 'Friday', runs: [{ run: 'to', open_seats: 1, needs_seat: 0, unplaced: [{ name: 'Adam' }], cars: [{ driver: 'Pat', description: 'CRV', seats: 2, status: 'open', driver_phone: '5551234', riders: [{ name: 'Azad', parent_phone: '5559999' }] }] }] }],
+      meals: [{ label: 'Fri dinner', needs: [{ label: 'Main dish', claim: { what: 'Pizza', family: 'the Romo family' } }, { label: 'Dessert', claim: null }] }],
+    }
+    const out = summarizeBoard(board)
+    expect(out.days[0].runs[0].cars[0]).toMatchObject({ driver: 'Pat', riders: ['Azad'], seats: 2 })
+    expect(out.days[0].runs[0].unplaced).toEqual(['Adam'])
+    expect(out.meals[0]).toMatchObject({ open: 1, items: ['Main dish: Pizza (the Romo family)', 'Dessert: OPEN'] })
+    expect(JSON.stringify(out)).not.toMatch(/555/)
   })
   it('create_event and feedback_reply say plainly they are not available and point at report_gap', async () => {
     for (const name of ['create_event', 'feedback_reply']) {

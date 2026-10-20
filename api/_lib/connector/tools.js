@@ -178,7 +178,9 @@ const READS = {
     }
     const b = await ctx.backend.rpc(ctx.session, 'hub_member_board', { p_event: trip.id })
     if (b.error) return { status: 'refused', message: b.error.message }
-    return { status: 'ok', trip: { title: trip.title, starts_on: trip.starts_on, over: trip.over }, board: b.data?.board ?? b.data, note: 'The board as staff see it: cars with their seats, and each meal with its food needs and who is bringing what.' }
+    const board = b.data?.board ?? b.data
+    if (a.full === true) return { status: 'ok', trip: { title: trip.title, starts_on: trip.starts_on, over: trip.over }, board, note: 'The whole board as staff see it.' }
+    return { status: 'ok', trip: { title: trip.title, starts_on: trip.starts_on, over: trip.over }, ...summarizeBoard(board), note: 'A summary. Pass full: true for every field (pickups, phones, allergy detail).' }
   },
 
   async parent_responses(ctx, a) {
@@ -235,6 +237,33 @@ const READS = {
   },
 }
 
+/** The trip board cut to what a phone answer needs: seats, who rides with whom, and open food. */
+export function summarizeBoard(board) {
+  const days = (board?.days ?? []).map((d) => ({
+    day: d.label ?? d.date,
+    runs: (d.runs ?? []).map((r) => ({
+      run: r.run === 'to' ? 'there' : r.run,
+      open_seats: r.open_seats ?? null,
+      needs_seat: Array.isArray(r.needs_seat) ? r.needs_seat.map((x) => x?.name ?? x) : r.needs_seat ?? null,
+      unplaced: Array.isArray(r.unplaced) ? r.unplaced.map((x) => x?.name ?? x) : r.unplaced ?? null,
+      cars: (r.cars ?? []).map((c) => ({
+        driver: c.driver,
+        car: c.description ?? null,
+        seats: c.seats,
+        riders: (c.riders ?? []).map((x) => x.name),
+        status: c.status,
+        ...(c.problem ? { problem: c.problem } : {}),
+      })),
+    })),
+  }))
+  const meals = (board?.meals ?? []).map((m) => ({
+    meal: m.label,
+    items: (m.needs ?? []).map((n) => (n.claim ? `${n.label}: ${n.claim.what} (${n.claim.family})` : `${n.label}: OPEN`)),
+    open: (m.needs ?? []).filter((n) => !n.claim).length,
+  }))
+  return { days, meals }
+}
+
 // ── find_tool / call_app over every reachable function ───────────────────────
 
 const STOP = new Set(['the', 'a', 'an', 'to', 'for', 'of', 'and', 'on', 'in', 'is', 'my', 'me', 'can', 'you', 'please', 'there', 'way', 'how', 'do', 'i'])
@@ -242,13 +271,16 @@ const tokens = (s) => String(s ?? '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').
 const stem = (w) => w.replace(/(ings|ing|ies|es|s|ed)$/, '')
 
 export function findTools(query, limit = 5) {
-  const q = tokens(query).map(stem)
+  // A stem under two letters (the s of "member's") would prefix-match every action.
+  const q = tokens(query).map(stem).filter((w) => w.length >= 2)
   if (!q.length) return []
   const scored = []
   for (const f of Object.values(FUNCTIONS)) {
     if (f.excluded || f.connector_only) continue
-    const hay = [...f.name.split('_'), ...tokens(f.describe)].map(stem)
-    const score = q.reduce((n, w) => n + (hay.includes(w) ? 2 : hay.some((h) => h.startsWith(w) || w.startsWith(h)) ? 1 : 0), 0)
+    const nameParts = f.name.split('_').map(stem)
+    const hay = [...nameParts, ...tokens(f.describe)].map(stem).filter((h) => h.length >= 2)
+    // A word in the action's own name counts most: "void session" is staff_void_session.
+    const score = q.reduce((n, w) => n + (nameParts.includes(w) ? 3 : hay.includes(w) ? 2 : hay.some((h) => h.startsWith(w) || w.startsWith(h)) ? 1 : 0), 0)
     if (score > 0) scored.push({ f, score })
   }
   scored.sort((x, y) => y.score - x.score || x.f.name.localeCompare(y.f.name))
