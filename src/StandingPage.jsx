@@ -16,7 +16,8 @@ const fmtDay = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'shor
 const fmtWhen = (iso) => new Date(iso).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
 const fmtDate = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
-export default function StandingPage({ session }) {
+export default function StandingPage({ session, hasRole = () => false }) {
+  const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const [params] = useSearchParams()
   const uid = session?.user?.id
   const memberId = params.get('member') || uid
@@ -26,11 +27,15 @@ export default function StandingPage({ session }) {
   const [notices, setNotices] = useState([])
   const [teams, setTeams] = useState([])
   const [msg, setMsg] = useState(null)
+  const [extras, setExtras] = useState(null)
 
   const load = useCallback(async () => {
     const r = await loadStanding(supabase, memberId)
     setRes(r)
     if (r.state !== 'ok') return
+    // 0017: checklist, training, letter progress. Absent before it is pasted.
+    const x = await supabase.rpc('member_extras', { p_member: memberId })
+    setExtras(x.error ? null : x.data)
     if (self) {
       setEvents(await loadAbsenceEvents(supabase))
       const [{ data: n }, { data: t }, { data: fm }] = await Promise.all([
@@ -49,7 +54,7 @@ export default function StandingPage({ session }) {
 
   async function act(fn, done) {
     setMsg(null)
-    try { await fn(); setMsg(done) } catch (e) { setMsg(errText(e)) }
+    try { const r = await fn(); setMsg(typeof done === 'function' ? done(r) : done) } catch (e) { setMsg(errText(e)) }
     await load()
   }
 
@@ -108,6 +113,8 @@ export default function StandingPage({ session }) {
           </ul>
         </section>
       )}
+
+      {extras && <Extras x={extras} self={self} isStaff={isStaff} memberId={memberId} onAct={act} />}
 
       {self && <AbsenceForm events={events} absences={d.absences} onDone={(t) => { setMsg(t); load() }} />}
       {!self && (
@@ -302,5 +309,56 @@ function IncidentForm({ onDone }) {
       <textarea className="st-input" rows={3} value={text} onChange={(e) => setText(e.target.value)} placeholder="What happened, where, and who was there" />
       <button className="st-btn st-btn-primary" onClick={send} disabled={busy}>{busy ? 'Sending…' : 'Log it'}</button>
     </section>
+  )
+}
+
+function Extras({ x, self, isStaff, memberId, onAct }) {
+  const o = x.onboarding
+  const memberItem = (k) => ['first_registration', 'discord', 'groupme'].includes(k)
+  const staffItem = (k) => ['buddy', 'parent_signed'].includes(k)
+  const letterMet = (x.letter ?? []).filter((l) => l.met).length
+  return (
+    <>
+      {!x.shop_tools && <p className="st-card st-alert" role="status" data-card="shopgate">No shop tools until your first-two-weeks checklist is done. You may come and watch.</p>}
+      <div className="st-grid">
+        <section className="st-card" data-card="checklist">
+          <h2 className="st-h2">First-two-weeks checklist {o.done ? '· done' : `· due ${fmtDate(o.due)}`}</h2>
+          <ul className="st-list">{o.items.map((it) => (
+            <li key={it.key} data-item={it.key} className={`st-row-between${it.done ? '' : ' bad'}`}>
+              <span>{it.done ? '✓' : '○'} {it.label}</span>
+              {((self && memberItem(it.key)) || (isStaff && (memberItem(it.key) || staffItem(it.key)))) && it.by !== 'record' && (
+                <button className="st-link" onClick={() => onAct(() => rpc(supabase, 'mark_onboarding', { p_member: memberId, p_item: it.key, p_done: !it.done, p_note: null }), null)}>{it.done ? 'Undo' : 'Done'}</button>
+              )}
+              {isStaff && it.key === 'parent_signed' && !it.done && (
+                <button className="st-link" onClick={() => onAct(() => rpc(supabase, 'mark_onboarding', { p_member: memberId, p_item: 'parent_signed', p_done: true, p_note: 'Paper' }), 'Paper signature recorded.')}>Paper signed</button>
+              )}
+            </li>))}</ul>
+        </section>
+        <section className="st-card" data-card="training">
+          <h2 className="st-h2">Sub-team training</h2>
+          <ul className="st-list">{(x.training ?? []).map((t) => (
+            <li key={`${t.subteam}-${t.code}`} className={t.required && !t.held ? 'bad' : ''}>{t.held ? '✓' : '○'} {t.code}{t.required ? ' (required)' : ''}{t.subteam ? ` · ${t.subteam}` : ''}</li>))}</ul>
+          <p className="st-muted">Earned at <a href="https://ideabosco.com/certifications" target="_blank" rel="noreferrer">ideabosco.com/certifications</a>. Due before Kickoff.</p>
+        </section>
+      </div>
+      <section className="st-card" data-card="letter">
+        <h2 className="st-h2">Varsity letter · {letterMet} of {(x.letter ?? []).length}</h2>
+        <ul className="st-list">{(x.letter ?? []).map((l) => (
+          <li key={l.key} className={l.met ? '' : 'bad'}>{l.met ? '✓' : '○'} {l.label}{l.detail ? <span className="st-muted"> · {l.detail}</span> : null}</li>))}</ul>
+        <p className="st-muted">Lots of hours alone do not earn a letter.</p>
+      </section>
+      {isStaff && !self && (
+        <section className="st-card" data-card="staffactions">
+          <h2 className="st-h2">Mentor actions</h2>
+          <div className="st-row">
+            <button className="st-btn" onClick={() => onAct(() => rpc(supabase, 'staff_send_family_link', { p_member: memberId, p_rotate: false }), (n) => `Family link emailed to ${n} parent address(es).`)}>Email the family link</button>
+            <button className="st-btn" onClick={() => onAct(() => rpc(supabase, 'staff_send_family_link', { p_member: memberId, p_rotate: true }), 'The old link is dead; the new one was emailed.')}>Replace a shared link</button>
+            <button className="st-btn" onClick={() => onAct(() => rpc(supabase, 'staff_set_media_exception', { p_member: memberId, p_on: !x.photo_exception, p_note: null }), null)}>{x.photo_exception ? 'Remove from no-photo list' : 'Add to no-photo list'}</button>
+            <button className="st-btn" onClick={() => onAct(() => rpc(supabase, 'staff_confirm_contribution', { p_member: memberId, p_on: true, p_note: null }), 'Contribution confirmed for the letter.')}>Confirm sub-team contribution</button>
+          </div>
+          <p className="st-muted">Emergency information: {x.medical_on_file ? 'on file' : 'nothing on file'} · <a href={`/emergency-info?member=${memberId}`}>open</a></p>
+        </section>
+      )}
+    </>
   )
 }

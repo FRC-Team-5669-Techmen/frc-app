@@ -47,6 +47,11 @@ const CONTEXT_TAGS = [
   ['/signouts',    'SIGN-OUTS'],
   ['/standing',    'STANDING'],
   ['/rosters',     'ROSTERS'],
+  ['/leaderboard', 'LEADERBOARD'],
+  ['/status-reports', 'STATUS'],
+  ['/emergency-info', 'EMERGENCY'],
+  ['/driver-docs', 'DRIVERS'],
+  ['/no-photo',    'NO PHOTO'],
 ]
 function contextTag(pathname) {
   const hit = CONTEXT_TAGS.find(([p]) => pathname === p || pathname.startsWith(p))
@@ -141,6 +146,13 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
           )}
           {/* Event rosters (0016): every member reads a posted roster. */}
           {!isParent && <NavLink to="/rosters" className={itemClass}>Event rosters</NavLink>}
+          {/* 0017: the leaderboard and sub-team status for members; emergency
+              information for parents (staff open it from the staff block);
+              driver documents for anyone who drives. */}
+          {!isParent && <NavLink to="/leaderboard" className={itemClass}>Hours leaderboard</NavLink>}
+          {!isParent && <NavLink to="/status-reports" className={itemClass}>Sub-team status</NavLink>}
+          {isParent && <NavLink to="/emergency-info" className={itemClass}>Emergency information</NavLink>}
+          <NavLink to="/driver-docs" className={itemClass}>Driver documents</NavLink>
           {/* Sign-out approvals: staff and the students given signout.approve
               (0014). null until 0014 is pasted or for anyone else. */}
           {signouts !== null && (
@@ -168,6 +180,8 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
               <div className="nav-dropdown-divider" />
               <NavLink to="/readiness" className={itemClass}>Readiness</NavLink>
               <NavLink to="/standing/team" className={itemClass}>Team standing</NavLink>
+              <NavLink to="/emergency-info" className={itemClass}>Emergency information</NavLink>
+              <NavLink to="/no-photo" className={itemClass}>No-photo list</NavLink>
               {/* Admin-only, not staff-wide: a report can quote whatever the
                   member had on screen, and the table's RLS is is_admin(). */}
               {isAdmin && (

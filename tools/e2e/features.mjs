@@ -70,6 +70,7 @@ const FEATURES = Object.freeze([
   'signout',
   'standing',
   'rosters',
+  'families',
 ]);
 
 

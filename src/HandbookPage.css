@@ -542,3 +542,5 @@
   .hb-chev { transition: transform 0.15s ease; }
   .hb-bar > span { transition: width 0.3s ease; }
 }
+.hb-changes { margin: 0 0 1rem; padding: 0.9rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.hb-publish { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }

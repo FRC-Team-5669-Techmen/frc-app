@@ -52,6 +52,10 @@ const ReportsPage      = lazy(() => import('./ReportsPage'))
 const MemberApplication  = lazy(() => import('./MemberApplication'))
 const ApplicationsPage   = lazy(() => import('./ApplicationsPage'))
 const ParentResponse     = lazy(() => import('./ParentResponse'))
+const FamilyPage         = lazy(() => import('./FamilyPage'))
+const EmergencyInfoPage  = lazy(() => import('./EmergencyInfoPage'))
+const DriverDocsPage     = lazy(() => import('./DriverDocsPage'))
+const TeamBoardsPage     = lazy(() => import('./TeamBoardsPage'))
 const FeedbackPage       = lazy(() => import('./FeedbackPage'))
 const AnnouncePage       = lazy(() => import('./AnnouncePage'))
 const SignoutsPage       = lazy(() => import('./SignoutsPage'))
@@ -283,6 +287,8 @@ export default function App() {
   // way. /e alone is its "lost your link" form.
   const onFamilyPath = location.pathname === '/e' || location.pathname.startsWith('/e/')
     || location.pathname === '/join' || location.pathname.startsWith('/join/')
+    // The private family link (0017): the same kind of capability URL.
+    || location.pathname.startsWith('/family/')
 
   // The design-system specimen. It exists ONLY where SpecimenPage exists, which
   // is dev, and it touches no auth and no Supabase, so no gate has anything to
@@ -350,6 +356,7 @@ export default function App() {
             Edge Function). Gates nothing; a parent who ignores it costs their
             student nothing. */}
         <Route path="/parent/:token" element={<ParentResponse />} />
+        <Route path="/family/:token" element={<FamilyPage />} />
 
         {/* Event family hub, the family page. Public by design, outside
             ProtectedLayout (no NavBar, no feedback widget, no notification
@@ -408,10 +415,15 @@ export default function App() {
               Edge Function). The page gates itself on hasRole('admin'). */}
           <Route path="/announce"        element={<AnnouncePage hasRole={hasRole} />} />
           <Route path="/signouts"        element={<SignoutsPage session={session} hasRole={hasRole} />} />
-          <Route path="/standing"        element={<StandingPage session={session} />} />
+          <Route path="/standing"        element={<StandingPage session={session} hasRole={hasRole} />} />
           <Route path="/standing/team"   element={<StandingTeamPage hasRole={hasRole} />} />
           <Route path="/rosters"         element={<RostersPage session={session} hasRole={hasRole} />} />
           <Route path="/rosters/:id"     element={<RostersPage session={session} hasRole={hasRole} />} />
+          <Route path="/emergency-info"  element={<EmergencyInfoPage session={session} hasRole={hasRole} />} />
+          <Route path="/driver-docs"     element={<DriverDocsPage session={session} hasRole={hasRole} />} />
+          <Route path="/leaderboard"     element={<TeamBoardsPage board="leaderboard" session={session} hasRole={hasRole} />} />
+          <Route path="/status-reports"  element={<TeamBoardsPage board="status" session={session} hasRole={hasRole} />} />
+          <Route path="/no-photo"        element={<TeamBoardsPage board="nophoto" session={session} hasRole={hasRole} />} />
           {/* Weekly survey. The member route resolves whatever survey is open;
               the mentor route authors them and reads results. */}
           <Route path="/survey"          element={<SurveyPage session={session} />} />

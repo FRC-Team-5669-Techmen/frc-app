@@ -289,3 +289,8 @@
 }
 .checkin-secondary:disabled { opacity: 0.6; cursor: default; }
 .checkin-success .checkin-meeting { color: #0A0B0D; }
+.checkin-tasks { display: flex; flex-direction: column; gap: 0.4rem; width: 100%; max-width: 24rem; }
+.checkin-task {
+  min-height: 44px; padding: 0.5rem 0.75rem; font: inherit; text-align: left;
+  color: #0A0B0D; background: rgba(10, 11, 13, 0.08); border: 1px solid rgba(10, 11, 13, 0.4); border-radius: var(--radius); cursor: pointer;
+}

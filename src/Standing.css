@@ -80,3 +80,21 @@ textarea.st-input, select.st-input { width: 100%; max-width: 100%; }
 .st-table th { text-align: left; font-family: var(--font-mono); font-weight: 400; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); padding: 0.5rem; border-bottom: 1px solid var(--border-strong); }
 .st-table td { padding: 0.5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
 .st-table a { color: var(--text); }
+.st-page-public { min-height: 100dvh; background: var(--bg); color: var(--text); }
+.st-public-head { padding: 0.9rem 1rem; font-family: var(--font-mono); letter-spacing: 0.12em; color: var(--gold); border-bottom: 1px solid var(--border); }
+.st-public-head span:first-child { color: var(--steel); }
+.st-handbook { max-height: 60vh; overflow-y: auto; padding: 0.75rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); margin: 0.5rem 0; font-size: 0.92rem; }
+.st-handbook h2, .st-handbook h3, .st-handbook h4 { color: var(--gold); margin: 1rem 0 0.4rem; font-family: var(--font-ui); }
+.st-handbook p { margin: 0.3rem 0; }
+@media print {
+  .navbar, .st-noprint, .st-tabs { display: none !important; }
+  .st-card { border: 1px solid #999; break-inside: avoid; }
+  body, .st-wrap { background: #fff !important; color: #000 !important; }
+}
+.st-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--border-strong); background: var(--bg); }
+.st-dot-green { background: var(--steel); }
+.st-dot-yellow { background: var(--gold); }
+.st-dot-red { background: var(--fault); }
+.st-pick-red.on { background: var(--fault); border-color: var(--fault); color: #fff; }
+.st-pick-green.on { background: var(--steel); border-color: var(--steel); }
+.st-board > li { padding: 0.55rem 0.25rem; }

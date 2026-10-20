@@ -478,6 +478,7 @@ export default function HandbookPage({ session, hasRole }) {
           </div>
         )}
 
+        {tab === 'sign' && <HandbookChanges isAdmin={!!hasRole?.('admin')} />}
         {tab === 'sign' && (
           <div role="tabpanel" className={`hb-sign${isStaff ? ' hb-sign-staff' : ''}`}>
             {!canSign ? (
@@ -538,5 +539,42 @@ export default function HandbookPage({ session, hasRole }) {
         )}
       </div>
     </div>
+  )
+}
+
+// The change feed (handbook Section 22, migration 0017): every version
+// numbered, announced in the app, effective 7 days later (a safety change at
+// once); a major change is signed again. An admin publishes a version here
+// after the text in src/handbook/ and HANDBOOK_VERSION change.
+function HandbookChanges({ isAdmin }) {
+  const [rows, setRows] = useState(null)
+  const [form, setForm] = useState({ version: HANDBOOK_VERSION, summary: '', major: false, safety: false })
+  const [msg, setMsg] = useState(null)
+  const load = () => supabase.from('handbook_versions').select('*').order('published_at', { ascending: false })
+    .then(({ data, error }) => setRows(error ? [] : data ?? []))
+  useEffect(() => { load() }, [])
+  if (!rows || (!rows.length && !isAdmin)) return null
+  async function publish() {
+    const { error } = await supabase.rpc('publish_handbook_version', { p_version: form.version.trim(), p_summary: form.summary.trim(), p_major: form.major, p_safety: form.safety })
+    setMsg(error ? (error.message || 'Not published') : 'Published. Every member was told.')
+    if (!error) load()
+  }
+  return (
+    <section className="hb-changes" data-card="changes">
+      <p className="hb-card-label">What changed</p>
+      <ul className="hb-todo">{rows.map((r) => (
+        <li key={r.version}><b>Version {r.version}</b>{r.major ? ' · major, sign again' : ''}{r.safety ? ' · safety' : ''} · in effect {new Date(r.effective_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}<br />{r.summary}</li>))}</ul>
+      {isAdmin && (
+        <div className="hb-publish">
+          <p className="hb-card-label">Publish a version (after the text and HANDBOOK_VERSION change)</p>
+          <input className="hb-search" value={form.version} onChange={(e) => setForm({ ...form, version: e.target.value })} aria-label="Version" />
+          <textarea className="hb-search" rows={3} value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} placeholder="What changed, in a line or two" aria-label="Summary" />
+          <label className="hb-agree-box"><input type="checkbox" checked={form.major} onChange={(e) => setForm({ ...form, major: e.target.checked })} /><span>Major: eligibility, travel, safety, costs or conduct (members sign again)</span></label>
+          <label className="hb-agree-box"><input type="checkbox" checked={form.safety} onChange={(e) => setForm({ ...form, safety: e.target.checked })} /><span>Safety change: in effect at once</span></label>
+          <button type="button" className="hb-btn hb-btn-primary" disabled={form.summary.trim().length < 3} onClick={publish}>Publish</button>
+          {msg && <p className="hb-fine">{msg}</p>}
+        </div>
+      )}
+    </section>
   )
 }

@@ -210,6 +210,10 @@ export default function ParentHomePage({ session }) {
                     <span className="ph-certs-label">Standing</span>
                     <Link to={`/standing?member=${s.id}`} className="ph-certs-none" data-testid="ph-standing-link">Attendance, hours and standing →</Link>
                   </div>
+                  <div className="ph-certs">
+                    <span className="ph-certs-label">Emergency</span>
+                    <Link to={`/emergency-info?member=${s.id}`} className="ph-certs-none" data-testid="ph-medical-link">Emergency information →</Link>
+                  </div>
                 </section>
               )
             })}

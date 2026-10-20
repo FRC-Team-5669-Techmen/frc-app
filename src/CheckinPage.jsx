@@ -94,6 +94,11 @@ export default function CheckinPage({ session }) {
   const [soError, setSoError] = useState(null)
   const [staffSelf, setStaffSelf] = useState(false)
   const [meeting, setMeeting] = useState(null)   // { title, status: present|late, at }
+  // After a check-in (0017 and the jobs board): no shop tools until the
+  // first-two-weeks checklist is done, and the member picks a task.
+  const [watchOnly, setWatchOnly] = useState(false)
+  const [tasks, setTasks] = useState(null)
+  const [taskMsg, setTaskMsg] = useState(null)
   // True once this history entry has acted on its arrival. Starts true when the
   // entry already carries the marker: a reload, a back/forward, a restored tab.
   const handled = useRef(isRevisit(location.state))
@@ -177,6 +182,7 @@ export default function CheckinPage({ session }) {
       // geo_ok: true when the fence was verified, false when an exempt member
       // skipped it (location not proven — surfaced if the exemption is removed).
       await insertEvent('in', !exempt)
+      afterCheckin()
       // A team meeting on now: the same scan logs present or late (0014).
       const m = await liveMeeting(supabase)
       if (m) {
@@ -190,6 +196,27 @@ export default function CheckinPage({ session }) {
     } finally {
       setActing(false)
     }
+  }
+
+  // Reads only; a failure leaves the success screen as it was.
+  async function afterCheckin() {
+    try {
+      const gate = await supabase.rpc('shop_tools_allowed', { p_member: null })
+      if (!gate.error && gate.data === false) setWatchOnly(true)
+      const { data: prof } = await supabase.from('profiles').select('subteams').eq('id', session.user.id).maybeSingle()
+      const subs = prof?.subteams ?? []
+      if (!subs.length) return
+      const { data } = await supabase.from('tasks').select('id, title, subteam').eq('status', 'open').in('subteam', subs).order('created_at', { ascending: false }).limit(5)
+      setTasks(data ?? [])
+    } catch { /* the screen already says checked in */ }
+  }
+
+  async function pickTask(t) {
+    setTaskMsg(null)
+    const c = await supabase.rpc('claim_task', { p_task: t.id })
+    if (c.error && !/already claimed/i.test(c.error.message || '')) { setTaskMsg(c.error.message || 'Could not take that task.'); return }
+    const j = await supabase.rpc('set_session_job', { p_task: t.id })
+    setTaskMsg(j.error ? (j.error.message || 'Could not set the task.') : `On it: ${t.title}`)
   }
 
   // A member with a session open, once 0014 is there: a meeting scan, the
@@ -582,6 +609,14 @@ export default function CheckinPage({ session }) {
       <p className="checkin-loc">{locDisplay}</p>
       {isIn && meeting && (
         <p className="checkin-meeting">{meeting.status === 'late' ? 'LATE' : 'PRESENT'} · {meeting.title}</p>
+      )}
+      {isIn && watchOnly && <p className="checkin-meeting" data-watch-only>WATCH ONLY · no shop tools until your checklist is done</p>}
+      {isIn && tasks && tasks.length > 0 && (
+        <div className="checkin-tasks">
+          <p className="checkin-meeting">PICK A TASK</p>
+          {tasks.map((t) => <button key={t.id} className="checkin-task" onClick={() => pickTask(t)}>{t.title}</button>)}
+          {taskMsg && <p className="checkin-meeting">{taskMsg}</p>}
+        </div>
       )}
       <footer className="checkin-footer" aria-hidden="true">STATUS // {isIn ? 'ON DECK' : 'CLEAR'}</footer>
       <Link to="/dashboard" className="checkin-home-link">VIEW STATUS →</Link>
