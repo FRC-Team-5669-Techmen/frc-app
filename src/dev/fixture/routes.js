@@ -39,6 +39,8 @@ export const ROUTES = Object.freeze([
   { path: '/handbook', url: '/handbook', group: 'member', label: 'Member handbook' },
   { path: '/trips', url: '/trips', group: 'member', label: 'Trips' },
   { path: '/standing', url: '/standing', group: 'member', label: 'My standing' },
+  { path: '/rosters', url: '/rosters', group: 'member', label: 'Event rosters' },
+  { path: '/rosters/:id', url: '/rosters/20000000-0000-4000-8000-000000000002', group: 'member', label: 'Event roster (all-team meeting)' },
   { path: '/trips/:id', url: `/trips/${EH.event}`, group: 'member', label: 'Trip boards (Fixture Blitz)' },
   { path: '/certify', url: '/certify', group: 'staff', label: 'Certify (retired, redirects to /certifications)' },
   { path: '/coverage', url: '/coverage', group: 'staff', label: 'Coverage (retired, redirects to /certifications)' },

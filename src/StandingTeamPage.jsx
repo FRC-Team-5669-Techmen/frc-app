@@ -309,7 +309,11 @@ function Fll({ nameOf, act, tick }) {
 
 function Settings({ act, tick }) {
   const [s, setS] = useState(null)
-  useEffect(() => { supabase.from('standing_settings').select('*').maybeSingle().then(({ data }) => setS(data)) }, [tick])
+  const [events, setEvents] = useState([])
+  useEffect(() => {
+    supabase.from('standing_settings').select('*').maybeSingle().then(({ data }) => setS(data))
+    supabase.from('events').select('id, title, starts_at').in('kind', ['meeting', 'other', 'training']).gte('starts_at', new Date(Date.now() - 200 * 864e5).toISOString()).order('starts_at').then(({ data }) => setEvents(data ?? []))
+  }, [tick])
   if (!s) return <p className="st-muted">Loading…</p>
   const set = (k) => (e) => setS({ ...s, [k]: e.target.value })
   return (
@@ -318,9 +322,18 @@ function Settings({ act, tick }) {
       <label className="st-label">Standards apply from <input type="date" className="st-input" value={s.starts_on} onChange={set('starts_on')} /></label>
       <label className="st-label">Build season from <input type="date" className="st-input" value={s.build_season_start} onChange={set('build_season_start')} /></label>
       <label className="st-label">Build season through <input type="date" className="st-input" value={s.build_season_end} onChange={set('build_season_end')} /></label>
+      {'kickoff_event_id' in s && (
+        <label className="st-label">Kickoff event (missing it blocks the drive team and pit crew)
+          <select className="st-input" value={s.kickoff_event_id ?? ''} onChange={set('kickoff_event_id')}>
+            <option value="">Not set</option>
+            {events.map((e) => <option key={e.id} value={e.id}>{new Date(e.starts_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} · {e.title}</option>)}
+          </select>
+        </label>
+      )}
       <div className="st-row">
         <button className="st-btn st-btn-primary" onClick={() => act(async () => {
-          const { error } = await supabase.from('standing_settings').update({ starts_on: s.starts_on, build_season_start: s.build_season_start, build_season_end: s.build_season_end, updated_at: new Date().toISOString() }).eq('id', true)
+          const { error } = await supabase.from('standing_settings').update({ starts_on: s.starts_on, build_season_start: s.build_season_start, build_season_end: s.build_season_end,
+            ...('kickoff_event_id' in s ? { kickoff_event_id: s.kickoff_event_id || null } : {}), updated_at: new Date().toISOString() }).eq('id', true)
           if (error) throw error
         }, 'Saved.')}>Save</button>
         <button className="st-btn" onClick={() => act(() => rpc(supabase, 'standing_evaluate', {}), (n) => `Evaluated: ${n} new week or month result(s).`)}>Run the check now</button>

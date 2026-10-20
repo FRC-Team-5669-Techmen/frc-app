@@ -46,6 +46,7 @@ const CONTEXT_TAGS = [
   ['/announce',    'ANNOUNCE'],
   ['/signouts',    'SIGN-OUTS'],
   ['/standing',    'STANDING'],
+  ['/rosters',     'ROSTERS'],
 ]
 function contextTag(pathname) {
   const hit = CONTEXT_TAGS.find(([p]) => pathname === p || pathname.startsWith(p))
@@ -138,6 +139,8 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
           {!isParent && !isStaff && (
             <NavLink to="/standing" end className={itemClass}>My standing</NavLink>
           )}
+          {/* Event rosters (0016): every member reads a posted roster. */}
+          {!isParent && <NavLink to="/rosters" className={itemClass}>Event rosters</NavLink>}
           {/* Sign-out approvals: staff and the students given signout.approve
               (0014). null until 0014 is pasted or for anyone else. */}
           {signouts !== null && (

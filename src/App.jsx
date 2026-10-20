@@ -57,6 +57,7 @@ const AnnouncePage       = lazy(() => import('./AnnouncePage'))
 const SignoutsPage       = lazy(() => import('./SignoutsPage'))
 const StandingPage       = lazy(() => import('./StandingPage'))
 const StandingTeamPage   = lazy(() => import('./StandingTeamPage'))
+const RostersPage        = lazy(() => import('./RostersPage'))
 const SurveyPage         = lazy(() => import('./SurveyPage'))
 const SurveysAdmin       = lazy(() => import('./SurveysAdmin'))
 // Event family hub (migrations 0005/0006). The family page is public, like
@@ -409,6 +410,8 @@ export default function App() {
           <Route path="/signouts"        element={<SignoutsPage session={session} hasRole={hasRole} />} />
           <Route path="/standing"        element={<StandingPage session={session} />} />
           <Route path="/standing/team"   element={<StandingTeamPage hasRole={hasRole} />} />
+          <Route path="/rosters"         element={<RostersPage session={session} hasRole={hasRole} />} />
+          <Route path="/rosters/:id"     element={<RostersPage session={session} hasRole={hasRole} />} />
           {/* Weekly survey. The member route resolves whatever survey is open;
               the mentor route authors them and reads results. */}
           <Route path="/survey"          element={<SurveyPage session={session} />} />

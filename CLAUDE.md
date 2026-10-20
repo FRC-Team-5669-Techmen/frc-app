@@ -66,6 +66,7 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 - **Event family hub**: [`docs/subsystems/event-family-hub.md`](docs/subsystems/event-family-hub.md)
 - **Member handbook**: [`docs/subsystems/handbook.md`](docs/subsystems/handbook.md)
 - **Member standing**: absences, break weeks, the weekly and monthly checks, probation and removal, grades, discipline, safety, incidents, voids, FLL mentors, notices (0015). [`docs/subsystems/standing.md`](docs/subsystems/standing.md)
+- **Event rosters**: roles, eligibility, event-day attendance, conflicts, the family sign-up rule, the carpool lock (0016). [`docs/subsystems/rosters.md`](docs/subsystems/rosters.md)
 
 ### Roadmap (planned modules)
 
@@ -222,4 +223,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-19. Member standing (ledger 0010, migration 0015, the notice-mail function); see `docs/history/member-standing-0015.md`.
+Last reviewed: 2026-10-19. Event rosters (ledger 0011, migration 0016); see `docs/history/event-rosters-0016.md`.
