@@ -130,6 +130,29 @@ describe('undo', () => {
     expect(computeUndo(alts, { args: { p_member: 'm', p_role: 'lead', p_grant: 'false' }, before: { found: true, had: true } })).toMatchObject({ args: { p_grant: true } })
     expect(computeUndo(alts, { args: { p_member: 'm', p_role: 'lead', p_grant: 'true' }, before: { found: true, had: true } })).toBeNull()
   })
+  it('a name set through Claude is undone with the previous name, and the nickname only when one was given', () => {
+    const alts = FUNCTIONS.admin_set_member_name.undo
+    expect(FUNCTIONS.admin_set_member_name.level).toBe('undo')
+    expect(computeUndo(alts, { args: { p_member: 'm', p_full_name: 'New Name' }, result: { nickname_given: false, previous_full_name: 'Old Name' } }))
+      .toEqual({ function: 'admin_set_member_name', args: { p_member: 'm', p_full_name: 'Old Name' } })
+    expect(computeUndo(alts, { args: { p_member: 'm', p_full_name: 'New', p_nickname: 'JJ' }, result: { nickname_given: true, previous_full_name: 'Old', previous_nickname: '' } }))
+      .toEqual({ function: 'admin_set_member_name', args: { p_member: 'm', p_full_name: 'Old', p_nickname: '' } })
+    // No previous name (the function strips nulls): no reverse rather than a wrong one.
+    expect(computeUndo(alts, { args: { p_member: 'm', p_full_name: 'New' }, result: { nickname_given: false } })).toBeNull()
+  })
+  it('merge_accounts resolves both accounts, always asks first, and writes nothing until confirmed', async () => {
+    const real = backend.rpc
+    backend.rpc = async (s, fn, args) => (fn === 'admin_get_members'
+      ? { data: [{ id: 'm-gmail', full_name: null, nickname: null, email: 'riley.summer@gmail.com', status: 'active' }, { id: 'm-school', full_name: 'Riley Ortega', email: 'rortega.2028@boscotech.net', status: 'active' }], error: null }
+      : real(s, fn, args))
+    const p = await runTool(ctx, 'merge_accounts', { said: 'merge Riley gmail into her school account', from: 'riley.summer@gmail.com', into: 'Riley Ortega', reason: 'summer Gmail' })
+    expect(p.status).toBe('preview')
+    expect(p.level).toBe('confirm')
+    expect(backend.state.audit.length).toBe(0)
+    const done = await runTool(ctx, 'merge_accounts', { said: 'merge Riley gmail into her school account', from: 'riley.summer@gmail.com', into: 'Riley Ortega', reason: 'summer Gmail', confirm_token: p.confirm_token })
+    expect(done.status).toBe('done')
+    expect(backend.state.calls.at(-1)).toMatchObject({ fn: 'admin_merge_member', args: { p_from: 'm-gmail', p_into: 'm-school', p_reason: 'summer Gmail' } })
+  })
   it('taking a role away asks first, the preview carries the removed row, and the confirmed write names its undo', async () => {
     const real = backend.rpc
     backend.rpc = async (s, fn, args) => {

@@ -34,6 +34,8 @@ import { fileURLToPath } from 'node:url'
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const MIG = readFileSync(path.join(REPO, 'supabase/migrations/0020_member_admin.sql'), 'utf8')
 const ID = { admin: '00000000-0000-0000-0000-0000000000a1', mentor: '00000000-0000-0000-0000-0000000000b1', student: '00000000-0000-0000-0000-0000000000c1', other: '00000000-0000-0000-0000-0000000000c4' }
+// The other member columns of a seeded row name one of these, a different one per row.
+const OTHERS = ['00000000-0000-0000-0000-0000000000c4', '00000000-0000-0000-0000-0000000000c3', '00000000-0000-0000-0000-0000000000c2', '00000000-0000-0000-0000-0000000000d1']
 const FROM = '00000000-0000-4000-9000-0000000000f1'
 const INTO = '00000000-0000-4000-9000-0000000000f2'
 
@@ -46,7 +48,7 @@ let total = 0
 const check = (ok, what) => {
   total += 1
   if (ok) passed += 1
-  else console.log(`FAIL ${what}`)
+  else if (!what.startsWith('MUTANT')) console.log(`FAIL ${what}`)
   return ok
 }
 
@@ -91,23 +93,26 @@ const MEMBER_REFS = new Set(['public.profiles', 'profiles', 'auth.users'])
 // Values a CHECK wants that the generic rules cannot guess.
 const OVERRIDES = {
   handbook_acknowledgments: { version: () => '1999-01-01', signer_role: () => 'student' },
-  handbook_versions: { version: (s) => (s === 'b' ? '1999-01-03' : '1999-01-02') },
+  handbook_versions: { version: (n) => `1999-01-${String(2 + n).padStart(2, '0')}` },
   parent_acknowledgments: { version: () => '1999-01-01' },
-  discord_announce_roles: { role_id: (s) => (s === 'b' ? '222222222222222222' : '333333333333333333') },
-  push_subscriptions: { endpoint: (s) => `https://merge.example/${s}` },
-  approved_emails: { email: (s) => `merge-${s}@example.com` },
-  allowed_domains: { domain: (s) => `merge-${s}.example` },
-  access_requests: { email: (s) => `merge-${s}@example.com` },
-  notice_outbox: { to_email: (s) => `merge-${s}@example.com` },
-  standing_weeks: { week_start: () => '2026-09-07' },
-  team_weeks: { week_start: () => '2026-09-07' },
-  subteam_status_reports: { week_start: () => '2026-09-07' },
-  standing_months: { month: () => '2026-09-01' },
-  letter_contributions: { season_start: () => '2026-09-01' },
-  hub_cars: { seats: () => 3 },
+  discord_announce_roles: { role_id: (n) => String(222222222222222222n + BigInt(n)) },
+  push_subscriptions: { endpoint: (n) => `https://merge.example/${n}` },
+  approved_emails: { email: (n) => `merge-${n}@example.com` },
+  allowed_domains: { domain: (n) => `merge-${n}.example` },
+  access_requests: { email: (n) => `merge-${n}@example.com` },
+  notice_outbox: { to_email: (n) => `merge-${n}@example.com` },
+  standing_weeks: { week_start: (n) => day(n * 7, '2026-09-07') },
+  team_weeks: { week_start: (n) => day(n * 7, '2026-09-07') },
+  subteam_status_reports: { week_start: (n) => day(n * 7, '2026-09-07') },
+  standing_months: { month: (n) => `2026-${String(1 + (n % 12)).padStart(2, '0')}-01` },
+  letter_contributions: { season_start: (n) => `${2000 + n}-09-01` },
   logged_hours: { hours: () => 1 },
   hour_adjustments: { hours: () => 1 },
   attendance_events: { type: () => 'in' },
+  task_updates: { body: () => 'merge update' },
+  hub_cars: { seats: () => 3, driver_label: () => 'Driver' },
+  member_applications: { conduct_acknowledged: () => true, build_season_acknowledged: () => true, subteam_second: () => 'Programming' },
+  member_permissions: { capability: () => 'events.create' },
 }
 
 function guessFromChecks(col, checks) {
@@ -119,47 +124,47 @@ function guessFromChecks(col, checks) {
   return undefined
 }
 
-function scalarFor(type, col, checks, suffix) {
+const day = (n, from = '2026-09-15') => new Date(Date.parse(from + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10)
+
+function scalarFor(type, col, checks, n) {
+  const suffix = n
   const fromCheck = guessFromChecks(col, checks)
   if (fromCheck !== undefined) return fromCheck
   if (/^(text|character varying)/.test(type)) return `merge ${col} ${suffix}`
   if (/^(integer|smallint|bigint|numeric|real|double)/.test(type)) return 1
   if (type === 'boolean') return false
-  if (type === 'date') return '2026-09-15'
+  if (type === 'date') return day(n)
   if (/^timestamp/.test(type)) return new Date().toISOString()
   if (type === 'jsonb' || type === 'json') return checks.some((d) => d.includes(`jsonb_typeof(${col})`) && d.includes("'array'")) ? [] : {}
   if (type.endsWith('[]')) return []
-  if (type === 'uuid') return null
+  if (type === 'uuid') return '00000000-0000-4000-8000-' + String(900000000000 + n).padStart(12, '0')
   return `merge ${suffix}`
 }
 
-const madeRef = new Map()
-async function refRow(ref, refcol, depth) {
-  const key = `${ref}.${refcol}`
-  const have = await q(`select ${refcol}::text as v from ${ref} order by 1 limit 1`)
-  if (have.rows.length) return have.rows[0].v
-  if (madeRef.has(key)) return madeRef.get(key)
+// A referenced row: always a new one, so two seeded rows never share a parent
+// (a unique key on the parent column would otherwise collide).
+async function refRow(ref, refcol, n, depth) {
   const tbl = ref.replace(/^public\./, '')
-  const id = await insertRow(tbl, {}, 'r', depth + 1)
-  const v = (await q(`select ${refcol}::text as v from ${ref} order by 1 limit 1`)).rows[0]?.v ?? id
-  madeRef.set(key, v)
-  return v
+  if (MEMBER_REFS.has(ref)) return OTHERS[n % OTHERS.length]
+  const row = await insertRow(tbl, {}, n + 1000 * (depth + 1), depth + 1)
+  return row[refcol]
 }
 
 // Insert one row into tbl with `fixed` columns; everything required is filled.
-async function insertRow(tbl, fixed, suffix, depth = 0) {
+let counter = 0
+async function insertRow(tbl, fixed, n, depth = 0) {
   if (depth > 4) throw new Error(`too deep at ${tbl}`)
+  const suffix = n
   const info = await tableInfo(tbl)
   const row = { ...fixed }
   for (const c of info.cols) {
     if (c.name in row) continue
     const fk = info.fks.find((f) => f.col === c.name)
     const ov = OVERRIDES[tbl]?.[c.name]
-    if (ov) { row[c.name] = ov(suffix); continue }
+    if (ov) { row[c.name] = ov(n); continue }
     if (!c.notnull || c.has_default) continue
-    if (fk && MEMBER_REFS.has(fk.ref)) { row[c.name] = ID.other; continue }
-    if (fk) { row[c.name] = await refRow(fk.ref, fk.refcol, depth); continue }
-    row[c.name] = scalarFor(c.type, c.name, info.checks, suffix)
+    if (fk) { row[c.name] = await refRow(fk.ref, fk.refcol, n, depth); continue }
+    row[c.name] = scalarFor(c.type, c.name, info.checks, n)
   }
   const keys = Object.keys(row)
   const vals = keys.map((k) => { const v = row[k]; return v !== null && typeof v === 'object' ? JSON.stringify(v) : v })
@@ -172,36 +177,41 @@ async function insertRow(tbl, fixed, suffix, depth = 0) {
   return ins.rows[0].row
 }
 
-async function seedOne(tbl, col, who, suffix) {
+async function seedOne(tbl, col, who) {
+  counter += 1
+  const n = counter
   const fixed = { [col]: who }
-  // The other member columns of the same row name a third member.
+  // The other member columns of the same row name a different member each time.
   const info = await tableInfo(tbl)
-  for (const f of info.fks) if (MEMBER_REFS.has(f.ref) && f.col !== col && info.cols.find((c) => c.name === f.col)?.notnull) fixed[f.col] = ID.other
+  let k = 0
+  for (const f of info.fks) if (MEMBER_REFS.has(f.ref) && f.col !== col && info.cols.find((c) => c.name === f.col)?.notnull) fixed[f.col] = OTHERS[(n + k++) % OTHERS.length]
+  // A seat hangs off a car by (car, day, run) together.
+  if (tbl === 'hub_seats') {
+    const car = await insertRow('hub_cars', {}, n + 5000, 1)
+    Object.assign(fixed, { car_id: car.id, day_id: car.day_id, run: car.run })
+  }
   await q('savepoint seed')
   try {
-    await insertRow(tbl, fixed, suffix)
+    await insertRow(tbl, fixed, n)
     await q('release savepoint seed')
     return true
   } catch (e) {
     await q('rollback to savepoint seed')
-    // a unique key with no member column: vary the text and try once more
-    if (e.code === '23505') {
-      await q('savepoint seed')
-      try {
-        await insertRow(tbl, fixed, `${suffix}2`)
-        await q('release savepoint seed')
-        return true
-      } catch (e2) {
-        await q('rollback to savepoint seed')
-        return `${e2.code} ${e2.message}`
-      }
+    // A one-row table (settings): name the account on the row that is there.
+    if (e.code === '23505' && (await q(`select count(*)::int as n from public.${tbl}`)).rows[0].n === 1) {
+      await q(`update public.${tbl} set "${col}" = $1`, [who])
+      return true
     }
     return `${e.code} ${e.message}`
   }
 }
 
 // ── one run ─────────────────────────────────────────────────────────────────
+// Read once from the real 0020, before any mutant: a mutant that forgets a
+// rule must still be seeded and judged on the column it forgot.
+let realRules = null
 async function rulesNow() {
+  if (realRules) return realRules
   return (await q(`select tbl, col, rule from public._merge_member_rules() r
                     where to_regclass('public.' || r.tbl) is not null
                       and exists (select 1 from information_schema.columns c where c.table_schema = 'public' and c.table_name = r.tbl and c.column_name = r.col)
@@ -209,6 +219,7 @@ async function rulesNow() {
 }
 
 async function seedAll() {
+  counter = 0
   await q(`insert into auth.users (id, email) values ($1, 'summer.gmail@example.com'), ($2, 'merge.school@boscotech.edu') on conflict (id) do nothing`, [FROM, INTO])
   await q(`insert into public.profiles (id) values ($1), ($2) on conflict (id) do nothing`, [FROM, INTO])
   await q(`update public.profiles set full_name = 'Merge Summer', approved = true, nickname = 'Summer', grad_year = 2029, subteams = '{CAD}' where id = $1`, [FROM])
@@ -220,8 +231,11 @@ async function seedAll() {
   for (const r of await rulesNow()) {
     if (!['move', 'keep', 'drop', 'grants'].includes(r.rule)) continue
     if (r.tbl === 'profiles' || r.tbl === 'member_roles') continue
-    for (const [who, s] of [[INTO, 'b'], [FROM, 'a']]) {
-      const ok = await seedOne(r.tbl, r.col, who, s)
+    // The connector own tables hold hashed credentials and the audit log;
+    // their rules (drop, keep) are proved by the result counts below, not seeded.
+    if (r.tbl.startsWith('connector_')) continue
+    for (const who of [INTO, FROM]) {
+      const ok = await seedOne(r.tbl, r.col, who)
       if (ok !== true) problems.push(`${r.tbl}.${r.col} (${who === FROM ? 'from' : 'into'}): ${ok}`)
     }
     seeded.push(r)
@@ -246,10 +260,11 @@ async function prove({ label, expectAll = true }) {
     const { problems, seeded } = await seedAll()
     check(problems.length === 0, `${label}: seeding every handled column: ${problems.join('; ')}`)
     const rules = seeded.filter((r) => r.rule === 'move')
-    const fromRows = Object.fromEntries((await snapshot(rules)).map ? [] : [])
     const before = await snapshot(seeded)
     const counted = Object.values(before).reduce((n, rows) => n + rows.length, 0)
     check(counted >= rules.length * 2, `${label}: seeded ${counted} rows over ${rules.length} moved columns`)
+    const unseeded = rules.filter((r) => before[`${r.tbl}.${r.col}`].filter((x) => x[r.col] === FROM).length === 0).map((r) => `${r.tbl}.${r.col}`)
+    check(unseeded.length === 0, `${label}: every moved column has a row naming the duplicate (${unseeded.join(', ')})`)
 
     // negative controls
     for (const who of ['mentor', 'student']) {
@@ -271,7 +286,7 @@ async function prove({ label, expectAll = true }) {
       const b = before[k]
       const a = after[k]
       if (r.rule === 'keep') {
-        check(JSON.stringify(a.map(key).sort()) === JSON.stringify(b.map(key).sort()), `${label}: ${k} kept as written`)
+        check(b.every((row) => a.some((x) => key(x) === key(row))), `${label}: ${k} kept as written`)
         continue
       }
       if (r.rule === 'drop' || r.rule === 'grants') {
@@ -287,12 +302,16 @@ async function prove({ label, expectAll = true }) {
       const mapRow = (row) => Object.fromEntries(Object.entries(row).map(([c, v]) => [c, v === FROM ? INTO : v]))
       const intoBefore = b.filter((row) => row[r.col] === INTO).map(mapRow)
       check(intoBefore.every((row) => a.some((x) => key(mapRow(x)) === key(row))), `${label}: every ${k} row of the kept account is still there`)
+      // Match after rows one for one: the kept rows first, then the moved ones.
+      const left = a.map((x) => key(mapRow(x)))
+      const take = (row) => { const i = left.indexOf(key(row)); if (i < 0) return false; left.splice(i, 1); return true }
+      intoBefore.forEach(take)
       const fromBefore = b.filter((row) => row[r.col] === FROM)
-      const movedOk = fromBefore.filter((row) => a.some((x) => key(mapRow(x)) === key(mapRow(row))))
-      const collided = fromBefore.length - movedOk.length
+      const moved = fromBefore.filter((row) => take(mapRow(row))).length
+      const collided = fromBefore.length - moved
       const reported = out.tables?.[r.tbl]?.kept_into ?? 0
       check(collided <= reported, `${label}: ${k}: ${collided} duplicate rows dropped, at most the ${reported} the merge reported for ${r.tbl}`)
-      check(a.length === intoBefore.length + movedOk.length, `${label}: ${k}: nothing appeared and nothing was lost (${a.length} = ${intoBefore.length} + ${movedOk.length})`)
+      check(left.length === 0, `${label}: ${k}: nothing appeared that was not there before (${left.length} extra)`)
     }
     const prof = (await q(`select * from public.profiles where id in ($1, $2) order by full_name`, [FROM, INTO])).rows
     const from = prof.find((p) => p.id === FROM)
@@ -308,9 +327,9 @@ async function prove({ label, expectAll = true }) {
     check(auth === 1, `${label}: the duplicate sign-in is not deleted`)
     const ae = (await q(`select count(*)::int as n from public.approved_emails where email = 'summer.gmail@example.com'`)).rows[0].n
     check(ae === 0 && out.approved_email_removed === true, `${label}: the duplicate email no longer approves on sign-in`)
-    const log = (await q(`select action from public.member_admin_log where member_id in ($1, $2) order by action`, [FROM, INTO])).rows.map((x) => x.action)
+    const log = (await q(`select action from public.member_admin_log where member_id in ($1, $2) and action like 'merge%' order by action`, [FROM, INTO])).rows.map((x) => x.action)
     check(JSON.stringify(log) === '["merge_from","merge_into"]', `${label}: one trail row for each account (${log})`)
-    check(out.moved_total > 50 && Object.keys(out.tables).length > 30, `${label}: the answer counts per table (${out.moved_total} rows over ${Object.keys(out.tables).length} tables)`)
+    check(out.moved_total > 80 && Object.keys(out.tables).length > 50, `${label}: the answer counts per table (${out.moved_total} rows over ${Object.keys(out.tables).length} tables)`)
     // A second merge of the same pair finds nothing left to move.
     const again = await as(ID.admin, () => q(`select public.admin_merge_member($1, $2, 'again') as out`, [FROM, INTO]))
     check(again.ok && again.r.rows[0].out.moved_total === 0, `${label}: merging again moves nothing`)
@@ -326,6 +345,7 @@ async function prove({ label, expectAll = true }) {
 const reapply = async () => { await q(MIG) }
 
 // ── the run ─────────────────────────────────────────────────────────────────
+realRules = await rulesNow()
 await prove({ label: 'merge' })
 
 // the trail table: admins read, nobody writes
@@ -347,6 +367,7 @@ await q(MIG.replace("if not public.is_admin() then\n    raise exception 'Permiss
   const missed = (total - t0) - (passed - before)
   total -= (total - t0); passed = before
   check(missed > 0, `mutant "the admin check gone" is caught (${missed} checks went red)`)
+  console.log(`mutant the admin check gone: ${missed} checks red`)
 }
 await reapply()
 
@@ -372,6 +393,7 @@ await q(MIG.replace("    ('event_signups', 'member_id', 'move'),\n", '').replace
   const missed = (total - t0) - (passed - before)
   total -= (total - t0); passed = before
   check(missed > 0, `mutant "the guard and a rule gone" is caught (${missed} checks went red)`)
+  console.log(`mutant the guard and a rule gone: ${missed} checks red`)
 }
 await reapply()
 

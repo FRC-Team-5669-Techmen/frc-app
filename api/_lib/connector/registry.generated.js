@@ -5,15 +5,15 @@ export default {
  "measured": "2026-10-20",
  "counts": {
   "functions_called": 170,
-  "registry_functions": 176,
-  "reachable": 166,
+  "registry_functions": 178,
+  "reachable": 168,
   "read": 15,
-  "undo": 3,
-  "confirm": 146,
+  "undo": 4,
+  "confirm": 147,
   "by_argument": 2,
   "generated": 152,
   "excluded_functions": 10,
-  "tools": 19,
+  "tools": 21,
   "edge_functions": 6,
   "routes": 1,
   "table_writes": 0,
@@ -354,6 +354,76 @@ export default {
     "p_member": "$resolved.member.id",
     "p_role": "$args.role",
     "p_grant": "$args.grant"
+   }
+  },
+  "set_member_name": {
+   "name": "set_member_name",
+   "describe": "Fix the real name a member shows under on the roster, and their nickname if he says one. Undo puts the old name back.",
+   "say": [
+    "Riley's real name is Riley Ortega",
+    "change Sam's name to Samuel Diaz",
+    "fix the spelling of Casey's last name",
+    "set Jordan's nickname to JJ"
+   ],
+   "kind": "function",
+   "args": {
+    "member": {
+     "type": "string",
+     "describe": "The member (a name or email)",
+     "required": true,
+     "resolve": "member"
+    },
+    "full_name": {
+     "type": "string",
+     "describe": "Their full real name, first and last",
+     "required": true
+    },
+    "nickname": {
+     "type": "string",
+     "describe": "Their nickname, only when he says one; empty clears it"
+    }
+   },
+   "function": "admin_set_member_name",
+   "map": {
+    "p_member": "$resolved.member.id",
+    "p_full_name": "$args.full_name",
+    "p_nickname": "$args.nickname"
+   }
+  },
+  "merge_accounts": {
+   "name": "merge_accounts",
+   "describe": "Move everything a duplicate account has (a summer Gmail login) onto the member's real school account. Always asks first.",
+   "say": [
+    "merge Riley's Gmail account into her school account",
+    "Sam has two accounts, move the old one into the school one",
+    "combine Jordan's accounts",
+    "move everything from the personal email to the school email"
+   ],
+   "kind": "function",
+   "args": {
+    "from": {
+     "type": "string",
+     "describe": "The duplicate account to merge away (a name or email)",
+     "required": true,
+     "resolve": "member"
+    },
+    "into": {
+     "type": "string",
+     "describe": "The account to keep, usually the school email",
+     "required": true,
+     "resolve": "member"
+    },
+    "reason": {
+     "type": "string",
+     "describe": "Why, in his words",
+     "required": true
+    }
+   },
+   "function": "admin_merge_member",
+   "map": {
+    "p_from": "$resolved.from.id",
+    "p_into": "$resolved.into.id",
+    "p_reason": "$args.reason"
    }
   },
   "feedback_inbox": {
@@ -721,6 +791,43 @@ export default {
    "describe": "Grant capability (a change: asks first).",
    "level": "confirm"
   },
+  "admin_merge_member": {
+   "name": "admin_merge_member",
+   "source": "hand",
+   "forms": [
+    {
+     "args": [
+      {
+       "name": "p_from",
+       "spoken": "from",
+       "type": "uuid",
+       "optional": false
+      },
+      {
+       "name": "p_into",
+       "spoken": "into",
+       "type": "uuid",
+       "optional": false
+      },
+      {
+       "name": "p_reason",
+       "spoken": "reason",
+       "type": "text",
+       "optional": false
+      }
+     ],
+     "returns": "jsonb",
+     "retset": false
+    }
+   ],
+   "writes": true,
+   "gates": [
+    "is_admin"
+   ],
+   "called_from": [],
+   "describe": "Merge a duplicate account into the member real account, moving everything it has. Always asks first and lists what moves.",
+   "level": "confirm"
+  },
   "admin_record_grade_check": {
    "name": "admin_record_grade_check",
    "source": "generated",
@@ -912,6 +1019,62 @@ export default {
    ],
    "describe": "Let a member check in without the location check, or put the check back. (A change: asks first.)",
    "level": "confirm"
+  },
+  "admin_set_member_name": {
+   "name": "admin_set_member_name",
+   "source": "hand",
+   "forms": [
+    {
+     "args": [
+      {
+       "name": "p_member",
+       "spoken": "member",
+       "type": "uuid",
+       "optional": false
+      },
+      {
+       "name": "p_full_name",
+       "spoken": "full_name",
+       "type": "text",
+       "optional": false
+      },
+      {
+       "name": "p_nickname",
+       "spoken": "nickname",
+       "type": "text",
+       "optional": true
+      }
+     ],
+     "returns": "jsonb",
+     "retset": false
+    }
+   ],
+   "writes": true,
+   "gates": [
+    "is_admin"
+   ],
+   "called_from": [],
+   "describe": "Set the real name a member shows under on the roster, and their nickname if given. Undo puts the old name back.",
+   "level": "undo",
+   "undo": [
+    {
+     "function": "admin_set_member_name",
+     "when": "$result.nickname_given",
+     "args": {
+      "p_member": "$args.p_member",
+      "p_full_name": "$result.previous_full_name",
+      "p_nickname": "$result.previous_nickname"
+     }
+    },
+    {
+     "function": "admin_set_member_name",
+     "when": "!$result.nickname_given",
+     "args": {
+      "p_member": "$args.p_member",
+      "p_full_name": "$result.previous_full_name"
+     }
+    }
+   ]
   },
   "admin_set_member_role": {
    "name": "admin_set_member_role",

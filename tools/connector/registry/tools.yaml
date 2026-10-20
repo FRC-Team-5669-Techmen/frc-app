@@ -146,6 +146,34 @@ set_team_role:
     p_role: $args.role
     p_grant: $args.grant
 
+set_member_name:
+  describe: Fix the real name a member shows under on the roster, and their nickname if he says one. Undo puts the old name back.
+  say: ["Riley's real name is Riley Ortega", "change Sam's name to Samuel Diaz", "fix the spelling of Casey's last name", "set Jordan's nickname to JJ"]
+  kind: function
+  function: admin_set_member_name
+  args:
+    member: {type: string, describe: "The member (a name or email)", required: true, resolve: member}
+    full_name: {type: string, describe: "Their full real name, first and last", required: true}
+    nickname: {type: string, describe: "Their nickname, only when he says one; empty clears it"}
+  map:
+    p_member: $resolved.member.id
+    p_full_name: $args.full_name
+    p_nickname: $args.nickname
+
+merge_accounts:
+  describe: Move everything a duplicate account has (a summer Gmail login) onto the member's real school account. Always asks first.
+  say: ["merge Riley's Gmail account into her school account", "Sam has two accounts, move the old one into the school one", "combine Jordan's accounts", "move everything from the personal email to the school email"]
+  kind: function
+  function: admin_merge_member
+  args:
+    from: {type: string, describe: "The duplicate account to merge away (a name or email)", required: true, resolve: member}
+    into: {type: string, describe: "The account to keep, usually the school email", required: true, resolve: member}
+    reason: {type: string, describe: "Why, in his words", required: true}
+  map:
+    p_from: $resolved.from.id
+    p_into: $resolved.into.id
+    p_reason: $args.reason
+
 feedback_inbox:
   describe: The app feedback inbox, newest first, with who sent it and its status.
   say: ["any new feedback", "what bugs came in", "read the feedback inbox", "show feedback marked in progress"]

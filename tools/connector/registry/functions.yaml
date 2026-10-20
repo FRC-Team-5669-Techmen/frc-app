@@ -110,3 +110,23 @@ schedule_create_event:
     - function: schedule_delete_event
       args:
         p_event: $result.id
+
+admin_set_member_name:
+  describe: Set the real name a member shows under on the roster, and their nickname if given. Undo puts the old name back.
+  level: undo
+  undo:
+    - function: admin_set_member_name
+      when: "$result.nickname_given"
+      args:
+        p_member: $args.p_member
+        p_full_name: $result.previous_full_name
+        p_nickname: $result.previous_nickname
+    - function: admin_set_member_name
+      when: "!$result.nickname_given"
+      args:
+        p_member: $args.p_member
+        p_full_name: $result.previous_full_name
+
+admin_merge_member:
+  describe: Merge a duplicate account into the member real account, moving everything it has. Always asks first and lists what moves.
+  level: confirm
