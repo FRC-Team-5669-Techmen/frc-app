@@ -9,7 +9,7 @@
  *    checks between them and an index of all 24 sections; terms are
  *    underlined and a term opens its glossary line;
  *  - search narrows the sections to the ones that match and marks the words
- *    (sports: Section 6 among them, fewer than 22); a word in no section
+ *    (activities: Section 6 among them, fewer than 22); a word in no section
  *    shows 0 and says so; clearing it brings back 22 and the 18 checks;
  *  - /handbook?section=6 and ?section=4 land on that section; ?tab=lessons,
  *    the old name, still opens the Handbook tab;
@@ -69,7 +69,7 @@ export default {
     await t.settle();
     t.eq('?section=6 opens the Handbook tab with every section', [await t.text('.hb-tab[aria-selected="true"]'), await t.count('.hb-sec-card')], ['Handbook', 22]);
     t.eq('Sections 4, 6 and 7 carry their own numbers', [await t.text('#sec-4 .hb-sec-num'), await t.text('#sec-6 .hb-sec-num'), await t.text('#sec-7 .hb-sec-num')], ['Section 4', 'Section 6', 'Section 7']);
-    t.check('Section 6 holds the sports rule', ((await t.text('#sec-6')) || '').includes('other clubs, sports and activities'), '');
+    t.check('Section 6 holds the planning rule', ((await t.text('#sec-6')) || '').includes('Plan other activities around team meetings'), '');
     t.check('Section 6 is scrolled into view', await t.evaluate(() => { const r = document.getElementById('sec-6').getBoundingClientRect(); return r.top >= 0 && r.top < innerHeight; }), '');
     await t.open('/handbook?section=4', { persona: 'student', mig: 'all', ready: '#sec-4' });
     t.check('?section=4 lands on Your week, with the Tuesday and Friday rule', ((await t.text('#sec-4')) || '').includes('Other activities never excuse a team meeting'), '');
@@ -97,10 +97,10 @@ export default {
     await t.noHScroll();
 
     t.as('student · search');
-    await t.page.fill('.hb-read-tools input[type="search"]', 'sports');
+    await t.page.fill('.hb-read-tools input[type="search"]', 'activities');
     await t.waitFor('.hb-hits');
     const sports = await t.count('.hb-sec-card');
-    t.check('searching sports narrows to fewer sections, Section 6 among them', sports >= 1 && sports < 22 && (await t.count('#sec-6')) === 1, `${sports} sections`);
+    t.check('searching activities narrows to fewer sections, Section 6 among them', sports >= 1 && sports < 22 && (await t.count('#sec-6')) === 1, `${sports} sections`);
     t.check('the word is marked and the checks are hidden', (await t.count('.hb-hit')) > 0 && (await t.count('.hb-check')) === 0, `${await t.count('.hb-hit')} marks`);
     t.check('the count says how many match', ((await t.text('.hb-hits')) || '').startsWith(`${sports} section`), await t.text('.hb-hits'));
     await t.shot('search');

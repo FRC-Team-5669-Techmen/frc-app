@@ -15,3 +15,7 @@ Mr. Pina could not find the rules he wanted to cite in a reply to a student: the
 - The leaderboard ranks students only; mentors, admins and parents are listed apart. `tools/e2e/features/families.mjs` gives the mentor more hours than any student and checks 0 on the student board against 1 apart, with Sam the other way round.
 
 Not verified: the live site after deploy (fixture mode only), and the live `member_roles` content behind the leaderboard split.
+
+## Wording audit (same day)
+
+Mr. Pina found instructions written into the rules as explicit negatives ("never excused: a mental health day", from his note not to copy that from 1678). Every such line was reworded or cut: Section 6 (never-excused list, "no limit for now"; a test, major assignment or college application deadline asked ahead is now excusable, since school comes first), 7 (his own hours, Team 111), 12 and 16 ("no other forms", "no dues", "no quota"), 14 ("no outside appeal"), 18 (last season's letters), 19 and 20 (service hours, Live Scan). Section 22 gained one line: a conflict that existed before the handbook gets a written plan with Mr. Pina through the end of that activity's season. The absence form label and the standing page line follow the new wording.

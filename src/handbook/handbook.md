@@ -118,9 +118,9 @@ Being in the room is not enough. You are present when you are on a task and work
 - **After that you are late. No scan is an absence.** Three lates in a calendar month count as one absence, and lates reset on the 1st.
 - **No phone, or the tag fails?** Tell a mentor right away. The mentor checks you in or out in the app and logs why.
 - **Excused absences:** ask in the app at least 24 hours ahead. A mentor approves or denies it. An approved absence never counts against you.
-- **No limit for now,** and any request can be denied. A request still unanswered at the meeting is approved.
-- **Can be excused:** illness, a family emergency, a required school event, a medical visit or a religious holiday.
-- **Never excused:** other clubs, sports and activities, homework, or a mental health day. Tests and college applications need a mentor's OK ahead.
+- **A request still unanswered at the meeting** is approved.
+- **Can be excused:** illness, a family emergency, a required school event, a medical visit, a religious holiday, or a test, a major assignment or a college application deadline asked for ahead.
+- **Plan other activities around team meetings.**
 - **An emergency** is your own illness or injury, or a death, hospital stay or serious illness in your close family. File it by 11:59 PM the next school day. Sick? Stay home.
 - **We never round.** With 8 or 9 meetings in a month, you can miss one. 7 of 9 is under 80%.
 - **A week you are fully excused** never counts against your hours.
@@ -143,7 +143,7 @@ Being in the room is not enough. You are present when you are on a task and work
 - **Leave without approval,** or forget to scan out, and you keep the meeting credit but lose that session's hours.
 - **A session open 12 hours** is flagged for a mentor to fix or void.
 - **Idle time is voided.** No task, or not working on it? A lead or mentor voids the session and sends you the reason.
-- **Everyone signs in, every time,** leaders, drive team and mentors too. Mr. Pina logs his own hours.
+- **Everyone signs in, every time,** leaders, drive team and mentors too.
 - **Scan only for yourself.** Faking hours is a conduct violation, up to removal. The first time voids both students' hours that week and is a written warning.
 - **FLL:** scan and choose Switch to FLL. The build session ends there and counts. Sign out of FLL with a note; no approval needed.
 - **Clean 10:** you clean up your own mess. See a dirty area? Clean it, whoever left it. We share the shop, so we clean it together. Skipping cleanup is what counts against you: a mentor can void that day's hours. Everyone stays to the end and cleans together for 10 minutes when a mentor calls it. The time changes day to day. Leaving before then needs a mentor's OK, and you clean your area first.
@@ -157,7 +157,7 @@ Being in the room is not enough. You are present when you are on a task and work
 
 ### Take care of yourself
 
-- **Keep time for life outside robotics.** Team 111 challenges members to spend 90 minutes a week on something else, ideally off screens.
+- **Keep time for life outside robotics.**
 - **Look out for teammates.** If someone seems overwhelmed, tell a mentor.
 - **Struggling?** Talk to a mentor or a Bosco Tech counselor. Asking never counts against you. In a crisis, call or text 988.
 
@@ -235,7 +235,7 @@ School comes first. Your GPA (grade point average) must be 2.0 or higher on ever
 
 - **Bosco Tech staff mentors check official grades in FACTS** at each progress report and quarter.
 - **Absent from school that day?** No team activity that day.
-- **Missing class for an event** is a pre-planned absence. Tell your teachers a week ahead and make up the work. No other forms.
+- **Missing class for an event** is a pre-planned absence. Tell your teachers a week ahead and make up the work.
 - **No skipping school the day after a competition.** Plan ahead: events leave no time for homework.
 - **Accommodations:** if a disability or learning need makes a standard hard, you and a parent tell Mr. Pina. Bosco Tech's process applies.
 
@@ -312,7 +312,7 @@ Three sets of rules apply at every team activity, on campus and off. They are th
 
 - **Serious violations skip steps,** up to immediate removal. They include violence, threats, harassment, theft, youth protection breaches, drugs or alcohol, and faking hours twice.
 - **Appeal a written warning** to Mr. Pina within 5 school days. It stands until he decides. A parent may join if the family wants.
-- **Suspension or removal:** talk it through with Mr. Pina; a parent may join. His decision is final, with no outside appeal.
+- **Suspension or removal:** talk it through with Mr. Pina; a parent may join. Mr. Pina makes the final decision.
 - **Knowing these rules is your job.**
 - **School discipline matters** go to Bosco Tech's Dean of Discipline, as during the school day.
 
@@ -377,10 +377,10 @@ Competition is an off-site team workday with the whole FRC community watching. E
 - **Parents drive in carpools,** with no school transportation. Not every family has to drive. Cars leave the Bosco Tech front lot as each fills, and the carpool board shows every car.
 - **The carpool plan locks 72 hours before leaving.** After that only a mentor can change it, and nothing changes in the last 12 hours.
 - **Riding with another family** needs both families' OK in the app, with mentors copied. No car carries one adult alone with one student not their own.
-- **Drivers** are licensed adults named in the family sign-up. Before a first ride, a driver uploads one photo of their license and insurance to the FRC app. It is stored privately, seen only by staff mentors, and deleted when the driver asks or leaves the team. No other forms. Driving earns parent service hours.
+- **Drivers** are licensed adults named in the family sign-up. Before a first ride, a driver uploads one photo of their license and insurance to the FRC app. It is stored privately, seen only by staff mentors, and deleted when the driver asks or leaves the team. Driving earns parent service hours.
 - **Students do not drive other students** to team events.
-- **Costs:** no dues. Required costs are the annual uniform from FRC Tees, a team shirt and jacket at FRC Tees' price, ordered through the team (details in the app), and, for manufacturing work, a respirator: a 3M 7500 series half facepiece in your size with 3M 60926 cartridges, about $45 to $65. It is the same one IDEA classes require, so buy it once. Families pay their own lodging and food. Cost a problem? A parent emails Mr. Pina, and it stays private.
-- **Meals:** events are potluck; each family brings food to share. Weekend sessions get food from a parent sign-up, or the team orders pizza. No family has a quota.
+- **Required costs:** the annual uniform from FRC Tees, a team shirt and jacket at FRC Tees' price, ordered through the team (details in the app), and, for manufacturing work, a respirator: a 3M 7500 series half facepiece in your size with 3M 60926 cartridges, about $45 to $65. It is the same one IDEA classes require, so buy it once. Families pay their own lodging and food. Cost a problem? A parent emails Mr. Pina, and it stays private.
+- **Meals:** events are potluck; each family brings food to share. Weekend sessions get food from a parent sign-up, or the team orders pizza.
 - **Travel on a meeting day?** The meeting becomes the trip briefing.
 
 ### At the event
@@ -418,7 +418,7 @@ Help other teams and share what you know. Keep our new designs and game plans in
 
 ## 18. Recognition and varsity letters
 
-FRC is a varsity activity at Bosco Tech, and a varsity letter is earned, not given. Last season no member met the standard, so no letters were awarded.
+FRC is a varsity activity at Bosco Tech, and a varsity letter is earned, not given.
 
 **Letter standard**
 
@@ -441,7 +441,7 @@ Lots of hours alone do not earn a letter. You also need a clean safety, conduct 
 Families make the team run: they drive, feed, chaperone and keep students on track. Our biggest request: read team messages in full and answer on time, with one family answer.
 
 - **Join the parent GroupMe, give the team an email,** and complete the family sign-up for every event. Your private link opens the app, no account needed.
-- **Service hours:** Bosco Tech requires them of parents; the team never requires them. Driving, attending or volunteering at any team event counts. So does helping supervise build season sessions, especially weekends.
+- **Service hours:** team events count toward Bosco Tech's parent service hours. Driving, attending or volunteering at any team event counts. So does helping supervise build season sessions, especially weekends.
 - **Parent night,** in person once a year in the school week before Kickoff, covers the handbook, events and how families help. It is in the IDEA Classroom; the exact date is posted in the app.
 - **You are welcome to help,** for a day or as a regular mentor (Section 20).
 - **At events, families follow the same conduct rules** as students.
@@ -456,7 +456,7 @@ Regular mentors are screened before they work with students. Occasional parent h
 - **Screening:** FIRST Youth Protection screening, a California Live Scan fingerprint check, and mandated reporter training. To start, contact Mr. Pina.
 - **A regular mentor** helps more than 16 hours a month or 32 a year. Anyone who supervises with no screened mentor present is one too.
 - **Occasional helpers need nothing extra.** A parent who comes in for a day or two helps while a screened mentor is in the room.
-- **Parents who only drive carpools** need no Live Scan and no forms, until they pass 16 hours a month or 32 a year; then California law requires Live Scan.
+- **Carpool drivers** need Live Scan only past 16 hours a month or 32 a year, as California law requires.
 - **Alumni may mentor right after graduating,** once screened like any regular mentor. They are never occasional helpers. Alumni under 21 never supervise students alone and stay out of student-only chats.
 - **Rule of Three:** no adult is ever alone with one student, in a room, a car or a message. Every conversation includes at least three people. The only exception is a parent with their own child.
 - **Messages:** an adult never messages one student privately. A direct message includes a second adult, or moves to a group channel.
@@ -486,6 +486,7 @@ Applications are open all year. Every returning member reapplies each May. A spo
 - **Every version is numbered,** and the app records who signed which version, and when.
 - **Reviewed every spring** by mentors and team leaders, after every member says in the app what worked and what to change.
 - **Mentors may go past the written rules only to protect safety or wellbeing.** Deadlines and the three standards are never judgment calls.
+- **A conflict that existed before this handbook** (October 20, 2026) gets a written plan with Mr. Pina through the end of that activity's season.
 
 ## 23. Glossary
 

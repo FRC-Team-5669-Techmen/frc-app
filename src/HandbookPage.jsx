@@ -234,7 +234,7 @@ function QuickRef({ goLesson }) {
         <ul className="hb-qlist">
           <li><strong>Ask in the app</strong> at least 24 hours ahead.</li>
           <li><strong>An emergency:</strong> file by 11:59 PM the next school day.</li>
-          <li><strong>Never excused:</strong> other activities, homework, a mental health day.</li>
+          <li><strong>Plan other activities</strong> around team meetings.</li>
           <li><strong>3 lates</strong> in a month count as 1 absence.</li>
         </ul>
       </Card>

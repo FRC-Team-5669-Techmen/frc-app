@@ -12,9 +12,9 @@ export const ABSENCE_REASONS = Object.freeze([
   { key: 'medical', label: 'Medical visit', emergency: true },
   { key: 'school_event', label: 'Required school event' },
   { key: 'religious', label: 'Religious holiday' },
-  { key: 'test_or_college', label: 'Test or college application (needs a mentor OK ahead)' },
+  { key: 'test_or_college', label: 'Test, major assignment or college application deadline' },
 ])
-export const NEVER_EXCUSED = 'Never excused: other clubs, sports and activities, homework, or a mental health day.'
+export const NEVER_EXCUSED = 'Plan other activities around team meetings.'
 
 export const reasonLabel = (k) => ABSENCE_REASONS.find((r) => r.key === k)?.label ?? k
 
