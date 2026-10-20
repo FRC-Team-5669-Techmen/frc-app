@@ -4,7 +4,7 @@
  * tools/sql-harness/run.mjs --node against its live server:
  *
  *   node tools/sql-harness/run.mjs --migrations 0002,0018 --tests none \
- *     --node tools/sql-harness/mutants-0018.mjs
+ *     --node tools/connector/harness/mutants-0018.mjs
  *
  * Each mutant widens ONE boundary 0018 sets, in the PERMISSIVE direction, by
  * applying a copy of 0018_connector.sql with one text replacement (or one
@@ -20,7 +20,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const MIG = path.join(REPO, 'supabase', 'migrations', '0018_connector.sql');
 const TEST = path.join(REPO, 'supabase', 'migrations', '0018_connector_rls_test.sql');
 const PSQL = process.env.PSQL || 'psql';
