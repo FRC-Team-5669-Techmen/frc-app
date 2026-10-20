@@ -87,7 +87,7 @@ list_events:
     to: {type: string, describe: "Last day, YYYY-MM-DD (two weeks from the first by default)"}
 
 create_event:
-  describe: Not available through Claude yet (the schedule page writes events directly). Says so; report_gap files it.
+  describe: Not available through Claude yet (the schedule page writes straight to the calendar). Says so; report_gap files it.
   say: ["add a build Saturday 9 to 1", "schedule a meeting Tuesday at lunch", "put the outreach event on the calendar"]
   kind: unavailable
   gap: "Creating an event writes the events table straight from /schedule; it needs a staff function first (next connector ledger)."

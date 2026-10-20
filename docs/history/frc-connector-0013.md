@@ -16,11 +16,11 @@ Kept current so a restarted session can resume. Each milestone is a local commit
 - [x] M3 tools/connector: sqlchain, inventory, gates, registry YAML, build.mjs writing api/_lib/connector/registry.generated.js; `npm run connector:build` / `connector:check`
 - [x] M4 api/_lib/connector (crypto, errors, backend, oauth, registry, engine, resolve, dates, tools, mcp, node, log-tables), api/mcp.js, api/connector/[route].js, vercel.json rewrites
 - [x] M5 src/ConnectorPage.jsx/.css, the /connector/* route and lazy import in App.jsx, the fixture routes line; build and ds:audit green; fixture screenshots at 375 and 1440 show the not-set-up state
-- [ ] M6 vitest suites (coverage, service role, OAuth, engine)
+- [x] M6 vitest: connector-oauth (22), connector-engine (21), connector-coverage (16), connector-service-role (5); coverage mutation-proved both ways (a planted direct write reddens 2 checks, a planted rpc reddens staleness), restored from a copy
 - [ ] M7 harness proofs (same rows as direct, refusals, mutants), MCP Inspector
 - [ ] M8 docs, connector.yml, CLAUDE.md row, full gate, landing
 
-Next: M6 (vitest suites: coverage, service role, oauth, engine/dates).
+Next: M7 (tools/connector/harness/proof.mjs: same rows as direct for every write entry, refusals for a member and a mentor, through connector_call on PostgreSQL 16; MCP Inspector against a local server).
 
 ## Audit (answered from the tree before building)
 

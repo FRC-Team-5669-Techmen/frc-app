@@ -203,7 +203,7 @@ export default {
   },
   "create_event": {
    "name": "create_event",
-   "describe": "Not available through Claude yet (the schedule page writes events directly). Says so; report_gap files it.",
+   "describe": "Not available through Claude yet (the schedule page writes straight to the calendar). Says so; report_gap files it.",
    "say": [
     "add a build Saturday 9 to 1",
     "schedule a meeting Tuesday at lunch",
@@ -4257,7 +4257,7 @@ export default {
    "table": "profiles",
    "op": "update",
    "lines": [
-    264
+    265
    ],
    "excluded": "direct table write, moves to a function in the next connector ledger"
   },
