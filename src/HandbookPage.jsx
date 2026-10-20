@@ -1,5 +1,6 @@
-// The member handbook (/handbook): a quick reference, the full text as 18
-// lessons with two questions each, the glossary, and signing.
+// The member handbook (/handbook): a quick reference, the whole handbook in
+// section order with search and a check (two questions) after each part, the
+// glossary, and signing.
 //
 // The text is src/handbook/handbook.md, the release copy of the team's Claude
 // Doc. Words that a freshman may not know are underlined; tapping one shows
@@ -13,7 +14,7 @@ import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import { isMissingTable } from './schemaMissing'
 import handbookMd from './handbook/handbook.md?raw'
-import { parseHandbook, parseInline, glossaryOf, agreementsOf } from './handbook/content'
+import { parseHandbook, parseInline, plain, glossaryOf, agreementsOf } from './handbook/content'
 import { LESSONS, TERM_MATCHES, HANDBOOK_VERSION } from './handbook/lessons'
 import { DIAGRAMS } from './handbook/diagrams'
 import { signerRoleFor, mustPassLessons, storageKey, emptyProgress, cleanProgress, answer, passedCount } from './handbook/sign'
@@ -83,12 +84,31 @@ function withTerms(str, ctx) {
 // must run inside ONE render of the lesson (StrictMode renders a component
 // twice, and a child component would see every term already used).
 function Inline({ text, ctx }) { return inline(text, ctx) }
+// A search hit is marked in place (ctx.hl); the rest still gets its terms.
+function marked(str, ctx) {
+  if (!ctx?.hl) return withTerms(str, ctx)
+  return str.split(ctx.hl).map((part, i) => i % 2
+    ? <mark key={`h${i}`} className="hb-hit">{part}</mark>
+    : <Fragment key={`t${i}`}>{withTerms(part, ctx)}</Fragment>)
+}
 function inline(text, ctx) {
   return parseInline(text).map((tok, i) => {
-    if (tok.t === 'b') return <strong key={i}>{withTerms(tok.v, ctx)}</strong>
+    // Bold may hold a link (the FIRST Code of Conduct line): render it inside.
+    if (tok.t === 'b') return <strong key={i}>{inline(tok.v, ctx)}</strong>
     if (tok.t === 'a') return <a key={i} href={tok.href} target="_blank" rel="noopener noreferrer">{tok.v.replace(/^https?:\/\//, '')}</a>
-    return <Fragment key={i}>{withTerms(tok.v, ctx)}</Fragment>
+    return <Fragment key={i}>{marked(tok.v, ctx)}</Fragment>
   })
+}
+
+// The plain words of a section, for search.
+function plainOf(sec) {
+  const out = [sec.title]
+  for (const b of sec.blocks) {
+    if (b.type === 'p' || b.type === 'h3') out.push(plain(b.text))
+    if (b.type === 'ul' || b.type === 'ol') for (const it of b.items) out.push(plain(it.text), ...it.children.map(plain))
+    if (b.type === 'table') out.push(...b.head, ...b.rows.flat().map(plain))
+  }
+  return out.join(' ').toLowerCase()
 }
 
 function Diagram({ k }) {
@@ -146,10 +166,14 @@ function saveProgress(userId, p) {
   try { localStorage.setItem(storageKey(userId), JSON.stringify(p)) } catch { /* private window */ }
 }
 
-const pad = n => String(n).padStart(2, '0')
-// A lesson is labelled by the handbook sections it holds, so "Section 4" in an
-// email is findable: lesson numbers are never shown, they would not match.
-const secs = l => l.sections.length > 1 ? `${l.sections[0]}-${l.sections[l.sections.length - 1]}` : String(l.sections[0])
+// The handbook in order: each part is the sections one check covers. Section
+// numbers are the only numbers shown, so "Section 4" in an email is findable.
+const PARTS = LESSONS.map(l => ({ lesson: l, sections: l.sections.map(n => SECTION[n]) }))
+const SEC_TEXT = Object.fromEntries(PARTS.flatMap(p => p.sections).map(sec => [sec.num, plainOf(sec)]))
+const LAST_READ = Math.max(...LESSONS.flatMap(l => l.sections))
+// Sections after the last part live on their own tabs.
+const TAB_SECTIONS = HB.sections.filter(sec => sec.num > LAST_READ)
+  .map(sec => ({ num: sec.num, title: sec.title, tab: /glossary/i.test(sec.title) ? 'glossary' : 'sign' }))
 const fmtDate = iso => !iso || Number.isNaN(Date.parse(iso)) ? 'today' : new Date(iso).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', year: 'numeric' })
 
 // ── Quick reference ─────────────────────────────────────────────────────────
@@ -226,75 +250,56 @@ function QuickRef({ goLesson }) {
   )
 }
 
-// ── One lesson ──────────────────────────────────────────────────────────────
-function Lesson({ lesson, index, open, onToggle, progress, onAnswer, onNext, openTerm, setOpenTerm }) {
+// ── One check (two questions after a part) ──────────────────────────────────
+function Check({ lesson, index, progress, onAnswer, onNext }) {
   const passed = !!progress.passed[lesson.id]
   const right = lesson.questions.filter((q, i) => progress.answers[`${lesson.id}:${i}`] === q.a).length
   const state = passed ? 'passed' : right > 0 ? 'started' : 'new'
-  const ctx = open ? makeCtx(lesson.id, openTerm, setOpenTerm) : null
+  const range = lesson.sections.length > 1 ? `Sections ${lesson.sections[0]} to ${lesson.sections[lesson.sections.length - 1]}` : `Section ${lesson.sections[0]}`
   return (
-    <section className={`hb-lesson hb-lesson-${state}${open ? ' open' : ''}`} id={`lesson-${lesson.id}`}>
-      <button type="button" className="hb-lesson-head" aria-expanded={open} onClick={onToggle}>
-        <span className="hb-lesson-num" aria-label={`Section ${secs(lesson)}`}><small>Sec</small>{secs(lesson)}</span>
-        <span className="hb-lesson-titles">
-          <span className="hb-lesson-title">{lesson.title}</span>
-          <span className="hb-lesson-rule">{lesson.rule}</span>
-        </span>
+    <div className="hb-check" id={`check-${lesson.id}`} data-state={state}>
+      <div className="hb-check-head">
+        <p className="hb-check-label">Check yourself · {range}</p>
         <span className={`hb-pill hb-pill-${state}`}>{passed ? 'Passed' : `${right} of 2`}</span>
-        <span className="hb-chev" aria-hidden="true" />
-      </button>
-      {open && (
-        <div className="hb-lesson-body">
-          <p className="hb-rule"><span className="hb-rule-label">The rule</span>{lesson.rule}</p>
-          {lesson.sections.map(n => (
-            <div key={n} className="hb-section" id={`sec-${n}`}>
-              <h3 className="hb-sec-title"><span className="hb-sec-num">Section {n}</span>{SECTION[n].title}</h3>
-              {blocksOf(SECTION[n].blocks, ctx)}
+      </div>
+      {lesson.questions.map((q, qi) => {
+        const chosen = progress.answers[`${lesson.id}:${qi}`]
+        const answered = chosen != null
+        const ok = chosen === q.a
+        return (
+          <fieldset key={qi} className="hb-q">
+            <legend className="hb-q-text"><span className="hb-q-n">{qi + 1}</span>{q.q}</legend>
+            <div className="hb-opts">
+              {q.o.map((opt, oi) => (
+                <button key={oi} type="button"
+                  className={`hb-opt${chosen === oi ? (ok ? ' hb-opt-right' : ' hb-opt-wrong') : ''}`}
+                  aria-pressed={chosen === oi}
+                  disabled={ok}
+                  onClick={() => onAnswer(lesson.id, qi, oi)}>
+                  {opt}
+                </button>
+              ))}
             </div>
-          ))}
-          <div className="hb-check">
-            <p className="hb-check-label">Check yourself</p>
-            {lesson.questions.map((q, qi) => {
-              const chosen = progress.answers[`${lesson.id}:${qi}`]
-              const answered = chosen != null
-              const ok = chosen === q.a
-              return (
-                <fieldset key={qi} className="hb-q">
-                  <legend className="hb-q-text"><span className="hb-q-n">{qi + 1}</span>{q.q}</legend>
-                  <div className="hb-opts">
-                    {q.o.map((opt, oi) => (
-                      <button key={oi} type="button"
-                        className={`hb-opt${chosen === oi ? (ok ? ' hb-opt-right' : ' hb-opt-wrong') : ''}`}
-                        aria-pressed={chosen === oi}
-                        disabled={ok}
-                        onClick={() => onAnswer(lesson.id, qi, oi)}>
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                  {answered && (
-                    <p className={`hb-feedback ${ok ? 'hb-feedback-ok' : 'hb-feedback-no'}`} aria-live="polite">
-                      <strong>{ok ? 'Right.' : 'Not quite. Try again.'}</strong> The handbook: “{q.quote}”
-                    </p>
-                  )}
-                </fieldset>
-              )
-            })}
-            {passed && (
-              <div className="hb-passed">
-                <span className="hb-passed-mark">Lesson passed</span>
-                <button type="button" className="hb-btn" onClick={onNext}>{index + 1 < LESSONS.length ? 'Next lesson' : 'Go to signing'} <span aria-hidden="true">→</span></button>
-              </div>
+            {answered && (
+              <p className={`hb-feedback ${ok ? 'hb-feedback-ok' : 'hb-feedback-no'}`} aria-live="polite">
+                <strong>{ok ? 'Right.' : 'Not quite. Try again.'}</strong> The handbook: “{q.quote}”
+              </p>
             )}
-          </div>
+          </fieldset>
+        )
+      })}
+      {passed && (
+        <div className="hb-passed">
+          <span className="hb-passed-mark">Check passed</span>
+          <button type="button" className="hb-btn" onClick={onNext}>{index + 1 < LESSONS.length ? 'Keep reading' : 'Go to signing'} <span aria-hidden="true">→</span></button>
         </div>
       )}
-    </section>
+    </div>
   )
 }
 
 // ── Page ────────────────────────────────────────────────────────────────────
-const TABS = [['quick', 'Quick reference'], ['lessons', 'Lessons'], ['glossary', 'Glossary'], ['sign', 'Sign']]
+const TABS = [['quick', 'Quick reference'], ['read', 'Handbook'], ['glossary', 'Glossary'], ['sign', 'Sign']]
 
 export default function HandbookPage({ session, hasRole }) {
   const userId = session?.user?.id
@@ -302,19 +307,22 @@ export default function HandbookPage({ session, hasRole }) {
   const signerRole = signerRoleFor(roles)
   const isStaff = signerRole === 'mentor'
   const [params, setParams] = useSearchParams()
-  // /handbook?section=6 opens the lesson holding Section 6 and scrolls to it,
-  // so an email or message can cite the handbook with a link that lands.
+  // /handbook?section=6 opens the Handbook tab at Section 6, so an email or
+  // message can cite the handbook with a link that lands. ?tab=lessons is the
+  // old name of the Handbook tab and still works.
   const linkSection = Number(params.get('section'))
-  const linkLesson = SECTION[linkSection] ? LESSONS.find(l => l.sections.includes(linkSection)) : null
-  const tab = linkLesson && !params.get('tab') ? 'lessons' : TABS.some(([k]) => k === params.get('tab')) ? params.get('tab') : 'quick'
+  const linkTab = SEC_TEXT[linkSection] != null ? 'read' : TAB_SECTIONS.find(x => x.num === linkSection)?.tab
+  const askedTab = params.get('tab') === 'lessons' ? 'read' : params.get('tab')
+  const tab = linkTab && !askedTab ? linkTab : TABS.some(([k]) => k === askedTab) ? askedTab : 'quick'
   const setTab = (k) => setParams(k === 'quick' ? {} : { tab: k }, { replace: true })
 
   const [progress, setProgress] = useState(() => loadProgress(userId))
   useEffect(() => { setProgress(loadProgress(userId)) }, [userId])
-  const [openLesson, setOpenLesson] = useState(() => linkLesson?.id ?? null)
   const [openTerm, setOpenTerm] = useState(null)
   const [q, setQ] = useState('')
-  const scrollTo = useRef(linkLesson ? `sec-${linkSection}` : null)
+  const [find, setFind] = useState('')
+  const [jump, setJump] = useState(0)
+  const scrollTo = useRef(linkTab === 'read' ? `sec-${linkSection}` : null)
 
   const passed = passedCount(progress)
   const allPassed = passed === LESSONS.length
@@ -333,13 +341,27 @@ export default function HandbookPage({ session, hasRole }) {
     if (!scrollTo.current) return
     const el = document.getElementById(scrollTo.current)
     scrollTo.current = null
-    if (el) el.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
-  }, [openLesson, tab])
+    // A link that lands on a section jumps at once; taps inside the page glide.
+    const smooth = jump > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (el) el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' })
+  }, [jump, tab])
 
-  function goLesson(id) {
-    setOpenLesson(id)
-    scrollTo.current = `lesson-${id}`
-    setTab('lessons')
+  function goTo(id) {
+    scrollTo.current = id
+    setJump(j => j + 1)
+    setTab('read')
+  }
+  function goSection(n) {
+    const x = TAB_SECTIONS.find(t => t.num === n)
+    if (x) { setTab(x.tab); scrollTo.current = 'hb-top'; setJump(j => j + 1); return }
+    setFind('')
+    goTo(`sec-${n}`)
+  }
+  // A quick-reference card or a to-do line opens its part of the handbook.
+  function goLesson(id, where = 'sec') {
+    const l = LESSONS.find(x => x.id === id)
+    setFind('')
+    goTo(where === 'check' ? `check-${id}` : `sec-${l.sections[0]}`)
   }
   function onAnswer(id, qi, oi) {
     setProgress(p => { const n = answer(p, id, qi, oi); saveProgress(userId, n); return n })
@@ -413,15 +435,15 @@ export default function HandbookPage({ session, hasRole }) {
           <div className="hb-hero-text">
             <p className="hb-eyebrow">Techmen · 5669 · Member handbook</p>
             <h1 className="hb-title">How we run the team</h1>
-            <p className="hb-lede">Every rule, in 18 short lessons. Pass each lesson's two questions, then sign. The quick reference has the essentials on one screen.</p>
+            <p className="hb-lede">The whole handbook is on the Handbook tab, in order, with search. Answer the two questions after each part, then sign. The quick reference has the essentials on one screen.</p>
             <p className="hb-version">Version {HB.version}</p>
           </div>
-          <div className="hb-meter" aria-label={`${passed} of ${LESSONS.length} lessons passed`}>
+          <div className="hb-meter" aria-label={`${passed} of ${LESSONS.length} checks passed`}>
             <div className="hb-meter-top">
               <span className="hb-meter-n"><b>{passed}</b>/{LESSONS.length}</span>
               <span className={`hb-pill hb-pill-${status}`}>{status === 'signed' ? `Signed ${fmtDate(sign.at)}` : status === 'ready' ? 'Ready to sign' : 'In progress'}</span>
             </div>
-            <span className="hb-meter-label">Lessons passed</span>
+            <span className="hb-meter-label">Checks passed</span>
             <div className="hb-bar" aria-hidden="true"><span style={{ width: `${(passed / LESSONS.length) * 100}%` }} /></div>
             <div className="hb-ticks" aria-hidden="true">
               {LESSONS.map(l => <span key={l.id} className={progress.passed[l.id] ? 'on' : ''} />)}
@@ -446,30 +468,67 @@ export default function HandbookPage({ session, hasRole }) {
           </div>
         )}
 
-        {tab === 'lessons' && (
-          <div role="tabpanel" className="hb-lessons-layout">
-            <nav className="hb-index" aria-label="Lessons">
-              <p className="hb-index-label">{passed} of {LESSONS.length} passed</p>
-              <ol>
-                {LESSONS.map((l, i) => (
-                  <li key={l.id}>
-                    <button type="button" className={`hb-index-item${openLesson === l.id ? ' active' : ''}${progress.passed[l.id] ? ' done' : ''}`} onClick={() => goLesson(l.id)}>
-                      <span className="hb-index-n">Sec {secs(l)}</span>{l.title}
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            </nav>
-            <div className="hb-lessons">
-              {LESSONS.map((l, i) => (
-                <Lesson key={l.id} lesson={l} index={i} open={openLesson === l.id}
-                  onToggle={() => { const next = openLesson === l.id ? null : l.id; setOpenLesson(next); if (next) scrollTo.current = `lesson-${l.id}` }}
-                  progress={progress} onAnswer={onAnswer} onNext={() => onNext(i)}
-                  openTerm={openTerm} setOpenTerm={setOpenTerm} />
-              ))}
+        {tab === 'read' && (() => {
+          const needle = find.trim().toLowerCase()
+          const hl = needle.length >= 2 ? new RegExp(`(${esc(find.trim())})`, 'gi') : null
+          const hits = hl ? Object.keys(SEC_TEXT).filter(n => SEC_TEXT[n].includes(needle)).length : 0
+          return (
+            <div role="tabpanel" className="hb-lessons-layout">
+              <nav className="hb-index" aria-label="Sections">
+                <p className="hb-index-label">Sections</p>
+                <ol>
+                  {PARTS.flatMap(p => p.sections.map(sec => (
+                    <li key={sec.num}>
+                      <button type="button" className={`hb-index-item${progress.passed[p.lesson.id] ? ' done' : ''}`} onClick={() => goSection(sec.num)}>
+                        <span className="hb-index-n">{sec.num}</span>{sec.title}
+                      </button>
+                    </li>
+                  )))}
+                  {TAB_SECTIONS.map(x => (
+                    <li key={x.num}>
+                      <button type="button" className="hb-index-item" onClick={() => goSection(x.num)}>
+                        <span className="hb-index-n">{x.num}</span>{x.title}
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </nav>
+              <div className="hb-read">
+                <div className="hb-read-tools">
+                  <label className="hb-search">
+                    <span className="hb-search-label">Search the handbook</span>
+                    <input type="search" value={find} onChange={e => setFind(e.target.value)} placeholder="Sports, probation, sign out..." />
+                  </label>
+                  <label className="hb-search hb-jump">
+                    <span className="hb-search-label">Go to section</span>
+                    <select value="" onChange={e => e.target.value && goSection(Number(e.target.value))}>
+                      <option value="">Choose a section</option>
+                      {PARTS.flatMap(p => p.sections).concat(TAB_SECTIONS).map(sec => <option key={sec.num} value={sec.num}>{sec.num}. {sec.title}</option>)}
+                    </select>
+                  </label>
+                </div>
+                {hl && <p className="hb-hits" aria-live="polite">{hits === 0 ? `Nothing matches “${find.trim()}”. Words are also in the Glossary tab.` : `${hits} ${hits === 1 ? 'section matches' : 'sections match'} “${find.trim()}”`}</p>}
+                {PARTS.map((p, i) => {
+                  const shown = p.sections.filter(sec => !hl || SEC_TEXT[sec.num].includes(needle))
+                  if (!shown.length) return null
+                  const ctx = makeCtx(p.lesson.id, openTerm, setOpenTerm)
+                  ctx.hl = hl
+                  return (
+                    <Fragment key={p.lesson.id}>
+                      {shown.map(sec => (
+                        <section key={sec.num} className="hb-section hb-sec-card" id={`sec-${sec.num}`}>
+                          <h2 className="hb-sec-title"><span className="hb-sec-num">Section {sec.num}</span>{sec.title}</h2>
+                          {blocksOf(sec.blocks, ctx)}
+                        </section>
+                      ))}
+                      {!hl && <Check lesson={p.lesson} index={i} progress={progress} onAnswer={onAnswer} onNext={() => onNext(i)} />}
+                    </Fragment>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {tab === 'glossary' && (
           <div role="tabpanel" className="hb-glossary">
@@ -492,11 +551,11 @@ export default function HandbookPage({ session, hasRole }) {
           <div role="tabpanel" className={`hb-sign${isStaff ? ' hb-sign-staff' : ''}`}>
             {!canSign ? (
               <div className="hb-locked">
-                <p className="hb-card-label">Signing opens after every lesson</p>
-                <h3 className="hb-card-title">{LESSONS.length - passed} {LESSONS.length - passed === 1 ? 'lesson' : 'lessons'} to go</h3>
+                <p className="hb-card-label">Signing opens after every check</p>
+                <h3 className="hb-card-title">{LESSONS.length - passed} {LESSONS.length - passed === 1 ? 'check' : 'checks'} to go</h3>
                 <ul className="hb-todo">
                   {LESSONS.filter(l => !progress.passed[l.id]).map(l => (
-                    <li key={l.id}><button type="button" className="hb-link" onClick={() => goLesson(l.id)}>{l.title}</button></li>
+                    <li key={l.id}><button type="button" className="hb-link" onClick={() => goLesson(l.id, 'check')}>{l.sections.length > 1 ? `Sections ${l.sections[0]} to ${l.sections[l.sections.length - 1]}` : `Section ${l.sections[0]}`}: {l.title}</button></li>
                   ))}
                 </ul>
               </div>

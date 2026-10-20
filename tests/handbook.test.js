@@ -58,6 +58,13 @@ describe('the handbook text', () => {
     const reporting = sectionText(hb.sections.find(s => s.num === 14))
     expect(reporting).toContain('wants to meet outside robotics')
     expect(plain('see [FIRST](https://www.firstinspires.org) now')).toBe('see FIRST now')
+    // A link inside bold reads as its words, and no section leaks raw link
+    // markup (the FIRST Code of Conduct line did, and overflowed the phone).
+    expect(plain('**The [FIRST Code](https://x.org), in short:** go')).toBe('The FIRST Code, in short: go')
+    const leaks = hb.sections.filter(s => s.num).filter(s => s.blocks.some(b =>
+      [b.text, ...(b.items ?? []).flatMap(it => [it.text, ...it.children]), ...(b.rows ?? []).flat()]
+        .filter(Boolean).some(t => plain(t).includes(']('))))
+    expect(leaks.map(s => s.num)).toEqual([])
   })
 
   test('the glossary and the signature agreements are read in full', () => {

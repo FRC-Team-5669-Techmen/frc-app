@@ -401,7 +401,7 @@ export default function App() {
               role-gated: the page picks its own staff / member / parent view and
               RLS decides the rows. */}
           <Route path="/certifications" element={<CertificationsPage session={session} hasRole={hasRole} />} />
-          {/* The member handbook: quick reference, 18 lessons, glossary and
+          {/* The member handbook: quick reference, the full text with checks, glossary and
               signing (migration 0013). Every role reads it; the page picks the
               agreement a member signs from their roles. */}
           <Route path="/handbook"    element={<HandbookPage session={session} hasRole={hasRole} />} />

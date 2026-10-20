@@ -21,14 +21,20 @@ export default function TeamBoardsPage({ board, session, hasRole = () => false }
   return <NoPhoto isStaff={isStaff} />
 }
 
+const ADULT_ROLES = ['mentor', 'admin', 'parent']
+
 function Leaderboard({ uid }) {
   const [rows, setRows] = useState(null)
   useEffect(() => {
     (async () => {
-      const [{ data: seasons }, { data: profs }] = await Promise.all([
+      const [{ data: seasons }, { data: profs }, { data: roleRows }] = await Promise.all([
         supabase.from('seasons').select('*'),
         supabase.from('profiles').select('id, full_name, nickname, status, approved'),
+        supabase.from('member_roles').select('member_id, role'),
       ])
+      // Students compete with students. Mentors, admins and parents are listed
+      // apart and never ranked against a student. A student lead is a student.
+      const adults = new Set((roleRows ?? []).filter((r) => ADULT_ROLES.includes(r.role)).map((r) => r.member_id))
       const season = resolveCurrentSeason(seasons ?? [])
       const from = season ? new Date(`${season.start_date}T00:00:00-07:00`).toISOString() : new Date(Date.now() - 365 * 864e5).toISOString()
       const { data: ev } = await fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time, category')
@@ -39,20 +45,34 @@ function Leaderboard({ uid }) {
       setRows(active.map((p) => {
         let build = 0, vol = 0
         for (const s of sessionsFromEvents(byUser.get(p.id) ?? [])) { if (s.category === 'volunteer') vol += s.ms; else build += s.ms }
-        return { id: p.id, name: displayName(p), build: build / 3600000, vol: vol / 3600000 }
+        return { id: p.id, name: displayName(p), build: build / 3600000, vol: vol / 3600000, adult: adults.has(p.id) }
       }).filter((r) => r.build + r.vol > 0).sort((a, b) => b.build - a.build))
     })()
   }, [])
   if (!rows) return <div className="st-wrap"><p className="st-muted">Loading…</p></div>
+  const hrs = (r) => `${fmtHours(Math.round(r.build * 10) / 10)}${r.vol > 0 ? ` · FLL ${fmtHours(Math.round(r.vol * 10) / 10)}` : ''}`
+  const students = rows.filter((r) => !r.adult)
+  const adults = rows.filter((r) => r.adult)
   return (
     <div className="st-wrap">
       <h1 className="st-title">Hours leaderboard</h1>
-      <p className="st-sub">Signed-in hours this season. Good work is praised in public; problems are handled in private.</p>
-      <ol className="st-list st-board">{rows.map((r, i) => (
-        <li key={r.id} className={`st-row-between${r.id === uid ? ' unread' : ''}`} data-rank={i + 1}>
+      <p className="st-sub">Student signed-in hours this season. Good work is praised in public; problems are handled in private.</p>
+      <ol className="st-list st-board" data-board="students">{students.map((r, i) => (
+        <li key={r.id} className={`st-row-between${r.id === uid ? ' unread' : ''}`} data-rank={i + 1} data-member={r.id}>
           <span><b className="hud-tnum">{i + 1}.</b> {r.name}</span>
-          <span className="hud-tnum">{fmtHours(Math.round(r.build * 10) / 10)}{r.vol > 0 ? ` · FLL ${fmtHours(Math.round(r.vol * 10) / 10)}` : ''}</span>
+          <span className="hud-tnum">{hrs(r)}</span>
         </li>))}</ol>
+      {adults.length > 0 && (
+        <>
+          <h2 className="st-h2">Mentors and adults</h2>
+          <p className="st-muted">Not ranked, and not part of the student board.</p>
+          <ul className="st-list" data-board="adults">{adults.map((r) => (
+            <li key={r.id} className={`st-row-between${r.id === uid ? ' unread' : ''}`} data-member={r.id}>
+              <span>{r.name}</span>
+              <span className="hud-tnum">{hrs(r)}</span>
+            </li>))}</ul>
+        </>
+      )}
     </div>
   )
 }

@@ -10,7 +10,8 @@
  *    linked parent sees Sam's values, a student does not;
  *  - driver documents: Sam uploads a license (1 row, 1 stored object), the
  *    mentor opens it (1 view logged), Riley sees 0 of Sam's;
- *  - the leaderboard ranks members by hours, highest first;
+ *  - the leaderboard ranks students by hours, highest first; a mentor with
+ *    more hours than any student is listed apart (0 on the board, 1 apart);
  *  - sub-team status: a student reads Programming at risk with 0 buttons, the
  *    mentor rates Mechanical (1 row);
  *  - the no-photo list: the mentor adds Riley (1 row); a student who is not on
@@ -86,6 +87,16 @@ export default {
 
     t.as('0017 · leaderboard');
     await t.open('/leaderboard', { persona: 'student', mig: 'all', ready: '.st-board li' });
+    // A mentor with more hours than any student: on one shared board the
+    // mentor would rank first. The student board must not list the mentor.
+    await t.evaluate((id) => {
+      const at = (h) => new Date(Date.now() - h * 36e5).toISOString();
+      window.__fx.insert('attendance_events', { user_id: id, type: 'in', location: 'shop-main', method: 'nfc', category: 'build', geo_ok: true, event_time: at(30) });
+      window.__fx.insert('attendance_events', { user_id: id, type: 'out', location: 'shop-main', method: 'nfc', category: 'build', geo_ok: null, event_time: at(2) });
+    }, P.mentor.id);
+    await t.open('/leaderboard', { persona: 'student', mig: 'all', ready: '.st-board li' });
+    t.eq('the mentor is listed apart, never on the student board (0 against 1)', [await t.count(`[data-board="students"] [data-member="${P.mentor.id}"]`), await t.count(`[data-board="adults"] [data-member="${P.mentor.id}"]`)], [0, 1]);
+    t.eq('Sam is on the student board (1) and not with the adults (0)', [await t.count(`[data-board="students"] [data-member="${P.student.id}"]`), await t.count(`[data-board="adults"] [data-member="${P.student.id}"]`)], [1, 0]);
     const hours = await t.evaluate(() => [...document.querySelectorAll('.st-board li')].map((li) => li.querySelector('span:last-child').textContent));
     const toH = (s) => { const m = s.match(/(\d+)h(?: (\d+)m)?/); return m ? Number(m[1]) + Number(m[2] ?? 0) / 60 : 0; };
     const vals = hours.map(toH);

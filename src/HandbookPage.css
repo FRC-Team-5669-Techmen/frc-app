@@ -255,6 +255,31 @@
 }
 .hb-lesson.open { border-color: var(--muted); }
 .hb-section { scroll-margin-top: 72px; }
+/* The Handbook tab: every section open, in order */
+.hb-read { display: grid; gap: 0.75rem; min-width: 0; }
+.hb-read-tools { display: grid; gap: 0.6rem; }
+.hb-read-tools .hb-search { margin-bottom: 0; }
+.hb-jump select {
+  min-height: 44px; padding: 0 0.75rem;
+  font: inherit; font-size: 1rem; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+}
+.hb-jump select:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.hb-hits { margin: 0; font-family: var(--font-mono); font-size: 0.85rem; color: var(--steel); }
+.hb-sec-card {
+  margin-top: 0;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+.hb-sec-card .hb-sec-title { font-size: 1.3rem; }
+.hb-sec-card .hb-sec-num { color: var(--gold); }
+.hb-hit { background: var(--gold-a08); color: var(--gold); outline: 1px solid var(--gold-dim); border-radius: 2px; padding: 0 1px; }
+.hb-check-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
+.hb-check-head .hb-check-label { margin: 0; }
+.hb-read > .hb-check { margin-top: 0; scroll-margin-top: 72px; }
+.hb-check[data-state="passed"] { border-color: var(--hr-volunteer); }
 .hb-lesson-passed .hb-lesson-num { color: var(--hr-volunteer); border-color: var(--hr-volunteer); }
 .hb-lesson-head {
   width: 100%;
@@ -504,6 +529,8 @@
   .hb-card-pair .hb-contacts .hb-contact-main { grid-column: 1 / -1; }
   .hb-glance { grid-template-columns: 1fr 1.6fr; align-items: center; gap: 1.5rem; }
   .hb-lessons-layout { display: grid; grid-template-columns: 250px 1fr; gap: 1rem; align-items: start; }
+  .hb-jump { display: none; }
+  .hb-sec-card { padding: 1.25rem 1.5rem; }
   .hb-index {
     display: block;
     position: sticky;

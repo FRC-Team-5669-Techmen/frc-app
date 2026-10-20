@@ -28,7 +28,8 @@ export function parseInline(text) {
 
 // Plain words of an inline string: what a reader sees, markup removed.
 export function plain(text) {
-  return parseInline(text).map(x => x.v).join('')
+  // Bold may hold a link, so its words are read the same way.
+  return parseInline(text).map(x => x.t === 'b' ? plain(x.v) : x.v).join('')
 }
 
 function parseBlocks(lines) {

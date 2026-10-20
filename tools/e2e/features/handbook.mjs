@@ -5,8 +5,14 @@
  * Claims under test, each against a presence on the same fixture:
  *  - the quick reference opens first with the three standards, the standards
  *    diagram drawn in theme colors (its words are not black), no page scroll;
- *  - 18 lessons; opening one renders its sections and underlined terms, and a
- *    term opens its glossary line;
+ *  - the Handbook tab shows sections 1 to 22 in order, all open, with 18
+ *    checks between them and an index of all 24 sections; terms are
+ *    underlined and a term opens its glossary line;
+ *  - search narrows the sections to the ones that match and marks the words
+ *    (sports: Section 6 among them, fewer than 22); a word in no section
+ *    shows 0 and says so; clearing it brings back 22 and the 18 checks;
+ *  - /handbook?section=6 and ?section=4 land on that section; ?tab=lessons,
+ *    the old name, still opens the Handbook tab;
  *  - a wrong answer is marked and does not pass; answering every question
  *    right (found by trying options, not by reading the answer key) passes
  *    all 18 and moves the meter from 0/18 to 18/18;
@@ -17,17 +23,16 @@
  *  - a mentor signs without lessons and sees the signer list; the student
  *    sees no list (0 against 1); a parent signs the 5 parent lines, a student
  *    the 8 student lines;
- *  - every tab, option and lesson head at least 44px on the phone.
+ *  - every tab, option and the section menu at least 44px on the phone.
  */
 import { P } from './_util.mjs';
 
 async function passAll(t) {
-  const heads = await t.count('.hb-lesson-head');
-  for (let i = 0; i < heads; i += 1) {
-    const lesson = t.page.locator('.hb-lesson').nth(i);
-    if ((await lesson.getAttribute('class')).includes('open') === false) await t.press(lesson.locator('.hb-lesson-head'));
+  const checks = await t.count('.hb-check');
+  for (let i = 0; i < checks; i += 1) {
+    const check = t.page.locator('.hb-check').nth(i);
     for (let qi = 0; qi < 2; qi += 1) {
-      const q = lesson.locator('.hb-q').nth(qi);
+      const q = check.locator('.hb-q').nth(qi);
       for (let oi = 0; oi < 3; oi += 1) {
         if (await q.locator('.hb-feedback-ok').count()) break;
         await t.press(q.locator('.hb-opt').nth(oi));
@@ -42,7 +47,7 @@ export default {
     await t.open('/handbook', { persona: 'student', mig: 'all', reset: true, ready: '.hb-hero' });
     await t.evaluate(() => { for (const k of Object.keys(localStorage)) if (k.startsWith('techmen.handbook.')) localStorage.removeItem(k); });
     await t.open('/handbook', { persona: 'student', mig: 'all', ready: '.hb-hero' });
-    t.eq('four tabs, quick reference selected', await t.texts('.hb-tab'), ['Quick reference', 'Lessons', 'Glossary', 'Sign']);
+    t.eq('four tabs, quick reference selected', await t.texts('.hb-tab'), ['Quick reference', 'Handbook', 'Glossary', 'Sign']);
     t.eq('selected tab', await t.text('.hb-tab[aria-selected="true"]'), 'Quick reference');
     t.eq('meter starts at 0/18', await t.text('.hb-meter-n'), '0/18');
     t.eq('three standards', await t.texts('.hb-stat-n'), ['80%', '2 h', '2.0']);
@@ -57,61 +62,75 @@ export default {
     await t.tapTargets('.hb-tab', 'tabs at least 44px on the phone');
     await t.shot('quick');
     t.eq('Get help lists Mr. Pina with his email and phone, and no Mr. Garza', [((await t.text('.hb-contacts')) || '').includes('apina@boscotech.edu'), ((await t.text('.hb-contacts')) || '').includes('(626) 419-9320'), ((await t.text('.hb-contacts')) || '').includes('Garza')], [true, true, false]);
-    t.eq('plain /handbook opens no lesson (0, against 1 with ?section=6)', await t.count('.hb-lesson.open'), 0);
+    t.eq('plain /handbook shows no section yet (0, against 22 on the Handbook tab)', await t.count('.hb-sec-card'), 0);
 
     t.as('student · citing a section by link');
     await t.open('/handbook?section=6', { persona: 'student', mig: 'all', ready: '#sec-6' });
     await t.settle();
-    t.eq('?section=6 opens the attendance lesson on the Lessons tab', [await t.text('.hb-tab[aria-selected="true"]'), await t.count('.hb-lesson.open'), await t.count('#lesson-attendance.open #sec-6')], ['Lessons', 1, 1]);
-    t.eq('lessons are labelled by section: Section 4 is the week lesson, 6 is attendance, 7 is hours', [await t.text('#lesson-week .hb-lesson-num'), await t.text('#lesson-attendance .hb-lesson-num'), await t.text('#lesson-hours .hb-lesson-num')], ['Sec4-5', 'Sec6', 'Sec7']);
+    t.eq('?section=6 opens the Handbook tab with every section', [await t.text('.hb-tab[aria-selected="true"]'), await t.count('.hb-sec-card')], ['Handbook', 22]);
+    t.eq('Sections 4, 6 and 7 carry their own numbers', [await t.text('#sec-4 .hb-sec-num'), await t.text('#sec-6 .hb-sec-num'), await t.text('#sec-7 .hb-sec-num')], ['Section 4', 'Section 6', 'Section 7']);
     t.check('Section 6 holds the sports rule', ((await t.text('#sec-6')) || '').includes('other clubs, sports and activities'), '');
     t.check('Section 6 is scrolled into view', await t.evaluate(() => { const r = document.getElementById('sec-6').getBoundingClientRect(); return r.top >= 0 && r.top < innerHeight; }), '');
     await t.open('/handbook?section=4', { persona: 'student', mig: 'all', ready: '#sec-4' });
     t.check('?section=4 lands on Your week, with the Tuesday and Friday rule', ((await t.text('#sec-4')) || '').includes('Other activities never excuse a team meeting'), '');
+    await t.open('/handbook?tab=lessons', { persona: 'student', mig: 'all', ready: '.hb-sec-card' });
+    t.eq('the old ?tab=lessons link opens the Handbook tab', await t.text('.hb-tab[aria-selected="true"]'), 'Handbook');
     await t.open('/handbook', { persona: 'student', mig: 'all', ready: '.hb-hero' });
 
-    t.as('student · lessons');
+    t.as('student · the whole handbook');
     await t.press('.hb-tab:nth-child(2)');
-    await t.waitFor('.hb-lesson');
-    t.eq('18 lessons', await t.count('.hb-lesson'), 18);
-    t.eq('none open, none passed', [await t.count('.hb-lesson.open'), await t.count('.hb-lesson-passed')], [0, 0]);
-    await t.press('.hb-lesson:nth-child(1) .hb-lesson-head');
-    await t.waitFor('.hb-lesson.open .hb-sec-title');
-    t.eq('lesson 1 renders sections 1, 2 and 3', await t.texts('.hb-lesson.open .hb-sec-num'), ['Section 1', 'Section 2', 'Section 3']);
-    const terms = await t.count('.hb-lesson.open .hb-term');
-    t.check('lesson 1 underlines terms', terms > 3, `${terms} terms`);
+    await t.waitFor('.hb-sec-card');
+    t.eq('22 sections in order, 18 checks, an index of 24, none passed', [await t.count('.hb-sec-card'), await t.count('.hb-check'), await t.count('.hb-index-item'), await t.count('.hb-check[data-state="passed"]')], [22, 18, 24, 0]);
+    const nums = await t.evaluate(() => [...document.querySelectorAll('.hb-sec-card')].map((el) => Number(el.id.slice(4))));
+    t.check('sections run 1 to 22 with none missing', nums.every((n, i) => n === i + 1), nums.join(','));
+    const terms = await t.count('#sec-1 .hb-term');
+    t.check('Section 1 underlines terms', terms > 2, `${terms} terms`);
     t.eq('no definition open yet', await t.count('.hb-term-pop'), 0);
-    await t.press('.hb-lesson.open .hb-term');
+    await t.evaluate(() => document.querySelector('#sec-1 .hb-term')?.scrollIntoView({ block: 'center' }));
+    await t.press('#sec-1 .hb-term');
     t.check('a tapped term opens its glossary line', (await t.count('.hb-term-pop')) === 1 && ((await t.text('.hb-term-def')) || '').length > 10, await t.text('.hb-term-pop'));
     await t.shot('term');
-    // Centre the rule first: at 375 the sticky tab bar can sit over a rule
-    // near the top, and a tap there lands on a tab instead.
-    await t.evaluate(() => document.querySelector('.hb-lesson.open .hb-rule')?.scrollIntoView({ block: 'center' }));
-    await t.press('.hb-lesson.open .hb-rule');
+    await t.evaluate(() => document.querySelector('#sec-1 .hb-sec-title')?.scrollIntoView({ block: 'center' }));
+    await t.press('#sec-1 .hb-sec-title');
     t.eq('a tap elsewhere closes it', await t.count('.hb-term-pop'), 0);
-    await t.tapTargets('.hb-lesson-head', 'lesson heads at least 44px on the phone');
-    await t.tapTargets('.hb-lesson.open .hb-opt', 'answer options at least 44px on the phone');
+    await t.tapTargets('.hb-check .hb-opt', 'answer options at least 44px on the phone');
+    await t.noHScroll();
+
+    t.as('student · search');
+    await t.page.fill('.hb-read-tools input[type="search"]', 'sports');
+    await t.waitFor('.hb-hits');
+    const sports = await t.count('.hb-sec-card');
+    t.check('searching sports narrows to fewer sections, Section 6 among them', sports >= 1 && sports < 22 && (await t.count('#sec-6')) === 1, `${sports} sections`);
+    t.check('the word is marked and the checks are hidden', (await t.count('.hb-hit')) > 0 && (await t.count('.hb-check')) === 0, `${await t.count('.hb-hit')} marks`);
+    t.check('the count says how many match', ((await t.text('.hb-hits')) || '').startsWith(`${sports} section`), await t.text('.hb-hits'));
+    await t.shot('search');
+    await t.page.fill('.hb-read-tools input[type="search"]', 'zzqxv');
+    await t.waitText('Nothing matches');
+    t.eq('a word in no section: 0 sections, 0 marks', [await t.count('.hb-sec-card'), await t.count('.hb-hit')], [0, 0]);
+    await t.page.fill('.hb-read-tools input[type="search"]', '');
+    await t.waitFor('.hb-check');
+    t.eq('clearing the search brings back 22 sections and 18 checks', [await t.count('.hb-sec-card'), await t.count('.hb-check')], [22, 18]);
 
     // A wrong answer: find one by trying, then check it does not pass.
-    const q1 = t.page.locator('.hb-lesson.open .hb-q').first();
+    const q1 = t.page.locator('.hb-check').first().locator('.hb-q').first();
     let wrongSeen = false;
     for (let oi = 0; oi < 3 && !wrongSeen; oi += 1) {
       await t.press(q1.locator('.hb-opt').nth(oi));
       wrongSeen = (await q1.locator('.hb-feedback-no').count()) === 1;
     }
     t.check('a wrong answer is marked wrong', wrongSeen, wrongSeen ? 'Not quite shown' : 'every option read right');
-    t.eq('and the lesson is not passed', await t.count('.hb-lesson-passed'), 0);
+    t.eq('and the check is not passed', await t.count('.hb-check[data-state="passed"]'), 0);
 
     t.as('student · sign locked');
     await t.press('.hb-tab:nth-child(4)');
     await t.waitFor('.hb-locked');
-    t.eq('locked: 18 to go, no sign button', [await t.text('.hb-locked .hb-card-title'), await t.count('.hb-btn-primary')], ['18 lessons to go', 0]);
+    t.eq('locked: 18 to go, no sign button', [await t.text('.hb-locked .hb-card-title'), await t.count('.hb-btn-primary')], ['18 checks to go', 0]);
 
-    t.as('student · passing every lesson');
+    t.as('student · passing every check');
     await t.press('.hb-tab:nth-child(2)');
-    await t.waitFor('.hb-lesson');
+    await t.waitFor('.hb-check');
     await passAll(t);
-    t.eq('all 18 passed, meter 18/18, ready to sign', [await t.count('.hb-lesson-passed'), await t.text('.hb-meter-n'), await t.text('.hb-meter .hb-pill')], [18, '18/18', 'Ready to sign']);
+    t.eq('all 18 passed, meter 18/18, ready to sign', [await t.count('.hb-check[data-state="passed"]'), await t.text('.hb-meter-n'), await t.text('.hb-meter .hb-pill')], [18, '18/18', 'Ready to sign']);
     await t.shot('passed');
 
     t.as('student · signing (0013 on)');

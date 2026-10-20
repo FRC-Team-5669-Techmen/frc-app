@@ -366,7 +366,7 @@ function StudentTiles({ m, present, uid }) {
       <Link to="/handbook" className="mb-tile mb-link-tile mb-role-student" data-testid="mb-handbook-tile">
         <span className="mb-tile-eyebrow">Handbook</span>
         <span className="mb-tile-big hud-tnum">{hb}<span className="mb-tile-big-sub">/{LESSONS.length}</span></span>
-        <span className="mb-tile-foot hud-mono">{hb === LESSONS.length ? 'all lessons passed →' : 'lessons passed →'}</span>
+        <span className="mb-tile-foot hud-mono">{hb === LESSONS.length ? 'all checks passed →' : 'handbook checks passed →'}</span>
       </Link>
 
       <Link to="/jobs" className="mb-tile mb-link-tile mb-role-student">
