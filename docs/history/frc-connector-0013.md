@@ -19,9 +19,9 @@ Kept current so a restarted session can resume. Each milestone is a local commit
 - [x] M6 vitest: connector-oauth (22), connector-engine (21), connector-coverage (16), connector-service-role (5); coverage mutation-proved both ways (a planted direct write reddens 2 checks, a planted rpc reddens staleness), restored from a copy
 - [x] M7 harness: proof.mjs 656/656 (10 hand samples same rows as direct; 84 write entries x member, mentor, signed out refused with nothing landing; 84 previews write nothing; allowlist paste 3 ways); a mutant letting anyone through turns 130 red; MCP Inspector 0.17.2 CLI 12/12 against the real handler over the harness, judged by rows
 - [x] M8a docs (subsystems/connector.md, connector/EVALS.md), connector.yml and its test, CLAUDE.md row, this entry's audit and steps
-- [ ] M8b full gate on the exact tree, fetch and rebase, renumber if needed, push
+- [x] M8b full gate on the exact tree (build ok; npm test 50 files, 815 tests; ds:audit ok; discord 19/19; history:verify lossless; test:checkin 51/51; test:features 1589/1589; connector:check current; SQL harness 413/413 across 19 files); origin/main unmoved at 4f3ccff, 0018 and 0013 still free; pushed
 
-Next: M8b.
+Done.
 
 ## Audit (answered from the tree before building, 2026-10-19, on 4f3ccff)
 
