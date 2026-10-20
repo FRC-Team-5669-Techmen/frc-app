@@ -90,3 +90,12 @@ connector_admin_disconnect:
 connector_admin_disconnect_all:
   describe: Disconnect every Claude connection, this one included.
   level: confirm
+
+# Ledger 0014: the schedule, Part B roster edits.
+schedule_create_event:
+  describe: Add an event to the team schedule.
+  level: undo
+  undo:
+    - function: schedule_delete_event
+      args:
+        p_event: $result.id

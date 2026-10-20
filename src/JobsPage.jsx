@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { displayName } from './names'
 // Shared subteam vocabulary (profiles.subteams keys off the same strings).
 // New jobs are restricted to these; an already-stored non-canonical value
@@ -227,8 +228,9 @@ export default function JobsPage({ session, hasRole = () => false }) {
     try {
       let image_path = null
       if (updImg) image_path = await uploadImage(updImg, `update/${selectedId}`)
-      const { error } = await supabase.from('task_updates')
-        .insert({ task_id: selectedId, member_id: uid, body: updBody.trim() || null, image_path })
+      const body = updBody.trim() || null
+      const { error } = await writeVia(supabase, 'job_post_update', { p_task: selectedId, p_body: body, p_image_path: image_path },
+        { table: 'task_updates', op: 'insert', values: { task_id: selectedId, member_id: uid, body, image_path } })
       if (error) throw error
       setUpdBody(''); setUpdImg(null)
       loadDetail(selectedId)
@@ -310,7 +312,8 @@ export default function JobsPage({ session, hasRole = () => false }) {
     const patch = { status, updated_at: new Date().toISOString() }
     if (status === 'completed') patch.completed_at = new Date().toISOString()
     if (status === 'open')      patch.completed_at = null
-    const { error } = await supabase.from('tasks').update(patch).eq('id', t.id)
+    const { error } = await writeVia(supabase, 'staff_set_job_status', { p_task: t.id, p_status: status },
+      { table: 'tasks', op: 'update', values: patch, eq: { id: t.id } })
     setBusy(b => { const n = { ...b }; delete n[t.id]; return n })
     if (error) { setError(error.message); return }
     setError(''); load()
@@ -377,27 +380,31 @@ export default function JobsPage({ session, hasRole = () => false }) {
       images:      form.images,
     }
 
-    let taskId
-    if (editTarget) {
-      const { error } = await supabase.from('tasks')
-        .update({ ...payload, updated_at: new Date().toISOString() })
-        .eq('id', editTarget.id)
-      if (error) { setSaving(false); setError(error.message); return }
-      taskId = editTarget.id
-      // Resync required skills: clear then re-insert the selection (old path only)
-      if (certMode === 'old') await supabase.from('task_required_skills').delete().eq('task_id', taskId)
-    } else {
-      const { data, error } = await supabase.from('tasks')
-        .insert({ ...payload, created_by: uid }).select('id').single()
-      if (error) { setSaving(false); setError(error.message); return }
-      taskId = data.id
-    }
-
-    if (certMode === 'old' && form.skillIds.length) {
-      const rows = form.skillIds.map(skill_id => ({ task_id: taskId, skill_id }))
-      const { error } = await supabase.from('task_required_skills').insert(rows)
-      if (error) { setSaving(false); setError(error.message); return }
-    }
+    // One save through staff_save_job (0019): the job, then (old path only)
+    // its required skills, all or nothing. The fallback is the sequence the
+    // page made before: update or insert the job, clear the skills on an
+    // edit (its error was never read), insert the selection.
+    const editId = editTarget?.id ?? null
+    const skillRows = (id) => form.skillIds.map(skill_id => ({ task_id: id, skill_id }))
+    const { data: savedId, error: saveErr } = await writeVia(supabase, 'staff_save_job', {
+      p_task: editId, p_title: payload.title, p_description: payload.description, p_subteam: payload.subteam,
+      p_max_claimants: payload.max_claimants, p_due_date: payload.due_date, p_links: payload.links, p_images: payload.images,
+      p_skill_ids: certMode === 'old' ? form.skillIds : null,
+    }, {
+      steps: [
+        editId
+          ? { table: 'tasks', op: 'update', values: { ...payload, updated_at: new Date().toISOString() }, eq: { id: editId } }
+          : { table: 'tasks', op: 'insert', values: { ...payload, created_by: uid }, select: 'id', single: true },
+        editId && certMode === 'old' ? { table: 'task_required_skills', op: 'delete', eq: { task_id: editId }, ignoreError: true } : null,
+        (ctx) => {
+          const id = editId ?? ctx.results[0]?.data?.id
+          return certMode === 'old' && form.skillIds.length ? { table: 'task_required_skills', op: 'insert', values: skillRows(id) } : null
+        },
+      ],
+      result: (ctx) => editId ?? ctx.results[0]?.data?.id ?? null,
+    })
+    if (saveErr) { setSaving(false); setError(saveErr.message); return }
+    const taskId = savedId
 
     // IDEA requirement: admins only, through admin_set_task_cert (0012), and
     // only when it changed, so an edit that leaves it alone writes nothing.
@@ -415,7 +422,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
   async function remove(t) {
     if (!window.confirm(`Delete "${t.title}"? This cannot be undone.`)) return
     setBusy(b => ({ ...b, [t.id]: true }))
-    const { error } = await supabase.from('tasks').delete().eq('id', t.id)
+    const { error } = await writeVia(supabase, 'staff_delete_job', { p_task: t.id }, { table: 'tasks', op: 'delete', eq: { id: t.id } })
     setBusy(b => { const n = { ...b }; delete n[t.id]; return n })
     if (error) { setError(error.message); return }
     setSelectedId(null)

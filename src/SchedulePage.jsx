@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { fmtTime, fmtDay, SHOP_OPEN_KINDS } from './shopStatus'
 import { displayName } from './names'
 import {
@@ -122,13 +123,15 @@ export default function SchedulePage({ session, hasRole }) {
       item: 'item' in patch ? (patch.item || null) : (mine?.item ?? null),
       updated_at: new Date().toISOString(),
     }
-    const { error: err } = await supabase.from('event_signups').upsert(row, { onConflict: 'event_id,member_id' })
+    const { error: err } = await writeVia(supabase, 'event_rsvp', { p_event: ev.id, p_response: row.response, p_item: row.item },
+      { table: 'event_signups', op: 'upsert', values: row, options: { onConflict: 'event_id,member_id' } })
     if (err) { setError(err.message); return }
     load()
   }
 
   async function clearSignup(ev) {
-    const { error: err } = await supabase.from('event_signups').delete().match({ event_id: ev.id, member_id: myId })
+    const { error: err } = await writeVia(supabase, 'event_clear_response', { p_event: ev.id },
+      { table: 'event_signups', op: 'delete', match: { event_id: ev.id, member_id: myId } })
     if (err) { setError(err.message); return }
     load()
   }
@@ -199,7 +202,8 @@ export default function SchedulePage({ session, hasRole }) {
         for (const r of rows) r.series_id = seriesId
       }
 
-      const { error: bulkErr } = await supabase.from('events').insert(rows)
+      const { error: bulkErr } = await writeVia(supabase, 'schedule_create_events', { p_events: rows },
+        { table: 'events', op: 'insert', values: rows })
       setSaving(false)
       if (bulkErr) { setError(eventWriteMessage(bulkErr)); return }
       setEditing(null); load()
@@ -221,29 +225,47 @@ export default function SchedulePage({ session, hasRole }) {
       // Staff: the whole series. A permission holder: only the rows they added,
       // which is all RLS would change anyway.
       const sibs = editableSeriesEvents(events, editingEvent.series_id, session.user, roles, caps)
-      const results = await Promise.all(sibs.map(sib => {
+      const times = sibs.map(sib => {
         const s = new Date(sib.starts_at)
         s.setHours(start.getHours(), start.getMinutes(), 0, 0)
         const e2 = new Date(s.getTime() + durationMs)
-        const q = supabase.from('events').update({ ...fields, starts_at: s.toISOString(), ends_at: e2.toISOString() }).eq('id', sib.id)
-        return isStaff ? q : q.select('id')
-      }))
+        return { id: sib.id, starts_at: s.toISOString(), ends_at: e2.toISOString() }
+      })
+      // schedule_update_series (0019) answers the ids it changed. Before it is
+      // pasted, the page's own updates run, one per event, as before.
+      const res = await writeVia(supabase, 'schedule_update_series', {
+        p_title: fields.title, p_kind: fields.kind, p_location: fields.location, p_notes: fields.notes,
+        p_rsvp_enabled: fields.rsvp_enabled, p_capacity: fields.capacity, p_mandatory: fields.mandatory, p_times: times,
+      }, {
+        steps: times.map(t => ({ table: 'events', op: 'update', values: { ...fields, starts_at: t.starts_at, ends_at: t.ends_at },
+          eq: { id: t.id }, select: isStaff ? undefined : 'id', keepGoing: true })),
+        result: (ctx) => ctx.results.flatMap(r => (Array.isArray(r?.data) ? r.data : [])),
+      })
       setSaving(false)
-      const failed = results.find(r => r.error)
-      if (failed) { setError(eventWriteMessage(failed.error)); return }
+      if (res.error) { setError(eventWriteMessage(res.error)); return }
+      // A permission holder only: an event the server did not change was refused.
       // Set AFTER the reload: a successful load() clears the banner.
-      if (results.some(silentlyRefused)) { setEditing(null); await load(); setError(REFUSED_MSG); return }
+      const changed = new Set((Array.isArray(res.data) ? res.data : []).map(r => r.id))
+      if (!isStaff && times.some(t => !changed.has(t.id))) { setEditing(null); await load(); setError(REFUSED_MSG); return }
       setEditing(null); load()
       return
     }
 
-    const upd = () => {
-      const q = supabase.from('events').update({ ...payload, updated_at: new Date().toISOString() }).eq('id', editing)
-      return isStaff ? q : q.select('id')
-    }
+    // Staff never read the changed ids back, so their answer carries none
+    // (silentlyRefused reads an empty list as a refusal).
+    const staffShape = (r) => (isStaff ? { ...r, data: null } : r)
     const res = editing === 'new'
-      ? await supabase.from('events').insert({ ...payload, created_by: session.user.id })
-      : await upd()
+      ? await writeVia(supabase, 'schedule_create_event', {
+        p_title: payload.title, p_kind: payload.kind, p_starts_at: payload.starts_at, p_ends_at: payload.ends_at,
+        p_location: payload.location, p_notes: payload.notes, p_rsvp_enabled: payload.rsvp_enabled,
+        p_capacity: payload.capacity, p_mandatory: payload.mandatory,
+      }, { table: 'events', op: 'insert', values: { ...payload, created_by: session.user.id } }).then(r => ({ ...r, data: null }))
+      : staffShape(await writeVia(supabase, 'schedule_update_event', {
+        p_event: editing, p_title: payload.title, p_kind: payload.kind, p_starts_at: payload.starts_at, p_ends_at: payload.ends_at,
+        p_location: payload.location, p_notes: payload.notes, p_rsvp_enabled: payload.rsvp_enabled,
+        p_capacity: payload.capacity, p_mandatory: payload.mandatory,
+      }, { table: 'events', op: 'update', values: { ...payload, updated_at: new Date().toISOString() }, eq: { id: editing },
+        select: isStaff ? undefined : 'id' }))
     setSaving(false)
     if (res.error) { setError(eventWriteMessage(res.error)); return }
     if (silentlyRefused(res)) { setEditing(null); await load(); setError(REFUSED_MSG); return }
@@ -253,10 +275,14 @@ export default function SchedulePage({ session, hasRole }) {
   // Standalone events confirm-then-delete; series events get a one-vs-series choice.
   function remove(ev) { setConfirmDel(ev) }
   async function doDelete(ev, scope) {
-    const q = scope === 'series'
-      ? supabase.from('events').delete().eq('series_id', ev.series_id)
-      : supabase.from('events').delete().eq('id', ev.id)
-    const res = await (isStaff ? q : q.select('id'))
+    const sel = isStaff ? undefined : 'id'
+    const raw = scope === 'series'
+      ? await writeVia(supabase, 'schedule_delete_series', { p_series: ev.series_id },
+        { table: 'events', op: 'delete', eq: { series_id: ev.series_id }, select: sel })
+      : await writeVia(supabase, 'schedule_delete_event', { p_event: ev.id },
+        { table: 'events', op: 'delete', eq: { id: ev.id }, select: sel })
+    // Staff never read the removed ids back (silentlyRefused reads an empty list as a refusal).
+    const res = isStaff ? { ...raw, data: null } : raw
     setConfirmDel(null)
     if (res.error) { setError(eventWriteMessage(res.error)); return }
     await load()

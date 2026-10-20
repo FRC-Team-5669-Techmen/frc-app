@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { displayName } from './names'
 import { isSchemaMissing } from './schemaMissing'
 import { errText } from './standing'
@@ -181,8 +182,13 @@ function RosterDetail({ id, uid, isStaff }) {
             <>
               <select className="st-input" aria-label="Family sign-up hub" value={hub.linked?.id ?? ''}
                 onChange={(e) => act(async () => {
-                  if (hub.linked) { const { error } = await supabase.from('hub_events').update({ event_id: null }).eq('id', hub.linked.id); if (error) throw error }
-                  if (e.target.value) { const { error } = await supabase.from('hub_events').update({ event_id: id }).eq('id', e.target.value); if (error) throw error }
+                  const unlink = hub.linked?.id ?? null
+                  const link = e.target.value || null
+                  const { error } = await writeVia(supabase, 'staff_link_family_hub', { p_event: id, p_unlink: unlink, p_link: link }, [
+                    unlink ? { table: 'hub_events', op: 'update', values: { event_id: null }, eq: { id: unlink } } : null,
+                    link ? { table: 'hub_events', op: 'update', values: { event_id: id }, eq: { id: link } } : null,
+                  ])
+                  if (error) throw error
                 }, 'Linked.')}>
                 <option value="">Not linked</option>
                 {hub.all.map((h) => <option key={h.id} value={h.id}>{h.title}</option>)}

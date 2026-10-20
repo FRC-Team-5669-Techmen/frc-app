@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { CATEGORIES, DEFAULT_CATEGORY, categoryLabel, categoryColor } from './categories'
 import { laDateKey } from './hoursUtils'
 import './LogHoursPage.css'
@@ -67,18 +68,17 @@ export default function LogHoursPage({ session }) {
     if (!form.type) { setFormError('Select a type.'); return }
 
     setSubmitting(true)
-    const { data, error } = await supabase
-      .from('logged_hours')
-      .insert({
+    const description = form.description.trim() || null
+    const { data, error } = await writeVia(supabase, 'log_hours_submit',
+      { p_date: form.date, p_hours: hrs, p_type: form.type, p_description: description },
+      { table: 'logged_hours', op: 'insert', select: '*', single: true, values: {
         member_id:   session.user.id,
         date:        form.date,
         hours:       hrs,
         type:        form.type,
-        description: form.description.trim() || null,
+        description,
         status:      'pending',
-      })
-      .select()
-      .single()
+      } })
     setSubmitting(false)
 
     if (error) { setFormError(error.message); return }
@@ -88,7 +88,7 @@ export default function LogHoursPage({ session }) {
 
   async function handleDelete(id) {
     setDeleting(d => ({ ...d, [id]: true }))
-    const { error } = await supabase.from('logged_hours').delete().eq('id', id)
+    const { error } = await writeVia(supabase, 'log_hours_delete', { p_entry: id }, { table: 'logged_hours', op: 'delete', eq: { id } })
     setDeleting(d => { const n = { ...d }; delete n[id]; return n })
     if (!error) setEntries(prev => prev.filter(e => e.id !== id))
   }

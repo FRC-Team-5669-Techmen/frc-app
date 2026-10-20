@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { RoleBadge, topRoleOf } from './roles'
 import { isMissingColumn, isMissingFunction } from './schemaMissing'
 import {
@@ -366,7 +367,9 @@ export default function FeedbackPage({ session, hasRole = () => false }) {
       const patch = status === 'new'
         ? { status: legacy, reviewed_by: null, reviewed_at: null }
         : { status: legacy, reviewed_by: uid, reviewed_at: new Date().toISOString() }
-      const { error: err } = await supabase.from('feedback').update(patch).eq('id', ids[0])
+      const { error: err } = await writeVia(supabase, 'feedback_set_legacy_status',
+        { p_report: ids[0], p_status: legacy, p_reviewed: status !== 'new' },
+        { table: 'feedback', op: 'update', values: patch, eq: { id: ids[0] } })
       setBusy(false)
       if (err) { setError(err.message); return }
       setRows(prev => prev.map(r => (r.id === ids[0] ? { ...r, ...patch } : r)))

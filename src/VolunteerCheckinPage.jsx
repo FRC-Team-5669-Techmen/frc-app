@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useLocation, useNavigate, Link } from 'react-router-dom'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
+import { recordAttendance } from './attendanceRecord'
 import { verifyAtFLL } from './geo'
 import { DEFAULT_CATEGORY } from './categories'
 import {
@@ -102,13 +104,13 @@ export default function VolunteerCheckinPage({ session }) {
     }
   }, [status])
 
-  // Write a volunteer attendance event. Client-side insert, matching the normal
-  // check-in path (CheckinPage also inserts directly — there is no check-in RPC).
+  // Write a volunteer attendance event through attendance_record (0019), the
+  // same write the normal check-in path makes (src/attendanceRecord.js).
   async function insertEvent(newType, geoVerified = null) {
     const now = new Date()
     const row = { user_id: session.user.id, type: newType, location: loc, method: 'nfc', category: CATEGORY }
     if (newType === 'in') row.geo_ok = geoVerified
-    const { error } = await supabase.from('attendance_events').insert(row)
+    const { error } = await recordAttendance(supabase, row)
     if (error) throw error
     recordLocalTap(deviceStore(), session.user.id, newType)
     return now
@@ -145,9 +147,8 @@ export default function VolunteerCheckinPage({ session }) {
   // attributes a session by its IN category, so the OUT's category is immaterial
   // — we use the default 'build' to satisfy the category check constraint.
   async function closeNormalSession() {
-    const { error } = await supabase
-      .from('attendance_events')
-      .insert({ user_id: session.user.id, type: 'out', location: loc, method: 'nfc', category: DEFAULT_CATEGORY })
+    const { error } = await recordAttendance(supabase,
+      { user_id: session.user.id, type: 'out', location: loc, method: 'nfc', category: DEFAULT_CATEGORY })
     if (error) throw error
   }
 
@@ -241,7 +242,8 @@ export default function VolunteerCheckinPage({ session }) {
       setLoadingMsg(revisit ? 'Checking your status…' : null)
     }
     try {
-      await supabase.from('profiles').upsert({ id: session.user.id }, { onConflict: 'id' })
+      await writeVia(supabase, 'member_ensure_profile', {},
+        { table: 'profiles', op: 'upsert', values: { id: session.user.id }, options: { onConflict: 'id' } })
 
       // Staff can exempt a member from the location gate (e.g. a phone with
       // unreliable GPS). Read it now so a tapped check-in can skip the fence.

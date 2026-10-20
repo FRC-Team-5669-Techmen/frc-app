@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { computeHoursMs, fmtHours } from './hoursUtils'
 import { fetchAllRows } from './fetchAllRows'
 import { RoleBadge, roleColor } from './roles'
@@ -162,12 +163,15 @@ export default function RosterPage() {
     const key = `${memberId}_approve`
     setSaving(s => ({ ...s, [key]: true }))
     // Approve the member and ensure the default student role (idempotent)
-    const { error: e1 } = await supabase.from('profiles').update({ approved: true }).eq('id', memberId)
-    const { error: e2 } = await supabase
-      .from('member_roles')
-      .upsert({ member_id: memberId, role: 'student' }, { onConflict: 'member_id,role', ignoreDuplicates: true })
+    // admin_approve_member (0019) does both, all or nothing. The fallback is
+    // the two writes the page made, the second running even if the first failed.
+    const { error } = await writeVia(supabase, 'admin_approve_member', { p_member: memberId }, [
+      { table: 'profiles', op: 'update', values: { approved: true }, eq: { id: memberId }, keepGoing: true },
+      { table: 'member_roles', op: 'upsert', values: { member_id: memberId, role: 'student' },
+        options: { onConflict: 'member_id,role', ignoreDuplicates: true }, keepGoing: true },
+    ])
     setSaving(s => { const n = { ...s }; delete n[key]; return n })
-    if (e1 || e2) { setPageError((e1 || e2).message); return }
+    if (error) { setPageError(error.message); return }
     setMembers(ms => ms.map(m =>
       m.id !== memberId ? m : {
         ...m,
@@ -181,7 +185,8 @@ export default function RosterPage() {
     e.preventDefault()
     const d = newDomain.trim().toLowerCase()
     if (!d) return
-    const { error } = await supabase.from('allowed_domains').insert({ domain: d })
+    const { error } = await writeVia(supabase, 'admin_add_allowed_domain', { p_domain: d },
+      { table: 'allowed_domains', op: 'insert', values: { domain: d } })
     if (error) { setPageError(error.message); return }
     setNewDomain('')
     setDomains(ds => [...ds, d].sort())
@@ -189,7 +194,8 @@ export default function RosterPage() {
 
   async function removeDomain(d) {
     if (!window.confirm(`Remove ${d}? New sign-ins from @${d} will need approval.`)) return
-    const { error } = await supabase.from('allowed_domains').delete().eq('domain', d)
+    const { error } = await writeVia(supabase, 'admin_remove_allowed_domain', { p_domain: d },
+      { table: 'allowed_domains', op: 'delete', eq: { domain: d } })
     if (error) { setPageError(error.message); return }
     setDomains(ds => ds.filter(x => x !== d))
   }
@@ -234,10 +240,8 @@ export default function RosterPage() {
   async function setStatus(memberId, status) {
     const key = `${memberId}_status`
     setSaving(s => ({ ...s, [key]: true }))
-    const { error } = await supabase
-      .from('profiles')
-      .update({ status })
-      .eq('id', memberId)
+    const { error } = await writeVia(supabase, 'admin_set_member_status', { p_member: memberId, p_status: status },
+      { table: 'profiles', op: 'update', values: { status }, eq: { id: memberId } })
     setSaving(s => { const n = { ...s }; delete n[key]; return n })
     if (error) { setPageError(error.message); return }
     setMembers(ms => ms.map(m => m.id === memberId ? { ...m, status } : m))
@@ -248,10 +252,8 @@ export default function RosterPage() {
   async function toggleGeoExempt(memberId, next) {
     const key = `${memberId}_geo`
     setSaving(s => ({ ...s, [key]: true }))
-    const { error } = await supabase
-      .from('profiles')
-      .update({ geofence_exempt: next })
-      .eq('id', memberId)
+    const { error } = await writeVia(supabase, 'admin_set_geofence_exempt', { p_member: memberId, p_exempt: next },
+      { table: 'profiles', op: 'update', values: { geofence_exempt: next }, eq: { id: memberId } })
     setSaving(s => { const n = { ...s }; delete n[key]; return n })
     if (error) { setPageError(error.message); return }
     setMembers(ms => ms.map(m => m.id === memberId ? { ...m, geofence_exempt: next } : m))

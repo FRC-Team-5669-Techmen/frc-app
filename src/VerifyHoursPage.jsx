@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { displayName } from './names'
 import { CATEGORIES, categoryLabel } from './categories'
 import { detectAnomalies } from './accountability'
@@ -387,11 +388,12 @@ export default function VerifyHoursPage({ session, hasRole }) {
 
   async function handleMissed(id, newStatus) {
     setMissedActing(a => ({ ...a, [id]: newStatus }))
-    const { error } = await supabase.from('session_reviews').update({
-      status:      newStatus,
-      reviewed_by: session.user.id,
-      reviewed_at: new Date().toISOString(),
-    }).eq('id', id)
+    const { error } = await writeVia(supabase, 'staff_resolve_missed_checkout', { p_review: id, p_status: newStatus },
+      { table: 'session_reviews', op: 'update', eq: { id }, values: {
+        status:      newStatus,
+        reviewed_by: session.user.id,
+        reviewed_at: new Date().toISOString(),
+      } })
     setMissedActing(a => { const n = { ...a }; delete n[id]; return n })
     // A failed write keeps the card: removing it would read as resolved while
     // the session stays uncounted.
@@ -411,10 +413,8 @@ export default function VerifyHoursPage({ session, hasRole }) {
     // mentor/lead/admin update, study_sessions.sql adds admin) is seen as not
     // saved, instead of marking the new value saved while the old cutoff stays
     // in force. A failure leaves Save enabled to try again.
-    const { data, error } = await supabase.from('app_settings')
-      .update({ value: cutoff })
-      .eq('key', 'auto_close_cutoff')
-      .select('key')
+    const { data, error } = await writeVia(supabase, 'staff_set_auto_close_cutoff', { p_value: cutoff },
+      { table: 'app_settings', op: 'update', values: { value: cutoff }, eq: { key: 'auto_close_cutoff' }, select: 'key' })
     setCutoffBusy(false)
     if (error || !data?.length) { window.alert(`Cutoff not saved: ${error?.message ?? 'no row updated'}`); return }
     setCutoffSaved(cutoff)
@@ -428,7 +428,8 @@ export default function VerifyHoursPage({ session, hasRole }) {
     const patch  = action === 'approve'
       ? { status: 'verified', verified_by: session.user.id, verified_at: now }
       : { status: 'rejected' }
-    const { error } = await supabase.from('logged_hours').update(patch).eq('id', id)
+    const { error } = await writeVia(supabase, 'staff_review_logged_hours', { p_entry: id, p_approve: action === 'approve' },
+      { table: 'logged_hours', op: 'update', values: patch, eq: { id } })
     setActing(a => { const n = { ...a }; delete n[id]; return n })
     if (!error) setEntries(prev => prev.filter(e => e.id !== id))
   }

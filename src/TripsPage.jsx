@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { isSchemaMissing } from './schemaMissing'
 import { fmtDate, fmtDay } from './eventHub'
 import { CarpoolBoard, EventInfo, FoodBoard, Seg } from './EventHubBoards'
@@ -36,7 +37,8 @@ function NewTrip() {
   async function create(e) {
     e.preventDefault()
     setErr('')
-    const { data, error } = await supabase.from('hub_events').insert({ title: title.trim() }).select('id').single()
+    const { data, error } = await writeVia(supabase, 'trips_create', { p_title: title.trim() },
+      { table: 'hub_events', op: 'insert', values: { title: title.trim() }, select: 'id', single: true })
     if (error) { setErr(error.message); return }
     navigate(`/trips/${data.id}/manage`)
   }

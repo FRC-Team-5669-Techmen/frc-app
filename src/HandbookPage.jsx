@@ -10,6 +10,7 @@
 import { useEffect, useMemo, useRef, useState, Fragment } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { isMissingTable } from './schemaMissing'
 import handbookMd from './handbook/handbook.md?raw'
 import { parseHandbook, parseInline, glossaryOf, agreementsOf } from './handbook/content'
@@ -378,11 +379,13 @@ export default function HandbookPage({ session, hasRole }) {
 
   async function doSign() {
     setBusy(true)
-    const { error } = await supabase.from('handbook_acknowledgments').insert({
-      member_id: userId, version: HANDBOOK_VERSION, signer_role: signerRole, lessons_passed: passed,
-      // Sent for completeness; the 0013 trigger replaces it with the server clock.
-      signed_at: new Date().toISOString(),
-    })
+    const { error } = await writeVia(supabase, 'handbook_sign',
+      { p_version: HANDBOOK_VERSION, p_signer_role: signerRole, p_lessons_passed: passed },
+      { table: 'handbook_acknowledgments', op: 'insert', values: {
+        member_id: userId, version: HANDBOOK_VERSION, signer_role: signerRole, lessons_passed: passed,
+        // Sent for completeness; the 0013 trigger replaces it with the server clock.
+        signed_at: new Date().toISOString(),
+      } })
     setBusy(false)
     if (!error || error.code === '23505') { setSign({ state: 'signed', at: new Date().toISOString() }); return }
     setSign({ state: isMissingTable(error) ? 'unavailable' : 'error', message: error.message })

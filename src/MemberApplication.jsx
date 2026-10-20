@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { SUBTEAMS } from './subteams'
 import { APPLICATION_SELECT } from './applicationFields'
 import { DISCORD_INVITE } from './discord'
@@ -389,8 +390,8 @@ export default function MemberApplication({ session, season, onDone }) {
     }
 
     // Returning the id costs nothing here and is what the parent email needs.
-    const { data: inserted, error: insErr } = await supabase
-      .from('member_applications').insert(row).select('id').single()
+    const { data: inserted, error: insErr } = await writeVia(supabase, 'member_application_submit', { p_application: row },
+      { table: 'member_applications', op: 'insert', values: row, select: 'id', single: true })
     if (insErr) {
       setSaving(false)
       // 23505 = the unique (member_id, season_id) index: already applied.
@@ -404,11 +405,14 @@ export default function MemberApplication({ session, season, onDone }) {
     // existing "profiles update own or admin" policy, same path ProfilePage
     // uses. The application row is the source of truth, so a failure here is a
     // note, not a blocked submit.
-    const { error: profErr } = await supabase.from('profiles').update({
+    const profPatch = {
       nickname:   form.preferred_name.trim() || null,
       grad_year:  form.grad_year !== '' ? Number(form.grad_year) : null,
       shirt_size: form.shirt_size || null,
-    }).eq('id', uid)
+    }
+    const { error: profErr } = await writeVia(supabase, 'member_save_application_profile',
+      { p_nickname: profPatch.nickname, p_grad_year: profPatch.grad_year, p_shirt_size: profPatch.shirt_size },
+      { table: 'profiles', op: 'update', values: profPatch, eq: { id: uid } })
 
     // Email the parent their questionnaire link. This is SUPPLEMENTARY: the
     // application is already saved and complete, the questionnaire gates

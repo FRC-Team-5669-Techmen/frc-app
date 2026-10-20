@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { displayName } from './names'
 import {
   QUESTION_KINDS, KIND_LABEL, sortQuestions, optionsOf, scaleOf,
@@ -408,16 +409,15 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
     e.preventDefault()
     if (!newTitle.trim() || busy) return
     setBusy(true); setError('')
-    const { data, error: e2 } = await supabase
-      .from('surveys')
-      .insert({
-        title: newTitle.trim(),
-        opens_at: fromLocalInput(newOpens),
-        closes_at: fromLocalInput(newCloses),
-        created_by: session?.user?.id ?? null,
-      })
-      .select('id')
-      .single()
+    const row = {
+      title: newTitle.trim(),
+      opens_at: fromLocalInput(newOpens),
+      closes_at: fromLocalInput(newCloses),
+      created_by: session?.user?.id ?? null,
+    }
+    const { data, error: e2 } = await writeVia(supabase, 'survey_create',
+      { p_title: row.title, p_opens_at: row.opens_at, p_closes_at: row.closes_at },
+      { table: 'surveys', op: 'insert', values: row, select: 'id', single: true })
     setBusy(false)
     if (e2) { setError(e2.message); return }
     setNewTitle(''); setNewOpens(''); setNewCloses('')
@@ -431,14 +431,13 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
   // visible database rule instead of hidden behaviour.
   async function setOpen(id, open) {
     setBusy(true); setError('')
-    if (open) {
-      const stale = surveys.filter(s => s.is_open && s.id !== id)
-      for (const s of stale) {
-        const { error: e } = await supabase.from('surveys').update({ is_open: false }).eq('id', s.id)
-        if (e) { setBusy(false); setError(`Could not close "${s.title}": ${e.message}`); return }
-      }
-    }
-    const { error: e2 } = await supabase.from('surveys').update({ is_open: open }).eq('id', id)
+    // survey_set_open (0019) closes whichever survey is open, then opens this
+    // one, in one go. The fallback is the page's own close-then-open.
+    const stale = open ? surveys.filter(s => s.is_open && s.id !== id) : []
+    const { error: e2 } = await writeVia(supabase, 'survey_set_open', { p_survey: id, p_open: open }, [
+      ...stale.map(s => ({ table: 'surveys', op: 'update', values: { is_open: false }, eq: { id: s.id } })),
+      { table: 'surveys', op: 'update', values: { is_open: open }, eq: { id } },
+    ])
     setBusy(false)
     if (e2) { setError(e2.message); return }
     await loadSurveys()
@@ -452,11 +451,14 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
     e.preventDefault()
     if (!survey || !editTitle.trim() || busy) return
     setBusy(true); setError(''); setNote('')
-    const { error: e2 } = await supabase.from('surveys').update({
+    const patch = {
       title: editTitle.trim(),
       opens_at: fromLocalInput(editOpens),
       closes_at: fromLocalInput(editCloses),
-    }).eq('id', survey.id)
+    }
+    const { error: e2 } = await writeVia(supabase, 'survey_save_details',
+      { p_survey: survey.id, p_title: patch.title, p_opens_at: patch.opens_at, p_closes_at: patch.closes_at },
+      { table: 'surveys', op: 'update', values: patch, eq: { id: survey.id } })
     setBusy(false)
     if (e2) { setError(e2.message); return }
     setNote('Saved.')
@@ -477,22 +479,25 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
     setBusy(true); setError(''); setNote('')
 
     const title = duplicateTitle(survey.title, surveys.map(s => s.title))
-    const { data: created, error: e1 } = await supabase.from('surveys').insert({
-      title,
-      opens_at: null,
-      closes_at: null,
-      is_open: false,
-      created_by: session?.user?.id ?? null,
-    }).select('id').single()
-    if (e1) { setBusy(false); setError(e1.message); return }
-
     // The copy's questions come from the SELECTED survey's already-loaded rows,
-    // which is the same list the mentor is looking at.
-    const rows = duplicateQuestionRows(created.id, questions)
-    if (rows.length) {
-      const { error: e2 } = await supabase.from('survey_questions').insert(rows)
-      if (e2) { setBusy(false); setError(e2.message); return }
-    }
+    // which is the same list the mentor is looking at. survey_duplicate (0019)
+    // writes the survey and its questions all or nothing; the fallback is the
+    // page's own two writes.
+    const rows = duplicateQuestionRows(null, questions)
+    const { data: created, error: e1 } = await writeVia(supabase, 'survey_duplicate', {
+      p_title: title,
+      p_questions: rows.map(({ position, kind, prompt, options, required }) => ({ position, kind, prompt, options, required })),
+    }, {
+      steps: [
+        { table: 'surveys', op: 'insert', select: 'id', single: true,
+          values: { title, opens_at: null, closes_at: null, is_open: false, created_by: session?.user?.id ?? null } },
+        (ctx) => (rows.length
+          ? { table: 'survey_questions', op: 'insert', values: duplicateQuestionRows(ctx.results[0].data.id, questions) }
+          : null),
+      ],
+      result: (ctx) => ctx.results[0]?.data ?? null,
+    })
+    if (e1) { setBusy(false); setError(e1.message); return }
 
     setBusy(false)
     await loadSurveys()
@@ -510,7 +515,7 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
   // note at the revokes in supabase/weekly_surveys.sql, which records the test.
   async function deleteSurvey(id) {
     setBusy(true); setError(''); setNote('')
-    const { error: e } = await supabase.from('surveys').delete().eq('id', id)
+    const { error: e } = await writeVia(supabase, 'survey_delete', { p_survey: id }, { table: 'surveys', op: 'delete', eq: { id } })
     setBusy(false)
     if (e) { setError(e.message); return }
     setArmed(null)
@@ -526,14 +531,15 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
   async function addQuestion() {
     setBusy(true); setError('')
     const nextPos = questions.length ? Math.max(...questions.map(q => q.position ?? 0)) + 1 : 1
-    const { error: e } = await supabase.from('survey_questions').insert({
-      survey_id: selected,
-      position: nextPos,
-      kind: 'single',
-      prompt: 'New question',
-      options: [],
-      required: false,
-    })
+    const { error: e } = await writeVia(supabase, 'survey_add_question', { p_survey: selected, p_position: nextPos },
+      { table: 'survey_questions', op: 'insert', values: {
+        survey_id: selected,
+        position: nextPos,
+        kind: 'single',
+        prompt: 'New question',
+        options: [],
+        required: false,
+      } })
     setBusy(false)
     if (e) { setError(e.message); return }
     await loadDetail(selected)
@@ -541,7 +547,9 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
 
   async function saveQuestion(id, patch) {
     setBusy(true); setError('')
-    const { error: e } = await supabase.from('survey_questions').update(patch).eq('id', id)
+    const { error: e } = await writeVia(supabase, 'survey_save_question',
+      { p_question: id, p_prompt: patch.prompt, p_kind: patch.kind, p_options: patch.options, p_required: patch.required },
+      { table: 'survey_questions', op: 'update', values: patch, eq: { id } })
     setBusy(false)
     if (e) { setError(e.message); return }
     await loadDetail(selected)
@@ -549,7 +557,8 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
 
   async function deleteQuestion(id) {
     setBusy(true); setError('')
-    const { error: e } = await supabase.from('survey_questions').delete().eq('id', id)
+    const { error: e } = await writeVia(supabase, 'survey_delete_question', { p_question: id },
+      { table: 'survey_questions', op: 'delete', eq: { id } })
     setBusy(false)
     if (e) { setError(e.message); return }
     await loadDetail(selected)
@@ -566,11 +575,9 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
     reordered.splice(next, 0, item)
     setQuestions(reordered)          // optimistic: the list is short and local
     setBusy(true); setError('')
-    for (let i = 0; i < reordered.length; i++) {
-      const { error: e } = await supabase.from('survey_questions')
-        .update({ position: i + 1 }).eq('id', reordered[i].id)
-      if (e) { setBusy(false); setError(e.message); await loadDetail(selected); return }
-    }
+    const { error: e } = await writeVia(supabase, 'survey_reorder_questions', { p_questions: reordered.map(q => q.id) },
+      reordered.map((q, i) => ({ table: 'survey_questions', op: 'update', values: { position: i + 1 }, eq: { id: q.id } })))
+    if (e) { setBusy(false); setError(e.message); await loadDetail(selected); return }
     setBusy(false)
     await loadDetail(selected)
   }

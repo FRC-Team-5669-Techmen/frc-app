@@ -4,6 +4,9 @@
 // .insert(...)` with nothing read back), so a rejected or failed write left the
 // tile saying "Checked in" with no word about why. It now reports.
 //
+// The write goes through attendance_record (0019) with the direct insert as
+// its fallback (src/attendanceRecord.js).
+//
 // Pure: the Supabase client is passed in, so tests/checkout-path.test.js drives
 // it with a stand-in and pins both the row shape and the error path.
 
@@ -12,6 +15,8 @@
 // NULL is not false), category takes its 'build' default, and an OUT needs
 // neither (sessions are attributed by their IN). Writing a new value here would
 // need a migration first; the test pins that it does not.
+import { recordAttendance } from './attendanceRecord.js'
+
 export const DASHBOARD_CHECKOUT_ROW = Object.freeze({ type: 'out', location: 'button', method: null })
 
 export function dashboardCheckoutRow(uid) {
@@ -29,7 +34,7 @@ export function checkoutFailureText(error) {
 // -> { ok: true, message: null } | { ok: false, message }
 export async function checkOutFromDashboard(client, uid) {
   try {
-    const { error } = await client.from('attendance_events').insert(dashboardCheckoutRow(uid))
+    const { error } = await recordAttendance(client, dashboardCheckoutRow(uid))
     if (error) return { ok: false, message: checkoutFailureText(error) }
     return { ok: true, message: null }
   } catch (err) {

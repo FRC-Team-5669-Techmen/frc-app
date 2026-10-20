@@ -13,6 +13,7 @@
 // check out exactly as they always have.
 
 import { isSchemaMissing } from './schemaMissing'
+import { recordAttendance } from './attendanceRecord.js'
 
 export const NOTE_MIN = 3
 export const NOTE_MAX = 1000
@@ -138,8 +139,8 @@ export async function switchToFll(client, { location, geoOk, note = null }) {
 // columns are not there, so the row is written without them.
 export async function insertOutWithNote(client, row, { note, cleanup }) {
   const withNote = { ...row, note: String(note ?? '').trim() || null, cleanup_confirmed: cleanup ?? null }
-  let { error } = await client.from('attendance_events').insert(withNote)
-  if (error && isSchemaMissing(error)) ({ error } = await client.from('attendance_events').insert(row))
+  let { error } = await recordAttendance(client, withNote)
+  if (error && isSchemaMissing(error)) ({ error } = await recordAttendance(client, row))
   if (error) throw error
 }
 

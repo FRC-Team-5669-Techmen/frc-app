@@ -20,9 +20,13 @@
 #   The level and the undo of a function tool are its function entry's
 #   (functions.yaml, or the generated one), never restated here.
 #
-# Anything here may only call a function the app already calls. A tool that
-# would need a direct table write is not here; it is excluded in
-# exclusions.yaml with the reason the coverage test requires.
+# Anything here may only call a function the app already calls. Since ledger
+# 0014 the app makes no direct table write (every page write is a function,
+# src/writeVia.js), so every action the app has can have a tool here.
+#
+# map templates: $args.x (the tool argument as given), $resolved.x.y (a
+# resolved member or event), $said, and $la.x (a time he said, read as Los
+# Angeles wall-clock time and sent as an instant).
 
 find_member:
   describe: Find a team member by name, nickname or email, with their roles and sub-teams.
@@ -87,11 +91,24 @@ list_events:
     to: {type: string, describe: "Last day, YYYY-MM-DD (two weeks from the first by default)"}
 
 create_event:
-  describe: Not available through Claude yet (the schedule page writes straight to the calendar). Says so; report_gap files it.
-  say: ["add a build Saturday 9 to 1", "schedule a meeting Tuesday at lunch", "put the outreach event on the calendar"]
-  kind: unavailable
-  gap: "Creating an event writes the events table straight from /schedule; it needs a staff function first (next connector ledger)."
-  args: {}
+  describe: Add an event to the team schedule, times in Los Angeles time. It reaches Discord and phones like any event; undo deletes it.
+  say: ["add a build Saturday 9 to 1", "schedule a meeting Tuesday at lunch", "put the outreach event on the calendar", "add a potluck on the 14th at 6"]
+  kind: function
+  function: schedule_create_event
+  args:
+    title: {type: string, describe: "What the event is called", required: true}
+    kind: {type: string, describe: "What kind of event", required: true, enum: [build, meeting, competition, potluck, outreach, volunteering, training, other]}
+    start: {type: string, describe: "When it starts, YYYY-MM-DD HH:MM, Los Angeles time", required: true}
+    end: {type: string, describe: "When it ends, YYYY-MM-DD HH:MM, Los Angeles time", required: true}
+    location: {type: string, describe: "Where it is"}
+    notes: {type: string, describe: "Notes shown on the event"}
+  map:
+    p_title: $args.title
+    p_kind: $args.kind
+    p_starts_at: $la.start
+    p_ends_at: $la.end
+    p_location: $args.location
+    p_notes: $args.notes
 
 event_signups:
   describe: Who said going, maybe or not going to an event.

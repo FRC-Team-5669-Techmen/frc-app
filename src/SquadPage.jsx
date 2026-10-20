@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { displayName } from './names'
 import './SquadPage.css'
 
@@ -47,8 +48,8 @@ export default function SquadPage({ session, hasRole = () => false }) {
     const memberId = assignSel[positionId]
     if (!memberId) return
     setBusy(b => ({ ...b, [positionId]: true }))
-    const { error } = await supabase.from('position_assignments')
-      .insert({ position_id: positionId, member_id: memberId, assigned_by: uid })
+    const { error } = await writeVia(supabase, 'staff_assign_position', { p_position: positionId, p_member: memberId },
+      { table: 'position_assignments', op: 'insert', values: { position_id: positionId, member_id: memberId, assigned_by: uid } })
     setBusy(b => { const n = { ...b }; delete n[positionId]; return n })
     if (error) { setError(error.message); return }
     setAssignSel(s => ({ ...s, [positionId]: '' }))
@@ -57,8 +58,8 @@ export default function SquadPage({ session, hasRole = () => false }) {
 
   async function unassign(positionId, memberId) {
     setBusy(b => ({ ...b, [positionId]: true }))
-    const { error } = await supabase.from('position_assignments')
-      .delete().eq('position_id', positionId).eq('member_id', memberId)
+    const { error } = await writeVia(supabase, 'staff_unassign_position', { p_position: positionId, p_member: memberId },
+      { table: 'position_assignments', op: 'delete', eq: { position_id: positionId, member_id: memberId } })
     setBusy(b => { const n = { ...b }; delete n[positionId]; return n })
     if (error) { setError(error.message); return }
     load()
@@ -92,9 +93,12 @@ export default function SquadPage({ session, hasRole = () => false }) {
       target_count: Math.max(0, parseInt(form.target_count, 10) || 0),
       sort_order:   parseInt(form.sort_order, 10) || 0,
     }
-    const { error } = editTarget
-      ? await supabase.from('positions').update(payload).eq('id', editTarget.id)
-      : await supabase.from('positions').insert(payload)
+    const { error } = await writeVia(supabase, 'staff_save_position', {
+      p_position: editTarget?.id ?? null, p_name: payload.name, p_description: payload.description,
+      p_target_count: payload.target_count, p_sort_order: payload.sort_order,
+    }, editTarget
+      ? { table: 'positions', op: 'update', values: payload, eq: { id: editTarget.id } }
+      : { table: 'positions', op: 'insert', values: payload })
     setSaving(false)
     if (error) { setError(error.message); return }
     closeForm()
@@ -104,7 +108,7 @@ export default function SquadPage({ session, hasRole = () => false }) {
   async function remove(p) {
     if (!window.confirm(`Remove "${p.name}" and all its assignments?`)) return
     setBusy(b => ({ ...b, [p.id]: true }))
-    const { error } = await supabase.from('positions').delete().eq('id', p.id)
+    const { error } = await writeVia(supabase, 'staff_delete_position', { p_position: p.id }, { table: 'positions', op: 'delete', eq: { id: p.id } })
     setBusy(b => { const n = { ...b }; delete n[p.id]; return n })
     if (error) { setError(error.message); return }
     load()

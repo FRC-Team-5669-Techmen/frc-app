@@ -12,14 +12,22 @@
 //                 scan never sees.
 //   edge          every Supabase Edge Function the app invokes, by name.
 //   routes        every Vercel function under api/ (the connector own aside).
-//   table_writes  every direct `.from('table').insert/update/upsert/delete`
-//                 in src/ and api/, multi-line ones included, with file and
-//                 line. The connector calls functions, never tables; each one
-//                 is excluded by tools/connector/registry/exclusions.yaml.
+//   table_writes  every direct table write in src/ and api/, with file and
+//                 line: a `.from(<anything>)` chain ending in insert, update,
+//                 upsert or delete (multi-line ones included, whatever names
+//                 the table), any `.insert(` or `.upsert(` call at all, and a
+//                 builder kept in a variable (`const q = supabase.from(t)`)
+//                 that is later updated or deleted through. The connector
+//                 calls functions, never tables, so there must be NONE: since
+//                 ledger 0014 every page write goes through a database
+//                 function via src/writeVia.js, the one file allowed to touch
+//                 a table (its fallback while a migration is unpasted), and
+//                 tests/connector-coverage.test.js fails on any write found.
 //   storage       every `storage.from('bucket').upload/remove`.
 //
-// The connector own files, the fixture engine (src/dev/) and generated files
-// are not the app calling anything, and are skipped.
+// The connector own files, the fixture engine (src/dev/), generated files and
+// src/writeVia.js (the one fallback helper) are not a page writing, and are
+// skipped.
 //
 //   node tools/connector/inventory.mjs   print the counts
 
@@ -36,12 +44,13 @@ function walk(dir, out = []) {
   return out;
 }
 
-const rel = (f) => relative(ROOT, f).split(sep).join('/');
+const rel = (f, root = ROOT) => relative(root, f).split(sep).join('/');
 
 /** Files that are not the app calling the database. */
-export function skipped(file) {
-  const r = rel(file);
+export function skipped(file, root = ROOT) {
+  const r = rel(file, root);
   return r.startsWith('src/dev/')
+    || r === 'src/writeVia.js'
     || r.startsWith('api/_lib/connector/')
     || r === 'api/mcp.js'
     || r.startsWith('api/connector/')
@@ -95,12 +104,16 @@ const RPC_LITERAL = /\.rpc\(\s*(['"`])([A-Za-z0-9_]+)\1/g;
 const QUOTED = /(['"`])([a-z_][a-z0-9_]*)\1/g;
 const INVOKE = /functions\.invoke\(\s*(['"`])([a-z0-9-]+)\1/g;
 const FN_URL = /functions\/v1\/([a-z0-9-]+)/g;
-const WRITE = /\.from\(\s*(['"`])([A-Za-z0-9_]+)\1\s*\)((?:\s*\.[a-zA-Z]+\((?:[^()]|\([^()]*\))*\))*?)\s*\.(insert|update|upsert|delete)\s*\(/g;
+const WRITE = /(\bstorage\s*)?\.from\(\s*([^()]*?)\s*\)((?:\s*\.[a-zA-Z]+\((?:[^()]|\([^()]*\))*\))*?)\s*\.(insert|update|upsert|delete)\s*\(/g;
+const ANY_INSERT = /\.(insert|upsert)\s*\(/g;
+const BUILDER_VAR = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:await\s+)?[\w$.]*\.from\(\s*(?!['"`][A-Za-z0-9_-]+['"`]\s*\)\s*\.(?:upload|remove|download|list|getPublicUrl|createSignedUrl))/g;
+/** `'events'` -> events; a table named by an expression keeps the expression. */
+const tableName = (arg) => { const m = /^(['"`])([A-Za-z0-9_]+)\1$/.exec(arg.trim()); return m ? m[2] : arg.trim(); };
 const STORAGE = /storage\s*\.from\(\s*(['"`])([A-Za-z0-9_-]+)\1\s*\)\s*\.(upload|remove|update|move)\s*\(/g;
 
 export function buildInventory(root = ROOT) {
   const known = chainNames(root);
-  const files = [...walk(join(root, 'src')), ...walk(join(root, 'api'))].filter((f) => !skipped(f)).sort();
+  const files = [...walk(join(root, 'src')), ...walk(join(root, 'api'))].filter((f) => !skipped(f, root)).sort();
   const functions = new Map(); // name -> Set(files)
   const edge = new Map();
   const tableWrites = [];
@@ -109,14 +122,29 @@ export function buildInventory(root = ROOT) {
   for (const file of files) {
     const raw = readFileSync(file, 'utf8');
     const text = stripComments(raw);
-    const r = rel(file);
+    const r = rel(file, root);
     const lineOf = (i) => text.slice(0, i).split('\n').length;
     const add = (map, name) => { if (!map.has(name)) map.set(name, new Set()); map.get(name).add(r); };
     for (const m of text.matchAll(RPC_LITERAL)) { add(functions, m[2]); literalCount += 1; }
     for (const m of text.matchAll(QUOTED)) if (known.has(m[2])) add(functions, m[2]);
     for (const m of text.matchAll(INVOKE)) add(edge, m[2]);
     for (const m of text.matchAll(FN_URL)) add(edge, m[1]);
-    for (const m of text.matchAll(WRITE)) tableWrites.push({ file: r, line: lineOf(m.index), table: m[2], op: m[4] });
+    const seen = new Set();
+    const addWrite = (index, table, op) => {
+      const line = lineOf(index);
+      const key = `${line}|${op}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      tableWrites.push({ file: r, line, table, op });
+    };
+    for (const m of text.matchAll(WRITE)) if (!m[1]) addWrite(m.index, tableName(m[2]), m[4]);
+    for (const m of text.matchAll(ANY_INSERT)) addWrite(m.index, '(any)', m[1]);
+    for (const m of text.matchAll(BUILDER_VAR)) {
+      const v = m[1].replace(/\$/g, '\\$');
+      for (const u of text.slice(m.index).matchAll(new RegExp(`\\b${v}\\s*\\.\\s*(update|delete|insert|upsert)\\s*\\(`, 'g'))) {
+        addWrite(m.index + u.index, '(builder)', u[1]);
+      }
+    }
     for (const m of text.matchAll(STORAGE)) storage.push({ file: r, line: lineOf(m.index), bucket: m[2], op: m[3] });
   }
   const routes = readdirSync(join(root, 'api'), { withFileTypes: true })
@@ -128,7 +156,7 @@ export function buildInventory(root = ROOT) {
     functions: sortObj(functions),
     edge: sortObj(edge),
     routes,
-    table_writes: tableWrites,
+    table_writes: tableWrites.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line),
     storage,
     counts: {
       functions: functions.size,

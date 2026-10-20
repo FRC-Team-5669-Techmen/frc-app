@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { displayName } from './names'
 import { STANDING_LABEL, KIND_LABEL, STATUS_LABEL, reasonLabel, fmtHours, loadOverview, rpc, errText, INCIDENT_KINDS } from './standing'
 import './Standing.css'
@@ -289,7 +290,8 @@ function Fll({ nameOf, act, tick }) {
       <div className="st-row">
         <input className="st-input" placeholder="FLL team name" value={name} onChange={(e) => setName(e.target.value)} />
         <button className="st-btn st-btn-primary" disabled={!name.trim()} onClick={() => act(async () => {
-          const { error } = await supabase.from('fll_teams').insert({ name: name.trim() })
+          const { error } = await writeVia(supabase, 'staff_add_fll_team', { p_name: name.trim() },
+            { table: 'fll_teams', op: 'insert', values: { name: name.trim() } })
           if (error) throw error
           setName('')
         }, 'Team added.')}>Add team</button>
@@ -332,8 +334,10 @@ function Settings({ act, tick }) {
       )}
       <div className="st-row">
         <button className="st-btn st-btn-primary" onClick={() => act(async () => {
-          const { error } = await supabase.from('standing_settings').update({ starts_on: s.starts_on, build_season_start: s.build_season_start, build_season_end: s.build_season_end,
-            ...('kickoff_event_id' in s ? { kickoff_event_id: s.kickoff_event_id || null } : {}), updated_at: new Date().toISOString() }).eq('id', true)
+          const settings = { starts_on: s.starts_on, build_season_start: s.build_season_start, build_season_end: s.build_season_end,
+            ...('kickoff_event_id' in s ? { kickoff_event_id: s.kickoff_event_id || null } : {}) }
+          const { error } = await writeVia(supabase, 'admin_save_standing_settings', { p_settings: settings },
+            { table: 'standing_settings', op: 'update', values: { ...settings, updated_at: new Date().toISOString() }, eq: { id: true } })
           if (error) throw error
         }, 'Saved.')}>Save</button>
         <button className="st-btn" onClick={() => act(() => rpc(supabase, 'standing_evaluate', {}), (n) => `Evaluated: ${n} new week or month result(s).`)}>Run the check now</button>

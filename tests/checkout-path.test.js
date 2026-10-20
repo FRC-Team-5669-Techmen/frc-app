@@ -14,7 +14,8 @@
 // fixture plugin at src/dev/fixture/features/b2.js.
 
 import { readFileSync } from 'node:fs'
-import { describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
+import { _resetWriteVia } from '../src/writeVia.js'
 import {
   DASHBOARD_CHECKOUT_ROW, checkOutFromDashboard, checkoutFailureText, dashboardCheckoutRow,
 } from '../src/attendanceCheckout.js'
@@ -24,12 +25,17 @@ import b2Fixture, { B2_IDS } from '../src/dev/fixture/features/b2.js'
 
 const src = (p) => readFileSync(new URL(`../src/${p}`, import.meta.url), 'utf8')
 
-// A stand-in for the one supabase-js call the dashboard makes:
-// client.from('attendance_events').insert(row) -> { error }
-function fakeClient(result) {
+// A stand-in for the calls the dashboard makes: attendance_record (0019),
+// answered here as not pasted yet (PGRST202) unless `fn` is given, then the
+// direct insert it falls back to, client.from('attendance_events').insert(row).
+function fakeClient(result, fn = null) {
   const calls = []
   return {
     calls,
+    rpc(name, args) {
+      calls.push({ rpc: name, args })
+      return Promise.resolve(fn ?? { data: null, error: { code: 'PGRST202', message: 'not in the schema cache' } })
+    },
     from(table) {
       return {
         insert(row) {
@@ -40,6 +46,10 @@ function fakeClient(result) {
     },
   }
 }
+
+beforeEach(() => _resetWriteVia())
+
+const tableCalls = (client) => client.calls.filter((c) => c.table)
 
 describe('dashboard Check Out', () => {
   test('writes exactly the shape that works against the database today', () => {
@@ -57,18 +67,30 @@ describe('dashboard Check Out', () => {
     expect(r.ok).toBe(false)
     expect(r.message).toMatch(/not recorded/i)
     expect(r.message).toContain('23514')
-    expect(client.calls).toEqual([{ table: 'attendance_events', row: dashboardCheckoutRow('u1') }])
+    expect(tableCalls(client)).toEqual([{ table: 'attendance_events', row: dashboardCheckoutRow('u1') }])
   })
 
   test('positive control: a clean insert reports success and no message', async () => {
     const client = fakeClient({ data: null, error: null })
     const r = await checkOutFromDashboard(client, 'u1')
     expect(r).toEqual({ ok: true, message: null })
-    expect(client.calls).toHaveLength(1)
+    expect(tableCalls(client)).toHaveLength(1)
+  })
+
+  test('with 0019 pasted the same check-out goes through attendance_record, and nothing touches the table', async () => {
+    const client = fakeClient({ data: null, error: { code: 'x' } }, { data: null, error: null })
+    const r = await checkOutFromDashboard(client, 'u1')
+    expect(r).toEqual({ ok: true, message: null })
+    expect(client.calls).toEqual([{ rpc: 'attendance_record', args: {
+      p_type: 'out', p_location: 'button', p_method: null, p_category: null, p_geo_ok: null, p_note: null, p_cleanup_confirmed: null,
+    } }])
+    const refused = fakeClient(null, { data: null, error: { code: '42501', message: 'nope' } })
+    expect((await checkOutFromDashboard(refused, 'u1')).message).toContain('42501')
+    expect(tableCalls(refused)).toHaveLength(0)
   })
 
   test('a network failure (the promise rejects) is reported too', async () => {
-    const client = { from: () => ({ insert: () => Promise.reject(new TypeError('Load failed')) }) }
+    const client = { rpc: () => Promise.reject(new TypeError('Load failed')), from: () => ({ insert: () => Promise.reject(new TypeError('Load failed')) }) }
     const r = await checkOutFromDashboard(client, 'u1')
     expect(r.ok).toBe(false)
     expect(r.message).toMatch(/not recorded/i)

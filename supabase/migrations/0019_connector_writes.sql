@@ -131,7 +131,7 @@ begin
 end
 $fn$;
 
--- Does: Save the signed-in member profile: nickname, bio, shirt size, sub-teams, disciplines and graduation year.
+-- Does: Save the profile of the signed-in member: nickname, bio, shirt size, sub-teams, disciplines and graduation year.
 -- Was: src/ProfilePage.jsx, profiles update.
 create or replace function public.member_save_profile(p_nickname text, p_bio text, p_shirt_size text, p_subteams text[], p_disciplines text[], p_grad_year integer)
 returns void language plpgsql security invoker set search_path = public as $fn$
@@ -143,7 +143,7 @@ begin
 end
 $fn$;
 
--- Does: Use the photo from the sign-in account as the signed-in member picture.
+-- Does: Use the photo from the sign-in account as the picture of the signed-in member.
 -- Was: src/ProfilePage.jsx, profiles update.
 create or replace function public.member_set_avatar(p_avatar_url text)
 returns void language plpgsql security invoker set search_path = public as $fn$
@@ -171,7 +171,7 @@ begin
 end
 $fn$;
 
--- Does: Submit the signed-in student member application for a season.
+-- Does: Submit a season member application for the signed-in student.
 -- Was: src/MemberApplication.jsx, member_applications insert returning id. The
 -- application arrives as one object with the page fields by column name.
 create or replace function public.member_application_submit(p_application jsonb)
@@ -289,7 +289,7 @@ begin
 end
 $fn$;
 
--- Does: Clear the signed-in member answer for an event.
+-- Does: Clear the answer the signed-in member gave for an event.
 -- Was: src/HomePage.jsx and src/SchedulePage.jsx, event_signups delete.
 create or replace function public.event_clear_response(p_event uuid)
 returns void language plpgsql security invoker set search_path = public as $fn$
@@ -393,7 +393,7 @@ begin
 end
 $fn$;
 
--- Does: Approve or reject a member logged hours.
+-- Does: Approve or reject hours a member logged.
 -- Was: src/VerifyHoursPage.jsx, logged_hours update.
 create or replace function public.staff_review_logged_hours(p_entry uuid, p_approve boolean)
 returns void language plpgsql security invoker set search_path = public as $fn$
@@ -691,7 +691,7 @@ $fn$;
 
 -- ── Surveys ─────────────────────────────────────────────────────────────────
 
--- Does: Submit the signed-in member answers to the open weekly survey.
+-- Does: Submit the answers of the signed-in member to the open weekly survey.
 -- Was: src/SurveyPage.jsx, survey_responses insert returning id and
 -- submitted_at, then survey_answers insert. p_answers is a list of
 -- {question_id, value}; a skipped question is left out. All or nothing.
@@ -734,7 +734,7 @@ begin
 end
 $fn$;
 
--- Does: Change a survey title and the window it is open.
+-- Does: Change the title of a survey and the window it is open.
 -- Was: src/SurveysAdmin.jsx, surveys update.
 create or replace function public.survey_save_details(p_survey uuid, p_title text, p_opens_at timestamptz, p_closes_at timestamptz)
 returns void language plpgsql security invoker set search_path = public as $fn$
@@ -802,7 +802,7 @@ begin
 end
 $fn$;
 
--- Does: Put a survey questions in a new order.
+-- Does: Put the questions of a survey in a new order.
 -- Was: src/SurveysAdmin.jsx, one survey_questions update per question.
 -- p_questions is every question id in the new order; each gets its place.
 create or replace function public.survey_reorder_questions(p_questions uuid[])
@@ -856,7 +856,7 @@ begin
 end
 $fn$;
 
--- Does: Save a trip details: title, venue, deadlines, rules, mentor alerts, links, info sections and the parent service hours note.
+-- Does: Save the details of a trip: title, venue, deadlines, rules, mentor alerts, links, info sections and the parent service hours note.
 -- Was: src/TripsAdmin.jsx, two hub_events updates (the details, and the
 -- info sections). p_fields holds the fields by column name; a key left out
 -- is left as it is, as the page did, and updated_at is stamped.

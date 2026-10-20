@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import './AccessGate.css'
 
 const ROLES = [
@@ -40,12 +41,15 @@ export default function AccessGate({ session }) {
     e.preventDefault()
     setSaving(true)
     setError('')
-    const { error: err } = await supabase.from('access_requests').insert({
+    const row = {
       email,
       full_name: fullName.trim() || null,
       requested_role: role,
       note: note.trim() || null,
-    })
+    }
+    const { error: err } = await writeVia(supabase, 'access_request_submit',
+      { p_email: row.email, p_full_name: row.full_name, p_requested_role: row.requested_role, p_note: row.note },
+      { table: 'access_requests', op: 'insert', values: row })
     setSaving(false)
     if (err) {
       // 23505 = the one-pending-per-email unique index: already requested.

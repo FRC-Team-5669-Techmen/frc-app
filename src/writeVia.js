@@ -26,7 +26,9 @@
 //            eq: { col: v }, in: { col: [..] }, match: { .. },   filters, in that order
 //            select: 'id' | '*',         RETURNING, only where the page read it back
 //            single: true,               .single() after the select
-//            keepGoing: true }           a failure here does not stop the later steps
+//            keepGoing: true,            a failure here does not stop the later steps
+//            ignoreError: true }         a failure here is neither answered nor stops
+//                                        anything (the page never read it)
 //   A step may be a function (ctx) => step | null (null skips it), and
 //   `values` may be a function (ctx) => values; ctx.results holds every
 //   earlier step's { data, error }.
@@ -91,7 +93,7 @@ export async function runDirect(client, fallback) {
     }
     last = { data: res?.data ?? null, error: res?.error ?? null }
     ctx.results.push(last)
-    if (last.error) {
+    if (last.error && !step.ignoreError) {
       firstError ??= last.error
       if (!step.keepGoing) break
     }

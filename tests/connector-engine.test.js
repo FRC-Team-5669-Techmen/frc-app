@@ -197,11 +197,48 @@ describe('the tools', () => {
     expect(out.meals[0]).toMatchObject({ open: 1, items: ['Main dish: Pizza (the Romo family)', 'Dessert: OPEN'] })
     expect(JSON.stringify(out)).not.toMatch(/555/)
   })
-  it('create_event and feedback_reply say plainly they are not available and point at report_gap', async () => {
-    for (const name of ['create_event', 'feedback_reply']) {
-      const out = await runTool(ctx, name, { said: 'x' })
-      expect(out.status).toBe('not_available')
-      expect(out.message).toMatch(/report_gap/)
+  it('feedback_reply says plainly it is not available and points at report_gap', async () => {
+    const out = await runTool(ctx, 'feedback_reply', { said: 'x' })
+    expect(out.status).toBe('not_available')
+    expect(out.message).toMatch(/report_gap/)
+  })
+  it('create_event writes at once in Los Angeles time and names its undo, which deletes the event (ledger 0014)', async () => {
+    backend.state.settings.allowedMember = 'u-admin'
+    const real = backend.rpc
+    backend.rpc = async (s, fn, args) => {
+      const r = await real(s, fn, args)
+      if (fn === 'connector_call' && args.p_mode === 'commit' && args.p_function === 'schedule_create_event' && r.data) r.data.result = { id: 'ev-1', title: args.p_args.p_title }
+      return r
+    }
+    const out = await runTool(ctx, 'create_event', { said: 'add a build Saturday 9 to 1', title: 'Build', kind: 'build', start: '2026-10-24 09:00', end: '2026-10-24 13:00', location: 'Shop' })
+    expect(out.status).toBe('done')
+    expect(out.level).toBe('undo')
+    expect(backend.state.calls.at(-1)).toMatchObject({ fn: 'schedule_create_event', args: { p_title: 'Build', p_kind: 'build', p_starts_at: '2026-10-24T16:00:00.000Z', p_ends_at: '2026-10-24T20:00:00.000Z', p_location: 'Shop' } })
+    expect(backend.state.audit.at(-1).undo).toEqual({ function: 'schedule_delete_event', args: { p_event: 'ev-1' } })
+    const u = await undoLast(ctx)
+    expect(u.status).toBe('done')
+    expect(backend.state.calls.at(-1)).toMatchObject({ fn: 'schedule_delete_event', args: { p_event: 'ev-1' } })
+  })
+  it('create_event refuses a time it cannot read and an end before the start, writing nothing', async () => {
+    const before = backend.state.audit.length
+    const bad = await runTool(ctx, 'create_event', { said: 'x', title: 'Build', kind: 'build', start: 'Saturday at 9', end: '2026-10-24 13:00' })
+    expect(bad.status).toBe('invalid')
+    const back = await runTool(ctx, 'create_event', { said: 'x', title: 'Build', kind: 'build', start: '2026-10-24 13:00', end: '2026-10-24 09:00' })
+    expect(back.status).toBe('invalid')
+    expect(backend.state.audit.length).toBe(before)
+  })
+  it('Los Angeles wall time crosses both 2026 clock changes, and the hour the clocks skip is refused', () => {
+    expect(dates.laWallToIso('2026-03-07 09:00')).toBe('2026-03-07T17:00:00.000Z')
+    expect(dates.laWallToIso('2026-03-09 09:00')).toBe('2026-03-09T16:00:00.000Z')
+    expect(dates.laWallToIso('2026-11-02T09:00')).toBe('2026-11-02T17:00:00.000Z')
+    expect(dates.laWallToIso('2026-03-08 02:30')).toBeNull()
+    expect(dates.laWallToIso('2026-10-24T09:00:00Z')).toBe('2026-10-24T09:00:00.000Z')
+    expect(dates.laWallToIso('tomorrow')).toBeNull()
+    for (let t = Date.UTC(2026, 0, 1); t < Date.UTC(2027, 0, 1); t += 3600_000 * 5) {
+      const wall = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(t))
+      const back = Date.parse(dates.laWallToIso(wall))
+      // The repeated fall-back hour reads as its first (daylight) instance.
+      expect([t, t - 3600_000]).toContain(back)
     }
   })
   it('find_tool finds a generated action and call_app refuses an unknown or excluded one', async () => {

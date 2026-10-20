@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import {
   sortQuestions, optionsOf, scaleOf, scaleTicks,
   isAnswered, isUnconfigured, missingRequired, buildAnswerRows,
@@ -224,11 +225,29 @@ export default function SurveyPage({ session }) {
     // (survey_id, member_id) is what makes a double submit -- two taps, or a
     // second tab -- land as an error rather than a second row, so a 23505 here
     // is not a failure, it is the already-submitted state arriving late.
-    const { data: resp, error: rErr } = await supabase
-      .from('survey_responses')
-      .insert({ survey_id: survey.id, member_id: memberId })
-      .select('id, submitted_at')
-      .single()
+    //
+    // survey_submit (0019) writes the response and its answers all or nothing,
+    // so a failed answer leaves no half-written submission to explain. Before
+    // it is pasted the page makes its two writes as it always did.
+    //
+    // A SKIPPED QUESTION WRITES NO ROW. buildAnswerRows drops anything that is
+    // not answered, so an untouched textarea stores nothing rather than "".
+    const answers = buildAnswerRows(null, ordered, draft).map(({ question_id, value }) => ({ question_id, value }))
+    const sub = await writeVia(supabase, 'survey_submit', { p_survey: survey.id, p_answers: answers }, {
+      steps: [
+        { table: 'survey_responses', op: 'insert', values: { survey_id: survey.id, member_id: memberId }, select: 'id, submitted_at', single: true },
+        (ctx) => {
+          const rows = buildAnswerRows(ctx.results[0].data.id, ordered, draft)
+          return rows.length ? { table: 'survey_answers', op: 'insert', values: rows } : null
+        },
+      ],
+      result: (ctx) => ctx.results[0]?.data ?? null,
+    })
+    // Which write failed: the response (nothing submitted) or, on the old
+    // path only, the answers after the response landed.
+    const resp = sub.via === 'direct' ? (sub.data ?? null) : (sub.error ? null : sub.data)
+    const rErr = resp ? null : sub.error
+    const aErr = resp ? sub.error : null
 
     if (rErr) {
       setBusy(false)
@@ -237,21 +256,15 @@ export default function SurveyPage({ session }) {
       return
     }
 
-    // A SKIPPED QUESTION WRITES NO ROW. buildAnswerRows drops anything that is
-    // not answered, so an untouched textarea stores nothing rather than "".
-    const rows = buildAnswerRows(resp.id, ordered, draft)
-    if (rows.length) {
-      const { error: aErr } = await supabase.from('survey_answers').insert(rows)
-      if (aErr) {
-        // The response row exists, so the member has submitted and cannot
-        // retry -- say what happened rather than showing a clean thank-you
-        // over a half-written submission.
-        setBusy(false)
-        setSubmitted(resp)
-        setState('done')
-        setError(`Your answers may not have saved: ${aErr.message}. Tell a mentor.`)
-        return
-      }
+    if (aErr) {
+      // The response row exists, so the member has submitted and cannot
+      // retry -- say what happened rather than showing a clean thank-you
+      // over a half-written submission.
+      setBusy(false)
+      setSubmitted(resp)
+      setState('done')
+      setError(`Your answers may not have saved: ${aErr.message}. Tell a mentor.`)
+      return
     }
 
     setBusy(false)

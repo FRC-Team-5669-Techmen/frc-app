@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { Link } from 'react-router-dom'
 import NotificationsPanel from './NotificationsPanel'
 import { RoleBadge, ROLE_ORDER } from './roles'
@@ -44,7 +45,8 @@ export default function ProfilePage({ session, hasRole = () => false }) {
       const metaAvatar = session.user.user_metadata?.avatar_url
       if (!avatar_url && metaAvatar) {
         avatar_url = metaAvatar
-        await supabase.from('profiles').update({ avatar_url }).eq('id', session.user.id)
+        await writeVia(supabase, 'member_set_avatar', { p_avatar_url: avatar_url },
+          { table: 'profiles', op: 'update', values: { avatar_url }, eq: { id: session.user.id } })
       }
 
       const p = { ...data, avatar_url }
@@ -105,17 +107,18 @@ export default function ProfilePage({ session, hasRole = () => false }) {
     setSaving(true)
     setError('')
     setSaved(false)
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        nickname:   form.nickname   || null,
-        bio:        form.bio        || null,
-        shirt_size:  form.shirt_size || null,
-        subteams:    form.subteams,
-        disciplines: form.disciplines,
-        grad_year:   form.grad_year !== '' ? Number(form.grad_year) : null,
-      })
-      .eq('id', session.user.id)
+    const patch = {
+      nickname:   form.nickname   || null,
+      bio:        form.bio        || null,
+      shirt_size:  form.shirt_size || null,
+      subteams:    form.subteams,
+      disciplines: form.disciplines,
+      grad_year:   form.grad_year !== '' ? Number(form.grad_year) : null,
+    }
+    const { error } = await writeVia(supabase, 'member_save_profile', {
+      p_nickname: patch.nickname, p_bio: patch.bio, p_shirt_size: patch.shirt_size,
+      p_subteams: patch.subteams, p_disciplines: patch.disciplines, p_grad_year: patch.grad_year,
+    }, { table: 'profiles', op: 'update', values: patch, eq: { id: session.user.id } })
     setSaving(false)
     if (error) { setError(error.message); return }
     setSaved(true)

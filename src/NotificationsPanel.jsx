@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import './NotificationsPanel.css'
 
 // Notification settings. Enables/disables web push (permission + pushManager
@@ -72,7 +73,8 @@ export default function NotificationsPanel({ session }) {
 
   const savePrefs = useCallback(async (next) => {
     setPrefs(next)
-    const { error } = await supabase.from('profiles').update({ notification_prefs: next }).eq('id', uid)
+    const { error } = await writeVia(supabase, 'member_set_notification_prefs', { p_prefs: next },
+      { table: 'profiles', op: 'update', values: { notification_prefs: next }, eq: { id: uid } })
     if (error) setMsg(error.message)
   }, [uid])
 
@@ -92,13 +94,16 @@ export default function NotificationsPanel({ session }) {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC),
       })
       const json = sub.toJSON()
-      const { error } = await supabase.from('push_subscriptions').upsert({
+      const subRow = {
         endpoint: json.endpoint,
         member_id: uid,
         p256dh: json.keys.p256dh,
         auth: json.keys.auth,
         user_agent: navigator.userAgent,
-      }, { onConflict: 'endpoint' })
+      }
+      const { error } = await writeVia(supabase, 'push_subscribe',
+        { p_endpoint: subRow.endpoint, p_p256dh: subRow.p256dh, p_auth: subRow.auth, p_user_agent: subRow.user_agent },
+        { table: 'push_subscriptions', op: 'upsert', values: subRow, options: { onConflict: 'endpoint' } })
       if (error) { setMsg(error.message); return }
       setSubscribed(true)
       setMsg('Notifications on for this device.')
@@ -115,7 +120,8 @@ export default function NotificationsPanel({ session }) {
       const reg = await navigator.serviceWorker.ready
       const sub = await reg.pushManager.getSubscription()
       if (sub) {
-        await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+        await writeVia(supabase, 'push_unsubscribe', { p_endpoint: sub.endpoint },
+          { table: 'push_subscriptions', op: 'delete', eq: { endpoint: sub.endpoint } })
         await sub.unsubscribe()
       }
       setSubscribed(false)

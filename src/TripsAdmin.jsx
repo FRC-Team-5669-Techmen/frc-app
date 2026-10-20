@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { isSchemaMissing } from './schemaMissing'
 import {
   DEFAULT_TZ, LINK_KEYS, SERVICE_HOURS_COLUMNS, SERVICE_HOURS_CSV_NOTE, daySheetHtml, exportColumns, exportRecords, fmtDate,
@@ -430,7 +431,9 @@ function NeedsEditor({ board, reload }) {
         <p className="eh-inline">
           <span className="eh-hint-warn">{starters.length} starter needs: review before sending.</span>
           <button type="button" className="eh-btn" onClick={async () => {
-            const { error } = await supabase.from('hub_food_needs').update({ starter: false }).in('id', starters.map((n) => n.id))
+            const ids = starters.map((n) => n.id)
+            const { error } = await writeVia(supabase, 'trips_mark_needs_reviewed', { p_needs: ids },
+              { table: 'hub_food_needs', op: 'update', values: { starter: false }, in: { id: ids } })
             setErr(error ? error.message : '')
             reload()
           }}>Mark all reviewed</button>
@@ -444,7 +447,9 @@ function NeedsEditor({ board, reload }) {
         <input className="eh-input" placeholder="Need, e.g. Main dish" value={label} onChange={(e) => setLabel(e.target.value)} />
         <input className="eh-input ehm-num" type="number" min="1" max="99" value={qty} onChange={(e) => setQty(e.target.value)} aria-label="Quantity" />
         <button type="button" className="eh-btn" disabled={!mealId || !label.trim()} onClick={async () => {
-          const { error } = await supabase.from('hub_food_needs').insert({ meal_id: mealId, label: label.trim(), quantity: Number(qty) || 1, position: 99 })
+          const need = { meal_id: mealId, label: label.trim(), quantity: Number(qty) || 1, position: 99 }
+          const { error } = await writeVia(supabase, 'trips_add_food_need', { p_meal: need.meal_id, p_label: need.label, p_quantity: need.quantity },
+            { table: 'hub_food_needs', op: 'insert', values: need })
           setErr(error ? error.message : '')
           if (!error) { setLabel(''); setQty(1) }
           reload()
@@ -455,7 +460,8 @@ function NeedsEditor({ board, reload }) {
           <li key={n.id} className="eh-inline">
             <span>{m.label}: {n.label} x{n.quantity}{n.starter ? ' (starter)' : ''}{n.claim ? `, claimed by ${n.claim.family}` : ''}</span>
             <button type="button" className="eh-mini" onClick={async () => {
-              const { error } = await supabase.from('hub_food_needs').delete().eq('id', n.id)
+              const { error } = await writeVia(supabase, 'trips_remove_food_need', { p_need: n.id },
+                { table: 'hub_food_needs', op: 'delete', eq: { id: n.id } })
               setErr(error ? error.message : '')
               reload()
             }}>Remove</button>
@@ -536,6 +542,10 @@ function Setup({ eventId, ov, reload }) {
     await load()
     reload()
   }
+  // trips_save_event (0019) takes the fields by name and leaves any it is not
+  // given alone, as the page update did.
+  const saveEvent = (fields) => done(writeVia(supabase, 'trips_save_event', { p_event: eventId, p_fields: fields },
+    { table: 'hub_events', op: 'update', values: fields, eq: { id: eventId } }))
   if (!ev) return <p className="eh-empty">Loading.</p>
   const setE = (k, v) => setEv({ ...ev, [k]: v })
   const sections = ev.info?.sections ?? []
@@ -581,14 +591,14 @@ function Setup({ eventId, ov, reload }) {
             <input className="eh-input" value={ev.links?.[k] ?? ''} placeholder="Blank: not set"
                    onChange={(e) => setE('links', { ...(ev.links ?? {}), [k]: e.target.value.trim() })} /></label>
         ))}
-        <button type="button" className="eh-btn eh-btn-primary" onClick={() => done(supabase.from('hub_events').update({
+        <button type="button" className="eh-btn eh-btn-primary" onClick={() => saveEvent({
           title: ev.title, venue_name: ev.venue_name, venue_address: ev.venue_address, map_url: ev.map_url,
           phase1_due_at: ev.phase1_due_at, lockin_opens_at: ev.lockin_opens_at, lockin_due_at: ev.lockin_due_at,
           one_minor_rule: ev.one_minor_rule, driver_paperwork_required: ev.driver_paperwork_required,
           alert_emails: ev.alert_emails ?? [], links: ev.links ?? {}, updated_at: new Date().toISOString(),
           // Sent only when the row has the column (0011), so an event saves the same before it is pasted.
           ...('parent_service_hours_note' in ev ? { parent_service_hours_note: String(ev.parent_service_hours_note ?? '').trim() || null } : {}),
-        }).eq('id', eventId))}>Save event</button>
+        })}>Save event</button>
       </section>
 
       {days.map((d, i) => {
@@ -636,13 +646,17 @@ function Setup({ eventId, ov, reload }) {
               <button type="button" role="switch" aria-checked={d.ask_pit_setup} className={`eh-chip${d.ask_pit_setup ? ' eh-chip-on' : ''}`} onClick={() => setD('ask_pit_setup', !d.ask_pit_setup)}>Ask about pit setup</button>
               <button type="button" role="switch" aria-checked={d.ask_school_ride} className={`eh-chip${d.ask_school_ride ? ' eh-chip-on' : ''}`} onClick={() => setD('ask_school_ride', !d.ask_school_ride)}>Ask about the ride to Bosco Tech</button>
             </div>
-            <button type="button" className="eh-btn eh-btn-primary" onClick={() => done(supabase.from('hub_days').update({
-              title: d.title, position: d.position, captain_id: d.captain_id, meet_place: d.meet_place, meet_at: d.meet_at,
-              last_car_out_at: d.last_car_out_at, target_arrival_at: d.target_arrival_at, doors_at: d.doors_at,
-              venue_opens_at: d.venue_opens_at, venue_closes_at: d.venue_closes_at, pits_close_at: d.pits_close_at,
-              drive_to_range: d.drive_to_range, drive_home_range: d.drive_home_range, miles_to: d.miles_to, miles_home: d.miles_home,
-              intro: d.intro, home_options: d.home_options ?? [], notes: d.notes, ask_pit_setup: d.ask_pit_setup, ask_school_ride: d.ask_school_ride,
-            }).eq('id', d.id))}>Save day</button>
+            <button type="button" className="eh-btn eh-btn-primary" onClick={() => {
+              const fields = {
+                title: d.title, position: d.position, captain_id: d.captain_id, meet_place: d.meet_place, meet_at: d.meet_at,
+                last_car_out_at: d.last_car_out_at, target_arrival_at: d.target_arrival_at, doors_at: d.doors_at,
+                venue_opens_at: d.venue_opens_at, venue_closes_at: d.venue_closes_at, pits_close_at: d.pits_close_at,
+                drive_to_range: d.drive_to_range, drive_home_range: d.drive_home_range, miles_to: d.miles_to, miles_home: d.miles_home,
+                intro: d.intro, home_options: d.home_options ?? [], notes: d.notes, ask_pit_setup: d.ask_pit_setup, ask_school_ride: d.ask_school_ride,
+              }
+              done(writeVia(supabase, 'trips_save_day', { p_day: d.id, p_fields: fields },
+                { table: 'hub_days', op: 'update', values: fields, eq: { id: d.id } }))
+            }}>Save day</button>
           </section>
         )
       })}
@@ -662,7 +676,8 @@ function Setup({ eventId, ov, reload }) {
               </div>
               <label className="eh-field"><span className="eh-q-label">Food truck footnote</span>
                 <input className="eh-input" value={m.truck_note ?? ''} onChange={(e) => setM('truck_note', e.target.value || null)} /></label>
-              <button type="button" className="eh-btn" onClick={() => done(supabase.from('hub_meals').update({ label: m.label, starts_at: m.starts_at, truck_note: m.truck_note }).eq('id', m.id))}>Save meal</button>
+              <button type="button" className="eh-btn" onClick={() => done(writeVia(supabase, 'trips_save_meal', { p_meal: m.id, p_label: m.label, p_starts_at: m.starts_at, p_truck_note: m.truck_note },
+                { table: 'hub_meals', op: 'update', values: { label: m.label, starts_at: m.starts_at, truck_note: m.truck_note }, eq: { id: m.id } }))}>Save meal</button>
             </div>
           )
         })}
@@ -689,10 +704,10 @@ function Setup({ eventId, ov, reload }) {
         ))}
         <div className="eh-inline">
           <button type="button" className="eh-btn" onClick={() => setE('info', { ...(ev.info ?? {}), sections: [...sections, { key: `s${Date.now()}`, title: 'New section', lines: [] }] })}>Add a section</button>
-          <button type="button" className="eh-btn eh-btn-primary" onClick={() => done(supabase.from('hub_events').update({
+          <button type="button" className="eh-btn eh-btn-primary" onClick={() => saveEvent({
             info: { ...(ev.info ?? {}), sections: sections.map((s) => ({ ...s, lines: textToLines(linesToText(s.lines)) })) },
             updated_at: new Date().toISOString(),
-          }).eq('id', eventId))}>Save sections</button>
+          })}>Save sections</button>
         </div>
       </section>
       {ov && <p className="eh-mono">Event ends {fmtDayTime(ov.event.ends_at, tz)}.</p>}
@@ -706,7 +721,9 @@ function AddDay({ eventId, tz, done }) {
     <section className="eh-card eh-inline">
       <input className="eh-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} aria-label="New day" />
       <button type="button" className="eh-btn" disabled={!date} onClick={() => {
-        done(supabase.from('hub_days').insert({ event_id: eventId, day_date: date, position: 9, venue_closes_at: zonedToIso(date, '18:00', tz) }), 'Day added.')
+        const closes = zonedToIso(date, '18:00', tz)
+        done(writeVia(supabase, 'trips_add_day', { p_event: eventId, p_day_date: date, p_venue_closes_at: closes },
+          { table: 'hub_days', op: 'insert', values: { event_id: eventId, day_date: date, position: 9, venue_closes_at: closes } }), 'Day added.')
         setDate('')
       }}>Add a day</button>
     </section>
@@ -727,7 +744,9 @@ function AddMeal({ eventId, days, tz, done }) {
       <input className="eh-input" placeholder="Sat lunch" value={label} onChange={(e) => setLabel(e.target.value)} />
       <input className="eh-input ehm-num" type="time" value={time} onChange={(e) => setTime(e.target.value)} aria-label="Starts" />
       <button type="button" className="eh-btn" disabled={!day || !label.trim()} onClick={() => {
-        done(supabase.from('hub_meals').insert({ event_id: eventId, day_id: dayId, label: label.trim(), starts_at: zonedToIso(day.day_date, time, tz) }), 'Meal added.')
+        const meal = { event_id: eventId, day_id: dayId, label: label.trim(), starts_at: zonedToIso(day.day_date, time, tz) }
+        done(writeVia(supabase, 'trips_add_meal', { p_event: meal.event_id, p_day: meal.day_id, p_label: meal.label, p_starts_at: meal.starts_at },
+          { table: 'hub_meals', op: 'insert', values: meal }), 'Meal added.')
         setLabel('')
       }}>Add a meal</button>
     </div>

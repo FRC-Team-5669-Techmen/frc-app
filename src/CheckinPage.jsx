@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useLocation, useNavigate, Link } from 'react-router-dom'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
+import { recordAttendance } from './attendanceRecord'
 import { verifyAtShop } from './geo'
 import { DEFAULT_CATEGORY } from './categories'
 import {
@@ -130,7 +132,7 @@ export default function CheckinPage({ session }) {
     if (signout) {
       await insertOutWithNote(supabase, row, signout)
     } else {
-      const { error } = await supabase.from('attendance_events').insert(row)
+      const { error } = await recordAttendance(supabase, row)
       if (error) throw error
     }
     recordLocalTap(deviceStore(), session.user.id, newType)
@@ -327,7 +329,8 @@ export default function CheckinPage({ session }) {
       setLoadingMsg(revisit ? 'Checking your status…' : null)
     }
     try {
-      await supabase.from('profiles').upsert({ id: session.user.id }, { onConflict: 'id' })
+      await writeVia(supabase, 'member_ensure_profile', {},
+        { table: 'profiles', op: 'upsert', values: { id: session.user.id }, options: { onConflict: 'id' } })
 
       // Staff can exempt a member from the location gate (e.g. a phone with
       // unreliable GPS). Read it now so a tapped check-in can skip the fence.

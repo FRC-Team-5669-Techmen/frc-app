@@ -219,6 +219,25 @@ export function readChain(root = ROOT) {
   return fns;
 }
 
+/**
+ * The plain-words description a migration gives a function: the first
+ * sentence after `-- Does:` in the comment block directly above its
+ * `create function` (0019 onward). The last file in apply order wins, like the
+ * signature. tools/connector/build.mjs makes it the generated entry's words.
+ */
+export function docsByName(root = ROOT) {
+  const out = new Map();
+  for (const file of chainFiles(root)) {
+    const text = readFileSync(join(root, file), 'utf8');
+    for (const m of text.matchAll(/((?:^--[^\n]*\n)+)[ \t]*create\s+(?:or\s+replace\s+)?function\s+(?:public\.)?([a-z_][a-z0-9_]*)\s*\(/gim)) {
+      const block = m[1].split('\n').map((l) => l.replace(/^--\s?/, '')).join(' ');
+      const d = /\bDoes:\s*(.+?\.)(?:\s|$)/.exec(block);
+      if (d) out.set(m[2].toLowerCase(), d[1].replace(/\s+/g, ' ').trim());
+    }
+  }
+  return out;
+}
+
 /** Every public function name the chain ends with. */
 export function chainNames(root = ROOT) {
   return new Set([...readChain(root).values()].map((f) => f.name));

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { REPORT_TYPES, TRIED_MAX, buildReport, submitReport, summarizeUserAgent } from './feedbackModel'
 import './FeedbackWidget.css'
 
@@ -170,7 +171,11 @@ export default function FeedbackWidget({ session }) {
         userAgent: navigator.userAgent,
         build:     BUILD,
       })
-      const { error: err } = await submitReport(p => supabase.from('feedback').insert(p), payload)
+      const { error: err } = await submitReport(p => writeVia(supabase, 'feedback_submit', {
+        p_category: p.category ?? null, p_message: p.message, p_image_paths: p.image_paths ?? [],
+        p_route: p.route ?? null, p_viewport: p.viewport ?? null, p_user_agent: p.user_agent ?? null,
+        p_tried: p.tried ?? null, p_build: p.build ?? null,
+      }, { table: 'feedback', op: 'insert', values: p }), payload)
       if (err) throw err
       setDone(true)
       setTimeout(() => { setOpen(false); reset() }, 1600)

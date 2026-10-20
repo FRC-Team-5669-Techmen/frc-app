@@ -8,7 +8,7 @@
 import { TOOLS, FUNCTIONS, liveFunction, levelFor, fitForm } from './registry.js'
 import { write, undoLast, NotRegistered } from './engine.js'
 import { RESOLVERS, roster, resolveMember, displayName } from './resolve.js'
-import { laDateKey, laMidnightMs, addDays, laClock, laDay } from './dates.js'
+import { laDateKey, laMidnightMs, addDays, laClock, laDay, laWallToIso } from './dates.js'
 import { isSchemaMissing } from './errors.js'
 
 export class UnknownTool extends Error {}
@@ -300,12 +300,23 @@ export function findTools(query, limit = 5) {
 
 const writeOpts = (a) => ({ dryRun: a.dry_run === true, requestId: a.request_id, confirmToken: a.confirm_token, again: a.again === true })
 
+class InvalidArgument extends Error {}
+
 function mapArgs(tool, a, resolved) {
   const out = {}
   for (const [k, tmpl] of Object.entries(tool.map ?? {})) {
     if (tmpl === '$said') { out[k] = a.said ?? ''; continue }
     let m = /^\$args\.([a-z_]+)$/.exec(tmpl)
     if (m) { if (a[m[1]] !== undefined) out[k] = a[m[1]]; continue }
+    // $la.x: a time he said, read as Los Angeles wall-clock time.
+    m = /^\$la\.([a-z_]+)$/.exec(tmpl)
+    if (m) {
+      if (a[m[1]] === undefined) continue
+      const iso = laWallToIso(a[m[1]])
+      if (!iso) throw new InvalidArgument(`"${a[m[1]]}" is not a time I can read for ${m[1]}. Send it as YYYY-MM-DD HH:MM, Los Angeles time. Nothing was changed.`)
+      out[k] = iso
+      continue
+    }
     m = /^\$resolved\.([a-z_]+)\.([a-z_]+)$/.exec(tmpl)
     if (m) { out[k] = resolved[m[1]]?.[m[2]]; continue }
     out[k] = tmpl
@@ -338,7 +349,16 @@ export async function runTool(ctx, name, a = {}) {
           resolved[argName] = r.member ?? r.event
         }
       }
-      const args = mapArgs(tool, a, resolved)
+      let args
+      try {
+        args = mapArgs(tool, a, resolved)
+      } catch (e) {
+        if (e instanceof InvalidArgument) return { status: 'invalid', message: e.message }
+        throw e
+      }
+      if (args.p_starts_at && args.p_ends_at && Date.parse(args.p_ends_at) < Date.parse(args.p_starts_at)) {
+        return { status: 'invalid', message: 'The end is before the start. Ask him for the times again. Nothing was changed.' }
+      }
       const out = await write(ctx, { tool: name, fn: tool.function, args }, writeOpts(a))
       if (name === 'approve_signout' && resolved.member) {
         out.signout = { member: resolved.member.name, note: resolved.member.note, cleanup_confirmed: resolved.member.cleanup_confirmed, asked_at: laClock(resolved.member.requested_at) }

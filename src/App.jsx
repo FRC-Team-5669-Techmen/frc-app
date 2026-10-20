@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { resolveCurrentSeason } from './seasons'
 import { nextApproval, nextRoles, nextOnboardedAt } from './claimApproval'
 import NavBar from './NavBar'
@@ -262,7 +263,8 @@ export default function App() {
       const { startTour } = await import('./tour')
       startTour(isStaff, async () => {
         const now = new Date().toISOString()
-        await supabase.from('profiles').update({ onboarded_at: now }).eq('id', session.user.id)
+        await writeVia(supabase, 'member_finish_tour', {},
+          { table: 'profiles', op: 'update', values: { onboarded_at: now }, eq: { id: session.user.id } })
         setOnboardedAt(now)
       }, isParentTrack)
     }

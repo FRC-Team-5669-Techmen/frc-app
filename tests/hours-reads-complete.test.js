@@ -175,7 +175,10 @@ describe('the tree', () => {
     // board, the glance card and the activity feed are bounded to today.
     expect(count('paged')).toBeGreaterThanOrEqual(9)
     expect(count('bounded')).toBeGreaterThanOrEqual(5)
-    expect(count('write')).toBeGreaterThanOrEqual(3)
+    // Every attendance write now goes through attendance_record (0019) via
+    // src/attendanceRecord.js, so the tree holds no direct one; that the scan
+    // still recognises a write is the synthetic case above.
+    expect(count('write')).toBe(0)
     const pagedFiles = new Set(all.filter(r => r.kind === 'paged').map(r => r.file))
     for (const f of ['HoursBoard.jsx', 'ReportsPage.jsx', 'VerifyHoursPage.jsx', 'ParentHomePage.jsx', 'JobsPage.jsx', 'RosterPage.jsx', 'AttendanceHistory.jsx', 'MemberHoursAdmin.jsx', 'MyHoursPage.jsx']) {
       expect(pagedFiles.has(f), f).toBe(true)

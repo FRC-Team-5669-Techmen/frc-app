@@ -109,4 +109,11 @@ describe('writeVia', () => {
     expect(go.error.message).toBe('first')
     expect(c.calls.map((x) => x.chain[0].table)).toEqual(['a', 'b', 'c'])
   })
+
+  it('ignoreError: a failure the page never read is not answered and stops nothing', async () => {
+    const c = fakeClient({ tables: { a: { data: null, error: { code: '42501', message: 'ignored' } }, c: { data: 'ok', error: null } } })
+    const r = await runDirect(c, [{ table: 'a', op: 'delete', eq: { id: 1 }, ignoreError: true }, { table: 'c', op: 'insert', values: {} }])
+    expect(r).toEqual({ data: 'ok', error: null, via: 'direct' })
+    expect(c.calls.map((x) => x.chain[0].table)).toEqual(['a', 'c'])
+  })
 })

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { computeHoursMs, fmtDuration } from './hoursUtils'
 import { useGlance } from './useGlance'
 import { fmtTime, fmtDay } from './shopStatus'
@@ -210,11 +211,12 @@ export default function HomePage({ session, hasRole = () => false }) {
     setRsvping(true)
     const next = myResp === response ? null : response // tap again to clear
     const { error } = next === null
-      ? await supabase.from('event_signups').delete().match({ event_id: nextId, member_id: uid })
-      : await supabase.from('event_signups').upsert(
-        { event_id: nextId, member_id: uid, response: next, updated_at: new Date().toISOString() },
-        { onConflict: 'event_id,member_id' },
-      )
+      ? await writeVia(supabase, 'event_clear_response', { p_event: nextId },
+        { table: 'event_signups', op: 'delete', match: { event_id: nextId, member_id: uid } })
+      : await writeVia(supabase, 'event_set_response', { p_event: nextId, p_response: next },
+        { table: 'event_signups', op: 'upsert',
+          values: { event_id: nextId, member_id: uid, response: next, updated_at: new Date().toISOString() },
+          options: { onConflict: 'event_id,member_id' } })
     setRsvping(false)
     // Show the answer only once it saved: a failed write keeps the old one.
     if (error) return

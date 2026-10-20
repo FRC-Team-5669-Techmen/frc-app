@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from './supabase'
+import { writeVia } from './writeVia'
 import { isSchemaMissing } from './schemaMissing'
 import {
   ANNOUNCE_CHANNELS, ANNOUNCE_LIMITS, DEFAULT_ANNOUNCE_CHANNEL, POLL_DURATION_PRESETS,
@@ -204,13 +205,16 @@ function RoleEditor({ roles, onChanged }) {
     e.preventDefault()
     const errs = validateRoleRow(form)
     if (errs.length) { setMsg(errs.join(' ')); return }
+    const row = {
+      name: form.name.trim(),
+      role_id: form.role_id.trim(),
+      notes: form.notes.trim() || null,
+      sort_order: form.sort_order === '' ? nextSort : Number(form.sort_order) || 0,
+    }
     write(
-      supabase.from('discord_announce_roles').insert({
-        name: form.name.trim(),
-        role_id: form.role_id.trim(),
-        notes: form.notes.trim() || null,
-        sort_order: form.sort_order === '' ? nextSort : Number(form.sort_order) || 0,
-      }),
+      writeVia(supabase, 'announce_add_role',
+        { p_name: row.name, p_role_id: row.role_id, p_notes: row.notes, p_sort_order: row.sort_order },
+        { table: 'discord_announce_roles', op: 'insert', values: row }),
       () => setForm(blank),
     )
   }
@@ -218,13 +222,16 @@ function RoleEditor({ roles, onChanged }) {
   function saveEdit(id) {
     const errs = validateRoleRow(edit)
     if (errs.length) { setMsg(errs.join(' ')); return }
+    const patch = {
+      name: edit.name.trim(),
+      role_id: edit.role_id.trim(),
+      notes: edit.notes.trim() || null,
+      sort_order: Number(edit.sort_order) || 0,
+    }
     write(
-      supabase.from('discord_announce_roles').update({
-        name: edit.name.trim(),
-        role_id: edit.role_id.trim(),
-        notes: edit.notes.trim() || null,
-        sort_order: Number(edit.sort_order) || 0,
-      }).eq('id', id),
+      writeVia(supabase, 'announce_edit_role',
+        { p_role: id, p_name: patch.name, p_role_id: patch.role_id, p_notes: patch.notes, p_sort_order: patch.sort_order },
+        { table: 'discord_announce_roles', op: 'update', values: patch, eq: { id } }),
       () => setEditing(null),
     )
   }
@@ -272,7 +279,8 @@ function RoleEditor({ roles, onChanged }) {
                   </div>
                   <div className="an-row-actions">
                     <button type="button" className="an-btn" disabled={busy}
-                      onClick={() => write(supabase.from('discord_announce_roles').update({ active: off }).eq('id', r.id))}>
+                      onClick={() => write(writeVia(supabase, 'announce_set_role_active', { p_role: r.id, p_active: off },
+                        { table: 'discord_announce_roles', op: 'update', values: { active: off }, eq: { id: r.id } }))}>
                       {off ? 'Activate' : 'Deactivate'}
                     </button>
                     <button type="button" className="an-btn" disabled={busy}
@@ -281,7 +289,8 @@ function RoleEditor({ roles, onChanged }) {
                     </button>
                     {armed === r.id ? (
                       <button type="button" className="an-btn an-btn-danger" disabled={busy}
-                        onClick={() => write(supabase.from('discord_announce_roles').delete().eq('id', r.id), () => setArmed(null))}>
+                        onClick={() => write(writeVia(supabase, 'announce_delete_role', { p_role: r.id },
+                          { table: 'discord_announce_roles', op: 'delete', eq: { id: r.id } }), () => setArmed(null))}>
                         Delete {r.name}? Past posts keep their copy.
                       </button>
                     ) : (

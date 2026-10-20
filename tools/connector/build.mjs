@@ -24,7 +24,7 @@
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import YAML from 'yaml';
-import { ROOT, readChain, bodiesByName } from './sqlchain.mjs';
+import { ROOT, readChain, bodiesByName, docsByName } from './sqlchain.mjs';
 import { buildInventory } from './inventory.mjs';
 import { reachedGates, writers } from './gates.mjs';
 
@@ -41,8 +41,13 @@ export const spoken = (name) => (name ?? '').replace(/^p_/, '').replace(/^target
 
 const words = (name) => name.replace(/^_+/, '').split('_').filter(Boolean);
 
-/** A generated entry's one sentence, from its name and what it does. */
-function generatedDescribe(name, writes) {
+/**
+ * A generated entry's one sentence: the migration's own `-- Does:` words when
+ * it gives them (sqlchain.mjs docsByName), otherwise one made from its name;
+ * then what it does.
+ */
+function generatedDescribe(name, writes, doc) {
+  if (doc) return `${doc} ${writes ? '(A change: asks first.)' : '(A read.)'}`;
   const w = words(name);
   const lead = w[0] === 'staff' || w[0] === 'admin' ? w.slice(1) : w;
   const text = lead.join(' ');
@@ -55,6 +60,7 @@ export function buildRegistry(root = ROOT) {
   const bodies = bodiesByName(chain);
   const writes = writers(bodies);
   const gates = reachedGates(bodies);
+  const docs = docsByName(root);
   const overlay = readOverlay(join(root, 'tools/connector/registry'));
   const handFns = overlay.functions ?? {};
   const excludedFns = overlay.exclusions.functions ?? {};
@@ -90,7 +96,7 @@ export function buildRegistry(root = ROOT) {
       if (hand.before) entry.before = hand.before;
       if (hand.connector_only) entry.connector_only = true;
     } else {
-      entry.describe = generatedDescribe(name, writes.has(name));
+      entry.describe = generatedDescribe(name, writes.has(name), docs.get(name));
       entry.level = writes.has(name) ? 'confirm' : 'read';
     }
     functions[name] = entry;

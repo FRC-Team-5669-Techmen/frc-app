@@ -6,27 +6,35 @@
 //     twenty characters: every function it calls, every Edge Function it
 //     invokes, every api/ route, every direct table write (by file, table and
 //     operation, with its count) and every storage write.
-//   - every direct table write found today is excluded with the one reason
-//     "direct table write, moves to a function in the next connector ledger".
+//   - there is NO direct table write anywhere under src/ or api/ outside
+//     src/writeVia.js (the one fallback helper) and the fixture engine: since
+//     ledger 0014 every page write goes through a database function, and a
+//     new direct write fails here whatever exclusions.yaml says. A planted
+//     write in a copy of the tree is the positive control.
+//   - every writeVia call names a function the SQL chain creates, with
+//     argument names its signature has (a typo would answer PGRST202, fall
+//     back to the direct write forever and never reach Claude).
 //   - every hand entry names something that exists, and every reverse an undo
 //     names is itself a live entry.
 //   - no tool description names a table, and every one is voice sized.
 //
-// A new `.rpc('name')` gets a generated tool on the next build, so this fails
-// only on a stale file (which .github/workflows/connector.yml regenerates on
-// every push to main). A new direct table write fails here until it is
-// excluded by hand or moved into a function.
+// A new `.rpc('name')` or writeVia call gets a generated tool on the next
+// build, so this fails only on a stale file (which
+// .github/workflows/connector.yml regenerates on every push to main). A new
+// direct table write fails here until it is moved into a function.
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
 import { buildRegistry, readOverlay, renderRegistry, serialize, REGISTRY_PATH } from '../tools/connector/build.mjs'
 import { buildInventory, stripComments } from '../tools/connector/inventory.mjs'
-import { readChain } from '../tools/connector/sqlchain.mjs'
+import { readChain, chainFiles } from '../tools/connector/sqlchain.mjs'
 import { STAFF_GATES, bodyWrites } from '../tools/connector/gates.mjs'
 import REGISTRY from '../api/_lib/connector/registry.generated.js'
 import { toolList, readRunners } from '../api/_lib/connector/tools.js'
 
-const REASON = 'direct table write, moves to a function in the next connector ledger'
 const fresh = buildRegistry()
+const ROOT = new URL('..', import.meta.url).pathname
 
 describe('the generated file is current', () => {
   it('equals a fresh build of this tree (run npm run connector:build if not)', () => {
@@ -61,11 +69,11 @@ describe('every write the app makes is answered for', () => {
     for (const e of fresh.edge) expect(e.excluded?.length ?? 0, e.name).toBeGreaterThanOrEqual(20)
     for (const r of fresh.routes) expect(r.excluded?.length ?? 0, r.file).toBeGreaterThanOrEqual(20)
   })
-  it('every direct table write is excluded, by file, table, operation and count, with the one reason', () => {
-    expect(fresh.table_writes.length).toBeGreaterThan(50)
-    for (const g of fresh.table_writes) {
-      expect(g.excluded, `${g.file} ${g.table}.${g.op} at lines ${g.lines.join(',')}`).toBe(REASON)
-    }
+  it('NO direct table write anywhere under src/ or api/, outside src/writeVia.js and the fixture engine', () => {
+    const found = buildInventory().table_writes.map((w) => `${w.file}:${w.line} ${w.table}.${w.op}`)
+    expect(found, 'move each into a database function and call it through writeVia (src/writeVia.js)').toEqual([])
+    expect(fresh.table_writes).toEqual([])
+    expect(readOverlay().exclusions.table_writes ?? [], 'a direct write cannot be excluded').toEqual([])
   })
   it('every storage write is excluded with a reason', () => {
     for (const g of fresh.storage) expect(g.excluded?.length ?? 0, `${g.file} ${g.bucket}`).toBeGreaterThanOrEqual(20)
@@ -77,11 +85,95 @@ describe('every write the app makes is answered for', () => {
     expect([...text.matchAll(WRITE)].map((m) => m[2])).toEqual(['planted'])
     expect(/\.rpc\(\s*(['"`])planted_fn\1/.test(text)).toBe(true)
   })
-  it('POSITIVE CONTROL: one more write of an excluded kind breaks the exclusion count', () => {
-    const g = fresh.table_writes[0]
-    const x = (readOverlay().exclusions.table_writes ?? []).find((e) => e.file === g.file && e.table === g.table && e.op === g.op)
-    expect(x.count).toBe(g.lines.length)
-    expect(x.count + 1 === g.lines.length).toBe(false)
+  it('POSITIVE CONTROL: writes planted in a copy of the tree are found, every shape, and the two exempt places stay exempt', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'cw-plant-'))
+    try {
+      for (const x of ['src', 'api', 'supabase', 'sql', 'platform_migration.sql']) if (existsSync(join(ROOT, x))) cpSync(join(ROOT, x), join(dir, x), { recursive: true })
+      const plant = [
+        "async function planted(t) {",
+        "  await supabase.from('events').delete().eq('id', 1)",
+        "  await supabase.from(t).update({ a: 1 }).eq('id', 2)",
+        "  await supabase",
+        "    .from('tasks')",
+        "    .eq('a', 1)",
+        "    .upsert({})",
+        "  const q = supabase.from('positions')",
+        "  await q.delete()",
+        "  await other.insert({})",
+        "}",
+      ].join('\n')
+      const page = join(dir, 'src/SquadPage.jsx')
+      writeFileSync(page, readFileSync(page, 'utf8') + '\n' + plant + '\n')
+      for (const f of ['src/writeVia.js', 'src/dev/fixture/engine.js']) writeFileSync(join(dir, f), readFileSync(join(dir, f), 'utf8') + '\n' + plant + '\n')
+      const found = buildInventory(dir).table_writes
+      expect(new Set(found.map((w) => w.file))).toEqual(new Set(['src/SquadPage.jsx']))
+      const ops = found.map((w) => `${w.table}.${w.op}`)
+      for (const want of ['events.delete', 't.update', 'tasks.upsert', '(builder).delete', '(any).insert']) expect(ops, want).toContain(want)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  // Every writeVia(client, 'fn', { p_x: ... }) in src/: the function exists in
+  // the SQL chain, and the literal argument names are its own, with every
+  // argument that has no default given.
+  const viaCalls = () => {
+    const out = []
+    const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(d, e.name)) : /\.(jsx?|mjs)$/.test(e.name) ? [join(d, e.name)] : []))
+    for (const file of walk(join(ROOT, 'src')).filter((f) => !f.includes('/src/dev/'))) {
+      const text = stripComments(readFileSync(file, 'utf8'))
+      for (const m of text.matchAll(/writeVia\(\s*[\w$.]+\s*,\s*'([a-z0-9_]+)'\s*,\s*/g)) {
+        let i = m.index + m[0].length
+        let keys = null
+        if (text[i] === '{') {
+          let depth = 0; let j = i; const top = []
+          let cur = ''
+          for (; j < text.length; j += 1) {
+            const c = text[j]
+            if ('{[('.includes(c)) depth += 1
+            if ('}])'.includes(c)) depth -= 1
+            if (depth === 1 && c === ',') { top.push(cur); cur = ''; continue }
+            if (depth === 0) break
+            if (!(depth === 1 && c === '{' && cur === '' && j === i)) cur += c
+          }
+          top.push(cur)
+          keys = top.map((s) => s.trim()).filter(Boolean).map((s) => /^([A-Za-z_$][\w$]*)/.exec(s)?.[1]).filter(Boolean)
+        }
+        out.push({ file: file.slice(ROOT.length), fn: m[1], keys })
+      }
+    }
+    return out
+  }
+  it('every writeVia call names a real function with its own argument names', () => {
+    const calls = viaCalls()
+    expect(calls.length).toBeGreaterThan(60)
+    const chain = [...readChain().values()]
+    for (const c of calls) {
+      const forms = chain.filter((f) => f.name === c.fn)
+      expect(forms.length, `${c.file}: ${c.fn} is not created by any SQL file`).toBeGreaterThan(0)
+      if (!c.keys) continue
+      const ok = forms.some((f) => c.keys.every((k) => f.args.some((a) => a.name === k)) && f.args.every((a) => a.has_default || c.keys.includes(a.name)))
+      expect(ok, `${c.file}: ${c.fn}(${c.keys.join(', ')}) does not fit ${forms.map((f) => f.args.map((a) => a.name).join(', ')).join(' | ')}`).toBe(true)
+    }
+  })
+  it('the attendance write (built by src/attendanceRecord.js, not a literal) fits attendance_record too', async () => {
+    const { attendanceArgs } = await import('../src/attendanceRecord.js')
+    const f = [...readChain().values()].find((x) => x.name === 'attendance_record')
+    const keys = Object.keys(attendanceArgs({ type: 'in' }))
+    expect(keys.sort()).toEqual(f.args.map((a) => a.name).sort())
+  })
+  it('create_event offers exactly the schedule page event kinds', () => {
+    const page = readFileSync(join(ROOT, 'src/SchedulePage.jsx'), 'utf8')
+    const kinds = JSON.parse(/const KINDS = (\[[^\]]*\])/.exec(page)[1].replace(/'/g, '"'))
+    expect(REGISTRY.tools.create_event.args.kind.enum).toEqual(kinds)
+  })
+  it('POSITIVE CONTROL: the argument check catches a misspelt argument and a missing one', () => {
+    const chain = [...readChain().values()]
+    const f = chain.find((x) => x.name === 'staff_delete_job')
+    const fits = (keys) => keys.every((k) => f.args.some((a) => a.name === k)) && f.args.every((a) => a.has_default || keys.includes(a.name))
+    expect(fits(['p_task'])).toBe(true)
+    expect(fits(['p_taks'])).toBe(false)
+    expect(fits([])).toBe(false)
   })
 })
 
@@ -114,7 +206,11 @@ describe('the hand overlay names real things', () => {
 })
 
 describe('the tool descriptions are for voice', () => {
-  const TABLES = new Set(fresh.table_writes.map((g) => g.table).concat(['connector_audit', 'connector_settings', 'attendance_events', 'hour_adjustments', 'signout_requests', 'parent_responses', 'member_roles']))
+  // Every table any SQL file creates (the page writes that used to name them are gone).
+  const TABLES = new Set(chainFiles().flatMap((f) => [...readFileSync(join(ROOT, f), 'utf8').matchAll(/create\s+table\s+(?:if\s+not\s+exists\s+)?(?:public\.)?([a-z_][a-z0-9_]*)/gi)].map((m) => m[1].toLowerCase())).concat(['profiles', 'attendance_events']))  // the two the Supabase project started with
+  it('POSITIVE CONTROL: the table list is the schema', () => {
+    for (const t of ['logged_hours', 'event_signups', 'hub_food_needs', 'connector_audit']) expect(TABLES.has(t), t).toBe(true)
+  })
   it('every hand tool: under 200 characters, three or more ways to say it, no table name', () => {
     for (const t of Object.values(REGISTRY.tools)) {
       expect(t.describe.length, t.name).toBeLessThan(200)
