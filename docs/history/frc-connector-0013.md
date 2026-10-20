@@ -12,7 +12,7 @@ subsystems: ["Connector", "Feedback", "Roster and access", "Testing", "CI workfl
 Kept current so a restarted session can resume. Each milestone is a local commit.
 
 - [x] M1 rebased onto origin/main 4f3ccff; read CLAUDE.md, the ledger and migrations READMEs, idea-app's connector; audit started
-- [ ] M2 migration 0018 and its test pass in the SQL harness
+- [x] M2 migration 0018 and its test pass in the SQL harness (23/23; mutants-0018 12/12); docs/connector/allowlist.sql; package.json has @modelcontextprotocol/sdk 1.32.1 and pg 8.16.3 (dev)
 - [ ] M3 tools/connector: inventory, schema, generated registry, `npm run connector:build`
 - [ ] M4 api/_lib/connector engine, OAuth, MCP endpoint, vercel.json rewrites
 - [ ] M5 src/ConnectorPage.jsx (consent card and admin page) and its route line
@@ -20,7 +20,7 @@ Kept current so a restarted session can resume. Each milestone is a local commit
 - [ ] M7 harness proofs (same rows as direct, refusals, mutants), MCP Inspector
 - [ ] M8 docs, connector.yml, CLAUDE.md row, full gate, landing
 
-Next: M2.
+Next: M3.
 
 ## Audit (answered from the tree before building)
 
