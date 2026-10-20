@@ -18,7 +18,7 @@
 -- client role; the private helpers refuse outside connector_call.
 --
 -- Positive controls: 5, 8, 9, 11, 14, 17, 19, 21, 23. Mutation runs:
--- tools/sql-harness/mutants-0018.mjs.
+-- tools/connector/harness/mutants-0018.mjs.
 --
 -- Actors, picked from live data: an admin A (allowlisted inside this test),
 -- an approved member with no staff role S, and a mentor or lead with no
