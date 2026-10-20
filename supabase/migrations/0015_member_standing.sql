@@ -48,14 +48,27 @@ begin
   if to_regclass('public.meeting_checkins') is null then
     raise exception '0015_member_standing: apply 0014_session_signout.sql first.';
   end if;
-  if to_regclass('public.session_reviews') is null then
-    raise exception '0015_member_standing: public.session_reviews is missing (sql/forgotten_checkout.sql).';
-  end if;
   if to_regprocedure('public.is_admin()') is null then
     raise exception '0015_member_standing: public.is_admin() is missing (supabase/feedback.sql).';
   end if;
 end
 $pre$;
+
+-- The review table from sql/forgotten_checkout.sql, created here when that
+-- file was never pasted (the live project, 2026-10-19). Same shape.
+create table if not exists public.session_reviews (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid references auth.users(id) on delete cascade not null,
+  checkin_id  uuid references public.attendance_events(id) on delete cascade not null unique,
+  checkout_id uuid references public.attendance_events(id) on delete cascade not null unique,
+  status      text not null default 'pending' check (status in ('pending', 'approved', 'voided')),
+  reviewed_by uuid references auth.users(id),
+  reviewed_at timestamptz,
+  created_at  timestamptz default now()
+);
+alter table public.session_reviews enable row level security;
+drop policy if exists "authenticated can read session_reviews" on public.session_reviews;
+create policy "authenticated can read session_reviews" on public.session_reviews for select to authenticated using (true);
 
 -- ── 0. Helpers ───────────────────────────────────────────────────────────────
 create or replace function public._la_today()
