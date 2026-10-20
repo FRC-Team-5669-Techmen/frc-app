@@ -70,6 +70,7 @@ const EventFamilyPage    = lazy(() => import('./EventFamilyPage'))
 const EventJoinPage      = lazy(() => import('./EventJoinPage'))
 const TripsPage          = lazy(() => import('./TripsPage'))
 const TripsAdmin         = lazy(() => import('./TripsAdmin'))
+const ConnectorPage      = lazy(() => import('./ConnectorPage'))
 // Mounted in ProtectedLayout, so it is on every authenticated page. Lazy with
 // its OWN Suspense boundary and a null fallback: sharing the app-level
 // boundary would put the whole shell back on the splash while it loads.
@@ -369,6 +370,8 @@ export default function App() {
             guardians. Public, outside ProtectedLayout, same as /e. */}
         <Route path="/join" element={<EventJoinPage />} />
         <Route path="/join/:eventId" element={<EventJoinPage />} />
+
+        <Route path="/connector/*" element={<ConnectorPage />} />{/* Claude connector: consent card + admin page, outside the shell (docs/subsystems/connector.md) */}
 
         {/* Design-system specimen. Dev only — 404 in production. No auth, no Supabase. */}
         <Route path="/_ds" element={SpecimenPage ? <SpecimenPage /> : <DsNotFound />} />

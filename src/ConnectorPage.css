@@ -1,0 +1,126 @@
+/* /connector and /connector/authorize (ConnectorPage.jsx). Theme tokens only
+   (src/theme.css): gold is identity and active state, never a surface fill;
+   red is for the destructive Disconnect and errors only. */
+.cnx-wrap {
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: var(--bg);
+  padding: 2.5rem 1rem 3rem;
+  box-sizing: border-box;
+}
+.cnx-card {
+  width: 100%;
+  max-width: 26rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.cnx-card-wide { max-width: 52rem; }
+.cnx-brand { display: flex; align-items: center; gap: 0.6rem; }
+.cnx-mark { width: 2rem; height: 2rem; }
+.cnx-wordmark { font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.14em; color: var(--steel); }
+.cnx-dot { color: var(--gold); margin: 0 0.1rem; }
+.cnx-eyebrow { margin: 0; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); }
+.cnx-title { margin: 0; font-family: var(--font-ui); font-size: 1.3rem; font-weight: 700; line-height: 1.25; color: var(--text); overflow-wrap: anywhere; }
+.cnx-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.cnx-muted { margin: 0; color: var(--steel); font-size: 0.95rem; line-height: 1.45; overflow-wrap: anywhere; }
+.cnx-mono { font-family: var(--font-mono); }
+.cnx-error { margin: 0; color: var(--fault); font-size: 0.9rem; }
+.cnx-ok { margin: 0; font-family: var(--font-mono); font-size: 0.85rem; color: var(--gold); }
+.cnx-inline { color: var(--gold); }
+.cnx-facts { list-style: none; margin: 0; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.45rem; background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); }
+.cnx-facts li { display: flex; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.cnx-k { margin: 0; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.cnx-v { color: var(--text); font-family: var(--font-mono); font-size: 0.85rem; overflow-wrap: anywhere; }
+.cnx-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+.cnx-form { display: flex; flex-direction: column; gap: 0.5rem; }
+.cnx-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.6rem 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+.cnx-btn:hover:not(:disabled) { background: var(--surface-2); }
+.cnx-btn:disabled { opacity: 0.55; cursor: default; }
+.cnx-btn-primary { color: var(--gold); border-color: var(--gold); }
+.cnx-btn-primary:hover:not(:disabled), .cnx-btn-primary:focus-visible { color: var(--bg); background: var(--gold); }
+.cnx-btn-danger { color: var(--fault); border-color: var(--fault); min-height: 2.75rem; }
+.cnx-btn-danger:hover:not(:disabled) { background: var(--fault-a10); }
+.cnx-link { align-self: center; background: none; border: 0; color: var(--steel); font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; min-height: 2.75rem; }
+.cnx-input {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.7rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  font: inherit;
+  box-sizing: border-box;
+  width: 100%;
+}
+.cnx-code { font-family: var(--font-mono); letter-spacing: 0.3em; text-align: center; }
+.cnx-select { width: auto; max-width: 100%; }
+.cnx-divider { display: flex; align-items: center; gap: 0.6rem; color: var(--muted); font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.cnx-divider::before, .cnx-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-strong); }
+.cnx-section { display: flex; flex-direction: column; gap: 0.6rem; padding-top: 0.85rem; border-top: 1px solid var(--border); }
+.cnx-section-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
+.cnx-h2 { margin: 0; font-family: var(--font-mono); font-size: 0.85rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--steel); }
+.cnx-count { color: var(--text); margin-left: 0.35rem; }
+.cnx-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.cnx-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding: 0.7rem; background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); }
+.cnx-row-off { opacity: 0.6; }
+.cnx-row-main { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.cnx-tool { font-weight: 700; color: var(--text); overflow-wrap: anywhere; }
+.cnx-meta { font-size: 0.75rem; color: var(--muted); }
+.cnx-chip { display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.15rem 0.45rem; border-radius: var(--radius); border: 1px solid var(--border-strong); color: var(--steel); white-space: nowrap; }
+.cnx-chip-on, .cnx-chip-done { color: var(--gold); border-color: var(--gold-dim); }
+.cnx-chip-failed { color: var(--fault); border-color: var(--fault); }
+.cnx-audit-row { background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); }
+.cnx-audit-head {
+  width: 100%;
+  min-height: 2.75rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: 'when tool chip' 'fn fn fn';
+  align-items: center;
+  gap: 0.25rem 0.6rem;
+  padding: 0.6rem 0.7rem;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cnx-when { grid-area: when; font-size: 0.75rem; color: var(--muted); }
+.cnx-audit-head .cnx-tool { grid-area: tool; }
+.cnx-fn { grid-area: fn; font-size: 0.75rem; color: var(--steel); overflow-wrap: anywhere; }
+.cnx-audit-head .cnx-chip { grid-area: chip; }
+.cnx-audit-body { padding: 0 0.7rem 0.7rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.cnx-pre { margin: 0; padding: 0.55rem; max-height: 16rem; overflow: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.75rem; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (min-width: 40rem) {
+  .cnx-card { padding: 2rem 1.75rem; }
+  .cnx-actions { flex-direction: row; }
+  .cnx-actions .cnx-btn { flex: 1; }
+  .cnx-audit-head { grid-template-columns: 9rem 1fr 1fr auto; grid-template-areas: 'when tool fn chip'; }
+}

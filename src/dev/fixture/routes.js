@@ -64,6 +64,7 @@ export const ROUTES = Object.freeze([
   { path: '/roster', url: '/roster', group: 'admin', label: 'Roster' },
   { path: '/feedback', url: '/feedback', group: 'admin', label: 'Feedback inbox' },
   { path: '/announce', url: '/announce', group: 'admin', label: 'Discord announce' },
+  { path: '/connector/*', url: '/connector', group: 'admin', label: 'Claude connector' },
   { path: '/checkin', url: '/checkin?loc=shop-main', group: 'checkin', label: 'NFC check-in (shop)', writes: true },
   { path: '/checkin-volunteer', url: '/checkin-volunteer?loc=fll-room', group: 'checkin', label: 'NFC volunteer check-in', writes: true },
   { path: '/_ds', url: '/_ds', group: 'dev', label: 'Design-system specimen' },
