@@ -45,7 +45,9 @@ One generated file, `api/_lib/connector/registry.generated.js`, written by `npm 
 
 Nothing to do: add the database function and call it from the app. The next push regenerates the registry, and the operation is reachable through `find_tool` and `call_app`, asking first if it writes.
 
-What does NOT get a tool by itself is **a direct table write** from a page (`supabase.from('x').insert(...)`). The connector calls functions, never tables. `tests/connector-coverage.test.js` fails on a new one until it is either moved into a definer function (the better answer) or excluded in `exclusions.yaml` by file, table, operation and count with a reason of at least twenty characters. Every direct write found on 2026-10-19 (84 in 26 files) is excluded with the reason "direct table write, moves to a function in the next connector ledger".
+**There is no direct table write left in the app, and none can be added** (ledger 0014, migration 0019). The connector calls functions, never tables, so every page write goes through a database function by `writeVia(supabase, 'fn', args, fallback)` (`src/writeVia.js`). The 84 direct writes found on 2026-10-19 became 67 functions, one per thing a person does, every one SECURITY INVOKER so the table policies that decided the direct write decide the function, row for row (`0019_connector_writes_rls_test.sql` runs the old write and the function side by side for five callers). The `fallback` is the page's old write described as data; it runs only while a function answers "no such function" (PGRST202 / 42883), so the app behaves the same before and after the SQL is pasted. `tests/connector-coverage.test.js` fails on any `.from(...)` insert, update, upsert or delete (and any `.insert(`/`.upsert(` or builder kept in a variable) under `src/` or `api/` outside `src/writeVia.js` and the fixture engine, whatever `exclusions.yaml` says, and on any `writeVia` call whose function or argument names the SQL does not have.
+
+**A new write is a function.** Write it in a numbered migration with a `-- Does:` line directly above its `create function` (the first sentence after `Does:` is what Claude reads in `find_tool`), call it with `writeVia`, and the next build makes it a `call_app` entry at confirm.
 
 ## How to write a hand entry
 
@@ -57,11 +59,23 @@ A hand entry gives an operation its voice: a name, a one-sentence `describe` und
 
 ## Gaps
 
-`report_gap` files what the app cannot do to the existing feedback inbox (`connector_report_gap`, SECURITY INVOKER, through the inbox's own insert policy, `route = 'connector'`, type idea), where it shows on `/feedback` with every other report. `create_event` and `feedback_reply` are listed tools that say plainly they are not available yet and point at `report_gap`.
+`report_gap` files what the app cannot do to the existing feedback inbox (`connector_report_gap`, SECURITY INVOKER, through the inbox's own insert policy, `route = 'connector'`, type idea), where it shows on `/feedback` with every other report. `feedback_reply` is a listed tool that says plainly it is not available and points at `report_gap`.
+
+## Tools added by ledger 0014
+
+- **`create_event`** (`schedule_create_event`, 0019): title, kind (the schedule page's own list), start, end, location, notes; times are read as Los Angeles wall-clock time (`$la.x` in a tool `map`, `laWallToIso` in `api/_lib/connector/dates.js`), an end before the start or an unreadable time writes nothing. Level undo: the reverse is `schedule_delete_event` with the new event's id.
+- **`set_member_name`** (`admin_set_member_name`, 0020): admin only, the full name and the nickname only when given; level undo, the reverse puts the previous values back (the function answers them). Each change writes a `member_admin_log` row.
+- **`merge_accounts`** (`admin_merge_member`, 0020): from and into resolved by name or email, a reason; always confirm, and the preview is the merge itself rolled back, so it lists the counts per table before anything is written. The rules are in `docs/subsystems/roster-and-access.md`.
+- **`set_team_role`** taking a role away now carries its undo (give it back), and its preview names the role row it will remove (below).
+
+## Deleted rows are reported (0021)
+
+0018 read the rows a call wrote by their in-progress xmin, which never sees a deleted row, so a removal previewed and audited as `"rows": []` (found live 2026-10-20 on a role removal). Since 0021 every table in `connector_log_tables` (now every public table but the connector's own) carries an AFTER DELETE row trigger, `connector_capture_delete`, which does nothing unless the delete runs inside `connector_call`; there it copies the deleted row into a transaction-only temporary table, and `_connector_rows_written` answers those rows marked `"deleted": true` (at most 200 per table, then one `more` entry). Cascades are captured the same way. An undo `when` may be a list that must all hold, and reads `"true"`/`"false"` text as booleans.
 
 ## Proof, and how to re-run it
 
-- `npx vitest run tests/connector-*.test.js`: OAuth (22), engine and tools (21), coverage (16), service role (5), workflow (5). Part of `npm test`.
+- `npx vitest run tests/connector-*.test.js tests/write-via.test.js tests/merge-coverage.test.js`: OAuth, engine and tools, coverage (zero direct writes, every writeVia call fits its function), service role, workflow, the fallback helper, the merge column list. Part of `npm test`.
+- `node tools/sql-harness/run.mjs --tests supabase/migrations/0019_connector_writes_rls_test.sql` (72 checks) and `--tests none --node tools/sql-harness/mutants-0019.mjs` (14 mutants); `0020_member_admin_rls_test.sql` (8) and `--node tools/sql-harness/merge-0020.mjs` (the merge, row by row, three mutants); `0021_connector_deleted_rows_rls_test.sql` (8) and `--node tools/sql-harness/mutants-0021.mjs` (3).
 - `node tools/sql-harness/run.mjs --migrations 0002,0018 --tests supabase/migrations/0018_connector_rls_test.sql` (23 checks), and `--tests none --node tools/connector/harness/mutants-0018.mjs` (12 mutants).
 - `node tools/sql-harness/run.mjs --tests none --node tools/connector/harness/proof.mjs`: every write entry, same rows as the direct call for the admin, refused with nothing landing for a member, a mentor and signed out; previews write nothing; the allowlist paste.
 - `node tools/sql-harness/run.mjs --tests none --node tools/connector/harness/inspector.mjs`: Anthropic's MCP Inspector against the real handler on the harness database (`tools/connector/harness/serve.mjs`, `local-backend.mjs`), judged by rows.

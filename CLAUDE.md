@@ -56,7 +56,7 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 - **Reporting and export**: [`docs/subsystems/reporting.md`](docs/subsystems/reporting.md)
 - **Subteams**: [`docs/subsystems/subteams.md`](docs/subsystems/subteams.md)
 - **Profile**: [`docs/subsystems/profile.md`](docs/subsystems/profile.md)
-- **Roster, access and capabilities**: admin roster, access requests, the `parent` role, staff invites, member capabilities, `claimApproval.js`. [`docs/subsystems/roster-and-access.md`](docs/subsystems/roster-and-access.md)
+- **Roster, access and capabilities**: admin roster, access requests, the `parent` role, staff invites, member capabilities, `claimApproval.js`, merge (0020). [`docs/subsystems/roster-and-access.md`](docs/subsystems/roster-and-access.md)
 - **Scheduling**: events and RSVPs. [`docs/subsystems/scheduling.md`](docs/subsystems/scheduling.md)
 - **Parent dashboard**: [`docs/subsystems/parent-dashboard.md`](docs/subsystems/parent-dashboard.md)
 - **Certifications**: the retired skills system and the IDEA certifications mirror. [`docs/subsystems/certifications.md`](docs/subsystems/certifications.md)
@@ -68,7 +68,7 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 - **Member standing**: absences, break weeks, the weekly and monthly checks, probation and removal, grades, discipline, safety, incidents, voids, FLL mentors, notices (0015). [`docs/subsystems/standing.md`](docs/subsystems/standing.md)
 - **Event rosters**: roles, eligibility, event-day attendance, conflicts, the family sign-up rule, the carpool lock (0016). [`docs/subsystems/rosters.md`](docs/subsystems/rosters.md)
 - **Families and records**: the family link, emergency information, driver documents, the no-photo list, sub-team status, the leaderboard, the onboarding checklist and shop gate, training, handbook versions, letter progress (0017). [`docs/subsystems/families-and-records.md`](docs/subsystems/families-and-records.md)
-- **Connector**: Claude acting as the admin through `/mcp` (0018). [`docs/subsystems/connector.md`](docs/subsystems/connector.md)
+- **Connector**: Claude acting as the admin through `/mcp` (0018); every write via `src/writeVia.js` (0019). [`docs/subsystems/connector.md`](docs/subsystems/connector.md)
 
 ### Roadmap (planned modules)
 
@@ -225,4 +225,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-19. Connector (0018); see `docs/history/frc-connector-0013.md`.
+Last reviewed: 2026-10-20. See `docs/history/frc-connector-writes-0014.md`.

@@ -17,7 +17,7 @@ its test) and `0011` (the parent service hours note and export) the same
 day. `0011` changes no grant or policy, so it has no `_rls_test.sql`; it is
 proven by `tools/sql-harness/check-0011.mjs`. `0012` (job claiming gated
 on the IDEA certifications mirror, with its test) landed on 2026-10-16. `0013` (handbook signatures, with its test) landed on
-2026-10-19, `0014` (sign-out requests and meeting check-in, with its test; needs 0004) `0015` (member standing, with its test; needs 0014) `0016` (event rosters, with its test; needs 0015, and the hub for its last block) and `0017` (families and records, with its test; needs 0015) the same day.
+2026-10-19, `0014` (sign-out requests and meeting check-in, with its test; needs 0004) `0015` (member standing, with its test; needs 0014) `0016` (event rosters, with its test; needs 0015, and the hub for its last block) and `0017` (families and records, with its test; needs 0015) the same day. `0018` (the connector, with its test) landed on 2026-10-19; `0019` (every page write as a function, with its test), `0020` (set a member name and merge accounts, with its test) and `0021` (deleted rows in connector previews and audit rows, with its test) on 2026-10-20, ledger 0014, each needing everything before it.
 
 **Every numbered test can now be run here, before anyone pastes it.**
 `node tools/sql-harness/run.mjs` builds a throwaway PostgreSQL 16 with Supabase

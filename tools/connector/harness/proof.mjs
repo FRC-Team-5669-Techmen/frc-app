@@ -159,6 +159,12 @@ const SAMPLES = {
   staff_edit_logged_hours: (fx) => ({ p_entry: fx.logged, p_type: 'outreach', p_hours: 3, p_date: new Date().toISOString().slice(0, 10) }),
   staff_void_session: () => ({ p_member: ID.riley, p_reason: 'Proof void' }),
   set_hour_goal: () => null,
+  // ledger 0014
+  schedule_create_event: () => ({ p_title: 'Proof build', p_kind: 'build', p_starts_at: '2026-10-24T16:00:00Z', p_ends_at: '2026-10-24T20:00:00Z', p_location: 'Shop' }),
+  admin_set_member_name: () => ({ p_member: ID.riley, p_full_name: 'Riley Proofname' }),
+  admin_merge_member: () => ({ p_from: ID.riley, p_into: ID.sam, p_reason: 'Proof merge' }),
+  admin_set_geofence_exempt: () => ({ p_member: ID.riley, p_exempt: true }),
+  survey_create: () => ({ p_title: 'Proof survey', p_opens_at: null, p_closes_at: null }),
 }
 
 /** Placeholder arguments of the right types, for a function with no sample. */
