@@ -2,7 +2,11 @@
 
 **Branch:** `codex/scouting-2026-evidence` · [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). Read `SCOUTING_START_HERE.md`, `CLAUDE.md`, `docs/subsystems/scouting.md`, `VERIFICATION.md` and `STAGING.md`. Continue the restored checkpoint history; do not rebuild from main. The private original inputs stay outside public commits.
 
-## Current application: `8fef9330a0fdb9677dc7231c9dfba7bcd7b68ee9`
+## Current application: `75fad888b88c3c2a8e547b74342a64a9c0906889`
+
+A final provenance audit found legacy video with unknown event scope still contributed to rates despite its uncertainty label. The new candidate excludes it from current rates/coverage, adds a review filter and explicit brief/comparison exclusions, and preserves raw records. Independent 0/1 versus 1/2 cases, a permissive filter mutation, and native browser checks protect the correction. **1028 tests**, **46 decision-workflow browser assertions**, **10 permissive mutations** and build/connector/design/calendar/history gates passed. The new candidate's built-PWA and existing scouting reruns are being completed; the broad isolated 15-feature run is on predecessor `8fef933`, whose unrelated platform source is unchanged. Do not collapse these source boundaries.
+
+## Previous candidate: `8fef9330a0fdb9677dc7231c9dfba7bcd7b68ee9`
 
 Implementation `09dab54` adds separate confirmed/optimistic projections, full observation history/dispute triage and local drive-team briefs with explicitly confirmed six-team lineups, frozen JSON/print exports and stale-review invalidation. Follow-up `8fef933` hides retained receipts and editing controls after definitive authorization/account failure while preserving local work. `DECISION_SUPPORT.md` records Techmen provenance and acceptance criteria. No schema, auth protocol, connector, provider or dependency changes.
 
