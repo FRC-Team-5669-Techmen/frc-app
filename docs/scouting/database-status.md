@@ -1,20 +1,12 @@
-# Current native verification — October 21, 2026
+# Current database verification — October 21, 2026
 
-The resumed workspace can run native PostgreSQL **16.10**, installed outside application dependencies using `@embedded-postgres/linux-x64@16.10.0-beta.15`; the `psql` client is 17.11. This supersedes the native-tooling blocker in the historical record below.
+Fresh native PostgreSQL 17.6: chain applied twice, **573/573** assertions across 23 rollback suites (72 scouting), **17/17** permissive mutants caught and **7/7** actual separate-connection races. The retained harness observes lock overlap before releasing the winning transaction. Built-PWA/local PostgREST checks pass **22/22**. Auth/cron/network/storage components in the native harness remain explicit stand-ins.
 
-- Full frozen chain and migrations through 0022 applied twice.
-- **573/573** checks across **23** rollback suites passed; **72/72** are scouting checks.
-- **17/17** permissive scouting mutations caught.
-- **7/7** new separate-connection assertions passed: overlapping identical operation returns the same receipt; only one record/revision/receipt; stale correction receives 40001; winning version/history preserved; separate IDs cannot duplicate one logical observation; only one dispatcher reserves a version; reservation uses immutable evidence.
+Isolated hosted Supabase PostgreSQL 17.11: unchanged migration 0022 applied twice; **72/72** SQL/RLS assertions passed with real hosted roles/Auth helpers and SQL-injected request claims. All users/profiles/records/operations/deliveries rolled back to zero. This does not prove hosted GoTrue/HTTP sessions. Both Edge Functions deployed with JWT verification on; HTTPS was blocked by the workspace proxy. The temporary branch was deleted after evidence capture. See `STAGING.md` and `verification/staging-2026-10-21.json`.
 
-The race script proves actual lock overlap using `pg_stat_activity`, then commits the first transaction. It does not depend on guessing which request wins. Reproduce with PostgreSQL binaries on PATH:
+Production remains PostgreSQL 17.6 with zero scouting tables/functions. It was read only. Earlier PostgreSQL 16.10 results (573 SQL checks, 17 mutants, seven races) are retained historical cross-engine evidence, not described as freshly repeated.
 
-```sh
-node tools/sql-harness/run.mjs --node tools/sql-harness/scouting-mutants.mjs
-node tools/sql-harness/run.mjs --tests none --node tools/sql-harness/scouting-race.mjs
-```
-
-All targets are throwaway local databases with repository auth/storage/cron/network stand-ins. No live Supabase mutation or real notification occurred. The same 573/573 checks, 17/17 mutants and 7/7 races also passed on native PostgreSQL 17.6. The built-PWA harness passes 19/19 against local PostgREST 13.0.7, including lost-body retry, page-closure/lease recovery and HTTP connector boundaries. Hosted Supabase deployment remains a separate gate.
+With native binaries on PATH, run `node tools/sql-harness/run.mjs --node tools/sql-harness/scouting-mutants.mjs,tools/sql-harness/scouting-race.mjs`. `tools/sql-harness/scouting-hosted-proof.mjs --emit` emits the guarded rollback-only hosted proof; never execute it on production. Exact commands/limits are in `RELEASE.md`.
 
 ---
 

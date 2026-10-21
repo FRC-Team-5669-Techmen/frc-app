@@ -1,0 +1,7 @@
+
+> frc-app@0.1.0 test:features
+> node tools/e2e/features.mjs --only scouting
+
+FAIL [375] scouting · teams and evidence · team controls at least 44px -- no visible .sc-wrap button, .sc-wrap select, .sc-wrap input
+scouting: 145/146 passed (375 and 1440)
+features e2e: 145/146 passed (375 and 1440)

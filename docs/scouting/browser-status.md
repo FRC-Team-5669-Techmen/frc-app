@@ -1,25 +1,12 @@
 # Current browser verification — October 21, 2026
 
-Installed **Chromium 154.0.8037.57** runs in the resumed cloud environment. The historical socket blocker below no longer applies.
+Chromium 154.0.8037.57 ran the real app at 375px touch emulation and 1440px desktop. **1766/1766** assertions across 15 features passed at map commit `7240bcb`. After the filename/provider-key corrections, **150/150** focused scouting assertions passed at application commit `7a1ddca`. Check-in passed **51/51**. No physical-phone claim follows from those widths/user agents.
 
-- `npm run test:features`: **1749/1749**, all **15** features, at 375px touch emulation and 1440px desktop.
-- Scouting within that run: **129/129**, including all eight training missions, first-pass/review history, export, actor isolation, conflicts and 44px control/overflow checks.
-- `npm run test:checkin -- --port 5402`: **51/51**.
-- `tools/e2e/scouting-pwa.mjs`: **19/19** against a real production build, service worker, IndexedDB, Supabase JS, local PostgREST and PostgreSQL 17.6. Actual browser network disable, expired-session cold start, installed start URL, truncated committed HTTP response and page closure before receipt are exercised. Auth issuance is synthetic; functions have a not-configured stub, and no provider/Discord request is made.
+The built production PWA passes **22/22** with an actual service worker, IndexedDB, expired-session cold entry, disabled browser networking, lost committed HTTP body, page closure/lease recovery, cached map and real local PostgREST/PostgreSQL. Auth issuance is synthetic. The real map adapter receives fictional Nexus data; other functions are not configured. No live provider/Discord request is made.
 
-The final clean-install focused repeats are retained with the logs. These are native browser results, not physical iPhone/Android or first-time student usability. Complete real-device/mentor/source gates before claiming competition readiness.
+`npm run scouting:preview:check` also passes all five actual-route tabs, manager/parent boundaries and a fictional map download under DOM/IndexedDB emulation. It establishes portable compilation, not layout or phone behavior.
 
-Reproduce:
-
-```sh
-npm ci
-npm run test:features
-npm run test:checkin
-# PostgreSQL and PostgREST must be installed for the disposable integration test:
-POSTGREST_BIN=/path/to/postgrest node tools/sql-harness/run.mjs --tests none --node tools/e2e/scouting-pwa.mjs
-```
-
-The fixture suite models API behavior and keeps the development server reachable during its simulated offline sections. The built-PWA test separately disables real browser networking. Neither uses hosted Supabase Auth, actual external providers, NFC hardware, an installed phone PWA or a human scout. See `VERIFICATION.md` and `verification/README.md` for executed results.
+Retained commands/results are in `verification/2026-10-21-competition/`. Reproduce with `npm run test:features`, `npm run test:checkin`, and the native/PostgREST PWA command in `RELEASE.md`. `STAGING.md` records the separate hosted SQL proof and HTTPS proxy blocker. Hosted Auth/API, actual phones and novice/mentor acceptance remain unverified.
 
 ---
 

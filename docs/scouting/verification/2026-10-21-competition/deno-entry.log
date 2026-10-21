@@ -1,0 +1,13 @@
+PASS Deno entry: scouting-import serves CORS preflight
+PASS Deno entry: scouting-import refuses non-POST methods
+PASS Deno entry: scouting-import refuses missing bearer before Auth
+PASS Deno entry: scouting-import rejects oversized request before Auth
+PASS Deno entry: scouting-import reports malformed JSON without touching Auth
+PASS Deno entry: scouting-import propagates an actual SDK Auth refusal
+PASS Deno entry: scouting-dispatch serves CORS preflight
+PASS Deno entry: scouting-dispatch refuses non-POST methods
+PASS Deno entry: scouting-dispatch refuses missing bearer before Auth
+PASS Deno entry: scouting-dispatch rejects oversized request before Auth
+PASS Deno entry: scouting-dispatch reports malformed JSON without touching Auth
+PASS Deno entry: scouting-dispatch propagates an actual SDK Auth refusal
+Deno entrypoints: 12/12 passed

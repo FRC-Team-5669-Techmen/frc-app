@@ -1,0 +1,53 @@
+{
+  "scope": "Actual local Deno entrypoints and pinned Supabase SDK; rejecting HTTP Auth stand-in; no hosted/provider/Discord sends",
+  "results": [
+    {
+      "label": "scouting-import serves CORS preflight",
+      "ok": true
+    },
+    {
+      "label": "scouting-import refuses non-POST methods",
+      "ok": true
+    },
+    {
+      "label": "scouting-import refuses missing bearer before Auth",
+      "ok": true
+    },
+    {
+      "label": "scouting-import rejects oversized request before Auth",
+      "ok": true
+    },
+    {
+      "label": "scouting-import reports malformed JSON without touching Auth",
+      "ok": true
+    },
+    {
+      "label": "scouting-import propagates an actual SDK Auth refusal",
+      "ok": true
+    },
+    {
+      "label": "scouting-dispatch serves CORS preflight",
+      "ok": true
+    },
+    {
+      "label": "scouting-dispatch refuses non-POST methods",
+      "ok": true
+    },
+    {
+      "label": "scouting-dispatch refuses missing bearer before Auth",
+      "ok": true
+    },
+    {
+      "label": "scouting-dispatch rejects oversized request before Auth",
+      "ok": true
+    },
+    {
+      "label": "scouting-dispatch reports malformed JSON without touching Auth",
+      "ok": true
+    },
+    {
+      "label": "scouting-dispatch propagates an actual SDK Auth refusal",
+      "ok": true
+    }
+  ]
+}

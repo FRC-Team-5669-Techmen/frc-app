@@ -1,0 +1,20 @@
+
+> frc-app@0.1.0 test:features
+> node tools/e2e/features.mjs
+
+certifications: 118/118 passed (375 and 1440)
+feedback: 227/227 passed (375 and 1440)
+announce: 125/125 passed (375 and 1440)
+permissions: 153/153 passed (375 and 1440)
+display-history: 226/226 passed (375 and 1440)
+my-hours: 84/84 passed (375 and 1440)
+dashboard-checkout: 30/30 passed (375 and 1440)
+event-hub: 207/207 passed (375 and 1440)
+job-certs: 109/109 passed (375 and 1440)
+handbook: 92/92 passed (375 and 1440)
+signout: 90/90 passed (375 and 1440)
+standing: 69/69 passed (375 and 1440)
+rosters: 27/27 passed (375 and 1440)
+families: 63/63 passed (375 and 1440)
+scouting: 146/146 passed (375 and 1440)
+features e2e: 1766/1766 passed (375 and 1440)

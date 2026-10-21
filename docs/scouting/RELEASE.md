@@ -10,6 +10,15 @@ The code is pushed to review branch `codex/scouting-2026-evidence`, with draft P
 4. In a browser-capable checkout, run `npm run test:checkin` and `npm run test:features`. The scouting spec covers 375px and 1440px. Install a supported Chromium or set `CHROMIUM_PATH` as described in `browser-status.md`.
 5. With authorized GitHub write access, push this review branch and open a PR using `PULL_REQUEST.md`. Do not push main or force-push. The restored branch and its Git history are now on GitHub. `SCOUTING_START_HERE.md` and `RESUME.md` are the entry points for another AI; the branch source ZIP is a downloadable source checkpoint.
 
+For local Edge entrypoint checks, install Deno outside app dependencies (this run used 2.9.6), then run:
+
+```sh
+deno check --no-config --no-lock --node-modules-dir=none supabase/functions/scouting-import/index.ts supabase/functions/scouting-dispatch/index.ts
+DENO_BIN=/path/to/deno node tools/e2e/scouting-edge.mjs
+```
+
+Use the same `DENO_DIR` for both commands if overriding its cache directory. The retained HTTP harness uses cached imports, blank provider credentials, explicit local-only Deno network permissions and a rejecting Auth stand-in. It verifies executable entrypoint boundaries, not hosted Supabase authentication or real delivery.
+
 ## Stage the database and services
 
 Use an isolated, authorized staging project before production. This repository does not maintain applied migration history. Confirm prerequisite objects through 0021 in the target database; the existence of SQL files is not proof that they ran.
@@ -41,7 +50,7 @@ Never prefix these with `VITE_`. The existing Supabase project URL and anon/publ
 
 The updated `scouting-import` source includes `pit-map.js`; deploy the whole directory. Its `mode: pit_map` performs a read-only eligibility/event check for ordinary scouts. The default mode still requires a manager. No additional migration is needed for maps. On each scouting device, open Teams → Pit map and directory, confirm the provider event key, then download while connected. A lead downloading on one device does not prepare other devices. Confirm walls/areas and assignments against the actual venue, then test reload offline. A failed refresh must preserve the previous key/time/map. Event backup includes this cache as a draft.
 
-The connected frc-app project currently reports no development branches. Provisioning an isolated hosted staging environment remains an external setup step; this implementation has not created a paid branch or used production as a staging substitute.
+An isolated data-free branch was created and verified on October 21, then deleted after evidence capture. Migration 0022 applied twice, the guarded 72-check hosted SQL proof passed and both Edge Functions deployed with JWT verification on. Direct HTTPS was blocked by the workspace proxy, so hosted Auth/API/provider acceptance remains open. `STAGING.md` records the exact proof and cleanup; no temporary compute remains. Production was never used as a staging substitute.
 
 No real Discord test sends were authorized for this build. A later explicitly approved integration check must verify the fixed #scouting/#strategy channels and bot permissions. User-controlled mentions stay suppressed; no unverified role ping mapping is shipped. Check uncertain delivery in Discord before any intentional replacement communication.
 

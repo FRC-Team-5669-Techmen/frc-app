@@ -18,7 +18,7 @@ Open the app and event while online before entering the venue. Cached event reco
 
 ## Setup and verification
 
-Apply migration 0022 only after the existing chain through 0021. Until its schema is installed, the page shows a setup state through `schemaMissing`. Edge integrations deploy separately by hand. No database or production deployment was performed by this branch.
+Apply migration 0022 only after the existing chain through 0021. Until its schema is installed, the page shows a setup state through `schemaMissing`. Edge integrations deploy separately by hand. No production database change or production deployment was performed. Temporary isolated hosted staging was verified and deleted after evidence capture; see `docs/scouting/STAGING.md`.
 
 Training prepares students for mentor assessment; it does not write IDEA certification rows or revive the retired skills system. Certification remains an IDEA Classroom action.
 

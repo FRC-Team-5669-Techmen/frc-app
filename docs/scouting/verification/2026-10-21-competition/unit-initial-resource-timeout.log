@@ -1,0 +1,31 @@
+
+> frc-app@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.11 /workspace/work/map-portability
+
+ ❯ tests/reporting-day-rule.test.js (7 tests | 1 failed) 48453ms
+     × matches the old reporting copy on every instant tried, in every input shape 48369ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/reporting-day-rule.test.js > the day rule reporting uses > matches the old reporting copy on every instant tried, in every input shape
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/reporting-day-rule.test.js:47:3
+     45|   })
+     46|
+     47|   test('matches the old reporting copy on every instant tried, in ever…
+       |   ^
+     48|     let n = 0, lateEvening = 0
+     49|     for (const t of instants()) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 64 passed (65)
+      Tests  1 failed | 970 passed (971)
+   Start at  14:05:22
+   Duration  101.13s (transform 21.72s, setup 0ms, import 46.69s, tests 184.82s, environment 9.30s)
+

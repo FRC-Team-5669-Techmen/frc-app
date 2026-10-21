@@ -1,6 +1,12 @@
-# Integration checkpoint
+# Current integration checkpoint — October 21, 2026
 
-Prepared October 21, 2026 UTC. These changes are local reviewable source, not deployed services.
+Latest source: `7a1ddca`. Read-only Nexus geometry and connector forwarding are implemented, including bounded demo/offseason keys. Roster import remains manager-only. The local production-built app passes **22/22** API/database assertions through real local PostgREST/native PostgreSQL, with synthetic Auth and fictional Nexus data supplied to the real adapter. Actual local Deno 2.9.6 entrypoints pass `deno check` and **12/12** HTTP boundaries against rejecting local Auth; no external network permission or real sends.
+
+In an isolated hosted branch, 0022 applied twice and **72/72** SQL/RLS assertions passed. Both actual Edge source directories deployed ACTIVE/version 1 with **verify_jwt=true**. Hosted HTTPS was denied by the workspace proxy, so no deployed Auth/API/provider/Discord success is claimed. All fixtures rolled back; the temporary branch was deleted after retaining evidence. Production remained unchanged. See `STAGING.md`.
+
+The notes below preserve earlier implementation detail and historical counts; use `VERIFICATION.md` for current results and boundaries.
+
+---
 
 ## Implemented
 
