@@ -18,6 +18,12 @@ Add a short note with the phase/action and useful uncertainty. Press **Save obse
 
 For a correction, open the existing observation. Saving creates a new version and retains the earlier evidence. If another version won first, use **Review conflict** to compare both proposals after refreshing; choose deliberately. Do not submit an unrelated “new” observation to hide a conflict.
 
+## Review evidence and brief the drive team
+
+Use **Teams → Review match evidence** to open a robot's full observation history. Search by match, scout or notes; **Next observations** reaches older entries. Choose **Disputed current matches** to inspect contradictory accounts together, then ask each author to review the footage or notes. Prior-event footage is a separate filter. A pending correction keeps the previous confirmed rate and master-list vote until synchronization; locally edited pit claims carry an explicit pending label.
+
+In **Teams → Drive-team match brief**, enter the match and all six teams after checking the field schedule. The app does not infer alliance colors from schedule order. Agree on autonomous routes, roles, endgame coordination and contingencies with your partners. Inspect thin/disputed evidence and stale estimates; unknown capabilities are not failures. Wait for **Brief saved on this device**, then **Confirm lineup and review brief**. Export JSON for attributed records/versions and printable HTML for the drive team; open the HTML and use the browser's Print command. Changing the plan or evidence requires another review. A reopened brief restores the draft but requires fresh review. Keep both exports with your event backup: these plans are local to this account/device and are not automatically shared or sent to Discord.
+
 ## Work in the pits
 
 Use **Teams → Pit report** for what a team claims. Match observations verify those claims separately. Check location source/time and visible contradictions rather than silently overwriting the imported address.

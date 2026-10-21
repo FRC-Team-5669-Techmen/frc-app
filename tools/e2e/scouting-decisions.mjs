@@ -68,9 +68,28 @@ try {
       assert.equal(await page.getByRole('button',{name:'Export printable brief',exact:true}).isDisabled(),false)
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),false)
       await page.screenshot({path:resolve(out,`brief-${width}.png`),fullPage:true})
+      await context.setOffline(false)
+      await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => b.textContent === 'Sync now' && !b.disabled))
+      await page.evaluate(async () => {
+        const { supabase } = await import('/src/dev/fixture/client.js')
+        window.__briefOriginalFrom = supabase.from
+        supabase.from = () => {
+          const q = {select:()=>q,eq:()=>q,in:()=>q,order:()=>q,range:()=>q,then:(resolve,reject)=>Promise.resolve({data:null,error:{code:'42501',message:'Synthetic permission denial'}}).then(resolve,reject)}
+          return q
+        }
+      })
+      await page.getByRole('button',{name:'Refresh',exact:true}).click()
+      await page.getByRole('heading',{name:'Scouting access unavailable',exact:true}).waitFor()
+      assert.equal(await page.getByRole('tablist',{name:'Scouting sections'}).count(),0)
+      assert.equal(await page.locator('.sc-match-brief').count(),0)
+      await page.evaluate(async () => { const {supabase} = await import('/src/dev/fixture/client.js'); supabase.from = window.__briefOriginalFrom; delete window.__briefOriginalFrom })
+      await page.getByRole('button',{name:'Retry scouting access',exact:true}).click()
+      await page.getByRole('heading',{name:'Fixture Regional',exact:true}).waitFor()
+      await page.locator('.sc-match-brief summary').click()
+      assert.equal(await page.getByLabel('Fallbacks and questions to resolve',{exact:true}).inputValue(),'Offline: ask partners about endgame clearance')
       assert.deepEqual(errors,[])
-      results.push({width,passed:true,checks:17,backend:'fictional fixture',storage:'native IndexedDB',offline:'editing/export readiness; built-PWA reload checked separately',realDevice:false})
-      console.log(`PASS decision support ${width}: 17 assertions`)
+      results.push({width,passed:true,checks:20,backend:'fictional fixture',storage:'native IndexedDB',offline:'editing/export readiness; built-PWA reload checked separately',realDevice:false})
+      console.log(`PASS decision support ${width}: 20 assertions`)
     } finally { await context.close() }
   }
 } finally {

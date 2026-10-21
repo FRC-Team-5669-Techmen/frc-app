@@ -42,7 +42,7 @@ async function mount(persona = 'student', roles) {
   root = createRoot(host)
   await act(async () => root.render(React.createElement(MemoryRouter, { initialEntries: [`/scouting/${EVENT}`] },
     React.createElement(Routes, null, React.createElement(Route, { path: '/scouting/:eventId', element: React.createElement(ScoutingPage, { session: data.session, hasRole: r => actualRoles.includes(r) }) })))))
-  await settle(() => host.querySelector('[data-scout-page="event"]') || host.textContent.includes('available to student and staff accounts') || host.textContent.includes('not set up yet'), 'event render')
+  await settle(() => host.querySelector('[data-scout-page="event"]') || host.textContent.includes('available to student and staff accounts') || host.textContent.includes('not set up yet') || host.textContent.includes('Scouting access unavailable'), 'event render')
 }
 async function unmount() { if (root) { await act(async () => root.unmount()); root = null } }
 function setOnline(value) {
@@ -71,6 +71,32 @@ beforeEach(() => {
 afterEach(async () => { await unmount(); host.remove(); vi.restoreAllMocks() })
 
 describe('rendered scouting with IndexedDB emulation', () => {
+  it.each(['42501', 'PGRST301', 'ACCOUNT_CHANGED'])('hides cached receipts and drafting controls after definitive %s denial without deleting local work', async code => {
+    await mount(); await settle(() => !buttons('Sync now')[0]?.disabled, 'initial sync idle')
+    const store = await createScoutingStore()
+    await store.enqueue(IDS.student, EVENT, {kind:'observation',team_number:5669,match_key:'qm999',payload:{source:'live',answers:{trench:'yes'},notes:'Retained receipt must not bypass denial'}})
+    await click(buttons('Sync now')[0]); await settle(() => !buttons('Sync now')[0]?.disabled, 'receipt saved')
+    await unmount()
+    const before = await store.listQueue(IDS.student, EVENT)
+    expect(before[0]).toMatchObject({status:'synced'})
+    const spy = vi.spyOn(supabase, 'from').mockImplementation(() => {
+      const q = { select: () => q, eq: () => q, in: () => q, order: () => q, range: () => q,
+        then: (resolve, reject) => Promise.resolve({data:null,error:{code,message:'Denied'}}).then(resolve,reject) }
+      return q
+    })
+    // mount's readiness helper also accepts this explicit refusal surface.
+    await mount()
+    expect(host.textContent).toContain('Scouting access unavailable')
+    expect(host.textContent).not.toContain('Retained receipt must not bypass denial')
+    expect(host.querySelector('[role="tablist"]')).toBeNull()
+    expect(await store.listQueue(IDS.student, EVENT)).toEqual(before)
+    await settle(() => !buttons('Retry scouting access')[0]?.disabled, 'denied sync idle')
+    spy.mockRestore(); await click(buttons('Retry scouting access')[0])
+    await settle(() => host.querySelector('[data-scout-page="event"]'))
+    expect(host.textContent).toContain('Retained receipt must not bypass denial')
+    store.close()
+  })
+
   it('keeps confirmed master votes and coverage visible while corrections wait offline', async () => {
     const template = fixture.rows('scouting_records').find(row => row.kind === 'team')
     const base = { ...template, member_id: IDS.student, team_number: 5669, version: 1 }
@@ -385,12 +411,12 @@ describe('sync recovery scheduling', () => {
     const original=supabase.auth.getSession
     const session=await original()
     const spy=vi.spyOn(supabase.auth,'getSession').mockResolvedValue({data:{session:{...session.data.session,user:{...session.data.session.user,id:IDS.student2}}},error:null})
-    await click(buttons('Sync now')[0]);await settle(()=>!buttons('Sync now')[0].disabled,'refused sync idle')
+    await click(buttons('Sync now')[0]);await settle(()=>buttons('Retry scouting access')[0] && !buttons('Retry scouting access')[0].disabled,'refused sync idle')
     const calls=spy.mock.calls.length
     await act(async()=>{await pause(100)})
     expect(spy.mock.calls.length).toBe(calls)
     expect((await store.listQueue(IDS.student,EVENT))[0].status).toBe('local')
-    spy.mockRestore();await click(buttons('Sync now')[0])
+    spy.mockRestore();await click(buttons('Retry scouting access')[0]);await settle(()=>buttons('Sync now')[0] && !buttons('Sync now')[0].disabled,'access restored');await click(buttons('Sync now')[0])
     await settle(()=>fixture.rows('scouting_records').some(r=>r.payload.text==='Keep this original account proposal'),'original account sync')
     store.close()
   })

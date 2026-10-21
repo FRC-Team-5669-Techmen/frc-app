@@ -99,3 +99,6 @@ SCOUTING_SOAK_MINUTES=39 POSTGREST_BIN=/absolute/path/to/postgrest node tools/sq
 ```
 
 Choose distinct fixture/PWA ports when running separate checkouts concurrently. The fixture harness refuses another checkout's server. `FOOTAGE_CORPUS.csv` and `FIELD_ACCEPTANCE.csv` require actual annotations/device/human results; blank fields intentionally prevent synthetic checks from becoming acceptance claims.
+
+
+Decision-support acceptance: run `node tools/e2e/scouting-decision-controls.mjs` (nine permissive mutations must be detected) and `node tools/e2e/scouting-decisions.mjs` (20 assertions at each of two Chromium viewport widths, fictional backend). Brief drafts use existing scoped IndexedDB storage and need no migration. Check a real coach's six-team lineup/plan/print workflow and actual-device recovery during field acceptance; automated browser checks do not establish match strategy effectiveness.

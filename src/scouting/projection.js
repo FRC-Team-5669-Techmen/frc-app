@@ -18,3 +18,8 @@ export function projectRecords(downloaded, queue, memberId, eventId) {
   }
   return { confirmed: [...confirmed.values()], visible: [...visible.values()] }
 }
+
+// Definitive authorization failures must not resurrect retained queue receipts.
+export function scoutingAccessDenied(error) {
+  return ['42501', 'PGRST301', 'ACCOUNT_CHANGED'].includes(error?.code)
+}

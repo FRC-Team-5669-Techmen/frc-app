@@ -7,6 +7,7 @@ const row = { id:'r', event_id:'e', member_id:'m', kind:'pick_list', version:1, 
 const result = {...row, version:2, payload:{rank:3}}
 const op = {member_id:'m',event_id:'e',record_id:'r',status:'synced',result,args:{p_kind:'pick_list',p_expected_version:1,p_payload:{rank:3}}}
 const cases = [
+ ['definitive access denial', "return ['42501', 'PGRST301', 'ACCOUNT_CHANGED'].includes(error?.code)", 'return false', fn => { for (const code of ['42501','PGRST301','ACCOUNT_CHANGED']) assert.equal(fn.accessDenied({code}),true) }],
  ['downloaded event scope', 'r.event_id === eventId && ', '', fn => assert.equal(fn([{...row,event_id:'foreign'}],[],'m','e').confirmed.length,0)],
  ['queue member scope', 'op.member_id === memberId && ', '', fn => assert.equal(fn([row],[{...op,member_id:'other'}],'m','e').confirmed[0].version,1)],
  ['queue event scope', 'op.event_id === eventId)', 'true)', fn => assert.equal(fn([row],[{...op,event_id:'other'}],'m','e').confirmed[0].version,1)],
@@ -16,7 +17,7 @@ const cases = [
  ['recovered proposal hold', '!op.recoveredFrom && ', '', fn => assert.deepEqual(fn([row],[{...op,status:'local',recoveredFrom:'failed'}],'m','e').visible,[row])],
  ['monotonic receipts', 'row.version > (confirmed.get(row.id)?.version ?? 0)', 'true', fn => assert.equal(fn([result],[{...op,result:row}],'m','e').confirmed[0].version,2)],
 ]
-const load = async code => (await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'))).projectRecords
+const load = async code => { const module = await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64')); return Object.assign(module.projectRecords, { accessDenied: module.scoutingAccessDenied }) }
 const original = await load(source)
 for (const [name, from, to, oracle] of cases) {
   assert(source.includes(from),`missing mutation anchor ${name}`); oracle(original)

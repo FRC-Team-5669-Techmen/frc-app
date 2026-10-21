@@ -4,9 +4,9 @@
 
 ## October 21 decision-support continuation
 
-New implementation adds separate confirmed/optimistic projections, a searchable and paged full observation history with dispute triage, and a locally saved drive-team match brief with explicitly entered six-team lineup, frozen JSON/print exports and stale-review invalidation. `DECISION_SUPPORT.md` records the acceptance contract and Techmen provenance. No schema, auth, connector, provider or dependency changes.
+New implementation adds separate confirmed/optimistic projections, a searchable and paged full observation history with dispute triage, and a locally saved drive-team match brief with explicitly entered six-team lineup, frozen JSON/print exports and stale-review invalidation. `DECISION_SUPPORT.md` records the acceptance contract and Techmen provenance. No schema, auth protocol, connector, provider or dependency changes. A definitive authorization/account failure now hides retained receipts and editing controls until access is restored; local work is preserved.
 
-Focused checks passed: 15 new pure/DOM cases, then 30 rendered cases including the real page's pending-correction master/coverage regression; eight permissive scope/confirmation mutations detected; two Chromium viewport cases exercised real IndexedDB, downloads and print rendering against fictional data. Full gates are being rerun; see the newest VERIFICATION section for final results. Earlier result counts below belong to their stated commits.
+Focused checks passed: 15 new pure/DOM cases, then 30 rendered cases including the real page's pending-correction master/coverage regression; nine permissive scope/confirmation/denial mutations detected; two Chromium viewport cases exercised real IndexedDB, downloads and print rendering against fictional data. Full gates are being rerun; see the newest VERIFICATION section for final results. Earlier result counts below belong to their stated commits.
 
 Continue with the current branch, not the earlier application hash below. Remaining external gates and release restrictions are unchanged. New brief drafts use the existing actor/event-scoped `match-brief` key and travel in event backups. Exported briefs are frozen copies, not shared database records or win predictions.
 
@@ -34,7 +34,7 @@ Final code: **1004/1004 tests**, build/all required gates, **336/336 affected-ro
 ## Specific external blockers
 
 - Staging HTTPS was denied by the managed workspace proxy (CONNECT 403). There is no network-policy editing tool in this session. Do not bypass the proxy. Hosted Auth/REST/gateway and source-provider acceptance need an approved environment with staging HTTPS access.
-- Real iPhone/Android backgrounding/storage recovery, beginner measurements, mentor assessment and independently annotated actual footage require people/devices/artifacts unavailable here. `FIELD_ACCEPTANCE.csv` has 15 NOT_RUN and three PARTIAL gates; none is silently marked passed.
+- Real iPhone/Android backgrounding/storage recovery, beginner measurements, mentor assessment and independently annotated actual footage require people/devices/artifacts unavailable here. `FIELD_ACCEPTANCE.csv` now has 16 NOT_RUN and three PARTIAL gates, including real drive-team brief acceptance; none is silently marked passed.
 - Original TideScout audio/frames/current app exports remain unavailable. Latest-version parity cannot be asserted. Role pings remain absent pending a reviewed mapping; AI parsing was not invented.
 - Production installation and real Discord sends still require the user's explicit release authorization. `RELEASE.md` is the concrete apply/recovery packet.
 

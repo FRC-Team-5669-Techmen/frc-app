@@ -2,6 +2,7 @@
 
 These are proposed Techmen behaviors, not verified TideScout features or win predictions. Acceptance criteria were recorded before implementation on October 21, 2026.
 
+- A definitive authorization/account failure hides cached receipts and drafting controls, preserving local storage for later authorized recovery. A transient network failure still permits prepared offline work.
 - Strategy calculations retain the last confirmed record while its correction is queued. A newer confirmed receipt supersedes an older downloaded version even when refresh fails. Foreign-account/event operations and unreleased recovered proposals cannot contribute.
 - Every downloaded observation remains searchable and correctable by its author, including entries beyond the first 30. Search and pagination never change reliability inputs. Current-event disputes expose contradictory contributors; prior-event footage remains separate. No automatic majority adjudication.
 - A match brief uses an explicitly entered six-team lineup; schedule array order does not establish alliance color. The coach records opening coordination, roles, endgame and contingencies. These are plans, not observed capabilities.

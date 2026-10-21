@@ -16,7 +16,7 @@ import RecoveryPanel from './scouting/RecoveryPanel'
 import { buildEventArchive, downloadArchive } from './scouting/backup'
 import { matchOrder } from './scouting/schedule'
 import { footageLabel, matchIdentity } from './scouting/provenance'
-import { projectRecords } from './scouting/projection'
+import { projectRecords, scoutingAccessDenied } from './scouting/projection'
 import EvidenceRecord, { RevisionList } from './scouting/EvidenceRecord'
 import MatchBrief from './scouting/MatchBrief'
 import ObservationBrowser from './scouting/ObservationBrowser'
@@ -232,6 +232,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
 
   if (loading) return <main className="sc-wrap"><h1>Scouting</h1><p role="status">Opening event and saved work…</p></main>
   if (data.missing) return <main className="sc-wrap"><Link className="sc-link" to="/scouting">← Events</Link><h1>Scouting is not set up yet</h1><p>Your lead needs to finish scouting setup. Your existing team tools are still available.</p><Link className="sc-link" to="/dashboard">Back to dashboard</Link></main>
+  if (scoutingAccessDenied(data.error)) return <main className="sc-wrap"><h1>Scouting access unavailable</h1><p>The server could not authorize this account. Locally saved work is preserved. Sign in with the authorized account or ask your lead to restore access.</p><div className="sc-actions"><Link className="sc-link" to="/dashboard">Back to dashboard</Link><button disabled={!online || !store || busy} onClick={() => refresh().catch(e => setError(errorText(e)))}>Retry scouting access</button></div></main>
   return <main className="sc-wrap" data-scout-page="event">
     <Link className="sc-back" to="/scouting">← Events</Link>
     <header className="sc-head"><div><span className="sc-eyebrow">Techmen scouting</span><h1>{data.event?.title || 'Event scouting'}</h1><p>{data.event?.location || 'Observe. Compare. Decide.'}</p></div><button className="sc-primary" disabled={!store || !data.event} onClick={() => openForm('observation')}>New observation</button></header>
