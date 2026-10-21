@@ -26,4 +26,4 @@ The initial broad attempt finished 1790/1793 (three failures); the separate 8fef
 
 ## In-progress final candidate db990e5
 
-`github-ci-136.*` independently confirms 1028 tests and required gates. `clock-targets.*` retains the complete 619/619 first feature batch on fixed business Date/native UI timers. `print-review.*` records the final browser PDF time/uncertainty check; its current PDF will replace the earlier retained PDF during final evidence consolidation. The other eleven features are still running; no complete 1801 claim yet. RESUME.md records the current state.
+`github-ci-136.*` independently confirms 1028 tests and required gates. `clock-targets.*` retains the complete 619/619 first feature batch on fixed business Date/native UI timers. `print-review.*` records the final browser PDF time/uncertainty check; `brief-print.pdf` is now the db990e5 PDF; other older artifact scopes remain as labeled until final consolidation. The other eleven features are still running; no complete 1801 claim yet. RESUME.md records the current state.
