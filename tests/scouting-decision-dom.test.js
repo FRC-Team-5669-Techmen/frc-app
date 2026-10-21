@@ -70,3 +70,16 @@ it('groups normalized current matches for dispute review while excluding prior f
   expect(disputedMatches([rows[0], {...rows[1], payload: { ...rows[1].payload, source_scope:'external', source_event:'2026test' }}]).size).toBe(0)
   expect(disputedMatches([...rows, {...rows[1], version:2, payload:{answers:{trench:'yes'}}}]).size).toBe(0)
 })
+
+it('offers a separate review filter for unverified video scope, excluding it from current evidence', async () => {
+  const base = {id:'legacy',event_id:'e',member_id:'me',team_number:5669,kind:'observation',match_key:'qm1',version:1,payload:{source:'video',answers:{trench:'yes'}}}
+  const rows = [base,{...base,id:'live',match_key:'qm2',payload:{source:'live',answers:{trench:'no'}}}]
+  await render(React.createElement(ObservationBrowser,{records:rows,confirmedRecords:rows,team:'',onTeam:()=>{},memberName:x=>x,nameFor:()=>'',canEdit:()=>true,onEdit:()=>{},revisions:[]}))
+  await input(field('Evidence source'),'unverified')
+  expect(host.querySelectorAll('article')).toHaveLength(1)
+  expect(host.querySelector('article').textContent).toContain('event scope not recorded')
+  await input(field('Evidence source'),'current')
+  expect(host.querySelectorAll('article')).toHaveLength(1)
+  expect(host.querySelector('article').textContent).toContain('Live match')
+  expect(host.querySelector('article').textContent).toContain('No')
+})

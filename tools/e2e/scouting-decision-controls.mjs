@@ -25,4 +25,14 @@ for (const [name, from, to, oracle] of cases) {
   assert.throws(() => oracle(mutant),undefined,`${name} survived`)
   console.log(`PASS negative control: ${name}`)
 }
-console.log(`${cases.length}/${cases.length} permissive mutations detected`)
+const modelSource = readFileSync(new URL('../../src/scouting/model.js', import.meta.url), 'utf8').replace("'./provenance.js'", JSON.stringify(new URL('../../src/scouting/provenance.js', import.meta.url).href))
+const modelOracle = async code => {
+  const {reliability} = await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'))
+  const base = {event_id:'e',member_id:'m',team_number:5669,kind:'observation',version:1}
+  assert.equal(reliability([{...base,id:'legacy',match_key:'qm1',payload:{source:'video',answers:{trench:'yes'}}},{...base,id:'live',match_key:'qm2',payload:{source:'live',answers:{trench:'no'}}}],5669,'trench').percent,0)
+}
+assert(modelSource.includes('.filter(isCurrentEvidence)'))
+await modelOracle(modelSource)
+await assert.rejects(() => modelOracle(modelSource.replace('.filter(isCurrentEvidence)', '.filter(() => true)')))
+console.log('PASS negative control: unverified video scope exclusion')
+console.log(`${cases.length + 1}/${cases.length + 1} permissive mutations detected`)

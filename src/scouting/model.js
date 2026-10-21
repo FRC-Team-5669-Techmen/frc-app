@@ -1,4 +1,4 @@
-import { isExternalEvidence, matchIdentity } from './provenance.js'
+import { isCurrentEvidence, matchIdentity } from './provenance.js'
 // Proposed Techmen rules. TideScout does not publish these formulas.
 export const CAPABILITIES = Object.freeze([
   { key: 'trench', label: 'Passes under the TRENCH' },
@@ -31,7 +31,7 @@ function newest(records, key) {
 export function currentObservations(records, team) {
   const versions = newest(records.filter(r => r.kind === 'observation' && r.team_number === Number(team)),
     r => r.id ?? `${r.event_id}:${r.member_id}:${r.team_number}:${String(r.match_key).trim().toLowerCase()}`)
-  return newest(versions, r => `${r.event_id}:${r.member_id}:${r.team_number}:${matchIdentity(r)}`).filter(r => !isExternalEvidence(r))
+  return newest(versions, r => `${r.event_id}:${r.member_id}:${r.team_number}:${matchIdentity(r)}`).filter(isCurrentEvidence)
 }
 
 export function reliability(records, team, capability) {

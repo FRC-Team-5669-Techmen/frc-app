@@ -1,6 +1,8 @@
 // A prior event's footage is useful context, but must not silently become a
 // current-event reliability trial. Full match keys avoid qm1/previous-qm1 collisions.
 export function isExternalEvidence(row) { return row.payload?.source_scope === 'external' }
+export function hasUnverifiedVideoScope(row) { return row.payload?.source === 'video' && !['current', 'external'].includes(row.payload?.source_scope) }
+export function isCurrentEvidence(row) { return !isExternalEvidence(row) && !hasUnverifiedVideoScope(row) }
 export function prepareFootageRecord(row) {
   const p = { ...row.payload }
   const hasVideo = row.kind === 'observation' ? p.source === 'video' : !!p.video_url

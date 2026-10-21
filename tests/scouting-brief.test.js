@@ -36,6 +36,15 @@ describe('reviewed match brief', () => {
     const brief = freezeBrief(briefInputs(draft, [row], context))
     expect(brief.teams[0].observations[0]).toMatchObject({id:'authentic',member:'author',version:1,match:'qm1'})
   })
+  it('exports an explicit exclusion for unverified video scope without changing the raw record', () => {
+    const row = observation('legacy','author','yes')
+    row.payload.source = 'video'
+    const brief = freezeBrief(briefInputs(draft,[row],context))
+    expect(brief.teams[0].unverifiedVideos).toBe(1)
+    expect(brief.teams[0].capabilities[0].percent).toBeNull()
+    expect(brief.records[0]).toEqual(row)
+    expect(printableBrief(brief)).toContain('1 videos excluded: event scope unverified')
+  })
   it('restores only bounded known text fields', () => {
     expect(restoreBrief({ match: 42, ours: {}, roles: 'x'.repeat(3000), unknown: 'ignored' })).toEqual({ ...emptyBrief(), roles: 'x'.repeat(2000) })
   })

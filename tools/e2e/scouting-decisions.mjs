@@ -20,6 +20,7 @@ try {
         const at = '2026-10-21T12:00:00Z'
         const rows = Array.from({ length: 65 }, (_, i) => ({ id: `33000000-0000-4000-8000-${String(i).padStart(12,'0')}`, event_id: event, member_id: actor, kind: 'observation', team_number: 5669, match_key: `qm${i+1}`, version: 1, updated_at: at, created_at: at, payload: { source: 'live', answers: { trench: i === 0 ? 'yes' : 'did_not_see' }, notes: i === 64 ? 'Oldest searchable evidence' : 'Synthetic evidence' } }))
         rows.push({ ...rows[0], id: '33000000-0000-4000-8000-000000000099', member_id: '00000000-0000-0000-0000-0000000000c2', match_key: '2026test_qm1', payload: { source: 'live', answers: { trench: 'no' }, notes: 'Contradiction' } })
+        rows.push({...rows[0],id:'33000000-0000-4000-8000-000000000098',match_key:'qm66',payload:{source:'video',video_url:'https://example.org/legacy',answers:{trench:'yes'},notes:'Legacy video: verify event first'}})
         window.__fx.db.scouting_records = rows; window.__fx.db.scouting_revisions = []; window.__fx.save()
       }, {event,actor})
       await page.reload(); await page.getByRole('heading', { name: 'Fixture Regional', exact: true }).waitFor()
@@ -32,6 +33,9 @@ try {
       await page.getByRole('button', {name:'Reset observation filters',exact:true}).click()
       await page.getByLabel('Evidence source',{exact:true}).selectOption('disputed')
       assert.equal(await page.locator('.sc-evidence-record').count(), 2)
+      await page.getByLabel('Evidence source',{exact:true}).selectOption('unverified')
+      assert.equal(await page.locator('.sc-evidence-record').count(),1)
+      assert.match(await page.locator('.sc-evidence-record').innerText(),/event scope not recorded/)
       await page.getByRole('tab', {name:'Teams',exact:true}).click()
       await page.locator('.sc-match-brief summary').click()
       await page.getByLabel('Brief match',{exact:true}).fill('qm42')
@@ -46,7 +50,8 @@ try {
       assert.equal(brief.teams[0].capabilities[0].disputed,1)
       assert.equal(brief.teams[0].capabilities[0].denominator,0)
       assert.equal(brief.teams[1].capabilities[0].percent,null)
-      assert.equal(brief.records.length,66)
+      assert.equal(brief.records.length,67)
+      assert.equal(brief.teams[0].unverifiedVideos,1)
       assert.equal(brief.context.memberId,actor)
       download = page.waitForEvent('download')
       await page.getByRole('button',{name:'Export printable brief',exact:true}).click()
@@ -88,8 +93,8 @@ try {
       await page.locator('.sc-match-brief summary').click()
       assert.equal(await page.getByLabel('Fallbacks and questions to resolve',{exact:true}).inputValue(),'Offline: ask partners about endgame clearance')
       assert.deepEqual(errors,[])
-      results.push({width,passed:true,checks:20,backend:'fictional fixture',storage:'native IndexedDB',offline:'editing/export readiness; built-PWA reload checked separately',realDevice:false})
-      console.log(`PASS decision support ${width}: 20 assertions`)
+      results.push({width,passed:true,checks:23,backend:'fictional fixture',storage:'native IndexedDB',offline:'editing/export readiness; built-PWA reload checked separately',realDevice:false})
+      console.log(`PASS decision support ${width}: 23 assertions`)
     } finally { await context.close() }
   }
 } finally {

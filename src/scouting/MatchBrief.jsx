@@ -43,6 +43,7 @@ export default function MatchBrief({ store, uid, eventId, eventTitle, records, c
     <p className="sc-help">{validation || `${pending} pending event saves excluded. Evidence cache: ${cachedAt ? new Date(cachedAt).toLocaleString() : 'age unknown'}. Estimates and plans are separate from observed capabilities.`}</p>
     {inputs && <div className="sc-brief-teams">{freezeBrief(inputs).teams.map(t => <article className="sc-evidence-record" key={t.team}>
       <h3>{t.team} {t.name}</h3>
+      {t.unverifiedVideos > 0 && <p className="sc-help">{t.unverifiedVideos} videos excluded from rates: event scope needs review.</p>}
       {t.capabilities.map(c => <div className="sc-brief-capability" key={c.key}><strong>{c.label}</strong><span>{c.denominator ? `${c.yes}/${c.denominator} confirmed matches: yes` : 'No decisive match evidence'}{c.disputed ? ` · ${c.disputed} disputed` : ''}</span><span className="sc-help">Pit claim: {t.pitClaims?.[c.key] ?? 'unknown'}{c.sufficient ? '' : ' · fewer than 3 decisive matches'}</span><span className="sc-help">Excluded responses: {c.didNotSee} did not see · {c.notApplicable} not applicable · {c.missing} unanswered</span></div>)}
       {t.pitNotes && <p className="sc-note">Pit notes: {t.pitNotes}</p>}
       <p className="sc-help">{t.estimate ? `EPA estimate: ${t.estimate.epa} · ${t.estimate.fetchedAt ?? 'date unknown'}${t.estimate.stale ? ' · STALE / age unknown' : ''}` : 'EPA unavailable'}. Not an official robot score.</p>

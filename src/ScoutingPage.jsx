@@ -15,7 +15,7 @@ import CoveragePanel from './scouting/CoveragePanel'
 import RecoveryPanel from './scouting/RecoveryPanel'
 import { buildEventArchive, downloadArchive } from './scouting/backup'
 import { matchOrder } from './scouting/schedule'
-import { footageLabel, matchIdentity } from './scouting/provenance'
+import { footageLabel, hasUnverifiedVideoScope, matchIdentity } from './scouting/provenance'
 import { projectRecords, scoutingAccessDenied } from './scouting/projection'
 import EvidenceRecord, { RevisionList } from './scouting/EvidenceRecord'
 import MatchBrief from './scouting/MatchBrief'
@@ -259,6 +259,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
       <div className="sc-team-grid">{visibleNumbers.map(n => { const team = teamRows.find(r => r.team_number === n), pit = pitFor(n); return <article className="sc-card sc-team-card" key={n}><div className="sc-section-head"><div><span className="sc-team-number">{n}</span><h3>{nameFor(n) || 'Team'}</h3></div><span className="sc-chip">{pit?.payload.pit_location || team?.payload.pit_location || 'Pit unknown'}</span></div>
         <PitLocation records={records} team={n} />
         <button onClick={() => { setEvidenceTeam(String(n)); setTab('scout') }}>Review match evidence</button>
+        {serverRecords.some(r => r.kind === 'observation' && r.team_number === n && hasUnverifiedVideoScope(r)) && <p className="sc-help">Video evidence with unverified event scope is excluded from these rates. Use Review match evidence to check its provenance.</p>}
         <div className="sc-evidence-grid">{CAPABILITIES.map(c => { const r = reliability(serverRecords, n, c.key); return <div className="sc-evidence" key={c.key}><h4>{c.label}</h4><span className="sc-help">Pit claim: {words(pit?.payload.capabilities?.[c.key])}{pit?.localStatus ? ' · saved locally, awaiting confirmation' : ''}</span><div className="sc-ratio">{r.percent === null ? 'No evidence' : `${Math.round(r.percent)}%`}<span>{r.yes}/{r.denominator} observed matches</span></div><p className="sc-help">{r.sufficient ? '3+ observed matches' : 'Provisional: fewer than 3 observed matches'}{r.disputed ? ` · ${r.disputed} disputed` : ''}</p><details><summary>Count details</summary><p className="sc-help">{r.no} observed failures. Excluded scout responses: {r.didNotSee} did not see, {r.notApplicable} not applicable, {r.missing} unanswered. Disputed matches are excluded.</p></details></div> })}</div>
         {team?.payload.epa != null && <p className="sc-help">Statbotics estimate: {team.payload.epa} EPA · {when(team.payload.epa_fetched_at)}. Not an official robot score.</p>}
         <div className="sc-actions"><button disabled={!!pit && !canEdit(pit)} onClick={() => openForm('pit', pit ? { record: pit } : { team: n })}>Pit report</button><button onClick={() => openForm('observation', { team: n })}>Observe</button><button onClick={() => openForm('message', { team: n })}>Message</button>{manager && team && canEdit(team) && <button onClick={() => openForm('team', { record: team })}>Edit team</button>}</div>

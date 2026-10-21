@@ -26,3 +26,11 @@ describe('event evidence coverage', () => {
     expect(eventCoverage([{ ...assignment, payload: { ...assignment.payload, status: 'cancelled' } }])[0].outstanding).toBe(0)
   })
 })
+
+it('keeps unverified video scope visible without claiming current or prior match coverage', () => {
+  const rows = [{id:'legacy',event_id:'e',member_id:'a',kind:'observation',team_number:5669,match_key:'qm1',payload:{source:'video',answers:{trench:'yes'}}}]
+  const coverage = eventCoverage(rows)
+  expect(coverage[0]).toMatchObject({currentMatches:0,priorMatches:0,unverifiedVideos:1})
+  expect(coverage[0].trials[0].denominator).toBe(0)
+  expect(filterCoverage(coverage,'unverified')).toHaveLength(1)
+})

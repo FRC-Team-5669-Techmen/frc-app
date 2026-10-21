@@ -36,3 +36,12 @@ it('counts short and full current-event match labels once, retaining disputes an
   expect(reliability([one, { ...same, payload: { answers: { trench: 'no' } } }], 5669, 'trench')).toMatchObject({ disputed: 1, denominator: 0 })
   expect(reliability([one, { ...same, member_id: 'a', version: 2, payload: { answers: { trench: 'no' } } }], 5669, 'trench')).toMatchObject({ no: 1, denominator: 1 })
 })
+
+it('excludes unknown video provenance while preserving explicit live observations and reviewed scope', () => {
+  const legacy = { ...external, id:'legacy', match_key:'qm2', payload:{source:'video',video_url:'https://example.org/old',answers:{trench:'yes'}} }
+  const live = { ...external, id:'live', match_key:'qm1', payload:{source:'live',video_url:'https://example.org/reference',answers:{trench:'no'}} }
+  expect(reliability([legacy,live],5669,'trench')).toMatchObject({yes:0,no:1,denominator:1,percent:0})
+  const reviewed = {...legacy,version:2,payload:{...legacy.payload,source_scope:'current'}}
+  expect(reliability([legacy,live,reviewed],5669,'trench')).toMatchObject({yes:1,no:1,denominator:2,percent:50})
+  expect(reliability([reviewed,{...legacy,version:3}],5669,'trench').denominator).toBe(0)
+})
