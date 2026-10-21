@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { normalizePitMap, mapDirectory, mapIsStale, importedMapKey } from '../src/scouting/pitMap.js'
+import { normalizePitMap, mapDirectory, mapIsStale, importedMapKey } from '../src/scouting/pit-map-model.js'
 import { importScouting } from '../supabase/functions/scouting-import/import.js'
 import { nexusMap } from '../src/dev/fixture/nexus-map.js'
 

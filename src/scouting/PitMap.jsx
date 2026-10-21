@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { importedMapKey, mapDirectory, mapIsStale, normalizePitMap, PIT_MAP_DRAFT, validMapKey } from './pitMap'
+import { importedMapKey, mapDirectory, mapIsStale, normalizePitMap, PIT_MAP_DRAFT, validMapKey } from './pit-map-model.js'
 
 const when = at => new Date(at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
 function Shape({ shape, kind, address, selected }) {

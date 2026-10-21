@@ -6,7 +6,7 @@ import { IDBFactory } from 'fake-indexeddb'
 import { beforeEach, afterEach, it, expect, vi } from 'vitest'
 import PitMap from '../src/scouting/PitMap.jsx'
 import { createScoutingStore } from '../src/scouting/storage.js'
-import { PIT_MAP_DRAFT } from '../src/scouting/pitMap.js'
+import { PIT_MAP_DRAFT } from '../src/scouting/pit-map-model.js'
 import { nexusMap } from '../src/dev/fixture/nexus-map.js'
 let host, root, store, props
 const at = '2026-10-21T08:00:00Z'
