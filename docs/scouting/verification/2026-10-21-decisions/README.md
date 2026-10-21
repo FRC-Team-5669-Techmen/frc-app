@@ -23,3 +23,7 @@ The final provenance candidate is 75fad88. Independent `github-ci-130.*` verifie
 The initial broad attempt finished 1790/1793 (three failures); the separate 8fef933 predecessor attempt finished 1797/1798 (one failure, with scouting 169/169). Missing assertions followed aborted cases; neither is a passing full run. A final-app serial run began at 17:02:18 UTC after the other suites finished. Current expected totals are 1801, including newer-main additions; do not substitute the historical 1789 count. Failed attempts will remain retained alongside final results.
 
 `sha256.json` covers all retained files except itself. Original audiovisual fidelity, fixed annotated actual footage, actual phones, novice/mentor/drive-coach evaluation, representative hosted providers and authorized delivery remain open in FIELD_ACCEPTANCE.csv. The former 39-cycle/2340-second soak belongs to the prior checkpoint and was not repeated here.
+
+## In-progress final candidate db990e5
+
+`github-ci-136.*` independently confirms 1028 tests and required gates. `clock-targets.*` retains the complete 619/619 first feature batch on fixed business Date/native UI timers. `print-review.*` records the final browser PDF time/uncertainty check; its current PDF will replace the earlier retained PDF during final evidence consolidation. The other eleven features are still running; no complete 1801 claim yet. RESUME.md records the current state.

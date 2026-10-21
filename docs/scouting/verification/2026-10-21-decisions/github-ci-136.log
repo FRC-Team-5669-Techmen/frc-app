@@ -1,0 +1,659 @@
+﻿2026-10-21T17:17:04.4821924Z Current runner version: '2.338.0'
+2026-10-21T17:17:04.4848734Z ##[group]Runner Image Provisioner
+2026-10-21T17:17:04.4849699Z Hosted Compute Agent
+2026-10-21T17:17:04.4850391Z Version: 20261012.601
+2026-10-21T17:17:04.4851055Z Commit: f3dc54e1fb89da6852db922499a0233137369e1d
+2026-10-21T17:17:04.4851788Z Build Date: 2026-10-12T17:48:21Z
+2026-10-21T17:17:04.4852626Z Worker ID: {5c208507-9c21-4b18-a6ff-cee180b9fe83}
+2026-10-21T17:17:04.4853377Z Region: northcentralus
+2026-10-21T17:17:04.4854025Z Cloud: Azure
+2026-10-21T17:17:04.4854615Z ##[endgroup]
+2026-10-21T17:17:04.4855945Z ##[group]Operating System
+2026-10-21T17:17:04.4856911Z Ubuntu
+2026-10-21T17:17:04.4857461Z 24.04.5
+2026-10-21T17:17:04.4858039Z LTS
+2026-10-21T17:17:04.4858600Z ##[endgroup]
+2026-10-21T17:17:04.4859176Z ##[group]Runner Image
+2026-10-21T17:17:04.4859875Z Image: ubuntu-24.04
+2026-10-21T17:17:04.4860473Z Version: 20261012.334.1
+2026-10-21T17:17:04.4861806Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261012.334/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-21T17:17:04.4863349Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261012.334
+2026-10-21T17:17:04.4864436Z ##[endgroup]
+2026-10-21T17:17:04.4867681Z ##[group]GITHUB_TOKEN Permissions
+2026-10-21T17:17:04.4870164Z Actions: write
+2026-10-21T17:17:04.4870824Z ArtifactMetadata: write
+2026-10-21T17:17:04.4871574Z Attestations: write
+2026-10-21T17:17:04.4872203Z Checks: write
+2026-10-21T17:17:04.4872788Z CodeQuality: write
+2026-10-21T17:17:04.4873428Z Contents: write
+2026-10-21T17:17:04.4874042Z CopilotRequests: write
+2026-10-21T17:17:04.4874677Z Deployments: write
+2026-10-21T17:17:04.4875387Z Discussions: write
+2026-10-21T17:17:04.4875968Z Drives: write
+2026-10-21T17:17:04.4876574Z Issues: write
+2026-10-21T17:17:04.4877613Z Metadata: read
+2026-10-21T17:17:04.4878306Z Models: read
+2026-10-21T17:17:04.4878966Z Packages: write
+2026-10-21T17:17:04.4879549Z Pages: write
+2026-10-21T17:17:04.4880169Z PullRequests: write
+2026-10-21T17:17:04.4880815Z RepositoryProjects: write
+2026-10-21T17:17:04.4881517Z SecurityEvents: write
+2026-10-21T17:17:04.4882191Z Statuses: write
+2026-10-21T17:17:04.4882790Z VulnerabilityAlerts: read
+2026-10-21T17:17:04.4883448Z ##[endgroup]
+2026-10-21T17:17:04.4885978Z Secret source: Actions
+2026-10-21T17:17:04.4887360Z Cache mode: write
+2026-10-21T17:17:04.4888295Z Prepare workflow directory
+2026-10-21T17:17:04.5284441Z Prepare all required actions
+2026-10-21T17:17:04.5332310Z Getting action download info
+2026-10-21T17:17:04.7860322Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-10-21T17:17:04.8707627Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-10-21T17:17:05.0630016Z Complete job name: test
+2026-10-21T17:17:05.1387548Z ##[group]Run actions/checkout@v4
+2026-10-21T17:17:05.1388502Z with:
+2026-10-21T17:17:05.1388986Z   repository: FRC-Team-5669-Techmen/frc-app
+2026-10-21T17:17:05.1392953Z   token: ***
+2026-10-21T17:17:05.1393419Z   ssh-strict: true
+2026-10-21T17:17:05.1393864Z   ssh-user: git
+2026-10-21T17:17:05.1394316Z   persist-credentials: true
+2026-10-21T17:17:05.1394806Z   clean: true
+2026-10-21T17:17:05.1395257Z   sparse-checkout-cone-mode: true
+2026-10-21T17:17:05.1395780Z   fetch-depth: 1
+2026-10-21T17:17:05.1396215Z   fetch-tags: false
+2026-10-21T17:17:05.1396824Z   show-progress: true
+2026-10-21T17:17:05.1397283Z   lfs: false
+2026-10-21T17:17:05.1397707Z   submodules: false
+2026-10-21T17:17:05.1398161Z   set-safe-directory: true
+2026-10-21T17:17:05.1398671Z   allow-unsafe-pr-checkout: false
+2026-10-21T17:17:05.1399404Z env:
+2026-10-21T17:17:05.1399851Z   VITE_SUPABASE_URL: http://127.0.0.1:54329
+2026-10-21T17:17:05.1400491Z   VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+2026-10-21T17:17:05.1401121Z ##[endgroup]
+2026-10-21T17:17:05.2390591Z Syncing repository: FRC-Team-5669-Techmen/frc-app
+2026-10-21T17:17:05.2393197Z ##[group]Getting Git version info
+2026-10-21T17:17:05.2394340Z Working directory is '/home/runner/work/frc-app/frc-app'
+2026-10-21T17:17:05.2396417Z [command]/usr/bin/git version
+2026-10-21T17:17:05.2451175Z git version 2.55.0
+2026-10-21T17:17:05.2472649Z ##[endgroup]
+2026-10-21T17:17:05.2487967Z Temporarily overriding HOME='/home/runner/work/_temp/83c8b28d-c1aa-418a-a382-d917529d9a07' before making global git config changes
+2026-10-21T17:17:05.2490220Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-21T17:17:05.2493346Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/frc-app/frc-app
+2026-10-21T17:17:05.2560045Z Deleting the contents of '/home/runner/work/frc-app/frc-app'
+2026-10-21T17:17:05.2563661Z ##[group]Initializing the repository
+2026-10-21T17:17:05.2569082Z [command]/usr/bin/git init /home/runner/work/frc-app/frc-app
+2026-10-21T17:17:05.2674708Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-21T17:17:05.2676363Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-21T17:17:05.2678128Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-21T17:17:05.2679390Z hint: call:
+2026-10-21T17:17:05.2680228Z hint:
+2026-10-21T17:17:05.2681114Z hint: 	git config --global init.defaultBranch <name>
+2026-10-21T17:17:05.2682713Z hint:
+2026-10-21T17:17:05.2683633Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-21T17:17:05.2685181Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-21T17:17:05.2686354Z hint:
+2026-10-21T17:17:05.2687129Z hint: 	git branch -m <name>
+2026-10-21T17:17:05.2687656Z hint:
+2026-10-21T17:17:05.2688323Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-21T17:17:05.2689338Z Initialized empty Git repository in /home/runner/work/frc-app/frc-app/.git/
+2026-10-21T17:17:05.2691151Z [command]/usr/bin/git remote add origin https://github.com/FRC-Team-5669-Techmen/frc-app
+2026-10-21T17:17:05.2749342Z ##[endgroup]
+2026-10-21T17:17:05.2750677Z ##[group]Disabling automatic garbage collection
+2026-10-21T17:17:05.2751886Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-21T17:17:05.2784028Z ##[endgroup]
+2026-10-21T17:17:05.2785195Z ##[group]Setting up auth
+2026-10-21T17:17:05.2791695Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-21T17:17:05.2827448Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-21T17:17:05.3202168Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-21T17:17:05.3242165Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-21T17:17:05.3493172Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-21T17:17:05.3532921Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-21T17:17:05.3773547Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-21T17:17:05.3817878Z ##[endgroup]
+2026-10-21T17:17:05.3818810Z ##[group]Fetching the repository
+2026-10-21T17:17:05.3829263Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +14914b3021e0dd80f453235385f139ecd1d2f3b4:refs/remotes/pull/4/merge
+2026-10-21T17:17:06.4822719Z From https://github.com/FRC-Team-5669-Techmen/frc-app
+2026-10-21T17:17:06.4825133Z  * [new ref]         14914b3021e0dd80f453235385f139ecd1d2f3b4 -> pull/4/merge
+2026-10-21T17:17:06.4830534Z ##[endgroup]
+2026-10-21T17:17:06.4832088Z ##[group]Determining the checkout info
+2026-10-21T17:17:06.4833546Z ##[endgroup]
+2026-10-21T17:17:06.4836261Z [command]/usr/bin/git sparse-checkout disable
+2026-10-21T17:17:06.4891787Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-21T17:17:06.4949978Z ##[group]Checking out the ref
+2026-10-21T17:17:06.4953489Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/4/merge
+2026-10-21T17:17:06.6162176Z Note: switching to 'refs/remotes/pull/4/merge'.
+2026-10-21T17:17:06.6163408Z 
+2026-10-21T17:17:06.6164379Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-21T17:17:06.6166264Z changes and commit them, and you can discard any commits you make in this
+2026-10-21T17:17:06.6168406Z state without impacting any branches by switching back to a branch.
+2026-10-21T17:17:06.6169811Z 
+2026-10-21T17:17:06.6170830Z If you want to create a new branch to retain commits you create, you may
+2026-10-21T17:17:06.6172976Z do so (now or later) by using -c with the switch command. Example:
+2026-10-21T17:17:06.6174209Z 
+2026-10-21T17:17:06.6174752Z   git switch -c <new-branch-name>
+2026-10-21T17:17:06.6175783Z 
+2026-10-21T17:17:06.6176514Z Or undo this operation with:
+2026-10-21T17:17:06.6177805Z 
+2026-10-21T17:17:06.6178544Z   git switch -
+2026-10-21T17:17:06.6179399Z 
+2026-10-21T17:17:06.6180547Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-21T17:17:06.6181874Z 
+2026-10-21T17:17:06.6183391Z HEAD is now at 14914b3 Merge db990e51fc24c24a42d8c202eb9107cc7ad33a9e into 0a11c52abce80d463577e41dfb4849801559643d
+2026-10-21T17:17:06.6188789Z ##[endgroup]
+2026-10-21T17:17:06.6227131Z [command]/usr/bin/git log -1 --format=%H
+2026-10-21T17:17:06.6259933Z 14914b3021e0dd80f453235385f139ecd1d2f3b4
+2026-10-21T17:17:06.6729207Z ##[group]Run actions/setup-node@v4
+2026-10-21T17:17:06.6730433Z with:
+2026-10-21T17:17:06.6731340Z   node-version: 22
+2026-10-21T17:17:06.6732289Z   cache: npm
+2026-10-21T17:17:06.6733212Z   always-auth: false
+2026-10-21T17:17:06.6734214Z   check-latest: false
+2026-10-21T17:17:06.6743901Z   token: ***
+2026-10-21T17:17:06.6744859Z env:
+2026-10-21T17:17:06.6745837Z   VITE_SUPABASE_URL: http://127.0.0.1:54329
+2026-10-21T17:17:06.6747446Z   VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+2026-10-21T17:17:06.6748824Z ##[endgroup]
+2026-10-21T17:17:06.8231895Z Found in cache @ /opt/hostedtoolcache/node/22.23.3/x64
+2026-10-21T17:17:06.8235776Z (node:2404) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-21T17:17:06.8239314Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-21T17:17:06.8242056Z ##[group]Environment details
+2026-10-21T17:17:09.6721941Z node: v22.23.3
+2026-10-21T17:17:09.6722638Z npm: 10.9.9
+2026-10-21T17:17:09.6723052Z yarn: 1.22.22
+2026-10-21T17:17:09.6724369Z ##[endgroup]
+2026-10-21T17:17:09.6742976Z [command]/opt/hostedtoolcache/node/22.23.3/x64/bin/npm config get cache
+2026-10-21T17:17:09.9707214Z /home/runner/.npm
+2026-10-21T17:17:10.1065679Z Cache hit for: node-cache-Linux-x64-npm-dab324919328305c88c07b109e69c51a2177320681ffea095b8205cbcb483fe3
+2026-10-21T17:17:10.1174376Z (node:2404) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-10-21T17:17:11.2106634Z Received 134217728 of 187217616 (71.7%), 128.0 MBs/sec
+2026-10-21T17:17:11.4587119Z Received 187217616 of 187217616 (100.0%), 143.1 MBs/sec
+2026-10-21T17:17:11.4588971Z Cache Size: ~179 MB (187217616 B)
+2026-10-21T17:17:11.4631053Z [command]/usr/bin/tar -xf /home/runner/work/_temp/19d25c98-c090-4d1c-99d6-27e8f043de28/cache.tzst -P -C /home/runner/work/frc-app/frc-app --use-compress-program unzstd
+2026-10-21T17:17:11.8087564Z Cache restored successfully
+2026-10-21T17:17:11.8182091Z Cache restored from key: node-cache-Linux-x64-npm-dab324919328305c88c07b109e69c51a2177320681ffea095b8205cbcb483fe3
+2026-10-21T17:17:11.8422591Z ##[group]Run npm ci
+2026-10-21T17:17:11.8422941Z [36;1mnpm ci[0m
+2026-10-21T17:17:11.8733877Z shell: /usr/bin/bash -e {0}
+2026-10-21T17:17:11.8734211Z env:
+2026-10-21T17:17:11.8734506Z   VITE_SUPABASE_URL: http://127.0.0.1:54329
+2026-10-21T17:17:11.8734897Z   VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+2026-10-21T17:17:11.8735230Z ##[endgroup]
+2026-10-21T17:17:17.2378840Z npm warn deprecated source-map@0.8.0-beta.0: The work that was done in this beta branch won't be included in future versions
+2026-10-21T17:17:17.8756464Z npm warn deprecated glob@11.1.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-10-21T17:17:19.8488014Z 
+2026-10-21T17:17:19.8488882Z added 538 packages, and audited 539 packages in 8s
+2026-10-21T17:17:19.8489381Z 
+2026-10-21T17:17:19.8489755Z 152 packages are looking for funding
+2026-10-21T17:17:19.8490235Z   run `npm fund` for details
+2026-10-21T17:17:19.8890172Z 
+2026-10-21T17:17:19.8891394Z 10 vulnerabilities (3 moderate, 7 high)
+2026-10-21T17:17:19.8891907Z 
+2026-10-21T17:17:19.8892331Z To address issues that do not require attention, run:
+2026-10-21T17:17:19.8892916Z   npm audit fix
+2026-10-21T17:17:19.8893129Z 
+2026-10-21T17:17:19.8893513Z To address all issues (including breaking changes), run:
+2026-10-21T17:17:19.8894148Z   npm audit fix --force
+2026-10-21T17:17:19.8894416Z 
+2026-10-21T17:17:19.8894615Z Run `npm audit` for details.
+2026-10-21T17:17:19.9867132Z ##[group]Run npm run build
+2026-10-21T17:17:19.9867453Z [36;1mnpm run build[0m
+2026-10-21T17:17:19.9939239Z shell: /usr/bin/bash -e {0}
+2026-10-21T17:17:19.9939513Z env:
+2026-10-21T17:17:19.9939779Z   VITE_SUPABASE_URL: http://127.0.0.1:54329
+2026-10-21T17:17:19.9940130Z   VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+2026-10-21T17:17:19.9940443Z ##[endgroup]
+2026-10-21T17:17:20.1022969Z 
+2026-10-21T17:17:20.1023605Z > frc-app@0.1.0 build
+2026-10-21T17:17:20.1023934Z > vite build
+2026-10-21T17:17:20.1024121Z 
+2026-10-21T17:17:20.6485165Z [36mvite v5.4.21 [32mbuilding for production...[36m[39m
+2026-10-21T17:17:20.6968828Z transforming...
+2026-10-21T17:17:23.4316389Z [32m✓[39m 266 modules transformed.
+2026-10-21T17:17:23.7379956Z rendering chunks...
+2026-10-21T17:17:23.9886989Z computing gzip size...
+2026-10-21T17:17:24.0168683Z [2mdist/[22m[32mregisterSW.js                                            [39m[1m[2m  0.13 kB[22m[1m[22m
+2026-10-21T17:17:24.0170223Z [2mdist/[22m[32mmanifest.webmanifest                                     [39m[1m[2m  0.50 kB[22m[1m[22m
+2026-10-21T17:17:24.0171775Z [2mdist/[22m[32mindex.html                                               [39m[1m[2m  0.92 kB[22m[1m[22m[2m │ gzip:   0.45 kB[22m
+2026-10-21T17:17:24.0173615Z [2mdist/[22m[2massets/[22m[32mchakra-petch-vietnamese-400-normal-Cn7ya5On.woff  [39m[1m[2m  5.04 kB[22m[1m[22m
+2026-10-21T17:17:24.0175358Z [2mdist/[22m[2massets/[22m[32mchakra-petch-vietnamese-700-normal-gQuUA8Wu.woff  [39m[1m[2m  5.08 kB[22m[1m[22m
+2026-10-21T17:17:24.0177359Z [2mdist/[22m[2massets/[22m[32mchakra-petch-vietnamese-600-normal-Pvj4qcw_.woff  [39m[1m[2m  5.11 kB[22m[1m[22m
+2026-10-21T17:17:24.0179221Z [2mdist/[22m[2massets/[22m[32mchakra-petch-vietnamese-500-normal-BVzUBLGs.woff  [39m[1m[2m  5.12 kB[22m[1m[22m
+2026-10-21T17:17:24.0180998Z [2mdist/[22m[2massets/[22m[32mchakra-petch-thai-400-normal-Bw1Q-fVY.woff2       [39m[1m[2m  7.04 kB[22m[1m[22m
+2026-10-21T17:17:24.0182756Z [2mdist/[22m[2massets/[22m[32mchakra-petch-thai-700-normal-B7WL5pBr.woff2       [39m[1m[2m  7.29 kB[22m[1m[22m
+2026-10-21T17:17:24.0184467Z [2mdist/[22m[2massets/[22m[32mchakra-petch-thai-500-normal-DeexCGiz.woff2       [39m[1m[2m  7.51 kB[22m[1m[22m
+2026-10-21T17:17:24.0186200Z [2mdist/[22m[2massets/[22m[32mchakra-petch-thai-600-normal-C620THcd.woff2       [39m[1m[2m  7.56 kB[22m[1m[22m
+2026-10-21T17:17:24.0188125Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-ext-400-normal-C8u6EFkq.woff2  [39m[1m[2m  8.86 kB[22m[1m[22m
+2026-10-21T17:17:24.0190515Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-ext-500-normal-gA6791b0.woff2  [39m[1m[2m  9.03 kB[22m[1m[22m
+2026-10-21T17:17:24.0192350Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-ext-600-normal-CdGvbdDU.woff2  [39m[1m[2m  9.06 kB[22m[1m[22m
+2026-10-21T17:17:24.0194202Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-ext-700-normal-DAkvJhej.woff2  [39m[1m[2m  9.07 kB[22m[1m[22m
+2026-10-21T17:17:24.0195925Z [2mdist/[22m[2massets/[22m[32mchakra-petch-thai-400-normal-KdzBjiWs.woff        [39m[1m[2m  9.42 kB[22m[1m[22m
+2026-10-21T17:17:24.0197812Z [2mdist/[22m[2massets/[22m[32mchakra-petch-thai-700-normal-vZLZ_5L8.woff        [39m[1m[2m  9.70 kB[22m[1m[22m
+2026-10-21T17:17:24.0199499Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-400-normal-SafcrIr2.woff2      [39m[1m[2m  9.76 kB[22m[1m[22m
+2026-10-21T17:17:24.0201108Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-700-normal-CnDBPjkL.woff2      [39m[1m[2m  9.90 kB[22m[1m[22m
+2026-10-21T17:17:24.0202794Z [2mdist/[22m[2massets/[22m[32mchakra-petch-thai-500-normal-CJG_V2_m.woff        [39m[1m[2m  9.91 kB[22m[1m[22m
+2026-10-21T17:17:24.0204416Z [2mdist/[22m[2massets/[22m[32mchakra-petch-thai-600-normal-BiM5MXH8.woff        [39m[1m[2m  9.95 kB[22m[1m[22m
+2026-10-21T17:17:24.0206489Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-500-normal-BR1ody1F.woff2      [39m[1m[2m  9.96 kB[22m[1m[22m
+2026-10-21T17:17:24.0208531Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-600-normal-DVQm9bgb.woff2      [39m[1m[2m  9.97 kB[22m[1m[22m
+2026-10-21T17:17:24.0210228Z [2mdist/[22m[2massets/[22m[32mshare-tech-mono-latin-400-normal-15MgdvEM.woff    [39m[1m[2m 10.24 kB[22m[1m[22m
+2026-10-21T17:17:24.0211937Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-ext-400-normal-MNNNbyh_.woff   [39m[1m[2m 12.04 kB[22m[1m[22m
+2026-10-21T17:17:24.0213614Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-ext-700-normal-BeviJPUl.woff   [39m[1m[2m 12.17 kB[22m[1m[22m
+2026-10-21T17:17:24.0215280Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-ext-500-normal-BCHeNDEx.woff   [39m[1m[2m 12.18 kB[22m[1m[22m
+2026-10-21T17:17:24.0217228Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-ext-600-normal-nL80L4xU.woff   [39m[1m[2m 12.22 kB[22m[1m[22m
+2026-10-21T17:17:24.0218889Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-400-normal-D7EtbySE.woff       [39m[1m[2m 13.16 kB[22m[1m[22m
+2026-10-21T17:17:24.0220530Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-700-normal-D1s_c2du.woff       [39m[1m[2m 13.33 kB[22m[1m[22m
+2026-10-21T17:17:24.0222215Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-500-normal-CnUQnZ4D.woff       [39m[1m[2m 13.41 kB[22m[1m[22m
+2026-10-21T17:17:24.0223877Z [2mdist/[22m[2massets/[22m[32mchakra-petch-latin-600-normal-DQKfcdKo.woff       [39m[1m[2m 13.43 kB[22m[1m[22m
+2026-10-21T17:17:24.0225591Z [2mdist/[22m[2massets/[22m[32mshare-tech-mono-latin-400-normal-CCqdbj5z.woff2   [39m[1m[2m 13.50 kB[22m[1m[22m
+2026-10-21T17:17:24.0227619Z [2mdist/[22m[2massets/[22m[35mSignoutForm-wJ1rMI8v.css                          [39m[1m[2m  1.95 kB[22m[1m[22m[2m │ gzip:   0.64 kB[22m
+2026-10-21T17:17:24.0229427Z [2mdist/[22m[2massets/[22m[35mMemberPage-CRnsrwBY.css                           [39m[1m[2m  2.47 kB[22m[1m[22m[2m │ gzip:   0.71 kB[22m
+2026-10-21T17:17:24.0231143Z [2mdist/[22m[2massets/[22m[35mLandingPage-dMTMVmJZ.css                          [39m[1m[2m  2.74 kB[22m[1m[22m[2m │ gzip:   0.82 kB[22m
+2026-10-21T17:17:24.0232987Z [2mdist/[22m[2massets/[22m[35mAttendanceHistory-GzO-sMx7.css                    [39m[1m[2m  2.79 kB[22m[1m[22m[2m │ gzip:   0.95 kB[22m
+2026-10-21T17:17:24.0234773Z [2mdist/[22m[2massets/[22m[35mAccessGate-Do6e_Opx.css                           [39m[1m[2m  3.17 kB[22m[1m[22m[2m │ gzip:   0.96 kB[22m
+2026-10-21T17:17:24.0237022Z [2mdist/[22m[2massets/[22m[35mSignoutsPage-BwVecsAF.css                         [39m[1m[2m  3.20 kB[22m[1m[22m[2m │ gzip:   0.99 kB[22m
+2026-10-21T17:17:24.0238844Z [2mdist/[22m[2massets/[22m[35mActivityPage-DjxoWT8o.css                         [39m[1m[2m  3.35 kB[22m[1m[22m[2m │ gzip:   0.95 kB[22m
+2026-10-21T17:17:24.0240625Z [2mdist/[22m[2massets/[22m[35mLoginPage-Dd65vbMB.css                            [39m[1m[2m  3.37 kB[22m[1m[22m[2m │ gzip:   1.02 kB[22m
+2026-10-21T17:17:24.0242379Z [2mdist/[22m[2massets/[22m[35mParentResponse-CNZUnxlT.css                       [39m[1m[2m  3.73 kB[22m[1m[22m[2m │ gzip:   1.09 kB[22m
+2026-10-21T17:17:24.0244241Z [2mdist/[22m[2massets/[22m[35mReportsPage-DIA1zMVC.css                          [39m[1m[2m  3.90 kB[22m[1m[22m[2m │ gzip:   1.09 kB[22m
+2026-10-21T17:17:24.0245981Z [2mdist/[22m[2massets/[22m[35mFeedbackWidget-BxK1PP9b.css                       [39m[1m[2m  4.04 kB[22m[1m[22m[2m │ gzip:   1.15 kB[22m
+2026-10-21T17:17:24.0248035Z [2mdist/[22m[2massets/[22m[35mPresenceBoard-Pyjo9WaH.css                        [39m[1m[2m  4.70 kB[22m[1m[22m[2m │ gzip:   1.43 kB[22m
+2026-10-21T17:17:24.0249909Z [2mdist/[22m[2massets/[22m[35mSurveyPage-Dr90hHdh.css                           [39m[1m[2m  4.75 kB[22m[1m[22m[2m │ gzip:   1.24 kB[22m
+2026-10-21T17:17:24.0251952Z [2mdist/[22m[2massets/[22m[35mAccessRequestsPage-DlOysgMN.css                   [39m[1m[2m  4.82 kB[22m[1m[22m[2m │ gzip:   1.25 kB[22m
+2026-10-21T17:17:24.0253802Z [2mdist/[22m[2massets/[22m[35mMemberApplication-5Pe44akn.css                    [39m[1m[2m  5.36 kB[22m[1m[22m[2m │ gzip:   1.34 kB[22m
+2026-10-21T17:17:24.0255615Z [2mdist/[22m[2massets/[22m[35mCheckinPage-DtdHi8Ep.css                          [39m[1m[2m  5.51 kB[22m[1m[22m[2m │ gzip:   1.35 kB[22m
+2026-10-21T17:17:24.0257619Z [2mdist/[22m[2massets/[22m[35mSquadPage-HJRT2XT0.css                            [39m[1m[2m  5.61 kB[22m[1m[22m[2m │ gzip:   1.31 kB[22m
+2026-10-21T17:17:24.0259394Z [2mdist/[22m[2massets/[22m[35mCertificationsPage-CqLAGq5A.css                   [39m[1m[2m  5.78 kB[22m[1m[22m[2m │ gzip:   1.50 kB[22m
+2026-10-21T17:17:24.0261208Z [2mdist/[22m[2massets/[22m[35mConnectorPage-2BsKQLqA.css                        [39m[1m[2m  5.83 kB[22m[1m[22m[2m │ gzip:   1.38 kB[22m
+2026-10-21T17:17:24.0262974Z [2mdist/[22m[2massets/[22m[35mReadinessPage-B4czZkVg.css                        [39m[1m[2m  6.08 kB[22m[1m[22m[2m │ gzip:   1.39 kB[22m
+2026-10-21T17:17:24.0264708Z [2mdist/[22m[2massets/[22m[35mtour-CnB2mjGz.css                                 [39m[1m[2m  6.22 kB[22m[1m[22m[2m │ gzip:   1.43 kB[22m
+2026-10-21T17:17:24.0266417Z [2mdist/[22m[2massets/[22m[35mHomePage-ChgDY4QJ.css                             [39m[1m[2m  6.48 kB[22m[1m[22m[2m │ gzip:   1.70 kB[22m
+2026-10-21T17:17:24.0268489Z [2mdist/[22m[2massets/[22m[35mApplicationsPage-CxAyggcS.css                     [39m[1m[2m  6.59 kB[22m[1m[22m[2m │ gzip:   1.43 kB[22m
+2026-10-21T17:17:24.0270335Z [2mdist/[22m[2massets/[22m[35mStanding-RKUMQnd0.css                             [39m[1m[2m  6.76 kB[22m[1m[22m[2m │ gzip:   1.70 kB[22m
+2026-10-21T17:17:24.0272101Z [2mdist/[22m[2massets/[22m[35mLogHoursPage-D46YYnQa.css                         [39m[1m[2m  7.31 kB[22m[1m[22m[2m │ gzip:   1.76 kB[22m
+2026-10-21T17:17:24.0273923Z [2mdist/[22m[2massets/[22m[35mParentHomePage-R4UHCU5k.css                       [39m[1m[2m  7.66 kB[22m[1m[22m[2m │ gzip:   1.67 kB[22m
+2026-10-21T17:17:24.0275759Z [2mdist/[22m[2massets/[22m[35mSurveysAdmin-DcdiWC2C.css                         [39m[1m[2m  8.01 kB[22m[1m[22m[2m │ gzip:   1.60 kB[22m
+2026-10-21T17:17:24.0277708Z [2mdist/[22m[2massets/[22m[35mHoursBoard-7ekWx10j.css                           [39m[1m[2m  9.43 kB[22m[1m[22m[2m │ gzip:   2.13 kB[22m
+2026-10-21T17:17:24.0279718Z [2mdist/[22m[2massets/[22m[35mMyHoursPage-_K-RaRBf.css                          [39m[1m[2m 10.02 kB[22m[1m[22m[2m │ gzip:   2.13 kB[22m
+2026-10-21T17:17:24.0281569Z [2mdist/[22m[2massets/[22m[35mProfilePage-BNoi8emn.css                          [39m[1m[2m 10.57 kB[22m[1m[22m[2m │ gzip:   2.22 kB[22m
+2026-10-21T17:17:24.0283387Z [2mdist/[22m[2massets/[22m[35mAnnouncePage-wYMK6D1r.css                         [39m[1m[2m 10.78 kB[22m[1m[22m[2m │ gzip:   2.12 kB[22m
+2026-10-21T17:17:24.0285167Z [2mdist/[22m[2massets/[22m[35mFeedbackPage-Cr8gI5Xg.css                         [39m[1m[2m 10.97 kB[22m[1m[22m[2m │ gzip:   2.12 kB[22m
+2026-10-21T17:17:24.0287139Z [2mdist/[22m[2massets/[22m[35mRosterPage-DjbHQSgg.css                           [39m[1m[2m 12.82 kB[22m[1m[22m[2m │ gzip:   2.39 kB[22m
+2026-10-21T17:17:24.0288941Z [2mdist/[22m[2massets/[22m[35mVerifyHoursPage-D_Xl9wmc.css                      [39m[1m[2m 14.69 kB[22m[1m[22m[2m │ gzip:   2.68 kB[22m
+2026-10-21T17:17:24.0290768Z [2mdist/[22m[2massets/[22m[35mSchedulePage-1ZcLMsuZ.css                         [39m[1m[2m 15.48 kB[22m[1m[22m[2m │ gzip:   2.78 kB[22m
+2026-10-21T17:17:24.0292556Z [2mdist/[22m[2massets/[22m[35mJobsPage-BrWDgzSW.css                             [39m[1m[2m 17.43 kB[22m[1m[22m[2m │ gzip:   3.22 kB[22m
+2026-10-21T17:17:24.0294614Z [2mdist/[22m[2massets/[22m[35mScoutingPage-CDSIx3ZO.css                         [39m[1m[2m 18.87 kB[22m[1m[22m[2m │ gzip:   4.07 kB[22m
+2026-10-21T17:17:24.0296465Z [2mdist/[22m[2massets/[22m[35mHandbookPage-cemWXd_u.css                         [39m[1m[2m 18.88 kB[22m[1m[22m[2m │ gzip:   4.03 kB[22m
+2026-10-21T17:17:24.0298388Z [2mdist/[22m[2massets/[22m[35mEventHub-DMRIN4Vw.css                             [39m[1m[2m 36.67 kB[22m[1m[22m[2m │ gzip:   6.91 kB[22m
+2026-10-21T17:17:24.0300121Z [2mdist/[22m[2massets/[22m[35mindex-CsfhlaG4.css                                [39m[1m[2m 66.32 kB[22m[1m[22m[2m │ gzip:  24.40 kB[22m
+2026-10-21T17:17:24.0301864Z [2mdist/[22m[2massets/[22m[36mdiscord-B-jhtE7I.js                               [39m[1m[2m  0.06 kB[22m[1m[22m[2m │ gzip:   0.08 kB[22m
+2026-10-21T17:17:24.0303579Z [2mdist/[22m[2massets/[22m[36mnames-DnOeks6H.js                                 [39m[1m[2m  0.27 kB[22m[1m[22m[2m │ gzip:   0.18 kB[22m
+2026-10-21T17:17:24.0305328Z [2mdist/[22m[2massets/[22m[36msubteams-DVxmxLlR.js                              [39m[1m[2m  0.29 kB[22m[1m[22m[2m │ gzip:   0.23 kB[22m
+2026-10-21T17:17:24.0307249Z [2mdist/[22m[2massets/[22m[36mcsv-s28ANtIX.js                                   [39m[1m[2m  0.41 kB[22m[1m[22m[2m │ gzip:   0.29 kB[22m
+2026-10-21T17:17:24.0309009Z [2mdist/[22m[2massets/[22m[36mfetchAllRows-Dq_tpNqs.js                          [39m[1m[2m  0.63 kB[22m[1m[22m[2m │ gzip:   0.39 kB[22m
+2026-10-21T17:17:24.0310779Z [2mdist/[22m[2massets/[22m[36mshopStatus-CtNQzdvD.js                            [39m[1m[2m  0.73 kB[22m[1m[22m[2m │ gzip:   0.39 kB[22m
+2026-10-21T17:17:24.0312569Z [2mdist/[22m[2massets/[22m[36mapplicationFields-Boz1FHED.js                     [39m[1m[2m  0.75 kB[22m[1m[22m[2m │ gzip:   0.39 kB[22m
+2026-10-21T17:17:24.0314376Z [2mdist/[22m[2massets/[22m[36mCheckinPage-BWAkrfRI.js                           [39m[1m[2m  0.77 kB[22m[1m[22m[2m │ gzip:   0.47 kB[22m
+2026-10-21T17:17:24.0316182Z [2mdist/[22m[2massets/[22m[36mpresence-CD8ioqj3.js                              [39m[1m[2m  0.80 kB[22m[1m[22m[2m │ gzip:   0.47 kB[22m
+2026-10-21T17:17:24.0318079Z [2mdist/[22m[2massets/[22m[36museGlance-B590DwaI.js                             [39m[1m[2m  1.17 kB[22m[1m[22m[2m │ gzip:   0.66 kB[22m
+2026-10-21T17:17:24.0319775Z [2mdist/[22m[2massets/[22m[36mjobCerts-BIFuOQcR.js                              [39m[1m[2m  1.58 kB[22m[1m[22m[2m │ gzip:   0.83 kB[22m
+2026-10-21T17:17:24.0321806Z [2mdist/[22m[2massets/[22m[36mMedicalForm-D0EZmWyu.js                           [39m[1m[2m  1.64 kB[22m[1m[22m[2m │ gzip:   0.79 kB[22m
+2026-10-21T17:17:24.0323595Z [2mdist/[22m[2massets/[22m[36mOfflineScouting-BT-nKg8Z.js                       [39m[1m[2m  1.77 kB[22m[1m[22m[2m │ gzip:   0.87 kB[22m
+2026-10-21T17:17:24.0325392Z [2mdist/[22m[2massets/[22m[36mLandingPage-Dw-tqAoi.js                           [39m[1m[2m  1.86 kB[22m[1m[22m[2m │ gzip:   0.71 kB[22m
+2026-10-21T17:17:24.0327306Z [2mdist/[22m[2massets/[22m[36mMemberPage-jWdr-PjU.js                            [39m[1m[2m  1.87 kB[22m[1m[22m[2m │ gzip:   0.74 kB[22m
+2026-10-21T17:17:24.0329073Z [2mdist/[22m[2massets/[22m[36maccountability-DdqVUWy7.js                        [39m[1m[2m  2.05 kB[22m[1m[22m[2m │ gzip:   1.01 kB[22m
+2026-10-21T17:17:24.0330805Z [2mdist/[22m[2massets/[22m[36mfeedbackZip-CdOgqVJr.js                           [39m[1m[2m  2.10 kB[22m[1m[22m[2m │ gzip:   1.05 kB[22m
+2026-10-21T17:17:24.0332584Z [2mdist/[22m[2massets/[22m[36mattendanceState-Bxfomnes.js                       [39m[1m[2m  2.25 kB[22m[1m[22m[2m │ gzip:   1.00 kB[22m
+2026-10-21T17:17:24.0334394Z [2mdist/[22m[2massets/[22m[36mSignoutForm-B7qz0TLh.js                           [39m[1m[2m  2.77 kB[22m[1m[22m[2m │ gzip:   1.41 kB[22m
+2026-10-21T17:17:24.0336504Z [2mdist/[22m[2massets/[22m[36mpermissions-CxtSkN73.js                           [39m[1m[2m  2.89 kB[22m[1m[22m[2m │ gzip:   1.25 kB[22m
+2026-10-21T17:17:24.0338448Z [2mdist/[22m[2massets/[22m[36msignout-BNM6ko54.js                               [39m[1m[2m  3.10 kB[22m[1m[22m[2m │ gzip:   1.26 kB[22m
+2026-10-21T17:17:24.0340168Z [2mdist/[22m[2massets/[22m[36mStanding-DVUbwGnP.js                              [39m[1m[2m  3.10 kB[22m[1m[22m[2m │ gzip:   1.48 kB[22m
+2026-10-21T17:17:24.0341959Z [2mdist/[22m[2massets/[22m[36mActivityPage-nseYUkum.js                          [39m[1m[2m  3.21 kB[22m[1m[22m[2m │ gzip:   1.24 kB[22m
+2026-10-21T17:17:24.0343738Z [2mdist/[22m[2massets/[22m[36mLoginPage-D55ZeSY9.js                             [39m[1m[2m  3.35 kB[22m[1m[22m[2m │ gzip:   1.49 kB[22m
+2026-10-21T17:17:24.0345455Z [2mdist/[22m[2massets/[22m[36msurveys-BnAv6QNY.js                               [39m[1m[2m  3.92 kB[22m[1m[22m[2m │ gzip:   1.71 kB[22m
+2026-10-21T17:17:24.0347392Z [2mdist/[22m[2massets/[22m[36mideaCerts-CqLHPEj5.js                             [39m[1m[2m  4.03 kB[22m[1m[22m[2m │ gzip:   1.76 kB[22m
+2026-10-21T17:17:24.0349142Z [2mdist/[22m[2massets/[22m[36mTripsPage-BkInBPKD.js                             [39m[1m[2m  4.27 kB[22m[1m[22m[2m │ gzip:   1.69 kB[22m
+2026-10-21T17:17:24.0350913Z [2mdist/[22m[2massets/[22m[36mEmergencyInfoPage-qsKFJ1vp.js                     [39m[1m[2m  4.40 kB[22m[1m[22m[2m │ gzip:   1.50 kB[22m
+2026-10-21T17:17:24.0352734Z [2mdist/[22m[2massets/[22m[36mAccessGate-MAfRvqGt.js                            [39m[1m[2m  4.74 kB[22m[1m[22m[2m │ gzip:   1.54 kB[22m
+2026-10-21T17:17:24.0354492Z [2mdist/[22m[2massets/[22m[36mPresenceBoard-Ncom1UWM.js                         [39m[1m[2m  4.88 kB[22m[1m[22m[2m │ gzip:   2.18 kB[22m
+2026-10-21T17:17:24.0356312Z [2mdist/[22m[2massets/[22m[36mDriverDocsPage-BSE2N8qg.js                        [39m[1m[2m  5.12 kB[22m[1m[22m[2m │ gzip:   1.90 kB[22m
+2026-10-21T17:17:24.0358438Z [2mdist/[22m[2massets/[22m[36mFamilyPage-DfGDKrbF.js                            [39m[1m[2m  5.90 kB[22m[1m[22m[2m │ gzip:   2.28 kB[22m
+2026-10-21T17:17:24.0360232Z [2mdist/[22m[2massets/[22m[36mAttendanceHistory-mzhXVYs_.js                     [39m[1m[2m  5.99 kB[22m[1m[22m[2m │ gzip:   2.50 kB[22m
+2026-10-21T17:17:24.0362023Z [2mdist/[22m[2massets/[22m[36mFeedbackWidget-Bjg037Pg.js                        [39m[1m[2m  6.32 kB[22m[1m[22m[2m │ gzip:   2.77 kB[22m
+2026-10-21T17:17:24.0364129Z [2mdist/[22m[2massets/[22m[36mAccessRequestsPage-BS4NwCdF.js                    [39m[1m[2m  6.55 kB[22m[1m[22m[2m │ gzip:   2.00 kB[22m
+2026-10-21T17:17:24.0365836Z [2mdist/[22m[2massets/[22m[36mReadinessPage-BKC0xWYv.js                         [39m[1m[2m  6.70 kB[22m[1m[22m[2m │ gzip:   1.78 kB[22m
+2026-10-21T17:17:24.0367822Z [2mdist/[22m[2massets/[22m[36mSquadPage-PYCOSBJB.js                             [39m[1m[2m  6.86 kB[22m[1m[22m[2m │ gzip:   2.20 kB[22m
+2026-10-21T17:17:24.0369579Z [2mdist/[22m[2massets/[22m[36mSurveyPage-DOa2lHYo.js                            [39m[1m[2m  6.87 kB[22m[1m[22m[2m │ gzip:   2.61 kB[22m
+2026-10-21T17:17:24.0371337Z [2mdist/[22m[2massets/[22m[36mParentResponse-BCS6AIlh.js                        [39m[1m[2m  7.07 kB[22m[1m[22m[2m │ gzip:   2.58 kB[22m
+2026-10-21T17:17:24.0373155Z [2mdist/[22m[2massets/[22m[36mSignoutsPage-DKJ2MnTI.js                          [39m[1m[2m  7.52 kB[22m[1m[22m[2m │ gzip:   2.75 kB[22m
+2026-10-21T17:17:24.0374958Z [2mdist/[22m[2massets/[22m[36mTeamBoardsPage-BErxXRYR.js                        [39m[1m[2m  7.54 kB[22m[1m[22m[2m │ gzip:   2.72 kB[22m
+2026-10-21T17:17:24.0376918Z [2mdist/[22m[2massets/[22m[36mfeedbackModel-7UH85zTC.js                         [39m[1m[2m  7.93 kB[22m[1m[22m[2m │ gzip:   3.32 kB[22m
+2026-10-21T17:17:24.0378959Z [2mdist/[22m[2massets/[22m[36mLogHoursPage-CoQkq4_e.js                          [39m[1m[2m  8.49 kB[22m[1m[22m[2m │ gzip:   2.60 kB[22m
+2026-10-21T17:17:24.0380696Z [2mdist/[22m[2massets/[22m[36mEventJoinPage-Ba4JoVFl.js                         [39m[1m[2m  8.94 kB[22m[1m[22m[2m │ gzip:   3.19 kB[22m
+2026-10-21T17:17:24.0382357Z [2mdist/[22m[2massets/[22m[36mParentHomePage-qA83VVGy.js                        [39m[1m[2m  9.07 kB[22m[1m[22m[2m │ gzip:   3.09 kB[22m
+2026-10-21T17:17:24.0384163Z [2mdist/[22m[2massets/[22m[36mVolunteerCheckinPage-CFwG_0Oq.js                  [39m[1m[2m 10.66 kB[22m[1m[22m[2m │ gzip:   3.62 kB[22m
+2026-10-21T17:17:24.0385969Z [2mdist/[22m[2massets/[22m[36mConnectorPage-DrO-huME.js                         [39m[1m[2m 11.61 kB[22m[1m[22m[2m │ gzip:   3.61 kB[22m
+2026-10-21T17:17:24.0388070Z [2mdist/[22m[2massets/[22m[36mCertificationsPage-C09wlwk8.js                    [39m[1m[2m 11.89 kB[22m[1m[22m[2m │ gzip:   4.43 kB[22m
+2026-10-21T17:17:24.0389931Z [2mdist/[22m[2massets/[22m[36mRostersPage-BSVOEVu7.js                           [39m[1m[2m 11.90 kB[22m[1m[22m[2m │ gzip:   4.03 kB[22m
+2026-10-21T17:17:24.0391686Z [2mdist/[22m[2massets/[22m[36mHomePage-DNn1QWZ_.js                              [39m[1m[2m 13.07 kB[22m[1m[22m[2m │ gzip:   4.14 kB[22m
+2026-10-21T17:17:24.0393407Z [2mdist/[22m[2massets/[22m[36msign-BXreVlhR.js                                  [39m[1m[2m 14.02 kB[22m[1m[22m[2m │ gzip:   5.04 kB[22m
+2026-10-21T17:17:24.0395129Z [2mdist/[22m[2massets/[22m[36mMyHoursPage-ZdOa0Ha_.js                           [39m[1m[2m 14.02 kB[22m[1m[22m[2m │ gzip:   4.39 kB[22m
+2026-10-21T17:17:24.0397095Z [2mdist/[22m[2massets/[22m[36mCheckinPage-B77myhoe.js                           [39m[1m[2m 14.44 kB[22m[1m[22m[2m │ gzip:   4.71 kB[22m
+2026-10-21T17:17:24.0398796Z [2mdist/[22m[2massets/[22m[36mProfilePage-jPCjUx1f.js                           [39m[1m[2m 15.20 kB[22m[1m[22m[2m │ gzip:   4.93 kB[22m
+2026-10-21T17:17:24.0400524Z [2mdist/[22m[2massets/[22m[36mRosterPage-DNrgejso.js                            [39m[1m[2m 15.20 kB[22m[1m[22m[2m │ gzip:   4.63 kB[22m
+2026-10-21T17:17:24.0402339Z [2mdist/[22m[2massets/[22m[36mApplicationsPage-DM57nT3_.js                      [39m[1m[2m 15.73 kB[22m[1m[22m[2m │ gzip:   4.79 kB[22m
+2026-10-21T17:17:24.0404149Z [2mdist/[22m[2massets/[22m[36mStandingPage-D5pui45A.js                          [39m[1m[2m 17.33 kB[22m[1m[22m[2m │ gzip:   5.43 kB[22m
+2026-10-21T17:17:24.0406255Z [2mdist/[22m[2massets/[22m[36mSurveysAdmin-FsgYSoc6.js                          [39m[1m[2m 17.60 kB[22m[1m[22m[2m │ gzip:   5.39 kB[22m
+2026-10-21T17:17:24.0408242Z [2mdist/[22m[2massets/[22m[36mStandingTeamPage-DvDcwGe0.js                      [39m[1m[2m 19.37 kB[22m[1m[22m[2m │ gzip:   5.57 kB[22m
+2026-10-21T17:17:24.0410073Z [2mdist/[22m[2massets/[22m[36mMemberApplication-wTEYOu2M.js                     [39m[1m[2m 20.10 kB[22m[1m[22m[2m │ gzip:   6.30 kB[22m
+2026-10-21T17:17:24.0411870Z [2mdist/[22m[2massets/[22m[36mReportsPage-C6MdYwp9.js                           [39m[1m[2m 21.47 kB[22m[1m[22m[2m │ gzip:   6.96 kB[22m
+2026-10-21T17:17:24.0413602Z [2mdist/[22m[2massets/[22m[36mSchedulePage-CWznGPMt.js                          [39m[1m[2m 21.92 kB[22m[1m[22m[2m │ gzip:   6.74 kB[22m
+2026-10-21T17:17:24.0415361Z [2mdist/[22m[2massets/[22m[36mHoursBoard-FQrKqG-L.js                            [39m[1m[2m 23.44 kB[22m[1m[22m[2m │ gzip:   7.34 kB[22m
+2026-10-21T17:17:24.0417882Z [2mdist/[22m[2massets/[22m[36mtour-BWk8AydE.js                                  [39m[1m[2m 24.31 kB[22m[1m[22m[2m │ gzip:   7.51 kB[22m
+2026-10-21T17:17:24.0419697Z [2mdist/[22m[2massets/[22m[36mEventHubBoards-BenV_vQE.js                        [39m[1m[2m 25.68 kB[22m[1m[22m[2m │ gzip:   7.39 kB[22m
+2026-10-21T17:17:24.0421694Z [2mdist/[22m[2massets/[22m[36mEventHub--cnvvYM0.js                              [39m[1m[2m 26.04 kB[22m[1m[22m[2m │ gzip:   9.55 kB[22m
+2026-10-21T17:17:24.0423467Z [2mdist/[22m[2massets/[22m[36mJobsPage-mhhdI8Ez.js                              [39m[1m[2m 27.71 kB[22m[1m[22m[2m │ gzip:   8.46 kB[22m
+2026-10-21T17:17:24.0425190Z [2mdist/[22m[2massets/[22m[36mAnnouncePage-DHj5_eTR.js                          [39m[1m[2m 29.78 kB[22m[1m[22m[2m │ gzip:   9.27 kB[22m
+2026-10-21T17:17:24.0427174Z [2mdist/[22m[2massets/[22m[36mFeedbackPage-Bc-1jv1O.js                          [39m[1m[2m 30.28 kB[22m[1m[22m[2m │ gzip:  10.81 kB[22m
+2026-10-21T17:17:24.0428934Z [2mdist/[22m[2massets/[22m[36mTripsAdmin-BN4f3qwf.js                            [39m[1m[2m 40.83 kB[22m[1m[22m[2m │ gzip:  10.79 kB[22m
+2026-10-21T17:17:24.0430722Z [2mdist/[22m[2massets/[22m[36mVerifyHoursPage-BFDb69GF.js                       [39m[1m[2m 41.00 kB[22m[1m[22m[2m │ gzip:  10.10 kB[22m
+2026-10-21T17:17:24.0432501Z [2mdist/[22m[2massets/[22m[36mhandbook-C3sDG4TJ.js                              [39m[1m[2m 41.91 kB[22m[1m[22m[2m │ gzip:  15.54 kB[22m
+2026-10-21T17:17:24.0434314Z [2mdist/[22m[2massets/[22m[36mHandbookPage-DgKfWcRW.js                          [39m[1m[2m 54.19 kB[22m[1m[22m[2m │ gzip:  13.01 kB[22m
+2026-10-21T17:17:24.0436087Z [2mdist/[22m[2massets/[22m[36mEventFamilyPage-Y2ns_Xij.js                       [39m[1m[2m 59.11 kB[22m[1m[22m[2m │ gzip:  17.50 kB[22m
+2026-10-21T17:17:24.0438136Z [2mdist/[22m[2massets/[22m[36mScoutingPage-LREy4Ffd.js                          [39m[1m[2m168.52 kB[22m[1m[22m[2m │ gzip:  52.05 kB[22m
+2026-10-21T17:17:24.0439836Z [2mdist/[22m[2massets/[22m[36mindex-sOVaQuhg.js                                 [39m[1m[2m428.11 kB[22m[1m[22m[2m │ gzip: 124.89 kB[22m
+2026-10-21T17:17:24.0440821Z [32m✓ built in 3.35s[39m
+2026-10-21T17:17:24.4420204Z 
+2026-10-21T17:17:24.4421068Z [36mPWA v0.21.2[39m
+2026-10-21T17:17:24.4421739Z Building [35msrc/sw.js[39m service worker ("[35mes[39m" format)...
+2026-10-21T17:17:24.4439778Z [36mvite v5.4.21 [32mbuilding for production...[36m[39m
+2026-10-21T17:17:24.4452724Z transforming...
+2026-10-21T17:17:24.5608836Z [32m✓[39m 58 modules transformed.
+2026-10-21T17:17:24.5800335Z rendering chunks...
+2026-10-21T17:17:24.5808105Z computing gzip size...
+2026-10-21T17:17:24.5820899Z [2mdist/[22m[36msw.mjs  [39m[1m[2m17.44 kB[22m[1m[22m[2m │ gzip: 5.90 kB[22m
+2026-10-21T17:17:24.5821804Z [32m✓ built in 137ms[39m
+2026-10-21T17:17:24.6421144Z 
+2026-10-21T17:17:24.6421975Z [36mPWA v0.21.2[39m
+2026-10-21T17:17:24.6422583Z mode      [35minjectManifest[39m
+2026-10-21T17:17:24.6423087Z format:   [35mes[39m
+2026-10-21T17:17:24.6423494Z precache  [32m145 entries[39m [2m(1957.59 KiB)[22m
+2026-10-21T17:17:24.6423833Z files generated
+2026-10-21T17:17:24.6424102Z   [2mdist/sw.js[22m
+2026-10-21T17:17:24.7030311Z ##[group]Run npm test
+2026-10-21T17:17:24.7030605Z [36;1mnpm test[0m
+2026-10-21T17:17:24.7107909Z shell: /usr/bin/bash -e {0}
+2026-10-21T17:17:24.7108193Z env:
+2026-10-21T17:17:24.7108542Z   VITE_SUPABASE_URL: http://127.0.0.1:54329
+2026-10-21T17:17:24.7108930Z   VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+2026-10-21T17:17:24.7109334Z ##[endgroup]
+2026-10-21T17:17:24.8286499Z 
+2026-10-21T17:17:24.8287134Z > frc-app@0.1.0 test
+2026-10-21T17:17:24.8287439Z > vitest run
+2026-10-21T17:17:24.8287574Z 
+2026-10-21T17:17:25.1452608Z 
+2026-10-21T17:17:25.1458479Z [1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/home/runner/work/frc-app/frc-app[39m
+2026-10-21T17:17:25.1459157Z 
+2026-10-21T17:17:29.9983324Z  [32m✓[39m tests/fixture-client.test.js [2m([22m[2m46 tests[22m[2m)[22m[33m 4156[2mms[22m[39m
+2026-10-21T17:17:30.8315375Z  [32m✓[39m tests/attendance-state.test.js [2m([22m[2m42 tests[22m[2m)[22m[33m 5082[2mms[22m[39m
+2026-10-21T17:17:30.8339276Z      [33m[2m✓[22m[39m identical on every instant sampled, both DST days included [33m 2621[2mms[22m[39m
+2026-10-21T17:17:30.8368989Z      [33m[2m✓[22m[39m positive control: the same comparison catches a key that is wrong (the UTC date) [33m 2428[2mms[22m[39m
+2026-10-21T17:17:30.9798993Z  [32m✓[39m tests/connector-engine.test.js [2m([22m[2m32 tests[22m[2m)[22m[33m 573[2mms[22m[39m
+2026-10-21T17:17:30.9818552Z      [33m[2m✓[22m[39m Los Angeles wall time crosses both 2026 clock changes, and the hour the clocks skip is refused [33m 305[2mms[22m[39m
+2026-10-21T17:17:31.0869345Z  [32m✓[39m tests/feedback-model.test.js [2m([22m[2m42 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+2026-10-21T17:17:31.1649752Z [90mstderr[2m | tests/scouting-dom.test.js[2m > [22m[2mrendered scouting with IndexedDB emulation[2m > [22m[2mkeeps a rejected proposal until the reviewed replacement is atomically stored
+2026-10-21T17:17:31.1651848Z [22m[39mWarning: An update to EventScouting inside a test was not wrapped in act(...).
+2026-10-21T17:17:31.1652536Z 
+2026-10-21T17:17:31.1657955Z When testing, code that causes React state updates should be wrapped into act(...):
+2026-10-21T17:17:31.1658765Z 
+2026-10-21T17:17:31.1659091Z act(() => {
+2026-10-21T17:17:31.1659707Z   /* fire events that update state */
+2026-10-21T17:17:31.1660686Z });
+2026-10-21T17:17:31.1671932Z /* assert on the output */
+2026-10-21T17:17:31.1672407Z 
+2026-10-21T17:17:31.1673493Z This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+2026-10-21T17:17:31.1674966Z     at EventScouting (/home/runner/work/frc-app/frc-app/src/ScoutingPage.jsx:392:26)
+2026-10-21T17:17:31.1676101Z     at ScoutingPage (/home/runner/work/frc-app/frc-app/src/ScoutingPage.jsx:67:25)
+2026-10-21T17:17:31.1677813Z     at RenderedRoute (file:///home/runner/work/frc-app/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6173:26)
+2026-10-21T17:17:31.1679539Z     at Routes (file:///home/runner/work/frc-app/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:7052:3)
+2026-10-21T17:17:31.1681279Z     at Router (file:///home/runner/work/frc-app/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6991:13)
+2026-10-21T17:17:31.1683001Z     at MemoryRouter (file:///home/runner/work/frc-app/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6907:3)
+2026-10-21T17:17:31.1684491Z Warning: An update to EventScouting inside a test was not wrapped in act(...).
+2026-10-21T17:17:31.1685208Z 
+2026-10-21T17:17:31.1685911Z When testing, code that causes React state updates should be wrapped into act(...):
+2026-10-21T17:17:31.1687313Z 
+2026-10-21T17:17:31.1687636Z act(() => {
+2026-10-21T17:17:31.1688189Z   /* fire events that update state */
+2026-10-21T17:17:31.1688780Z });
+2026-10-21T17:17:31.1689303Z /* assert on the output */
+2026-10-21T17:17:31.1689732Z 
+2026-10-21T17:17:31.1691324Z This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+2026-10-21T17:17:31.1692973Z     at EventScouting (/home/runner/work/frc-app/frc-app/src/ScoutingPage.jsx:392:26)
+2026-10-21T17:17:31.1696161Z     at ScoutingPage (/home/runner/work/frc-app/frc-app/src/ScoutingPage.jsx:67:25)
+2026-10-21T17:17:31.1697945Z     at RenderedRoute (file:///home/runner/work/frc-app/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6173:26)
+2026-10-21T17:17:31.1699684Z     at Routes (file:///home/runner/work/frc-app/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:7052:3)
+2026-10-21T17:17:31.1701384Z     at Router (file:///home/runner/work/frc-app/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6991:13)
+2026-10-21T17:17:31.1703117Z     at MemoryRouter (file:///home/runner/work/frc-app/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6907:3)
+2026-10-21T17:17:31.1704102Z 
+2026-10-21T17:17:31.1705965Z [90mstderr[2m | tests/scouting-dom.test.js[2m > [22m[2mrendered scouting with IndexedDB emulation[2m > [22m[2mkeeps a rejected proposal until the reviewed replacement is atomically stored
+2026-10-21T17:17:31.1708168Z [22m[39mWarning: An update to EventScouting inside a test was not wrapped in act(...).
+2026-10-21T17:17:31.1708919Z 
+2026-10-21T17:17:31.1709629Z When testing, code that causes React state updates should be wrapped into act(...):
+2026-10-21T17:17:31.1710362Z 
+2026-10-21T17:17:31.1710675Z act(() => {
+2026-10-21T17:17:31.1711251Z   /* fire events that update state */
+2026-10-21T17:17:31.1711857Z });
+2026-10-21T17:17:31.1712389Z /* assert on the output */
+2026-10-21T17:17:31.1712823Z 
+2026-10-21T17:17:31.1713945Z This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+2026-10-21T17:17:31.1715452Z     at EventScouting (/home/runner/work/frc-app/frc-app/src/ScoutingPage.jsx:392:26)
+2026-10-21T17:17:31.1716620Z     at ScoutingPage (/home/runner/work/frc-app/frc-app/src/ScoutingPage.jsx:67:25)
+2026-10-21T17:17:31.1718321Z     at RenderedRoute (file:///home/runner/work/frc-app/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6173:26)
+2026-10-21T17:17:31.1720055Z     at Routes (file:///home/runner/work/frc-app/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:7052:3)
+2026-10-21T17:17:31.1721721Z     at Router (file:///home/runner/work/frc-app/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6991:13)
+2026-10-21T17:17:31.1723434Z     at MemoryRouter (file:///home/runner/work/frc-app/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6907:3)
+2026-10-21T17:17:31.1724442Z 
+2026-10-21T17:17:31.3187897Z  [32m✓[39m tests/feedback-export.test.js [2m([22m[2m27 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+2026-10-21T17:17:31.4284857Z  [32m✓[39m tests/discord-announce-function.test.js [2m([22m[2m20 tests[22m[2m)[22m[32m 133[2mms[22m[39m
+2026-10-21T17:17:31.6871149Z  [32m✓[39m tests/attendance-history.test.js [2m([22m[2m25 tests[22m[2m)[22m[32m 60[2mms[22m[39m
+2026-10-21T17:17:32.0567032Z  [32m✓[39m tests/scouting-recovery.test.js [2m([22m[2m23 tests[22m[2m)[22m[32m 94[2mms[22m[39m
+2026-10-21T17:17:32.2788572Z  [32m✓[39m tests/idea-certs.test.js [2m([22m[2m32 tests[22m[2m)[22m[32m 50[2mms[22m[39m
+2026-10-21T17:17:32.5218626Z  [32m✓[39m tests/discord-announce.test.js [2m([22m[2m29 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+2026-10-21T17:17:32.7765253Z  [32m✓[39m tests/scouting-storage.test.js [2m([22m[2m18 tests[22m[2m)[22m[32m 55[2mms[22m[39m
+2026-10-21T17:17:32.9580047Z  [32m✓[39m tests/permissions.test.js [2m([22m[2m28 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+2026-10-21T17:17:33.2988999Z  [32m✓[39m tests/scouting-integrations.test.js [2m([22m[2m21 tests[22m[2m)[22m[32m 59[2mms[22m[39m
+2026-10-21T17:17:33.5340880Z  [32m✓[39m tests/my-hours-model.test.js [2m([22m[2m24 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+2026-10-21T17:17:33.8107118Z  [32m✓[39m tests/event-hub.test.js [2m([22m[2m22 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+2026-10-21T17:17:34.5052884Z  [32m✓[39m tests/scouting-dom.test.js [2m([22m[2m28 tests[22m[2m)[22m[33m 6609[2mms[22m[39m
+2026-10-21T17:17:34.5078443Z      [33m[2m✓[22m[39m hides cached receipts and drafting controls after definitive 42501 denial without deleting local work [33m 413[2mms[22m[39m
+2026-10-21T17:17:34.5108686Z      [33m[2m✓[22m[39m hides cached receipts and drafting controls after definitive PGRST301 denial without deleting local work [33m 338[2mms[22m[39m
+2026-10-21T17:17:34.5110856Z      [33m[2m✓[22m[39m pages large team lists without hiding search matches or fabricating empty evidence [33m 627[2mms[22m[39m
+2026-10-21T17:17:34.5113006Z      [33m[2m✓[22m[39m restores a draft, retains an offline observation across remount, then syncs exactly once [33m 478[2mms[22m[39m
+2026-10-21T17:17:34.5122220Z      [33m[2m✓[22m[39m does not spin on a local queue when the account changes before sync [33m 334[2mms[22m[39m
+2026-10-21T17:17:34.5124138Z    [33m[2m✓[22m[39m keeps new work visible while an earlier queue snapshot finishes and drains it without duplicate submissions [33m 315[2mms[22m[39m
+2026-10-21T17:17:35.1549113Z  [32m✓[39m tests/connector-coverage.test.js [2m([22m[2m21 tests[22m[2m)[22m[33m 784[2mms[22m[39m
+2026-10-21T17:17:35.2058995Z  [32m✓[39m tests/connector-oauth.test.js [2m([22m[2m22 tests[22m[2m)[22m[32m 141[2mms[22m[39m
+2026-10-21T17:17:35.4258948Z  [32m✓[39m tests/checkout-path.test.js [2m([22m[2m24 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+2026-10-21T17:17:35.4802192Z  [32m✓[39m tests/event-family-function.test.js [2m([22m[2m10 tests[22m[2m)[22m[32m 98[2mms[22m[39m
+2026-10-21T17:17:35.6990684Z  [32m✓[39m tests/idea-certs-contract.test.js [2m([22m[2m17 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+2026-10-21T17:17:35.9060698Z  [32m✓[39m tests/checkout-approval.test.js [2m([22m[2m25 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+2026-10-21T17:17:36.1550868Z  [32m✓[39m tests/hours-utils.test.js [2m([22m[2m28 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+2026-10-21T17:17:36.4874730Z  [32m✓[39m tests/hours-day-rule.test.js [2m([22m[2m11 tests[22m[2m)[22m[33m 4948[2mms[22m[39m
+2026-10-21T17:17:36.4876467Z      [33m[2m✓[22m[39m on 400 ledgers: each season's Matrix row total = its By member attendance total [33m 569[2mms[22m[39m
+2026-10-21T17:17:36.4878264Z      [33m[2m✓[22m[39m on 400 ledgers: every Matrix cell = the sessions a click on that cell opens [33m 2345[2mms[22m[39m
+2026-10-21T17:17:36.4880009Z      [33m[2m✓[22m[39m on 400 ledgers: per day, new - crossing = old - crossing the old counted [33m 610[2mms[22m[39m
+2026-10-21T17:17:36.4881468Z      [33m[2m✓[22m[39m on 400 ledgers where nothing crosses, the per-day hours are identical [33m 588[2mms[22m[39m
+2026-10-21T17:17:36.4882960Z      [33m[2m✓[22m[39m on 400 ledgers: days present moved only for check-ins after 00:00 UTC [33m 599[2mms[22m[39m
+2026-10-21T17:17:36.7121619Z  [32m✓[39m tests/vocabulary-drift.test.js [2m([22m[2m12 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+2026-10-21T17:17:37.0299413Z  [32m✓[39m tests/workflows.test.js [2m([22m[2m26 tests[22m[2m)[22m[32m 112[2mms[22m[39m
+2026-10-21T17:17:37.2311962Z  [32m✓[39m tests/my-hours-pairing.test.js [2m([22m[2m5 tests[22m[2m)[22m[33m 1588[2mms[22m[39m
+2026-10-21T17:17:37.2328726Z      [33m[2m✓[22m[39m computeHoursMs equals the 89896ca implementation on 400 ledgers [33m 339[2mms[22m[39m
+2026-10-21T17:17:37.2355324Z      [33m[2m✓[22m[39m on 400 ledgers: new - old = the closed, counted sessions spanning 00:00 UTC, per category [33m 526[2mms[22m[39m
+2026-10-21T17:17:37.2388334Z      [33m[2m✓[22m[39m on 400 ledgers with no session crossing 00:00 UTC, the per-season maps are identical [33m 519[2mms[22m[39m
+2026-10-21T17:17:37.2430338Z  [32m✓[39m tests/hours-reads-complete.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+2026-10-21T17:17:37.4534029Z  [32m✓[39m tests/job-certs.test.js [2m([22m[2m15 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+2026-10-21T17:17:37.5057818Z  [32m✓[39m tests/fixture-fin.test.js [2m([22m[2m15 tests[22m[2m)[22m[33m 598[2mms[22m[39m
+2026-10-21T17:17:37.7620790Z  [32m✓[39m tests/discord-calendar-sync.test.js [2m([22m[2m12 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+2026-10-21T17:17:37.9895461Z  [32m✓[39m tests/anomaly-pairing.test.js [2m([22m[2m16 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+2026-10-21T17:17:39.6539018Z  [32m✓[39m tests/fixture-seed.test.js [2m([22m[2m26 tests[22m[2m)[22m[33m 2144[2mms[22m[39m
+2026-10-21T17:17:39.8608774Z  [32m✓[39m tests/scouting-decision-dom.test.js [2m([22m[2m6 tests[22m[2m)[22m[33m 496[2mms[22m[39m
+2026-10-21T17:17:39.9078931Z  [32m✓[39m tests/feedback-fixture.test.js [2m([22m[2m12 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+2026-10-21T17:17:40.0619571Z  [32m✓[39m tests/feedback-zip.test.js [2m([22m[2m11 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+2026-10-21T17:17:40.1735163Z  [32m✓[39m tests/scouting-pit-map.test.js [2m([22m[2m26 tests[22m[2m)[22m[32m 51[2mms[22m[39m
+2026-10-21T17:17:40.3590297Z  [32m✓[39m tests/discord-announce-drift.test.js [2m([22m[2m10 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+2026-10-21T17:17:40.6054404Z  [32m✓[39m tests/event-hub-service-hours.test.js [2m([22m[2m8 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+2026-10-21T17:17:40.9350299Z  [32m✓[39m tests/audit-trivial-fixes.test.js [2m([22m[2m11 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+2026-10-21T17:17:41.1767333Z  [32m✓[39m tests/write-via.test.js [2m([22m[2m8 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+2026-10-21T17:17:41.3711462Z  [32m✓[39m tests/scouting-model.test.js [2m([22m[2m11 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+2026-10-21T17:17:41.5938839Z  [32m✓[39m tests/handbook.test.js [2m([22m[2m11 tests[22m[2m)[22m[32m 38[2mms[22m[39m
+2026-10-21T17:17:42.1529036Z  [32m✓[39m tests/scouting-form-races.test.js [2m([22m[2m5 tests[22m[2m)[22m[33m 347[2mms[22m[39m
+2026-10-21T17:17:42.3984113Z  [32m✓[39m tests/hours-resolve.test.js [2m([22m[2m16 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+2026-10-21T17:17:42.5593605Z  [32m✓[39m tests/checkout-arrival.test.js [2m([22m[2m14 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+2026-10-21T17:17:42.8044238Z  [32m✓[39m tests/merge-coverage.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+2026-10-21T17:17:43.0736914Z  [32m✓[39m tests/scouting-pit-map-dom.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 266[2mms[22m[39m
+2026-10-21T17:17:43.1189342Z  [32m✓[39m tests/retired-skills.test.js [2m([22m[2m7 tests[22m[2m)[22m[32m 81[2mms[22m[39m
+2026-10-21T17:17:43.2517817Z  [32m✓[39m tests/scouting-schedule.test.js [2m([22m[2m7 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+2026-10-21T17:17:43.3569743Z  [32m✓[39m tests/my-hours-fetch.test.js [2m([22m[2m9 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+2026-10-21T17:17:43.5921065Z  [32m✓[39m tests/scouting-backup.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+2026-10-21T17:17:43.6216442Z  [32m✓[39m tests/legacy-suites.test.js [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+2026-10-21T17:17:43.8776129Z  [32m✓[39m tests/standing.test.js [2m([22m[2m12 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+2026-10-21T17:17:44.1359293Z  [32m✓[39m tests/idea-sync-log-export.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+2026-10-21T17:17:44.3521829Z  [32m✓[39m tests/scouting-provenance.test.js [2m([22m[2m5 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+2026-10-21T17:17:44.6689028Z  [32m✓[39m tests/scouting-brief.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 227[2mms[22m[39m
+2026-10-21T17:17:44.8331571Z  [32m✓[39m tests/discord-announce-source.test.js [2m([22m[2m10 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+2026-10-21T17:17:44.9846595Z  [32m✓[39m tests/scouting-coverage.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+2026-10-21T17:17:45.1958809Z  [32m✓[39m tests/scouting-training.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+2026-10-21T17:17:45.3978542Z  [32m✓[39m tests/scouting-offline-identity.test.js [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+2026-10-21T17:17:45.6298806Z  [32m✓[39m tests/scouting-projection.test.js [2m([22m[2m6 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+2026-10-21T17:17:45.6868945Z  [32m✓[39m tests/scouting-draft-loading.test.js [2m([22m[2m2 tests[22m[2m)[22m[32m 131[2mms[22m[39m
+2026-10-21T17:17:45.8292609Z  [32m✓[39m tests/connector-service-role.test.js [2m([22m[2m5 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+2026-10-21T17:17:45.8764728Z  [32m✓[39m tests/scouting-workbook.test.js [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+2026-10-21T17:17:45.9844613Z  [32m✓[39m tests/permissions-fixture.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+2026-10-21T17:17:46.1310314Z  [32m✓[39m tests/schema-missing.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+2026-10-21T17:17:46.1311788Z  [32m✓[39m tests/connector-workflow.test.js [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+2026-10-21T17:17:46.2535298Z  [32m✓[39m tests/reporting-day-rule.test.js [2m([22m[2m7 tests[22m[2m)[22m[33m 8466[2mms[22m[39m
+2026-10-21T17:17:46.2544287Z      [33m[2m✓[22m[39m matches the old reporting copy on every instant tried, in every input shape [33m 8444[2mms[22m[39m
+2026-10-21T17:17:46.3324284Z  [32m✓[39m tests/seasons.test.js [2m([22m[2m2 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+2026-10-21T17:17:46.3508181Z  [32m✓[39m tests/fixture-routes.test.js [2m([22m[2m4 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+2026-10-21T17:17:46.3544780Z 
+2026-10-21T17:17:46.3554070Z [2m Test Files [22m [1m[32m71 passed[39m[22m[90m (71)[39m
+2026-10-21T17:17:46.3558022Z [2m      Tests [22m [1m[32m1028 passed[39m[22m[90m (1028)[39m
+2026-10-21T17:17:46.3558798Z [2m   Start at [22m 17:17:25
+2026-10-21T17:17:46.3560783Z [2m   Duration [22m 21.20s[2m (transform 3.29s, setup 0ms, import 9.07s, tests 38.22s, environment 4.47s)[22m
+2026-10-21T17:17:46.3562154Z 
+2026-10-21T17:17:46.4114808Z ##[group]Run npm run ds:audit
+2026-10-21T17:17:46.4115128Z [36;1mnpm run ds:audit[0m
+2026-10-21T17:17:46.4184062Z shell: /usr/bin/bash -e {0}
+2026-10-21T17:17:46.4184344Z env:
+2026-10-21T17:17:46.4184619Z   VITE_SUPABASE_URL: http://127.0.0.1:54329
+2026-10-21T17:17:46.4184974Z   VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+2026-10-21T17:17:46.4185290Z ##[endgroup]
+2026-10-21T17:17:46.5190043Z 
+2026-10-21T17:17:46.5190642Z > frc-app@0.1.0 ds:audit
+2026-10-21T17:17:46.5191089Z > node scripts/design-system/ds-audit.mjs
+2026-10-21T17:17:46.5191313Z 
+2026-10-21T17:17:46.9103816Z ds-audit: ok — 36 aliases × 3 grounds literal and complete, 79 components verified, 315 files scanned
+2026-10-21T17:17:46.9291034Z ##[group]Run npm run discord:calendar:test
+2026-10-21T17:17:46.9291592Z [36;1mnpm run discord:calendar:test[0m
+2026-10-21T17:17:46.9386523Z shell: /usr/bin/bash -e {0}
+2026-10-21T17:17:46.9387204Z env:
+2026-10-21T17:17:46.9387588Z   VITE_SUPABASE_URL: http://127.0.0.1:54329
+2026-10-21T17:17:46.9388150Z   VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+2026-10-21T17:17:46.9388625Z ##[endgroup]
+2026-10-21T17:17:47.0444792Z 
+2026-10-21T17:17:47.0445678Z > frc-app@0.1.0 discord:calendar:test
+2026-10-21T17:17:47.0447226Z > node scripts/discord/calendar-sync.test.mjs
+2026-10-21T17:17:47.0447966Z 
+2026-10-21T17:17:47.0983872Z   PASS  report-only posts nothing and writes no tracking rows
+2026-10-21T17:17:47.0993846Z   PASS  first live run posts to #calendar and records the message id
+2026-10-21T17:17:47.1009466Z   PASS  second run over unchanged data posts NOTHING (no double post)
+2026-10-21T17:17:47.1019855Z   PASS  a changed event EDITS the existing message instead of posting again
+2026-10-21T17:17:47.1026187Z   PASS  a deleted event strikes the message and marks it cancelled, never deletes
+2026-10-21T17:17:47.1034603Z   PASS  cancellation is idempotent — a second sweep does not re-edit
+2026-10-21T17:17:47.1039382Z   PASS  reminder_24h is retired: an event inside 24h never creates one
+2026-10-21T17:17:47.1051521Z   PASS  retiring 24h does not skip, delay or double-fire the 2h reminder
+2026-10-21T17:17:47.1064880Z   PASS  2h reminder fires; no 24h slot is opened or superseded
+2026-10-21T17:17:47.1077670Z   PASS  an event naming a subteam pings that role, and only that role
+2026-10-21T17:17:47.1081421Z   PASS  an event naming no subteam pings nobody
+2026-10-21T17:17:47.1092014Z   PASS  a 4xx on create releases the reservation; an ambiguous failure keeps it
+2026-10-21T17:17:47.1097131Z   PASS  a failing cancellation sweep no longer stops reminders from posting
+2026-10-21T17:17:47.1103665Z   PASS  a JWT failure is retried at most twice, and a recoverable one succeeds
+2026-10-21T17:17:47.1109513Z   PASS  a retried run cannot create a second row or a second Discord message
+2026-10-21T17:17:47.1114636Z   PASS  only auth-shaped failures are retried, never anything else
+2026-10-21T17:17:47.1120602Z   PASS  a 2h reminder that was never sent is logged as reminder_missed, once
+2026-10-21T17:17:47.1124289Z   PASS  a reminder that fired normally is never logged as missed
+2026-10-21T17:17:47.1126803Z   PASS  every run is logged
+2026-10-21T17:17:47.1127057Z 
+2026-10-21T17:17:47.1127197Z 19/19 passed
+2026-10-21T17:17:47.1266567Z ##[group]Run npm run history:verify
+2026-10-21T17:17:47.1267200Z [36;1mnpm run history:verify[0m
+2026-10-21T17:17:47.1333711Z shell: /usr/bin/bash -e {0}
+2026-10-21T17:17:47.1333989Z env:
+2026-10-21T17:17:47.1334245Z   VITE_SUPABASE_URL: http://127.0.0.1:54329
+2026-10-21T17:17:47.1334608Z   VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+2026-10-21T17:17:47.1334925Z ##[endgroup]
+2026-10-21T17:17:47.2363298Z 
+2026-10-21T17:17:47.2364033Z > frc-app@0.1.0 history:verify
+2026-10-21T17:17:47.2364491Z > node docs/history/_tools/verify-split.mjs
+2026-10-21T17:17:47.2364724Z 
+2026-10-21T17:17:47.2845314Z entries reassembled : 50 (expected 50)
+2026-10-21T17:17:47.2846129Z reassembled bytes   : 109839 (expected 109839)
+2026-10-21T17:17:47.2847397Z reassembled sha256  : b85db0a6aa3588f5d12b8c85a159ade43b36327f1f8e9c327d6bca9c15e4aa59
+2026-10-21T17:17:47.2848693Z reference sha256    : b85db0a6aa3588f5d12b8c85a159ade43b36327f1f8e9c327d6bca9c15e4aa59
+2026-10-21T17:17:47.2856107Z source byte compare : IDENTICAL against _source/claude-md-log-2026-09-02.txt
+2026-10-21T17:17:47.2857219Z sha256 compare      : IDENTICAL
+2026-10-21T17:17:47.2857755Z 
+2026-10-21T17:17:47.2858986Z OK: the split is lossless. Every byte of the pre-split paragraph is present, in order, across 50 entries (18 written since).
+2026-10-21T17:17:47.3047029Z ##[group]Run echo "build:           success"
+2026-10-21T17:17:47.3047429Z [36;1mecho "build:           success"[0m
+2026-10-21T17:17:47.3047713Z [36;1mecho "test:            success"[0m
+2026-10-21T17:17:47.3047982Z [36;1mecho "ds-audit:        success"[0m
+2026-10-21T17:17:47.3048255Z [36;1mecho "discord:         success"[0m
+2026-10-21T17:17:47.3048541Z [36;1mecho "history:         success"[0m
+2026-10-21T17:17:47.3048797Z [36;1m{[0m
+2026-10-21T17:17:47.3049003Z [36;1m  echo "## CI"[0m
+2026-10-21T17:17:47.3049234Z [36;1m  echo[0m
+2026-10-21T17:17:47.3049462Z [36;1m  echo "| step | outcome |"[0m
+2026-10-21T17:17:47.3049763Z [36;1m  echo "| --- | --- |"[0m
+2026-10-21T17:17:47.3050037Z [36;1m  echo "| build | success |"[0m
+2026-10-21T17:17:47.3050527Z [36;1m  echo "| test | success |"[0m
+2026-10-21T17:17:47.3050796Z [36;1m  echo "| ds:audit | success |"[0m
+2026-10-21T17:17:47.3051114Z [36;1m  echo "| discord:calendar:test | success |"[0m
+2026-10-21T17:17:47.3051484Z [36;1m  echo "| history:verify | success |"[0m
+2026-10-21T17:17:47.3051782Z [36;1m  echo[0m
+2026-10-21T17:17:47.3052474Z [36;1m  echo "No credential is read by this workflow, so a green run says nothing about whether this branch's SQL has been applied to the live database. See \`supabase/migrations/README.md\`."[0m
+2026-10-21T17:17:47.3053225Z [36;1m} >> "$GITHUB_STEP_SUMMARY"[0m
+2026-10-21T17:17:47.3053507Z [36;1mif [ "success" != "success" ] \[0m
+2026-10-21T17:17:47.3053793Z [36;1m  || [ "success" != "success" ] \[0m
+2026-10-21T17:17:47.3054075Z [36;1m  || [ "success" != "success" ] \[0m
+2026-10-21T17:17:47.3054352Z [36;1m  || [ "success" != "success" ] \[0m
+2026-10-21T17:17:47.3054631Z [36;1m  || [ "success" != "success" ]; then[0m
+2026-10-21T17:17:47.3054916Z [36;1m  exit 1[0m
+2026-10-21T17:17:47.3055129Z [36;1mfi[0m
+2026-10-21T17:17:47.3121427Z shell: /usr/bin/bash -e {0}
+2026-10-21T17:17:47.3121703Z env:
+2026-10-21T17:17:47.3121972Z   VITE_SUPABASE_URL: http://127.0.0.1:54329
+2026-10-21T17:17:47.3122329Z   VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+2026-10-21T17:17:47.3122647Z ##[endgroup]
+2026-10-21T17:17:47.3208822Z build:           success
+2026-10-21T17:17:47.3209475Z test:            success
+2026-10-21T17:17:47.3209897Z ds-audit:        success
+2026-10-21T17:17:47.3210288Z discord:         success
+2026-10-21T17:17:47.3223457Z history:         success
+2026-10-21T17:17:47.3328086Z Post job cleanup.
+2026-10-21T17:17:47.4553431Z (node:3179) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-21T17:17:47.4554720Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-21T17:17:47.4556638Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-dab324919328305c88c07b109e69c51a2177320681ffea095b8205cbcb483fe3, not saving cache.
+2026-10-21T17:17:47.4723590Z Post job cleanup.
+2026-10-21T17:17:47.5676970Z [command]/usr/bin/git version
+2026-10-21T17:17:47.5732622Z git version 2.55.0
+2026-10-21T17:17:47.5789154Z Temporarily overriding HOME='/home/runner/work/_temp/4250cad5-1546-4f58-a935-572b30e491bb' before making global git config changes
+2026-10-21T17:17:47.5797776Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-21T17:17:47.5799613Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/frc-app/frc-app
+2026-10-21T17:17:47.5854801Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-21T17:17:47.5923585Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-21T17:17:47.6261638Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-21T17:17:47.6302119Z http.https://github.com/.extraheader
+2026-10-21T17:17:47.6316287Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-21T17:17:47.6379950Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-21T17:17:47.6767720Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-21T17:17:47.6820687Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-21T17:17:47.7281776Z Cleaning up orphan processes
+2026-10-21T17:17:47.7625603Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

@@ -1,0 +1,5 @@
+signout: 90/90 passed (375 and 1440)
+event-hub: 207/207 passed (375 and 1440)
+permissions: 153/153 passed (375 and 1440)
+scouting: 169/169 passed (375 and 1440)
+features e2e: 619/619 passed (375 and 1440)
