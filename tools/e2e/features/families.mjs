@@ -142,6 +142,26 @@ export default {
     await t.open('/handbook?tab=sign', { persona: 'student', mig: 'all', ready: '[data-card="changes"]' });
     t.eq('a student reads the feed, no publish form', [await t.count('[data-card="changes"] li'), await t.count('.hb-publish')], [2, 0]);
 
+    t.as('0017 · the handbook with no login (/rules)');
+    await t.open('/rules?tab=read', { persona: 'signedout', mig: 'all', reset: true, ready: '.hb-sec-card' });
+    t.eq('/rules signed out: 3 tabs, no Sign, 22 sections, the family-link note', [await t.texts('.hb-tab'), await t.count('.hb-sec-card'), await t.count('[data-card="public-note"]')], [['Quick reference', 'Handbook', 'Glossary'], 22, 1]);
+    await t.open('/handbook', { persona: 'student', mig: 'all', ready: '.hb-hero' });
+    t.eq('/handbook for a member keeps 4 tabs and no note (against 3 and 1)', [(await t.texts('.hb-tab')).length, await t.count('[data-card="public-note"]')], [4, 0]);
+    await t.noHScroll();
+
+    t.as('0017 · email every family its link');
+    await t.open('/standing/team', { persona: 'mentor', mig: 'all', ready: '[data-card="family-links"]' });
+    const before = (await t.rows('notice_outbox')).filter((n) => n.kind === 'family_link').length;
+    await t.press('[data-card="family-links"] .st-btn');
+    t.eq('one tap asks first: 0 emails yet', (await t.rows('notice_outbox')).filter((n) => n.kind === 'family_link').length, before);
+    await t.press('[data-card="family-links"] .st-btn-primary');
+    await t.waitText('Family links queued');
+    const sent = (await t.rows('notice_outbox')).filter((n) => n.kind === 'family_link').length - before;
+    const apps = new Set((await t.rows('member_applications')).map((a) => a.member_id)).size;
+    t.check('the confirm tap queues one email per family on file', sent >= 1 && sent <= apps, `${sent} queued, ${apps} applications`);
+    await t.open('/standing/team', { persona: 'student', mig: 'all', ready: '.st-wrap' });
+    t.eq('a student sees no family-link button (0 against 1)', await t.count('[data-card="family-links"]'), 0);
+
     t.as('pre-0017');
     await t.open(`/family/${TOKEN}`, { persona: 'signedout', mig: PRE_0017, reset: true, ready: '.st-title' });
     t.eq('the family link: not available', await t.text('.st-title'), 'Not available');

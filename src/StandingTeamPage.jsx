@@ -63,6 +63,7 @@ export default function StandingTeamPage({ hasRole = () => false }) {
         ))}
       </div>
       {msg && <p className="st-msg" role="status">{msg}</p>}
+      {tab === 'Overview' && <FamilyLinks rows={rows} setMsg={setMsg} />}
       {tab === 'Overview' && <Overview rows={rows} />}
       {tab === 'Absences' && <Absences nameOf={nameOf} act={act} tick={tick} />}
       {tab === 'Confirm' && <Confirm nameOf={nameOf} act={act} isAdmin={isAdmin} tick={tick} />}
@@ -73,6 +74,42 @@ export default function StandingTeamPage({ hasRole = () => false }) {
       {tab === 'FLL' && <Fll nameOf={nameOf} act={act} tick={tick} />}
       {tab === 'Settings' && isAdmin && <Settings act={act} tick={tick} />}
     </div>
+  )
+}
+
+// One tap emails every family its private link (/family/<token>: the
+// handbook, its sign box, emergency information). Each member goes through
+// staff_send_family_link, the same function as the button on a member's page.
+function FamilyLinks({ rows, setMsg }) {
+  const [step, setStep] = useState('idle') // idle | confirm | sending | done
+  async function sendAll() {
+    setStep('sending'); setMsg(null)
+    let emails = 0, families = 0
+    const missing = []
+    for (const r of rows) {
+      try {
+        const n = await rpc(supabase, 'staff_send_family_link', { p_member: r.member_id, p_rotate: false })
+        if (Number(n) > 0) { emails += Number(n); families += 1 } else missing.push(r.name)
+      } catch { missing.push(r.name) }
+    }
+    setStep('done')
+    setMsg(`Family links queued: ${emails} email(s) to ${families} famil${families === 1 ? 'y' : 'ies'}.${missing.length ? ` No parent email or application on file: ${missing.join(', ')}.` : ''}`)
+  }
+  return (
+    <section className="st-card" data-card="family-links">
+      <h2 className="st-h2">Family links</h2>
+      <p className="st-muted">Emails each parent their private link: the handbook, its sign box and emergency information. No account needed.</p>
+      {step === 'confirm' ? (
+        <div className="st-row">
+          <button className="st-btn st-btn-primary" onClick={sendAll}>Send to {rows.length} member families</button>
+          <button className="st-btn" onClick={() => setStep('idle')}>Cancel</button>
+        </div>
+      ) : (
+        <button className="st-btn" disabled={step === 'sending' || !rows.length} onClick={() => setStep('confirm')}>
+          {step === 'sending' ? 'Sending…' : step === 'done' ? 'Send again' : 'Email every family their link'}
+        </button>
+      )}
+    </section>
   )
 }
 

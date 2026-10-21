@@ -20,6 +20,7 @@ export const ROUTES = Object.freeze([
   { path: '/login', url: '/login', group: 'public', label: 'Login' },
   { path: '/parent/:token', url: `/parent/${PARENT_TOKEN}`, group: 'public', label: 'Parent questionnaire' },
   { path: '/family/:token', url: `/family/${PARENT_TOKEN}`, group: 'public', label: 'Family link' },
+  { path: '/rules', url: '/rules', group: 'public', label: 'Handbook, no login' },
   { path: '/e/:token', url: `/e/${EH.tokens.sam}`, group: 'public', label: 'Event family page (Sam, fresh)' },
   { path: '/e', url: '/e', group: 'public', label: 'Event family page: no link (goes to /join)' },
   { path: '/join', url: '/join', group: 'public', label: 'Event open sign-up link' },

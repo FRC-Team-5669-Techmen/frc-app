@@ -5641,7 +5641,8 @@ export default {
     "is_staff"
    ],
    "called_from": [
-    "src/StandingPage.jsx"
+    "src/StandingPage.jsx",
+    "src/StandingTeamPage.jsx"
    ],
    "describe": "Send family link (a change: asks first).",
    "level": "confirm"

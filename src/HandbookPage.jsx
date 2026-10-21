@@ -299,9 +299,13 @@ function Check({ lesson, index, progress, onAnswer, onNext }) {
 }
 
 // ── Page ────────────────────────────────────────────────────────────────────
-const TABS = [['quick', 'Quick reference'], ['read', 'Handbook'], ['glossary', 'Glossary'], ['sign', 'Sign']]
+const ALL_TABS = [['quick', 'Quick reference'], ['read', 'Handbook'], ['glossary', 'Glossary'], ['sign', 'Sign']]
 
-export default function HandbookPage({ session, hasRole }) {
+// publicView: /rules, the same handbook for anyone with no login (parents,
+// the team website). No Sign tab and no progress meter; parents sign through
+// their private family link.
+export default function HandbookPage({ session, hasRole, publicView = false }) {
+  const TABS = publicView ? ALL_TABS.filter(([k]) => k !== 'sign') : ALL_TABS
   const userId = session?.user?.id
   const roles = ['mentor', 'lead', 'admin', 'parent', 'student'].filter(r => hasRole?.(r))
   const signerRole = signerRoleFor(roles)
@@ -313,7 +317,8 @@ export default function HandbookPage({ session, hasRole }) {
   const linkSection = Number(params.get('section'))
   const linkTab = SEC_TEXT[linkSection] != null ? 'read' : TAB_SECTIONS.find(x => x.num === linkSection)?.tab
   const askedTab = params.get('tab') === 'lessons' ? 'read' : params.get('tab')
-  const tab = linkTab && !askedTab ? linkTab : TABS.some(([k]) => k === askedTab) ? askedTab : 'quick'
+  const wanted = linkTab && !askedTab ? linkTab : askedTab
+  const tab = TABS.some(([k]) => k === wanted) ? wanted : 'quick'
   const setTab = (k) => setParams(k === 'quick' ? {} : { tab: k }, { replace: true })
 
   const [progress, setProgress] = useState(() => loadProgress(userId))
@@ -438,7 +443,12 @@ export default function HandbookPage({ session, hasRole }) {
             <p className="hb-lede">The whole handbook is on the Handbook tab, in order, with search. Answer the two questions after each part, then sign. The quick reference has the essentials on one screen.</p>
             <p className="hb-version">Version {HB.version}</p>
           </div>
-          <div className="hb-meter" aria-label={`${passed} of ${LESSONS.length} checks passed`}>
+          {publicView ? (
+            <div className="hb-meter hb-public-note" data-card="public-note">
+              <span className="hb-meter-label">Parents and guardians</span>
+              <p className="hb-p">Sign through the private family link emailed to you. No account needed.</p>
+            </div>
+          ) : <div className="hb-meter" aria-label={`${passed} of ${LESSONS.length} checks passed`}>
             <div className="hb-meter-top">
               <span className="hb-meter-n"><b>{passed}</b>/{LESSONS.length}</span>
               <span className={`hb-pill hb-pill-${status}`}>{status === 'signed' ? `Signed ${fmtDate(sign.at)}` : status === 'ready' ? 'Ready to sign' : 'In progress'}</span>
@@ -448,7 +458,7 @@ export default function HandbookPage({ session, hasRole }) {
             <div className="hb-ticks" aria-hidden="true">
               {LESSONS.map(l => <span key={l.id} className={progress.passed[l.id] ? 'on' : ''} />)}
             </div>
-          </div>
+          </div>}
         </header>
 
         <div className="hb-tabs" role="tablist" aria-label="Handbook">
