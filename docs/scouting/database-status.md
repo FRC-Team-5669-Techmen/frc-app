@@ -1,3 +1,9 @@
+# Extended database checks — October 21, 2026
+
+Migration, RPC and Edge contracts are unchanged in the recovery continuation. A fresh native PostgreSQL 17.6 chain applied twice and passed all 72 scouting SQL/RLS assertions, caught 17 deliberately weakened controls and passed seven separate-connection races. Current built-PWA checks exercise actual local PostgREST/native PostgreSQL receipts, including backup replay and SQL rejection of a malformed recovered payload. See `VERIFICATION.md` for current results and exact source boundaries. No hosted branch was recreated and no production mutation occurred in this continuation. The earlier 573-check and hosted proofs below remain historical unchanged-contract evidence.
+
+---
+
 # Current database verification — October 21, 2026
 
 Fresh native PostgreSQL 17.6: chain applied twice, **573/573** assertions across 23 rollback suites (72 scouting), **17/17** permissive mutants caught and **7/7** actual separate-connection races. The retained harness observes lock overlap before releasing the winning transaction. Built-PWA/local PostgREST checks pass **22/22**. Auth/cron/network/storage components in the native harness remain explicit stand-ins.

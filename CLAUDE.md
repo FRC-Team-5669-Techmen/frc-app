@@ -179,6 +179,8 @@ This applies to every change. Prompts do not need to restate it.
 
 ### Branches, and what happens to them
 
+**Scouting review exception (explicit user instruction):** continue `codex/scouting-2026-evidence` and draft PR #4, preserving newer remote changes. Do not apply the solo-mode main-push rule to this scouting run. Main pushes, production deployment/database changes and real Discord sends require separate explicit release authorization. Read `docs/scouting/RESUME.md` and `RELEASE.md` before continuing; routine review-branch implementation, tests and checkpoint pushes are already authorized.
+
 **A session working alone (solo mode) commits and pushes straight to `main`** — Mr. Pina's rule since 2026-09-27, recorded in [`docs/decisions/05-solo-mode-on-frc-app.md`](docs/decisions/05-solo-mode-on-frc-app.md) — and only after the local gate passes on the exact tree being pushed: `npm run build`, `npm test`, `npm run ds:audit`, `npm run discord:calendar:test`, `npm run history:verify`, `npm run test:checkin` and `npm run test:features`, each read by its summary line, because a runner can exit 0 with a failure. In this mode CI reports after the fact rather than gating: every push to `main` deploys the PWA to students who may be mid-check-in, and on 2026-10-01 production went live 14 seconds before CI finished. SQL still reaches the database only by hand, so code that reads a migration not yet applied must detect it through `src/schemaMissing.js` and degrade to a plain "not set up yet" state, never fail. If `main` moved, rebase onto it and run the whole gate again before pushing, and rebase only commits that have not been pushed anywhere: `integrate.yml` may already have merged them into `integration`, and their rewritten copies then conflict with it (after the rebase of 2026-10-01 every Integrate run failed that way). **Parallel work — two or more sessions at once — keeps the branch path below** (a `claude/**` branch, `integrate.yml` collecting it into `integration`, `deploy.yml` moving `main`), because two sessions cannot both gate `main`.
 
 - **In parallel mode, work on the `claude/**` branch the harness minted for the session. Push it. Do not merge to `main`.**
@@ -226,4 +228,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-21. Scouting includes prepared-account offline entry, Nexus pit maps and native/PostgREST/browser checks; latest record: `docs/history/scouting-competition-map.md`.
+Last reviewed: 2026-10-21. Scouting adds reviewed backup recovery, interruption-safe drafts, keyboard focus return and paged large-event cards; newer main handbook work is preserved. Latest record: `docs/history/scouting-reviewed-recovery.md`.

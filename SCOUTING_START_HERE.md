@@ -8,7 +8,7 @@ cd frc-app
 npm ci
 ```
 
-Read `CLAUDE.md`, `docs/subsystems/scouting.md`, then **docs/scouting/RESUME.md** and **docs/scouting/VERIFICATION.md**. `EVIDENCE.md`, `CONTRACT.md` and `acceptance-oracles.md` distinguish the original source evidence, proposed Techmen rules and independent expectations. `RELEASE.md` gives apply order and field gates. The original private handoff was read but is intentionally excluded from public source.
+Read `CLAUDE.md`, `docs/subsystems/scouting.md`, then **docs/scouting/RESUME.md** and **docs/scouting/VERIFICATION.md**. `EVIDENCE.md`, `CONTRACT.md` and `acceptance-oracles.md` distinguish the original source evidence, proposed Techmen rules and independent expectations. `RELEASE.md` gives apply order and field gates. `FIELD_GUIDE.md` gives day-of-event instructions; `RECOVERY.md` defines reviewed backup restoration. The original private handoff was read but is intentionally excluded from public source.
 
 Remain on the review branch. Preserve newer remote changes. Do not push main, deploy production, change the live database or send real Discord messages without explicit release authorization. A successful local test is not a deployed or human-validated competition system.
 

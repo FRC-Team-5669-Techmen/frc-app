@@ -8,7 +8,7 @@ These are proposed Techmen facilitation guidelines. They are not verified TideSc
 
 Use an approved training event. Have each student sign in on the phone they will use, open the event online and verify the local-storage instructions. Prepare pairs, headphones where appropriate, and a way for the mentor to inspect exported practice records. Never request real Discord delivery for these exercises.
 
-Choose the actual recordings before the student begins the assessment. Freeze their URLs, event/match identifiers, assigned robot, observable intervals and independent expected answers. Include a clear success, an observed failed attempt, a blocked view, a non-attempt, a disagreement and a correction. Prefer a second annotator who has not seen the app output. If evidence is ambiguous, the expected answer must preserve that ambiguity. No real corpus has been independently annotated in this implementation run; synthetic examples do not fill that gap.
+Choose the actual recordings before the student begins the assessment. Use `FOOTAGE_CORPUS.csv` as the empty annotation template; all six rows remain NOT_SELECTED until a person supplies and reviews real sources. Freeze their URLs, event/match identifiers, assigned robot, observable intervals and independent expected answers. Include a clear success, an observed failed attempt, a blocked view, a non-attempt, a disagreement and a correction. Prefer a second annotator who has not seen the app output. If evidence is ambiguous, the expected answer must preserve that ambiguity. No real corpus has been independently annotated in this implementation run; synthetic examples do not fill that gap.
 
 Uncached external videos need connectivity; the app does not download them. Written exercises and prepared scouting data are available offline. Confirm authorized footage availability before taking the session offline.
 
@@ -47,3 +47,5 @@ For each criterion, record **not yet observed**, **needs coaching**, or **indepe
 | Independence | The core task succeeds on the student's real phone with recorded help/errors; the student asks for clarification when the evidence cannot support a claim |
 
 Use `FIELD_ACCEPTANCE.csv` to record actual devices, build, time, errors, assistance, sources and outcomes. A scripted browser run verifies software behavior, never this rubric. If a criterion needs coaching, assign a focused exercise and reassess with different pre-annotated footage. Preserve the original attempt so improvement is visible.
+
+For the bad-connection mission, use `FIELD_GUIDE.md` and `RECOVERY.md` to practice exporting a pending save and reviewing it on a second browser. Keep its original save ID. Prove that restore/reload/reconnect do not release held work, then explicitly retry and inspect one server record. Perform this with training data and no requested Discord delivery.

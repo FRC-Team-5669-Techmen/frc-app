@@ -1,3 +1,9 @@
+# Extended recovery execution evidence
+
+`2026-10-21-recovery/` contains the additional implementation run. `README.md` in that directory pins the exact source and runtime of each check; `sha256.json` pins retained files. The broad regression/soak at `254d69e` are distinguished from the later keyboard, pagination and current-main merge at `6b7feaa`. Synthetic data, local Auth stand-ins, manual accessibility gaps and field gates remain explicit.
+
+The records below describe earlier checkpoints.
+
 # Retained execution evidence
 
 `2026-10-21-competition/` contains the latest 971-test, 1766-feature, 150-scouting, 51-check-in, 573-SQL/17-mutant/7-race, 22-PWA and 12-Deno logs/assertions, portable-review/oracle/gate output and fictional screenshots. The full feature run is at `7240bcb`; the latest focused checks cover the later filename/provider-key changes at `7a1ddca`. Initial resource/timing/compilation failures are retained separately. `sha256.json` pins these artifacts. Terminal blank lines at the end of two unit logs were normalized; result content is unchanged.

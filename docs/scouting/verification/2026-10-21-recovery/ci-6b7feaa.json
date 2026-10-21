@@ -1,0 +1,27 @@
+{
+  "source": "6b7feaa67aa298927e5c4aca875c6709d64d1c6e",
+  "run": {
+    "id": 39627480888,
+    "name": "CI",
+    "status": "completed",
+    "conclusion": "success",
+    "run_number": 122,
+    "jobs_url": "https://api.github.com/repos/FRC-Team-5669-Techmen/frc-app/actions/runs/39627480888/jobs",
+    "logs_url": "https://api.github.com/repos/FRC-Team-5669-Techmen/frc-app/actions/runs/39627480888/logs",
+    "workflow_id": 348275876
+  },
+  "job_id": 119316417563,
+  "scope": "GitHub-hosted CI, Node 22/npm 10, placeholder Supabase config; no live services",
+  "verbatimSummaryLines": [
+    "2026-10-21T15:38:26.8129190Z node: v22.23.3",
+    "2026-10-21T15:38:26.8130715Z npm: 10.9.9",
+    "2026-10-21T15:38:42.1335953Z precache  \u001b[32m145 entries\u001b[39m \u001b[2m(1942.00 KiB)\u001b[22m",
+    "2026-10-21T15:39:05.9416210Z \u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m68 passed\u001b[39m\u001b[22m\u001b[90m (68)\u001b[39m",
+    "2026-10-21T15:39:05.9421069Z \u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m1004 passed\u001b[39m\u001b[22m\u001b[90m (1004)\u001b[39m",
+    "2026-10-21T15:39:05.9423990Z \u001b[2m   Duration \u001b[22m 23.23s\u001b[2m (transform 3.30s, setup 0ms, import 8.51s, tests 42.03s, environment 4.14s)\u001b[22m",
+    "2026-10-21T15:39:06.5110192Z ds-audit: ok — 36 aliases × 3 grounds literal and complete, 79 components verified, 315 files scanned",
+    "2026-10-21T15:39:06.7077049Z 19/19 passed",
+    "2026-10-21T15:39:06.8726305Z OK: the split is lossless. Every byte of the pre-split paragraph is present, in order, across 50 entries (17 written since).",
+    "2026-10-21T15:39:07.3591421Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/"
+  ]
+}

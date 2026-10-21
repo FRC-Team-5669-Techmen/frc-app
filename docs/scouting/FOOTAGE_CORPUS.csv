@@ -1,0 +1,7 @@
+case_id,status,recording_url,source_event_key,source_match_key,team_number,start_seconds,end_seconds,capability,expected_answer,evidence_notes,annotator,independent_reviewer,frozen_at,review_disagreement_resolution
+F01-clear-success,NOT_SELECTED,,,,,,,,,,,,,
+F02-visible-failed-attempt,NOT_SELECTED,,,,,,,,,,,,,
+F03-obstructed-view,NOT_SELECTED,,,,,,,,,,,,,
+F04-non-attempt-or-non-applicability,NOT_SELECTED,,,,,,,,,,,,,
+F05-multi-observer-disagreement,NOT_SELECTED,,,,,,,,,,,,,
+F06-supported-correction,NOT_SELECTED,,,,,,,,,,,,,

@@ -1,0 +1,93 @@
+frozen SQL: 55/55 files applied
+migration 0001_idea_certifications_mirror.sql: applied twice
+migration 0002_feedback_console.sql: applied twice
+migration 0003_discord_announcements.sql: applied twice
+migration 0004_member_permissions.sql: applied twice
+migration 0005_event_family_hub.sql: applied twice
+migration 0006_beach_blitz_seed.sql: applied twice
+migration 0007_event_hub_open_link.sql: applied twice
+migration 0008_event_hub_families.sql: applied twice
+migration 0009_event_hub_households.sql: applied twice
+migration 0010_event_hub_roster_names.sql: applied twice
+migration 0011_event_hub_parent_service_hours.sql: applied twice
+migration 0012_jobs_idea_cert_gate.sql: applied twice
+migration 0013_handbook_acknowledgments.sql: applied twice
+migration 0014_session_signout.sql: applied twice
+migration 0015_member_standing.sql: applied twice
+migration 0016_event_rosters.sql: applied twice
+migration 0017_families_and_records.sql: applied twice
+migration 0018_connector.sql: applied twice
+migration 0019_connector_writes.sql: applied twice
+migration 0020_member_admin.sql: applied twice
+migration 0021_connector_deleted_rows.sql: applied twice
+migration 0022_scouting.sql: applied twice
+PASS scouting PWA: built app loads event through real PostgREST
+PASS scouting PWA: production service worker controls the page
+PASS scouting PWA: built map adapter authorizes through local PostgREST and caches fictional Nexus geometry
+PASS scouting PWA: cold navigation works offline even after the stored Auth session expires
+PASS scouting PWA: installed PWA start URL reopens the prepared event offline
+PASS scouting PWA: cold offline map survives with real service worker and IndexedDB
+PASS scouting PWA: offline observation has no server record
+PASS scouting PWA: native IndexedDB queue survives built-PWA reload
+PASS scouting PWA: lost HTTP response preserves the queued proposal after server commit
+PASS scouting PWA: lost-response backup preserves the actual operation identity
+PASS scouting PWA: fresh-profile recovery holds the save across reload without another server revision
+PASS scouting PWA: reviewed recovered request uses its original server receipt
+PASS scouting PWA: malformed domain data is held out of evidence and rejected by actual SQL validation
+PASS scouting PWA: rejected recovery cannot bypass validation through form editing
+PASS scouting PWA: explicitly removing a rejected recovered copy leaves original synchronized evidence intact
+PASS scouting PWA: reconnect creates exactly one attributed observation
+PASS scouting PWA: repeated launch creates no duplicate logical records
+PASS scouting PWA: interrupted-page test reaches a real committed save before response
+PASS scouting PWA: a restarted page automatically recovers its expired lease without another submit
+PASS scouting PWA: exiting prepared mode removes capture access
+PASS scouting PWA: offline identity stays cleared across reload
+PASS scouting PWA: parent JWT sees no scouting rows through PostgREST
+PASS scouting PWA: parent JWT cannot save through PostgREST
+PASS scouting PWA: map adapter refuses a parent through the actual local eligibility RPC before provider access
+PASS scouting PWA: authenticated client cannot bypass validated write RPC
+PASS scouting PWA: connector HTTP preview rolls back without creating evidence
+PASS scouting PWA: connector HTTP commit preserves identity and audit
+PASS scouting PWA: connector HTTP refuses an unauthorized account
+PASS scouting PWA: elapsed soak cycle 1: offline reload and duplicate sync preserve one attributed did_not_see observation
+PASS scouting PWA: elapsed soak cycle 2: offline reload and duplicate sync preserve one attributed no observation
+PASS scouting PWA: elapsed soak cycle 3: offline reload and duplicate sync preserve one attributed yes observation
+PASS scouting PWA: elapsed soak cycle 4: offline reload and duplicate sync preserve one attributed not_applicable observation
+PASS scouting PWA: elapsed soak cycle 5: offline reload and duplicate sync preserve one attributed did_not_see observation
+PASS scouting PWA: elapsed soak cycle 6: offline reload and duplicate sync preserve one attributed no observation
+PASS scouting PWA: elapsed soak cycle 7: offline reload and duplicate sync preserve one attributed yes observation
+PASS scouting PWA: elapsed soak cycle 8: offline reload and duplicate sync preserve one attributed not_applicable observation
+PASS scouting PWA: elapsed soak cycle 9: offline reload and duplicate sync preserve one attributed did_not_see observation
+PASS scouting PWA: elapsed soak cycle 10: offline reload and duplicate sync preserve one attributed no observation
+PASS scouting PWA: elapsed soak cycle 11: offline reload and duplicate sync preserve one attributed yes observation
+PASS scouting PWA: elapsed soak cycle 12: offline reload and duplicate sync preserve one attributed not_applicable observation
+PASS scouting PWA: elapsed soak cycle 13: offline reload and duplicate sync preserve one attributed did_not_see observation
+PASS scouting PWA: elapsed soak cycle 14: offline reload and duplicate sync preserve one attributed no observation
+PASS scouting PWA: elapsed soak cycle 15: offline reload and duplicate sync preserve one attributed yes observation
+PASS scouting PWA: elapsed soak cycle 16: offline reload and duplicate sync preserve one attributed not_applicable observation
+PASS scouting PWA: elapsed soak cycle 17: offline reload and duplicate sync preserve one attributed did_not_see observation
+PASS scouting PWA: elapsed soak cycle 18: offline reload and duplicate sync preserve one attributed no observation
+PASS scouting PWA: elapsed soak cycle 19: offline reload and duplicate sync preserve one attributed yes observation
+PASS scouting PWA: elapsed soak cycle 20: offline reload and duplicate sync preserve one attributed not_applicable observation
+PASS scouting PWA: elapsed soak cycle 21: offline reload and duplicate sync preserve one attributed did_not_see observation
+PASS scouting PWA: elapsed soak cycle 22: offline reload and duplicate sync preserve one attributed no observation
+PASS scouting PWA: elapsed soak cycle 23: offline reload and duplicate sync preserve one attributed yes observation
+PASS scouting PWA: elapsed soak cycle 24: offline reload and duplicate sync preserve one attributed not_applicable observation
+PASS scouting PWA: elapsed soak cycle 25: offline reload and duplicate sync preserve one attributed did_not_see observation
+PASS scouting PWA: elapsed soak cycle 26: offline reload and duplicate sync preserve one attributed no observation
+PASS scouting PWA: elapsed soak cycle 27: offline reload and duplicate sync preserve one attributed yes observation
+PASS scouting PWA: elapsed soak cycle 28: offline reload and duplicate sync preserve one attributed not_applicable observation
+PASS scouting PWA: elapsed soak cycle 29: offline reload and duplicate sync preserve one attributed did_not_see observation
+PASS scouting PWA: elapsed soak cycle 30: offline reload and duplicate sync preserve one attributed no observation
+PASS scouting PWA: elapsed soak cycle 31: offline reload and duplicate sync preserve one attributed yes observation
+PASS scouting PWA: elapsed soak cycle 32: offline reload and duplicate sync preserve one attributed not_applicable observation
+PASS scouting PWA: elapsed soak cycle 33: offline reload and duplicate sync preserve one attributed did_not_see observation
+PASS scouting PWA: elapsed soak cycle 34: offline reload and duplicate sync preserve one attributed no observation
+PASS scouting PWA: elapsed soak cycle 35: offline reload and duplicate sync preserve one attributed yes observation
+PASS scouting PWA: elapsed soak cycle 36: offline reload and duplicate sync preserve one attributed not_applicable observation
+PASS scouting PWA: elapsed soak cycle 37: offline reload and duplicate sync preserve one attributed did_not_see observation
+PASS scouting PWA: elapsed soak cycle 38: offline reload and duplicate sync preserve one attributed no observation
+PASS scouting PWA: elapsed soak cycle 39: offline reload and duplicate sync preserve one attributed yes observation
+PASS scouting PWA: elapsed soak ends with one logical record per cycle and no pending work
+scouting PWA: 68/68 passed
+sql harness: 0/0 checks passed across 0 test file(s)

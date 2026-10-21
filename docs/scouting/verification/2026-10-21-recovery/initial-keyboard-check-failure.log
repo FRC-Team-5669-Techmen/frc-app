@@ -1,0 +1,14 @@
+PASS scouting accessibility 375 scout-this: 0 violations; 0 manual-review rules
+PASS scouting accessibility 375 teams: 0 violations; 0 manual-review rules
+PASS scouting accessibility 375 pit-messages: 0 violations; 0 manual-review rules
+PASS scouting accessibility 375 pick-lists: 0 violations; 1 manual-review rules
+PASS scouting accessibility 375 practice: 0 violations; 0 manual-review rules
+PASS scouting accessibility 375 downloaded-map: 0 violations; 1 manual-review rules
+PASS scouting accessibility 375 recovery-input: 0 violations; 1 manual-review rules
+PASS scouting accessibility 375 observation-dialog: 0 violations; 1 manual-review rules
+AssertionError [ERR_ASSERTION]: native dialog must contain keyboard focus
+
+false !== true
+
+    at file:///workspace/frc-app/tools/e2e/scouting-accessibility.mjs:56:12
+scouting accessibility: 8/9 scans without automated violations

@@ -1,0 +1,12 @@
+
+> frc-app@0.1.0 test
+> vitest run --maxWorkers=1
+
+
+ RUN  v4.1.11 /workspace/work/scouting-focus
+
+
+ Test Files  68 passed (68)
+      Tests  1003 passed (1003)
+   Start at  15:20:59
+   Duration  144.87s (transform 9.68s, setup 0ms, import 21.67s, tests 85.04s, environment 7.76s)

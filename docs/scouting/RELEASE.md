@@ -63,7 +63,7 @@ Use a training event and real phones, not a live competition. Record the phone/b
 - Two tabs/devices: make corrections from the same base version; require explicit conflict review. Change accounts while a save is queued; only the original actor may synchronize it.
 - Lead: preview a shift with fewer available scouts than robots; inspect coverage gaps, breaks, existing work and double-booking. Save, refresh, and confirm assignments. Concurrent leads must coordinate; the planner is not a global reservation system.
 - Pit crew: reply to another scout's question without rewriting it; verify the original author, reply author, revisions and location source/time.
-- Recovery: export an event containing unsynced work and partial practice; inspect its account/event scope, immutable operation IDs and draft keys. Confirm a failed export shows an error while the original work remains intact.
+- Recovery: export unsynced work and partial practice. On a second prepared device under the same account/event, preview and restore selected pending saves; confirm they remain held after reload/reconnect. Review and retry one original request, then confirm one server record/revision. Conflicts require review. Practice/drafts/maps stay in the archive for manual review. A failed export or restore must leave original work intact. See `RECOVERY.md` and `FIELD_GUIDE.md`.
 - Footage: record a different event with its full source key; verify its note remains visible and its results do not enter the current-event percentages. Confirm short/full current-event labels cannot duplicate a logical observation.
 - Strategy: compare three teams with missing data and disputed observations; cancel a preview, then apply a reviewed order. Check support counts and DNP votes separately.
 - Practice: complete interactive drills, retain a partial session through reload, export the workbook and perform mentor assessment against a fixed pre-annotated footage set. Certification remains in IDEA Classroom.
@@ -84,3 +84,18 @@ If the app must be rolled back, restore the previous app deployment while preser
 - `docs/scouting/FIELD_ACCEPTANCE.csv`: unexecuted physical-device, human, source and staging checks. Blank actual-result fields are intentional.
 - The read-only production catalog currently has no scouting tables/functions, and neither scouting Edge Function is deployed. Production reports PostgreSQL 17.6. Local success does not install the release.
 - Preserve current production and its check-in path until explicit release authorization and the outstanding acceptance gates are complete. No authorization is requested merely because a local build is green.
+
+## Additional reproducible browser checks
+
+```sh
+# Synthetic 120-team / 1,682-record fixture; native Chromium, no live services
+node tools/e2e/scouting-volume.mjs
+# Independent pinned audit engine outside app dependencies
+npm install --prefix /tmp/scouting-a11y --no-package-lock --no-save axe-core@4.11.1
+AXE_CORE_PATH=/tmp/scouting-a11y/node_modules/axe-core/axe.min.js node tools/e2e/scouting-accessibility.mjs
+# Optional measured-duration recovery run (0–60 minutes); requires the native
+# PostgreSQL and PostgREST executables documented in tools/sql-harness/README.md
+SCOUTING_SOAK_MINUTES=39 POSTGREST_BIN=/absolute/path/to/postgrest node tools/sql-harness/run.mjs --tests none --node tools/e2e/scouting-pwa.mjs
+```
+
+Choose distinct fixture/PWA ports when running separate checkouts concurrently. The fixture harness refuses another checkout's server. `FOOTAGE_CORPUS.csv` and `FIELD_ACCEPTANCE.csv` require actual annotations/device/human results; blank fields intentionally prevent synthetic checks from becoming acceptance claims.

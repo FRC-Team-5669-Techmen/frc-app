@@ -1,0 +1,5 @@
+Error: A server on http://127.0.0.1:5401 is not a fixture server for this checkout (it serves /workspace/frc-app; this is /workspace/work/scouting-focus). Stop it, or pass --port to use a free port.
+    at startFixtureServer (file:///workspace/work/scouting-focus/tools/e2e/lib.mjs:93:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async main (file:///workspace/work/scouting-focus/tools/e2e/features.mjs:417:18)
+features e2e: 0/1 passed (375 and 1440)

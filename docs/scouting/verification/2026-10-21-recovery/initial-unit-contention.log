@@ -1,0 +1,30 @@
+
+> frc-app@0.1.0 test
+> vitest run --maxWorkers=1
+
+
+ RUN  v4.1.11 /workspace/work/scouting-focus
+
+ ❯ tests/reporting-day-rule.test.js (7 tests | 1 failed) 37848ms
+     × matches the old reporting copy on every instant tried, in every input shape 37755ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/reporting-day-rule.test.js > the day rule reporting uses > matches the old reporting copy on every instant tried, in every input shape
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/reporting-day-rule.test.js:47:3
+     45|   })
+     46|
+     47|   test('matches the old reporting copy on every instant tried, in ever…
+       |   ^
+     48|     let n = 0, lateEvening = 0
+     49|     for (const t of instants()) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 67 passed (68)
+      Tests  1 failed | 1003 passed (1004)
+   Start at  15:31:09
+   Duration  213.08s (transform 14.11s, setup 0ms, import 28.14s, tests 132.02s, environment 13.51s)

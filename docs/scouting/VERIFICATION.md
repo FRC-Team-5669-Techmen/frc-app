@@ -2,7 +2,39 @@
 
 Code is on `codex/scouting-2026-evidence`, [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). Software and isolated hosted SQL checks pass. **Immediate competition acceptance remains blocked** by hosted HTTP access, physical-device/human/source gates and production release authorization. No production database change, deployment, main push or real Discord send occurred.
 
-## Executed results and exact scope
+## Extended follow-up: current candidate and independent scopes
+
+The user requested at least another hour; this run began **14:48:18 UTC**. Application candidate **`6b7feaa`** includes reviewed pending-save restoration, interruption-safe drafts, modal focus return and paged team cards. It also preserves newer remote main `0a11c52` through merge `f3518cf`. No SQL, API, provider, Edge or dependency contract changed.
+
+| Check | Actual result and source |
+| --- | --- |
+| Final application | `6b7feaa67aa298927e5c4aca875c6709d64d1c6e`, including newer main `0a11c52` |
+| Unit/DOM and build | **1004/1004, 68 files**; build passed, 145 precache entries / 1941.88 KiB local. Complete one-worker rerun; Node 24.19/npm 11.9 |
+| Final affected browser routes | **336/336**: 169 scouting, 75 families and 92 handbook; native Chromium, 375px touch emulation / 1440px desktop |
+| Broad browser regression | **1789/1789 across 15 features** at `254d69e`; predates only focus return, pagination and the current-main merge. Those later changes have the final affected-route/volume/accessibility checks above/below |
+| Built PWA/local API | **28/28** on final application code: actual Chromium/service worker/IndexedDB/Supabase JS/PostgREST/native PostgreSQL. Synthetic Auth and fictional Nexus geometry |
+| Sustained offline recovery | **68/68** on the built `254d69e` snapshot, including **39** offline/reload/reconnect/duplicate-sync cycles over **2340.0 seconds**. Unknown, observed failure, success, not-applicable and omitted floor-intake states retained; one attributed record/revision per cycle; no pending work at finish |
+| Native database | Fresh PostgreSQL 17.6 chain twice; **72/72** scouting SQL/RLS assertions, **17/17** mutants caught and **7/7** concurrent-write checks. SQL/API/Edge contracts unchanged by this continuation |
+| Accessibility | **18/18** scoped axe-core 4.11.1 scans without automated violations; negative controls and keyboard focus checks pass. Incomplete/manual checks remain; no full WCAG, screen-reader or real-phone claim |
+| Large event | Both widths pass with **120 teams / 1,682 records and revisions**, complete cache/export, four card pages, final-team search, independent percentages and 120 median-rank ties. Timings are synthetic shared-container observations |
+| Existing check-in | **51/51** at `254d69e`; check-in source unchanged |
+| Other gates | Connector current; design 36 aliases × 3 grounds / 79 components / 315 files; calendar **19/19**; 50 original history entries byte/SHA-identical; **13** independent math assertions; actual-route portable DOM review passes |
+| Independent GitHub CI | [CI 122](https://github.com/FRC-Team-5669-Techmen/frc-app/actions/runs/39627480888) passed for `6b7feaa`, Node 22.23.3/npm 10.9.9; logs confirm **1004 tests** and all required gates |
+
+The timed run began at **14:48:18 UTC**; final evidence was consolidated at **2026-10-21 15:48:25 UTC**, after more than an hour of implementation/verification. Source/runtime boundaries are retained in `verification/2026-10-21-recovery/README.md` and its hashed artifacts. Earlier full **573 SQL**, **12 local Deno**, and **72 hosted staging** checks below remain historical evidence for unchanged contracts; they were not falsely counted as fresh repeats.
+
+
+New recovery expectations were written before implementation in `RECOVERY.md`. Actual native IndexedDB transactions and local PostgreSQL receipts are checked separately from DOM emulation. Scope-guard mutants, same-operation replay, whole-selection rollback and cross-tab collision checks make permissive implementations fail. A malformed recovered domain request remains held and invisible as evidence until SQL validates it; SQL rejection preserves it for review/export/removal.
+
+The independent axe-core 4.11.1 audit uses a deliberately unnamed-button negative control. It exposed an Escape-focus defect, now fixed and checked in native Chromium. Automated scans do not certify WCAG, screen-reader usability or physical-phone behavior. Manual contrast/layout review remains required for items the engine cannot determine (including arrow controls and SVG/map text).
+
+The large-event fixture is explicitly synthetic: 120 teams, 1,440 observations, two reversed complete ballots, 1,682 records and revisions. Hand expectations are four successful / six observed TRENCH matches (67%), two did-not-see, two not-applicable and two missing responses; BUMP and floor-intake have no measured denominator. Reversed ballots have median rank 60.5 and support two for every team, with ascending team-number ties. Paging cards does not page the mathematical inputs. Timings describe only this shared container, not a device or student benchmark.
+
+Harness setup corrections are retained where relevant: clean `npm ci` supplied missing local test packages; an incorrect browser-port flag was rejected by the checkout-identity guard; the initial volume harness used the wrong export label and two debug runs were cancelled before its corrected isolated run. None of these is reported as a successful application check. The final unit run initially timed out in the existing reporting-date test under contention (1003 passed / one timeout). A complete one-worker rerun after the auxiliary browser checks ended passed 1004/1004 without changing timeout or expectations. No test expectation was weakened to conceal an application failure.
+
+Current external acceptance remains **15 NOT_RUN and three PARTIAL** gates in `FIELD_ACCEPTANCE.csv`. `FIELD_GUIDE.md` provides concrete operating/recovery steps, and `FOOTAGE_CORPUS.csv` is a blank six-case selection/annotation packet, not invented match evidence.
+
+## Earlier October 21 checkpoint — historical results and exact scope
 
 | Check | Actual evidence |
 | --- | --- |
@@ -40,7 +72,7 @@ Hosted fixture preparation initially lacked copied Auth triggers/profiles and th
 ## Remaining blockers
 
 - **Hosted HTTP:** workspace proxy refused staging HTTPS (CONNECT 403); no bypass attempted. GoTrue login, deployed REST/gateway behavior, private API-schema exposure, representative live providers and real delivery remain unverified.
-- **Field/human/source:** no real iPhone/Android storage/backgrounding proof, novice completion timings/errors, mentor assessment, fixed annotated real-match corpus or original TideScout audiovisual/current-app comparison. No claim of latest TideScout parity. `FIELD_ACCEPTANCE.csv`: 13 NOT_RUN, three PARTIAL.
+- **Field/human/source:** no real iPhone/Android storage/backgrounding proof, novice completion timings/errors, mentor assessment, fixed annotated real-match corpus or original TideScout audiovisual/current-app comparison. No claim of latest TideScout parity. `FIELD_ACCEPTANCE.csv` now has 15 NOT_RUN, three PARTIAL (two recovery/draft field cases added).
 - **Release:** production still has zero scouting tables/functions or scouting Edge Functions. Explicit authorization is required to install/deploy production or send real Discord messages. Automatic review-preview builds do not install services.
 
 `STAGING.md` and its retained JSON document the actual hosted proof, advisor findings and cleanup. The temporary branch was deleted after evidence retention; all fixture/data/HTTP queues were zero. No scouting function had a SECURITY DEFINER advisor warning; the operations table's no-policy INFO is intentional service-only access. Existing non-scouting advisor warnings were preserved for separate review, not declared cleared.

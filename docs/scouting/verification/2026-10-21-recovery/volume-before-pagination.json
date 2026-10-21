@@ -1,0 +1,18 @@
+{
+  "source": "3828e86, synthetic volume harness during development; extracted from logged successful assertions before pagination, not a controlled benchmark",
+  "widths": [
+    {
+      "width": 375,
+      "loadMs": 5432,
+      "teamsMs": 10256,
+      "searchMs": 564
+    },
+    {
+      "width": 1440,
+      "loadMs": 3011,
+      "teamsMs": 1560,
+      "searchMs": 591
+    }
+  ],
+  "limitation": "Shared-container timings. Initial debug runs were cancelled after a wrong export selector; concurrent debug log tail was not used as final evidence."
+}

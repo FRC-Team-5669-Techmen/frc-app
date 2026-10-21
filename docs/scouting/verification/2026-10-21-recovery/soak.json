@@ -1,0 +1,597 @@
+{
+  "scope": "Built app, native Chromium, real local PostgREST/PostgreSQL; synthetic auth; real map adapter with fictional Nexus response; no live services or real phones",
+  "soak": {
+    "requestedMinutes": 39,
+    "startedAt": "2026-10-21T15:09:19.146Z",
+    "finishedAt": "2026-10-21T15:48:19.164Z",
+    "rounds": [
+      {
+        "round": 1,
+        "match": "qm1000",
+        "answer": "did_not_see",
+        "recordId": "e31356ac-ec6b-4c51-ad4b-30b2f8293247",
+        "elapsedMs": 3968,
+        "at": "2026-10-21T15:09:23.114Z"
+      },
+      {
+        "round": 2,
+        "match": "qm1001",
+        "answer": "no",
+        "recordId": "f07223ee-2a24-406d-b240-f720e804fd2e",
+        "elapsedMs": 1888,
+        "at": "2026-10-21T15:10:21.041Z"
+      },
+      {
+        "round": 3,
+        "match": "qm1002",
+        "answer": "yes",
+        "recordId": "61092d4b-9db8-43d2-95c1-8d45b37fb997",
+        "elapsedMs": 1155,
+        "at": "2026-10-21T15:11:20.321Z"
+      },
+      {
+        "round": 4,
+        "match": "qm1003",
+        "answer": "not_applicable",
+        "recordId": "3abd4ff5-3172-4dfe-b539-ef4cff4175e1",
+        "elapsedMs": 1857,
+        "at": "2026-10-21T15:12:21.034Z"
+      },
+      {
+        "round": 5,
+        "match": "qm1004",
+        "answer": "did_not_see",
+        "recordId": "ff9e00a7-bfaf-4a8c-add7-df291167eb3f",
+        "elapsedMs": 2715,
+        "at": "2026-10-21T15:13:21.897Z"
+      },
+      {
+        "round": 6,
+        "match": "qm1005",
+        "answer": "no",
+        "recordId": "eb50a9b9-2e59-4ba8-bf3e-32051c04d9ed",
+        "elapsedMs": 5615,
+        "at": "2026-10-21T15:14:24.849Z"
+      },
+      {
+        "round": 7,
+        "match": "qm1006",
+        "answer": "yes",
+        "recordId": "eabaa9f5-c0e9-4aa7-81db-2d7b2068b022",
+        "elapsedMs": 1995,
+        "at": "2026-10-21T15:15:21.245Z"
+      },
+      {
+        "round": 8,
+        "match": "qm1007",
+        "answer": "not_applicable",
+        "recordId": "8fde5ca4-484e-45de-864f-98f770621696",
+        "elapsedMs": 2060,
+        "at": "2026-10-21T15:16:21.329Z"
+      },
+      {
+        "round": 9,
+        "match": "qm1008",
+        "answer": "did_not_see",
+        "recordId": "84f8bc46-9cce-4fc3-8cb5-f5573495bde3",
+        "elapsedMs": 5557,
+        "at": "2026-10-21T15:17:24.871Z"
+      },
+      {
+        "round": 10,
+        "match": "qm1009",
+        "answer": "no",
+        "recordId": "3c7287ea-0427-416f-bc00-01db4b078a53",
+        "elapsedMs": 1722,
+        "at": "2026-10-21T15:18:21.052Z"
+      },
+      {
+        "round": 11,
+        "match": "qm1010",
+        "answer": "yes",
+        "recordId": "2a861fbc-5283-4987-adf2-97fb3cd2168b",
+        "elapsedMs": 1874,
+        "at": "2026-10-21T15:19:21.227Z"
+      },
+      {
+        "round": 12,
+        "match": "qm1011",
+        "answer": "not_applicable",
+        "recordId": "5ccf4358-85ce-4377-8bee-b67337a5ef1b",
+        "elapsedMs": 3847,
+        "at": "2026-10-21T15:20:23.246Z"
+      },
+      {
+        "round": 13,
+        "match": "qm1012",
+        "answer": "did_not_see",
+        "recordId": "d59e4728-eca4-4031-9b4a-aeb3e37bde8f",
+        "elapsedMs": 12126,
+        "at": "2026-10-21T15:21:34.182Z"
+      },
+      {
+        "round": 14,
+        "match": "qm1013",
+        "answer": "no",
+        "recordId": "d2e68fd1-6084-459a-a30a-3e405dd5ddc8",
+        "elapsedMs": 2616,
+        "at": "2026-10-21T15:22:24.680Z"
+      },
+      {
+        "round": 15,
+        "match": "qm1014",
+        "answer": "yes",
+        "recordId": "174d0176-99b8-4ee2-a142-a3cb2b63cf60",
+        "elapsedMs": 3651,
+        "at": "2026-10-21T15:23:25.734Z"
+      },
+      {
+        "round": 16,
+        "match": "qm1015",
+        "answer": "not_applicable",
+        "recordId": "c4e9eb8a-0c18-4e43-b45b-1f441ab8b5ec",
+        "elapsedMs": 3422,
+        "at": "2026-10-21T15:24:25.542Z"
+      },
+      {
+        "round": 17,
+        "match": "qm1016",
+        "answer": "did_not_see",
+        "recordId": "e6434dcf-8f65-421c-a9f3-f44bb8e9254f",
+        "elapsedMs": 12374,
+        "at": "2026-10-21T15:25:35.212Z"
+      },
+      {
+        "round": 18,
+        "match": "qm1017",
+        "answer": "no",
+        "recordId": "d4f5692a-e06a-4e6e-aec9-3caaaf238bb9",
+        "elapsedMs": 7673,
+        "at": "2026-10-21T15:26:30.526Z"
+      },
+      {
+        "round": 19,
+        "match": "qm1018",
+        "answer": "yes",
+        "recordId": "3bf2d8c5-b795-43a6-acf0-c9595f2300c5",
+        "elapsedMs": 9869,
+        "at": "2026-10-21T15:27:33.123Z"
+      },
+      {
+        "round": 20,
+        "match": "qm1019",
+        "answer": "not_applicable",
+        "recordId": "581fa4a8-3ea6-4158-be93-3b58c9318aa1",
+        "elapsedMs": 11365,
+        "at": "2026-10-21T15:28:34.686Z"
+      },
+      {
+        "round": 21,
+        "match": "qm1020",
+        "answer": "did_not_see",
+        "recordId": "419108cf-7d2f-4ba1-8fb6-3c9e87ceb3dc",
+        "elapsedMs": 4359,
+        "at": "2026-10-21T15:29:27.716Z"
+      },
+      {
+        "round": 22,
+        "match": "qm1021",
+        "answer": "no",
+        "recordId": "a498d790-6af4-44d6-b7d1-9c20943270f2",
+        "elapsedMs": 4979,
+        "at": "2026-10-21T15:30:28.402Z"
+      },
+      {
+        "round": 23,
+        "match": "qm1022",
+        "answer": "yes",
+        "recordId": "64189ae2-ef14-42d0-b5f5-8048ea27f2a1",
+        "elapsedMs": 13449,
+        "at": "2026-10-21T15:31:36.937Z"
+      },
+      {
+        "round": 24,
+        "match": "qm1023",
+        "answer": "not_applicable",
+        "recordId": "4637dd6b-deea-4e67-bc13-c44c399d10cc",
+        "elapsedMs": 6371,
+        "at": "2026-10-21T15:32:29.890Z"
+      },
+      {
+        "round": 25,
+        "match": "qm1024",
+        "answer": "did_not_see",
+        "recordId": "6ec04c48-be11-45fb-9346-cff1b900d76f",
+        "elapsedMs": 12925,
+        "at": "2026-10-21T15:33:36.494Z"
+      },
+      {
+        "round": 26,
+        "match": "qm1025",
+        "answer": "no",
+        "recordId": "ad1bb21e-6d5a-48d3-b7ef-17e67ea1e0b1",
+        "elapsedMs": 4027,
+        "at": "2026-10-21T15:34:27.615Z"
+      },
+      {
+        "round": 27,
+        "match": "qm1026",
+        "answer": "yes",
+        "recordId": "0f4eb65f-e6bc-442b-bb0e-784b953d074a",
+        "elapsedMs": 3038,
+        "at": "2026-10-21T15:35:26.700Z"
+      },
+      {
+        "round": 28,
+        "match": "qm1027",
+        "answer": "not_applicable",
+        "recordId": "b11d34d2-a095-42c6-bce4-e7671943c823",
+        "elapsedMs": 6754,
+        "at": "2026-10-21T15:36:30.437Z"
+      },
+      {
+        "round": 29,
+        "match": "qm1028",
+        "answer": "did_not_see",
+        "recordId": "8fc03348-afa1-4dc1-9886-22965dce1c82",
+        "elapsedMs": 4627,
+        "at": "2026-10-21T15:37:28.322Z"
+      },
+      {
+        "round": 30,
+        "match": "qm1029",
+        "answer": "no",
+        "recordId": "f7936d1e-be00-4ba0-928a-9431b44b1c0f",
+        "elapsedMs": 2194,
+        "at": "2026-10-21T15:38:25.899Z"
+      },
+      {
+        "round": 31,
+        "match": "qm1030",
+        "answer": "yes",
+        "recordId": "7ec65ca7-b58e-409e-b156-398ba8276687",
+        "elapsedMs": 3032,
+        "at": "2026-10-21T15:39:26.752Z"
+      },
+      {
+        "round": 32,
+        "match": "qm1031",
+        "answer": "not_applicable",
+        "recordId": "9c343a01-3f6d-4591-9d1d-b8533a87ed4d",
+        "elapsedMs": 2280,
+        "at": "2026-10-21T15:40:26.026Z"
+      },
+      {
+        "round": 33,
+        "match": "qm1032",
+        "answer": "did_not_see",
+        "recordId": "e4de9595-3f60-4e6b-9c1a-0184281d3b20",
+        "elapsedMs": 5136,
+        "at": "2026-10-21T15:41:28.896Z"
+      },
+      {
+        "round": 34,
+        "match": "qm1033",
+        "answer": "no",
+        "recordId": "9dada9ff-d931-412f-8eb8-e02de634d9bc",
+        "elapsedMs": 1493,
+        "at": "2026-10-21T15:42:25.264Z"
+      },
+      {
+        "round": 35,
+        "match": "qm1034",
+        "answer": "yes",
+        "recordId": "9d4796d7-ec76-45b1-8a27-167871fa1cf7",
+        "elapsedMs": 2503,
+        "at": "2026-10-21T15:43:26.291Z"
+      },
+      {
+        "round": 36,
+        "match": "qm1035",
+        "answer": "not_applicable",
+        "recordId": "a9d6c906-8e11-456e-a311-600e0d132aee",
+        "elapsedMs": 1906,
+        "at": "2026-10-21T15:44:25.725Z"
+      },
+      {
+        "round": 37,
+        "match": "qm1036",
+        "answer": "did_not_see",
+        "recordId": "10c9e179-5de9-4b49-8d3f-9194304d1431",
+        "elapsedMs": 4866,
+        "at": "2026-10-21T15:45:28.890Z"
+      },
+      {
+        "round": 38,
+        "match": "qm1037",
+        "answer": "no",
+        "recordId": "984b790d-f6e5-48de-819c-04bcef29dca0",
+        "elapsedMs": 1944,
+        "at": "2026-10-21T15:46:25.984Z"
+      },
+      {
+        "round": 39,
+        "match": "qm1038",
+        "answer": "yes",
+        "recordId": "9d0c9ae7-e717-407a-8e50-e0b111545999",
+        "elapsedMs": 1459,
+        "at": "2026-10-21T15:47:25.508Z"
+      }
+    ],
+    "elapsedMs": 2340018
+  },
+  "results": [
+    {
+      "label": "built app loads event through real PostgREST",
+      "ok": true
+    },
+    {
+      "label": "production service worker controls the page",
+      "ok": true
+    },
+    {
+      "label": "built map adapter authorizes through local PostgREST and caches fictional Nexus geometry",
+      "ok": true
+    },
+    {
+      "label": "cold navigation works offline even after the stored Auth session expires",
+      "ok": true
+    },
+    {
+      "label": "installed PWA start URL reopens the prepared event offline",
+      "ok": true
+    },
+    {
+      "label": "cold offline map survives with real service worker and IndexedDB",
+      "ok": true
+    },
+    {
+      "label": "offline observation has no server record",
+      "ok": true
+    },
+    {
+      "label": "native IndexedDB queue survives built-PWA reload",
+      "ok": true
+    },
+    {
+      "label": "lost HTTP response preserves the queued proposal after server commit",
+      "ok": true
+    },
+    {
+      "label": "lost-response backup preserves the actual operation identity",
+      "ok": true
+    },
+    {
+      "label": "fresh-profile recovery holds the save across reload without another server revision",
+      "ok": true
+    },
+    {
+      "label": "reviewed recovered request uses its original server receipt",
+      "ok": true
+    },
+    {
+      "label": "malformed domain data is held out of evidence and rejected by actual SQL validation",
+      "ok": true
+    },
+    {
+      "label": "rejected recovery cannot bypass validation through form editing",
+      "ok": true
+    },
+    {
+      "label": "explicitly removing a rejected recovered copy leaves original synchronized evidence intact",
+      "ok": true
+    },
+    {
+      "label": "reconnect creates exactly one attributed observation",
+      "ok": true
+    },
+    {
+      "label": "repeated launch creates no duplicate logical records",
+      "ok": true
+    },
+    {
+      "label": "interrupted-page test reaches a real committed save before response",
+      "ok": true
+    },
+    {
+      "label": "a restarted page automatically recovers its expired lease without another submit",
+      "ok": true
+    },
+    {
+      "label": "exiting prepared mode removes capture access",
+      "ok": true
+    },
+    {
+      "label": "offline identity stays cleared across reload",
+      "ok": true
+    },
+    {
+      "label": "parent JWT sees no scouting rows through PostgREST",
+      "ok": true
+    },
+    {
+      "label": "parent JWT cannot save through PostgREST",
+      "ok": true
+    },
+    {
+      "label": "map adapter refuses a parent through the actual local eligibility RPC before provider access",
+      "ok": true
+    },
+    {
+      "label": "authenticated client cannot bypass validated write RPC",
+      "ok": true
+    },
+    {
+      "label": "connector HTTP preview rolls back without creating evidence",
+      "ok": true
+    },
+    {
+      "label": "connector HTTP commit preserves identity and audit",
+      "ok": true
+    },
+    {
+      "label": "connector HTTP refuses an unauthorized account",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 1: offline reload and duplicate sync preserve one attributed did_not_see observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 2: offline reload and duplicate sync preserve one attributed no observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 3: offline reload and duplicate sync preserve one attributed yes observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 4: offline reload and duplicate sync preserve one attributed not_applicable observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 5: offline reload and duplicate sync preserve one attributed did_not_see observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 6: offline reload and duplicate sync preserve one attributed no observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 7: offline reload and duplicate sync preserve one attributed yes observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 8: offline reload and duplicate sync preserve one attributed not_applicable observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 9: offline reload and duplicate sync preserve one attributed did_not_see observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 10: offline reload and duplicate sync preserve one attributed no observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 11: offline reload and duplicate sync preserve one attributed yes observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 12: offline reload and duplicate sync preserve one attributed not_applicable observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 13: offline reload and duplicate sync preserve one attributed did_not_see observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 14: offline reload and duplicate sync preserve one attributed no observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 15: offline reload and duplicate sync preserve one attributed yes observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 16: offline reload and duplicate sync preserve one attributed not_applicable observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 17: offline reload and duplicate sync preserve one attributed did_not_see observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 18: offline reload and duplicate sync preserve one attributed no observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 19: offline reload and duplicate sync preserve one attributed yes observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 20: offline reload and duplicate sync preserve one attributed not_applicable observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 21: offline reload and duplicate sync preserve one attributed did_not_see observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 22: offline reload and duplicate sync preserve one attributed no observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 23: offline reload and duplicate sync preserve one attributed yes observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 24: offline reload and duplicate sync preserve one attributed not_applicable observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 25: offline reload and duplicate sync preserve one attributed did_not_see observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 26: offline reload and duplicate sync preserve one attributed no observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 27: offline reload and duplicate sync preserve one attributed yes observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 28: offline reload and duplicate sync preserve one attributed not_applicable observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 29: offline reload and duplicate sync preserve one attributed did_not_see observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 30: offline reload and duplicate sync preserve one attributed no observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 31: offline reload and duplicate sync preserve one attributed yes observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 32: offline reload and duplicate sync preserve one attributed not_applicable observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 33: offline reload and duplicate sync preserve one attributed did_not_see observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 34: offline reload and duplicate sync preserve one attributed no observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 35: offline reload and duplicate sync preserve one attributed yes observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 36: offline reload and duplicate sync preserve one attributed not_applicable observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 37: offline reload and duplicate sync preserve one attributed did_not_see observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 38: offline reload and duplicate sync preserve one attributed no observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak cycle 39: offline reload and duplicate sync preserve one attributed yes observation",
+      "ok": true
+    },
+    {
+      "label": "elapsed soak ends with one logical record per cycle and no pending work",
+      "ok": true
+    }
+  ]
+}
