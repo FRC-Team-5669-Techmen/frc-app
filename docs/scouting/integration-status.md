@@ -41,3 +41,9 @@ Prepared October 21, 2026 UTC. These changes are local reviewable source, not de
 - Connector scouting reads cap at 1000 records and mark `truncated`; the full app export is the path for larger event archives.
 
 Prior-event observation notifications now include the recorded source event in the text, preserving the distinction outside the app. Mention suppression and duplicate-delivery handling remain unchanged. No real notification was sent during verification.
+
+## Resumed local transport proof, October 21
+
+A real production build/Supabase JS client now runs against local PostgREST 13.0.7 and native PostgreSQL 17.6 in `tools/e2e/scouting-pwa.mjs`. It uses synthetic Auth issuance and no live provider calls. The 19/19 checks include connector HTTP preview rollback, attributed/audited commit, unauthorized-account refusal, direct-write refusal and parent read/write denial. Native separate-connection delivery reservations pass 7/7 race assertions without sending anything.
+
+Read-only production metadata confirms both scouting Edge Functions are absent. No deployed API/provider/Discord acceptance is claimed. A fresh Statbotics sample request through the web reader was inaccessible; Nexus documentation remains v1.8.0. Missing real responses and field/device testing remain release gates.

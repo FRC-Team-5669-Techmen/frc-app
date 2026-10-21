@@ -5,6 +5,7 @@
  * not live SQL, Discord, actual venue networking or real phone usability.
  */
 import { P } from './_util.mjs'
+import { readFileSync } from 'node:fs'
 const EVENT = '16000000-0000-4000-8000-000000000001'
 const ROUTE = `/scouting/${EVENT}`
 const PRE = Array.from({ length: 21 }, (_, i) => String(i + 1).padStart(4, '0')).join(',')
@@ -213,6 +214,89 @@ export default {
       t.eq('incomplete practice note survives reload', await t.page.getByLabel('One thing I learned, and one question for my mentor', { exact: true }).inputValue(), 'Keep the claim separate from a visible match observation.')
       t.eq('incomplete exercise cannot record a finished mission', await t.page.getByRole('button', { name: 'Record mission practice', exact: true }).isDisabled(), true)
       await t.noHScroll(); await t.shot('practice-mission')
+    })
+
+    await t.step('practice completion and footage corrections remain reviewable', async () => {
+      t.as('practice progression')
+      // The expected judgments below are explicit authored fixtures, not robot
+      // observations, real recordings or a measured student usability result.
+      const drill=t.page.getByRole('region',{name:'Interactive practice',exact:true})
+      for(const [i,label] of ['Pit claim','Scout observation','Official alliance result','Statistical estimate','Not established','Not established'].entries()) await t.press(drill.getByRole('group').nth(i).getByRole('button',{name:label,exact:true}))
+      await t.press(drill.getByRole('button',{name:'Review practice decisions',exact:true}))
+      const questions=t.page.locator('.sc-practice-fields > fieldset')
+      await t.press(questions.nth(0).getByRole('button',{name:'Did Not See',exact:true}))
+      await t.press(questions.nth(1).getByRole('button',{name:'No',exact:true}))
+      const activity=t.page.getByRole('checkbox',{name:'I completed the partner or mentor activity above.',exact:true})
+      await activity.check()
+      await t.press(t.page.getByRole('button',{name:'Record mission practice',exact:true}))
+      await t.waitText('1 / 8 missions recorded')
+      t.check('a completed interactive mission is durably recorded',await t.page.getByText('Practice recorded for this mission.',{exact:true}).count()===1)
+      await activity.uncheck();await t.waitText('0 / 8 missions recorded')
+      t.eq('withdrawing the activity acknowledgment withdraws completion',await t.page.getByRole('button',{name:'Record mission practice',exact:true}).isDisabled(),true)
+      await activity.check();await t.press(t.page.getByRole('button',{name:'Record mission practice',exact:true}));await t.waitText('1 / 8 missions recorded')
+      await t.press(t.page.getByText('Real footage workbook (0 entries)',{exact:true}))
+      await t.press(t.page.getByRole('button',{name:'Add practice footage',exact:true}))
+      const footage=t.page.getByRole('article',{name:'Practice footage 1',exact:true})
+      await footage.getByLabel('Team',{exact:true}).fill('9001')
+      await footage.getByLabel('Source match',{exact:true}).fill('synthetic_qm1')
+      await footage.getByLabel('Recording URL',{exact:true}).fill('https://example.invalid/fictional-recording')
+      await footage.getByLabel('Who selected this source?',{exact:true}).fill('Synthetic browser fixture, not real footage')
+      await footage.getByLabel('Passes under the TRENCH',{exact:true}).selectOption('did_not_see')
+      await footage.getByLabel('First-pass notes and timestamps',{exact:true}).fill('0:30 the view was blocked; outcome unknown.')
+      await t.press(footage.getByRole('button',{name:'Freeze first pass',exact:true}))
+      t.eq('frozen first-pass evidence cannot be casually overwritten',await footage.getByLabel('First-pass notes and timestamps',{exact:true}).isDisabled(),true)
+      await footage.getByLabel('Reviewed: Passes under the TRENCH',{exact:true}).selectOption('yes')
+      await footage.getByLabel('Review, correction and supporting timestamp',{exact:true}).fill('Synthetic second camera at 0:30 shows the full passage; correction explained.')
+      await footage.getByRole('checkbox').check()
+      await t.press(footage.getByRole('button',{name:'Record footage review',exact:true}))
+      await t.waitText('1 frozen first pass · 1 reviewed entry')
+      await t.waitText('Practice saved on this device.')
+      await t.page.reload();await t.waitText('Fixture Regional');await tab(t,'Practice');await t.waitText('Practice record loaded on this device.')
+      await t.press(t.page.getByText('Real footage workbook (1 entry)',{exact:true}))
+      t.eq('first-pass uncertainty survives reviewed correction and reload',await footage.getByLabel('Passes under the TRENCH',{exact:true}).inputValue(),'did_not_see')
+      await t.press(footage.getByText('Review history (1)',{exact:true}))
+      t.check('the separately recorded correction survives reload',(await footage.textContent()).includes('Synthetic second camera at 0:30'))
+      t.eq('practice footage never creates competition records',(await t.rows('scouting_records')).filter(r=>r.team_number===9001).length,0)
+      const cases=[
+        {index:1,decisions:[0,1,2,1],quiz:[1,0]},
+        {index:2,matches:[['Yes','Yes','Yes'],['Did Not See','No','Yes'],['Did Not See','Did Not See','Did Not See'],['Did Not See','Yes','No'],['Not Applicable','Not Applicable','Yes'],['No','Did Not See','Yes']],moments:[3,4,3,3,3,4],quiz:[2,1]},
+        {index:3,decisions:[1,1,1],quiz:[1,1]},
+        {index:4,decisions:[1,0,1,1,0],quiz:[1,1]},
+        {index:5,decisions:[1,1,0,1],quiz:[1,1]},
+        {index:6,decisions:[0,0,1],quiz:[0,1]},
+        {index:7,decisions:[1,1],quiz:[1,1]},
+      ]
+      for(const c of cases){
+        await t.press(t.page.getByRole('navigation',{name:'Practice missions',exact:true}).getByRole('button').nth(c.index))
+        if(c.matches){
+          for(const [i,expected] of c.matches.entries()){
+            await t.press(t.page.getByRole('navigation',{name:'Practice matches',exact:true}).getByRole('button').nth(i))
+            for(let step=0;step<c.moments[i];step++)await t.press(t.page.getByRole('button',{name:'Next moment',exact:true}))
+            for(const [j,label] of ['Passes under the TRENCH','Crosses the BUMP','Intakes FUEL from the floor'].entries())await t.press(t.page.getByRole('region',{name:'Practice match lab',exact:true}).getByRole('group',{name:label,exact:true}).getByRole('button',{name:expected[j],exact:true}))
+            await t.page.getByLabel('Evidence note for this robot',{exact:true}).fill('Automated synthetic scenario '+(i+1)+'; no real match observation claimed.')
+            await t.press(t.page.getByRole('button',{name:'Review this match',exact:true}))
+          }
+        }else{
+          const exercises=t.page.getByRole('region',{name:'Interactive practice',exact:true})
+          for(const [i,answer] of c.decisions.entries())await t.press(exercises.getByRole('group').nth(i).getByRole('button').nth(answer))
+          await t.press(exercises.getByRole('button',{name:'Review practice decisions',exact:true}))
+        }
+        for(const [i,answer] of c.quiz.entries())await t.press(t.page.locator('.sc-practice-fields > fieldset').nth(i).getByRole('button').nth(answer))
+        await t.page.getByLabel('One thing I learned, and one question for my mentor',{exact:true}).fill('Automated workflow check for mission '+(c.index+1)+'. Partner activity is simulated, not human proficiency evidence.')
+        await t.page.getByRole('checkbox',{name:'I completed the partner or mentor activity above.',exact:true}).check()
+        await t.press(t.page.getByRole('button',{name:'Record mission practice',exact:true}))
+        await t.waitText(`${c.index+1} / 8 missions recorded`)
+      }
+      t.check('all eight interactive mission workflows can be completed', (await t.bodyText()).includes('8 / 8 missions recorded'))
+      const downloadPromise=t.page.waitForEvent('download')
+      await t.press(t.page.getByRole('button',{name:'Export practice record',exact:true}))
+      const download=await downloadPromise, packet=JSON.parse(readFileSync(await download.path(),'utf8'))
+      t.eq('practice export preserves eight completions without awarding certification',Object.values(packet.progress).filter(v=>v?.completed===true).length,8)
+      t.eq('practice export explicitly refuses a certification claim',packet.officialCertificationAwarded,false)
+      t.eq('activity plan is distinct from measured time',packet.measuredPracticeTime,null)
+      t.eq('export preserves first-pass uncertainty and later correction',[packet.workbook[0].submission.answers.trench,packet.workbook[0].reviews[0].answers.trench],['did_not_see','yes'])
+      await t.tapTargets('.sc-training button, .sc-training input, .sc-training select','practice controls at least 44px')
+      await t.noHScroll();await t.shot('practice-history')
     })
 
     await t.step('lead previews a shift before assigning it', async () => {

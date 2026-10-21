@@ -14,7 +14,7 @@ node tools/sql-harness/run.mjs --node tools/sql-harness/scouting-mutants.mjs
 node tools/sql-harness/run.mjs --tests none --node tools/sql-harness/scouting-race.mjs
 ```
 
-All targets are throwaway local databases with repository auth/storage/cron/network stand-ins. No live Supabase mutation or real notification occurred. Native PostgreSQL is now verified locally; Supabase deployment and PostgREST remain separate gates.
+All targets are throwaway local databases with repository auth/storage/cron/network stand-ins. No live Supabase mutation or real notification occurred. The same 573/573 checks, 17/17 mutants and 7/7 races also passed on native PostgreSQL 17.6. The built-PWA harness passes 19/19 against local PostgREST 13.0.7, including lost-body retry, page-closure/lease recovery and HTTP connector boundaries. Hosted Supabase deployment remains a separate gate.
 
 ---
 
@@ -98,3 +98,7 @@ The same retained PGlite command was rerun after adding immutable same-event/tea
 ## Resumed source-boundary verification
 
 The latest retained harness run passed **72/72 scouting checks, 17/17 permissive mutants, and 573/573 SQL checks across 23 files**, with both migration passes successful. New tests cover prior-event provenance, source/assignment agreement, a reviewable external URL, and current-event short/full match alias uniqueness. Mutation controls remove the external match-prefix and assignment-scope guards and are caught. No native PostgreSQL, PostgREST or live Supabase claim follows from these WASM results.
+
+## Read-only production catalog, October 21
+
+The connected `frc-app` project reports PostgreSQL **17.6**. A metadata-only query found the expected profiles, events, roles, permissions, connector audit and member-admin tables. It found **zero public scouting tables and zero scouting functions**. The Edge Function list contains neither `scouting-import` nor `scouting-dispatch`. This proves the release is not installed; it is not a live RLS/workflow test. No live schema/data change or notification was made. Production's patched build and hosted Auth/extensions are not emulated by the native harness.

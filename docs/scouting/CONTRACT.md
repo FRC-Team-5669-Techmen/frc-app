@@ -47,3 +47,7 @@ Coverage separates current-event matches, prior-event footage, local observation
 ## Prepared offline entry
 
 A successfully loaded online event must first receive `scouting_can_access() = true`. After durable caching, store a device-local hint `{memberId,eventId,preparedAt}` with no Auth token or server permission. The app/SW may open this account's local cache and queue during a cold offline start, even when its real session requires refresh. This surface grants no remote read/write. Changing accounts, signing out or receiving a definitive online access refusal clears the hint. Reconnecting uses the real session and existing actor-bound RPCs; local data cannot authorize synchronization. This is an explicit Techmen requirement, not documented TideScout behavior.
+
+## Practice first-pass history
+
+A footage workbook submission freezes the team, actual source match/URL, source selector, first-pass answers/notes and time. A subsequent review records its own answers, supporting note/time and self-reported discussion; earlier reviews and the first pass remain. These are local practice records, never competition statistics or certification. Source identity mistakes require a new entry and explanatory review rather than silently changing the frozen source. All eight mission workflows and practice export are scriptable; only a real mentor can assess competence on independently chosen recordings and actual phones.

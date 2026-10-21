@@ -21,7 +21,7 @@ const db=new Client();await db.connect()
 const port=Number(process.env.SCOUTING_PWA_PORT)||54335, apiPort=port+1, origin=`http://127.0.0.1:${port}`
 // Random per-run local signing key. Never sent to any remote service or output.
 const key=randomUUID()+randomUUID(), event=randomUUID(), results=[]
-let pgrest, server, browser, page, dropNextSave = false
+let pgrest, server, browser, page, dropNextSave = false, holdNextSave = false, heldSaveCommitted = false
 const wait=ms=>new Promise(r=>setTimeout(r,ms))
 function check(label,actual){assert.ok(actual,label);results.push({label,ok:true});console.log('PASS scouting PWA: '+label)}
 const sign=claims=>{const body=Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url')+'.'+Buffer.from(JSON.stringify(claims)).toString('base64url');return body+'.'+createHmac('sha256',key).update(body).digest('base64url')}
@@ -44,6 +44,7 @@ try {
     const chunks=[];for await(const c of req)chunks.push(c)
     const headers={...req.headers};delete headers.host;delete headers['content-length']
     const upstream=await fetch(`http://127.0.0.1:${apiPort}`+url.pathname.slice('/rest/v1'.length)+url.search,{method:req.method,headers,body:['GET','HEAD'].includes(req.method)?undefined:Buffer.concat(chunks)})
+    if (url.pathname === '/rest/v1/rpc/scouting_save' && upstream.ok && holdNextSave) { holdNextSave=false; await upstream.arrayBuffer(); heldSaveCommitted=true; await new Promise(r=>res.on('close',r)); return }
     if (url.pathname === '/rest/v1/rpc/scouting_save' && upstream.ok && dropNextSave) { dropNextSave=false; const bytes=Buffer.from(await upstream.arrayBuffer()); res.writeHead(200,{'content-type':'application/json','content-length':bytes.length}); res.flushHeaders(); res.write(bytes.subarray(0,10)); setTimeout(()=>res.destroy(),30); return }
     res.writeHead(upstream.status,Object.fromEntries([...upstream.headers].filter(([k])=>!['transfer-encoding','content-encoding','content-length'].includes(k))))
     res.end(Buffer.from(await upstream.arrayBuffer()));return
@@ -98,6 +99,18 @@ try {
  check('reconnect creates exactly one attributed observation',rows.length===1&&rows[0].member_id===actor.id&&rows[0].payload.answers.trench==='did_not_see')
  await page.reload();await page.getByRole('heading',{name:'PWA Offline Acceptance',exact:true}).waitFor()
  check('repeated launch creates no duplicate logical records',Number((await db.query('select count(*) as n from public.scouting_records where event_id=$1',[event])).rows[0].n)===1)
+ // Kill the page after a second real committed save, before its HTTP receipt.
+ holdNextSave=true
+ await page.getByRole('button',{name:'New observation',exact:true}).click()
+ await page.getByLabel('Team number',{exact:true}).fill('5669');await page.getByLabel('Match',{exact:true}).fill('qm100')
+ await page.getByLabel('Notes',{exact:true}).fill('Page interruption recovery proof')
+ await page.getByRole('button',{name:'Save observation',exact:true}).click()
+ for(let i=0;i<200&&!heldSaveCommitted;i++)await wait(25)
+ check('interrupted-page test reaches a real committed save before response',heldSaveCommitted&&Number((await db.query('select count(*) as n from public.scouting_records where event_id=$1',[event])).rows[0].n)===2)
+ await page.close();page=await context.newPage();await page.goto(origin+`/scouting/${event}`)
+ await page.getByRole('heading',{name:'PWA Offline Acceptance',exact:true}).waitFor()
+ await page.getByText('All saved work synced',{exact:true}).waitFor({timeout:45000})
+ check('a restarted page automatically recovers its expired lease without another submit',Number((await db.query('select count(*) as n from public.scouting_records where event_id=$1',[event])).rows[0].n)===2&&Number((await db.query('select count(*) as n from public.scouting_revisions where event_id=$1',[event])).rows[0].n)===2)
  await page.screenshot({path:resolve(out,'recovered.png'),fullPage:true})
  await context.setOffline(true);await page.reload()
  await page.getByRole('button',{name:'Exit offline scouting',exact:true}).click()

@@ -148,6 +148,16 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
   useEffect(() => { if (store) refresh().catch(e => { if (alive.current) { setError(errorText(e)); setLoading(false) } }) }, [store, refresh])
   useEffect(() => { if (store && online && !loading && !data.missing) sync() }, [store, online, loading])
 
+  useEffect(() => {
+    if (!store || !online || loading || busy) return
+    const leases = queue.filter(op => op.status === 'syncing').map(op => Number(op.leaseUntil) || 0)
+    if (!leases.length) return
+    // A tab can close after the server commits but before storing its receipt.
+    // Retry the SAME operation once its local cross-tab lease expires.
+    const timer = setTimeout(() => sync(), Math.max(0, Math.min(...leases) - Date.now()) + 25)
+    return () => clearTimeout(timer)
+  }, [store, online, loading, busy, queue, sync])
+
   async function save(record) {
     if (!store) throw new Error('Device storage is unavailable. Nothing was saved.')
     const operation = await saveScoutingRecord({ store, memberId: uid, eventId, record })

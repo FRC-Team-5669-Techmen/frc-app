@@ -4,3 +4,6 @@
 .sc-practice-scoreboard { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding: 16px; background: var(--surface-2); border-left: 3px solid var(--gold); margin-top: 16px; font-family: var(--font-mono); }
 .sc-practice-timeline { border-left: 1px solid var(--border-strong); padding-left: 28px; }
 .sc-training input:not([type=checkbox]), .sc-training select { min-width: 0; width: 100%; min-height: 44px; }
+
+/* The app-wide input width must not stretch a check box across the row. */
+.sc-training input[type=checkbox] { width: 44px; height: 44px; flex: 0 0 44px; }

@@ -1,13 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, Route, Routes } from 'react-router-dom'
 import ScoutingPage from '../ScoutingPage'
-import { supabase } from '../supabase'
-import { readOfflineScoutingAccount, clearOfflineScoutingAccountUnless } from './offlineIdentity'
+import { supabase, getStoredSessionMemberId } from '../supabase'
+import { readOfflineScoutingAccount, clearOfflineScoutingAccountUnless, OFFLINE_ACCOUNT_EVENT } from './offlineIdentity'
 
 // Deliberately outside the online approval gate, for a previously prepared
 // account's local cache and queue only. This grants no access to remote data.
 export default function OfflineScouting() {
-  const [account, setAccount] = useState(readOfflineScoutingAccount)
+  function preparedAccount() { const saved=readOfflineScoutingAccount();return saved?.memberId===getStoredSessionMemberId()?saved:null }
+  const [account, setAccount] = useState(preparedAccount)
+  useEffect(()=>{
+    const update=()=>setAccount(preparedAccount())
+    window.addEventListener(OFFLINE_ACCOUNT_EVENT,update);window.addEventListener('storage',update)
+    return()=>{window.removeEventListener(OFFLINE_ACCOUNT_EVENT,update);window.removeEventListener('storage',update)}
+  },[])
   function leave() {
     clearOfflineScoutingAccountUnless(); setAccount(null)
     // Local sign-out may finish after the network returns if Auth is refreshing.

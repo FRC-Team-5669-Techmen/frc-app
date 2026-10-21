@@ -220,14 +220,14 @@ export default function App() {
 
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
-        if (navigator.onLine) clearOfflineScoutingAccountUnless(session?.user?.id)
+        if (session || navigator.onLine) clearOfflineScoutingAccountUnless(session?.user?.id)
         setSession(session)
         if (session) claimAndLoad(session.user.id)
       })
       .catch(() => setSession(null))
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (navigator.onLine || _event === 'SIGNED_OUT') clearOfflineScoutingAccountUnless(session?.user?.id)
+      if (session || navigator.onLine || _event === 'SIGNED_OUT') clearOfflineScoutingAccountUnless(session?.user?.id)
       setSession(session)
       if (session) {
         claimAndLoad(session.user.id)
