@@ -71,6 +71,28 @@ beforeEach(() => {
 afterEach(async () => { await unmount(); host.remove(); vi.restoreAllMocks() })
 
 describe('rendered scouting with IndexedDB emulation', () => {
+  it('pages large team lists without hiding search matches or fabricating empty evidence', async () => {
+    const template = fixture.rows('scouting_records').find(row => row.kind === 'team')
+    fixture.db.scouting_records = Array.from({ length: 67 }, (_, i) => ({ ...template, id: `33000000-0000-4000-8000-${String(i).padStart(12, '0')}`, team_number: 8000 + i, payload: { name: `Synthetic ${8000 + i}`, source: 'manual' } }))
+    fixture.db.scouting_revisions = []; fixture.db.scouting_delivery = []
+    await mount(); await click(buttons('Teams')[0])
+    const cards = () => [...host.querySelectorAll('.sc-team-card')]
+    expect(cards()).toHaveLength(30)
+    expect(host.textContent).toContain('Showing 1–30 of 67 teams')
+    expect(buttons('Previous teams')[0].disabled).toBe(true)
+    await click(buttons('Next teams')[0]); expect(cards()).toHaveLength(30)
+    await click(buttons('Next teams')[0]); expect(cards()).toHaveLength(7)
+    expect(buttons('Next teams')[0].disabled).toBe(true)
+    expect(cards().at(-1).textContent).toContain('Synthetic 8066')
+    await input(host.querySelector('input[type="search"]'), '8001')
+    expect(cards()).toHaveLength(1); expect(cards()[0].textContent).toContain('Synthetic 8001')
+    expect(cards()[0].textContent).toContain('No evidence')
+    await input(host.querySelector('input[type="search"]'), 'absent team')
+    expect(cards()).toHaveLength(0); expect(host.textContent).toContain('No teams match this search.')
+    await input(host.querySelector('input[type="search"]'), '')
+    expect(cards()).toHaveLength(30); expect(host.textContent).toContain('Showing 1–30 of 67 teams')
+  })
+
   it('restores a draft, retains an offline observation across remount, then syncs exactly once', async () => {
     await mount()
     await click(buttons('Scout match')[0])

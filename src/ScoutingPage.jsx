@@ -81,6 +81,8 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
   const [busy, setBusy] = useState(false)
   const [form, setForm] = useState(null)
   const [teamQuery, setTeamQuery] = useState('')
+  const [teamPage, setTeamPage] = useState(0)
+  const findTeam = query => { setTeamQuery(query); setTeamPage(0) }
   const [showAllAssignments, setShowAllAssignments] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState('')
@@ -202,6 +204,12 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
   const teamRows = records.filter(r => r.kind === 'team')
   const numbers = [...new Set(records.map(r => r.team_number).filter(Boolean))].sort((a, b) => a - b)
   const nameFor = n => teamRows.find(r => r.team_number === n)?.payload?.name ?? ''
+  // Limit expensive evidence cards, while searching and deriving from the full
+  // downloaded data set. A page never changes denominators or ranking inputs.
+  const filteredNumbers = numbers.filter(n => `${n} ${nameFor(n)}`.toLowerCase().includes(teamQuery.toLowerCase()))
+  const lastTeamPage = Math.max(0, Math.ceil(filteredNumbers.length / 30) - 1)
+  const currentTeamPage = Math.min(teamPage, lastTeamPage)
+  const visibleNumbers = filteredNumbers.slice(currentTeamPage * 30, (currentTeamPage + 1) * 30)
   const memberName = id => (data.members ?? []).find(m => m.id === id)?.nickname || (data.members ?? []).find(m => m.id === id)?.full_name || (id === uid ? 'You' : 'Team member')
   const canEdit = row => !row.localStatus && (row.member_id === uid || (manager && !['pick_list', 'observation'].includes(row.kind)))
   const observations = records.filter(r => r.kind === 'observation')
@@ -243,10 +251,12 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
     </section>}
     {tab === 'teams' && <section className="sc-stack" role="tabpanel" id="sc-panel-teams" aria-labelledby="sc-tab-teams">
       {store && <PitMap store={store} uid={uid} eventId={eventId} records={records} online={online} client={supabase} />}
-      <CoveragePanel records={records} nameFor={nameFor} onTeam={team => setTeamQuery(String(team))} />
-      <div className="sc-section-head"><div><h2>Robots and evidence</h2><p className="sc-help">Pit claims are separate from match verification.</p></div><label className="sc-search">Find a team<input type="search" value={teamQuery} onChange={e => setTeamQuery(e.target.value)} placeholder="Number or name" /></label></div>
+      <CoveragePanel records={records} nameFor={nameFor} onTeam={team => findTeam(String(team))} />
+      <div className="sc-section-head"><div><h2>Robots and evidence</h2><p className="sc-help">Pit claims are separate from match verification.</p></div><label className="sc-search">Find a team<input type="search" value={teamQuery} onChange={e => findTeam(e.target.value)} placeholder="Number or name" /></label></div>
       {!numbers.length && <div className="sc-empty"><h3>No teams yet</h3><p>Your lead can import the event roster or add a team below. You can also record a pit report by team number.</p><button onClick={() => openForm('pit')}>New pit report</button></div>}
-      <div className="sc-team-grid">{numbers.filter(n => `${n} ${nameFor(n)}`.toLowerCase().includes(teamQuery.toLowerCase())).map(n => { const team = teamRows.find(r => r.team_number === n), pit = pitFor(n); return <article className="sc-card sc-team-card" key={n}><div className="sc-section-head"><div><span className="sc-team-number">{n}</span><h3>{nameFor(n) || 'Team'}</h3></div><span className="sc-chip">{pit?.payload.pit_location || team?.payload.pit_location || 'Pit unknown'}</span></div>
+      {!!numbers.length && !filteredNumbers.length && <p role="status">No teams match this search.</p>}
+      {filteredNumbers.length > 30 && <nav className="sc-actions" aria-label="Team results pages"><button disabled={currentTeamPage === 0} onClick={() => setTeamPage(currentTeamPage - 1)}>Previous teams</button><span role="status">Showing {currentTeamPage * 30 + 1}–{Math.min((currentTeamPage + 1) * 30, filteredNumbers.length)} of {filteredNumbers.length} teams</span><button disabled={currentTeamPage === lastTeamPage} onClick={() => setTeamPage(currentTeamPage + 1)}>Next teams</button></nav>}
+      <div className="sc-team-grid">{visibleNumbers.map(n => { const team = teamRows.find(r => r.team_number === n), pit = pitFor(n); return <article className="sc-card sc-team-card" key={n}><div className="sc-section-head"><div><span className="sc-team-number">{n}</span><h3>{nameFor(n) || 'Team'}</h3></div><span className="sc-chip">{pit?.payload.pit_location || team?.payload.pit_location || 'Pit unknown'}</span></div>
         <PitLocation records={records} team={n} />
         <div className="sc-evidence-grid">{CAPABILITIES.map(c => { const r = reliability(serverRecords, n, c.key); return <div className="sc-evidence" key={c.key}><h4>{c.label}</h4><span className="sc-help">Pit claim: {words(pit?.payload.capabilities?.[c.key])}</span><div className="sc-ratio">{r.percent === null ? 'No evidence' : `${Math.round(r.percent)}%`}<span>{r.yes}/{r.denominator} observed matches</span></div><p className="sc-help">{r.sufficient ? '3+ observed matches' : 'Provisional: fewer than 3 observed matches'}{r.disputed ? ` · ${r.disputed} disputed` : ''}</p><details><summary>Count details</summary><p className="sc-help">{r.no} observed failures. Excluded scout responses: {r.didNotSee} did not see, {r.notApplicable} not applicable, {r.missing} unanswered. Disputed matches are excluded.</p></details></div> })}</div>
         {team?.payload.epa != null && <p className="sc-help">Statbotics estimate: {team.payload.epa} EPA · {when(team.payload.epa_fetched_at)}. Not an official robot score.</p>}
