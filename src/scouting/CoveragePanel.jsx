@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { eventCoverage, filterCoverage } from './coverage'
-export default function CoveragePanel({ records, nameFor, onTeam }) {
+export default function CoveragePanel({ records, confirmedRecords, nameFor, onTeam }) {
   const [filter, setFilter] = useState('all')
-  const rows = useMemo(() => eventCoverage(records), [records])
+  const rows = useMemo(() => eventCoverage(records, confirmedRecords), [records, confirmedRecords])
   const shown = filterCoverage(rows, filter)
   if (!rows.length) return null
   return <details className="sc-card sc-coverage"><summary>Event coverage · {rows.filter(r => r.pit).length}/{rows.length} pit reports · {rows.filter(r => !r.thin).length}/{rows.length} with 3+ trials per capability</summary>

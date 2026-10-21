@@ -28,10 +28,14 @@ function newest(records, key) {
 // One trial per match. A disputed match is explicit, never a failed trial.
 // Missing answers, did_not_see and not_applicable counts are scout responses,
 // while yes/no/disputed counts are matches. Callers must label them accordingly.
-export function reliability(records, team, capability) {
+export function currentObservations(records, team) {
   const versions = newest(records.filter(r => r.kind === 'observation' && r.team_number === Number(team)),
     r => r.id ?? `${r.event_id}:${r.member_id}:${r.team_number}:${String(r.match_key).trim().toLowerCase()}`)
-  const rows = newest(versions, r => `${r.event_id}:${r.member_id}:${r.team_number}:${matchIdentity(r)}`).filter(r => !isExternalEvidence(r))
+  return newest(versions, r => `${r.event_id}:${r.member_id}:${r.team_number}:${matchIdentity(r)}`).filter(r => !isExternalEvidence(r))
+}
+
+export function reliability(records, team, capability) {
+  const rows = currentObservations(records, team)
   const matches = new Map()
   const out = { yes: 0, no: 0, denominator: 0, percent: null, sufficient: false, disputed: 0, didNotSee: 0, notApplicable: 0, missing: 0 }
   for (const row of rows) {

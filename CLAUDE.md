@@ -228,4 +228,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-21. Scouting adds reviewed backup recovery, interruption-safe drafts, keyboard focus return and paged large-event cards; newer main handbook work is preserved. Latest record: `docs/history/scouting-reviewed-recovery.md`.
+Last reviewed: 2026-10-21. Scouting adds stable confirmed evidence during offline corrections, full observation review and frozen drive-team briefs. Latest record: `docs/history/scouting-decision-support.md`.

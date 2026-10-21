@@ -16,6 +16,10 @@ import RecoveryPanel from './scouting/RecoveryPanel'
 import { buildEventArchive, downloadArchive } from './scouting/backup'
 import { matchOrder } from './scouting/schedule'
 import { footageLabel, matchIdentity } from './scouting/provenance'
+import { projectRecords } from './scouting/projection'
+import EvidenceRecord, { RevisionList } from './scouting/EvidenceRecord'
+import MatchBrief from './scouting/MatchBrief'
+import ObservationBrowser from './scouting/ObservationBrowser'
 import './ScoutingPage.css'
 
 const when = value => value ? new Date(value).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' }) : 'Unknown time'
@@ -80,6 +84,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [form, setForm] = useState(null)
+  const [evidenceTeam, setEvidenceTeam] = useState('')
   const [teamQuery, setTeamQuery] = useState('')
   const [teamPage, setTeamPage] = useState(0)
   const findTeam = query => { setTeamQuery(query); setTeamPage(0) }
@@ -191,15 +196,8 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
     }
     return operations
   }
-  const records = useMemo(() => {
-    const byId = new Map((data.records ?? []).map(r => [r.id, r]))
-    for (const op of queue) {
-      if (op.status === 'synced' && op.result && (!byId.has(op.record_id) || op.result.version > byId.get(op.record_id).version)) byId.set(op.record_id, op.result)
-      else if (!op.recoveredFrom && (op.status === 'local' || op.status === 'syncing')) byId.set(op.record_id, { ...byId.get(op.record_id), id: op.record_id, event_id: eventId, member_id: byId.get(op.record_id)?.member_id ?? uid, kind: op.args.p_kind, team_number: op.args.p_team, match_key: op.args.p_match, payload: op.args.p_payload, version: op.args.p_expected_version, localStatus: op.status })
-    }
-    return [...byId.values()]
-  }, [data.records, queue, eventId, uid])
-  const serverRecords = (data.records ?? []).filter(r => !r.localStatus)
+  const { visible: records, confirmed: serverRecords } = useMemo(
+    () => projectRecords(data.records ?? [], queue, uid, eventId), [data.records, queue, uid, eventId])
   const pending = queue.filter(x => x.status !== 'synced')
   const teamRows = records.filter(r => r.kind === 'team')
   const numbers = [...new Set(records.map(r => r.team_number).filter(Boolean))].sort((a, b) => a - b)
@@ -247,18 +245,20 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
       <div className="sc-section-head"><div><h2>Your next match</h2><p className="sc-help">Observe the assigned robot. Record what you actually see.</p></div><button aria-pressed={showAllAssignments} onClick={() => setShowAllAssignments(x => !x)}>{showAllAssignments ? 'Show my assignments' : 'Show all assignments'}</button></div>
       {!assignments.length && <div className="sc-empty"><span className="sc-eyebrow">Ready when you are</span><h3>No assignments yet</h3><p>Ask your scouting lead for a match, or capture an observation now.</p><button onClick={() => openForm('observation')}>Start an observation</button></div>}
       <div className="sc-assignment-grid">{assignments.map(row => <article className={`sc-card sc-assignment${isComplete(row) ? ' sc-complete' : ''}`} key={row.id}><div className="sc-section-head"><span className="sc-match">{row.match_key}</span><span className="sc-chip">{row.localStatus ? 'Saved locally' : isComplete(row) ? 'Recorded' : 'To scout'}</span></div><div className="sc-team-number">{row.team_number}</div><h3>{nameFor(row.team_number) || 'Assigned robot'}</h3><p>{row.payload.instructions || 'Watch capabilities and record useful match notes.'}</p><p className="sc-help">Scout: {memberName(row.payload.assignee)}{row.payload.video_url ? ` · ${footageLabel(row)}` : ''}</p><div className="sc-actions">{row.payload.video_url && <a className="sc-link" href={row.payload.video_url} target="_blank" rel="noopener noreferrer">Watch video ↗</a>}<button className="sc-primary" disabled={!!row.localStatus || !!observationFor(row)?.localStatus || row.payload.assignee !== uid} onClick={() => openForm('observation', observationFor(row) ? { record: observationFor(row) } : { team: row.team_number, assignment: row })}>{observationFor(row) ? 'Review observation' : 'Scout match'}</button>{manager && canEdit(row) && <button onClick={() => openForm('assignment', { record: row })}>Edit assignment</button>}</div></article>)}</div>
-      <details className="sc-card" open={observations.length > 0}><summary>Recent observations ({observations.length})</summary><div className="sc-stack">{observations.slice().sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at))).slice(0, 30).map(row => <EvidenceRecord key={row.id} row={row} memberName={memberName} canEdit={canEdit(row)} onEdit={() => openForm('observation', { record: row })} revisions={data.revisions ?? []} />)}{!observations.length && <p className="sc-help">No observations saved for this event.</p>}</div></details>
+      <ObservationBrowser records={observations} confirmedRecords={serverRecords} team={evidenceTeam} onTeam={setEvidenceTeam} memberName={memberName} nameFor={nameFor} canEdit={canEdit} onEdit={row => openForm('observation', { record: row })} revisions={data.revisions ?? []} />
     </section>}
     {tab === 'teams' && <section className="sc-stack" role="tabpanel" id="sc-panel-teams" aria-labelledby="sc-tab-teams">
       {store && <PitMap store={store} uid={uid} eventId={eventId} records={records} online={online} client={supabase} />}
-      <CoveragePanel records={records} nameFor={nameFor} onTeam={team => findTeam(String(team))} />
+      {store && <MatchBrief store={store} uid={uid} eventId={eventId} eventTitle={data.event?.title} records={serverRecords} cachedAt={data.cachedAt} pending={pending.length} reviewer={memberName(uid)} />}
+      <CoveragePanel records={records} confirmedRecords={serverRecords} nameFor={nameFor} onTeam={team => findTeam(String(team))} />
       <div className="sc-section-head"><div><h2>Robots and evidence</h2><p className="sc-help">Pit claims are separate from match verification.</p></div><label className="sc-search">Find a team<input type="search" value={teamQuery} onChange={e => findTeam(e.target.value)} placeholder="Number or name" /></label></div>
       {!numbers.length && <div className="sc-empty"><h3>No teams yet</h3><p>Your lead can import the event roster or add a team below. You can also record a pit report by team number.</p><button onClick={() => openForm('pit')}>New pit report</button></div>}
       {!!numbers.length && !filteredNumbers.length && <p role="status">No teams match this search.</p>}
       {filteredNumbers.length > 30 && <nav className="sc-actions" aria-label="Team results pages"><button disabled={currentTeamPage === 0} onClick={() => setTeamPage(currentTeamPage - 1)}>Previous teams</button><span role="status">Showing {currentTeamPage * 30 + 1}–{Math.min((currentTeamPage + 1) * 30, filteredNumbers.length)} of {filteredNumbers.length} teams</span><button disabled={currentTeamPage === lastTeamPage} onClick={() => setTeamPage(currentTeamPage + 1)}>Next teams</button></nav>}
       <div className="sc-team-grid">{visibleNumbers.map(n => { const team = teamRows.find(r => r.team_number === n), pit = pitFor(n); return <article className="sc-card sc-team-card" key={n}><div className="sc-section-head"><div><span className="sc-team-number">{n}</span><h3>{nameFor(n) || 'Team'}</h3></div><span className="sc-chip">{pit?.payload.pit_location || team?.payload.pit_location || 'Pit unknown'}</span></div>
         <PitLocation records={records} team={n} />
-        <div className="sc-evidence-grid">{CAPABILITIES.map(c => { const r = reliability(serverRecords, n, c.key); return <div className="sc-evidence" key={c.key}><h4>{c.label}</h4><span className="sc-help">Pit claim: {words(pit?.payload.capabilities?.[c.key])}</span><div className="sc-ratio">{r.percent === null ? 'No evidence' : `${Math.round(r.percent)}%`}<span>{r.yes}/{r.denominator} observed matches</span></div><p className="sc-help">{r.sufficient ? '3+ observed matches' : 'Provisional: fewer than 3 observed matches'}{r.disputed ? ` · ${r.disputed} disputed` : ''}</p><details><summary>Count details</summary><p className="sc-help">{r.no} observed failures. Excluded scout responses: {r.didNotSee} did not see, {r.notApplicable} not applicable, {r.missing} unanswered. Disputed matches are excluded.</p></details></div> })}</div>
+        <button onClick={() => { setEvidenceTeam(String(n)); setTab('scout') }}>Review match evidence</button>
+        <div className="sc-evidence-grid">{CAPABILITIES.map(c => { const r = reliability(serverRecords, n, c.key); return <div className="sc-evidence" key={c.key}><h4>{c.label}</h4><span className="sc-help">Pit claim: {words(pit?.payload.capabilities?.[c.key])}{pit?.localStatus ? ' · saved locally, awaiting confirmation' : ''}</span><div className="sc-ratio">{r.percent === null ? 'No evidence' : `${Math.round(r.percent)}%`}<span>{r.yes}/{r.denominator} observed matches</span></div><p className="sc-help">{r.sufficient ? '3+ observed matches' : 'Provisional: fewer than 3 observed matches'}{r.disputed ? ` · ${r.disputed} disputed` : ''}</p><details><summary>Count details</summary><p className="sc-help">{r.no} observed failures. Excluded scout responses: {r.didNotSee} did not see, {r.notApplicable} not applicable, {r.missing} unanswered. Disputed matches are excluded.</p></details></div> })}</div>
         {team?.payload.epa != null && <p className="sc-help">Statbotics estimate: {team.payload.epa} EPA · {when(team.payload.epa_fetched_at)}. Not an official robot score.</p>}
         <div className="sc-actions"><button disabled={!!pit && !canEdit(pit)} onClick={() => openForm('pit', pit ? { record: pit } : { team: n })}>Pit report</button><button onClick={() => openForm('observation', { team: n })}>Observe</button><button onClick={() => openForm('message', { team: n })}>Message</button>{manager && team && canEdit(team) && <button onClick={() => openForm('team', { record: team })}>Edit team</button>}</div>
         {pit && <details><summary>Pit notes and history</summary><EvidenceRecord row={pit} memberName={memberName} revisions={data.revisions ?? []} /></details>}
@@ -269,7 +269,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
       {!records.some(r => r.kind === 'message') && <div className="sc-empty"><h3>No pit messages</h3><p>Flag a robot issue or a question for someone in the pits.</p></div>}
       {records.filter(r => r.kind === 'message').sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at))).map(row => { const delivery = (data.delivery ?? []).filter(d => d.record_id === row.id && d.record_version === row.version).at(-1); return <article className="sc-card" key={row.id}><div className="sc-section-head"><h3>{row.team_number} {nameFor(row.team_number)}</h3><span className="sc-chip">{row.payload.status}</span></div>{row.payload.reply_to && <p className="sc-help">Reply to: {records.find(r => r.id === row.payload.reply_to)?.payload.text || 'Original message not loaded'}</p>}<p className="sc-note">{row.payload.text}</p><PitLocation records={records} team={row.team_number} /><p className="sc-help">{memberName(row.member_id)} · {row.localStatus ? 'Saved on this device' : `Synced · ${when(row.updated_at)}`}</p><p className="sc-delivery">Discord: {row.localStatus ? 'Waiting for sync' : delivery?.status?.replaceAll('_', ' ') || (row.payload.request_delivery ? 'Delivery requested; status unavailable' : 'Not requested')}</p>{['uncertain', 'sending'].includes(delivery?.status) && <p className="sc-help">Receipt is unconfirmed. Check Discord before any further action; an automatic resend could duplicate the message.</p>}<div className="sc-actions">{!row.localStatus && <button onClick={() => openForm('message', { team: row.team_number, replyTo: row.payload.reply_to ? records.find(r => r.id === row.payload.reply_to) : row })}>Reply to pit conversation</button>}{canEdit(row) && <button onClick={() => openForm('message', { record: row })}>Edit or resolve</button>}{row.payload.request_delivery && (row.member_id === uid || manager) && ['failed', 'not_configured', 'queued'].includes(delivery?.status) && <button disabled={!online || busy} onClick={async () => { setBusy(true); try { const r = await supabase.functions.invoke('scouting-dispatch', { body: { record_id: row.id, version: row.version } }); if (r.error) throw r.error; setNotice(`Discord: ${r.data?.status || 'status pending'}`); await refresh() } catch (e) { setError(`Message remains saved. ${errorText(e)}`) } finally { setBusy(false) } }}>Retry Discord delivery</button>}</div><details><summary>Correction history</summary><RevisionList row={row} revisions={data.revisions ?? []} memberName={memberName} /></details></article> })}
     </section>}
-    {tab === 'picks' && store && <div role="tabpanel" id="sc-panel-picks" aria-labelledby="sc-tab-picks"><PickLists records={records} uid={uid} eventId={eventId} store={store} onSave={save} nameFor={nameFor} /></div>}
+    {tab === 'picks' && store && <div role="tabpanel" id="sc-panel-picks" aria-labelledby="sc-tab-picks"><PickLists records={records} confirmedRecords={serverRecords} uid={uid} eventId={eventId} store={store} onSave={save} nameFor={nameFor} /></div>}
     {tab === 'practice' && store && <div role="tabpanel" id="sc-panel-practice" aria-labelledby="sc-tab-practice"><Training key={`${uid}:${eventId}`} store={store} memberId={uid} eventId={eventId} /></div>}
     {manager && <ManageEvent store={store} uid={uid} records={records} onSaveBatch={saveBatch} eventId={eventId} teamRows={teamRows} members={scouts} onForm={openForm} onSave={save} online={online} />}
     {exportError && <p role="alert" className="sc-error">{exportError}</p>}
@@ -277,14 +277,6 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
     {store && data.event && <RecoveryPanel store={store} uid={uid} eventId={eventId} onRestored={rows => { queueGeneration.current++; setQueue(previous => [...previous, ...rows]) }} />}
     {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : save} onClose={() => setForm(null)} />}
   </main>
-}
-
-function EvidenceRecord({ row, revisions, memberName, canEdit, onEdit }) {
-  return <article className="sc-evidence-record"><div className="sc-section-head"><h3>{row.team_number}{row.match_key ? ` · ${row.match_key}` : ' · Pit report'}</h3>{canEdit && <button onClick={onEdit}>Correct observation</button>}</div><p className="sc-help">{memberName(row.member_id)} · {row.localStatus ? 'Saved locally' : `Version ${row.version} · ${when(row.updated_at)}`} · {row.kind === 'observation' ? footageLabel(row) : 'Pit claim'}</p><div className="sc-answer-summary">{CAPABILITIES.map(c => <span key={c.key}><b>{c.label}</b> {words((row.payload.answers ?? row.payload.capabilities)?.[c.key])}</span>)}</div>{row.payload.notes && <p className="sc-note">{row.payload.notes}</p>}{row.payload.video_url && <a className="sc-link" href={row.payload.video_url} target="_blank" rel="noopener noreferrer">Source video ↗</a>}<details><summary>Correction history</summary><RevisionList row={row} revisions={revisions} memberName={memberName} /></details></article>
-}
-function RevisionList({ row, revisions, memberName }) {
-  const history = revisions.filter(r => r.record_id === row.id).sort((a, b) => b.version - a.version)
-  return history.length ? <ol className="sc-history">{history.map(r => <li key={`${r.record_id}:${r.version}`}><p>Version {r.version} · {memberName(r.changed_by ?? r.member_id)} · {when(r.created_at ?? r.changed_at)}</p><pre className="sc-json">{JSON.stringify(r.payload ?? r.snapshot?.payload ?? r.record?.payload ?? r.snapshot ?? {}, null, 2)}</pre></li>)}</ol> : <p className="sc-help">No earlier versions downloaded.</p>
 }
 
 function QueuePanel({ queue, store, uid, eventId, serverRecords, onChange, onSave, onSync, onRepair }) {

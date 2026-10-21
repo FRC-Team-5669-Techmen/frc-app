@@ -208,3 +208,12 @@
 .sc-recovery-list > li { border-top: 1px solid var(--border); padding: 12px 0; }
 .sc-recovery input[type="file"] { max-width: 100%; }
 .sc-form-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+
+/* Match review and observation filters reuse the scouting form primitives. */
+.sc-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; margin: 12px 0; }
+.sc-form-grid > label { min-width: 0; }
+.sc-match-brief fieldset { min-width: 0; margin: 16px 0; padding: 16px; border: 1px solid var(--border-strong); border-radius: var(--radius); }
+.sc-match-brief legend { padding: 0 8px; color: var(--steel); font-size: 14px; }
+.sc-match-brief .sc-evidence-record { overflow-wrap: anywhere; }
+.sc-brief-teams { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 20px; }
+.sc-brief-capability { display: grid; gap: 5px; margin: 14px 0; font-size: 14px; }

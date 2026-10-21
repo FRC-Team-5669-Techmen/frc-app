@@ -59,3 +59,12 @@ Teams includes a Nexus v1.8.0 geometry map and text directory with search, highl
 An exported event JSON can be previewed and selectively restored under the same account/event. Recovery validates bounded request identity, preserves original operation bodies/IDs and atomically rechecks collisions. Recovered operations stay held and out of evidence until separately released and confirmed by the server. The archive cannot install a cache, permission hint or alleged receipt. Practice, unsubmitted drafts and maps remain available in the JSON for manual review, not automatic restoration. See `docs/scouting/RECOVERY.md`.
 
 Form/planner/pick-list draft-read failures pause editing until retry; failed storage never produces a saved-success message. Dialog cleanup returns keyboard focus. Team evidence cards page in groups of 30; roster search, downloaded cache, percentages and rankings still use all records. The retained `scouting-volume.mjs` and `scouting-accessibility.mjs` harnesses distinguish synthetic local browser checks from field acceptance.
+
+
+## Confirmed evidence and reviewed match briefs
+
+`projection.js` separates confirmed rows (downloaded data plus newer verified queue receipts) from optimistic local edits. Strategy rates, master ballots, filters, coverage and match briefs use confirmed inputs. Pending corrections retain earlier confirmed evidence. Actor/event checks, recovered-proposal holds and monotonic receipt versions have executable permissive mutation controls.
+
+`ObservationBrowser.jsx` makes all downloaded observations searchable/pageable, with current/prior/disputed filters and existing author-only correction controls. `currentObservations` is shared with reliability so dispute grouping uses the same normalized identities and correction rules. `EvidenceRecord.jsx` retains attribution and revision history.
+
+`MatchBrief.jsx` saves a device-local actor/event draft, requires a manually confirmed six-team lineup, exposes capabilities/unknowns/disputes and coach plans separately, and freezes JSON/escaped printable HTML only after review. Plan/evidence changes invalidate export readiness. Read/write failure pauses editing or review; writes are serialized and only the latest completed write may claim saved. No new remote permissions, notifications or SQL contracts. See `docs/scouting/DECISION_SUPPORT.md` and the retained decision-support checks.

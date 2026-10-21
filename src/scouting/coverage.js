@@ -3,11 +3,11 @@ import { isExternalEvidence, matchIdentity } from './provenance.js'
 
 // Coverage describes collected evidence, not robot strength. Repeated scouts in
 // one match do not increase match coverage. Pending work never counts as synced.
-export function eventCoverage(records) {
+export function eventCoverage(records, confirmedRecords = records.filter(r => !r.localStatus)) {
   const teams = [...new Set(records.map(r => r.team_number).filter(n => Number.isInteger(n) && n > 0))].sort((a, b) => a - b)
   return teams.map(team => {
     const rows = records.filter(r => r.team_number === team)
-    const synced = rows.filter(r => !r.localStatus)
+    const synced = confirmedRecords.filter(r => r.team_number === team)
     const observations = synced.filter(r => r.kind === 'observation')
     const current = observations.filter(r => !isExternalEvidence(r))
     const trials = CAPABILITIES.map(c => ({ ...c, ...reliability(synced, team, c.key) }))

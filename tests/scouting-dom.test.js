@@ -71,6 +71,29 @@ beforeEach(() => {
 afterEach(async () => { await unmount(); host.remove(); vi.restoreAllMocks() })
 
 describe('rendered scouting with IndexedDB emulation', () => {
+  it('keeps confirmed master votes and coverage visible while corrections wait offline', async () => {
+    const template = fixture.rows('scouting_records').find(row => row.kind === 'team')
+    const base = { ...template, member_id: IDS.student, team_number: 5669, version: 1 }
+    const ballot = { ...base, id: '33000000-0000-4000-8000-000000000001', kind: 'pick_list', team_number: null, payload: { entries: [{team:5669,tier:1,rank:1}] } }
+    const observation = { ...base, id: '33000000-0000-4000-8000-000000000002', kind: 'observation', match_key:'qm1', payload:{answers:{trench:'yes'}} }
+    const pit = { ...base, id: '33000000-0000-4000-8000-000000000003', kind:'pit', payload:{capabilities:{trench:'yes'}} }
+    fixture.db.scouting_records = [ballot, observation, pit, {...base, kind:'team', payload:{name:'Techmen',source:'manual'}}]
+    await mount(); await unmount()
+    const store = await createScoutingStore()
+    await store.enqueueBatch(IDS.student, EVENT, [
+      {...ballot,payload:{entries:[{team:5669,tier:3,rank:3}]}},
+      {...observation,payload:{answers:{trench:'no'}}},
+      {...pit,payload:{capabilities:{trench:'no'}}},
+    ])
+    failReads(); online = false; await mount()
+    await click(buttons('Pick lists')[0]); await click(buttons('Master list')[0])
+    expect(host.querySelector('.sc-master').textContent).toContain('Median tier 1, rank 1')
+    await click(buttons('Teams')[0])
+    expect(host.querySelector('.sc-coverage summary').textContent).toContain('1/1 pit reports')
+    expect(host.querySelector('.sc-team-card .sc-ratio').textContent).toContain('1/1 observed matches')
+    store.close()
+  })
+
   it('pages large team lists without hiding search matches or fabricating empty evidence', async () => {
     const template = fixture.rows('scouting_records').find(row => row.kind === 'team')
     fixture.db.scouting_records = Array.from({ length: 67 }, (_, i) => ({ ...template, id: `33000000-0000-4000-8000-${String(i).padStart(12, '0')}`, team_number: 8000 + i, payload: { name: `Synthetic ${8000 + i}`, source: 'manual' } }))

@@ -2,6 +2,14 @@
 
 **Branch:** `codex/scouting-2026-evidence` · [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). Read `SCOUTING_START_HERE.md`, `CLAUDE.md`, `docs/subsystems/scouting.md`, `VERIFICATION.md` and `STAGING.md`. Continue the restored checkpoint history; do not rebuild from main. The private original inputs stay outside public commits.
 
+## October 21 decision-support continuation
+
+New implementation adds separate confirmed/optimistic projections, a searchable and paged full observation history with dispute triage, and a locally saved drive-team match brief with explicitly entered six-team lineup, frozen JSON/print exports and stale-review invalidation. `DECISION_SUPPORT.md` records the acceptance contract and Techmen provenance. No schema, auth, connector, provider or dependency changes.
+
+Focused checks passed: 15 new pure/DOM cases, then 30 rendered cases including the real page's pending-correction master/coverage regression; eight permissive scope/confirmation mutations detected; two Chromium viewport cases exercised real IndexedDB, downloads and print rendering against fictional data. Full gates are being rerun; see the newest VERIFICATION section for final results. Earlier result counts below belong to their stated commits.
+
+Continue with the current branch, not the earlier application hash below. Remaining external gates and release restrictions are unchanged. New brief drafts use the existing actor/event-scoped `match-brief` key and travel in event backups. Exported briefs are frozen copies, not shared database records or win predictions.
+
 ## October 21 extended implementation
 
 The additional run began **14:48:18 UTC**. Current application candidate is **`6b7feaa67aa298927e5c4aca875c6709d64d1c6e`**. The earlier checkpoint history is preserved. Merge `f3518cf` incorporates newer remote main `0a11c52` (public handbook/family-link changes); no main push occurred. Implementation/verification continued past one hour; evidence was consolidated at **2026-10-21 15:48:25 UTC**. The review branch is the durable source checkpoint; the GitHub commit ZIP provides a downloadable copy.

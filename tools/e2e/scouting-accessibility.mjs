@@ -46,6 +46,7 @@ try{
     await audit(name.toLowerCase().replaceAll(' ','-'))
    }
    await page.getByRole('tab',{name:'Teams',exact:true}).click()
+   await page.locator('.sc-match-brief summary').click();await page.getByLabel('Brief match',{exact:true}).fill('qm42');await page.getByLabel('Our alliance teams',{exact:true}).fill('5669 101 202');await page.getByLabel('Opponent teams',{exact:true}).fill('303 404 505');await audit('match-brief');await page.locator('.sc-match-brief summary').click()
    await page.getByText('Pit map and directory',{exact:true}).click();await page.getByLabel('Nexus event key',{exact:true}).fill('2026dal')
    await page.getByRole('button',{name:'Download / refresh map',exact:true}).click();await page.getByText('Map saved on this device for offline use.',{exact:true}).waitFor()
    await audit('downloaded-map')

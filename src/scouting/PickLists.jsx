@@ -5,7 +5,7 @@ import { aggregatePickLists, CAPABILITIES, filterTeams, previewComparison, TIERS
 const normalize = rows => TIERS.flatMap(t => rows.filter(x => x.tier === t.value).map((x, i) => ({ ...x, rank: i + 1 })))
 const tierLabel = tier => TIERS.find(x => x.value === tier)?.label ?? `Tier ${tier}`
 
-export default function PickLists({ records, uid, eventId, store, onSave, nameFor }) {
+export default function PickLists({ records, confirmedRecords = records.filter(r => !r.localStatus), uid, eventId, store, onSave, nameFor }) {
   const mine = records.find(r => r.kind === 'pick_list' && r.member_id === uid)
   const [entries, setEntries] = useState(mine?.payload?.entries ?? [])
   const [dirty, setDirty] = useState(false)
@@ -61,8 +61,8 @@ export default function PickLists({ records, uid, eventId, store, onSave, nameFo
     const swapped = entries.map(e => e.team === team ? other : e.team === other.team ? row : e)
     change(normalize(swapped))
   }
-  const filtered = filterTeams(records.filter(r => !r.localStatus), { minEpa: minEpa === '' ? undefined : Number(minEpa), capability: capability || undefined })
-  const master = aggregatePickLists(records.filter(r => !r.localStatus))
+  const filtered = filterTeams(confirmedRecords, { minEpa: minEpa === '' ? undefined : Number(minEpa), capability: capability || undefined })
+  const master = aggregatePickLists(confirmedRecords)
   const selectedNumbers = selected.map(Number)
   const pairs = [[0, 1], [0, 2], [1, 2]]
   const pending = !!mine?.localStatus
@@ -92,7 +92,7 @@ export default function PickLists({ records, uid, eventId, store, onSave, nameFo
         {(!ready || !mine || dirty || pending) ? <p className="sc-help">Load your draft, then save and sync your list before comparing.</p> : <>
           <div className="sc-fields">{selected.map((value, i) => <label key={i}>Team {i + 1}<select aria-label={`Team ${i + 1}`} value={value} onChange={e => { const next = [...selected]; next[i] = e.target.value; setSelected(next); setVotes({}); setPreview(null) }}><option value="">Choose team</option>{entries.map(e => <option key={e.team} value={e.team}>{e.team} {nameFor(e.team)}</option>)}</select></label>)}</div>
           {selected.every(Boolean) && new Set(selected).size === 3 && <>
-            <ComparisonEvidence teams={selectedNumbers} records={records.filter(r => !r.localStatus)} nameFor={nameFor} />
+            <ComparisonEvidence teams={selectedNumbers} records={confirmedRecords} nameFor={nameFor} />
             {pairs.map(([a, b]) => { const key = `${a}:${b}`; return <fieldset className="sc-choice" key={key}><legend>Which team would you pick first?</legend><div className="sc-choice-options">{[a, b].map(index => <button key={index} aria-pressed={votes[key] === selectedNumbers[index]} onClick={() => { setVotes({ ...votes, [key]: selectedNumbers[index] }); setPreview(null) }}>{selectedNumbers[index]} {nameFor(selectedNumbers[index])}</button>)}</div></fieldset> })}
             <button disabled={Object.keys(votes).length !== 3} onClick={() => { try { const result = previewComparison(entries, selectedNumbers, pairs.map(([a, b]) => ({ winner: votes[`${a}:${b}`], loser: votes[`${a}:${b}`] === selectedNumbers[a] ? selectedNumbers[b] : selectedNumbers[a] }))); setPreview({ ...result, baseVersion: mine.version }) } catch (e) { setError(e.message) } }}>Preview order</button>
           </>}
