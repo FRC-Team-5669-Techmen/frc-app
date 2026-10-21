@@ -2,15 +2,15 @@
 
 **Branch:** `codex/scouting-2026-evidence` · [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). Read `SCOUTING_START_HERE.md`, `CLAUDE.md`, `docs/subsystems/scouting.md`, `VERIFICATION.md` and `STAGING.md`. Continue the restored checkpoint history; do not rebuild from main. The private original inputs stay outside public commits.
 
-## October 21 decision-support continuation
+## Current application: `8fef9330a0fdb9677dc7231c9dfba7bcd7b68ee9`
 
-New implementation adds separate confirmed/optimistic projections, a searchable and paged full observation history with dispute triage, and a locally saved drive-team match brief with explicitly entered six-team lineup, frozen JSON/print exports and stale-review invalidation. `DECISION_SUPPORT.md` records the acceptance contract and Techmen provenance. No schema, auth protocol, connector, provider or dependency changes. A definitive authorization/account failure now hides retained receipts and editing controls until access is restored; local work is preserved.
+Implementation `09dab54` adds separate confirmed/optimistic projections, full observation history/dispute triage and local drive-team briefs with explicitly confirmed six-team lineups, frozen JSON/print exports and stale-review invalidation. Follow-up `8fef933` hides retained receipts and editing controls after definitive authorization/account failure while preserving local work. `DECISION_SUPPORT.md` records Techmen provenance and acceptance criteria. No schema, auth protocol, connector, provider or dependency changes.
 
-Focused checks passed: 15 new pure/DOM cases, then 30 rendered cases including the real page's pending-correction master/coverage regression; nine permissive scope/confirmation/denial mutations detected; two Chromium viewport cases exercised real IndexedDB, downloads and print rendering against fictional data. Full gates are being rerun; see the newest VERIFICATION section for final results. Earlier result counts below belong to their stated commits.
+Current checks: **1024 tests**, independent **CI 126**, **40 decision-workflow Chromium assertions**, **nine** permissive scope/confirmation/denial mutations, **28 built-PWA/local API checks**, **72 SQL/RLS assertions + 17 mutants + seven races**, and **51 check-in assertions** passed. Twenty automated accessibility scans and both 120-team volume cases passed before the final denial-only guard. The original scouting browser suite passed 169 assertions before that guard. The broad run hit one announcements loading timeout; its isolated rerun passed 125/125. A full clean-checkout repeat is still running at this checkpoint; do not claim full browser regression is green until its summary is retained.
 
-Continue with the current branch, not the earlier application hash below. Remaining external gates and release restrictions are unchanged. New brief drafts use the existing actor/event-scoped `match-brief` key and travel in event backups. Exported briefs are frozen copies, not shared database records or win predictions.
+The current branch is pushed and draft PR #4 remains the delivery path. Brief drafts use the existing actor/event-scoped `match-brief` key and are included in event backups. Exports are frozen copies, not shared database plans or win predictions. New field gate P19 requires actual drive-coach/alliance-partner acceptance. Exact scopes, initial failures and remaining release gates are in VERIFICATION.md; older counts below are historical.
 
-## October 21 extended implementation
+## Previous October 21 extended implementation (historical)
 
 The additional run began **14:48:18 UTC**. Current application candidate is **`6b7feaa67aa298927e5c4aca875c6709d64d1c6e`**. The earlier checkpoint history is preserved. Merge `f3518cf` incorporates newer remote main `0a11c52` (public handbook/family-link changes); no main push occurred. Implementation/verification continued past one hour; evidence was consolidated at **2026-10-21 15:48:25 UTC**. The review branch is the durable source checkpoint; the GitHub commit ZIP provides a downloadable copy.
 

@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-21T16:32:19.729Z",
+  "results": [
+    {
+      "width": 375,
+      "passed": true,
+      "checks": 20,
+      "backend": "fictional fixture",
+      "storage": "native IndexedDB",
+      "offline": "editing/export readiness; built-PWA reload checked separately",
+      "realDevice": false
+    },
+    {
+      "width": 1440,
+      "passed": true,
+      "checks": 20,
+      "backend": "fictional fixture",
+      "storage": "native IndexedDB",
+      "offline": "editing/export readiness; built-PWA reload checked separately",
+      "realDevice": false
+    }
+  ]
+}

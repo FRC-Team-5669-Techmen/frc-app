@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /workspace/frc-app
+
+
+ Test Files  1 passed (1)
+      Tests  28 passed (28)
+   Start at  16:30:16
+   Duration  29.93s (transform 5.49s, setup 0ms, import 8.33s, tests 17.27s, environment 3.83s)
+

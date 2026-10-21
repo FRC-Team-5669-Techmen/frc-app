@@ -1,0 +1,37 @@
+
+ RUN  v4.1.11 /workspace/frc-app
+
+ ❯ tests/scouting-dom.test.js (28 tests | 3 failed) 12300ms
+     × hides cached receipts and drafting controls after definitive 42501 denial without deleting local work 830ms
+     × hides cached receipts and drafting controls after definitive PGRST301 denial without deleting local work 919ms
+     × hides cached receipts and drafting controls after definitive ACCOUNT_CHANGED denial without deleting local work 666ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/scouting-dom.test.js > rendered scouting with IndexedDB emulation > hides cached receipts and drafting controls after definitive 42501 denial without deleting local work
+ FAIL  tests/scouting-dom.test.js > rendered scouting with IndexedDB emulation > hides cached receipts and drafting controls after definitive PGRST301 denial without deleting local work
+ FAIL  tests/scouting-dom.test.js > rendered scouting with IndexedDB emulation > hides cached receipts and drafting controls after definitive ACCOUNT_CHANGED denial without deleting local work
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/scouting-dom.test.js:81:55
+     79|     await unmount()
+     80|     const before = await store.listQueue(IDS.student, EVENT)
+     81|     expect(before.some(op => op.status === 'synced')).toBe(true)
+       |                                                       ^
+     82|     const spy = vi.spyOn(supabase, 'from').mockImplementation(() => {
+     83|       const q = { select: () => q, eq: () => q, in: () => q, order: ()…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 25 passed (28)
+   Start at  16:29:27
+   Duration  18.43s (transform 3.56s, setup 0ms, import 4.87s, tests 12.30s, environment 999ms)
+

@@ -1,0 +1,6 @@
+Seeded 375; opening large event
+Loaded 375; rendering teams
+PASS 375: 1,682 records/revisions, 1,440 observations, 120 teams; load 2549 ms, team tab 1354 ms, search 105 ms (synthetic local fixture)
+Seeded 1440; opening large event
+Loaded 1440; rendering teams
+PASS 1440: 1,682 records/revisions, 1,440 observations, 120 teams; load 5567 ms, team tab 2167 ms, search 106 ms (synthetic local fixture)

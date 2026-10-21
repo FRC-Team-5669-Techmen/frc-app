@@ -1,0 +1,105 @@
+
+ RUN  v4.1.11 /workspace/frc-app
+
+stderr | tests/scouting-dom.test.js > rendered scouting with IndexedDB emulation > hides cached receipts and drafting controls after definitive ACCOUNT_CHANGED denial without deleting local work
+Warning: An update to EventScouting inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventScouting (/workspace/frc-app/src/ScoutingPage.jsx:392:26)
+    at ScoutingPage (/workspace/frc-app/src/ScoutingPage.jsx:67:25)
+    at RenderedRoute (file:///workspace/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6173:26)
+    at Routes (file:///workspace/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:7052:3)
+    at Router (file:///workspace/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6991:13)
+    at MemoryRouter (file:///workspace/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6907:3)
+Warning: An update to EventScouting inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventScouting (/workspace/frc-app/src/ScoutingPage.jsx:392:26)
+    at ScoutingPage (/workspace/frc-app/src/ScoutingPage.jsx:67:25)
+    at RenderedRoute (file:///workspace/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6173:26)
+    at Routes (file:///workspace/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:7052:3)
+    at Router (file:///workspace/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6991:13)
+    at MemoryRouter (file:///workspace/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6907:3)
+
+stderr | tests/scouting-dom.test.js > rendered scouting with IndexedDB emulation > hides cached receipts and drafting controls after definitive ACCOUNT_CHANGED denial without deleting local work
+Warning: An update to EventScouting inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventScouting (/workspace/frc-app/src/ScoutingPage.jsx:392:26)
+    at ScoutingPage (/workspace/frc-app/src/ScoutingPage.jsx:67:25)
+    at RenderedRoute (file:///workspace/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6173:26)
+    at Routes (file:///workspace/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:7052:3)
+    at Router (file:///workspace/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6991:13)
+    at MemoryRouter (file:///workspace/frc-app/node_modules/react-router/dist/development/chunk-QUQL4437.mjs:6907:3)
+
+ ❯ tests/scouting-dom.test.js (28 tests | 4 failed) 29775ms
+     × hides cached receipts and drafting controls after definitive 42501 denial without deleting local work 354ms
+     × hides cached receipts and drafting controls after definitive PGRST301 denial without deleting local work 685ms
+     × hides cached receipts and drafting controls after definitive ACCOUNT_CHANGED denial without deleting local work 703ms
+     × does not spin on a local queue when the account changes before sync 227ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/scouting-dom.test.js > rendered scouting with IndexedDB emulation > hides cached receipts and drafting controls after definitive 42501 denial without deleting local work
+ FAIL  tests/scouting-dom.test.js > rendered scouting with IndexedDB emulation > hides cached receipts and drafting controls after definitive PGRST301 denial without deleting local work
+ FAIL  tests/scouting-dom.test.js > rendered scouting with IndexedDB emulation > hides cached receipts and drafting controls after definitive ACCOUNT_CHANGED denial without deleting local work
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ click tests/scouting-dom.test.js:28:56
+     26| const buttons = text => [...host.querySelectorAll('button')].filter(b …
+     27| async function click(button) {
+     28|   expect(button).toBeTruthy(); expect(button.disabled).toBe(false)
+       |                                                        ^
+     29|   await act(async () => { button.dispatchEvent(new MouseEvent('click',…
+     30| }
+ ❯ tests/scouting-dom.test.js:78:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/scouting-dom.test.js > sync recovery scheduling > does not spin on a local queue when the account changes before sync
+TypeError: Cannot read properties of undefined (reading 'disabled')
+ ❯ tests/scouting-dom.test.js:413:81
+    411|     const session=await original()
+    412|     const spy=vi.spyOn(supabase.auth,'getSession').mockResolvedValue({…
+    413|     await click(buttons('Sync now')[0]);await settle(()=>!buttons('Syn…
+       |                                                                                 ^
+    414|     const calls=spy.mock.calls.length
+    415|     await act(async()=>{await pause(100)})
+ ❯ settle tests/scouting-dom.test.js:22:9
+ ❯ tests/scouting-dom.test.js:413:41
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 24 passed (28)
+   Start at  16:28:16
+   Duration  35.29s (transform 2.63s, setup 0ms, import 3.49s, tests 29.78s, environment 1.74s)
+

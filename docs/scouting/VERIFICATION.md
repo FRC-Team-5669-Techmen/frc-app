@@ -2,7 +2,30 @@
 
 Code is on `codex/scouting-2026-evidence`, [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). Software and isolated hosted SQL checks pass. **Immediate competition acceptance remains blocked** by hosted HTTP access, physical-device/human/source gates and production release authorization. No production database change, deployment, main push or real Discord send occurred.
 
-## Extended follow-up: current candidate and independent scopes
+## Decision-support candidate: `8fef933`
+
+Implementation commits `09dab54` and `8fef933` add stable confirmed evidence during pending corrections, complete observation search/dispute review, reviewed drive-team briefs, and refusal of retained-receipt visibility after definitive authorization errors. `DECISION_SUPPORT.md` records the acceptance expectations and proposed Techmen behavior. No SQL, provider, dependency or auth protocol changed.
+
+| Executed check | Result and boundary |
+| --- | --- |
+| Unit/DOM | **1024/1024, 71 files**, on final application contents; includes confirmed-vote/coverage continuity, draft read/write failure, review invalidation, old observations, metadata spoof resistance and forbidden/token/account-change refusal/recovery |
+| Independent CI | [CI 126](https://github.com/FRC-Team-5669-Techmen/frc-app/actions/runs/39635840263) passed at `8fef933`; retained actual job logs confirm 1024 tests and build/design/calendar/history gates |
+| Decision workflows | **40/40 assertions** across native Chromium 375px touch emulation and 1440px desktop; real IndexedDB, JSON/HTML downloads, PDF printing, offline edits and access-denial/recovery; backend data/auth are fictional |
+| Exclusion controls | **9/9** deliberately permissive projection/access-denial mutations detected |
+| Built PWA/local API | **28/28** on final app: native Chromium/service worker/IndexedDB/Supabase JS/PostgREST/PostgreSQL; synthetic Auth and fictional map geometry. Covers interrupted/lost-response saves, duplicate retry, parent denial and connector preview/commit/denial |
+| Native scouting database | **72/72** SQL/RLS assertions, **17/17** mutants and **7/7** concurrent-write checks; unchanged migration applied twice in disposable local PostgreSQL. No hosted/live database claim |
+| Check-in | **51/51** native Chromium assertions; unchanged check-in sources |
+| Accessibility/volume | **20/20** scoped axe-core 4.11.1 scans without automated violations, including brief inputs; manual/physical-device checks remain. Both 120-team/1,682-record synthetic volume cases passed. These ran before the final denial-only UI guard |
+| Existing scouting/portable review | **169/169** scouting browser assertions and actual-route portable DOM review passed before the denial-only guard; final broad repeat is running from an isolated `8fef933` checkout |
+| Required local gates | Build passed: 145 precache entries / 1956.23 KiB; connector current; design audit passed; calendar **19/19**; original history byte/SHA-identical |
+| Broad browser regression | Initial run encountered an announcements loading timeout while other work was running. Isolated announcements rerun passed **125/125** without changing announcements or relaxing assertions. Full clean-checkout repeat is in progress; no full-green result is claimed yet |
+
+Retained evidence is in `verification/2026-10-21-decisions/`. Initial harness failures are preserved: escaped text was initially mistaken for an active HTML attribute by a regex (replaced with DOM parsing), textarea-label lookup included its value, select labeling required an explicit accessible name, denial fixtures initially omitted the required live source, and the browser's reconnect/refusal test needed to wait for the existing sync to finish. The full-browser loading timeout's cause is unproven; a clean-checkout repeat avoids concurrent source edits. No expectation or timeout was weakened to obtain a pass.
+
+Real phones, novice timing/proficiency, independently annotated real footage, drive-coach/alliance-partner acceptance and representative hosted/provider/Discord behavior remain external gates. `FIELD_ACCEPTANCE.csv` now has **19 gates: 16 NOT_RUN and three PARTIAL**. A frozen brief is a decision aid, not a prediction or certification of competitive performance. Production release is still separately gated.
+
+## Previous extended follow-up: `6b7feaa` (historical)
+
 
 The user requested at least another hour; this run began **14:48:18 UTC**. Application candidate **`6b7feaa`** includes reviewed pending-save restoration, interruption-safe drafts, modal focus return and paged team cards. It also preserves newer remote main `0a11c52` through merge `f3518cf`. No SQL, API, provider, Edge or dependency contract changed.
 
