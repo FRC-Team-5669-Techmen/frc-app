@@ -1,0 +1,42 @@
+{
+  "broad_run": {
+    "passed": 1800,
+    "total": 1801,
+    "failures": [
+      {
+        "feature": "scouting",
+        "vp": "1440",
+        "state": "correction conflict",
+        "label": "review displays both proposals",
+        "ok": false,
+        "measurement": ""
+      }
+    ]
+  },
+  "unaffected_modules": {
+    "features": [
+      "announce",
+      "certifications",
+      "dashboard-checkout",
+      "display-history",
+      "event-hub",
+      "families",
+      "feedback",
+      "handbook",
+      "job-certs",
+      "my-hours",
+      "permissions",
+      "rosters",
+      "signout",
+      "standing"
+    ],
+    "passed": 1632,
+    "scope": "Before the final lazy ScoutingPage state-ordering fix; these 14 module sources are unchanged"
+  },
+  "final_scouting": {
+    "passed": 169,
+    "scope": "Final application, native Chromium at 375 and 1440"
+  },
+  "complete_feature_coverage": 1801,
+  "scope": "Coverage across serial runs with explicit source boundaries; not a claim that the initial full run passed"
+}

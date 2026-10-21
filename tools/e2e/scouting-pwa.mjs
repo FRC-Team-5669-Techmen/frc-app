@@ -203,6 +203,29 @@ try {
  check('connector HTTP commit preserves identity and audit',committed.ok&&(await db.query('select member_id from public.scouting_records where id=$1',[args.p_id])).rows[0]?.member_id===admin.id&&Number((await db.query("select count(*) as n from public.connector_audit where user_id=$1 and function_name='scouting_save'",[admin.id])).rows[0].n)===1)
  const forbidden=await connector(parentToken,'commit','pwa-denied-'+randomUUID())
  check('connector HTTP refuses an unauthorized account',!forbidden.ok&&Number((await db.query('select count(*) as n from public.scouting_records where id=$1',[args.p_id])).rows[0].n)===1)
+ // Real HTTP conflict -> durable queue -> explicit review. PostgREST 14 must
+ // return PT409 rather than retrying a synthetic serialization_failure forever.
+ await context.setOffline(false);await page.goto(origin+`/scouting/${event}`)
+ await page.getByRole('heading',{name:'PWA Offline Acceptance',exact:true}).waitFor()
+ const before=(await db.query('select * from public.scouting_records where event_id=$1 and match_key=$2',[event,'qm99'])).rows[0]
+ const evidence=page.locator('.sc-evidence-record').filter({has:page.getByRole('heading',{name:'5669 · qm99',exact:true})})
+ await evidence.getByRole('button',{name:'Correct observation',exact:true}).click()
+ await page.getByLabel('Notes',{exact:true}).fill('My held HTTP conflict proposal')
+ const concurrentArgs={p_id:before.id,p_event:event,p_kind:before.kind,p_team:before.team_number,p_match:before.match_key,p_payload:{...before.payload,notes:'Other tab won through actual HTTP'},p_expected_version:before.version,p_operation:randomUUID(),p_actor:actor.id}
+ const concurrentResponse=await fetch(origin+'/rest/v1/rpc/scouting_save',{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify(concurrentArgs)})
+ check('concurrent correction succeeds through actual PostgREST',concurrentResponse.ok&&(await concurrentResponse.json()).version===2)
+ const conflictResponse=page.waitForResponse(r=>r.url().endsWith('/rest/v1/rpc/scouting_save')&&r.status()===409)
+ await page.getByRole('button',{name:'Save observation',exact:true}).click()
+ check('stale PWA save receives HTTP 409 with PT409',(await (await conflictResponse).json()).code==='PT409')
+ await page.getByRole('button',{name:'Review conflict',exact:true}).waitFor()
+ const winner=(await db.query('select version,payload from public.scouting_records where id=$1',[before.id])).rows[0]
+ check('HTTP conflict preserves newer server evidence and queued proposal',winner.version===2&&winner.payload.notes==='Other tab won through actual HTTP'&&Number((await db.query('select count(*) as n from public.scouting_revisions where record_id=$1',[before.id])).rows[0].n)===2)
+ await page.getByRole('button',{name:'Review conflict',exact:true}).click()
+ check('actual HTTP conflict review displays both proposals',(await page.locator('.sc-conflict').textContent()).includes('My held HTTP conflict proposal')&&(await page.locator('.sc-conflict').textContent()).includes('Other tab won through actual HTTP'))
+ await page.getByRole('button',{name:'Apply my reviewed proposal',exact:true}).click()
+ await page.getByText('All saved work synced',{exact:true}).waitFor()
+ const reviewed=(await db.query('select version,payload from public.scouting_records where id=$1',[before.id])).rows[0]
+ check('explicit PWA review commits a third attributed version',reviewed.version===3&&reviewed.payload.notes==='My held HTTP conflict proposal'&&Number((await db.query('select count(*) as n from public.scouting_revisions where record_id=$1 and changed_by=$2',[before.id,actor.id])).rows[0].n)===3)
  if(soakMinutes>0){
   // One artificial scouting cycle per minute. This deliberately exercises
   // repeated offline/reload/reconnect over elapsed time, not human task timing.

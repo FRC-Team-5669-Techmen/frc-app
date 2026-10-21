@@ -1,0 +1,1361 @@
+{
+  "clockStart": "2026-10-01T23:00:00.000Z",
+  "clockMode": "fixed-date-real-timers",
+  "features": [
+    "scouting"
+  ],
+  "results": [
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "student event",
+      "label": "student reaches scouting",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "student event",
+      "label": "manager controls hidden for student",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "student event",
+      "label": "fixture has no invalid seeded rows",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "student event",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "student event",
+      "label": "student controls at least 44px",
+      "ok": true,
+      "measurement": "17 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "new observation starts with no selected answers",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "capture controls at least 44px",
+      "ok": true,
+      "measurement": "18 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "one durable observation reaches the server fixture",
+      "ok": true,
+      "measurement": "ad5aa99d-f81c-4b22-83aa-917f8a773894"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "Did not see remains distinct from No and Yes",
+      "ok": true,
+      "measurement": "{\"trench\":\"did_not_see\",\"bump\":\"no\",\"ground_intake\":\"yes\"}"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "observation attribution comes from the signed-in member",
+      "ok": true,
+      "measurement": "\"00000000-0000-0000-0000-0000000000c1\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "fresh record starts at version one",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "one revision exists for submitted observation",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "draft recovery",
+      "label": "interrupted match draft restored",
+      "ok": true,
+      "measurement": "\"qm8\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "draft recovery",
+      "label": "interrupted notes restored",
+      "ok": true,
+      "measurement": "\"Unsubmitted draft survives closing and reload.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "draft recovery",
+      "label": "unsubmitted draft created no server observation",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "simulated offline capture",
+      "label": "offline save does not claim a server record",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "simulated offline capture",
+      "label": "local queue remains visible after reload",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "simulated offline capture",
+      "label": "another account cannot see the local proposal",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "simulated offline capture",
+      "label": "another account cannot synchronize the saved operation",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "simulated offline capture",
+      "label": "reconnect synchronizes the saved local observation",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "simulated offline capture",
+      "label": "repeat synchronization does not duplicate the logical record",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "team cards expose names and claims",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "map renders four fictional source pits",
+      "ok": true,
+      "measurement": "4"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "map renders source wall geometry",
+      "ok": true,
+      "measurement": "\"-10\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "map flags firsthand location conflict",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "selection highlights exactly one map pit",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "rotation swaps the independent map dimensions",
+      "ok": true,
+      "measurement": "\"0 0 1293 840\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "map controls at least 44px",
+      "ok": true,
+      "measurement": "8 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "documented Nexus demo key is accepted for map downloads",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "offline reload preserves cached pit geometry",
+      "ok": true,
+      "measurement": "4"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "offline reload preserves the actual downloaded Nexus key",
+      "ok": true,
+      "measurement": "\"demo1234\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "offline map cannot initiate a provider download",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "team controls at least 44px",
+      "ok": true,
+      "measurement": "50 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "saved message remains readable despite failed delivery",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "failed delivery is not presented as delivered",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "individual list shows four fixture teams",
+      "ok": true,
+      "measurement": "saves for this account and event. Wait for “saved on this device” before exporting; keep the file with your team.Recover pending saves from a backupUse an event JSON exported by this account for this event. Review it here before restoring. Existing work stays in place. Recovered saves wait for your review before they can sync.This recovers queued submissions only. Practice, unsubmitted drafts, downloaded maps and cached data stay in the archive for manual review with your lead.Event backup JSON "
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "own list initially has four unique entries",
+      "ok": true,
+      "measurement": "4"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "pick-list controls at least 44px",
+      "ok": true,
+      "measurement": "35 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "preview computes the independently expected order",
+      "ok": true,
+      "measurement": "[\"5669 · Tier 1 · position 1\",\"1538 · Tier 1 · position 2\",\"4414 · Tier 2 · position 1\",\"1323 · Tier 3 · position 1\"]"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "preview leaves saved list unchanged",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "cancel leaves saved list unchanged",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "explicit apply commits one new list version",
+      "ok": true,
+      "measurement": "2"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "apply preserves unselected team and selected slots",
+      "ok": true,
+      "measurement": "[5669,1538,4414,1323]"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "master labels Techmen aggregation choice and support",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "correction conflict",
+      "label": "concurrent fixture writer creates version two",
+      "ok": true,
+      "measurement": "2"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "correction conflict",
+      "label": "stale edit did not overwrite newer server notes",
+      "ok": true,
+      "measurement": "\"Another tab corrected this observation first.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "correction conflict",
+      "label": "review displays both proposals",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "correction conflict",
+      "label": "explicit review commits a third version",
+      "ok": true,
+      "measurement": "3"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "correction conflict",
+      "label": "reviewed correction is the latest evidence",
+      "ok": true,
+      "measurement": "\"My reviewed correction keeps the blocked view explicit.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "correction conflict",
+      "label": "all three correction snapshots are retained",
+      "ok": true,
+      "measurement": "3"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "manager",
+      "label": "manager controls shown to mentor",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "parent-only",
+      "label": "parent-only cannot open a capture form",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "parent-only",
+      "label": "parent-only cannot read scouting records in fixture",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "parent-only",
+      "label": "parent-only fixture RPC refuses capture",
+      "ok": true,
+      "measurement": "\"42501\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "parent-only",
+      "label": "incomplete practice note survives reload",
+      "ok": true,
+      "measurement": "\"Keep the claim separate from a visible match observation.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "parent-only",
+      "label": "incomplete exercise cannot record a finished mission",
+      "ok": true,
+      "measurement": "true"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "parent-only",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "a completed interactive mission is durably recorded",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "withdrawing the activity acknowledgment withdraws completion",
+      "ok": true,
+      "measurement": "true"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "frozen first-pass evidence cannot be casually overwritten",
+      "ok": true,
+      "measurement": "true"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "first-pass uncertainty survives reviewed correction and reload",
+      "ok": true,
+      "measurement": "\"did_not_see\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "the separately recorded correction survives reload",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "practice footage never creates competition records",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "all eight interactive mission workflows can be completed",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "practice export preserves eight completions without awarding certification",
+      "ok": true,
+      "measurement": "8"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "practice export explicitly refuses a certification claim",
+      "ok": true,
+      "measurement": "false"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "activity plan is distinct from measured time",
+      "ok": true,
+      "measurement": "null"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "export preserves first-pass uncertainty and later correction",
+      "ok": true,
+      "measurement": "[\"did_not_see\",\"yes\"]"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "practice controls at least 44px",
+      "ok": true,
+      "measurement": "40 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "actual downloaded archive contains the unsent operation",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "wrong-account archive creates no observation",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "preview alone makes no server record",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "recovery controls at least 44px",
+      "ok": true,
+      "measurement": "5 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "reload, reconnect and Sync now leave recovered work held",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "reviewed recovery creates one original logical record",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "recovered uncertainty remains explicit",
+      "ok": true,
+      "measurement": "{\"trench\":\"did_not_see\"}"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "reviewed recovery creates one revision",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "reimport cannot select an already restored save",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "preview writes no assignments",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "reviewed plan creates exactly two assignments",
+      "ok": true,
+      "measurement": "2"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pre-0022",
+      "label": "missing schema offers no active capture action",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "student event",
+      "label": "student reaches scouting",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "student event",
+      "label": "manager controls hidden for student",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "student event",
+      "label": "fixture has no invalid seeded rows",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "student event",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "capture observation",
+      "label": "new observation starts with no selected answers",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "capture observation",
+      "label": "one durable observation reaches the server fixture",
+      "ok": true,
+      "measurement": "79665e1f-fbd4-4eae-a9b7-6b5a304ae2f6"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "capture observation",
+      "label": "Did not see remains distinct from No and Yes",
+      "ok": true,
+      "measurement": "{\"trench\":\"did_not_see\",\"bump\":\"no\",\"ground_intake\":\"yes\"}"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "capture observation",
+      "label": "observation attribution comes from the signed-in member",
+      "ok": true,
+      "measurement": "\"00000000-0000-0000-0000-0000000000c1\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "capture observation",
+      "label": "fresh record starts at version one",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "capture observation",
+      "label": "one revision exists for submitted observation",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "draft recovery",
+      "label": "interrupted match draft restored",
+      "ok": true,
+      "measurement": "\"qm8\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "draft recovery",
+      "label": "interrupted notes restored",
+      "ok": true,
+      "measurement": "\"Unsubmitted draft survives closing and reload.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "draft recovery",
+      "label": "unsubmitted draft created no server observation",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "simulated offline capture",
+      "label": "offline save does not claim a server record",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "simulated offline capture",
+      "label": "local queue remains visible after reload",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "simulated offline capture",
+      "label": "another account cannot see the local proposal",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "simulated offline capture",
+      "label": "another account cannot synchronize the saved operation",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "simulated offline capture",
+      "label": "reconnect synchronizes the saved local observation",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "simulated offline capture",
+      "label": "repeat synchronization does not duplicate the logical record",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "team cards expose names and claims",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "map renders four fictional source pits",
+      "ok": true,
+      "measurement": "4"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "map renders source wall geometry",
+      "ok": true,
+      "measurement": "\"-10\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "map flags firsthand location conflict",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "selection highlights exactly one map pit",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "rotation swaps the independent map dimensions",
+      "ok": true,
+      "measurement": "\"0 0 1293 840\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "documented Nexus demo key is accepted for map downloads",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "offline reload preserves cached pit geometry",
+      "ok": true,
+      "measurement": "4"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "offline reload preserves the actual downloaded Nexus key",
+      "ok": true,
+      "measurement": "\"demo1234\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "offline map cannot initiate a provider download",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "saved message remains readable despite failed delivery",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "failed delivery is not presented as delivered",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "individual list shows four fixture teams",
+      "ok": true,
+      "measurement": "saves for this account and event. Wait for “saved on this device” before exporting; keep the file with your team.Recover pending saves from a backupUse an event JSON exported by this account for this event. Review it here before restoring. Existing work stays in place. Recovered saves wait for your review before they can sync.This recovers queued submissions only. Practice, unsubmitted drafts, downloaded maps and cached data stay in the archive for manual review with your lead.Event backup JSON "
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "own list initially has four unique entries",
+      "ok": true,
+      "measurement": "4"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "preview computes the independently expected order",
+      "ok": true,
+      "measurement": "[\"5669 · Tier 1 · position 1\",\"1538 · Tier 1 · position 2\",\"4414 · Tier 2 · position 1\",\"1323 · Tier 3 · position 1\"]"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "preview leaves saved list unchanged",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "cancel leaves saved list unchanged",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "explicit apply commits one new list version",
+      "ok": true,
+      "measurement": "2"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "apply preserves unselected team and selected slots",
+      "ok": true,
+      "measurement": "[5669,1538,4414,1323]"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "master labels Techmen aggregation choice and support",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "correction conflict",
+      "label": "concurrent fixture writer creates version two",
+      "ok": true,
+      "measurement": "2"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "correction conflict",
+      "label": "stale edit did not overwrite newer server notes",
+      "ok": true,
+      "measurement": "\"Another tab corrected this observation first.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "correction conflict",
+      "label": "review displays both proposals",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "correction conflict",
+      "label": "explicit review commits a third version",
+      "ok": true,
+      "measurement": "3"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "correction conflict",
+      "label": "reviewed correction is the latest evidence",
+      "ok": true,
+      "measurement": "\"My reviewed correction keeps the blocked view explicit.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "correction conflict",
+      "label": "all three correction snapshots are retained",
+      "ok": true,
+      "measurement": "3"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "manager",
+      "label": "manager controls shown to mentor",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "parent-only",
+      "label": "parent-only cannot open a capture form",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "parent-only",
+      "label": "parent-only cannot read scouting records in fixture",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "parent-only",
+      "label": "parent-only fixture RPC refuses capture",
+      "ok": true,
+      "measurement": "\"42501\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "parent-only",
+      "label": "incomplete practice note survives reload",
+      "ok": true,
+      "measurement": "\"Keep the claim separate from a visible match observation.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "parent-only",
+      "label": "incomplete exercise cannot record a finished mission",
+      "ok": true,
+      "measurement": "true"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "parent-only",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "a completed interactive mission is durably recorded",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "withdrawing the activity acknowledgment withdraws completion",
+      "ok": true,
+      "measurement": "true"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "frozen first-pass evidence cannot be casually overwritten",
+      "ok": true,
+      "measurement": "true"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "first-pass uncertainty survives reviewed correction and reload",
+      "ok": true,
+      "measurement": "\"did_not_see\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "the separately recorded correction survives reload",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "practice footage never creates competition records",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "all eight interactive mission workflows can be completed",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "practice export preserves eight completions without awarding certification",
+      "ok": true,
+      "measurement": "8"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "practice export explicitly refuses a certification claim",
+      "ok": true,
+      "measurement": "false"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "activity plan is distinct from measured time",
+      "ok": true,
+      "measurement": "null"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "export preserves first-pass uncertainty and later correction",
+      "ok": true,
+      "measurement": "[\"did_not_see\",\"yes\"]"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "actual downloaded archive contains the unsent operation",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "wrong-account archive creates no observation",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "preview alone makes no server record",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "reload, reconnect and Sync now leave recovered work held",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "reviewed recovery creates one original logical record",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "recovered uncertainty remains explicit",
+      "ok": true,
+      "measurement": "{\"trench\":\"did_not_see\"}"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "reviewed recovery creates one revision",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "reimport cannot select an already restored save",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "preview writes no assignments",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "reviewed plan creates exactly two assignments",
+      "ok": true,
+      "measurement": "2"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pre-0022",
+      "label": "missing schema offers no active capture action",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    }
+  ]
+}

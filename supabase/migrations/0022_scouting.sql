@@ -6,6 +6,8 @@
 -- Public RPCs are SECURITY INVOKER. Privileged atomic writes live in a non-exposed
 -- schema, validate the real auth.uid and roles, and expose no direct table writes.
 -- In Supabase API settings, do not expose scouting_private.
+-- Domain conflicts use PT409, not serialization_failure: PostgREST 14 retries
+-- 40001 indefinitely. PT409 returns HTTP 409 for explicit client review.
 
 create schema if not exists scouting_private;
 revoke all on schema scouting_private from public, anon;
@@ -289,13 +291,13 @@ begin
   if oldrow.event_id<>p_event or oldrow.kind<>p_kind or oldrow.team_number is distinct from p_team or oldrow.match_key is distinct from p_match then raise exception using errcode='22023',message='Record identity cannot change; create a new record.'; end if;
   if oldrow.member_id<>uid and (not manager or p_kind in ('observation','pick_list')) then raise exception using errcode='42501',message='You can only correct your own observation or pick list.'; end if;
   if p_kind='message' and oldrow.payload->>'reply_to' is distinct from p_payload->>'reply_to' then raise exception using errcode='22023',message='A reply cannot move to another conversation.'; end if;
-  if oldrow.version<>p_expected_version then raise exception using errcode='40001',message='This record changed. Refresh and review both versions before saving.'; end if;
+  if oldrow.version<>p_expected_version then raise exception using errcode='PT409',message='This record changed. Refresh and review both versions before saving.'; end if;
   update public.scouting_records set payload=p_payload,version=version+1,updated_at=clock_timestamp() where id=p_id returning * into saved;
  else
-  if p_expected_version<>0 then raise exception using errcode='40001',message='The record no longer matches this edit. Refresh before saving.'; end if;
+  if p_expected_version<>0 then raise exception using errcode='PT409',message='The record no longer matches this edit. Refresh before saving.'; end if;
   begin
    insert into public.scouting_records(id,event_id,member_id,kind,team_number,match_key,payload,version) values(p_id,p_event,uid,p_kind,p_team,p_match,p_payload,1) returning * into saved;
-  exception when unique_violation then raise exception using errcode='40001',message='A record already exists for this team, match or list. Refresh and edit it.'; end;
+  exception when unique_violation then raise exception using errcode='PT409',message='A record already exists for this team, match or list. Refresh and edit it.'; end;
  end if;
  result := to_jsonb(saved);
  insert into public.scouting_revisions(record_id,version,event_id,member_id,changed_by,snapshot) values(saved.id,saved.version,saved.event_id,saved.member_id,uid,result);

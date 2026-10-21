@@ -150,12 +150,12 @@ describe('reviewed pending-save recovery (IndexedDB emulation)', () => {
     } finally { source.close(); target.close() }
   })
 
-  it('retains a server conflict and never changes the expected version during recovery', async () => {
+  it.each(['PT409', '40001'])('retains a %s conflict and never changes the expected version during recovery', async code => {
     const source = await make(), target = await make()
     try {
       const op = await source.enqueue(MEMBER, EVENT, { ...observation, version: 1 }), archive = await archiveFrom(source)
       await target.restoreRecovery(MEMBER, EVENT, archive, [op.id]); await target.releaseRecovered(MEMBER, EVENT, op.id)
-      const rpc = vi.fn(async () => ({ error: { code: '40001', message: 'The server is now at version 2.' } }))
+      const rpc = vi.fn(async () => ({ error: { code, message: 'The server is now at version 2.' } }))
       await syncScoutingQueue({ store: target, client: fakeClient(rpc), memberId: MEMBER, eventId: EVENT })
       expect((await target.listQueue(MEMBER, EVENT))[0]).toMatchObject({ status: 'conflict', args: { p_expected_version: 1 }, retryable: false })
       await syncScoutingQueue({ store: target, client: fakeClient(rpc), memberId: MEMBER, eventId: EVENT })

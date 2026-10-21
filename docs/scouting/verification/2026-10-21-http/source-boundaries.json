@@ -1,0 +1,38 @@
+{
+  "baseline": "f8d605633298ecc545265f9176ef1982270234f3",
+  "application_sha256": {
+    "src/ScoutingPage.jsx": "2ba5c886eb1f2291a93956bdd61d197515275c734fe2c596c17e3ed020b8388e",
+    "src/scouting/client.js": "78a7a118e190c9f12feac92f663c9ac89abc75f99e623bea17cb309c64d74ebd",
+    "src/dev/fixture/features/scouting.js": "da73eb4fafbcf005b3149680658d1d2960d40222ba2eb68afdd081ebc3f3dd21",
+    "supabase/migrations/0022_scouting.sql": "c0985d286ce6ba7f40907e86afd7cb01cd1a934b146c3be79e773895eaf24205",
+    "supabase/migrations/0022_scouting_rls_test.sql": "f8fdae96f5435263abdfadb283348a15773a3589fe363b3596c92e96448eebca"
+  },
+  "instrument_sha256": {
+    "tests/scouting-dom.test.js": "185e0b8b97c2b401cb570058226972304b2f11cf59d2e789ecedd421891fbcad",
+    "tests/scouting-storage.test.js": "4d14e05e9659e1fc499c2d75a0db906759707fb8a62a4f85bf94460fe30d89a0",
+    "tests/scouting-recovery.test.js": "c3ebb34113fbd0509605b9ba09b796bb3469cd4645adb94504ff8b0a77525e52",
+    "tools/e2e/scouting-hosted.mjs": "06819428a6dfb182121791949714071b69238f6815a2932f670f44de1605cc25",
+    "tools/e2e/scouting-pwa.mjs": "17e41bca32440dc9f407814b23561ce5c49fadb8bd0b0cdb4df01f3049016265",
+    "tools/e2e/features/scouting.mjs": "c7bf6f8a8f9640afc490106b9a355c98ed9d0f923b20b61b0806a30e016eab24",
+    "tools/e2e/features.mjs": "d4d1ddb71520fb8a8bb568c4067c3dbf131c6abf9ddc69ca16eddb71998899e9",
+    "tools/sql-harness/scouting-hosted-proof.mjs": "172803b0722fd1e2db7477265baf85989bfe58a7b23c671d7c9ac158f4dd247f",
+    "tools/sql-harness/scouting-mutants.mjs": "bace2daef5893a818bfd1d6ea14cf61cdf60db7ddca7640f15d4940a8a614ee7",
+    "tools/sql-harness/scouting-race.mjs": "7b56aeab31d4dde4523442ea42a5e1faa70b0d57b331b986cdb53e0cc11bc8bf",
+    "package-lock.json": "e08712f76c0e4c4943ec525155e7f441c9eb84a3e251c3f1cdd522ee3879be23"
+  },
+  "before_state_ordering_fix": {
+    "ScoutingPage_sha256": "1fa81a9295c4f76ef099578a50f9fc9ddd348897a4ad1e365e95e2a8be0b5bde",
+    "browser": "1800/1801; all 1632 assertions in 14 unaffected modules pass",
+    "hosted": "49 + 3 revoked + 3 restored, actual hosted JWTs; SQL/client unchanged after this run",
+    "native_sql": "72 + 17 mutants + 7 races, SQL unchanged after this run",
+    "pwa": "33/33 before UI follow-up, retained separately"
+  },
+  "final_application": {
+    "unit": 1031,
+    "scouting": 169,
+    "pwa": 33,
+    "checkin": 51,
+    "browser_scope": "1632 unaffected assertions from broad run plus 169 final scouting assertions; the full broad process remains failed"
+  },
+  "limits": "Real hosted token issuance from SQL-provisioned fictional users; no OTP/OAuth, hosted browser, provider success, Discord delivery, physical phones or human competence claim. HTTP-harness completion accounting followed the retained network run."
+}

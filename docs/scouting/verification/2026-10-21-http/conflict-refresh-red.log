@@ -1,0 +1,33 @@
+
+ RUN  v4.1.11 /workspace/frc-app
+
+ ❯ tests/scouting-dom.test.js (29 tests | 1 failed | 28 skipped) 299ms
+     × keeps conflict review closed until its current server evidence finishes refreshing 297ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/scouting-dom.test.js > rendered scouting with IndexedDB emulation > keeps conflict review closed until its current server evidence finishes refreshing
+AssertionError: expected [ <button></button> ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ tests/scouting-dom.test.js:273:42
+    271|       expect((await store.listQueue(IDS.student, EVENT)).find(op => op…
+    272|       expect(buttons('Sync now')[0].disabled).toBe(true)
+    273|       expect(buttons('Review conflict')).toHaveLength(0)
+       |                                          ^
+    274|       release(); await settle(() => buttons('Review conflict').length …
+    275|       await click(buttons('Review conflict')[0])
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 28 skipped (29)
+   Start at  19:21:14
+   Duration  1.88s (transform 582ms, setup 0ms, import 862ms, tests 299ms, environment 578ms)
+

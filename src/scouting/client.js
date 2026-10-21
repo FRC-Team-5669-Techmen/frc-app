@@ -41,7 +41,7 @@ export async function syncScoutingQueue({ store, client, memberId, eventId, isCu
       const finished = await store.finish(memberId, eventId, op.id, op.lease, { status: 'synced', result: saved })
       if (!finished) continue // Another tab owns an expired lease now.
     } catch (e) {
-      const conflict = e?.code === '40001'
+      const conflict = ['PT409', '40001'].includes(e?.code)
       const permanent = conflict || ['42501', '22023', '23505', '23514', '23503', '22P02'].includes(e?.code)
       await store.finish(memberId, eventId, op.id, op.lease, { status: conflict ? 'conflict' : 'failed', error: plainError(e), retryable: !permanent })
       continue

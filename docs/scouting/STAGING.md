@@ -1,4 +1,24 @@
-# Hosted staging proof — October 21, 2026
+# Hosted HTTP continuation — October 21, 2026
+
+The workspace network was corrected. GitHub/npm returned HTTP 200, the production Auth health URL returned HTTP 401 without an API key (read-only reachability), and actual requests to a new isolated data-free branch succeeded. The previous CONNECT 403 is historical evidence, not the current blocker.
+
+Branch `scouting-2026-http-review` (`cctevrqiuqdiswkgghwo`) copied schema without production data. It reported PostgreSQL **17.11** and PostgREST **14.18**. Prerequisite tables and zero users/profiles/jobs were checked before applying 0022. Both source Edge directories deployed ACTIVE with `verify_jwt=true`.
+
+Real hosted password grants and refresh tokens worked for six SQL-provisioned fictional `.invalid` accounts. The first two HTTP runs passed 32 assertions each, then stale corrections timed out at 30 seconds. An isolated serialization probe also timed out. Supabase documentation confirmed the PostgREST 14 infinite-retry bug for application-raised `40001`. The exact looping test backends were identified and terminated only in this branch. Source now uses `PT409` for all three domain conflicts, while the client preserves compatibility with older `40001` responses.
+
+The fixed suite passed **49/49**, including all three HTTP 409 cases. A separate **3/3 revoked + 3/3 restored** sequence reused the same JWT to verify live authorization rather than token metadata. Actual deployed import accepts a manager JWT, denies ordinary-scout roster access and reaches the ordinary-scout map configuration boundary. Dispatch rejects invalid JWTs and a missing-record request without any send. **No OTP email, school Google OAuth, provider success, bot/channel setup or real Discord delivery was tested.** `HOSTED_HTTP.md` retains exact reproduction steps and safety guards.
+
+TBA/Nexus endpoints returned 401 without keys; the isolated function reports missing configuration. Public Statbotics returned HTTP 500 with `[]` for `2026dal` and `2025casf`. These are reachable failures, not successful provider acceptance. Both connected Vercel accounts return a scoped 403 for the existing project/team, blocking a safely isolated shareable app preview. No app deployment was attempted.
+
+Current 0022 applied twice after the correction. The final **72/72** hosted rollback SQL/RLS proof passed. Before cleanup, six fictional users/profiles, five fictional records, nine revisions/operations, and **zero delivery rows/jobs/queued HTTP requests** were recorded. Guarded cleanup removed only those identified fixtures; the rollback proof then confirmed zero users/profiles/records, and a final catalog confirmed all eight counters zero. The test branch was **deleted successfully**; branch listing shows only default main. Read-only production postcheck still found PostgreSQL 17.6 and **zero scouting tables/functions**.
+
+Advisors retained the intentional no-policy INFO for the service-only operations table and existing platform SECURITY DEFINER warnings. Two temporary diagnostic functions also had mutable-search-path warnings; neither is part of the shipped source, and both disappeared with the deleted branch. No shipped scouting function appeared in the SECURITY DEFINER warnings. The warning record is retained, not treated as security clearance.
+
+No production mutation/deployment, main push, real notification or unattended test compute occurred. The retained `verification/2026-10-21-http/` record separates hosted HTTP, hosted SQL, native PostgreSQL, local built-PWA and fixture-browser evidence.
+
+---
+
+# Earlier hosted SQL-only proof — October 21, 2026 (historical)
 
 An isolated Supabase branch, `scouting-2026-verification` (`ghznodbtpvxlsyevmkla`), was created under the existing frc-app project without production data. PostgreSQL reported **17.11**. The initial catalog briefly appeared empty before the parent schema finished copying. An empty-schema bootstrap guard then refused to run, preserving the copied schema. No replacement foundation or Auth/storage/network stand-ins were installed.
 

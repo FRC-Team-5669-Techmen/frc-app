@@ -1,3 +1,9 @@
+# Hosted HTTP conflict continuation
+
+`2026-10-21-http/` retains real isolated GoTrue/REST/Edge results (55 assertions), current 72-check hosted rollback proof and cleanup, native PostgreSQL 17.11 (72 checks / 17 mutants / seven races), 1031 unit tests, final scouting 169 and built-PWA 33 checks. The broad 1800/1801 failure, its 1632 unaffected assertions and the subsequent state-ordering fix are explicitly bounded. See its README, hashes, `HOSTED_HTTP.md` and `VERIFICATION.md`. A Vercel team-scope 403 still blocks an isolated app preview; no temporary backend remains.
+
+---
+
 # Extended recovery execution evidence
 
 `2026-10-21-recovery/` contains the additional implementation run. `README.md` in that directory pins the exact source and runtime of each check; `sha256.json` pins retained files. The broad regression/soak at `254d69e` are distinguished from the later keyboard, pagination and current-main merge at `6b7feaa`. Synthetic data, local Auth stand-ins, manual accessibility gaps and field gates remain explicit.

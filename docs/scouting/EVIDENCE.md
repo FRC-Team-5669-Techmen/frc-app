@@ -13,6 +13,8 @@ There are **no observed TideScout application workflow claims** in this run. The
 
 October 21 map continuation: Nexus API v1.8.0 and its first-party pit-map guide establish geometry, not TideScout's presentation. `PIT_MAP.md` pins the independently calculated coordinate expectations before implementation. The implemented Techmen renderer, local cache, rotation/zoom, text directory and contradiction/freshness handling are inferred Techmen requirements. No live Nexus map response was available. A fresh public Statbotics response attempt remained inaccessible through the available web reader. The 2026 HighTide technical binder's indexed app descriptions remain documentation leads; direct extraction still returned no body, and no current app/source contract was recovered.
 
+Later October 21 HTTP continuation: GitHub/npm and actual Supabase Auth/REST/Edge are reachable through the inherited workspace proxy. TBA/Nexus return HTTP 401 without keys; public Statbotics returned HTTP 500 with [] for two event keys. These do not establish representative source schemas or successful imports. A fresh attempt to read the original YouTube watch URL still failed at proxy CONNECT 403 (HTTP 000); no bypass was attempted. Original audio/frames and current TideScout parity remain unverified.
+
 ## What dated version is established
 
 | Source | Result | Scope and limitation |

@@ -143,9 +143,10 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
     syncLock.current = true; setBusy(true)
     const startedGeneration = queueGeneration.current
     try {
-      const next = await syncScoutingQueue({ store, client: supabase, memberId: uid, eventId, isCurrent: current, offlineMemberId })
+      await syncScoutingQueue({ store, client: supabase, memberId: uid, eventId, isCurrent: current, offlineMemberId })
       if (!alive.current) return
-      if (queueGeneration.current === startedGeneration) setQueue(next)
+      // Publish the durable queue with its refreshed evidence snapshot. A
+      // conflict must not become reviewable against the previous server value.
       await refresh()
     } catch (e) { if (alive.current) setError(errorText(e)) }
     finally {

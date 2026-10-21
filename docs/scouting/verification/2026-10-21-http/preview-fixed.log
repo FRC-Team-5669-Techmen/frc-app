@@ -1,0 +1,18 @@
+
+> frc-app@0.1.0 scouting:preview:check
+> npm run scouting:preview && node tools/scouting-preview/check.mjs
+
+
+> frc-app@0.1.0 scouting:preview
+> node tools/scouting-preview/build.mjs
+
+Review built: /workspace/frc-app/artifacts/scouting-review/REVIEW.html (1109720 bytes; network connections disabled by CSP)
+Checking tab: Teams
+Checking tab: Pit messages
+Checking tab: Pick lists
+Checking tab: Practice
+Checking mentor persona
+Checking parent persona
+Returning to student
+Checking fictional map download in portable bundle
+Portable review: real route/all five tabs, mentor planner, parent denial and fictional map cache verified; zero script errors (DOM emulation).

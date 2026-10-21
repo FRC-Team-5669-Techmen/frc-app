@@ -1,0 +1,20 @@
+{
+  "project_ref": "cctevrqiuqdiswkgghwo",
+  "event": "9d5d44ac-6e5b-466a-bd00-a24b8046b6cb",
+  "verified_at": "2026-10-21T19:04:53.156Z",
+  "scope": "Real hosted GoTrue password/refresh JWTs; SQL-provisioned fictional accounts, no OTP/OAuth or Discord delivery",
+  "results": [
+    {
+      "label": "existing JWT access after restoration",
+      "ok": true
+    },
+    {
+      "label": "existing JWT evidence after restoration",
+      "ok": true
+    },
+    {
+      "label": "existing JWT save after restoration",
+      "ok": true
+    }
+  ]
+}

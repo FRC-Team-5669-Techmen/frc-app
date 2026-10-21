@@ -58,7 +58,7 @@ begin
  v:=pg_temp.save_as(s,id,e,'pit','{"capabilities":{"trench":"no"}}',1);
  perform pg_temp.rec(11,'correction preserves first revision and increments',v not like 'err:%' and (v::jsonb->>'version')='2' and (select count(*) from public.scouting_revisions where record_id=id)=2,v);
  v:=pg_temp.save_as(s,id,e,'pit','{"capabilities":{"trench":"yes"}}',1);
- perform pg_temp.rec(12,'stale edit conflicts and does not overwrite',v like 'err:40001:%' and (select payload->'capabilities'->>'trench' from public.scouting_records where scouting_records.id=id)='no',v);
+ perform pg_temp.rec(12,'stale edit conflicts and does not overwrite',v like 'err:PT409:%' and (select payload->'capabilities'->>'trench' from public.scouting_records where scouting_records.id=id)='no',v);
  v:=pg_temp.save_as(t,id,e,'pit','{"capabilities":{}}',2);
  perform pg_temp.rec(13,'unprivileged cross-author correction refused',v like 'err:42501:%',v);
  v:=pg_temp.save_as(m,id,e,'pit','{"capabilities":{"trench":"unknown"}}',2);
@@ -70,7 +70,7 @@ begin
  v:=pg_temp.save_as(s,oid,e,'observation','{"answers":{"trench":"yes"},"source":"live"}',1,gen_random_uuid(),5669,'qm1');
  perform pg_temp.rec(17,'author can correct own observation',v not like 'err:%' and v::jsonb->>'version'='2',v);
  v:=pg_temp.save_as(s,gen_random_uuid(),e,'observation','{"answers":{},"source":"live"}',0,gen_random_uuid(),5669,'qm1');
- perform pg_temp.rec(18,'new ID cannot duplicate logical observation',v like 'err:40001:%',v);
+ perform pg_temp.rec(18,'new ID cannot duplicate logical observation',v like 'err:PT409:%',v);
  v:=pg_temp.save_as(s,gen_random_uuid(),e,'observation','{"answers":{"trench":0},"source":"live"}',0,gen_random_uuid(),5669,'qm2');
  perform pg_temp.rec(19,'numeric zero cannot masquerade as unknown',v like 'err:22023:%',v);
  v:=pg_temp.save_as(s,aid,e,'assignment',jsonb_build_object('assignee',t,'status','assigned'),0,gen_random_uuid(),5669,'qm2');
@@ -197,7 +197,7 @@ begin
  perform pg_temp.rec(70,'assignee retains prior-event provenance on capture',v not like 'err:%',v);
 
  v:=pg_temp.save_as(s,gen_random_uuid(),e,'observation','{"answers":{"trench":"yes"},"source":"live"}',0,gen_random_uuid(),5669,'2026current_qm1');
- perform pg_temp.rec(71,'full and short current-event keys cannot duplicate a logical observation',v like 'err:40001:%',v);
+ perform pg_temp.rec(71,'full and short current-event keys cannot duplicate a logical observation',v like 'err:PT409:%',v);
  v:=pg_temp.save_as(t,gen_random_uuid(),e,'observation','{"answers":{"trench":"no"},"source":"live"}',0,gen_random_uuid(),5669,'qm1');
  perform pg_temp.rec(72,'current qm1 stays distinct from external event qm1',v not like 'err:%',v);
 

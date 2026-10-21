@@ -245,6 +245,41 @@ describe('rendered scouting with IndexedDB emulation', () => {
     store.close()
   })
 
+  it('keeps conflict review closed until its current server evidence finishes refreshing', async () => {
+    fixture.setPersona('student')
+    const initial = await supabase.rpc('scouting_save', { p_actor: IDS.student, p_id: crypto.randomUUID(), p_event: EVENT,
+      p_kind: 'observation', p_team: 5669, p_match: 'qm991', p_payload: { source: 'live', answers: { trench: 'no' }, notes: 'Original confirmed note' },
+      p_expected_version: 0, p_operation: crypto.randomUUID() })
+    expect(initial.data.version).toBe(1)
+    await mount(); await settle(() => !buttons('Sync now')[0]?.disabled, 'initial sync idle')
+    const store = await createScoutingStore()
+    const before = initial.data
+    const concurrent = await supabase.rpc('scouting_save', { p_actor: IDS.student, p_id: before.id, p_event: EVENT, p_kind: before.kind,
+      p_team: before.team_number, p_match: before.match_key, p_payload: { ...before.payload, notes: 'Latest independently saved server note' },
+      p_expected_version: before.version, p_operation: crypto.randomUUID() })
+    expect(concurrent.data.version).toBe(2)
+    const proposal = await store.enqueue(IDS.student, EVENT, { ...before, payload: { ...before.payload, notes: 'My held correction proposal' } })
+    let release, reads = 0
+    const gate = new Promise(resolve => { release = resolve }), original = supabase.from.bind(supabase)
+    const spy = vi.spyOn(supabase, 'from').mockImplementation((...args) => {
+      const query = original(...args), then = query.then.bind(query)
+      query.then = (resolve, reject) => { reads++; return gate.then(() => then(resolve, reject)) }
+      return query
+    })
+    try {
+      await click(buttons('Sync now')[0]); await settle(() => reads > 0, 'held evidence refresh')
+      expect((await store.listQueue(IDS.student, EVENT)).find(op => op.id === proposal.id)).toMatchObject({ status: 'conflict', args: { p_payload: { notes: 'My held correction proposal' } } })
+      expect(buttons('Sync now')[0].disabled).toBe(true)
+      expect(buttons('Review conflict')).toHaveLength(0)
+      release(); await settle(() => buttons('Review conflict').length === 1, 'review ready with refreshed evidence')
+      await click(buttons('Review conflict')[0])
+      const review = host.querySelector('.sc-conflict').textContent
+      expect(review).toContain('Current server version 2')
+      expect(review).toContain('Latest independently saved server note')
+      expect(review).toContain('My held correction proposal')
+    } finally { release(); spy.mockRestore(); await act(async () => { await pause(20) }); store.close() }
+  })
+
   it('keeps a rejected proposal until the reviewed replacement is atomically stored', async () => {
     const store = await createScoutingStore()
     const existing = fixture.rows('scouting_records').find(r => r.kind === 'pick_list' && r.member_id === IDS.student)

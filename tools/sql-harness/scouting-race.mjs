@@ -51,7 +51,7 @@ try {
   const stale = save(second,{id,version:1,payload:{text:'Stale correction',status:'open'}}).then(value=>({value}),error=>({error}))
   await waitBlocked(pid); await first.query('commit')
   const refused = await stale; await second.query('rollback')
-  check('overlapping stale correction is refused with 40001', refused.error?.code==='40001')
+  check('overlapping stale correction is refused with PT409', refused.error?.code==='PT409')
   const current = (await db.query('select version,payload from public.scouting_records where id=$1',[id])).rows[0]
   check('winning correction and exactly two revisions survive', current.version===2 && current.payload.text==='First correction' && Number((await db.query('select count(*) as n from public.scouting_revisions where record_id=$1',[id])).rows[0].n)===2)
 
@@ -62,7 +62,7 @@ try {
   const logical = save(second,observation).then(value=>({value}),error=>({error}))
   await waitBlocked(pid); await first.query('commit')
   const logicalResult = await logical; await second.query('rollback')
-  check('simultaneous fresh IDs cannot duplicate a logical observation', logicalResult.error?.code==='40001' && Number((await db.query("select count(*) as n from public.scouting_records where event_id=$1 and kind='observation'",[event])).rows[0].n)===1)
+  check('simultaneous fresh IDs cannot duplicate a logical observation', logicalResult.error?.code==='PT409' && Number((await db.query("select count(*) as n from public.scouting_records where event_id=$1 and kind='observation'",[event])).rows[0].n)===1)
 
   // Competing dispatchers reserve only one immutable message version, without sending.
   await as(first,actor); const notification=await save(first,{payload:{text:'Reservation only; never sent',status:'open',request_delivery:true}}); await first.query('commit')

@@ -8,6 +8,8 @@ See [contract](../scouting/CONTRACT.md), [evidence](../scouting/EVIDENCE.md) and
 
 All writes call `scouting_save` through `writeVia`; new scouting has no legacy direct-write fallback. Operation IDs deduplicate retries. Optimistic version checks reject stale corrections rather than silently overwriting another tab. The connector calls the same SQL operation and adds its own audit trail.
 
+Domain conflicts use SQLSTATE `PT409` (HTTP 409). Application-raised `40001` loops on hosted PostgREST 14, so it is no longer emitted for stale/missing/duplicate scouting records. The client recognizes both codes and holds either proposal for explicit review. Synchronization publishes the durable queue with refreshed evidence, so a new conflict cannot open review against the previous server value. `docs/scouting/HOSTED_HTTP.md` documents the real hosted Auth/REST/Edge harness and its isolated fictional identities; OTP/OAuth, successful providers and real delivery remain separate acceptance work.
+
 ## Access
 
 Approved active students and staff may scout. Parent-only accounts cannot access scouting, including through capability grants; a parent holding mentor, lead or admin is staff. Managers are staff, event scouting leads or holders of `scouting.manage`. Individual observations and pick lists remain author-owned. Shared pit and assignment changes have explicit manager gates.

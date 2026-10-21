@@ -1,0 +1,66 @@
+[
+  {
+    "name": "rls_enabled_no_policy",
+    "level": "INFO",
+    "count": 17,
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+    "scouting": [
+      {
+        "detail": "Table \\`public.scouting_operations\\` has RLS enabled, but no policies exist",
+        "metadata": {
+          "name": "scouting_operations",
+          "type": "table",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-21T19:02:15.841Z"
+      }
+    ]
+  },
+  {
+    "name": "function_search_path_mutable",
+    "level": "WARN",
+    "count": 2,
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable",
+    "scouting": [
+      {
+        "detail": "Function \\`public.scouting_http_pt409_probe\\` has a role mutable search_path",
+        "metadata": {
+          "name": "scouting_http_pt409_probe",
+          "type": "function",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-21T19:02:15.841Z"
+      },
+      {
+        "detail": "Function \\`public.scouting_http_serialization_probe\\` has a role mutable search_path",
+        "metadata": {
+          "name": "scouting_http_serialization_probe",
+          "type": "function",
+          "schema": "public"
+        },
+        "observed_at": "2026-10-21T19:02:15.841Z"
+      }
+    ]
+  },
+  {
+    "name": "anon_security_definer_function_executable",
+    "level": "WARN",
+    "count": 85,
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable",
+    "scouting": []
+  },
+  {
+    "name": "authenticated_security_definer_function_executable",
+    "level": "WARN",
+    "count": 168,
+    "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+    "scouting": []
+  },
+  {
+    "name": "auth_leaked_password_protection",
+    "level": "WARN",
+    "count": 1,
+    "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection",
+    "scouting": []
+  }
+]

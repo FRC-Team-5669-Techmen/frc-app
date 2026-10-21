@@ -26,7 +26,7 @@ function save(ctx) {
   if (['assignment', 'team'].includes(a.p_kind) && !manager) return fail('Scouting manager required.', '42501')
   if (old && old.member_id !== user.id && (!manager || ['observation', 'pick_list'].includes(old.kind))) return fail('Only the author can change that record.', '42501')
   if (old && (old.event_id !== a.p_event || old.kind !== a.p_kind || old.team_number !== a.p_team || old.match_key !== a.p_match)) return fail('The identity of a record cannot change.')
-  if ((old?.version ?? 0) !== a.p_expected_version) return fail('This record changed. Review the newer version before applying your edit.', '40001')
+  if ((old?.version ?? 0) !== a.p_expected_version) return fail('This record changed. Review the newer version before applying your edit.', 'PT409')
   const p = a.p_payload
   if (!p || Array.isArray(p) || typeof p !== 'object') return fail('A record needs an object payload.')
   if (!['pit', 'observation', 'assignment', 'message', 'pick_list', 'team'].includes(a.p_kind)) return fail('Unknown record kind.')
@@ -45,13 +45,13 @@ function save(ctx) {
   if (old && a.p_kind === 'message' && old.payload.reply_to !== p.reply_to) return fail('A reply cannot move to another conversation.')
   if (a.p_kind === 'pick_list') {
     if (!Array.isArray(p.entries) || new Set(p.entries.map(e => e.team)).size !== p.entries.length || p.entries.some(e => !Number.isInteger(e.team) || e.team <= 0 || ![1, 2, 3, 'dnp'].includes(e.tier) || !Number.isInteger(e.rank) || e.rank <= 0)) return fail('A pick list needs unique teams, tiers, and positive ranks.')
-    if (!old && rows(db, 'scouting_records').some(r => r.event_id === a.p_event && r.member_id === user.id && r.kind === 'pick_list')) return fail('Your pick list already exists. Reload it before editing.', '40001')
+    if (!old && rows(db, 'scouting_records').some(r => r.event_id === a.p_event && r.member_id === user.id && r.kind === 'pick_list')) return fail('Your pick list already exists. Reload it before editing.', 'PT409')
   }
   if (!old && rows(db, 'scouting_records').some(r => r.event_id === a.p_event && r.kind === a.p_kind && (
     (['team', 'pit'].includes(a.p_kind) && r.team_number === a.p_team)
     || (a.p_kind === 'observation' && r.member_id === user.id && r.team_number === a.p_team && matchIdentity(r) === matchIdentity({ match_key: a.p_match, payload: p }))
     || (a.p_kind === 'assignment' && p.status !== 'cancelled' && r.payload.status !== 'cancelled' && r.payload.assignee === p.assignee && r.team_number === a.p_team && matchIdentity(r) === matchIdentity({ match_key: a.p_match, payload: p }))
-  ))) return fail('A record already exists. Refresh and edit it.', '40001')
+  ))) return fail('A record already exists. Refresh and edit it.', 'PT409')
   const at = stamp(now)
   const record = { id: a.p_id, event_id: a.p_event, member_id: old?.member_id ?? user.id, kind: a.p_kind, team_number: a.p_team, match_key: a.p_match, payload: structuredClone(p), version: (old?.version ?? 0) + 1, created_at: old?.created_at ?? at, updated_at: at }
   if (old) engine.updateRows('scouting_records', r => r.id === record.id, record)

@@ -116,9 +116,9 @@ describe('queue synchronization and explicit failure states', () => {
     _resetWriteVia(); api.rpc = async (name, args) => ({ data: reply(args), error: null })
     expect((await syncScoutingQueue({ store, client: api, memberId: 'member-a', eventId: 'event-a' }))[0].status).toBe('synced')
   })
-  it('preserves conflicting proposals and requires deliberate resolution', async () => {
+  it.each(['PT409', '40001'])('preserves %s conflicts and requires deliberate resolution', async code => {
     const { store } = fixture(); const op = await store.enqueue('member-a', 'event-a', { ...record, version: 2 }); let calls = 0
-    const api = client(async () => { calls++; return { error: { code: '40001', message: 'The record changed.' } } })
+    const api = client(async () => { calls++; return { error: { code, message: 'The record changed.' } } })
     const args = { store, client: api, memberId: 'member-a', eventId: 'event-a' }
     expect((await syncScoutingQueue(args))[0].status).toBe('conflict')
     await syncScoutingQueue(args); expect(calls).toBe(1)

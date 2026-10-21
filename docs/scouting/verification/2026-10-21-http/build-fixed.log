@@ -1,0 +1,176 @@
+
+> frc-app@0.1.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 266 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/registerSW.js                                              0.13 kB
+dist/manifest.webmanifest                                       0.50 kB
+dist/index.html                                                 0.92 kB │ gzip:   0.46 kB
+dist/assets/chakra-petch-vietnamese-400-normal-Cn7ya5On.woff    5.04 kB
+dist/assets/chakra-petch-vietnamese-700-normal-gQuUA8Wu.woff    5.08 kB
+dist/assets/chakra-petch-vietnamese-600-normal-Pvj4qcw_.woff    5.11 kB
+dist/assets/chakra-petch-vietnamese-500-normal-BVzUBLGs.woff    5.12 kB
+dist/assets/chakra-petch-thai-400-normal-Bw1Q-fVY.woff2         7.04 kB
+dist/assets/chakra-petch-thai-700-normal-B7WL5pBr.woff2         7.29 kB
+dist/assets/chakra-petch-thai-500-normal-DeexCGiz.woff2         7.51 kB
+dist/assets/chakra-petch-thai-600-normal-C620THcd.woff2         7.56 kB
+dist/assets/chakra-petch-latin-ext-400-normal-C8u6EFkq.woff2    8.86 kB
+dist/assets/chakra-petch-latin-ext-500-normal-gA6791b0.woff2    9.03 kB
+dist/assets/chakra-petch-latin-ext-600-normal-CdGvbdDU.woff2    9.06 kB
+dist/assets/chakra-petch-latin-ext-700-normal-DAkvJhej.woff2    9.07 kB
+dist/assets/chakra-petch-thai-400-normal-KdzBjiWs.woff          9.42 kB
+dist/assets/chakra-petch-thai-700-normal-vZLZ_5L8.woff          9.70 kB
+dist/assets/chakra-petch-latin-400-normal-SafcrIr2.woff2        9.76 kB
+dist/assets/chakra-petch-latin-700-normal-CnDBPjkL.woff2        9.90 kB
+dist/assets/chakra-petch-thai-500-normal-CJG_V2_m.woff          9.91 kB
+dist/assets/chakra-petch-thai-600-normal-BiM5MXH8.woff          9.95 kB
+dist/assets/chakra-petch-latin-500-normal-BR1ody1F.woff2        9.96 kB
+dist/assets/chakra-petch-latin-600-normal-DVQm9bgb.woff2        9.97 kB
+dist/assets/share-tech-mono-latin-400-normal-15MgdvEM.woff     10.24 kB
+dist/assets/chakra-petch-latin-ext-400-normal-MNNNbyh_.woff    12.04 kB
+dist/assets/chakra-petch-latin-ext-700-normal-BeviJPUl.woff    12.17 kB
+dist/assets/chakra-petch-latin-ext-500-normal-BCHeNDEx.woff    12.18 kB
+dist/assets/chakra-petch-latin-ext-600-normal-nL80L4xU.woff    12.22 kB
+dist/assets/chakra-petch-latin-400-normal-D7EtbySE.woff        13.16 kB
+dist/assets/chakra-petch-latin-700-normal-D1s_c2du.woff        13.33 kB
+dist/assets/chakra-petch-latin-500-normal-CnUQnZ4D.woff        13.41 kB
+dist/assets/chakra-petch-latin-600-normal-DQKfcdKo.woff        13.43 kB
+dist/assets/share-tech-mono-latin-400-normal-CCqdbj5z.woff2    13.50 kB
+dist/assets/SignoutForm-wJ1rMI8v.css                            1.95 kB │ gzip:   0.64 kB
+dist/assets/MemberPage-CRnsrwBY.css                             2.47 kB │ gzip:   0.71 kB
+dist/assets/LandingPage-dMTMVmJZ.css                            2.74 kB │ gzip:   0.82 kB
+dist/assets/AttendanceHistory-GzO-sMx7.css                      2.79 kB │ gzip:   0.95 kB
+dist/assets/AccessGate-Do6e_Opx.css                             3.17 kB │ gzip:   0.96 kB
+dist/assets/SignoutsPage-BwVecsAF.css                           3.20 kB │ gzip:   0.99 kB
+dist/assets/ActivityPage-DjxoWT8o.css                           3.35 kB │ gzip:   0.95 kB
+dist/assets/LoginPage-Dd65vbMB.css                              3.37 kB │ gzip:   1.02 kB
+dist/assets/ParentResponse-CNZUnxlT.css                         3.73 kB │ gzip:   1.09 kB
+dist/assets/ReportsPage-DIA1zMVC.css                            3.90 kB │ gzip:   1.09 kB
+dist/assets/FeedbackWidget-BxK1PP9b.css                         4.04 kB │ gzip:   1.15 kB
+dist/assets/PresenceBoard-Pyjo9WaH.css                          4.70 kB │ gzip:   1.43 kB
+dist/assets/SurveyPage-Dr90hHdh.css                             4.75 kB │ gzip:   1.24 kB
+dist/assets/AccessRequestsPage-DlOysgMN.css                     4.82 kB │ gzip:   1.25 kB
+dist/assets/MemberApplication-5Pe44akn.css                      5.36 kB │ gzip:   1.34 kB
+dist/assets/CheckinPage-DtdHi8Ep.css                            5.51 kB │ gzip:   1.35 kB
+dist/assets/SquadPage-HJRT2XT0.css                              5.61 kB │ gzip:   1.31 kB
+dist/assets/CertificationsPage-CqLAGq5A.css                     5.78 kB │ gzip:   1.50 kB
+dist/assets/ConnectorPage-2BsKQLqA.css                          5.83 kB │ gzip:   1.38 kB
+dist/assets/ReadinessPage-B4czZkVg.css                          6.08 kB │ gzip:   1.39 kB
+dist/assets/tour-CnB2mjGz.css                                   6.22 kB │ gzip:   1.43 kB
+dist/assets/HomePage-ChgDY4QJ.css                               6.48 kB │ gzip:   1.70 kB
+dist/assets/ApplicationsPage-CxAyggcS.css                       6.59 kB │ gzip:   1.43 kB
+dist/assets/Standing-RKUMQnd0.css                               6.76 kB │ gzip:   1.70 kB
+dist/assets/LogHoursPage-D46YYnQa.css                           7.31 kB │ gzip:   1.76 kB
+dist/assets/ParentHomePage-R4UHCU5k.css                         7.66 kB │ gzip:   1.67 kB
+dist/assets/SurveysAdmin-DcdiWC2C.css                           8.01 kB │ gzip:   1.60 kB
+dist/assets/HoursBoard-7ekWx10j.css                             9.43 kB │ gzip:   2.13 kB
+dist/assets/MyHoursPage-_K-RaRBf.css                           10.02 kB │ gzip:   2.13 kB
+dist/assets/ProfilePage-BNoi8emn.css                           10.57 kB │ gzip:   2.22 kB
+dist/assets/AnnouncePage-wYMK6D1r.css                          10.78 kB │ gzip:   2.12 kB
+dist/assets/FeedbackPage-Cr8gI5Xg.css                          10.97 kB │ gzip:   2.12 kB
+dist/assets/RosterPage-DjbHQSgg.css                            12.82 kB │ gzip:   2.39 kB
+dist/assets/VerifyHoursPage-D_Xl9wmc.css                       14.69 kB │ gzip:   2.68 kB
+dist/assets/SchedulePage-1ZcLMsuZ.css                          15.48 kB │ gzip:   2.78 kB
+dist/assets/JobsPage-BrWDgzSW.css                              17.43 kB │ gzip:   3.22 kB
+dist/assets/ScoutingPage-CDSIx3ZO.css                          18.87 kB │ gzip:   4.07 kB
+dist/assets/HandbookPage-cemWXd_u.css                          18.88 kB │ gzip:   4.03 kB
+dist/assets/EventHub-DMRIN4Vw.css                              36.67 kB │ gzip:   6.91 kB
+dist/assets/index-CsfhlaG4.css                                 66.32 kB │ gzip:  24.40 kB
+dist/assets/discord-B-jhtE7I.js                                 0.06 kB │ gzip:   0.08 kB
+dist/assets/names-DnOeks6H.js                                   0.27 kB │ gzip:   0.18 kB
+dist/assets/subteams-DVxmxLlR.js                                0.29 kB │ gzip:   0.23 kB
+dist/assets/csv-s28ANtIX.js                                     0.41 kB │ gzip:   0.29 kB
+dist/assets/fetchAllRows-Dq_tpNqs.js                            0.63 kB │ gzip:   0.39 kB
+dist/assets/shopStatus-CtNQzdvD.js                              0.73 kB │ gzip:   0.39 kB
+dist/assets/applicationFields-Boz1FHED.js                       0.75 kB │ gzip:   0.39 kB
+dist/assets/CheckinPage-BWAkrfRI.js                             0.77 kB │ gzip:   0.47 kB
+dist/assets/presence-C07VOrWj.js                                0.80 kB │ gzip:   0.47 kB
+dist/assets/useGlance-D3IMINTe.js                               1.17 kB │ gzip:   0.66 kB
+dist/assets/jobCerts-C78pc5Np.js                                1.58 kB │ gzip:   0.83 kB
+dist/assets/MedicalForm-UgiF-85h.js                             1.64 kB │ gzip:   0.79 kB
+dist/assets/OfflineScouting-Dvv9N-il.js                         1.77 kB │ gzip:   0.87 kB
+dist/assets/LandingPage-Bdw69913.js                             1.86 kB │ gzip:   0.71 kB
+dist/assets/MemberPage-CPEaZ4fb.js                              1.87 kB │ gzip:   0.74 kB
+dist/assets/accountability-XCBrzhfq.js                          2.05 kB │ gzip:   1.01 kB
+dist/assets/feedbackZip-CdOgqVJr.js                             2.10 kB │ gzip:   1.05 kB
+dist/assets/attendanceState-Obbpu_Yq.js                         2.25 kB │ gzip:   1.00 kB
+dist/assets/SignoutForm-rQur3kSx.js                             2.77 kB │ gzip:   1.41 kB
+dist/assets/permissions-KAEMLo33.js                             2.89 kB │ gzip:   1.25 kB
+dist/assets/signout-XEnR7Kgm.js                                 3.10 kB │ gzip:   1.26 kB
+dist/assets/Standing-D4iHECRO.js                                3.10 kB │ gzip:   1.48 kB
+dist/assets/ActivityPage-Cc7uZ6Op.js                            3.21 kB │ gzip:   1.24 kB
+dist/assets/LoginPage-Bn7sFtow.js                               3.35 kB │ gzip:   1.49 kB
+dist/assets/surveys-BnAv6QNY.js                                 3.92 kB │ gzip:   1.71 kB
+dist/assets/ideaCerts-Zi8Eh4_9.js                               4.03 kB │ gzip:   1.76 kB
+dist/assets/TripsPage-D8Ups2_s.js                               4.27 kB │ gzip:   1.69 kB
+dist/assets/EmergencyInfoPage-w8EIbnW5.js                       4.40 kB │ gzip:   1.50 kB
+dist/assets/AccessGate-CKN_2kb0.js                              4.74 kB │ gzip:   1.53 kB
+dist/assets/PresenceBoard-6TCdOCvG.js                           4.88 kB │ gzip:   2.18 kB
+dist/assets/DriverDocsPage-Clz89Th7.js                          5.12 kB │ gzip:   1.90 kB
+dist/assets/FamilyPage-NL1TI37A.js                              5.90 kB │ gzip:   2.28 kB
+dist/assets/AttendanceHistory-BWrBo63U.js                       5.99 kB │ gzip:   2.50 kB
+dist/assets/FeedbackWidget-BfFjNrYY.js                          6.32 kB │ gzip:   2.77 kB
+dist/assets/AccessRequestsPage-COiJ4dRG.js                      6.55 kB │ gzip:   2.00 kB
+dist/assets/ReadinessPage-BXuDaA9K.js                           6.70 kB │ gzip:   1.78 kB
+dist/assets/SquadPage-DeJsu-ZS.js                               6.86 kB │ gzip:   2.20 kB
+dist/assets/SurveyPage-CqxulDmV.js                              6.87 kB │ gzip:   2.61 kB
+dist/assets/ParentResponse-BJ6q4DUy.js                          7.06 kB │ gzip:   2.56 kB
+dist/assets/SignoutsPage-b8gEJ31C.js                            7.52 kB │ gzip:   2.75 kB
+dist/assets/TeamBoardsPage-B1-ti320.js                          7.54 kB │ gzip:   2.72 kB
+dist/assets/feedbackModel-B8mfJzXD.js                           7.93 kB │ gzip:   3.32 kB
+dist/assets/LogHoursPage-Bb9sVZJ1.js                            8.49 kB │ gzip:   2.60 kB
+dist/assets/EventJoinPage-Rhe0eL5o.js                           8.91 kB │ gzip:   3.18 kB
+dist/assets/ParentHomePage-2Vsi5t_t.js                          9.07 kB │ gzip:   3.09 kB
+dist/assets/VolunteerCheckinPage-DDEDpr-4.js                   10.66 kB │ gzip:   3.62 kB
+dist/assets/ConnectorPage-LJFw9VbY.js                          11.61 kB │ gzip:   3.61 kB
+dist/assets/CertificationsPage-BpV8MogB.js                     11.89 kB │ gzip:   4.43 kB
+dist/assets/RostersPage-CypCJUHs.js                            11.90 kB │ gzip:   4.03 kB
+dist/assets/HomePage-DpZcYjE5.js                               13.07 kB │ gzip:   4.14 kB
+dist/assets/sign-BXreVlhR.js                                   14.02 kB │ gzip:   5.04 kB
+dist/assets/MyHoursPage-UlTJK_VF.js                            14.02 kB │ gzip:   4.39 kB
+dist/assets/CheckinPage-4E4mhRJs.js                            14.44 kB │ gzip:   4.71 kB
+dist/assets/ProfilePage-B_m_2xBB.js                            15.18 kB │ gzip:   4.92 kB
+dist/assets/RosterPage-LO7U6ip8.js                             15.20 kB │ gzip:   4.64 kB
+dist/assets/ApplicationsPage-BXSscT-e.js                       15.73 kB │ gzip:   4.79 kB
+dist/assets/StandingPage-C7SVu6U2.js                           17.33 kB │ gzip:   5.43 kB
+dist/assets/SurveysAdmin-Bd72wE8-.js                           17.60 kB │ gzip:   5.39 kB
+dist/assets/StandingTeamPage-BLggmDmd.js                       19.37 kB │ gzip:   5.57 kB
+dist/assets/MemberApplication-D6SdU4Ne.js                      20.10 kB │ gzip:   6.30 kB
+dist/assets/ReportsPage-Dky4z7xN.js                            21.47 kB │ gzip:   6.96 kB
+dist/assets/SchedulePage-C40cPoGU.js                           21.92 kB │ gzip:   6.74 kB
+dist/assets/HoursBoard-BNKbn82R.js                             23.44 kB │ gzip:   7.35 kB
+dist/assets/tour-BWk8AydE.js                                   24.31 kB │ gzip:   7.51 kB
+dist/assets/EventHubBoards-DuBbkzD1.js                         25.68 kB │ gzip:   7.39 kB
+dist/assets/EventHub-CCdRV-Fi.js                               26.04 kB │ gzip:   9.55 kB
+dist/assets/JobsPage-UXvwGtxc.js                               27.71 kB │ gzip:   8.46 kB
+dist/assets/AnnouncePage-DMiWFhDD.js                           29.78 kB │ gzip:   9.27 kB
+dist/assets/FeedbackPage-CHq0QoyA.js                           30.28 kB │ gzip:  10.80 kB
+dist/assets/TripsAdmin-B-7JBGsd.js                             40.83 kB │ gzip:  10.79 kB
+dist/assets/VerifyHoursPage-Bd271fCp.js                        41.00 kB │ gzip:  10.09 kB
+dist/assets/handbook-C3sDG4TJ.js                               41.91 kB │ gzip:  15.54 kB
+dist/assets/HandbookPage-DgD3KvfZ.js                           54.19 kB │ gzip:  13.01 kB
+dist/assets/EventFamilyPage-Bv3hHGLv.js                        59.10 kB │ gzip:  17.48 kB
+dist/assets/ScoutingPage-DYHLaa0F.js                          168.53 kB │ gzip:  52.06 kB
+dist/assets/index-COcq5Ute.js                                 428.05 kB │ gzip: 124.86 kB
+✓ built in 3.32s
+
+PWA v0.21.2
+Building src/sw.js service worker ("es" format)...
+vite v5.4.21 building for production...
+transforming...
+✓ 58 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/sw.mjs  17.44 kB │ gzip: 5.90 kB
+✓ built in 111ms
+
+PWA v0.21.2
+mode      injectManifest
+format:   es
+precache  145 entries (1957.49 KiB)
+files generated
+  dist/sw.js

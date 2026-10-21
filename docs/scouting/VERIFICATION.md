@@ -1,8 +1,29 @@
 # Scouting verification — October 21, 2026
 
-Code is on `codex/scouting-2026-evidence`, [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). Software and isolated hosted SQL checks pass. **Immediate competition acceptance remains blocked** by hosted HTTP access, physical-device/human/source gates and production release authorization. No production database change, deployment, main push or real Discord send occurred.
+Code is on `codex/scouting-2026-evidence`, [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). Real isolated hosted Auth/REST/Edge and SQL checks now pass. **Immediate competition acceptance remains blocked** by isolated app-preview access, provider success, physical-device/human/source gates and production release authorization. No production database change, deployment, main push or real Discord send occurred.
 
-## Final decision-support candidate: `db990e5`
+## Hosted HTTP conflict continuation
+
+Actual HTTPS to Supabase works in this workspace. The isolated branch reported PostgreSQL **17.11** / PostgREST **14.18**. Two runs stalled at stale correction after 32 passing assertions; a diagnostic serialization RPC also timed out. Supabase documents the [PostgREST 14 retry defect for application-raised 40001](https://supabase.com/docs/guides/troubleshooting/high-cpu-and-infinite-transaction-retries-when-using-custom-error-codes-in-rpc-functions-77326b). The unreleased 0022 now emits `PT409` (HTTP 409) for stale edits, missing targets and duplicate logical records. Client/fixture/SQL expectations and native races agree; older `40001` responses remain recognized by the queue.
+
+| Executed check | Current result and boundary |
+| --- | --- |
+| Unit/DOM | **1031/1031, 71 files**; both conflict codes remain held for review, and a controlled delayed refresh prevents review against stale evidence |
+| Hosted HTTP | **49/49 + 3/3 revoked + 3/3 restored**; real GoTrue password/refresh JWTs, PostgREST and deployed Edge boundaries. Six SQL-provisioned fictional accounts; no OTP/OAuth or real notifications |
+| Hosted SQL/RLS | **72/72**, current 0022 applied twice; final rollback proof after guarded fixture cleanup leaves zero users/profiles/records |
+| Native PostgreSQL 17.11 | **72/72**, **17/17** permissive mutants caught and **7/7** separate-connection races; disposable local cluster with platform stand-ins |
+| Browser coverage | **1632/1632** across 14 unaffected modules in the broad run, then **169/169 scouting** on the final state-ordering fix; complete **1801** expected feature coverage across serial runs. The broad run itself was 1800/1801, not a passing run |
+| Built PWA/local API | **33/33** on final application; native Chromium/service worker/IndexedDB, PostgREST 14.18 / PostgreSQL 17.11 and synthetic Auth. Five new assertions cover real concurrent correction, HTTP 409, held proposal, both review inputs and explicit version-three apply |
+| Check-in | **51/51**, both Chromium widths; check-in source unchanged |
+| Required gates | Build: **145 precache entries / 1957.46 KiB**; connector current; design 36 aliases × 3 grounds / 79 components / 315 files; calendar **19/19**; 50 original history entries byte/SHA-identical; portable actual-route DOM review passes; no dependency/lockfile change |
+
+The broad browser run reached **1800/1801**: the desktop scouting conflict panel briefly showed old server context because the queue update became visible before evidence refresh. A deterministic DOM test failed against that ordering (review became available while the refresh was held), then passed after publishing queue and evidence together through `refresh`. This preserves the winning version and the held proposal. The final affected-route (169/169) and built-PWA (33/33) runs pass and are retained separately; the broad run itself remains a failed run.
+
+The test branch `cctevrqiuqdiswkgghwo` was cleaned and deleted. All eight fixture/job/request counters were zero before deletion. Production read-only postcheck still found PostgreSQL 17.6 and zero scouting tables/functions. Both connected Vercel accounts return team-scope 403 for the existing frc-app project, so no isolated shareable app preview was created. TBA/Nexus credentials are inaccessible and their unauthenticated endpoints return 401; public Statbotics returned HTTP 500 with [] for two keys. The original YouTube URL still receives proxy CONNECT 403. These remain distinct blockers.
+
+Current evidence is in `verification/2026-10-21-http/`; reproduction is in `HOSTED_HTTP.md`. Initial failures and the canceled/reused-server browser attempts are retained. No assertion, actionability timeout or force-click was changed. Earlier decision-workflow/accessibility/volume/soak results below retain their original source boundaries and are not fresh repeats of this continuation. FIELD_ACCEPTANCE.csv now has **16 NOT_RUN, two PARTIAL and one PASS (P11)**; no physical-device or human gate was passed.
+
+## Previous decision-support candidate: `db990e5`
 
 Implementation commits `09dab54`, `8fef933` and `75fad88` add stable confirmed evidence during pending corrections, complete observation search/dispute review, reviewed drive-team briefs, definitive authorization-denial handling and exclusion of video whose event scope is unverified. `DECISION_SUPPORT.md` records the acceptance expectations and proposed Techmen behavior. `db990e5` formats printed cache timestamps as UTC and verifies the fixture UI using native timers with fixed business dates. No SQL, provider, dependency or auth protocol changed. Final evidence consolidated **2026-10-21T17:44:31.273120+00:00**.
 

@@ -4,17 +4,19 @@ This is the human checklist. The AI keeps responsibility for programming, databa
 
 The current application is a review candidate, not an installed production release. Do not start these phone exercises on the normal team site yet. First the AI must give you a working, separate test link, the correct test event, sign-in instructions and a build identifier. A fictional offline review file is useful for looking around, but cannot establish hosted login or synchronization.
 
-## 1. Do now: unblock the test workspace's Internet access
+## 1. Do now: authorize the existing Vercel connection for the team
 
-**What is blocked:** this ChatGPT execution environment permits package-download sites but not the Supabase application endpoint. A fresh read-only connection attempt on October 21, 2026 received a proxy CONNECT 403 before reaching Supabase. This is a workspace access setting, not evidence that your Supabase password is wrong.
+**Network access now works.** The AI reached Supabase and completed 55 real hosted Auth/API/function assertions in a separate fictional test branch. That temporary branch was cleaned and deleted. Do not change your phone Wi-Fi or repeat the previous workspace-network instructions.
 
-1. Open the settings for the cloud execution environment attached to this conversation. Look for Internet or network access. This is not your phone's Wi-Fi setting, Vercel Firewall, or Supabase's SQL editor.
-2. Allow the environment to reach the web services needed for testing, keeping existing GitHub/package access. The AI needs HTTPS to the isolated Supabase test project's hostname and to `www.thebluealliance.com`, `api.statbotics.io` and `frc.nexus`. If the settings only accept individual domains, have the AI supply the new test project's exact hostname first; the old temporary project was deleted and must not be reused. Source-video review also needs approved access to its original sites and media hosts, which can be identified separately.
-3. Save/apply the environment configuration and allow any requested environment refresh. Tell the AI: **“The environment network setting is updated. Recheck access and prepare the test link.”**
+**What is blocked now:** the connected Vercel app can list `frc-app`, but both connected accounts receive a team-scope 403 when inspecting the project in **mrpina-s-projects**. The AI cannot safely configure an isolated preview or give you a tested phone link yet. A normal preview pointing at production is not the test system.
 
-The AI cannot see your settings screen, so exact button names are not verified. **If you cannot find this setting, send a screenshot of the conversation's environment/settings controls. Do not include passwords or secret keys.** The AI can then identify the next click. No available tool currently edits this workspace's policy; the similarly named Vercel network tool controls a different product.
+1. Open the existing Vercel app connection settings in ChatGPT. Use the intended account that can access the **mrpina-s-projects** team and **frc-app** project.
+2. If the connection offers team authorization or account-scope approval, authorize that existing team. Keep passwords, login codes and tokens private; do not paste them into chat. Signing into the Vercel website alone does not establish access for this connection.
+3. Tell the AI that team access is available. The AI must recheck project inspection, create a new isolated test backend, configure the separate app preview and verify the link before assigning phone drills.
 
-**Done when:** the AI reports that the actual test endpoint is reachable. A saved setting alone is not proof. Network permission does not authorize production changes or Discord sends.
+The service error recommends a team-authorization action, but no tool to generate that authorization link is available in this session. Exact settings-screen button names are not verified. If the connection cannot expose team authorization, report that result; do not create a second project or broaden production access as a workaround.
+
+**Done when:** the AI can inspect this project through the existing connection and supplies a verified separate test link. Network and Vercel access do not authorize production changes or Discord sends.
 
 ## 2. Let the AI prepare the test system
 
@@ -135,4 +137,4 @@ Mistakes or help needed:
 Screenshot/video filename, if useful:
 ```
 
-The AI translates your observations into [FIELD_ACCEPTANCE.csv](FIELD_ACCEPTANCE.csv), links evidence, records failures and fixes them. The 19 acceptance gates currently remain **16 not run and three partial**; writing this guide does not pass any gate. P11–P13 are principally AI-owned hosted database/provider/dispatch checks, not instructions for you to operate Supabase manually.
+The AI translates your observations into [FIELD_ACCEPTANCE.csv](FIELD_ACCEPTANCE.csv), links evidence, records failures and fixes them. The 19 acceptance gates currently are **16 not run, two partial and one passed**. P11 passed automated isolated hosted database/API checks; this does not pass any phone or human gate. P11–P13 are principally AI-owned hosted database/provider/dispatch checks, not instructions for you to operate Supabase manually.
