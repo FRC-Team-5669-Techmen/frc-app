@@ -1,0 +1,116 @@
+{
+  "date": "2026-10-21",
+  "branch": "codex/scouting-2026-evidence",
+  "code_commit": "32b6b9814d7a3baaf14b1bbf38281e5e368b2caa",
+  "code_git_objects": {
+    "src": "8e7d6a629d8fe4d4f94adb820533ad2d7eb635e1",
+    "api": "9c0ebe7bab17b34927decd7f96b5519acf108498",
+    "supabase": "60fb7fc93513e27e1db10979c40f7a2b16344364",
+    "tools": "9a486ecbb7681156ce2e1c99c8775814c73e9099",
+    "tests": "271e265c83be1eeccadaf3e4fb69d2ffac69e1a9",
+    "package.json": "1470899d98484f28ba76e2638568f19d947ce5b6",
+    "package-lock.json": "9d7526a64cfe4d9e2bf33c45aff37b2d653ecb1b"
+  },
+  "pr": "https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4",
+  "runtime": {
+    "node": "24.19.0",
+    "npm": "11.9.0",
+    "chromium": "154.0.8037.57",
+    "postgres": [
+      "16.10",
+      "17.6"
+    ],
+    "postgrest": "13.0.7"
+  },
+  "executed": {
+    "unit": {
+      "passed": 940,
+      "total": 940,
+      "files": 63
+    },
+    "feature_browser": {
+      "passed": 1749,
+      "total": 1749,
+      "suites": 15
+    },
+    "post_install_scouting_browser": {
+      "passed": 129,
+      "total": 129
+    },
+    "checkin_browser": {
+      "passed": 51,
+      "total": 51
+    },
+    "native_sql_each_engine": {
+      "passed": 573,
+      "total": 573,
+      "files": 23
+    },
+    "scouting_sql": {
+      "passed": 72,
+      "total": 72
+    },
+    "permissive_mutants_each_engine": {
+      "caught": 17,
+      "total": 17
+    },
+    "native_race_each_engine": {
+      "passed": 7,
+      "total": 7
+    },
+    "built_pwa_http": {
+      "passed": 19,
+      "total": 19
+    },
+    "math": {
+      "passed": 13,
+      "total": 13
+    },
+    "calendar": {
+      "passed": 19,
+      "total": 19
+    }
+  },
+  "scope": {
+    "real_phones_tested": false,
+    "human_usability_tested": false,
+    "hosted_auth_tested": false,
+    "live_provider_tested": false,
+    "real_discord_messages_sent": false,
+    "production_changed": false,
+    "original_video_audio_frames_observed": false,
+    "real_match_corpus_annotated": false,
+    "local_auth_is_synthetic": true,
+    "fixture_backend_is_simulated": true
+  },
+  "live_catalog_read_only": {
+    "postgres": "17.6",
+    "scouting_tables": 0,
+    "scouting_functions": 0,
+    "scouting_edge_functions_present": false
+  },
+  "evidence_sha256": {
+    "build.log": "a4f7b23858efa1a3edd4ffa907195f37e43b24ba205e2700f694ea5c3df696e2",
+    "calendar.log": "c7c328545f5f889831e355d7be91e6cd6cf65d33fed7b727dcd3cb608fcff4e2",
+    "checkin.log": "ab60243689dcc86400f576df2169ee155fec61dd8e242481bd5746621be69580",
+    "ci.json": "43e8abc04540bd7aaf3fb0cb40df42bc5c01752444bdcab73f2feb46a9a7c0ab",
+    "connector.log": "f38be14f9c251af27dbacf9d703116f8f7ef2f7f96ad9373e10e06b0bd364cbc",
+    "dependencies.log": "49eaead95f90e1e161fb7c23e3f941a2bbddbe047bfba1236ef4863e01de5de4",
+    "design.log": "3effffbeb92d66b45aab0ba329189cc34c5b416fce2183414ac6e8daf63899de",
+    "features.json": "efbdf352b727b21ccc46c2f6c5e996e4d55c4848253214dfb1871b30fd2c514b",
+    "features.log": "113a4ee982ffafe90ae741a4e2dfbc7b36d63c987d475a7573d457e3a4d85d6e",
+    "history.log": "10276ef0e9d1942e3cbea5aa604ae23bf24dff6769a298b3a507031e7872c92c",
+    "math.log": "daad95e816917b18ed408f3fc1e4f8ef1402a97c6c00fcf3d453164c85a321fb",
+    "portable-review.log": "81bd0f8a9b38f6a307b50cc271333ecc4876693df445965ee0e9881fe2ba1e38",
+    "postgres16.log": "0830fc7b33e53b0e86b12d14ce41f0efc549e3a09f126de2ad6427c9e836998e",
+    "postgres17.log": "43f5e6e11cc9ccb69493307b48f01e7312dcce906db1664103a53349c9f9faf7",
+    "practice-1440-fixture.png": "1b95dc1f02621f3e88496293f4efc1870571c318bfe0491ad2000488422f2715",
+    "pwa-local.png": "1331845bcb234d82aa4a567206e3a785cdeb9e7d16ce3a8ad6b52ee980e405d3",
+    "pwa.json": "012c7529f2c0df9db474529a4f5bca3bba017687be8ee6826c05965a6dcb34b1",
+    "pwa.log": "bce9c83efed3fa05ec4f1d21bf995fd52fa985c5e38a5443a91f65a8d0aa73a5",
+    "scout-375-fixture.png": "7fe5bbe1a0b70e3edbb5e45cb237d91f60eaec3eb8ee144d62eeb797cd9c8a1d",
+    "scouting-clean.json": "23ccf8f3e12c08af018c35213582f5b4b24d573649ebdf2bd4dc9d1aea842490",
+    "scouting-clean.log": "3e0e59c3c7bdfe9001142d36288ff1b45cca3e28a8408aa7dab868d23382a2c7",
+    "unit.log": "2d611b3688901e82ee03c22d994d802a9649e5b529e7272c867f739843bd7deb"
+  }
+}

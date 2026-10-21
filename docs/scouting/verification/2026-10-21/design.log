@@ -1,0 +1,5 @@
+
+> frc-app@0.1.0 ds:audit
+> node scripts/design-system/ds-audit.mjs
+
+ds-audit: ok — 36 aliases × 3 grounds literal and complete, 79 components verified, 315 files scanned

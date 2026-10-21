@@ -1,18 +1,65 @@
-# Active continuation verification — October 21, 2026
+# Scouting verification — October 21, 2026
 
-This section supersedes the historical access blockers below. Review branch `codex/scouting-2026-evidence` is pushed and [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4) is open. The checkpoint tree exactly matched bundled commit `b7c27bb`; remote main remains `9bb3a07`. No private source handoff is committed.
+The implemented system is on `codex/scouting-2026-evidence`, [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). It is **locally verified, not accepted for immediate competition release**. Production has no scouting schema or scouting Edge Functions installed. No live database change, main push or real Discord notification occurred.
 
-Executed in this continuation so far:
+## Current executed results
 
-- Initial baseline: 934/934 unit/DOM tests, production build, connector/design/calendar/history and 13 independent synthetic math assertions passed.
-- Real Chromium fixture scouting after accessibility/queue fixes: **104/104**, 375px touch emulation and 1440px desktop; check-in regression **51/51**. These are browser results with a fictional backend, not phones or live services.
-- Native PostgreSQL **16.10**: migrations applied twice; **573/573** checks across **23** SQL suites, including **72/72** scouting checks; **17/17** permissive mutants caught. New separate-connection races: **7/7** assertions passed.
-- Built production PWA → Supabase JS → local **PostgREST 13.0.7** → native PostgreSQL: **17/17** assertions passed. Synthetic local Auth tokens/refresh endpoint. Actual browser network disable, cold deep link and installed start URL, expired-session local capture, native IndexedDB reload, deliberately truncated HTTP response after commit, retry deduplication, parent/direct-write denial and connector HTTP preview/commit/denial. No fixture RPC implementation is used by this check.
-- Offline-recovery milestone: **937/937** unit/DOM tests in **62** files; production build (**145** precache entries, **1912.00 KiB**), connector registry, design audit, 19/19 calendar checks and lossless 50-entry history check passed. Subsequent changes require fresh final verification.
+| Check | Actual result and scope |
+| --- | --- |
+| Clean installation | npm 10.9.9 and npm 11.9.0 each install 538 packages; repaired missing nested esbuild entries without changing an existing pinned version |
+| Combined unit/DOM suite | **940/940**, **63 files**, including original regressions and scouting cases |
+| Production build | Passed; **145** precache entries, about **1.9 MiB** (local 1917.55 KiB; CI 1917.67 KiB) |
+| Full Chromium feature regression | **1749/1749**, **15 features**, at 375px touch emulation and 1440px desktop |
+| Scouting within that browser suite | **129/129**, including all eight practice missions, durable export and frozen/reviewed footage history |
+| Check-in regression | **51/51**, 375px and 1440px |
+| Native PostgreSQL 16.10 and 17.6 | Migrations applied twice; **573/573** checks across **23** rollback suites on each engine; **72** checks are scouting |
+| Permissive database mutations | **17/17 caught** on each native engine |
+| Separate-connection races | **7/7** on each native engine: same-operation receipt, exact counts, stale correction, retained winning history, logical observation uniqueness and single delivery reservation |
+| Built PWA/API recovery | **19/19** on native Chromium, actual service worker/IndexedDB/Supabase JS, local PostgREST 13.0.7 and PostgreSQL 17.6; synthetic Auth issuance |
+| Connector generation/check | Current; **174** functions called, **172** reachable, **23** tools, **zero** direct client table writes |
+| Design audit | Passed: 36 aliases × 3 grounds, 79 components, 315 files |
+| Existing calendar regression | **19/19** (test engine; no real sends) |
+| History preservation | All **50** original entries byte/SHA-identical |
+| Independent arithmetic | **13** hand-oracle assertions; synthetic fixtures |
+| Portable review | Actual route/all five tabs, mentor planner, parent denial; zero script errors under DOM/IndexedDB emulation |
+| GitHub Actions | [CI run 39578534065](https://github.com/FRC-Team-5669-Techmen/frc-app/actions/runs/39578534065) **passed** on Node 22.23.3/npm 10.9.9 at code commit `32b6b98`; actual logs confirm 940 tests and all five CI gates |
 
-The built-PWA test first failed cold navigation (2/3 passed). The retained harness then passed after a scouting navigation fallback and a device-local prepared identity entry were implemented. Textarea/select names and initial queue loading were also corrected from browser failures. These failures are recorded as defects found, not passing verification.
+Current cloud runtime: Node 24.19.0/npm 11.9.0 and Chromium 154.0.8037.57 on Debian 13. Native server tooling is outside application dependencies. See [retained logs and assertion records](verification/README.md) and [browser status](browser-status.md) for commands and boundaries. A final focused scouting/PWA repeat after the repaired clean install is recorded beside these results.
 
-Still external/unverified: hosted Supabase Auth/deployment/configuration, deployed Edge Functions, representative provider responses, authorized real Discord delivery, physical iPhone/Android backgrounding/storage behavior, beginner task measurements, independent real-match annotations and original reference audio/frames. Production use is not yet accepted. No production deployment, live database change, main push or real notification occurred.
+## What each capability is actually verified against
+
+| Capability / evidence lead | Independent expectation | Executed proof |
+| --- | --- | --- |
+| W1: pit claims and match verification | A1 hand fixture: 2/3 decisive matches, separate unseen/N/A/disputed data; corrected evidence replaces a trial | Math oracle, model/DOM tests, native SQL validation and Chromium explicit answer persistence |
+| W2: Scout This and footage | A2 identity, authorship, prior-event provenance, one logical record and reviewed stale correction | Schedule/storage/provenance tests, native RLS/mutations/races and Chromium assignment/conflict workflows; real footage accuracy remains unverified |
+| W3: stands-to-pit communication | A3 save independent of delivery, immutable thread/revision and one reservation | DOM/fixture flows, mocked dispatcher/API failures, native RLS and two-connection reservation tests. No live Discord delivery or full map-geometry parity claimed |
+| W4: lists, filters and aggregation | A4 hand medians/support/DNP/unknown examples; explicit Techmen formula | Independent arithmetic/model tests, native author ownership and browser list workflows |
+| W5: comparison preview/apply | A5 fixed selected-slot permutation, unchanged cancel and stale-write refusal | Oracle/model tests, Chromium stored-record assertions and native version checks |
+| Offline recovery | Original operation/actor/body survive interruption; no second logical observation | Native races and actual built-PWA network disable, expiry, truncated committed response, page closure, lease recovery and reconnect |
+| Beginner practice | All eight workflows can save/restore/export; first pass remains distinct from correction; no automatic certification | Chromium completes all missions with simulated partner acknowledgments, reloads workbook history and inspects the exported JSON; actual student proficiency is NOT tested |
+
+TideScout workflow timestamps remain secondary leads, not observed original audiovisual behavior. Proposed Techmen formulas and deviations are in [EVIDENCE.md](EVIDENCE.md), [CONTRACT.md](CONTRACT.md) and [acceptance-oracles.md](acceptance-oracles.md).
+
+## Defects found and corrected in this continuation
+
+- Restored textarea/select names were unstable: explicit accessible names now survive reload and value changes.
+- A cached event briefly said all work was synced before its queue loaded: event/queue opening now waits for durable queue state.
+- Built offline deep links failed, and an expired session could trap startup: scoped service-worker navigation plus prepared local entry now recovers the event and installed start URL.
+- A prepared identity alone could show the previous account offline: the gateway also matches the current locally stored session member and responds to sign-out/cross-tab changes.
+- A page closed before its receipt left a `syncing` operation waiting indefinitely: an expiry timer automatically retries the original operation after restart.
+- Practice could retain completion after a requirement was withdrawn, and first-pass footage could be overwritten: completion invalidates appropriately and the workbook freezes/appends evidence.
+- npm 11 had tolerated an invalid nested esbuild resolution; npm 10 CI rejected it. The lockfile now includes the missing platform entries, and clean installs plus GitHub CI pass.
+
+The PWA harness first failed cold navigation (2/3). The expanded browser run exposed the offline account mismatch (127/129). These are corrected failures, not passing evidence. Retained final checks show their positive and negative controls.
+
+## Specific release blockers and fidelity gaps
+
+1. **Production not installed.** A metadata-only query on the connected `frc-app` project found zero scouting tables/functions; neither scouting Edge Function is deployed. PostgreSQL reports 17.6. This is live catalog evidence, not live RLS/workflow acceptance. Applying SQL/deploying production/sending real Discord messages remains outside current authorization. Git pushes may produce automatic Vercel review previews; a successful preview build does not install services.
+2. **Physical devices and beginners unavailable.** No real iPhone/Android backgrounding/storage test, first-time student completion time/error measurement or mentor proficiency assessment was executed. [FIELD_ACCEPTANCE.csv](FIELD_ACCEPTANCE.csv) remains NOT_RUN for those gates. The [180-minute training plan and rubric](TRAINING.md) are facilitation guidance, not measured practice or a passing threshold.
+3. **Reference/recording access incomplete.** Original video frames/audio, an independently annotated real-match corpus and authorized current TideScout source/application/export comparison are absent. The newly discovered first-party technical binder is a documented lead, not a recovered current app contract. Latest-version parity cannot be asserted.
+4. **Live integrations unverified.** Hosted Auth/PostgREST configuration, deployed Edge Functions, representative provider responses, actual channel/bot permissions and real delivery were not exercised. Local Auth issuance is synthetic, external failures are mocked and native cron/network/storage use repository stand-ins. Nexus map geometry and reviewed Discord role-ping mapping remain fidelity gaps; sourced pit addresses and respectful questions/replies are implemented.
+
+The branch preserves the existing app, branding, roles, events, connector and check-in path. Private original inputs remain outside public commits. See [RELEASE.md](RELEASE.md) for concrete setup/recovery instructions and [RESUME.md](RESUME.md) for continuation. No completion claim here substitutes for the remaining external acceptance.
 
 ---
 

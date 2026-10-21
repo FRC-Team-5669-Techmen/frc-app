@@ -1,0 +1,8 @@
+frc-app@0.1.0 /workspace/work/frc-app
+├─┬ vite@5.4.21
+│ └── esbuild@0.21.5
+└─┬ vitest@4.1.11
+  ├── esbuild@0.28.2 extraneous
+  └─┬ vite@8.2.2
+    └── esbuild@0.28.2 deduped
+

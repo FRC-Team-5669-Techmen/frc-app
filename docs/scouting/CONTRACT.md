@@ -1,6 +1,6 @@
 # Scouting implementation contract
 
-Techmen design, not a recovered TideScout schema. Agreed before implementation.
+Techmen design, not a recovered TideScout schema. Specified before the initial implementation; proposed Techmen behavior.
 
 One lazy route /scouting and /scouting/:eventId, linked to existing events and members. Parent-only denied; approved students and staff allowed. Managers: staff, event scouting_lead, or scouting.manage capability (parent-only never receives access through capability). Capture is available to any eligible member, consistent with everyone without another job scouting.
 

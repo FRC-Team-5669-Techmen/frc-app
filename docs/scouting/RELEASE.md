@@ -1,6 +1,6 @@
 # Scouting release and field acceptance
 
-The code is on local review branch `codex/scouting-2026-evidence`. It has not been pushed, merged, deployed or applied to the live database. Use `VERIFICATION.md` for actual checks and `RESUME.md` for remaining source-fidelity gaps.
+The code is pushed to review branch `codex/scouting-2026-evidence`, with draft PR #4 open. It has not been merged or deployed to production, and no scouting SQL has been applied to the live database. Git pushes may create automatic Vercel review previews. Use `VERIFICATION.md` for actual checks and `RESUME.md` for remaining source-fidelity gaps.
 
 ## Review the implementation
 
@@ -8,7 +8,7 @@ The code is on local review branch `codex/scouting-2026-evidence`. It has not be
 2. Run `npm ci`, `npm test`, `npm run build`, `npm run connector:check`, `npm run ds:audit`, `npm run discord:calendar:test`, and `npm run history:verify`.
 3. Run `npm run scouting:preview:check`. Open `artifacts/scouting-review/REVIEW.html` for an interactive fictional review using the actual components. Its simulated backend is not live acceptance.
 4. In a browser-capable checkout, run `npm run test:checkin` and `npm run test:features`. The scouting spec covers 375px and 1440px. Install a supported Chromium or set `CHROMIUM_PATH` as described in `browser-status.md`.
-5. With authorized GitHub write access, push this review branch and open a PR using `PULL_REQUEST.md`. Do not push main or force-push. GitHub integration writes returned HTTP403 in this session; the archive is the recovery path, not a remote branch.
+5. With authorized GitHub write access, push this review branch and open a PR using `PULL_REQUEST.md`. Do not push main or force-push. The restored branch and its Git history are now on GitHub. `SCOUTING_START_HERE.md` and `RESUME.md` are the entry points for another AI; the branch source ZIP is a downloadable source checkpoint.
 
 ## Stage the database and services
 
@@ -21,7 +21,7 @@ Apply in order:
 1. `supabase/migrations/0022_scouting.sql`
 2. `supabase/migrations/0022_scouting_rls_test.sql` (rollback-only proof; requires the documented test actors)
 
-Keep `scouting_private` out of exposed API schemas. Verify direct writes are refused, parent-only access is denied, parent-plus-staff works, the event lead roster is scoped to its event, and revoked users cannot save. Run the retained native harness and a real two-session stale-edit/duplicate-operation test. PGlite passed locally but is single-connection and not PostgREST.
+Keep `scouting_private` out of exposed API schemas. Verify direct writes are refused, parent-only access is denied, parent-plus-staff works, the event lead roster is scoped to its event, and revoked users cannot save. Native PostgreSQL 16.10 and 17.6, real separate-connection races and local PostgREST have passed; reproduce them with the retained harnesses. Hosted Supabase Auth, patched extensions, deployed configuration and provider behavior still require authorized staging/field acceptance.
 
 Deploy both source directories manually to the authorized staging project, with user JWT verification and in-function `auth.getUser` checks:
 
@@ -62,3 +62,12 @@ Do not equate synthetic scenario accuracy with real scouting competence, or a br
 After independent review and staging/field gates, the authorized operator decides whether to apply the database/functions and publish the app. Code detects missing scouting schema and leaves existing team tools usable. Do not publish the new route expecting migration files to apply automatically.
 
 If the app must be rolled back, restore the previous app deployment while preserving scouting records, revisions and pending client data. Do not drop tables to hide a UI problem. Export evidence before any separately authorized destructive recovery. Keep the checkpoint, commit IDs and actual executed verification record with the PR.
+
+## Reviewable release packet
+
+- `SCOUTING_START_HERE.md`: portable source/Git continuation entry.
+- `docs/scouting/VERIFICATION.md`: current executed results and explicit limitations.
+- `docs/scouting/TRAINING.md`: full practice facilitation plan and proposed mentor rubric.
+- `docs/scouting/FIELD_ACCEPTANCE.csv`: unexecuted physical-device, human, source and staging checks. Blank actual-result fields are intentional.
+- The read-only production catalog currently has no scouting tables/functions, and neither scouting Edge Function is deployed. Production reports PostgreSQL 17.6. Local success does not install the release.
+- Preserve current production and its check-in path until explicit release authorization and the outstanding acceptance gates are complete. No authorization is requested merely because a local build is green.

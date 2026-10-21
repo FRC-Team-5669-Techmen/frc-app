@@ -1,8 +1,25 @@
 # Current browser verification — October 21, 2026
 
-Actual installed Chromium runs in the resumed cloud environment. The earlier socket blocker below is historical. `npm run test:features -- --only scouting --verbose`: **104/104 passed** at 375px touch emulation and 1440px desktop. This tests native dialogs, IndexedDB reload/reconnect, drafts, actor-isolated queues, comparison preview/cancel/apply, explicit conflict resolution, parent/mentor gates, planning, training drafts, 44px controls and overflow against the fictional backend. It is not a real phone, a live integration, or built-PWA offline cold-start.
+Installed **Chromium 154.0.8037.57** runs in the resumed cloud environment. The historical socket blocker below no longer applies.
 
-Browser execution exposed unstable textarea/select accessible names and a brief false “all synced” before the local queue loaded. Explicit names and loading the queue before opening the event fix these; the retained spec passes without HMR during the final run. Full regression is being run next. Production PWA cold-start and real-device/human gates remain open.
+- `npm run test:features`: **1749/1749**, all **15** features, at 375px touch emulation and 1440px desktop.
+- Scouting within that run: **129/129**, including all eight training missions, first-pass/review history, export, actor isolation, conflicts and 44px control/overflow checks.
+- `npm run test:checkin -- --port 5402`: **51/51**.
+- `tools/e2e/scouting-pwa.mjs`: **19/19** against a real production build, service worker, IndexedDB, Supabase JS, local PostgREST and PostgreSQL 17.6. Actual browser network disable, expired-session cold start, installed start URL, truncated committed HTTP response and page closure before receipt are exercised. Auth issuance is synthetic; functions have a not-configured stub, and no provider/Discord request is made.
+
+The final clean-install focused repeats are retained with the logs. These are native browser results, not physical iPhone/Android or first-time student usability. Complete real-device/mentor/source gates before claiming competition readiness.
+
+Reproduce:
+
+```sh
+npm ci
+npm run test:features
+npm run test:checkin
+# PostgreSQL and PostgREST must be installed for the disposable integration test:
+POSTGREST_BIN=/path/to/postgrest node tools/sql-harness/run.mjs --tests none --node tools/e2e/scouting-pwa.mjs
+```
+
+The fixture suite models API behavior and keeps the development server reachable during its simulated offline sections. The built-PWA test separately disables real browser networking. Neither uses hosted Supabase Auth, actual external providers, NFC hardware, an installed phone PWA or a human scout. See `VERIFICATION.md` and `verification/README.md` for executed results.
 
 ---
 

@@ -1,66 +1,55 @@
-# Active continuation — October 21, 2026
+# Resume Team 5669 scouting
 
-**Branch:** `codex/scouting-2026-evidence`; [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). Restored from the uploaded checkpoint bundle at `b7c27bbb78feb0d9a61e39d1e0a5aa948dd40cd6`; archive/source hashes match. Original private handoff stays outside this repository. This section supersedes historical access failures below.
+**Review branch:** `codex/scouting-2026-evidence` · [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). Start with `SCOUTING_START_HERE.md`, `CLAUDE.md`, `docs/subsystems/scouting.md` and `docs/scouting/VERIFICATION.md`. The original uploaded source matched bundled commit `b7c27bb`; all checkpoint history was restored and pushed. Do not rebuild from main. Main was last confirmed at `9bb3a07321f6fc8a298835e0ec31fc193e106111`.
 
-Current run: restored source reviewed; `npm ci` installed 536 packages; 937/937 tests (62 files), production build and connector/design/calendar/history gates passed after the offline recovery fixes. Native PostgreSQL **16.10** passed 573/573 SQL checks across 23 suites, 17/17 permissive mutants, and the new **7/7 separate-connection race checks**. Actual Chromium fixture scouting passed **104/104** at 375px touch emulation and 1440px desktop after stable control names and atomic queue/event loading fixes. Full check-in/feature regression is running. Remote main remains `9bb3a07321f6fc8a298835e0ec31fc193e106111`. The branch and full checkpoint history are now pushed; remote write access works.
+## Current implementation and proof
 
-**Latest implementation:** fixed cold offline PWA navigation and prepared-account recovery, including an expired stored Auth session. A built app with real local PostgREST/native PostgreSQL passed 17/17 browser/HTTP assertions, including a deliberately truncated committed-save response, explicit retry with one record, parent/direct-write denial and connector preview/commit/denial. Auth issuance is synthetic, not hosted Supabase. Online upload still requires the actual session and server permissions. Full training progression and preserved first-pass footage reviews are now implemented and browser-exercised. Latest focused scouting browser run: 129/129 at 375/1440; combined unit suite: 940/940 in 63 files. A restarted-page lease recovery timer was added and the built-PWA/PostgREST suite now passes 19/19. The full feature regression is still running; do not infer its final result yet.
+| Requirement | State |
+| --- | --- |
+| Pit claims, observations, assignments, planning, replies, individual/master lists and comparison preview/apply | Implemented; unit/DOM, real Chromium and native SQL checks pass. Formulas are proposed Techmen rules, not claimed 4414 algorithms |
+| Durable offline capture and account-bound recovery | Implemented; built-PWA checks cover cold start, expired local session, lost committed response, page closure/lease retry and one logical record. Online authorization remains server-enforced |
+| Extensive beginner practice | Eight missions; 180-minute activity plan; 27 decisions; six written simulations; partner/real-footage tasks; frozen first-pass workbook and appended reviews; portable export. All eight software flows pass in Chromium; humans/real footage remain external gates |
+| Integrations and connector | Import/dispatch/connector code implemented; local API/SQL and mocked failures checked. No live scouting services installed or real Discord send authorized |
+| Source reconstruction | Evidence matrix, rule/API pins, hand-calculated expectations and deliberate deviations preserved. Original audiovisual/current-app fidelity and real match annotations remain unresolved |
+| Portability | Full source/history pushed; root start file, retained verification logs, training guide and field worksheet included. GitHub source ZIP is downloadable; clone the review branch for Git history |
 
-| Requirement | Implementation | Current verification / remaining work |
-| --- | --- | --- |
-| Pit, observation, assignments, messages, lists/comparisons | Present in checkpoint | 934 unit checks and 104 browser scouting checks rerun; full regression pending |
-| Durable offline capture, corrections, account scope | Present | Draft naming and initial queue visibility fixed; native SQL/races pass; built-PWA offline/HTTP suite passed; final regression pending |
-| Provider imports / Discord / connector | Present | Local gates running; deployed services and external credentials not verified; no real Discord sends authorized |
-| Extensive beginner practice | Eight missions, 180-minute activity plan, 27 interactive decisions, six written simulations, frozen first-pass footage workbook and review history | All eight workflows and portable export exercised in Chromium; real footage/human assessment remain open |
-| Reference fidelity | Evidence matrix, rule/API pins and independent synthetic arithmetic | First-party pages rechecked; YouTube web fetch throttled; original frames/audio and annotated real-match corpus still missing |
-| Review delivery | Complete source and Git history restored | Pushed and draft PR #4 open; keep resumable documentation current |
-| Release | Not released | Real phones, first-time students, isolated Supabase/PostgREST/provider checks remain external gates; production requires explicit authorization |
+Executed results: **940/940 unit/DOM tests (63 files), 1749/1749 Chromium feature assertions (15 suites, including 129 scouting), 51/51 check-in, 573/573 SQL checks on native PostgreSQL 16.10 and 17.6, 17/17 mutants, 7/7 separate-connection races, and 19/19 built-PWA/PostgREST checks**. Build/connector/design/calendar/history/oracle/portable-review gates pass. GitHub CI passed on Node 22/npm 10 at code commit `32b6b98`. Final verification documentation names runtime limits and retained evidence.
 
-Continue all unblocked work. Do not deploy production, change live SQL, push main, or send real Discord notifications. Existing counts below describe earlier runs only. Logs for this run are in `/workspace/work/` until packaged as portable evidence.
+The checkpoint lockfile was repaired for npm 10: 27 missing nested esbuild/platform entries were added; no existing pinned version changed. Both npm 10 and 11 install 538 packages. Another AI should not discard this repair or assume the original npm 11 install proved CI portability.
 
----
+## What still prevents competition acceptance
 
-# Resume the scouting implementation
+- Production catalog has no scouting tables/functions, and neither `scouting-import` nor `scouting-dispatch` is deployed. Setup/release needs explicit authorization. Read-only catalog access works; it does not prove live behavior.
+- Real iPhone/Android, first-time student measurements, a mentor review and the independent real-recording corpus are unavailable in this cloud run. Use `TRAINING.md` and `FIELD_ACCEPTANCE.csv`; never mark those NOT_RUN gates passed from browser emulation.
+- Original TideScout video audio/frames and authorized current app/schema/export access remain missing. Source timestamps are secondary leads. Nexus map geometry and reviewed Discord role pings remain fidelity gaps; sourced addresses and pit conversation workflows work.
+- Live TBA/Statbotics/Nexus responses, hosted Auth/API configuration and authorized real delivery still need representative staging/field checks. Local transport uses synthetic Auth and stand-ins; no live integration success was claimed.
 
-This is ordinary React/Vite/JavaScript and Supabase SQL. Claude Code, Gemini CLI or another coding agent can work directly in this repository. Nothing depends on ChatGPT state or its tool runtime.
+## Continue safely
 
-Start with CLAUDE.md, then docs/subsystems/scouting.md, docs/scouting/VERIFICATION.md, EVIDENCE.md and the status files in this directory. The private original handoff belongs outside the public repository.
-
-## First commands
-
-```bash
+```sh
+git fetch origin
+git switch codex/scouting-2026-evidence
+# Preserve newer remote changes; do not force-push or replace this branch with main.
 npm ci
-npm run connector:build
 npm test
 npm run build
 npm run connector:check
+npm run ds:audit
+npm run discord:calendar:test
+npm run history:verify
 node docs/scouting/check-oracles.mjs
+npm run scouting:preview:check
+npm run test:checkin
+npm run test:features
 ```
 
-Follow `database-status.md` for the optional PGlite SQL check and native PostgreSQL harness. Follow `browser-status.md` for the browser commands. Browser emulation is not real-device verification.
+With native PostgreSQL binaries on PATH (and an unprivileged server user if running as root):
 
-## Delivery constraints
+```sh
+node tools/sql-harness/run.mjs --node tools/sql-harness/scouting-mutants.mjs,tools/sql-harness/scouting-race.mjs
+POSTGREST_BIN=/path/to/postgrest node tools/sql-harness/run.mjs --tests none --node tools/e2e/scouting-pwa.mjs
+```
 
-Keep work on a review branch. Do not push main, merge, deploy production, apply SQL to the live database or send real Discord messages without deployment authorization. Do not commit credentials, the original private handoff or private feedback. Recheck current main and open branches before resuming.
+Read `database-status.md` and `browser-status.md` for tool versions and exact boundaries. The retained SQL harness refuses a non-disposable target for its race/API scripts. No ChatGPT runtime is required.
 
-The intended branch is `codex/scouting-2026-evidence`, based on `9bb3a07321f6fc8a298835e0ec31fc193e106111`. GitHub integration branch creation returned HTTP403, and shell git push had no credentials. Therefore this session could not create a remote branch or PR; a portable source archive and Git bundle preserve the actual implementation.
-
-## Remaining release gates
-
-- Native PostgreSQL16/Supabase staging RLS and PostgREST behavior.
-- Full retained browser suite at375px and1440px, real iPhone and Android, actual interruption/resume behavior, measured beginner usability.
-- Original video frames/audio and a fixed annotated real-match corpus. Synthetic fixtures are explicitly not match evidence.
-- Deployed integration configuration and provider API behavior; no test Discord messages were sent.
-- Nexus map geometry and verified Discord role ping mapping remain fidelity gaps. Pit addresses and provenance, manual assignments, a reviewed automatic shift planner, and explicit source snapshots are implemented. The planner is a Techmen design, not a verified TideScout algorithm.
-- Official certification assessment remains in IDEA Classroom. The in-app practice path prepares that assessment and must not award a conflicting certification.
-- Review the source, complete the above checks, push the branch and open the PR once GitHub write access works.
-
-Do not discard the implemented source or rebuild from scratch. Treat verification gaps as unfinished checks, not permission to claim success.
-
-## Expanded local implementation
-
-The continued build adds a shift planner with atomic local batch saves, eligible-scout roster, pit conversation replies, comparison evidence cards, pit-address provenance, serialized pick-list drafts, 27 interactive practice decisions plus six written match scenarios, and a real-footage workbook. Practice is locally persisted; official certification remains in IDEA Classroom.
-
-`npm run scouting:preview:check` builds a self-contained review HTML from the actual components and exercises the compiled bundle in jsdom with IndexedDB emulation. The portable archive includes `REVIEW.html`; open it in Chrome/Edge to inspect the fictional student/mentor/parent views. It blocks network connections and has no live credentials. It is not the production app or evidence of real-browser acceptance.
-
-The next local review also adds complete account/event recovery exports, atomic team imports, offline cache opening, event coverage, and explicit prior-event footage. Read the last sections of CONTRACT.md before changing these paths. In particular, never import an archive by inserting its `records` array, and never replace operation IDs during retries. The JSON preserves drafts and practice but does not provide a one-click restore UI. Source-scope labels are recorded provenance, not independently verified claims about the contents of a linked video.
+Do not push main, merge/deploy production, modify the live database or send real Discord notifications without explicit release authorization. Keep the private original handoff outside public commits. Official certification remains in IDEA Classroom. `RELEASE.md` specifies migration 0022 after verified prerequisites through 0021 and preserves scouting history during rollback. This is a concrete reviewable implementation with external acceptance still blocked, not a declaration of field readiness.
