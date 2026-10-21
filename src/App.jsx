@@ -360,6 +360,9 @@ export default function App() {
             student nothing. */}
         <Route path="/parent/:token" element={<ParentResponse />} />
         <Route path="/family/:token" element={<FamilyPage />} />
+        {/* The handbook for anyone, no login (parents, the team website). Read
+            only: signing stays behind a login or the family link. */}
+        <Route path="/rules" element={<HandbookPage publicView />} />
 
         {/* Event family hub, the family page. Public by design, outside
             ProtectedLayout (no NavBar, no feedback widget, no notification
