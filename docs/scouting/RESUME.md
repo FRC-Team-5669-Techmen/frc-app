@@ -1,3 +1,23 @@
+# Active continuation — October 21, 2026
+
+**Branch:** `codex/scouting-2026-evidence`. Restored from the uploaded checkpoint bundle at `b7c27bbb78feb0d9a61e39d1e0a5aa948dd40cd6`; archive/source hashes match. Original private handoff stays outside this repository. This section supersedes historical access failures below.
+
+Current run: source reviewed; `npm ci` installed 536 packages; 934/934 tests (61 files) and production build passed. Remote main still `9bb3a07321f6fc8a298835e0ec31fc193e106111`; Git push dry run succeeded. Actual Chromium is running the retained scouting spec: draft-recovery and subsequent offline steps currently fail, under investigation. No browser pass claimed. Native PostgreSQL 16 tooling is being prepared in a scratch directory; no native SQL result yet.
+
+| Requirement | Implementation | Current verification / remaining work |
+| --- | --- | --- |
+| Pit, observation, assignments, messages, lists/comparisons | Present in checkpoint | Unit checks rerun; fix and complete real Chromium fixture run |
+| Durable offline capture, corrections, account scope | Present | Browser draft-recovery failure under investigation; native concurrent SQL checks pending |
+| Provider imports / Discord / connector | Present | Local gates running; deployed services and external credentials not verified; no real Discord sends authorized |
+| Extensive beginner practice | Eight missions, 200-minute activity plan, interactive decisions, six written simulations, footage workbook | Review full progression, recovery and mentor handoff; no human proficiency claim |
+| Reference fidelity | Evidence matrix, rule/API pins and independent synthetic arithmetic | First-party pages rechecked; YouTube web fetch throttled; original frames/audio and annotated real-match corpus still missing |
+| Review delivery | Complete source and Git history restored | Push review branch and create draft PR; retain resumable documentation |
+| Release | Not released | Real phones, first-time students, isolated Supabase/PostgREST/provider checks remain external gates; production requires explicit authorization |
+
+Continue all unblocked work. Do not deploy production, change live SQL, push main, or send real Discord notifications. Existing counts below describe earlier runs only. Logs for this run are in `/workspace/work/` until packaged as portable evidence.
+
+---
+
 # Resume the scouting implementation
 
 This is ordinary React/Vite/JavaScript and Supabase SQL. Claude Code, Gemini CLI or another coding agent can work directly in this repository. Nothing depends on ChatGPT state or its tool runtime.
