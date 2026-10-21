@@ -2,7 +2,8 @@
 // Preserves the previous generateSW behavior — precache via __WB_MANIFEST and
 // auto-update on reload — and adds Web Push handling.
 
-import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching'
+import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching'
+import { registerRoute, NavigationRoute } from 'workbox-routing'
 
 // Auto-update: activate the new SW immediately so a reload picks it up, matching
 // the prior registerType:'autoUpdate' behavior. (Incognito still shows the true
@@ -12,6 +13,12 @@ self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim(
 
 cleanupOutdatedCaches()
 precacheAndRoute(self.__WB_MANIFEST)
+
+// Scouting deep links must survive a cold offline navigation. API/connector
+// requests must never receive the app shell in place of their real response.
+registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html'), {
+  allowlist: [/^\/scouting(?:\/|$)/, /^\/$/],
+}))
 
 // ── Web Push ──────────────────────────────────────────────────────────────
 // Payload shape (from the send-push Edge Function):

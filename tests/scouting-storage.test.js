@@ -34,7 +34,7 @@ function fixture() {
 }
 const record = { id: 'record-1', kind: 'observation', team_number: 5669, match_key: 'qm1', payload: { answers: { trench: 'did_not_see' }, source: 'live' }, version: 0 }
 function client(rpc) {
-  return { auth: { getSession: async () => ({ data: { session: { user: { id: 'member-a' } } } }) }, rpc }
+  return { auth: { getSession: async () => ({ data: { session: { user: { id: 'member-a' } } } }) }, rpc: (name, args) => name === 'scouting_can_access' ? Promise.resolve({ data: true, error: null }) : rpc?.(name, args) }
 }
 const reply = args => ({ id: args.p_id, event_id: args.p_event, member_id: 'member-a', kind: args.p_kind, payload: args.p_payload, version: args.p_expected_version + 1 })
 beforeEach(() => _resetWriteVia())
@@ -231,4 +231,18 @@ describe('offline opening', () => {
     api.auth.getSession = async () => ({ data: { session: { user: { id: 'member-b' } } } })
     expect(await loadScoutingEvent(args)).toMatchObject({ offline: false, records: [], error: { code: 'ACCOUNT_CHANGED' } })
   })
+  it('opens prepared local data without refreshing expired Auth, but only for its explicit identity and lifetime', async () => {
+    const { store } = fixture()
+    await store.putCache('member-a','event-a',{event:{id:'event-a'},records:[record]})
+    let authCalls=0
+    const api={auth:{getSession:async()=>{authCalls++;return {data:{session:null},error:{code:'NETWORK_ERROR'}}}}}
+    const args={store,client:api,memberId:'member-a',eventId:'event-a',online:()=>false,offlineMemberId:'member-a'}
+    expect(await loadScoutingEvent(args)).toMatchObject({offline:true,records:[record]})
+    expect(authCalls).toBe(0)
+    expect(await loadScoutingEvent({...args,offlineMemberId:'member-b'})).toMatchObject({records:[],error:{code:'ACCOUNT_CHANGED'}})
+    expect(authCalls).toBe(1)
+    expect(await loadScoutingEvent({...args,isCurrent:()=>false})).toMatchObject({records:[],error:{code:'ACCOUNT_CHANGED'}})
+    expect(authCalls).toBe(1)
+  })
+
 })

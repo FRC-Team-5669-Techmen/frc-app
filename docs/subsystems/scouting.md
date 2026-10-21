@@ -35,3 +35,9 @@ The standalone review is built by `npm run scouting:preview` from the same route
 `Export event data` now includes account/event-scoped drafts, practice, pending operations, confirmed receipts and cached evidence in a versioned JSON archive. The archive is for reviewed recovery; it never automatically uploads or overwrites existing work. Offline event opening skips remote data queries. Team imports are atomic locally.
 
 Prior-event footage must retain its source event and full match key, appears with a provenance label and stays outside current-event reliability percentages. Full TBA and short current-event match labels share one logical identity. The coverage panel in Teams finds missing pit reports, thin or disputed evidence and prior-event context.
+
+## Built PWA recovery
+
+The scouting route and installed start URL have a service-worker navigation fallback. After an eligible online event load confirms `scouting_can_access`, a local identity hint remembers only member/event IDs and preparation time. Cold offline scouting opens that account's cached data and durable queue, including when Auth needs a network refresh. It does not grant server authorization. Explicit sign-out, account changes and an online access denial clear the hint. Reconnection returns to normal auth/approval and server actor/RLS checks before upload. First-time offline login and uncached events are unavailable. The identity hint can be cleared without deleting pending evidence.
+
+`tools/e2e/scouting-pwa.mjs`, run through the disposable SQL harness, uses a normal production build, real Chromium/IndexedDB/service worker, real Supabase JS and local PostgREST/native PostgreSQL. Only Auth identities/token issuance are synthetic; no provider or Discord call is made. This separately verifies cold navigation, expired-session offline entry, lost-response retry and HTTP permission/connector boundaries. See the current verification record for actual results.

@@ -76,3 +76,9 @@ API version pins describe inspected contracts, not proof a connector is configur
 ## Remaining fidelity and release gates
 
 Original frames/audio; TideScout's exact controls, formulas and permissions; authorized production/source/export comparison; a fixed independently annotated real-match video corpus; live API credentials and representative responses; real iPhone/Android interruption testing; measured beginner usability with actual students. Automated browser emulation cannot close these gates. See [acceptance-oracles.md](acceptance-oracles.md) for the acceptance specification and [VERIFICATION.md](VERIFICATION.md) if present for executed results.
+
+## Source recheck — October 21, 2026
+
+The current continuation re-opened the Chief Delphi tutorial and historical Alliance page through the web reader; their scope remains as described above. The video reader again reported an online-fetch throttle; no original frames/audio were inspected.
+
+A newly discovered first-party [2026 Technical Binder](https://2026.team4414.com/) has indexed descriptions of TideScout, film review, pick lists and other tools. **Documented lead only:** the search index describes multiplayer lists, qualitative insights and paired video/data. Direct text extraction returned zero lines. No dated app revision, working workflow, screenshot semantics, undisclosed formula or current production contract was established. This expands the reference leads without upgrading secondary workflow leads to observed behavior or claiming latest-version parity.

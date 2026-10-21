@@ -21,13 +21,13 @@ const words = value => ({ yes: 'Yes', no: 'No', unknown: 'Unknown', did_not_see:
 const errorText = e => e?.message || String(e || 'Could not complete this action.')
 const uuid = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 
-export default function ScoutingPage({ session, hasRole = () => false }) {
+export default function ScoutingPage({ session, hasRole = () => false, offlineMemberId = null }) {
   const { eventId } = useParams()
   const uid = session?.user?.id
   const staff = ['admin', 'mentor', 'lead'].some(hasRole)
   if (!uid || (hasRole('parent') && !staff)) return <main className="sc-wrap"><h1>Scouting</h1><p>Scouting is available to student and staff accounts.</p><Link className="sc-link" to="/dashboard">Back to dashboard</Link></main>
   if (eventId && !uuid(eventId)) return <main className="sc-wrap"><h1>Event not found</h1><Link className="sc-link" to="/scouting">Choose an event</Link></main>
-  return eventId ? <EventScouting key={`${uid}:${eventId}`} uid={uid} eventId={eventId} staff={staff} /> : <ScoutingEvents key={uid} uid={uid} />
+  return eventId ? <EventScouting key={`${uid}:${eventId}`} uid={uid} eventId={eventId} staff={staff} offlineMemberId={offlineMemberId} /> : <ScoutingEvents key={uid} uid={uid} />
 }
 
 function ScoutingEvents({ uid }) {
@@ -44,6 +44,7 @@ function ScoutingEvents({ uid }) {
         store = await createScoutingStore()
         const saved = await store.getDraft(uid, 'event-index', 'events')
         if (live && saved) { setEvents(saved); setCached(true) }
+        if (!navigator.onLine) { if (live && !saved) { setEvents([]); setError('No event list is saved here. Open the event link you prepared, or reconnect once.') }; return }
         const result = await supabase.from('events').select('id,title,kind,starts_at,ends_at,location').in('kind', ['competition', 'training']).order('starts_at', { ascending: false })
         if (result.error) throw result.error
         if (live) { setEvents(result.data ?? []); setCached(false); setError('') }
@@ -65,7 +66,7 @@ function ScoutingEvents({ uid }) {
   </main>
 }
 
-function EventScouting({ uid, eventId, staff }) {
+function EventScouting({ uid, eventId, staff, offlineMemberId }) {
   const [store, setStore] = useState(null)
   const [data, setData] = useState({ records: [], delivery: [], revisions: [], members: [], event: null })
   const [queue, setQueue] = useState([])
@@ -96,10 +97,13 @@ function EventScouting({ uid, eventId, staff }) {
 
   const refresh = useCallback(async (selectedStore = store) => {
     if (!selectedStore) return
-    const snapshot = await loadScoutingEvent({ store: selectedStore, client: supabase, memberId: uid, eventId, isCurrent: current })
+    const snapshot = await loadScoutingEvent({ store: selectedStore, client: supabase, memberId: uid, eventId, isCurrent: current, offlineMemberId })
     if (!alive.current) return
-    setData(snapshot); setLoading(false)
-    setQueue(await selectedStore.listQueue(uid, eventId))
+    // Load the durable queue before opening the event. A cached event can
+    // otherwise briefly claim that all work is synced before pending saves load.
+    const savedQueue = await selectedStore.listQueue(uid, eventId)
+    if (!alive.current) return
+    setData(snapshot); setQueue(savedQueue); setLoading(false)
     if (snapshot.error) setError(errorText(snapshot.error)); else setError('')
     if (!navigator.onLine) {
       const savedScouts = await selectedStore.getDraft(uid, eventId, 'eligible-scouts')
@@ -126,7 +130,7 @@ function EventScouting({ uid, eventId, staff }) {
     syncLock.current = true; setBusy(true)
     const startedGeneration = queueGeneration.current
     try {
-      const next = await syncScoutingQueue({ store, client: supabase, memberId: uid, eventId, isCurrent: current })
+      const next = await syncScoutingQueue({ store, client: supabase, memberId: uid, eventId, isCurrent: current, offlineMemberId })
       if (!alive.current) return
       setQueue(next); await refresh()
     } catch (e) { if (alive.current) setError(errorText(e)) }

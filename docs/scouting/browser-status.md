@@ -1,3 +1,13 @@
+# Current browser verification — October 21, 2026
+
+Actual installed Chromium runs in the resumed cloud environment. The earlier socket blocker below is historical. `npm run test:features -- --only scouting --verbose`: **104/104 passed** at 375px touch emulation and 1440px desktop. This tests native dialogs, IndexedDB reload/reconnect, drafts, actor-isolated queues, comparison preview/cancel/apply, explicit conflict resolution, parent/mentor gates, planning, training drafts, 44px controls and overflow against the fictional backend. It is not a real phone, a live integration, or built-PWA offline cold-start.
+
+Browser execution exposed unstable textarea/select accessible names and a brief false “all synced” before the local queue loaded. Explicit names and loading the queue before opening the event fix these; the retained spec passes without HMR during the final run. Full regression is being run next. Production PWA cold-start and real-device/human gates remain open.
+
+---
+
+## Historical checkpoint record
+
 # Browser verification status
 
 Session date: October 20, 2026 (client calendar, America/Los_Angeles).

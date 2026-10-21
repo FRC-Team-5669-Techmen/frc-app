@@ -1,3 +1,25 @@
+# Current native verification — October 21, 2026
+
+The resumed workspace can run native PostgreSQL **16.10**, installed outside application dependencies using `@embedded-postgres/linux-x64@16.10.0-beta.15`; the `psql` client is 17.11. This supersedes the native-tooling blocker in the historical record below.
+
+- Full frozen chain and migrations through 0022 applied twice.
+- **573/573** checks across **23** rollback suites passed; **72/72** are scouting checks.
+- **17/17** permissive scouting mutations caught.
+- **7/7** new separate-connection assertions passed: overlapping identical operation returns the same receipt; only one record/revision/receipt; stale correction receives 40001; winning version/history preserved; separate IDs cannot duplicate one logical observation; only one dispatcher reserves a version; reservation uses immutable evidence.
+
+The race script proves actual lock overlap using `pg_stat_activity`, then commits the first transaction. It does not depend on guessing which request wins. Reproduce with PostgreSQL binaries on PATH:
+
+```sh
+node tools/sql-harness/run.mjs --node tools/sql-harness/scouting-mutants.mjs
+node tools/sql-harness/run.mjs --tests none --node tools/sql-harness/scouting-race.mjs
+```
+
+All targets are throwaway local databases with repository auth/storage/cron/network stand-ins. No live Supabase mutation or real notification occurred. Native PostgreSQL is now verified locally; Supabase deployment and PostgREST remain separate gates.
+
+---
+
+## Historical WASM checkpoint record
+
 # Scouting database checkpoint
 
 Verified in this cloud workspace on October 20, 2026 (Los Angeles date).

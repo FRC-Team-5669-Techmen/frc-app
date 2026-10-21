@@ -1,3 +1,23 @@
+# Active continuation verification — October 21, 2026
+
+This section supersedes the historical access blockers below. Review branch `codex/scouting-2026-evidence` is pushed and [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4) is open. The checkpoint tree exactly matched bundled commit `b7c27bb`; remote main remains `9bb3a07`. No private source handoff is committed.
+
+Executed in this continuation so far:
+
+- Initial baseline: 934/934 unit/DOM tests, production build, connector/design/calendar/history and 13 independent synthetic math assertions passed.
+- Real Chromium fixture scouting after accessibility/queue fixes: **104/104**, 375px touch emulation and 1440px desktop; check-in regression **51/51**. These are browser results with a fictional backend, not phones or live services.
+- Native PostgreSQL **16.10**: migrations applied twice; **573/573** checks across **23** SQL suites, including **72/72** scouting checks; **17/17** permissive mutants caught. New separate-connection races: **7/7** assertions passed.
+- Built production PWA → Supabase JS → local **PostgREST 13.0.7** → native PostgreSQL: **17/17** assertions passed. Synthetic local Auth tokens/refresh endpoint. Actual browser network disable, cold deep link and installed start URL, expired-session local capture, native IndexedDB reload, deliberately truncated HTTP response after commit, retry deduplication, parent/direct-write denial and connector HTTP preview/commit/denial. No fixture RPC implementation is used by this check.
+- Offline-recovery milestone: **937/937** unit/DOM tests in **62** files; production build (**145** precache entries, **1912.00 KiB**), connector registry, design audit, 19/19 calendar checks and lossless 50-entry history check passed. Subsequent changes require fresh final verification.
+
+The built-PWA test first failed cold navigation (2/3 passed). The retained harness then passed after a scouting navigation fallback and a device-local prepared identity entry were implemented. Textarea/select names and initial queue loading were also corrected from browser failures. These failures are recorded as defects found, not passing verification.
+
+Still external/unverified: hosted Supabase Auth/deployment/configuration, deployed Edge Functions, representative provider responses, authorized real Discord delivery, physical iPhone/Android backgrounding/storage behavior, beginner task measurements, independent real-match annotations and original reference audio/frames. Production use is not yet accepted. No production deployment, live database change, main push or real notification occurred.
+
+---
+
+## Historical checkpoint evidence
+
 # Verification record
 
 Local implementation checkpoint verified October 21, 2026. This records checks actually executed, not production acceptance. Browser, staging and field gates remain open.

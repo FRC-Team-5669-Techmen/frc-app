@@ -90,36 +90,36 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
           <div className="sc-fields"><label>Team number<input inputMode="numeric" type="number" min="1" max="99999" required readOnly={!!record || !!replyTo} value={value.team_number} onChange={e => change({ ...value, team_number: e.target.value })} /></label>
           {['observation', 'assignment'].includes(kind) && <label>Match<input required readOnly={!!record} maxLength="100" placeholder="qm1" value={value.match_key} onChange={e => change({ ...value, match_key: e.target.value })} /></label>}</div>
           {kind === 'observation' && <>
-            <label>Source<select value={p.source} onChange={e => payload('source', e.target.value)}><option value="live">Live match</option><option value="video">Match video</option></select></label>
+            <label>Source<select aria-label="Source" value={p.source} onChange={e => payload('source', e.target.value)}><option value="live">Live match</option><option value="video">Match video</option></select></label>
             {p.source === 'video' && <label>Video URL<input type="url" placeholder="https://…" value={p.video_url} onChange={e => payload('video_url', e.target.value)} /></label>}
             <p className="sc-help">Yes means you saw it work. No means you saw it fail. If the view was blocked, choose Did not see. Leave an answer blank if you have not checked it.</p>
             {CAPABILITIES.map(c => <Choice key={c.key} label={c.label} value={p.answers[c.key]} options={[["yes", "Yes"], ["no", "No"], ["did_not_see", "Did not see"], ["not_applicable", "Not applicable"]]} onChange={v => answer('answers', c.key, v)} />)}
-            <label>Notes<textarea maxLength="4000" placeholder="What happened? Which part of the match?" value={p.notes} onChange={e => payload('notes', e.target.value)} /></label>
+            <label>Notes<textarea aria-label="Notes" maxLength="4000" placeholder="What happened? Which part of the match?" value={p.notes} onChange={e => payload('notes', e.target.value)} /></label>
             <label className="sc-checkbox"><input type="checkbox" checked={p.request_delivery === true} onChange={e => payload('request_delivery', e.target.checked)} /><span>Request Discord delivery after sync</span></label>
           </>}
           {((kind === 'observation' && p.source === 'video') || (kind === 'assignment' && p.video_url)) && <>
-            <label>Footage event<select value={p.source_scope || 'current'} onChange={e => payload('source_scope', e.target.value)}><option value="current">This event</option><option value="external">A different event</option></select></label>
+            <label>Footage event<select aria-label="Footage event" value={p.source_scope || 'current'} onChange={e => payload('source_scope', e.target.value)}><option value="current">This event</option><option value="external">A different event</option></select></label>
             {p.source_scope === 'external' && <><label>Source event key<input required maxLength="44" placeholder="2026cabb" value={p.source_event || ''} onChange={e => payload('source_event', e.target.value)} /></label><p className="sc-help">Use the full source match key above, such as 2026cabb_qm1. This footage stays visible as prior-event context and is excluded from this event's reliability percentages.</p></>}
           </>}
           {kind === 'pit' && <>
             <p className="sc-help">Record what the team claims. Match observations verify these claims separately.</p>
             {CAPABILITIES.map(c => <Choice key={c.key} label={c.label} value={p.capabilities[c.key]} options={[["yes", "Yes"], ["no", "No"], ["unknown", "Unknown"]]} onChange={v => answer('capabilities', c.key, v)} />)}
             <label>Pit location<input maxLength="200" placeholder="Row or booth, if known" value={p.pit_location} onChange={e => payload('pit_location', e.target.value)} /></label>
-            <label>Notes<textarea maxLength="4000" value={p.notes} onChange={e => payload('notes', e.target.value)} /></label>
+            <label>Notes<textarea aria-label="Notes" maxLength="4000" value={p.notes} onChange={e => payload('notes', e.target.value)} /></label>
           </>}
           {kind === 'message' && <>
             {replyTo && <blockquote className="sc-help">Replying to: {replyTo.payload.text}</blockquote>}
-            <label>Robot note<textarea required maxLength="2000" placeholder="What should the pit crew ask this team?" value={p.text} onChange={e => payload('text', e.target.value)} /></label>
+            <label>Robot note<textarea aria-label="Robot note" required maxLength="2000" placeholder="What should the pit crew ask this team?" value={p.text} onChange={e => payload('text', e.target.value)} /></label>
             <p className="sc-help">Describe robots and match events. Keep names and personal details out of scouting notes.</p>
-            <label>Status<select value={p.status} onChange={e => payload('status', e.target.value)}><option value="open">Open</option><option value="resolved">Resolved</option></select></label>
+            <label>Status<select aria-label="Status" value={p.status} onChange={e => payload('status', e.target.value)}><option value="open">Open</option><option value="resolved">Resolved</option></select></label>
             <label className="sc-checkbox"><input type="checkbox" checked={p.request_delivery} onChange={e => payload('request_delivery', e.target.checked)} /><span>Request Discord delivery after sync</span></label>
             <p className="sc-help">Saving a message does not mean Discord received it. Delivery status appears separately.</p>
           </>}
           {kind === 'assignment' && <>
-            <label>Scout<select required value={p.assignee} onChange={e => payload('assignee', e.target.value)}><option value="">Choose a scout</option>{members.map(m => <option key={m.id} value={m.id}>{m.nickname || m.full_name || 'Member'}</option>)}</select></label>
-            <label>Instructions<textarea maxLength="2000" value={p.instructions} onChange={e => payload('instructions', e.target.value)} /></label>
+            <label>Scout<select aria-label="Scout" required value={p.assignee} onChange={e => payload('assignee', e.target.value)}><option value="">Choose a scout</option>{members.map(m => <option key={m.id} value={m.id}>{m.nickname || m.full_name || 'Member'}</option>)}</select></label>
+            <label>Instructions<textarea aria-label="Instructions" maxLength="2000" value={p.instructions} onChange={e => payload('instructions', e.target.value)} /></label>
             <label>Video URL<input type="url" placeholder="https://…" value={p.video_url} onChange={e => payload('video_url', e.target.value)} /></label>
-            <label>Status<select value={p.status} onChange={e => payload('status', e.target.value)}><option value="assigned">Assigned</option><option value="complete">Complete</option><option value="cancelled">Cancelled</option></select></label>
+            <label>Status<select aria-label="Status" value={p.status} onChange={e => payload('status', e.target.value)}><option value="assigned">Assigned</option><option value="complete">Complete</option><option value="cancelled">Cancelled</option></select></label>
           </>}
           {kind === 'team' && <>
             <label>Team name<input required maxLength="200" value={p.name} onChange={e => change({ ...value, payload: { ...p, name: e.target.value, source: 'manual', source_url: '', fetched_at: new Date().toISOString() } })} /></label>

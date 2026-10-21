@@ -43,3 +43,7 @@ The event JSON export is `techmen-scouting-v2`. It contains the event snapshot, 
 Team imports enqueue a reviewed batch in one IndexedDB transaction. Server writes remain separate validated operations. No partial local import is presented as a complete save. Offline opening skips remote data queries and uses the existing account/event cache; an uncached event requests an initial download.
 
 Coverage separates current-event matches, prior-event footage, local observations, missing pit reports, outstanding assignments and per-capability trials/disputes. Three trials per capability is a coverage threshold, not a robot-quality score or scouting certification.
+
+## Prepared offline entry
+
+A successfully loaded online event must first receive `scouting_can_access() = true`. After durable caching, store a device-local hint `{memberId,eventId,preparedAt}` with no Auth token or server permission. The app/SW may open this account's local cache and queue during a cold offline start, even when its real session requires refresh. This surface grants no remote read/write. Changing accounts, signing out or receiving a definitive online access refusal clears the hint. Reconnecting uses the real session and existing actor-bound RPCs; local data cannot authorize synchronization. This is an explicit Techmen requirement, not documented TideScout behavior.

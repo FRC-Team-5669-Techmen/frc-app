@@ -1,5 +1,6 @@
 import { writeVia } from '../writeVia.js'
 import { isSchemaMissing } from '../schemaMissing.js'
+import { prepareOfflineScoutingAccount, clearOfflineScoutingAccountUnless } from './offlineIdentity.js'
 
 const plainError = e => ({ code: e?.code || 'NETWORK_ERROR', message: e?.message || 'Could not reach the server. Your local save is safe.' })
 const noLongerCurrent = () => ({ code: 'ACCOUNT_CHANGED', message: 'Your account changed. Reopen scouting with the account that saved this record.' })
@@ -88,15 +89,21 @@ export async function readScoutingPages(client, table, { eventId, columns = '*',
   }
 }
 
-export async function loadScoutingEvent({ store, client, memberId, eventId, isCurrent = () => true, online = () => globalThis.navigator?.onLine !== false }) {
-  if (!await current(client, memberId, isCurrent)) return { records: [], delivery: [], revisions: [], members: [], event: null, error: noLongerCurrent(), offline: false, missing: false }
+export async function loadScoutingEvent({ store, client, memberId, eventId, isCurrent = () => true, online = () => globalThis.navigator?.onLine !== false, offlineMemberId = null }) {
   if (!online()) {
+    // A prepared offline entry uses no expired Auth token and makes no remote
+    // call. The explicit identity is supplied only by the local-cache gateway.
+    if (!isCurrent() || (offlineMemberId !== memberId && !await current(client, memberId, isCurrent))) return { records: [], delivery: [], revisions: [], members: [], event: null, error: noLongerCurrent(), offline: false, missing: false }
     const cached = await store.getCache(memberId, eventId)
     if (!isCurrent()) return { records: [], delivery: [], revisions: [], members: [], event: null, error: noLongerCurrent(), offline: false, missing: false }
     return { records: [], delivery: [], revisions: [], members: [], event: null, ...(cached?.value ?? {}), cachedAt: cached?.cachedAt ?? null,
       offline: true, missing: false, error: cached ? null : { code: 'OFFLINE_NOT_CACHED', message: 'This event has not been downloaded on this device. Connect once to prepare it for offline scouting.' } }
   }
+  if (!await current(client, memberId, isCurrent)) return { records: [], delivery: [], revisions: [], members: [], event: null, error: noLongerCurrent(), offline: false, missing: false }
   try {
+    const access = await client.rpc('scouting_can_access')
+    if (access.error) throw access.error
+    if (access.data !== true) throw { code: '42501', message: 'Your current account cannot access scouting. Local work is preserved for review.' }
     const requests = await Promise.all([
       readScoutingPages(client, 'scouting_records', { eventId }),
       readScoutingPages(client, 'scouting_delivery', { eventId }),
@@ -107,6 +114,8 @@ export async function loadScoutingEvent({ store, client, memberId, eventId, isCu
     if (!await current(client, memberId, isCurrent)) throw noLongerCurrent()
     const value = { records: requests[0], delivery: requests[1], revisions: requests[2], event: requests[3][0] ?? null, members: requests[4] }
     const cached = await store.putCache(memberId, eventId, value)
+    if (!await current(client, memberId, isCurrent)) throw noLongerCurrent()
+    if (value.event) prepareOfflineScoutingAccount(memberId, eventId)
     return { ...value, cachedAt: cached.cachedAt, offline: false, missing: false, error: null }
   } catch (e) {
     if (e?.code === 'ACCOUNT_CHANGED' || !await current(client, memberId, isCurrent)) return { records: [], delivery: [], revisions: [], members: [], event: null, error: noLongerCurrent(), offline: false, missing: false }
@@ -114,6 +123,7 @@ export async function loadScoutingEvent({ store, client, memberId, eventId, isCu
     // old server data after a definitive refusal or before the migration exists.
     const missing = isSchemaMissing(e)
     const denied = e?.code === '42501' || e?.code === 'PGRST301'
+    if (denied) clearOfflineScoutingAccountUnless()
     const cached = missing || denied ? null : await store.getCache(memberId, eventId)
     return { records: [], delivery: [], revisions: [], members: [], event: null, ...(cached?.value ?? {}), cachedAt: cached?.cachedAt ?? null,
       offline: !!cached, missing, error: plainError(e) }

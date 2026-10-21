@@ -50,7 +50,7 @@ export default function Training({ store, memberId, eventId }) {
    <h4>Check your judgment</h4>{mission.questions.map((q,i)=><fieldset key={mission.id+':'+i}><legend>{q.prompt}</legend>{q.options.map((option,j)=><button key={option} aria-pressed={answers[i]===j} onClick={()=>{change({answers:{...answers,[i]:j},checked:false})}}>{option}</button>)}{checked&&<p role="status"><strong>{answers[i]===q.answer?'Yes. ':'Review this. '}</strong>{q.why}</p>}</fieldset>)}
    <button onClick={()=>change({checked:true})}>Check my choices</button>
    <label className="sc-training-check"><input type="checkbox" checked={didActivity} onChange={e=>change({didActivity:e.target.checked})}/>I completed the partner or mentor activity above.</label>
-   <label>One thing I learned, and one question for my mentor<textarea rows={3} maxLength={2000} value={note} onChange={e=>change({note:e.target.value})} placeholder="Name specific evidence or a recovery you practiced."/></label>
+   <label>One thing I learned, and one question for my mentor<textarea aria-label="One thing I learned, and one question for my mentor" rows={3} maxLength={2000} value={note} onChange={e=>change({note:e.target.value})} placeholder="Name specific evidence or a recovery you practiced."/></label>
    <button disabled={!loaded||!practiceReady||!didActivity||!note.trim()||mission.questions.some((q,i)=>answers[i]!==q.answer)} onClick={complete}>Record mission practice</button>{entry.completed&&savedProgress[mission.id]?.completed&&<p role="status">Practice recorded for this mission.</p>}
    {!practiceReady&&<p className="sc-training-muted">Finish and review the interactive practice before recording this mission.</p>}
    </fieldset>

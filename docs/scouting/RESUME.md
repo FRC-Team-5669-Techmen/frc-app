@@ -1,17 +1,19 @@
 # Active continuation — October 21, 2026
 
-**Branch:** `codex/scouting-2026-evidence`. Restored from the uploaded checkpoint bundle at `b7c27bbb78feb0d9a61e39d1e0a5aa948dd40cd6`; archive/source hashes match. Original private handoff stays outside this repository. This section supersedes historical access failures below.
+**Branch:** `codex/scouting-2026-evidence`; [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). Restored from the uploaded checkpoint bundle at `b7c27bbb78feb0d9a61e39d1e0a5aa948dd40cd6`; archive/source hashes match. Original private handoff stays outside this repository. This section supersedes historical access failures below.
 
-Current run: source reviewed; `npm ci` installed 536 packages; 934/934 tests (61 files) and production build passed. Remote main still `9bb3a07321f6fc8a298835e0ec31fc193e106111`; Git push dry run succeeded. Actual Chromium is running the retained scouting spec: draft-recovery and subsequent offline steps currently fail, under investigation. No browser pass claimed. Native PostgreSQL 16 tooling is being prepared in a scratch directory; no native SQL result yet.
+Current run: restored source reviewed; `npm ci` installed 536 packages; 937/937 tests (62 files), production build and connector/design/calendar/history gates passed after the offline recovery fixes. Native PostgreSQL **16.10** passed 573/573 SQL checks across 23 suites, 17/17 permissive mutants, and the new **7/7 separate-connection race checks**. Actual Chromium fixture scouting passed **104/104** at 375px touch emulation and 1440px desktop after stable control names and atomic queue/event loading fixes. Full check-in/feature regression is running. Remote main remains `9bb3a07321f6fc8a298835e0ec31fc193e106111`. The branch and full checkpoint history are now pushed; remote write access works.
+
+**Latest implementation:** fixed cold offline PWA navigation and prepared-account recovery, including an expired stored Auth session. A built app with real local PostgREST/native PostgreSQL passed 17/17 browser/HTTP assertions, including a deliberately truncated committed-save response, explicit retry with one record, parent/direct-write denial and connector preview/commit/denial. Auth issuance is synthetic, not hosted Supabase. Online upload still requires the actual session and server permissions. Full regression and final gates are being rerun. Next review: full training progression, preservation of first-pass footage evidence, then remaining release gates.
 
 | Requirement | Implementation | Current verification / remaining work |
 | --- | --- | --- |
-| Pit, observation, assignments, messages, lists/comparisons | Present in checkpoint | Unit checks rerun; fix and complete real Chromium fixture run |
-| Durable offline capture, corrections, account scope | Present | Browser draft-recovery failure under investigation; native concurrent SQL checks pending |
+| Pit, observation, assignments, messages, lists/comparisons | Present in checkpoint | 934 unit checks and 104 browser scouting checks rerun; full regression pending |
+| Durable offline capture, corrections, account scope | Present | Draft naming and initial queue visibility fixed; native SQL/races pass; built-PWA offline/HTTP suite passed; final regression pending |
 | Provider imports / Discord / connector | Present | Local gates running; deployed services and external credentials not verified; no real Discord sends authorized |
-| Extensive beginner practice | Eight missions, 200-minute activity plan, interactive decisions, six written simulations, footage workbook | Review full progression, recovery and mentor handoff; no human proficiency claim |
+| Extensive beginner practice | Eight missions, 180-minute activity plan, interactive decisions, six written simulations, footage workbook | Review full progression, recovery and mentor handoff; no human proficiency claim |
 | Reference fidelity | Evidence matrix, rule/API pins and independent synthetic arithmetic | First-party pages rechecked; YouTube web fetch throttled; original frames/audio and annotated real-match corpus still missing |
-| Review delivery | Complete source and Git history restored | Push review branch and create draft PR; retain resumable documentation |
+| Review delivery | Complete source and Git history restored | Pushed and draft PR #4 open; keep resumable documentation current |
 | Release | Not released | Real phones, first-time students, isolated Supabase/PostgREST/provider checks remain external gates; production requires explicit authorization |
 
 Continue all unblocked work. Do not deploy production, change live SQL, push main, or send real Discord notifications. Existing counts below describe earlier runs only. Logs for this run are in `/workspace/work/` until packaged as portable evidence.

@@ -30,7 +30,7 @@ function MatchLab({ state, onChange }) {
     <ol className="sc-practice-timeline">{drill.frames.slice(0,frame+1).map((text,i)=><li key={i}>{text}</li>)}</ol>
     <button disabled={frame>=drill.frames.length-1} onClick={()=>change({frame:frame+1})}>Next moment</button>
     <div className="sc-training-replay">{CAPABILITIES.map(c=><fieldset key={c.key}><legend>{c.label}</legend>{options.map(([value,label])=><button key={value} aria-pressed={current.answers?.[c.key]===value} onClick={()=>change({answers:{...current.answers,[c.key]:value},reviewed:false})}>{label}</button>)}</fieldset>)}</div>
-    <label>Evidence note for this robot<textarea maxLength={2000} rows={2} value={current.note??''} placeholder="Describe an action, its moment, and what you could not see." onChange={e=>change({note:e.target.value})}/></label>
+    <label>Evidence note for this robot<textarea aria-label="Evidence note for this robot" maxLength={2000} rows={2} value={current.note??''} placeholder="Describe an action, its moment, and what you could not see." onChange={e=>change({note:e.target.value})}/></label>
     <button disabled={frame<drill.frames.length-1 || CAPABILITIES.some(c=>!current.answers?.[c.key])} onClick={()=>change({reviewed:true,attempts:attempt(current,results.filter(r=>r.correct).length,results.length)})}>Review this match</button>
     {current.reviewed&&<div role="status"><p>{results.filter(r=>r.correct).length} / 3 observations match the visible evidence.</p><ul>{results.map(r=><li key={r.key}><strong>{CAPABILITIES.find(c=>c.key===r.key).label}: {r.correct?'supported':'review'}</strong>. {r.why}</li>)}</ul></div>}
     {selected<MATCH_DRILLS.length-1&&<button onClick={()=>onChange({...state,selected:selected+1})}>Next practice match</button>}

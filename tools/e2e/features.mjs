@@ -320,7 +320,7 @@ class Harness {
     try {
       await fn();
     } catch (e) {
-      this.check(label, false, `threw: ${e?.message?.split('\n')[0] ?? e}`);
+      this.check(label, false, `threw: ${e?.message ?? e}`);
       await this.shot(`${label.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-THREW`);
     }
   }
