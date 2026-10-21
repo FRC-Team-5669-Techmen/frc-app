@@ -30,6 +30,10 @@ A reviewed schedule plan uses the existing assignment record contract. One local
 
 Pit location display retains source and time. Addresses older than 24 hours (or unknown/future timestamps) are flagged for verification, not erased. This freshness warning is a Techmen choice. A firsthand pit report takes precedence over a directory import.
 
+Nexus geometry uses a read-only `scouting-import` mode. Existing member eligibility and competition/training event visibility are required; manager permission is still required for roster imports. Geometry is normalized as whole-map data (max 500,000 JSON characters, 1,000 shapes per collection, 2,500 overall, finite bounded coordinates and supported arrow types). Malformed walls reject the whole map. Source text never becomes markup. Map dimensions below one unit or an aspect ratio above 50 are refused as unsupported. These bounds, centered SVG rendering, map controls and freshness/conflict warnings are Techmen policies.
+
+Map downloads commit to the existing member/event IndexedDB draft `nexus-pit-map-v1` before offline availability is announced. The stored event key and retrieval time belong to that geometry; typing a different key never relabels the displayed map. Failures preserve the old cache. Source assignments are not manual pit corrections and never change observations, claims or rankings. The event export includes the map draft. External video and maps never imply live navigation or real-phone validation.
+
 ## Footage event boundaries and match identity
 
 Observations and assignments may carry `source_scope: current|external` and an external `source_event` such as `2026cabb`. External footage requires an HTTPS URL and a full match key starting with that source event. An observation tied to an assignment must preserve the assignment's source scope. Prior-event footage remains visible and exportable, with explicit labels, but is excluded from current-event reliability. Legacy video records without scope are labeled “event scope not recorded”; a lead must review their provenance before relying on them.

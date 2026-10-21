@@ -71,7 +71,7 @@ const READS = {
     const resolved = await RESOLVERS.event(ctx, a.event)
     if (!resolved.event) return resolved
     if (!ctx.backend.scoutingImport) return { status: 'not_available', message: 'Import preview is unavailable in this environment.' }
-    const result = await ctx.backend.scoutingImport(ctx.session, { event_id: resolved.event.id, event_key: a.event_key })
+    const result = await ctx.backend.scoutingImport(ctx.session, { event_id: resolved.event.id, event_key: a.event_key, ...(a.mode ? { mode: a.mode } : {}) })
     if (result.error) return { status: 'unavailable', message: 'Import preview is unavailable. Existing scouting data is unchanged.' }
     return { status: 'ok', preview: result.data }
   },

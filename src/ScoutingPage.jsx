@@ -10,6 +10,7 @@ import PickLists from './scouting/PickLists'
 import Training from './scouting/Training'
 import SchedulePlanner from './scouting/SchedulePlanner'
 import PitLocation from './scouting/PitLocation'
+import PitMap from './scouting/PitMap'
 import CoveragePanel from './scouting/CoveragePanel'
 import { buildEventArchive, downloadArchive } from './scouting/backup'
 import { matchOrder } from './scouting/schedule'
@@ -235,6 +236,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
       <details className="sc-card" open={observations.length > 0}><summary>Recent observations ({observations.length})</summary><div className="sc-stack">{observations.slice().sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at))).slice(0, 30).map(row => <EvidenceRecord key={row.id} row={row} memberName={memberName} canEdit={canEdit(row)} onEdit={() => openForm('observation', { record: row })} revisions={data.revisions ?? []} />)}{!observations.length && <p className="sc-help">No observations saved for this event.</p>}</div></details>
     </section>}
     {tab === 'teams' && <section className="sc-stack" role="tabpanel" id="sc-panel-teams" aria-labelledby="sc-tab-teams">
+      {store && <PitMap store={store} uid={uid} eventId={eventId} records={records} online={online} client={supabase} />}
       <CoveragePanel records={records} nameFor={nameFor} onTeam={team => setTeamQuery(String(team))} />
       <div className="sc-section-head"><div><h2>Robots and evidence</h2><p className="sc-help">Pit claims are separate from match verification.</p></div><label className="sc-search">Find a team<input type="search" value={teamQuery} onChange={e => setTeamQuery(e.target.value)} placeholder="Number or name" /></label></div>
       {!numbers.length && <div className="sc-empty"><h3>No teams yet</h3><p>Your lead can import the event roster or add a team below. You can also record a pit report by team number.</p><button onClick={() => openForm('pit')}>New pit report</button></div>}

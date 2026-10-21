@@ -14,3 +14,4 @@ P12,Staging,Deploy scouting-import and inspect representative TBA/Statbotics/Nex
 P13,Staging,Deploy scouting-dispatch; confirm channels/config without sending,"Verify author/manager scope, mentions suppression and separate delivery status",NOT_RUN,,,,,,,,,
 P14,Explicitly authorized integration,One reviewed real Discord notification and failure/recovery drill,Only after separate authorization; saved evidence survives; uncertain receipt never auto-resends,NOT_RUN,,,,,,,,,
 P15,Reference review,Inspect original May 2026 video frames/audio and any authorized current app sample,Record observed behavior/timestamps; resolve secondary-caption contradictions and fidelity gaps,NOT_RUN,,,,,,,,,
+P16,Both,Download and navigate the actual venue pit map then reload offline,"Check source key/time, zoom/rotation, walls and locations against signs; a conflicting scout report stays separate; record errors and recovery",NOT_RUN,,,,,,,,,

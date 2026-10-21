@@ -11,6 +11,8 @@ Checked October 20, 2026 (America/Los_Angeles). This is a behavioral reference a
 
 There are **no observed TideScout application workflow claims** in this run. The supplied secondary transcript supplies workflow leads. Its labels and timestamps do not become independent verification by being repeated here.
 
+October 21 map continuation: Nexus API v1.8.0 and its first-party pit-map guide establish geometry, not TideScout's presentation. `PIT_MAP.md` pins the independently calculated coordinate expectations before implementation. The implemented Techmen renderer, local cache, rotation/zoom, text directory and contradiction/freshness handling are inferred Techmen requirements. No live Nexus map response was available. A fresh public Statbotics response attempt remained inaccessible through the available web reader. The 2026 HighTide technical binder's indexed app descriptions remain documentation leads; direct extraction still returned no body, and no current app/source contract was recovered.
+
 ## What dated version is established
 
 | Source | Result | Scope and limitation |

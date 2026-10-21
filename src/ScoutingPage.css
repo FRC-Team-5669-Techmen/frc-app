@@ -46,6 +46,19 @@
 .sc-tabs button[aria-current="page"] { color: var(--gold); border-color: var(--gold-dim); }
 .sc-tabs button span { font: 12px var(--font-mono); padding: 2px 6px; background: var(--bg); border-radius: 3px; }
 .sc-stack { display: grid; gap: 18px; }
+.sc-map-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; margin: 14px 0; }
+.sc-map-viewport { overflow: auto; max-height: 65vh; border: 1px solid var(--border-strong); margin-top: 12px; background: var(--bg); }
+.sc-map-viewport svg { display: block; height: auto; max-width: none; }
+.sc-map-pits rect { fill: var(--surface-2); stroke: var(--steel); stroke-width: 1; }
+.sc-map-pits text, .sc-map-areas text, .sc-map-labels text { fill: var(--text); font-family: var(--font-mono); }
+.sc-map-walls rect { fill: var(--steel); }
+.sc-map-areas rect { fill: var(--surface); stroke: var(--steel); stroke-dasharray: 3 3; }
+.sc-map-arrows path { fill: var(--steel); }
+.sc-map-selected rect { stroke: var(--gold); stroke-width: 5; }
+.sc-map-selected text { fill: var(--gold); }
+.sc-map-selection { border-left: 3px solid var(--gold); padding-left: 12px; }
+.sc-map-directory { list-style: none; padding: 0; display: grid; gap: 8px; }
+.sc-map-directory li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .sc-help { color: var(--steel); font-size: 13px; line-height: 1.6; }
 .sc-wrap .sc-help { margin: 7px 0; }
 .sc-error { color: var(--text); border: 1px solid var(--fault); background: var(--fault-a10); padding: 14px; border-radius: var(--radius); overflow-wrap: anywhere; }

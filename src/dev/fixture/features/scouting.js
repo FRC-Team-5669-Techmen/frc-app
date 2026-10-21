@@ -1,4 +1,5 @@
 import { matchIdentity } from '../../../scouting/provenance.js'
+import { nexusMap } from '../nexus-map.js'
 // Fixture-only port of scouting rules. This proves browser workflows; SQL and
 // RLS are independently exercised by 0022_scouting_rls_test.sql.
 const EVENT = '16000000-0000-4000-8000-000000000001'
@@ -101,6 +102,12 @@ export default {
     scouting_save: save,
   },
   functions: {
+    'scouting-import': ({ body, persona, now }) => {
+      if (!persona || persona.isParent) return fail('Not permitted.', '42501')
+      if (body?.mode !== 'pit_map') return fail('Roster import is not configured in this fixture.', '503')
+      if (body.event_id !== EVENT || !/^20\d{2}[a-z0-9_]{2,60}$/.test(body.event_key)) return fail('Choose a fixture event and valid key.', '22023')
+      return ok({ map: structuredClone(nexusMap), event_key: body.event_key, fetched_at: stamp(now), source: 'nexus', source_url: `https://frc.nexus/api/v1/event/${body.event_key}/map`, schema: 'nexus-v1.8.0' })
+    },
     'scouting-dispatch': ({ body, persona, engine, now }) => {
       if (!persona || persona.isParent) return fail('Not permitted.', '42501')
       const changed = engine.updateRows('scouting_delivery', r => r.record_id === body?.record_id && ['queued', 'failed', 'not_configured'].includes(r.status), { status: 'not_configured', error: 'Discord is not configured in fixture mode.', updated_at: stamp(now) })

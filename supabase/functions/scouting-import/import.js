@@ -1,5 +1,6 @@
 // Read-only upstream adapter. Saving the preview uses scouting_save, under
 // the same author, conflict and audit rules as manual team entry.
+import { normalizePitMap } from './pit-map.js'
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const EVENT = /^20\d{2}[a-z0-9_]{2,60}$/
 const TEAM = /^frc([1-9]\d{0,4})$/
@@ -77,8 +78,25 @@ export function normalizeTeamPreview({ teams, matches = [], pits = {}, estimates
 
 export async function importScouting({ userClient, body, env = {}, fetchImpl = fetch, now = () => new Date().toISOString() }) {
   if (!UUID.test(body?.event_id ?? '') || !EVENT.test(body?.event_key ?? '')) return { http: 400, error: 'Choose a calendar event and a valid provider event key, such as 2026dal.' }
+  if (body.mode != null && body.mode !== 'pit_map') return { http: 400, error: 'Unknown scouting import mode.' }
   const auth = await userClient.auth.getUser()
   if (auth.error || !auth.data?.user) return { http: 401, error: 'Sign in first.' }
+  // Every eligible scout can prepare a read-only venue map. This does not
+  // grant roster import or any write; those still require the manager gate.
+  if (body.mode === 'pit_map') {
+    const access = await userClient.rpc('scouting_can_access')
+    if (access.error || access.data !== true) return { http: 403, error: 'Your current account cannot access scouting.' }
+    const event = await userClient.from('events').select('id,kind').eq('id', body.event_id).maybeSingle()
+    if (event.error || !event.data || !['competition', 'training'].includes(event.data.kind)) return { http: 404, error: 'Choose a visible competition or training event.' }
+    if (!env.NEXUS_API_KEY) return { http: 503, error: 'Nexus is not configured. Any previously downloaded map is unchanged.', status: 'not_configured' }
+    try {
+      const source_url = `https://frc.nexus/api/v1/event/${body.event_key}/map`
+      const result = await fetchJson(source_url, { 'Nexus-Api-Key': env.NEXUS_API_KEY }, fetchImpl)
+      return { http: 200, map: normalizePitMap(result.data), event_key: body.event_key, fetched_at: now(), source: 'nexus', source_url, schema: 'nexus-v1.8.0', etag: result.etag }
+    } catch {
+      return { http: 503, error: 'No usable Nexus map is available for this event. Check the event key or try again later. Any previously downloaded map is unchanged.', status: 'unavailable' }
+    }
+  }
   const allowed = await userClient.rpc('scouting_can_manage', { p_event: body.event_id })
   if (allowed.error || allowed.data !== true) return { http: 403, error: 'Only a scouting manager can prepare imported event data.' }
   const eventKey = body.event_key

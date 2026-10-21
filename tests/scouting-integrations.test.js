@@ -177,6 +177,21 @@ describe('read-only provider import with mocked upstreams', () => {
 })
 
 describe('connector delivery follows confirmed commits only', () => {
+  it('reads map geometry as the connector account and reports upstream refusal without a write', async () => {
+    const backend = memoryBackend()
+    backend.select = vi.fn(async () => ({ data: [{ id, title: 'Map test event', kind: 'competition' }] }))
+    backend.scoutingImport = vi.fn(async () => ({ data: { source: 'nexus', event_key: '2026dal', map: { pits: {} } } }))
+    const session = { accessToken: 'minted-user', user: { id: 'u-admin' } }
+    const ctx = { backend, session, token: { id: 't1' }, now: testClock(), random: testRandom(), cache: new Map() }
+    const args = { event: id, event_key: '2026dal', mode: 'pit_map' }
+    expect((await runTool(ctx, 'preview_scouting_import', args)).status).toBe('ok')
+    expect(backend.scoutingImport).toHaveBeenCalledWith(session, { event_id:id,event_key:'2026dal',mode:'pit_map' })
+    expect(backend.state.calls).toHaveLength(0)
+    expect(backend.state.audit).toHaveLength(0)
+    backend.scoutingImport.mockResolvedValue({ error: { message: 'Provider unavailable' } })
+    expect((await runTool(ctx, 'preview_scouting_import', args)).status).toBe('unavailable')
+    expect(backend.state.calls).toHaveLength(0)
+  })
   it('binds scouting authorship to the connector session, even if the request supplies another actor', async () => {
     const backend = memoryBackend()
     const ctx = { backend, session: { accessToken: 'minted-user', user: { id: 'u-admin' } }, token: { id: 't1' }, now: testClock(), random: testRandom(), cache: new Map() }

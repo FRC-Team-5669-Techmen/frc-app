@@ -36,8 +36,19 @@ try {
  await until(()=>doc.querySelector('[data-scout-page="event"]'))
  const teams=[...doc.querySelectorAll('.sc-tabs button')].find(b=>b.textContent.trim()==='Teams');teams.click();await wait(100)
  assert.equal(doc.querySelectorAll('.sc-team-card').length,4)
+ console.log('Checking fictional map download in portable bundle');
+ doc.querySelector('.sc-pit-map').open=true
+ await until(()=>!doc.querySelector('[aria-label="Nexus event key"]').disabled)
+ const mapKey=doc.querySelector('[aria-label="Nexus event key"]')
+ Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype,'value').set.call(mapKey,'2026dal')
+ mapKey.dispatchEvent(new dom.window.Event('input',{bubbles:true}));await wait(30)
+ const download=[...doc.querySelectorAll('.sc-pit-map button')].find(b=>b.textContent==='Download / refresh map')
+ assert.equal(download.disabled,false);download.click()
+ await until(()=>doc.querySelectorAll('.sc-map-pits').length===4)
+ assert(doc.querySelector('.sc-pit-map').textContent.includes('Map saved on this device for offline use.'))
+ assert.equal(doc.querySelector('.sc-map-pits rect').getAttribute('x'),'-50')
  assert.deepEqual(errors,[])
  doc.querySelectorAll('script').forEach(e=>e.remove())
  writeFileSync('artifacts/scouting-review/static-render.html',dom.serialize())
- console.log('Portable review: real route and all five tabs render; mentor planner and parent denial verified; zero script errors (DOM emulation).')
+ console.log('Portable review: real route/all five tabs, mentor planner, parent denial and fictional map cache verified; zero script errors (DOM emulation).')
 }finally{dom.window.close()}

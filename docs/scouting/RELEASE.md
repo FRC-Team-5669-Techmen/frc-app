@@ -33,11 +33,15 @@ Server-only configuration:
 | Variable | Purpose |
 | --- | --- |
 | `TBA_AUTH_KEY` | TBA event roster and match preview |
-| `NEXUS_API_KEY` | Nexus pit addresses |
+| `NEXUS_API_KEY` | Nexus pit addresses and geometry maps |
 | `DISCORD_BOT_TOKEN` | Existing team's Discord bot |
 | `DISCORD_GUILD_ID` | Existing team's Discord server |
 
 Never prefix these with `VITE_`. The existing Supabase project URL and anon/publishable configuration remain part of the existing app setup. Statbotics import uses the public provider endpoint. Source failures must preserve stored data; confirm representative provider responses in staging.
+
+The updated `scouting-import` source includes `pit-map.js`; deploy the whole directory. Its `mode: pit_map` performs a read-only eligibility/event check for ordinary scouts. The default mode still requires a manager. No additional migration is needed for maps. On each scouting device, open Teams → Pit map and directory, confirm the provider event key, then download while connected. A lead downloading on one device does not prepare other devices. Confirm walls/areas and assignments against the actual venue, then test reload offline. A failed refresh must preserve the previous key/time/map. Event backup includes this cache as a draft.
+
+The connected frc-app project currently reports no development branches. Provisioning an isolated hosted staging environment remains an external setup step; this implementation has not created a paid branch or used production as a staging substitute.
 
 No real Discord test sends were authorized for this build. A later explicitly approved integration check must verify the fixed #scouting/#strategy channels and bot permissions. User-controlled mentions stay suppressed; no unverified role ping mapping is shipped. Check uncertain delivery in Discord before any intentional replacement communication.
 

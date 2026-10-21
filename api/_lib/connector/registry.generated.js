@@ -597,7 +597,7 @@ export default {
   },
   "preview_scouting_import": {
    "name": "preview_scouting_import",
-   "describe": "Preview team details, match schedules and available estimates from scouting providers without saving changes.",
+   "describe": "Preview event teams, match schedules and estimates, or read the Nexus pit map, without saving changes.",
    "say": [
     "preview the Beach Blitz team import",
     "fetch the scouting event data",
@@ -615,6 +615,13 @@ export default {
      "type": "string",
      "describe": "The provider event key, such as 2026dal",
      "required": true
+    },
+    "mode": {
+     "type": "string",
+     "describe": "Use pit_map for read-only Nexus geometry; omit for the manager-only team import",
+     "enum": [
+      "pit_map"
+     ]
     }
    }
   }
@@ -6985,7 +6992,8 @@ export default {
   {
    "name": "scouting-import",
    "files": [
-    "src/ScoutingPage.jsx"
+    "src/ScoutingPage.jsx",
+    "src/scouting/PitMap.jsx"
    ],
    "excluded": "not a separate generated tool: preview_scouting_import reads this Edge Function as the same account, then scouting_save applies reviewed records"
   },

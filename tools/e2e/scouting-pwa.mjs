@@ -2,7 +2,8 @@
 /** Built app -> real Supabase JS -> local PostgREST -> native PostgreSQL.
  * The parent SQL harness supplies a DISPOSABLE database. Auth identities/tokens
  * are synthetic; this is not hosted Supabase Auth, a phone, or an external API.
- * No real Discord messages can be sent: functions return not-configured here.
+ * No real Discord messages can be sent. The real read-only map adapter uses
+ * a fictional Nexus response; other functions return not-configured here.
  * POSTGREST_BIN=/path/postgrest node tools/sql-harness/run.mjs --tests none --node tools/e2e/scouting-pwa.mjs
  */
 import { spawn, execFileSync } from 'node:child_process'
@@ -12,6 +13,9 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { resolve, extname } from 'node:path'
 import assert from 'node:assert/strict'
 import { Client } from 'pg'
+import { createClient } from '@supabase/supabase-js'
+import { importScouting } from '../../supabase/functions/scouting-import/import.js'
+import { nexusMap } from '../../src/dev/fixture/nexus-map.js'
 import { launch } from '../browser-verify/browser.mjs'
 if (!process.env.PGHOST?.startsWith('/tmp/frc-sqlh-')) throw new Error('Use the disposable SQL harness only')
 if (!process.env.POSTGREST_BIN) throw new Error('Set POSTGREST_BIN to an installed PostgREST executable')
@@ -21,7 +25,7 @@ const db=new Client();await db.connect()
 const port=Number(process.env.SCOUTING_PWA_PORT)||54335, apiPort=port+1, origin=`http://127.0.0.1:${port}`
 // Random per-run local signing key. Never sent to any remote service or output.
 const key=randomUUID()+randomUUID(), event=randomUUID(), results=[]
-let pgrest, server, browser, page, dropNextSave = false, holdNextSave = false, heldSaveCommitted = false
+let pgrest, server, browser, page, dropNextSave = false, holdNextSave = false, heldSaveCommitted = false, mapProviderCalls = 0
 const wait=ms=>new Promise(r=>setTimeout(r,ms))
 function check(label,actual){assert.ok(actual,label);results.push({label,ok:true});console.log('PASS scouting PWA: '+label)}
 const sign=claims=>{const body=Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url')+'.'+Buffer.from(JSON.stringify(claims)).toString('base64url');return body+'.'+createHmac('sha256',key).update(body).digest('base64url')}
@@ -51,6 +55,12 @@ try {
    }
    if(url.pathname==='/auth/v1/token'){res.setHeader('content-type','application/json');res.end(JSON.stringify({access_token:token,refresh_token:'local-only-test',expires_at:expires,expires_in:3600,token_type:'bearer',user}));return}
    if(url.pathname==='/auth/v1/user'){res.setHeader('content-type','application/json');res.end(JSON.stringify(user));return}
+   if(url.pathname==='/functions/v1/scouting-import'){
+    const chunks=[];for await(const c of req)chunks.push(c)
+    const userClient=createClient(origin,'local-test-placeholder',{global:{headers:{Authorization:req.headers.authorization||''}},auth:{persistSession:false,autoRefreshToken:false}})
+    const result=await importScouting({userClient,body:JSON.parse(Buffer.concat(chunks)),env:{NEXUS_API_KEY:'local-fake-provider-key'},fetchImpl:async url=>{assert.equal(url,'https://frc.nexus/api/v1/event/2026dal/map');mapProviderCalls++;return new Response(JSON.stringify(nexusMap))}})
+    const {http,...body}=result;res.writeHead(http,{'content-type':'application/json'});res.end(JSON.stringify(body));return
+   }
    if(url.pathname.startsWith('/functions/v1/')){res.writeHead(503,{'content-type':'application/json'});res.end(JSON.stringify({status:'not_configured',error:'No external integration configured in this local test'}));return}
    const asset=resolve(out,'app','.'+decodeURIComponent(url.pathname));const file=asset.startsWith(resolve(out,'app')+'/')&&existsSync(asset)&&extname(asset)?asset:resolve(out,'app/index.html')
    const mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.woff2':'font/woff2','.webmanifest':'application/manifest+json'}
@@ -68,6 +78,13 @@ try {
  check('built app loads event through real PostgREST',true)
  await page.evaluate(async()=>{await navigator.serviceWorker.ready;if(!navigator.serviceWorker.controller)await new Promise(r=>navigator.serviceWorker.addEventListener('controllerchange',r,{once:true}))})
  check('production service worker controls the page',await page.evaluate(()=>!!navigator.serviceWorker.controller))
+ await page.getByRole('tab',{name:'Teams',exact:true}).click()
+ await page.getByText('Pit map and directory',{exact:true}).click()
+ await page.getByLabel('Nexus event key',{exact:true}).fill('2026dal')
+ await page.getByRole('button',{name:'Download / refresh map',exact:true}).click()
+ await page.getByText('Map saved on this device for offline use.',{exact:true}).waitFor()
+ check('built map adapter authorizes through local PostgREST and caches fictional Nexus geometry',mapProviderCalls===1&&await page.locator('.sc-map-pits').count()===4)
+ await page.getByRole('tab',{name:'Scout this',exact:true}).click()
  // Force the stored session beyond its local refresh deadline, then remove
  // the network. The offline surface must not depend on refreshing Auth.
  await page.evaluate(()=>{const key='sb-127-auth-token', s=JSON.parse(localStorage.getItem(key));s.expires_at=Math.floor(Date.now()/1000)-60;localStorage.setItem(key,JSON.stringify(s))})
@@ -80,6 +97,12 @@ try {
  await page.goto(origin,{waitUntil:'domcontentloaded',timeout:15000})
  await page.getByRole('heading',{name:'PWA Offline Acceptance',exact:true}).waitFor({timeout:15000})
  check('installed PWA start URL reopens the prepared event offline',true)
+ await page.getByRole('tab',{name:'Teams',exact:true}).click()
+ await page.getByText('Pit map and directory',{exact:true}).click()
+ await page.getByText('Showing the map saved on this device.',{exact:false}).waitFor()
+ check('cold offline map survives with real service worker and IndexedDB',await page.locator('.sc-map-pits').count()===4&&mapProviderCalls===1)
+ await page.screenshot({path:resolve(out,'offline-map.png'),fullPage:true})
+ await page.getByRole('tab',{name:'Scout this',exact:true}).click()
  await page.getByRole('button',{name:'New observation',exact:true}).click()
  await page.getByLabel('Team number',{exact:true}).fill('5669');await page.getByLabel('Match',{exact:true}).fill('qm99')
  await page.getByRole('group',{name:'Passes under the TRENCH',exact:true}).getByRole('button',{name:'Did not see',exact:true}).click()
@@ -125,6 +148,9 @@ try {
  const attempt={p_id:randomUUID(),p_event:event,p_kind:'message',p_team:5669,p_match:null,p_payload:{text:'Unauthorized',status:'open'},p_expected_version:0,p_operation:randomUUID(),p_actor:parent.id}
  const denied=await fetch(origin+'/rest/v1/rpc/scouting_save',{method:'POST',headers:{authorization:'Bearer '+parentToken,'content-type':'application/json'},body:JSON.stringify(attempt)})
  check('parent JWT cannot save through PostgREST',denied.status===403&&(await denied.json()).code==='42501')
+ const mapCallsBefore=mapProviderCalls
+ const deniedMap=await fetch(origin+'/functions/v1/scouting-import',{method:'POST',headers:{authorization:'Bearer '+parentToken,'content-type':'application/json'},body:JSON.stringify({event_id:event,event_key:'2026dal',mode:'pit_map'})})
+ check('map adapter refuses a parent through the actual local eligibility RPC before provider access',deniedMap.status===403&&mapProviderCalls===mapCallsBefore)
  const direct=await fetch(origin+'/rest/v1/scouting_records',{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify({id:randomUUID(),event_id:event,member_id:actor.id,kind:'message',team_number:5669,payload:{text:'Bypass'}})})
  check('authenticated client cannot bypass validated write RPC',direct.status===403&&(await direct.json()).code==='42501')
  const admin=(await db.query("select member_id as id from public.member_roles where role='admin' order by member_id limit 1")).rows[0]
@@ -140,7 +166,7 @@ try {
  check('connector HTTP refuses an unauthorized account',!forbidden.ok&&Number((await db.query('select count(*) as n from public.scouting_records where id=$1',[args.p_id])).rows[0].n)===1)
 } catch(e) { if(page) { writeFileSync(resolve(out,'failure.html'),await page.content().catch(()=>'')); await page.screenshot({path:resolve(out,'failure.png'),fullPage:true}).catch(()=>{}) }; results.push({label:e.message,ok:false});console.error('FAIL scouting PWA: '+e.stack);process.exitCode=1}
 finally {
- writeFileSync(resolve(out,'results.json'),JSON.stringify({scope:'Built app, native Chromium, real local PostgREST/PostgreSQL; synthetic auth; no live services or real phones',results},null,2))
+ writeFileSync(resolve(out,'results.json'),JSON.stringify({scope:'Built app, native Chromium, real local PostgREST/PostgreSQL; synthetic auth; real map adapter with fictional Nexus response; no live services or real phones',results},null,2))
  await browser?.close();await new Promise(r=>server?server.close(r):r());pgrest?.kill('SIGTERM');await db.end()
  console.log(`scouting PWA: ${results.filter(r=>r.ok).length}/${results.length} passed`)
 }

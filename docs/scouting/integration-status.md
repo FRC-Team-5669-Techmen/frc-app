@@ -34,7 +34,7 @@ Prepared October 21, 2026 UTC. These changes are local reviewable source, not de
 
 - No real Discord message was sent. No live TBA/Nexus key was read or used. No live data was imported. No Supabase function was deployed. Live JWT gateway behavior, Discord permissions and provider quotas remain unverified.
 - Real-device offline behavior and first-time scout timing belong to the overall app verification; mocked integration tests establish none of those claims.
-- Nexus map geometry and AI parsing are not implemented; manual/verified pit addresses are available. Role pings are deliberately absent pending a reviewed role mapping.
+- Nexus map geometry is implemented in the October 21 continuation; see `PIT_MAP.md`. Ordinary eligible scouts use the read-only mode while roster imports stay manager-only. Live provider/map presentation fidelity remains unverified. AI parsing and role pings are deliberately absent; there is no reviewed role mapping or authorized real send.
 - Upstream HTTP cache metadata is returned but a shared server cache is not implemented. Imported snapshots retain retrieval time; the user explicitly refreshes and reviews before saving.
 - Provider-match previews can be accepted into the reviewed shift planner. Schedule drafts persist locally per account/event; reviewed assignments sync through the existing versioned RPC. They are not a new shared server schedule table.
 - A `sending` reservation left by a crashed dispatcher remains visibly unresolved. It is intentionally not automatically resent; an operator must inspect Discord before deciding on a new explicit communication.

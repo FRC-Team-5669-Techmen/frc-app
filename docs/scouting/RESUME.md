@@ -4,6 +4,10 @@
 
 ## Current implementation and proof
 
+October 21 continuation: added the Nexus v1.8.0 pit map and text directory, zoom/rotation/search, account/event-scoped durable download, freshness and conflicting-location warnings. Every eligible scout can download through the read-only adapter; roster imports remain manager-only. Connector `preview_scouting_import` accepts optional `mode: pit_map`. No schema migration was needed. [PIT_MAP.md](PIT_MAP.md) froze the acceptance expectations before coding. Focused checks passed (146/146 Chromium, 969 unit/DOM); the full final regression is being rerun for the next retained verification packet.
+
+In-flight checkpoint: the full browser regression is still running against unchanged app source. Native PostgreSQL 17 has freshly passed 573 SQL checks, 17 mutants, seven races and 22 PWA checks. Actual local Deno 2.9.6 entrypoints pass checks plus 12 HTTP boundary assertions (rejecting local Auth stand-in). The standalone review builder exposed a case collision between `PitMap.jsx` and `pitMap.js`; rename the helper after the browser run, then repeat build/unit/focused browser/portable review. This paragraph is a pending-work record, not a completion claim.
+
 | Requirement | State |
 | --- | --- |
 | Pit claims, observations, assignments, planning, replies, individual/master lists and comparison preview/apply | Implemented; unit/DOM, real Chromium and native SQL checks pass. Formulas are proposed Techmen rules, not claimed 4414 algorithms |
@@ -21,8 +25,8 @@ The checkpoint lockfile was repaired for npm 10: 27 missing nested esbuild/platf
 
 - Production catalog has no scouting tables/functions, and neither `scouting-import` nor `scouting-dispatch` is deployed. Setup/release needs explicit authorization. Read-only catalog access works; it does not prove live behavior.
 - Real iPhone/Android, first-time student measurements, a mentor review and the independent real-recording corpus are unavailable in this cloud run. Use `TRAINING.md` and `FIELD_ACCEPTANCE.csv`; never mark those NOT_RUN gates passed from browser emulation.
-- Original TideScout video audio/frames and authorized current app/schema/export access remain missing. Source timestamps are secondary leads. Nexus map geometry and reviewed Discord role pings remain fidelity gaps; sourced addresses and pit conversation workflows work.
-- Live TBA/Statbotics/Nexus responses, hosted Auth/API configuration and authorized real delivery still need representative staging/field checks. Local transport uses synthetic Auth and stand-ins; no live integration success was claimed.
+- Original TideScout video audio/frames and authorized current app/schema/export access remain missing. Source timestamps are secondary leads. Nexus geometry now works in Techmen; exact TideScout map presentation and reviewed Discord role pings remain fidelity gaps.
+- Live TBA/Statbotics/Nexus responses, hosted Auth/API configuration and authorized real delivery still need representative staging/field checks. Local transport uses synthetic Auth and stand-ins; no live integration success was claimed. The connected frc-app project has no development branches; current production catalog again shows no scouting objects or Edge Functions. Do not create a paid staging branch or install production without the applicable authorization.
 
 ## Continue safely
 
