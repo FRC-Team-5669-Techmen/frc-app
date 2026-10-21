@@ -1,6 +1,6 @@
 // Portable evidence archive. JSON is deliberately plain and documented so a
 // reviewer can recover work without this application's runtime. It is not an
-// import command: pending operations must retain their IDs and author on retry.
+// automatic import command: reviewed recovery keeps pending operation IDs and authors.
 export function buildEventArchive({ eventId, memberId, snapshot, local, exportedAt = new Date().toISOString() }) {
   if (local.member_id !== memberId || local.event_id !== eventId) throw new Error('Backup belongs to another account or event.')
   const records = new Map((snapshot.records ?? []).map(row => [row.id, row]))

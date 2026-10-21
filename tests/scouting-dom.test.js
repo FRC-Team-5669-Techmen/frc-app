@@ -427,3 +427,72 @@ describe('event recovery and footage provenance', () => {
    expect(archive.exported_by).toBe(IDS.student)
    store.close()
  })
+
+it('previews a backup without writing, holds its recovered request across remount, then explicitly retries it', async () => {
+  const { buildEventArchive } = await import('../src/scouting/backup.js')
+  const donor = await createScoutingStore({ dbName: 'separate-lost-device' })
+  const original = await donor.enqueue(IDS.student, EVENT, { kind: 'observation', team_number: 5669, match_key: 'qm301', payload: { answers: { trench: 'did_not_see' }, source: 'live', notes: 'Recovered evidence must wait for server validation.' } })
+  const archive = buildEventArchive({ memberId: IDS.student, eventId: EVENT, snapshot: {}, local: await donor.exportBackup(IDS.student, EVENT) })
+  donor.close()
+  const target = await createScoutingStore()
+  async function choose(value) {
+    const field = host.querySelector('input[type="file"]'), text = JSON.stringify(value)
+    Object.defineProperty(field, 'files', { configurable: true, value: [{ size: text.length, text: async () => text }] })
+    await act(async () => { field.dispatchEvent(new Event('change', { bubbles: true })); await pause(1) })
+  }
+  try {
+    await mount()
+    await choose({ ...archive, exported_by: IDS.student2 })
+    await settle(() => host.textContent.includes('original member account and event'), 'scope refusal')
+    expect(await target.listQueue(IDS.student, EVENT)).toEqual([])
+    await choose(archive)
+    await settle(() => host.textContent.includes('1 recoverable'), 'recovery preview')
+    expect(await target.listQueue(IDS.student, EVENT)).toEqual([])
+    await click(buttons('Select all recoverable saves')[0])
+    await click(buttons('Restore 1 selected saves for review')[0])
+    await settle(() => host.textContent.includes('Recovered · awaiting review'), 'held recovery')
+    expect((await target.listQueue(IDS.student, EVENT))[0].args).toEqual(original.args)
+    expect(fixture.rows('scouting_records').some(row => row.id === original.record_id)).toBe(false)
+    expect([...host.querySelectorAll('.sc-evidence-record')].some(row => row.textContent.includes('Recovered evidence'))).toBe(false)
+    await unmount(); await mount()
+    await settle(() => !buttons('Sync now')[0].disabled, 'sync idle')
+    await click(buttons('Sync now')[0]); await settle(() => !buttons('Sync now')[0].disabled)
+    expect((await target.listQueue(IDS.student, EVENT))[0].status).toBe('recovered')
+    expect(fixture.rows('scouting_records').some(row => row.id === original.record_id)).toBe(false)
+    await click(buttons('Review recovered save')[0]);await click(buttons('Retry original save')[0])
+    await settle(() => host.textContent.includes('All saved work synced'), 'reviewed original request sync')
+    expect(fixture.rows('scouting_records').filter(row => row.id === original.record_id)).toHaveLength(1)
+    expect(fixture.rows('scouting_revisions').filter(row => row.record_id === original.record_id)).toHaveLength(1)
+    await choose(archive);await settle(() => host.textContent.includes('0 recoverable · 1 already present'), 'duplicate recovery skipped')
+    expect((await target.listQueue(IDS.student, EVENT))[0]).toMatchObject({ id: original.id, status: 'synced' })
+  } finally { target.close() }
+})
+
+it('keeps new work visible while an earlier queue snapshot finishes and drains it without duplicate submissions', async () => {
+  await mount(); await settle(() => !buttons('Sync now')[0].disabled, 'initial sync idle')
+  const original = supabase.rpc.bind(supabase), releases = [], calls = []
+  vi.spyOn(supabase, 'rpc').mockImplementation((name, args) => {
+    if (name !== 'scouting_save') return original(name, args)
+    calls.push(args)
+    return new Promise(resolve => releases.push(async () => resolve(await original(name, args))))
+  })
+  async function capture(match) {
+    await click(buttons('New observation')[0]);await settle(() => host.querySelector('dialog textarea'))
+    await input(host.querySelector('dialog input[type="number"]'), '5669')
+    await input(host.querySelector('dialog input[placeholder="qm1"]'), match)
+    await input(host.querySelector('dialog textarea'), 'Concurrent local save '+match)
+    await click(buttons('Save observation')[0]);await settle(() => !host.querySelector('dialog'))
+  }
+  await capture('qm510');await settle(() => calls.length === 1, 'first held RPC')
+  await capture('qm511');await settle(() => host.textContent.includes('2 waiting to sync'), 'second durable proposal')
+  let falseSynced = false
+  const observer = new MutationObserver(() => { if (host.textContent.includes('All saved work synced')) falseSynced = true })
+  observer.observe(host, { childList: true, subtree: true, characterData: true })
+  await act(async () => releases[0]());await settle(() => calls.length === 2, 'fresh local work drains')
+  expect(falseSynced).toBe(false)
+  expect(host.textContent).toContain('1 waiting to sync')
+  observer.disconnect()
+  await act(async () => releases[1]());await settle(() => host.textContent.includes('All saved work synced'), 'both confirmed')
+  expect(calls.map(row => row.p_match)).toEqual(['qm510', 'qm511'])
+  expect(fixture.rows('scouting_records').filter(row => ['qm510','qm511'].includes(row.match_key))).toHaveLength(2)
+})

@@ -20,6 +20,9 @@ import { launch } from '../browser-verify/browser.mjs'
 if (!process.env.PGHOST?.startsWith('/tmp/frc-sqlh-')) throw new Error('Use the disposable SQL harness only')
 if (!process.env.POSTGREST_BIN) throw new Error('Set POSTGREST_BIN to an installed PostgREST executable')
 const root=resolve(import.meta.dirname,'../..'), out=resolve(root,'artifacts/scouting-pwa')
+const soakMinutes=Number(process.env.SCOUTING_SOAK_MINUTES||0)
+if(!Number.isFinite(soakMinutes)||soakMinutes<0||soakMinutes>60)throw new Error('SCOUTING_SOAK_MINUTES must be between 0 and 60')
+const soak={requestedMinutes:soakMinutes,startedAt:null,finishedAt:null,rounds:[]}
 mkdirSync(out,{recursive:true})
 const db=new Client();await db.connect()
 const port=Number(process.env.SCOUTING_PWA_PORT)||54335, apiPort=port+1, origin=`http://127.0.0.1:${port}`
@@ -69,7 +72,7 @@ try {
  })
  await new Promise(r=>server.listen(port,'127.0.0.1',r))
  ;({browser}=await launch())
- const context=await browser.newContext({viewport:{width:375,height:812},isMobile:true,hasTouch:true,serviceWorkers:'allow'})
+ let context=await browser.newContext({viewport:{width:375,height:812},isMobile:true,hasTouch:true,serviceWorkers:'allow'})
  page=await context.newPage()
  await page.goto(origin)
  await page.evaluate(({user,token,expires})=>localStorage.setItem('sb-127-auth-token',JSON.stringify({access_token:token,refresh_token:'local-only-test',expires_at:expires,expires_in:3600,token_type:'bearer',user})),{user,token,expires})
@@ -116,8 +119,44 @@ try {
  await context.setOffline(false)
  await page.getByRole('button',{name:'Retry save',exact:true}).waitFor({timeout:30000})
  check('lost HTTP response preserves the queued proposal after server commit',Number((await db.query('select count(*) as n from public.scouting_records where event_id=$1',[event])).rows[0].n)===1)
- await page.getByRole('button',{name:'Retry save',exact:true}).click()
+ const backupDownload=page.waitForEvent('download')
+ await page.getByRole('button',{name:'Export event data',exact:true}).click()
+ const backup=JSON.parse(readFileSync(await (await backupDownload).path(),'utf8')), original=backup.pending[0]
+ check('lost-response backup preserves the actual operation identity',original.args.p_actor===actor.id&&original.args.p_event===event&&original.id===original.args.p_operation)
+ // A fresh profile simulates replacing a lost device. Only the exported file
+ // crosses profiles; no IndexedDB cache, permission hint or receipt is copied.
+ await context.close()
+ context=await browser.newContext({viewport:{width:375,height:812},isMobile:true,hasTouch:true,serviceWorkers:'allow'})
+ page=await context.newPage();await page.goto(origin)
+ await page.evaluate(({user,token,expires})=>localStorage.setItem('sb-127-auth-token',JSON.stringify({access_token:token,refresh_token:'local-only-test',expires_at:expires,expires_in:3600,token_type:'bearer',user})),{user,token,expires})
+ await page.goto(origin+`/scouting/${event}`);await page.getByRole('heading',{name:'PWA Offline Acceptance',exact:true}).waitFor()
+ await page.getByText('Recover pending saves from a backup',{exact:true}).click()
+ await page.getByLabel('Event backup JSON',{exact:true}).setInputFiles({name:'lost-device.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(backup))})
+ await page.getByText('1 recoverable',{exact:false}).waitFor()
+ await page.getByRole('button',{name:'Select all recoverable saves',exact:true}).click()
+ await page.getByRole('button',{name:'Restore 1 selected saves for review',exact:true}).click()
+ await page.getByText('Recovered · awaiting review',{exact:true}).waitFor()
+ await page.reload();await page.getByText('Recovered · awaiting review',{exact:true}).waitFor()
+ check('fresh-profile recovery holds the save across reload without another server revision',Number((await db.query('select count(*) as n from public.scouting_revisions where event_id=$1',[event])).rows[0].n)===1)
+ await page.getByRole('button',{name:'Review recovered save',exact:true}).click()
+ await page.getByRole('button',{name:'Retry original save',exact:true}).click()
  await page.getByText('All saved work synced',{exact:true}).waitFor({timeout:30000})
+ check('reviewed recovered request uses its original server receipt',Number((await db.query('select count(*) as n from public.scouting_operations where operation_id=$1',[original.id])).rows[0].n)===1&&Number((await db.query('select count(*) as n from public.scouting_revisions where event_id=$1',[event])).rows[0].n)===1)
+ const invalidBackup=structuredClone(backup),bad=invalidBackup.device_backup.operations[0]
+ bad.id=randomUUID();bad.record_id=randomUUID();bad.key=`${actor.id}:${event}:${bad.id}`
+ Object.assign(bad.args,{p_id:bad.record_id,p_operation:bad.id,p_match:'qm-invalid-backup',p_payload:{source:'live',answers:{trench:'unknown_is_not_zero'},notes:{not:'text'}}})
+ await page.getByText('Recover pending saves from a backup',{exact:true}).click()
+ await page.getByLabel('Event backup JSON',{exact:true}).setInputFiles({name:'invalid-domain-request.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(invalidBackup))})
+ await page.getByText('1 recoverable',{exact:false}).waitFor()
+ await page.getByRole('button',{name:'Select all recoverable saves',exact:true}).click();await page.getByRole('button',{name:'Restore 1 selected saves for review',exact:true}).click()
+ await page.getByRole('button',{name:'Review recovered save',exact:true}).click();await page.getByRole('button',{name:'Retry original save',exact:true}).click()
+ await page.getByText('The server rejected this recovered request.',{exact:false}).waitFor()
+ check('malformed domain data is held out of evidence and rejected by actual SQL validation',Number((await db.query('select count(*) as n from public.scouting_records where id=$1',[bad.record_id])).rows[0].n)===0&&await page.locator('.sc-evidence-record').filter({hasText:'qm-invalid-backup'}).count()===0)
+ await page.getByRole('button',{name:'Review recovered save',exact:true}).click()
+ check('rejected recovery cannot bypass validation through form editing',await page.getByRole('button',{name:'Edit rejected proposal',exact:true}).count()===0&&await page.getByRole('button',{name:'Retry original save',exact:true}).count()===0)
+ await page.getByRole('button',{name:'Remove recovered copy',exact:true}).click()
+ await page.getByText('All saved work synced',{exact:true}).waitFor()
+ check('explicitly removing a rejected recovered copy leaves original synchronized evidence intact',Number((await db.query('select count(*) as n from public.scouting_records where event_id=$1',[event])).rows[0].n)===1)
  const rows=(await db.query('select * from public.scouting_records where event_id=$1',[event])).rows
  check('reconnect creates exactly one attributed observation',rows.length===1&&rows[0].member_id===actor.id&&rows[0].payload.answers.trench==='did_not_see')
  await page.reload();await page.getByRole('heading',{name:'PWA Offline Acceptance',exact:true}).waitFor()
@@ -164,9 +203,44 @@ try {
  check('connector HTTP commit preserves identity and audit',committed.ok&&(await db.query('select member_id from public.scouting_records where id=$1',[args.p_id])).rows[0]?.member_id===admin.id&&Number((await db.query("select count(*) as n from public.connector_audit where user_id=$1 and function_name='scouting_save'",[admin.id])).rows[0].n)===1)
  const forbidden=await connector(parentToken,'commit','pwa-denied-'+randomUUID())
  check('connector HTTP refuses an unauthorized account',!forbidden.ok&&Number((await db.query('select count(*) as n from public.scouting_records where id=$1',[args.p_id])).rows[0].n)===1)
+ if(soakMinutes>0){
+  // One artificial scouting cycle per minute. This deliberately exercises
+  // repeated offline/reload/reconnect over elapsed time, not human task timing.
+  await context.setOffline(false);await page.goto(origin+`/scouting/${event}`)
+  await page.getByRole('heading',{name:'PWA Offline Acceptance',exact:true}).waitFor()
+  await page.getByText('All saved work synced',{exact:true}).waitFor()
+  await page.evaluate(async()=>{await navigator.serviceWorker.ready;if(!navigator.serviceWorker.controller)await new Promise(r=>navigator.serviceWorker.addEventListener('controllerchange',r,{once:true}))})
+  const began=Date.now(),deadline=began+soakMinutes*60000
+  soak.startedAt=new Date(began).toISOString()
+  let round=0
+  while(Date.now()<deadline){
+   const started=Date.now(),match='qm'+(1000+round),answer=['did_not_see','no','yes','not_applicable'][round%4],label={did_not_see:'Did not see',no:'No',yes:'Yes',not_applicable:'Not applicable'}[answer]
+   await context.setOffline(true)
+   if(round%4===0){await page.close();page=await context.newPage();await page.goto(origin+`/scouting/${event}`,{waitUntil:'domcontentloaded'});await page.getByRole('heading',{name:'PWA Offline Acceptance',exact:true}).waitFor()}
+   await page.getByRole('button',{name:'New observation',exact:true}).click()
+   await page.getByLabel('Team number',{exact:true}).fill('5669');await page.getByLabel('Match',{exact:true}).fill(match)
+   await page.getByRole('group',{name:'Passes under the TRENCH',exact:true}).getByRole('button',{name:label,exact:true}).click()
+   await page.getByLabel('Notes',{exact:true}).fill(`Synthetic soak cycle ${round+1}; no human timing or real match claim.`)
+   await page.getByRole('button',{name:'Save observation',exact:true}).click()
+   await page.getByText('1 waiting to sync',{exact:true}).waitFor()
+   await page.reload();await page.getByText('1 waiting to sync',{exact:true}).waitFor()
+   await context.setOffline(false);await page.getByText('All saved work synced',{exact:true}).waitFor({timeout:30000})
+   await page.getByRole('button',{name:'Sync now',exact:true}).click()
+   await page.waitForFunction(()=>![...document.querySelectorAll('button')].find(b=>b.textContent==='Sync now')?.disabled)
+   const records=(await db.query('select r.*, (select count(*) from public.scouting_revisions v where v.record_id=r.id) as revision_count from public.scouting_records r where event_id=$1 and match_key=$2',[event,match])).rows
+   check(`elapsed soak cycle ${round+1}: offline reload and duplicate sync preserve one attributed ${answer} observation`,records.length===1&&records[0].member_id===actor.id&&records[0].version===1&&Number(records[0].revision_count)===1&&records[0].payload.answers.trench===answer&&!Object.hasOwn(records[0].payload.answers,'ground_intake'))
+   soak.rounds.push({round:++round,match,answer,recordId:records[0].id,elapsedMs:Date.now()-started,at:new Date().toISOString()})
+   const next=Math.min(started+60000,deadline)
+   while(Date.now()<next){await wait(Math.min(15000,next-Date.now()));assert.equal(await page.getByRole('heading',{name:'PWA Offline Acceptance',exact:true}).count(),1)}
+  }
+  soak.finishedAt=new Date().toISOString();soak.elapsedMs=Date.now()-began
+  const counts=await db.query("select count(*) as records,count(distinct match_key) as matches from public.scouting_records where event_id=$1 and match_key ~ '^qm1[0-9]{3}$'",[event])
+  check('elapsed soak ends with one logical record per cycle and no pending work',Number(counts.rows[0].records)===soak.rounds.length&&Number(counts.rows[0].matches)===soak.rounds.length&&await page.getByText('All saved work synced',{exact:true}).count()===1)
+  await page.screenshot({path:resolve(out,'soak-final.png'),fullPage:true})
+ }
 } catch(e) { if(page) { writeFileSync(resolve(out,'failure.html'),await page.content().catch(()=>'')); await page.screenshot({path:resolve(out,'failure.png'),fullPage:true}).catch(()=>{}) }; results.push({label:e.message,ok:false});console.error('FAIL scouting PWA: '+e.stack);process.exitCode=1}
 finally {
- writeFileSync(resolve(out,'results.json'),JSON.stringify({scope:'Built app, native Chromium, real local PostgREST/PostgreSQL; synthetic auth; real map adapter with fictional Nexus response; no live services or real phones',results},null,2))
+ writeFileSync(resolve(out,'results.json'),JSON.stringify({scope:'Built app, native Chromium, real local PostgREST/PostgreSQL; synthetic auth; real map adapter with fictional Nexus response; no live services or real phones',soak,results},null,2))
  await browser?.close();await new Promise(r=>server?server.close(r):r());pgrest?.kill('SIGTERM');await db.end()
  console.log(`scouting PWA: ${results.filter(r=>r.ok).length}/${results.length} passed`)
 }

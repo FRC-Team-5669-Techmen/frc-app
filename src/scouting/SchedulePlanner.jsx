@@ -6,21 +6,23 @@ export default function SchedulePlanner({ store, uid, eventId, members, records,
   const [config, setConfig] = useState(initial)
   const [ready, setReady] = useState(false), [busy, setBusy] = useState(false)
   const [preview, setPreview] = useState(null), [error, setError] = useState(''), [status, setStatus] = useState('Loading saved schedule…')
-  const writes = useRef(Promise.resolve()), alive = useRef(true)
+  const [loadAttempt, setLoadAttempt] = useState(0)
+  const writes = useRef(Promise.resolve()), alive = useRef(true), sequence = useRef(0)
   useEffect(() => {
     alive.current = true
     store.getDraft(uid, eventId, 'assignment-planner-v1').then(saved => {
       if (!alive.current) return
       if (saved) setConfig({ ...initial, ...saved })
       setReady(true); setStatus(saved ? 'Schedule restored on this device.' : 'Paste a schedule or use an imported preview.')
-    }).catch(e => { if (alive.current) { setError(e.message); setReady(true) } })
+    }).catch(e => { if (alive.current) { setError(`Your planner draft could not be read. Retry before editing. ${e.message || ''}`); setStatus('Planner draft could not be loaded.'); setReady(false) } })
     return () => { alive.current = false }
-  }, [store, uid, eventId])
+  }, [store, uid, eventId, loadAttempt])
   function change(next) {
     setConfig(next); setPreview(null); setStatus('Saving planner draft…')
+    const request = ++sequence.current
     writes.current = writes.current.catch(() => {}).then(() => store.saveDraft(uid, eventId, 'assignment-planner-v1', next)).then(() => {
-      if (alive.current) { setStatus('Planner draft saved on this device.'); setError('') }
-    }).catch(e => { if (alive.current) { setStatus('Planner draft is not saved.'); setError(e.message) } })
+      if (alive.current && request === sequence.current) { setStatus('Planner draft saved on this device.'); setError('') }
+    }).catch(e => { if (alive.current && request === sequence.current) { setStatus('Planner draft is not saved.'); setError(e.message) } })
   }
   function prepare() {
     setError(''); setPreview(null)
@@ -60,6 +62,7 @@ export default function SchedulePlanner({ store, uid, eventId, members, records,
       <button type="button" onClick={prepare}>Preview assignment plan</button>
     </fieldset>
     {error && <p role="alert" className="sc-error">{error}</p>}<p role="status" className="sc-help">{status}</p>
+    {!ready && error && <button onClick={() => { setError(''); setStatus('Loading saved schedule…'); setLoadAttempt(value => value + 1) }}>Retry loading planner draft</button>}
     {preview && <div className="sc-preview sc-stack"><h4>Review before assigning</h4><p>{preview.proposals.length} new assignments · {preview.existing.length} already covered · {preview.gaps.length} uncovered</p>
       <p className="sc-help">Workload in this range: {preview.loads.map(s => `${name(s.id)} ${s.count}`).join(' · ')}</p>
       {preview.conflicts.length > 0 && <p role="alert">Existing assignments double-book {preview.conflicts.length} scout/match slots. Review those assignments before the shift.</p>}

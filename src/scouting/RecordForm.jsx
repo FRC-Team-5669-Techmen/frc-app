@@ -32,26 +32,31 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [draftStatus, setDraftStatus] = useState('Opening draft…')
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const draftKey = `form:${kind}:${record?.id ?? replyTo?.id ?? assignment?.id ?? team ?? 'new'}`
   const mounted = useRef(true)
   const writeSequence = useRef(Promise.resolve())
+  const draftSequence = useRef(0)
+  const submitting = useRef(false)
   useEffect(() => {
     mounted.current = true
-    dialog.current?.showModal()
+    if (!dialog.current?.open) dialog.current?.showModal()
     store.getDraft(uid, eventId, draftKey).then(saved => {
       if (!mounted.current) return
       if (saved) setValue(saved)
       setReady(true); setDraftStatus(saved ? 'Draft restored on this device' : 'Draft saves on this device')
-    }).catch(e => { if (mounted.current) { setReady(true); setError(e.message || 'Draft storage is unavailable.') } })
+    }).catch(e => { if (mounted.current) { setReady(false); setDraftStatus('Draft could not be loaded'); setError(`Your existing draft could not be read. Retry before editing. ${e.message || ''}`) } })
     return () => { mounted.current = false }
-  }, [store, uid, eventId, draftKey])
+  }, [store, uid, eventId, draftKey, loadAttempt])
 
   function change(next) {
+    if (submitting.current) return
     setValue(next); setDraftStatus('Saving draft…')
+    const request = ++draftSequence.current
     // Serialize writes so rapid taps cannot persist an older draft last.
     writeSequence.current = writeSequence.current.catch(() => {}).then(() => store.saveDraft(uid, eventId, draftKey, next)).then(() => {
-      if (mounted.current) setDraftStatus('Draft saved on this device')
-    }).catch(e => { if (mounted.current) { setError(e.message || 'Could not save the draft.'); setDraftStatus('Draft is not saved') } })
+      if (mounted.current && request === draftSequence.current) { setDraftStatus('Draft saved on this device'); setError('') }
+    }).catch(e => { if (mounted.current && request === draftSequence.current) { setError(e.message || 'Could not save the draft.'); setDraftStatus('Draft is not saved') } })
   }
   function payload(key, val) { change({ ...value, payload: { ...value.payload, [key]: val } }) }
   function answer(group, key, val) {
@@ -60,7 +65,9 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
     payload(group, map)
   }
   async function submit(e) {
-    e.preventDefault(); setError(''); setSaving(true)
+    e.preventDefault()
+    if (submitting.current || !ready) return
+    submitting.current = true; setError(''); setSaving(true)
     try {
       await writeSequence.current
       let row = { id: value.id, version: value.version, kind, team_number: Number(value.team_number), match_key: ['observation', 'assignment'].includes(kind) ? value.match_key.trim() : null, payload: value.payload }
@@ -78,7 +85,7 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
       await store.deleteDraft(uid, eventId, draftKey).catch(() => {})
       onClose()
     } catch (e) { if (mounted.current) setError(e.message || 'Could not save. Your draft is still here.') }
-    finally { if (mounted.current) setSaving(false) }
+    finally { submitting.current = false; if (mounted.current) setSaving(false) }
   }
   const p = value.payload
   return <dialog ref={dialog} className="sc-dialog" onCancel={e => { e.preventDefault(); if (!saving) onClose() }} aria-labelledby="sc-form-title">
@@ -86,7 +93,7 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
       <div className="sc-dialog-head"><div><span className="sc-eyebrow">{record ? `Correct version ${record.version}` : 'Capture evidence'}</span><h2 id="sc-form-title">{TITLES[kind]}</h2></div><button type="button" onClick={onClose} disabled={saving} aria-label="Close form">Close</button></div>
       <div className="sc-dialog-body">
         {record && <p className="sc-help">Your correction creates a new version. Earlier versions stay in the history.</p>}
-        {!ready ? <p>Restoring draft…</p> : <>
+        {!ready ? <p>{error ? 'Draft editing is paused until your saved work can be loaded.' : 'Restoring draft…'}</p> : <fieldset disabled={saving} className="sc-form-fields"><legend className="sc-sr-only">{TITLES[kind]} fields</legend>
           <div className="sc-fields"><label>Team number<input inputMode="numeric" type="number" min="1" max="99999" required readOnly={!!record || !!replyTo} value={value.team_number} onChange={e => change({ ...value, team_number: e.target.value })} /></label>
           {['observation', 'assignment'].includes(kind) && <label>Match<input required readOnly={!!record} maxLength="100" placeholder="qm1" value={value.match_key} onChange={e => change({ ...value, match_key: e.target.value })} /></label>}</div>
           {kind === 'observation' && <>
@@ -126,8 +133,9 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
             <label>Pit location<input maxLength="200" value={p.pit_location} onChange={e => change({ ...value, payload: { ...p, pit_location: e.target.value, pit_source: 'manual', pit_fetched_at: new Date().toISOString() } })} /></label>
             <p className="sc-help">This is a manual team record. Imported official results and statistical estimates retain their own source labels.</p>
           </>}
-        </>}
+        </fieldset>}
         {error && <p role="alert" className="sc-error">{error}</p>}
+        {!ready && error && <button type="button" onClick={() => { setError(''); setDraftStatus('Opening draft…'); setLoadAttempt(value => value + 1) }}>Retry loading draft</button>}
       </div>
       <div className="sc-dialog-foot"><span className="sc-help" role="status">{draftStatus}</span><button className="sc-primary" type="submit" disabled={saving || !ready}>{saving ? 'Saving…' : ACTIONS[kind]}</button></div>
     </form>

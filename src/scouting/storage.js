@@ -1,4 +1,5 @@
 import { matchIdentity } from './provenance.js'
+import { recoveryOperations, planRecovery } from './recovery.js'
 // IndexedDB transactions make queue claims atomic across tabs. A request can be
 // retried after a lease expires, using the SAME operation id and immutable body;
 // the server supplies the exactly-once logical write guarantee.
@@ -169,6 +170,40 @@ export class ScoutingStore {
       drafts: (await tx.all('drafts')).filter(row => row.key.startsWith(prefix)).map(row => ({ draft_key: row.key.slice(prefix.length), value: row.value, updated_at: row.updatedAt })),
       cache: (await tx.get('cache', scope)) ?? null,
     }))
+  }
+  async previewRecovery(memberId, eventId, archive) {
+    requireScope(memberId, eventId)
+    const operations = recoveryOperations(archive, memberId, eventId)
+    return this.backend.transaction(['operations'], 'readonly', async tx => planRecovery(operations,
+      (await tx.all('operations')).filter(op => op.member_id === memberId && op.event_id === eventId)))
+  }
+  async restoreRecovery(memberId, eventId, archive, selectedIds) {
+    requireScope(memberId, eventId)
+    const operations = recoveryOperations(archive, memberId, eventId)
+    if (!Array.isArray(selectedIds) || !selectedIds.length || selectedIds.length > 6000 || new Set(selectedIds).size !== selectedIds.length
+      || selectedIds.some(id => !operations.some(op => op.id === id))) throw error('RECOVERY_SELECTION', 'Choose pending saves from this backup.')
+    return this.backend.transaction(['operations'], 'readwrite', async tx => {
+      const current = (await tx.all('operations')).filter(op => op.member_id === memberId && op.event_id === eventId)
+      const plan = planRecovery(operations, current).filter(op => selectedIds.includes(op.id))
+      if (plan.some(op => op.state === 'blocked')) throw error('RECOVERY_COLLISION', 'Local work changed or conflicts with this backup. Preview it again; nothing was restored.')
+      const restored = []
+      for (const op of plan.filter(row => row.state === 'ready')) {
+        const row = { key: `${scopeKey(memberId, eventId)}:${op.id}`, id: op.id, record_id: op.record_id, member_id: memberId, event_id: eventId,
+          args: op.args, status: 'recovered', recoveredFrom: op.previousStatus, createdAt: this.now(), updatedAt: this.now(), attempts: 0, error: null, result: null }
+        await tx.put('operations', row); restored.push(row)
+      }
+      return clone(restored)
+    })
+  }
+  async releaseRecovered(memberId, eventId, operationId) {
+    requireScope(memberId, eventId)
+    return this.backend.transaction(['operations'], 'readwrite', async tx => {
+      const key = `${scopeKey(memberId, eventId)}:${operationId}`, op = await tx.get('operations', key)
+      if (!op || op.status !== 'recovered') throw error('RECOVERY_REFUSED', 'This save is no longer awaiting recovery review. Refresh its status.')
+      const next = { ...op, status: 'local', updatedAt: this.now() }
+      await tx.put('operations', next)
+      return clone(next)
+    })
   }
   async saveDraft(memberId, eventId, draftKey, value) {
     requireScope(memberId, eventId)

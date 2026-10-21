@@ -17,6 +17,7 @@ export default function PickLists({ records, uid, eventId, store, onSave, nameFo
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [ready, setReady] = useState(false)
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const [minEpa, setMinEpa] = useState('')
   const [capability, setCapability] = useState('')
   const [selected, setSelected] = useState(['', '', ''])
@@ -30,9 +31,9 @@ export default function PickLists({ records, uid, eventId, store, onSave, nameFo
       if (!live) return
       if (draft) { setEntries(draft.entries); setBaseVersion(draft.baseVersion); if (draft.recordId) setRecordId(draft.recordId); setDirty(true); setDraftStatus('Draft restored on this device'); if (draft.baseVersion !== (mine?.version ?? 0)) setError('The saved list changed while this draft was open. Saving will preserve your proposal for conflict review.') }
       setReady(true)
-    }).catch(e => { if (live) { setError(e.message); setReady(true) } })
+    }).catch(e => { if (live) { setError(`Your pick-list draft could not be read. Retry before editing. ${e.message || ''}`); setReady(false) } })
     return () => { live = false }
-  }, [uid, eventId, store])
+  }, [uid, eventId, store, loadAttempt])
   useEffect(() => { if (!dirty) { setEntries(mine?.payload?.entries ?? []); setBaseVersion(mine?.version ?? 0); if (mine?.id) setRecordId(mine.id) } }, [mine?.version, mine?.localStatus])
   function change(next) {
     setEntries(next); setDirty(true); setPreview(null)
@@ -68,6 +69,7 @@ export default function PickLists({ records, uid, eventId, store, onSave, nameFo
   return <section aria-label="Pick lists" className="sc-stack">
     <div className="sc-section-head"><div><h2>Pick lists</h2><p className="sc-help">Build your view, then bring the evidence to the meeting.</p></div><div className="sc-toggle"><button aria-pressed={mode === 'mine'} onClick={() => setMode('mine')}>My list</button><button aria-pressed={mode === 'master'} onClick={() => setMode('master')}>Master list</button></div></div>
     {error && <p role="alert" className="sc-error">{error}</p>}
+    {!ready && error && <button onClick={() => { setError(''); setLoadAttempt(value => value + 1) }}>Retry loading pick-list draft</button>}
     {mode === 'master' ? <>
       <p className="sc-help">Techmen rule: median tier and rank, with every submitted list counted. Unranked teams contribute no vote. Do-not-pick votes are shown separately, never a hidden veto. Local changes appear after sync.</p>
       {master.length ? <ol className="sc-master">{master.map((r, i) => <li key={r.team}><span className="sc-position">{i + 1}</span><div><strong>{r.team}</strong> <span>{nameFor(r.team)}</span><p className="sc-help">{r.tier === 'dnp' ? 'No ranked votes' : `Median tier ${r.tier}, rank ${r.rank}`} · {r.support} list{r.support === 1 ? '' : 's'} · {r.dnpVotes} do not pick</p></div></li>)}</ol> : <div className="sc-empty">No submitted lists yet. Start with your own observations.</div>}
@@ -87,7 +89,7 @@ export default function PickLists({ records, uid, eventId, store, onSave, nameFo
       </div>)}
       <div className="sc-save-bar"><span role="status" className="sc-help">{pending ? 'Saved locally. Sync before editing again.' : dirty ? draftStatus : mine ? `Saved list · version ${mine.version}` : 'No saved list yet'}</span><button className="sc-primary" disabled={saving || pending || !dirty || !ready} onClick={() => save()}>{saving ? 'Saving…' : 'Save pick list'}</button></div>
       <details className="sc-card sc-comparison"><summary>Compare three teams</summary><p className="sc-help">Choose three teams already in your saved list. Three pairwise votes produce a proposed order. Ties keep the original order; other teams stay in place.</p>
-        {(!mine || dirty || pending) ? <p className="sc-help">Save and sync your list before comparing.</p> : <>
+        {(!ready || !mine || dirty || pending) ? <p className="sc-help">Load your draft, then save and sync your list before comparing.</p> : <>
           <div className="sc-fields">{selected.map((value, i) => <label key={i}>Team {i + 1}<select aria-label={`Team ${i + 1}`} value={value} onChange={e => { const next = [...selected]; next[i] = e.target.value; setSelected(next); setVotes({}); setPreview(null) }}><option value="">Choose team</option>{entries.map(e => <option key={e.team} value={e.team}>{e.team} {nameFor(e.team)}</option>)}</select></label>)}</div>
           {selected.every(Boolean) && new Set(selected).size === 3 && <>
             <ComparisonEvidence teams={selectedNumbers} records={records.filter(r => !r.localStatus)} nameFor={nameFor} />

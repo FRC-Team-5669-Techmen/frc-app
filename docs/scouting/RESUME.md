@@ -2,6 +2,10 @@
 
 **Branch:** `codex/scouting-2026-evidence` · [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). Read `SCOUTING_START_HERE.md`, `CLAUDE.md`, `docs/subsystems/scouting.md`, `VERIFICATION.md` and `STAGING.md`. Continue the restored checkpoint history; do not rebuild from main. The private original inputs stay outside public commits.
 
+## October 21 follow-up in progress
+
+User requested at least another hour. Reviewed pending-save recovery and draft race/read-failure protections are implemented; see `RECOVERY.md` and `docs/history/scouting-reviewed-recovery.md`. Current targeted DOM/storage checks and the first expanded browser/PWA runs pass; final full-source gates and elapsed-duration testing are being run. Do not inherit the earlier counts below as verification of this new continuation. No database or provider contract changed.
+
 ## Implemented, verified and blocked
 
 | Requirement | Current state |
