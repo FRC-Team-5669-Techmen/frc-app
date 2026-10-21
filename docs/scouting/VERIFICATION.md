@@ -21,15 +21,16 @@ See `EVIDENCE.md`, `CONTRACT.md`, math fixtures and acceptance mapping. No histo
 
 | Check | Actual result |
 | --- | --- |
-| Final combined `npm test` | 57 files; 898/898 tests passed |
-| `npm run build` | Passed; PWA generated with 332 precache entries |
-| Connector generation and check | Passed; 172 called functions, 170 reachable, 23 tools, zero direct table writes |
+| Final combined `npm test` | 58 files; 918/918 tests passed |
+| `npm run build` | Passed; PWA generated with 457 precache entries |
+| Connector generation and check | Passed; 173 called functions, 171 reachable, 23 tools, zero direct table writes |
 | Design-system audit | Passed; 36 aliases across 3 grounds, 79 components, 315 files |
 | Discord calendar regression | 19/19 passed |
 | Historical content preservation | 50 original entries byte/SHA identical |
 | Independent mathematical oracles | 13 assertions passed |
-| Focused client model/storage/DOM | 32 tests passed, included in combined suite |
-| PostgreSQL 18.6 WASM (PGlite) | Full migration chain through 0022 applied twice; 52 new SQL checks, 11 permissive mutants and 553 checks across 23 rollback RLS suites passed |
+| React DOM workflows | 17 tests passed, included in combined suite |
+| Compiled portable review | All five tabs, mentor planner and parent denial render; zero script errors under DOM/IndexedDB emulation |
+| PostgreSQL 18.6 WASM (PGlite) | Full migration chain through 0022 applied twice; 62 new SQL checks, 15 permissive mutants and 563 checks across 23 rollback RLS suites passed |
 | `git diff --check` | Passed |
 
 React DOM checks use jsdom and fake-indexeddb, including a native-dialog stub. They verify behavior under emulation, not browser layout or phone usability. PGlite is a single-connection WASM PostgreSQL runtime; it does not establish native PostgreSQL16, PostgREST or concurrent-connection correctness. See database-status.md and browser-status.md for reproducible commands and boundaries.
@@ -48,8 +49,6 @@ The portable checkpoint contains the implementation, Git history, source evidenc
 
 ## Continued build (October 21)
 
-The expanded implementation has passed 912 tests across 58 files, production build, connector check (173 called functions, 171 reachable, 23 tools, zero direct table writes), design audit, calendar regression, history preservation and the 13 independent arithmetic assertions. Subsequent targeted additions are being consolidated for the next final run.
-
-PostgreSQL WASM was rerun: 62 scouting checks, 15 permissive mutants, 563 total SQL checks across 23 files. The compiled standalone review also renders all five tabs, mentor planner and parent denial with zero script errors under DOM/IndexedDB emulation. No real-browser or real-device claims follow from that.
+The final combined run includes reviewed shift planning with atomic local batch saves, eligible roster reads, immutable same-event/team pit replies, side-by-side evidence, pit-location provenance, persisted interactive practice, pick-list drafts, completed-assignment corrections and account-change sync recovery. The actual React screens are packaged in a network-disabled portable review, with separate release instructions and a prepared PR description.
 
 The requested interface visual is a static rendering of the actual React DOM using a print renderer with compatibility CSS. It is not a Chromium screenshot and must not be cited as a layout acceptance test.

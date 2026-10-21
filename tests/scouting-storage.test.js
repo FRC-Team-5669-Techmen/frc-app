@@ -202,3 +202,18 @@ describe('complete paginated reads', () => {
     await expect(readScoutingPages(repeated, 'scouting_records')).rejects.toMatchObject({ code: 'DATA_CHANGED' })
   })
 })
+
+describe('sync queue work selection', () => {
+  it('does not reacquire completed receipts when synchronizing new work', async () => {
+    const {store}=fixture()
+    const done=await store.enqueue('member-a','event-a',record)
+    const claim=await store.claim('member-a','event-a',done.id)
+    await store.finish('member-a','event-a',done.id,claim.lease,{status:'synced',result:reply(done.args)})
+    const fresh=await store.enqueue('member-a','event-a',{...record,id:'another-record',match_key:'qm2'})
+    const original=store.claim.bind(store),claims=[]
+    store.claim=async(...args)=>{claims.push(args[2]);return original(...args)}
+    await syncScoutingQueue({store,client:client(async(_name,args)=>({data:reply(args),error:null})),memberId:'member-a',eventId:'event-a'})
+    expect(claims).toEqual([fresh.id])
+    expect((await store.listQueue('member-a','event-a')).every(o=>o.status==='synced')).toBe(true)
+  })
+})

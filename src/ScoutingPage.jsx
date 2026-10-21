@@ -10,6 +10,7 @@ import PickLists from './scouting/PickLists'
 import Training from './scouting/Training'
 import SchedulePlanner from './scouting/SchedulePlanner'
 import PitLocation from './scouting/PitLocation'
+import { matchOrder } from './scouting/schedule'
 import './ScoutingPage.css'
 
 const when = value => value ? new Date(value).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' }) : 'Unknown time'
@@ -78,6 +79,7 @@ function EventScouting({ uid, eventId, staff }) {
   const [online, setOnline] = useState(navigator.onLine)
   const alive = useRef(true)
   const syncLock = useRef(false)
+  const queueGeneration = useRef(0)
   const current = () => alive.current
   useEffect(() => {
     alive.current = true
@@ -117,6 +119,7 @@ function EventScouting({ uid, eventId, staff }) {
   const sync = useCallback(async () => {
     if (!store || syncLock.current) return
     syncLock.current = true; setBusy(true)
+    const startedGeneration = queueGeneration.current
     try {
       const next = await syncScoutingQueue({ store, client: supabase, memberId: uid, eventId, isCurrent: current })
       if (!alive.current) return
@@ -128,7 +131,7 @@ function EventScouting({ uid, eventId, staff }) {
         setBusy(false)
         // Batch imports may enqueue new rows after this sync took its snapshot.
         // Drain only fresh local work; failed requests wait for a deliberate retry.
-        store.listQueue(uid, eventId).then(next => { if (alive.current && navigator.onLine && next.some(op => op.status === 'local')) setTimeout(() => { if (alive.current) sync() }, 0) }).catch(() => {})
+        if (queueGeneration.current !== startedGeneration) store.listQueue(uid, eventId).then(next => { if (alive.current && navigator.onLine && next.some(op => op.status === 'local')) setTimeout(() => { if (alive.current) sync() }, 0) }).catch(() => {})
       }
     }
   }, [store, uid, eventId, refresh])
@@ -139,6 +142,7 @@ function EventScouting({ uid, eventId, staff }) {
   async function save(record) {
     if (!store) throw new Error('Device storage is unavailable. Nothing was saved.')
     const operation = await saveScoutingRecord({ store, memberId: uid, eventId, record })
+    queueGeneration.current++
     if (!alive.current) return operation
     setQueue(await store.listQueue(uid, eventId)); setNotice('Saved on this device. Waiting to sync.')
     if (navigator.onLine) {
@@ -150,6 +154,7 @@ function EventScouting({ uid, eventId, staff }) {
   async function saveBatch(proposals) {
     if (!store) throw new Error('Device storage is unavailable. Nothing was saved.')
     const operations = await store.enqueueBatch(uid, eventId, proposals)
+    queueGeneration.current++
     // Local commit is the success boundary. A failed refresh cannot make a
     // successfully saved batch look unsaved and invite a duplicate submission.
     if (alive.current) {
@@ -174,8 +179,10 @@ function EventScouting({ uid, eventId, staff }) {
   const memberName = id => (data.members ?? []).find(m => m.id === id)?.nickname || (data.members ?? []).find(m => m.id === id)?.full_name || (id === uid ? 'You' : 'Team member')
   const canEdit = row => !row.localStatus && (row.member_id === uid || (manager && !['pick_list', 'observation'].includes(row.kind)))
   const observations = records.filter(r => r.kind === 'observation')
+  const observationFor = row => observations.find(o => o.member_id === row.payload.assignee && (o.payload.assignment_id === row.id || (o.team_number === row.team_number && o.match_key === row.match_key)))
+  const isComplete = row => row.payload.status === 'complete' || !!observationFor(row)
   const assignments = records.filter(r => r.kind === 'assignment' && r.payload?.status !== 'cancelled' && (showAllAssignments || r.payload?.assignee === uid))
-  const isComplete = row => row.payload.status === 'complete' || observations.some(o => o.payload.assignment_id === row.id)
+    .sort((a, b) => Number(isComplete(a)) - Number(isComplete(b)) || matchOrder({ key: a.match_key }, { key: b.match_key }))
   const pitFor = n => records.filter(r => r.kind === 'pit' && r.team_number === n).sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)))[0]
   const openForm = (kind, extra = {}) => setForm({ kind, ...extra })
   function exportData() {
@@ -192,12 +199,12 @@ function EventScouting({ uid, eventId, staff }) {
     {error && <p role="alert" className="sc-error">{error}</p>}
     {notice && <div className="sc-notice" role="status"><span>{notice}</span><button aria-label="Dismiss save notice" onClick={() => setNotice('')}>Dismiss</button></div>}
     {data.offline && <p className="sc-help">Using the last successful download. New data stays on this device until you reconnect. Keep this browser's data until everything has synced.</p>}
-    <QueuePanel queue={pending} store={store} uid={uid} eventId={eventId} serverRecords={serverRecords} onChange={async () => setQueue(await store.listQueue(uid, eventId))} onSave={save} onSync={sync} onRepair={op => openForm(op.args.p_kind, { rejectedOperation: op.id, record: { id: op.args.p_id, version: op.args.p_expected_version, kind: op.args.p_kind, team_number: op.args.p_team, match_key: op.args.p_match, payload: op.args.p_payload } })} />
+    <QueuePanel queue={pending} store={store} uid={uid} eventId={eventId} serverRecords={serverRecords} onChange={async () => { queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)) }} onSave={save} onSync={sync} onRepair={op => openForm(op.args.p_kind, { rejectedOperation: op.id, record: { id: op.args.p_id, version: op.args.p_expected_version, kind: op.args.p_kind, team_number: op.args.p_team, match_key: op.args.p_match, payload: op.args.p_payload } })} />
     <nav className="sc-tabs" role="tablist" aria-label="Scouting sections" onKeyDown={e => { if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return; const tabs = [...e.currentTarget.querySelectorAll('[role="tab"]')]; const i = tabs.indexOf(document.activeElement); const next = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; e.preventDefault(); tabs[next]?.focus(); tabs[next]?.click() }}>{[['scout', 'Scout this'], ['teams', 'Teams'], ['messages', 'Pit messages'], ['picks', 'Pick lists'], ['practice', 'Practice']].map(([key, label]) => <button key={key} role="tab" id={`sc-tab-${key}`} aria-controls={`sc-panel-${key}`} tabIndex={tab === key ? 0 : -1} aria-label={label} aria-selected={tab === key} aria-current={tab === key ? 'page' : undefined} onClick={() => setTab(key)}>{label}{key === 'scout' && <span>{assignments.filter(r => !isComplete(r)).length}</span>}</button>)}</nav>
     {tab === 'scout' && <section className="sc-stack" role="tabpanel" id="sc-panel-scout" aria-labelledby="sc-tab-scout">
       <div className="sc-section-head"><div><h2>Your next match</h2><p className="sc-help">Observe the assigned robot. Record what you actually see.</p></div><button aria-pressed={showAllAssignments} onClick={() => setShowAllAssignments(x => !x)}>{showAllAssignments ? 'Show my assignments' : 'Show all assignments'}</button></div>
       {!assignments.length && <div className="sc-empty"><span className="sc-eyebrow">Ready when you are</span><h3>No assignments yet</h3><p>Ask your scouting lead for a match, or capture an observation now.</p><button onClick={() => openForm('observation')}>Start an observation</button></div>}
-      <div className="sc-assignment-grid">{assignments.map(row => <article className={`sc-card sc-assignment${isComplete(row) ? ' sc-complete' : ''}`} key={row.id}><div className="sc-section-head"><span className="sc-match">{row.match_key}</span><span className="sc-chip">{row.localStatus ? 'Saved locally' : isComplete(row) ? 'Recorded' : 'To scout'}</span></div><div className="sc-team-number">{row.team_number}</div><h3>{nameFor(row.team_number) || 'Assigned robot'}</h3><p>{row.payload.instructions || 'Watch capabilities and record useful match notes.'}</p><p className="sc-help">Scout: {memberName(row.payload.assignee)}</p><div className="sc-actions">{row.payload.video_url && <a className="sc-link" href={row.payload.video_url} target="_blank" rel="noopener noreferrer">Watch video ↗</a>}<button className="sc-primary" disabled={!!row.localStatus || row.payload.assignee !== uid} onClick={() => openForm('observation', { team: row.team_number, assignment: row })}>Scout match</button>{manager && canEdit(row) && <button onClick={() => openForm('assignment', { record: row })}>Edit assignment</button>}</div></article>)}</div>
+      <div className="sc-assignment-grid">{assignments.map(row => <article className={`sc-card sc-assignment${isComplete(row) ? ' sc-complete' : ''}`} key={row.id}><div className="sc-section-head"><span className="sc-match">{row.match_key}</span><span className="sc-chip">{row.localStatus ? 'Saved locally' : isComplete(row) ? 'Recorded' : 'To scout'}</span></div><div className="sc-team-number">{row.team_number}</div><h3>{nameFor(row.team_number) || 'Assigned robot'}</h3><p>{row.payload.instructions || 'Watch capabilities and record useful match notes.'}</p><p className="sc-help">Scout: {memberName(row.payload.assignee)}</p><div className="sc-actions">{row.payload.video_url && <a className="sc-link" href={row.payload.video_url} target="_blank" rel="noopener noreferrer">Watch video ↗</a>}<button className="sc-primary" disabled={!!row.localStatus || !!observationFor(row)?.localStatus || row.payload.assignee !== uid} onClick={() => openForm('observation', observationFor(row) ? { record: observationFor(row) } : { team: row.team_number, assignment: row })}>{observationFor(row) ? 'Review observation' : 'Scout match'}</button>{manager && canEdit(row) && <button onClick={() => openForm('assignment', { record: row })}>Edit assignment</button>}</div></article>)}</div>
       <details className="sc-card" open={observations.length > 0}><summary>Recent observations ({observations.length})</summary><div className="sc-stack">{observations.slice().sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at))).slice(0, 30).map(row => <EvidenceRecord key={row.id} row={row} memberName={memberName} canEdit={canEdit(row)} onEdit={() => openForm('observation', { record: row })} revisions={data.revisions ?? []} />)}{!observations.length && <p className="sc-help">No observations saved for this event.</p>}</div></details>
     </section>}
     {tab === 'teams' && <section className="sc-stack" role="tabpanel" id="sc-panel-teams" aria-labelledby="sc-tab-teams">
@@ -220,7 +227,7 @@ function EventScouting({ uid, eventId, staff }) {
     {tab === 'practice' && store && <div role="tabpanel" id="sc-panel-practice" aria-labelledby="sc-tab-practice"><Training key={`${uid}:${eventId}`} store={store} memberId={uid} eventId={eventId} /></div>}
     {manager && <ManageEvent store={store} uid={uid} records={records} onSaveBatch={saveBatch} eventId={eventId} teamRows={teamRows} members={scouts} onForm={openForm} onSave={save} online={online} />}
     <footer className="sc-footer"><button onClick={exportData}>Export event data</button><span>Claims, observations, official results, estimates and rankings remain distinct.</span></footer>
-    {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : save} onClose={() => setForm(null)} />}
+    {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : save} onClose={() => setForm(null)} />}
   </main>
 }
 

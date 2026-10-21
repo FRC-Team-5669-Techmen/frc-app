@@ -37,6 +37,6 @@ Do not discard the implemented source or rebuild from scratch. Treat verificatio
 
 ## Expanded local implementation
 
-The continued build adds a shift planner with atomic local batch saves, eligible-scout roster, pit conversation replies, comparison evidence cards, pit-address provenance, serialized pick-list drafts, 32 interactive practice decisions plus six written match scenarios, and a real-footage workbook. Practice is locally persisted; official certification remains in IDEA Classroom.
+The continued build adds a shift planner with atomic local batch saves, eligible-scout roster, pit conversation replies, comparison evidence cards, pit-address provenance, serialized pick-list drafts, 27 interactive practice decisions plus six written match scenarios, and a real-footage workbook. Practice is locally persisted; official certification remains in IDEA Classroom.
 
 `npm run scouting:preview:check` builds a self-contained review HTML from the actual components and exercises the compiled bundle in jsdom with IndexedDB emulation. The portable archive includes `REVIEW.html`; open it in Chrome/Edge to inspect the fictional student/mentor/parent views. It blocks network connections and has no live credentials. It is not the production app or evidence of real-browser acceptance.

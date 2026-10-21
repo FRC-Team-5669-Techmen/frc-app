@@ -18,6 +18,7 @@ export async function syncScoutingQueue({ store, client, memberId, eventId, isCu
   if (!await current(client, memberId, isCurrent)) return store.listQueue(memberId, eventId)
   const queue = await store.listQueue(memberId, eventId)
   for (const candidate of queue) {
+    if (!['local', 'syncing'].includes(candidate.status) && !(candidate.status === 'failed' && candidate.retryable)) continue
     if (!await current(client, memberId, isCurrent)) break
     const op = await store.claim(memberId, eventId, candidate.id)
     if (!op) continue

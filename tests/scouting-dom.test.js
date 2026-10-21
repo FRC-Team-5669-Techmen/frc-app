@@ -301,3 +301,61 @@ describe('pit conversation and assignment eligibility', () => {
     expect(names).not.toContain(name(IDS.parent));expect(names).not.toContain(name(IDS.student2))
   })
 })
+
+describe('scout review and truthful draft status', () => {
+  it('reopens the original assignment observation for correction instead of creating a duplicate', async () => {
+    await mount(); await click(buttons('Scout match')[0]); await settle(()=>host.querySelector('dialog textarea'),'draft')
+    await input(host.querySelector('dialog textarea'),'First attributed note.')
+    await click(buttons('Save observation')[0])
+    await settle(()=>buttons('Review observation').length===1 && !buttons('Review observation')[0].disabled,'review action')
+    await click(buttons('Review observation')[0]); await settle(()=>host.querySelector('dialog textarea'),'correction form')
+    expect(host.querySelector('dialog textarea').value).toBe('First attributed note.')
+    await input(host.querySelector('dialog textarea'),'Corrected after reviewing the video.')
+    await click(buttons('Save observation')[0])
+    await settle(()=>fixture.rows('scouting_records').some(r=>r.kind==='observation' && r.member_id===IDS.student && r.version===2),'corrected')
+    const rows=fixture.rows('scouting_records').filter(r=>r.kind==='observation'&&r.member_id===IDS.student&&r.match_key==='qm1')
+    expect(rows).toHaveLength(1);expect(rows[0].version).toBe(2)
+  })
+  it('shows a pick draft storage failure without discarding the current list', async () => {
+    const {ScoutingStore}=await import('../src/scouting/storage.js')
+    const original=ScoutingStore.prototype.saveDraft
+    vi.spyOn(ScoutingStore.prototype,'saveDraft').mockImplementation(function(member,event,key,value){
+      return key==='pick-list'?Promise.reject(new Error('simulated quota')):original.call(this,member,event,key,value)
+    })
+    await mount();await click(buttons('Pick lists')[0]);await settle(()=>!host.querySelector('[aria-label="Remove 4414 from list"]').disabled,'list ready')
+    await click(host.querySelector('[aria-label="Remove 4414 from list"]'))
+    await settle(()=>host.textContent.includes('Draft is not saved'),'visible draft failure')
+    expect(host.textContent).toContain('simulated quota')
+    expect(host.querySelector('[aria-label="Remove 1538 from list"]')).toBeTruthy()
+    expect(host.querySelector('[aria-label="Remove 4414 from list"]')).toBeNull()
+    expect(fixture.rows('scouting_records').find(r=>r.kind==='pick_list'&&r.member_id===IDS.student).payload.entries.some(e=>e.team===4414)).toBe(true)
+  })
+})
+
+describe('sync recovery scheduling', () => {
+  it('does not spin on a local queue when the account changes before sync', async () => {
+    await mount();await settle(()=>!buttons('Sync now')[0].disabled,'initial sync idle')
+    const store=await createScoutingStore()
+    await store.enqueue(IDS.student,EVENT,{kind:'message',team_number:5669,payload:{text:'Keep this original account proposal',status:'open'}})
+    const original=supabase.auth.getSession
+    const session=await original()
+    const spy=vi.spyOn(supabase.auth,'getSession').mockResolvedValue({data:{session:{...session.data.session,user:{...session.data.session.user,id:IDS.student2}}},error:null})
+    await click(buttons('Sync now')[0]);await settle(()=>!buttons('Sync now')[0].disabled,'refused sync idle')
+    const calls=spy.mock.calls.length
+    await act(async()=>{await pause(100)})
+    expect(spy.mock.calls.length).toBe(calls)
+    expect((await store.listQueue(IDS.student,EVENT))[0].status).toBe('local')
+    spy.mockRestore();await click(buttons('Sync now')[0])
+    await settle(()=>fixture.rows('scouting_records').some(r=>r.payload.text==='Keep this original account proposal'),'original account sync')
+    store.close()
+  })
+})
+
+describe('fixture actor boundary', () => {
+  it('refuses a changed account actor and accepts the signed-in actor', async () => {
+    fixture.setPersona('student')
+    const args={p_id:crypto.randomUUID(),p_event:EVENT,p_kind:'message',p_team:5669,p_match:null,p_payload:{text:'An attributed fixture note',status:'open'},p_expected_version:0,p_operation:crypto.randomUUID()}
+    expect((await supabase.rpc('scouting_save',{...args,p_actor:IDS.student2})).error.code).toBe('42501')
+    expect((await supabase.rpc('scouting_save',{...args,p_actor:IDS.student})).data.member_id).toBe(IDS.student)
+  })
+})

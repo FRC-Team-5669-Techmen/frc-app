@@ -1,0 +1,11 @@
+# Add event scouting with durable capture and auditable evidence
+
+Scouts need to capture robot evidence in unreliable venue networks and bring defensible comparisons to strategy meetings. This adds scouting to the existing Techmen app while preserving the check-in fast path, member/event identity, access controls and IDEA certification authority.
+
+The lazy scouting route includes pit claims, live/video observations, reviewed shift planning, separately attributed pit replies, individual/master pick lists, evidence-backed three-team previews and beginner practice. IndexedDB drafts and immutable queued operations retain interrupted work. Version checks protect corrections; Discord receipts remain separate from data saves. TBA/Statbotics/Nexus imports are previewed and preserve provenance and partial-source failures. The connector uses the same authenticated writes.
+
+Migration 0022 provides validated writes, attribution/revisions, idempotency, manager-only eligible rosters and separate delivery reservations. No live migration or deployment has occurred. See `docs/scouting/RELEASE.md` for apply order and required field gates.
+
+Validation: see `docs/scouting/VERIFICATION.md` for the final exact counts. The retained checks cover unit/DOM behavior, production build, connector coverage, design, existing calendar/history, independent mathematical examples and PostgreSQL WASM RLS/mutations. The portable review bundles the actual components with fictional data; it is not production acceptance.
+
+Still required before release: real Chromium/phone workflows, native PostgreSQL/PostgREST and concurrent sessions, representative provider responses and authorized Discord integration checks. Original TideScout video frames/audio and unpublished formulas remain unverified. The proposed Techmen mathematics, planning rules and deviations are explicit in `EVIDENCE.md` and `CONTRACT.md`.

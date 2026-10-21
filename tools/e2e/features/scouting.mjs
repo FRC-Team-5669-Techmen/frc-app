@@ -11,7 +11,7 @@ const PRE = Array.from({ length: 21 }, (_, i) => String(i + 1).padStart(4, '0'))
 const own = (records, kind) => records.filter(r => r.member_id === P.student.id && r.kind === kind)
 
 async function tab(t, name) {
-  await t.press(t.page.locator('.sc-tabs').getByRole('button', { name, exact: true }))
+  await t.press(t.page.locator('.sc-tabs').getByRole('tab', { name, exact: true }))
   await t.settle()
 }
 async function choice(t, group, name) {
@@ -164,7 +164,7 @@ export default {
       await t.press(card.getByRole('button', { name: 'Correct observation', exact: true }))
       await t.page.getByLabel('Notes', { exact: true }).fill('My reviewed correction keeps the blocked view explicit.')
       const concurrent = await t.evaluate(async r => window.__fx.supabase.rpc('scouting_save', {
-        p_id: r.id, p_event: r.event_id, p_kind: r.kind, p_team: r.team_number, p_match: r.match_key,
+        p_actor: r.member_id, p_id: r.id, p_event: r.event_id, p_kind: r.kind, p_team: r.team_number, p_match: r.match_key,
         p_payload: { ...r.payload, notes: 'Another tab corrected this observation first.' }, p_expected_version: r.version, p_operation: crypto.randomUUID(),
       }), before)
       t.eq('concurrent fixture writer creates version two', concurrent.data?.version, 2)
@@ -195,9 +195,38 @@ export default {
       await t.open(ROUTE, { persona: 'parent', mig: 'all' })
       t.eq('parent-only cannot open a capture form', await t.page.getByRole('button', { name: 'New observation', exact: true }).count(), 0)
       t.eq('parent-only cannot read scouting records in fixture', (await t.evaluate(async () => (await window.__fx.supabase.from('scouting_records').select('*')).data)).length, 0)
-      const parentSave = await t.evaluate(async ({ event }) => window.__fx.supabase.rpc('scouting_save', { p_id: crypto.randomUUID(), p_event: event, p_kind: 'message', p_team: 4414, p_match: null, p_payload: { text: 'Must be refused', status: 'open', request_delivery: false }, p_expected_version: 0, p_operation: crypto.randomUUID() }), { event: EVENT })
+      const parentSave = await t.evaluate(async ({ event, actor }) => window.__fx.supabase.rpc('scouting_save', { p_actor: actor, p_id: crypto.randomUUID(), p_event: event, p_kind: 'message', p_team: 4414, p_match: null, p_payload: { text: 'Must be refused', status: 'open', request_delivery: false }, p_expected_version: 0, p_operation: crypto.randomUUID() }), { event: EVENT, actor: P.parent.id })
       t.eq('parent-only fixture RPC refuses capture', parentSave.error?.code, '42501')
       await t.shot('parent-denied')
+    })
+
+    await t.step('interactive practice saves incomplete work', async () => {
+      await t.open(ROUTE, { persona: 'student', mig: 'all', reset: true, ready: '.sc-wrap' })
+      await tab(t, 'Practice')
+      await t.waitText('Practice record loaded on this device.')
+      const drill = t.page.getByRole('region', { name: 'Interactive practice', exact: true })
+      await t.press(drill.getByRole('group').first().getByRole('button', { name: 'Pit claim', exact: true }))
+      await t.page.getByLabel('One thing I learned, and one question for my mentor', { exact: true }).fill('Keep the claim separate from a visible match observation.')
+      await t.waitText('Practice saved on this device.')
+      await t.page.reload(); await t.waitText('Fixture Regional'); await tab(t, 'Practice')
+      await t.waitText('Practice record loaded on this device.')
+      t.eq('incomplete practice note survives reload', await t.page.getByLabel('One thing I learned, and one question for my mentor', { exact: true }).inputValue(), 'Keep the claim separate from a visible match observation.')
+      t.eq('incomplete exercise cannot record a finished mission', await t.page.getByRole('button', { name: 'Record mission practice', exact: true }).isDisabled(), true)
+      await t.noHScroll(); await t.shot('practice-mission')
+    })
+
+    await t.step('lead previews a shift before assigning it', async () => {
+      await t.open(ROUTE, { persona: 'mentor', mig: 'all', reset: true, ready: '.sc-wrap' })
+      await t.press(t.page.getByText('Manage event', { exact: true }))
+      await t.page.getByLabel('Match schedule', { exact: true }).fill('qm80, 5669\nqm81, 4414')
+      await t.press(t.page.getByRole('group', { name: 'Available scouts', exact: true }).getByRole('button').first())
+      await t.press(t.page.getByRole('button', { name: 'Preview assignment plan', exact: true }))
+      await t.waitText('2 new assignments')
+      t.eq('preview writes no assignments', (await t.rows('scouting_records')).filter(r => ['qm80', 'qm81'].includes(r.match_key)).length, 0)
+      await t.press(t.page.getByRole('button', { name: 'Save 2 assignments', exact: true }))
+      await t.page.waitForFunction(() => window.__fx.rows('scouting_records').filter(r => ['qm80', 'qm81'].includes(r.match_key)).length === 2)
+      t.eq('reviewed plan creates exactly two assignments', (await t.rows('scouting_records')).filter(r => ['qm80', 'qm81'].includes(r.match_key)).length, 2)
+      await t.noHScroll(); await t.shot('assignment-plan')
     })
 
     await t.step('missing migration fallback', async () => {

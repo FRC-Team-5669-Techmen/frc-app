@@ -14,6 +14,7 @@ const manages = (ctx, event) => eligible(ctx) && (ctx.persona?.isStaff
 function save(ctx) {
   const { args: a, db, user, engine, now, uuid } = ctx
   if (!eligible(ctx)) return fail('Scouting is available to approved students and staff.', '42501')
+  if (a.p_actor !== user.id) return fail('This save belongs to another account.', '42501')
   if (!rows(db, 'events').some(e => e.id === a.p_event)) return fail('Event not found.')
   const oldOperation = rows(db, 'scouting_operations').find(r => r.operation_id === a.p_operation && r.member_id === user.id)
   if (oldOperation) return JSON.stringify(oldOperation.request) === JSON.stringify(a) ? ok(oldOperation.result) : fail('This operation was already used with different data.')
