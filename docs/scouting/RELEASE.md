@@ -2,6 +2,8 @@
 
 The code is pushed to review branch `codex/scouting-2026-evidence`, with draft PR #4 open. It has not been merged or deployed to production, and no scouting SQL has been applied to the live database. Git pushes may create automatic Vercel review previews. Use `VERIFICATION.md` for actual checks and `RESUME.md` for remaining source-fidelity gaps.
 
+Nontechnical owner: use **[YOUR_CHECKLIST.md](YOUR_CHECKLIST.md)**. The engineering commands below belong to the implementing AI/operator, not homework for the owner.
+
 ## Review the implementation
 
 1. Restore the Git bundle or use the complete source tree in the checkpoint. Read `CLAUDE.md` and `docs/subsystems/scouting.md`.

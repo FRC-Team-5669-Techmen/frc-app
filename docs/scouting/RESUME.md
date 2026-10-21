@@ -22,6 +22,10 @@
 
 Initial broad runs had 3 and 1 failure(s), including loading/action timing failures in different modules. A third serial attempt at `75fad88` also failed navigation and was cancelled; concurrency is not a proven cause. The final harness fixes business dates and keeps animation/retry timers native, with a standalone positive/negative clock control. No assertion or actionability/navigation timeout was weakened. The final two disjoint batches used the committed application unchanged and collectively passed all expected per-feature counts. This is complete feature coverage, not a claim that the earlier single-process run passed. Do not erase the failed-run evidence or infer a proven root cause.
 
+## Owner handoff
+
+The user requested that the AI perform every technically accessible task and explain only genuinely human steps from zero. `YOUR_CHECKLIST.md` is the staged, plain-language checklist; do not hand the owner SQL, terminal work or test logs. On October 21, 2026, the environment again reported an enforced package-sites-only policy, and a fresh read-only Supabase health connection failed at proxy CONNECT 403. The newly discovered Vercel session-policy tool controls Vercel sandboxes, not this managed workspace. No applicable workspace-policy editor or connected browser-control tool is available. Ask for the environment configuration/access correction first, then prepare and verify an isolated test link before asking the owner to perform phone drills. Source/automated checks remain unchanged; no field gate was marked passed.
+
 ## Specific external blockers
 
 - Managed workspace proxy refused staging HTTPS (documented CONNECT 403); the current network policy has no staging HTTPS allowance. No policy-editing tool exists here; do not bypass it. Hosted Auth/REST/gateway and representative source-provider acceptance require an approved environment with access.
