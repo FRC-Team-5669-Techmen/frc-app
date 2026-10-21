@@ -1,6 +1,12 @@
-# Current integration checkpoint — October 21, 2026
+# Current integration boundary
 
-Latest source: `7a1ddca`. Read-only Nexus geometry and connector forwarding are implemented, including bounded demo/offseason keys. Roster import remains manager-only. The local production-built app passes **22/22** API/database assertions through real local PostgREST/native PostgreSQL, with synthetic Auth and fictional Nexus data supplied to the real adapter. Actual local Deno 2.9.6 entrypoints pass `deno check` and **12/12** HTTP boundaries against rejecting local Auth; no external network permission or real sends.
+The decision-support continuation changes no SQL, provider, Edge or connector contract. Final `db990e5` passes 28 built-PWA/local API checks with synthetic Auth and fictional providers. Fresh native SQL/RLS, mutation and race results, and the earlier hosted SQL/deployment evidence are scoped in `VERIFICATION.md`. Hosted Auth/API/provider success and real notification delivery remain unverified; production is unchanged.
+
+---
+
+# Earlier integration checkpoint — October 21, 2026 (historical)
+
+Source at that checkpoint: `7a1ddca`. Read-only Nexus geometry and connector forwarding are implemented, including bounded demo/offseason keys. Roster import remains manager-only. The local production-built app passes **22/22** API/database assertions through real local PostgREST/native PostgreSQL, with synthetic Auth and fictional Nexus data supplied to the real adapter. Actual local Deno 2.9.6 entrypoints pass `deno check` and **12/12** HTTP boundaries against rejecting local Auth; no external network permission or real sends.
 
 In an isolated hosted branch, 0022 applied twice and **72/72** SQL/RLS assertions passed. Both actual Edge source directories deployed ACTIVE/version 1 with **verify_jwt=true**. Hosted HTTPS was denied by the workspace proxy, so no deployed Auth/API/provider/Discord success is claimed. All fixtures rolled back; the temporary branch was deleted after retaining evidence. Production remained unchanged. See `STAGING.md`.
 

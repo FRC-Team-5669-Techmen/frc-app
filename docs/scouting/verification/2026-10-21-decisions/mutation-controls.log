@@ -7,4 +7,5 @@ PASS negative control: receipt event scope
 PASS negative control: confirmation required
 PASS negative control: recovered proposal hold
 PASS negative control: monotonic receipts
-9/9 permissive mutations detected
+PASS negative control: unverified video scope exclusion
+10/10 permissive mutations detected

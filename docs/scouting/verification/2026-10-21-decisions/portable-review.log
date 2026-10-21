@@ -6,7 +6,7 @@
 > frc-app@0.1.0 scouting:preview
 > node tools/scouting-preview/build.mjs
 
-Review built: /workspace/frc-app/artifacts/scouting-review/REVIEW.html (1108446 bytes; network connections disabled by CSP)
+Review built: /workspace/frc-app/artifacts/scouting-review/REVIEW.html (1109702 bytes; network connections disabled by CSP)
 Checking tab: Teams
 Checking tab: Pit messages
 Checking tab: Pick lists

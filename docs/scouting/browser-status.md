@@ -1,10 +1,16 @@
+# Current decision-support browser verification
+
+See `VERIFICATION.md` and `verification/2026-10-21-decisions/` for final `db990e5` results: 1801 feature assertions across two disjoint serial batches, 46 decision-workflow assertions, 28 built-PWA/local API checks and 20 automated accessibility scans. The earlier full-process failures remain retained; their cause is unproven. Native Chromium/touch emulation and synthetic data do not establish actual-phone or human acceptance.
+
+---
+
 # Extended recovery/browser checks — October 21, 2026
 
 Current-source and prior-source runs are separated in `VERIFICATION.md` and `verification/2026-10-21-recovery/`. New checks cover reviewed JSON recovery, native dialog focus, large-event paging and an elapsed-duration offline/reload/reconnect soak. These remain native Chromium with synthetic Auth/fixture data, never physical-device or human acceptance. The results below are the earlier checkpoint and must not replace the current report.
 
 ---
 
-# Current browser verification — October 21, 2026
+# Earlier map checkpoint — October 21, 2026 (historical)
 
 Chromium 154.0.8037.57 ran the real app at 375px touch emulation and 1440px desktop. **1766/1766** assertions across 15 features passed at map commit `7240bcb`. After the filename/provider-key corrections, **150/150** focused scouting assertions passed at application commit `7a1ddca`. Check-in passed **51/51**. No physical-phone claim follows from those widths/user agents.
 

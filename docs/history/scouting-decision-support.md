@@ -2,7 +2,7 @@
 title: "Confirmed scouting evidence and reviewed drive-team briefs"
 date: 2026-10-21
 branches: [codex/scouting-2026-evidence]
-commits: []
+commits: [09dab54, 8fef933, 75fad88, db990e5]
 migrations: []
 subsystems: ["Scouting", "Fixture mode"]
 ---
