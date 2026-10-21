@@ -10,7 +10,10 @@ import PickLists from './scouting/PickLists'
 import Training from './scouting/Training'
 import SchedulePlanner from './scouting/SchedulePlanner'
 import PitLocation from './scouting/PitLocation'
+import CoveragePanel from './scouting/CoveragePanel'
+import { buildEventArchive, downloadArchive } from './scouting/backup'
 import { matchOrder } from './scouting/schedule'
+import { footageLabel, matchIdentity } from './scouting/provenance'
 import './ScoutingPage.css'
 
 const when = value => value ? new Date(value).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' }) : 'Unknown time'
@@ -76,6 +79,8 @@ function EventScouting({ uid, eventId, staff }) {
   const [form, setForm] = useState(null)
   const [teamQuery, setTeamQuery] = useState('')
   const [showAllAssignments, setShowAllAssignments] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState('')
   const [online, setOnline] = useState(navigator.onLine)
   const alive = useRef(true)
   const syncLock = useRef(false)
@@ -158,7 +163,7 @@ function EventScouting({ uid, eventId, staff }) {
     // Local commit is the success boundary. A failed refresh cannot make a
     // successfully saved batch look unsaved and invite a duplicate submission.
     if (alive.current) {
-      setQueue(previous => [...previous, ...operations]); setNotice(`${operations.length} assignments saved on this device.`)
+      setQueue(previous => [...previous, ...operations]); setNotice(`${operations.length} records saved on this device.`)
       if (navigator.onLine) sync().catch(e => { if (alive.current) setError(errorText(e)) })
     }
     return operations
@@ -179,17 +184,25 @@ function EventScouting({ uid, eventId, staff }) {
   const memberName = id => (data.members ?? []).find(m => m.id === id)?.nickname || (data.members ?? []).find(m => m.id === id)?.full_name || (id === uid ? 'You' : 'Team member')
   const canEdit = row => !row.localStatus && (row.member_id === uid || (manager && !['pick_list', 'observation'].includes(row.kind)))
   const observations = records.filter(r => r.kind === 'observation')
-  const observationFor = row => observations.find(o => o.member_id === row.payload.assignee && (o.payload.assignment_id === row.id || (o.team_number === row.team_number && o.match_key === row.match_key)))
+  const observationFor = row => observations.find(o => o.member_id === row.payload.assignee && (o.payload.assignment_id === row.id || (o.team_number === row.team_number && matchIdentity(o) === matchIdentity(row))))
   const isComplete = row => row.payload.status === 'complete' || !!observationFor(row)
   const assignments = records.filter(r => r.kind === 'assignment' && r.payload?.status !== 'cancelled' && (showAllAssignments || r.payload?.assignee === uid))
     .sort((a, b) => Number(isComplete(a)) - Number(isComplete(b)) || matchOrder({ key: a.match_key }, { key: b.match_key }))
   const pitFor = n => records.filter(r => r.kind === 'pit' && r.team_number === n).sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)))[0]
   const openForm = (kind, extra = {}) => setForm({ kind, ...extra })
-  function exportData() {
-    const payload = { format: 'techmen-scouting-v1', event: data.event, exported_at: new Date().toISOString(), records: serverRecords, revisions: data.revisions ?? [], delivery: data.delivery ?? [], pending: queue.filter(x => x.status !== 'synced'), source_note: 'Pit claims, observations, official alliance results and estimates are distinct. Pending records are local proposals, not synchronized evidence.' }
-    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }))
-    const a = document.createElement('a'); a.href = url; a.download = `techmen-scouting-${eventId}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000)
+  async function exportData() {
+    if (!store || exporting) return
+    setExporting(true); setExportError('')
+    try {
+      const local = await store.exportBackup(uid, eventId)
+      if (!alive.current) return
+      const payload = buildEventArchive({ eventId, memberId: uid, snapshot: data, local })
+      downloadArchive(payload, `techmen-scouting-${eventId}-${new Date().toISOString().replaceAll(':', '-')}.json`)
+      setNotice(`Backup prepared: ${payload.records.length} synchronized records, ${payload.pending.length} pending saves and ${local.drafts.length} saved drafts. Check your Downloads folder.`)
+    } catch (e) { if (alive.current) setExportError(`Backup could not be created. Your saved work is unchanged. ${errorText(e)}`) }
+    finally { if (alive.current) setExporting(false) }
   }
+
   if (loading) return <main className="sc-wrap"><h1>Scouting</h1><p role="status">Opening event and saved work…</p></main>
   if (data.missing) return <main className="sc-wrap"><Link className="sc-link" to="/scouting">← Events</Link><h1>Scouting is not set up yet</h1><p>Your lead needs to finish scouting setup. Your existing team tools are still available.</p><Link className="sc-link" to="/dashboard">Back to dashboard</Link></main>
   return <main className="sc-wrap" data-scout-page="event">
@@ -204,10 +217,11 @@ function EventScouting({ uid, eventId, staff }) {
     {tab === 'scout' && <section className="sc-stack" role="tabpanel" id="sc-panel-scout" aria-labelledby="sc-tab-scout">
       <div className="sc-section-head"><div><h2>Your next match</h2><p className="sc-help">Observe the assigned robot. Record what you actually see.</p></div><button aria-pressed={showAllAssignments} onClick={() => setShowAllAssignments(x => !x)}>{showAllAssignments ? 'Show my assignments' : 'Show all assignments'}</button></div>
       {!assignments.length && <div className="sc-empty"><span className="sc-eyebrow">Ready when you are</span><h3>No assignments yet</h3><p>Ask your scouting lead for a match, or capture an observation now.</p><button onClick={() => openForm('observation')}>Start an observation</button></div>}
-      <div className="sc-assignment-grid">{assignments.map(row => <article className={`sc-card sc-assignment${isComplete(row) ? ' sc-complete' : ''}`} key={row.id}><div className="sc-section-head"><span className="sc-match">{row.match_key}</span><span className="sc-chip">{row.localStatus ? 'Saved locally' : isComplete(row) ? 'Recorded' : 'To scout'}</span></div><div className="sc-team-number">{row.team_number}</div><h3>{nameFor(row.team_number) || 'Assigned robot'}</h3><p>{row.payload.instructions || 'Watch capabilities and record useful match notes.'}</p><p className="sc-help">Scout: {memberName(row.payload.assignee)}</p><div className="sc-actions">{row.payload.video_url && <a className="sc-link" href={row.payload.video_url} target="_blank" rel="noopener noreferrer">Watch video ↗</a>}<button className="sc-primary" disabled={!!row.localStatus || !!observationFor(row)?.localStatus || row.payload.assignee !== uid} onClick={() => openForm('observation', observationFor(row) ? { record: observationFor(row) } : { team: row.team_number, assignment: row })}>{observationFor(row) ? 'Review observation' : 'Scout match'}</button>{manager && canEdit(row) && <button onClick={() => openForm('assignment', { record: row })}>Edit assignment</button>}</div></article>)}</div>
+      <div className="sc-assignment-grid">{assignments.map(row => <article className={`sc-card sc-assignment${isComplete(row) ? ' sc-complete' : ''}`} key={row.id}><div className="sc-section-head"><span className="sc-match">{row.match_key}</span><span className="sc-chip">{row.localStatus ? 'Saved locally' : isComplete(row) ? 'Recorded' : 'To scout'}</span></div><div className="sc-team-number">{row.team_number}</div><h3>{nameFor(row.team_number) || 'Assigned robot'}</h3><p>{row.payload.instructions || 'Watch capabilities and record useful match notes.'}</p><p className="sc-help">Scout: {memberName(row.payload.assignee)}{row.payload.video_url ? ` · ${footageLabel(row)}` : ''}</p><div className="sc-actions">{row.payload.video_url && <a className="sc-link" href={row.payload.video_url} target="_blank" rel="noopener noreferrer">Watch video ↗</a>}<button className="sc-primary" disabled={!!row.localStatus || !!observationFor(row)?.localStatus || row.payload.assignee !== uid} onClick={() => openForm('observation', observationFor(row) ? { record: observationFor(row) } : { team: row.team_number, assignment: row })}>{observationFor(row) ? 'Review observation' : 'Scout match'}</button>{manager && canEdit(row) && <button onClick={() => openForm('assignment', { record: row })}>Edit assignment</button>}</div></article>)}</div>
       <details className="sc-card" open={observations.length > 0}><summary>Recent observations ({observations.length})</summary><div className="sc-stack">{observations.slice().sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at))).slice(0, 30).map(row => <EvidenceRecord key={row.id} row={row} memberName={memberName} canEdit={canEdit(row)} onEdit={() => openForm('observation', { record: row })} revisions={data.revisions ?? []} />)}{!observations.length && <p className="sc-help">No observations saved for this event.</p>}</div></details>
     </section>}
     {tab === 'teams' && <section className="sc-stack" role="tabpanel" id="sc-panel-teams" aria-labelledby="sc-tab-teams">
+      <CoveragePanel records={records} nameFor={nameFor} onTeam={team => setTeamQuery(String(team))} />
       <div className="sc-section-head"><div><h2>Robots and evidence</h2><p className="sc-help">Pit claims are separate from match verification.</p></div><label className="sc-search">Find a team<input type="search" value={teamQuery} onChange={e => setTeamQuery(e.target.value)} placeholder="Number or name" /></label></div>
       {!numbers.length && <div className="sc-empty"><h3>No teams yet</h3><p>Your lead can import the event roster or add a team below. You can also record a pit report by team number.</p><button onClick={() => openForm('pit')}>New pit report</button></div>}
       <div className="sc-team-grid">{numbers.filter(n => `${n} ${nameFor(n)}`.toLowerCase().includes(teamQuery.toLowerCase())).map(n => { const team = teamRows.find(r => r.team_number === n), pit = pitFor(n); return <article className="sc-card sc-team-card" key={n}><div className="sc-section-head"><div><span className="sc-team-number">{n}</span><h3>{nameFor(n) || 'Team'}</h3></div><span className="sc-chip">{pit?.payload.pit_location || team?.payload.pit_location || 'Pit unknown'}</span></div>
@@ -226,13 +240,14 @@ function EventScouting({ uid, eventId, staff }) {
     {tab === 'picks' && store && <div role="tabpanel" id="sc-panel-picks" aria-labelledby="sc-tab-picks"><PickLists records={records} uid={uid} eventId={eventId} store={store} onSave={save} nameFor={nameFor} /></div>}
     {tab === 'practice' && store && <div role="tabpanel" id="sc-panel-practice" aria-labelledby="sc-tab-practice"><Training key={`${uid}:${eventId}`} store={store} memberId={uid} eventId={eventId} /></div>}
     {manager && <ManageEvent store={store} uid={uid} records={records} onSaveBatch={saveBatch} eventId={eventId} teamRows={teamRows} members={scouts} onForm={openForm} onSave={save} online={online} />}
-    <footer className="sc-footer"><button onClick={exportData}>Export event data</button><span>Claims, observations, official results, estimates and rankings remain distinct.</span></footer>
+    {exportError && <p role="alert" className="sc-error">{exportError}</p>}
+    <footer className="sc-footer"><button disabled={!store || exporting} onClick={exportData}>{exporting ? 'Preparing backup…' : 'Export event data'}</button><span>Includes saved drafts, practice progress and pending saves for this account and event. Wait for “saved on this device” before exporting; keep the file with your team.</span></footer>
     {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : save} onClose={() => setForm(null)} />}
   </main>
 }
 
 function EvidenceRecord({ row, revisions, memberName, canEdit, onEdit }) {
-  return <article className="sc-evidence-record"><div className="sc-section-head"><h3>{row.team_number}{row.match_key ? ` · ${row.match_key}` : ' · Pit report'}</h3>{canEdit && <button onClick={onEdit}>Correct observation</button>}</div><p className="sc-help">{memberName(row.member_id)} · {row.localStatus ? 'Saved locally' : `Version ${row.version} · ${when(row.updated_at)}`} · {row.payload.source || 'Pit claim'}</p><div className="sc-answer-summary">{CAPABILITIES.map(c => <span key={c.key}><b>{c.label}</b> {words((row.payload.answers ?? row.payload.capabilities)?.[c.key])}</span>)}</div>{row.payload.notes && <p className="sc-note">{row.payload.notes}</p>}{row.payload.video_url && <a className="sc-link" href={row.payload.video_url} target="_blank" rel="noopener noreferrer">Source video ↗</a>}<details><summary>Correction history</summary><RevisionList row={row} revisions={revisions} memberName={memberName} /></details></article>
+  return <article className="sc-evidence-record"><div className="sc-section-head"><h3>{row.team_number}{row.match_key ? ` · ${row.match_key}` : ' · Pit report'}</h3>{canEdit && <button onClick={onEdit}>Correct observation</button>}</div><p className="sc-help">{memberName(row.member_id)} · {row.localStatus ? 'Saved locally' : `Version ${row.version} · ${when(row.updated_at)}`} · {row.kind === 'observation' ? footageLabel(row) : 'Pit claim'}</p><div className="sc-answer-summary">{CAPABILITIES.map(c => <span key={c.key}><b>{c.label}</b> {words((row.payload.answers ?? row.payload.capabilities)?.[c.key])}</span>)}</div>{row.payload.notes && <p className="sc-note">{row.payload.notes}</p>}{row.payload.video_url && <a className="sc-link" href={row.payload.video_url} target="_blank" rel="noopener noreferrer">Source video ↗</a>}<details><summary>Correction history</summary><RevisionList row={row} revisions={revisions} memberName={memberName} /></details></article>
 }
 function RevisionList({ row, revisions, memberName }) {
   const history = revisions.filter(r => r.record_id === row.id).sort((a, b) => b.version - a.version)
@@ -243,7 +258,7 @@ function QueuePanel({ queue, store, uid, eventId, serverRecords, onChange, onSav
   const [error, setError] = useState('')
   const [review, setReview] = useState(null)
   if (!queue.length) return null
-  return <details className="sc-card sc-queue" open={queue.some(x => ['conflict', 'failed'].includes(x.status))}><summary>Saved work on this device ({queue.length})</summary><p className="sc-help">Local saves are durable in this browser. Keep this browser's data until they sync.</p>{error && <p role="alert" className="sc-error">{error}</p>}{queue.map(op => { const current = serverRecords.find(r => r.id === op.record_id) ?? serverRecords.find(r => r.kind === op.args.p_kind && (['pit', 'team'].includes(r.kind) ? r.team_number === op.args.p_team : r.kind === 'pick_list' ? r.member_id === uid : r.kind === 'observation' ? r.member_id === uid && r.team_number === op.args.p_team && r.match_key === op.args.p_match : r.kind === 'assignment' ? r.team_number === op.args.p_team && r.match_key === op.args.p_match && r.payload?.assignee === op.args.p_payload?.assignee && r.payload?.status !== 'cancelled' : false)); return <div className="sc-queue-item" key={op.id}><div><strong>{op.args.p_kind.replaceAll('_', ' ')} {op.args.p_team ?? ''} {op.args.p_match ?? ''}</strong><p>{op.status === 'local' ? 'Saved locally' : op.status}{op.error?.message ? `: ${op.error.message}` : ''}</p></div><div className="sc-actions">{op.status === 'failed' && op.retryable && <button onClick={async () => { try { await store.retry(uid, eventId, op.id); await onChange(); await onSync() } catch (e) { setError(errorText(e)) } }}>Retry save</button>}{op.status === 'failed' && !op.retryable && op.error?.code !== '42501' && <button onClick={() => onRepair(op)}>Edit rejected proposal</button>}{op.status === 'conflict' && <button onClick={() => setReview(review === op.id ? null : op.id)}>Review conflict</button>}</div>{review === op.id && <div className="sc-conflict"><div><h4>Your saved proposal</h4><pre className="sc-json">{JSON.stringify(op.args.p_payload, null, 2)}</pre></div><div><h4>Current server version {current?.version ?? 'not downloaded'}</h4><pre className="sc-json">{JSON.stringify(current?.payload ?? {}, null, 2)}</pre></div><p className="sc-help">Refresh first to compare the latest server record. Keeping the server version removes your queued proposal. Applying yours creates a new version and is checked again for conflicts.</p><div className="sc-actions"><button onClick={async () => { try { await store.discard(uid, eventId, op.id); await onChange(); setReview(null) } catch (e) { setError(errorText(e)) } }}>Keep server version</button><button className="sc-primary" disabled={!current} onClick={async () => { try { await store.replaceConflict(uid, eventId, op.id, { id: current.id, version: current.version, kind: op.args.p_kind, team_number: op.args.p_team, match_key: op.args.p_match, payload: op.args.p_payload }); await onChange(); setReview(null); await onSync() } catch (e) { setError(errorText(e)) } }}>Apply my reviewed proposal</button></div></div>}</div> })}</details>
+  return <details className="sc-card sc-queue" open={queue.some(x => ['conflict', 'failed'].includes(x.status))}><summary>Saved work on this device ({queue.length})</summary><p className="sc-help">Local saves are durable in this browser. Keep this browser's data until they sync.</p>{error && <p role="alert" className="sc-error">{error}</p>}{queue.map(op => { const current = serverRecords.find(r => r.id === op.record_id) ?? serverRecords.find(r => r.kind === op.args.p_kind && (['pit', 'team'].includes(r.kind) ? r.team_number === op.args.p_team : r.kind === 'pick_list' ? r.member_id === uid : r.kind === 'observation' ? r.member_id === uid && r.team_number === op.args.p_team && matchIdentity(r) === matchIdentity({ match_key: op.args.p_match, payload: op.args.p_payload }) : r.kind === 'assignment' ? r.team_number === op.args.p_team && matchIdentity(r) === matchIdentity({ match_key: op.args.p_match, payload: op.args.p_payload }) && r.payload?.assignee === op.args.p_payload?.assignee && r.payload?.status !== 'cancelled' : false)); return <div className="sc-queue-item" key={op.id}><div><strong>{op.args.p_kind.replaceAll('_', ' ')} {op.args.p_team ?? ''} {op.args.p_match ?? ''}</strong><p>{op.status === 'local' ? 'Saved locally' : op.status}{op.error?.message ? `: ${op.error.message}` : ''}</p></div><div className="sc-actions">{op.status === 'failed' && op.retryable && <button onClick={async () => { try { await store.retry(uid, eventId, op.id); await onChange(); await onSync() } catch (e) { setError(errorText(e)) } }}>Retry save</button>}{op.status === 'failed' && !op.retryable && op.error?.code !== '42501' && <button onClick={() => onRepair(op)}>Edit rejected proposal</button>}{op.status === 'conflict' && <button onClick={() => setReview(review === op.id ? null : op.id)}>Review conflict</button>}</div>{review === op.id && <div className="sc-conflict"><div><h4>Your saved proposal</h4><pre className="sc-json">{JSON.stringify(op.args.p_payload, null, 2)}</pre></div><div><h4>Current server version {current?.version ?? 'not downloaded'}</h4><pre className="sc-json">{JSON.stringify(current?.payload ?? {}, null, 2)}</pre></div><p className="sc-help">Refresh first to compare the latest server record. Keeping the server version removes your queued proposal. Applying yours creates a new version and is checked again for conflicts.</p><div className="sc-actions"><button onClick={async () => { try { await store.discard(uid, eventId, op.id); await onChange(); setReview(null) } catch (e) { setError(errorText(e)) } }}>Keep server version</button><button className="sc-primary" disabled={!current} onClick={async () => { try { await store.replaceConflict(uid, eventId, op.id, { id: current.id, version: current.version, kind: op.args.p_kind, team_number: op.args.p_team, match_key: op.args.p_match, payload: op.args.p_payload }); await onChange(); setReview(null); await onSync() } catch (e) { setError(errorText(e)) } }}>Apply my reviewed proposal</button></div></div>}</div> })}</details>
 }
 
 function ManageEvent({ store, uid, records, onSaveBatch, eventId, teamRows, members, onForm, onSave, online }) {
@@ -263,17 +278,17 @@ function ManageEvent({ store, uid, records, onSaveBatch, eventId, teamRows, memb
   }
   async function applyImport() {
     setBusy(true); setError('')
-    let count = 0
     try {
-      for (const team of preview.teams) {
+      const proposals = preview.teams.map(team => {
         const prior = teamRows.find(r => r.team_number === team.team_number)
-        if (prior?.localStatus) continue
-        await onSave({ ...(prior ? { id: prior.id, version: prior.version } : {}), kind: 'team', team_number: team.team_number, match_key: null, payload: { ...prior?.payload, ...team.payload } })
-        count++
-      }
-      setNotice(`${count} teams saved on this device for sync.`); setPreview(null)
-    } catch (e) { setError(`${count} teams saved locally. ${errorText(e)}`) } finally { setBusy(false) }
+        if (prior?.localStatus) throw new Error(`Team ${team.team_number} has a pending edit. Sync or resolve it before importing.`)
+        return { ...(prior ? { id: prior.id, version: prior.version } : {}), kind: 'team', team_number: team.team_number, match_key: null, payload: { ...prior?.payload, ...team.payload } }
+      })
+      await onSaveBatch(proposals)
+      setNotice(`${proposals.length} teams saved on this device for sync.`); setPreview(null)
+    } catch (e) { setError(`The import was not saved. ${errorText(e)}`) } finally { setBusy(false) }
   }
+
   return <details className="sc-card sc-manage"><summary>Manage event</summary><p className="sc-help">Scouting leads and staff manage teams and assignments. Each import is previewed before it is saved.</p><div className="sc-actions"><button onClick={() => onForm('team')}>Add event team</button><button onClick={() => onForm('assignment')}>Assign a scout</button></div>
     <div className="sc-import"><label>TBA event key<input placeholder="2026cabb" value={key} onChange={e => setKey(e.target.value)} maxLength="80" /></label><button disabled={!key.trim() || busy || !online} onClick={importPreview}>{busy ? 'Working…' : 'Preview event import'}</button></div>{error && <p role="alert" className="sc-error">{error}</p>}{notice && <p role="status">{notice}</p>}
     {preview && <div className="sc-preview"><h3>Import preview</h3><p>{preview.teams.length} teams · {preview.matches?.length ?? 0} scheduled matches</p><ul>{(preview.sources ?? []).map((source, i) => <li key={i}>{source.source}: {source.status}{source.message ? ` · ${source.message}` : ''}</li>)}</ul><p className="sc-help">Imported data keeps its source and retrieval time. Official scores are alliance totals. Statistical estimates remain separate.</p><details><summary>Review teams</summary><ul>{preview.teams.map(t => <li key={t.team_number}>{t.team_number} {t.payload.name} · {t.payload.pit_location || 'Pit unknown'} · EPA {t.payload.epa ?? 'unavailable'}</li>)}</ul></details><div className="sc-actions"><button disabled={busy} onClick={() => setPreview(null)}>Cancel import</button><button className="sc-primary" disabled={busy || !preview.teams.length} onClick={applyImport}>Save imported teams</button></div>{!!preview.matches?.length && <details><summary>Schedule and footage</summary>{preview.matches.map(match => <div className="sc-schedule-match" key={match.key}><h4>{match.key}</h4><div className="sc-actions">{match.teams.map(team => <button key={team} onClick={() => onForm('assignment', { team, assignment: { match_key: match.key, payload: { video_url: match.videos?.[0] ?? '' } } })}>Assign {team}</button>)}</div></div>)}</details>}</div>}

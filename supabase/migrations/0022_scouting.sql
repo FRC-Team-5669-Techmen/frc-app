@@ -31,8 +31,12 @@ create index if not exists scouting_records_event_idx on public.scouting_records
 create index if not exists scouting_records_member_idx on public.scouting_records(member_id);
 create unique index if not exists scouting_one_list on public.scouting_records(event_id,member_id) where kind = 'pick_list';
 create unique index if not exists scouting_one_team on public.scouting_records(event_id,kind,team_number) where kind in ('team','pit');
-create unique index if not exists scouting_one_observation on public.scouting_records(event_id,member_id,team_number,match_key) where kind = 'observation';
-create unique index if not exists scouting_one_assignment on public.scouting_records(event_id,team_number,match_key,(payload->>'assignee')) where kind = 'assignment' and payload->>'status' <> 'cancelled';
+-- Rebuild these local-review indexes so repeated application retains canonical match identity.
+-- Existing aliases must be reviewed if an earlier draft migration was applied; no rows are deleted.
+drop index if exists public.scouting_one_observation;
+drop index if exists public.scouting_one_assignment;
+create unique index if not exists scouting_one_observation on public.scouting_records(event_id,member_id,team_number,(case when payload->>'source_scope'='external' then lower(btrim(match_key)) else regexp_replace(lower(btrim(match_key)), '^[0-9]{4}[a-z0-9]+_(qm[0-9]+|sf[0-9]+m[0-9]+|f[0-9]+m[0-9]+)$', '\1') end)) where kind = 'observation';
+create unique index if not exists scouting_one_assignment on public.scouting_records(event_id,team_number,(case when payload->>'source_scope'='external' then lower(btrim(match_key)) else regexp_replace(lower(btrim(match_key)), '^[0-9]{4}[a-z0-9]+_(qm[0-9]+|sf[0-9]+m[0-9]+|f[0-9]+m[0-9]+)$', '\1') end),(payload->>'assignee')) where kind = 'assignment' and payload->>'status' <> 'cancelled';
 
 create table if not exists public.scouting_revisions (
  record_id uuid not null references public.scouting_records(id) on delete restrict,
@@ -162,8 +166,8 @@ begin
  if p_match is not null and length(p_match)>100 then raise exception using errcode='22023',message='Match key is too long.'; end if;
  allowed := case p_kind
   when 'pit' then array['capabilities','notes','pit_location']
-  when 'observation' then array['answers','notes','source','video_url','assignment_id','request_delivery']
-  when 'assignment' then array['assignee','status','instructions','video_url']
+  when 'observation' then array['answers','notes','source','video_url','assignment_id','request_delivery','source_scope','source_event']
+  when 'assignment' then array['assignee','status','instructions','video_url','source_scope','source_event']
   when 'message' then array['text','status','request_delivery','reply_to']
   when 'pick_list' then array['entries','reason']
   when 'team' then array['name','pit_location','source','source_url','fetched_at','epa','epa_source','epa_fetched_at','official_results','pit_source','pit_fetched_at'] end;
@@ -186,11 +190,29 @@ begin
    end if;
   end loop;
  end if;
+ if p_kind in ('observation','assignment') then
+  if p_payload ? 'source_scope' and coalesce(p_payload->>'source_scope','') not in ('current','external') then
+   raise exception using errcode='22023',message='Choose current or external footage scope.';
+  end if;
+  if p_payload ? 'source_event' and coalesce(p_payload->>'source_scope','')<>'external' then
+   raise exception using errcode='22023',message='A source event requires external footage scope.';
+  end if;
+  if p_payload->>'source_scope'='external' then
+   if coalesce(p_payload->>'source_event','') !~ '^[0-9]{4}[a-z0-9]{2,40}$'
+      or left(p_match,length(p_payload->>'source_event')+1) is distinct from (p_payload->>'source_event')||'_'
+      or coalesce(p_payload->>'video_url','')=''
+      or (p_kind='observation' and p_payload->>'source' is distinct from 'video') then
+    raise exception using errcode='22023',message='Prior-event footage needs its source event, full match key and video URL.';
+   end if;
+  end if;
+ end if;
  if p_kind='observation' then
   if coalesce(p_payload->>'source','') not in ('live','video') then raise exception using errcode='22023',message='Choose live or video observation.'; end if;
   if p_payload ? 'assignment_id' then
    begin who := (p_payload->>'assignment_id')::uuid; exception when others then raise exception using errcode='22023',message='Invalid assignment.'; end;
-   if not exists(select 1 from public.scouting_records r where r.id=who and r.kind='assignment' and r.event_id=p_event and r.team_number=p_team and r.match_key=p_match and r.payload->>'assignee'=auth.uid()::text and r.payload->>'status'<>'cancelled') then
+   if not exists(select 1 from public.scouting_records r where r.id=who and r.kind='assignment' and r.event_id=p_event and r.team_number=p_team and r.match_key=p_match and r.payload->>'assignee'=auth.uid()::text and r.payload->>'status'<>'cancelled'
+    and coalesce(r.payload->>'source_scope','current')=coalesce(p_payload->>'source_scope','current')
+    and (r.payload->>'source_event') is not distinct from (p_payload->>'source_event')) then
     raise exception using errcode='22023',message='This assignment does not match your observation.';
    end if;
   end if;

@@ -48,3 +48,14 @@ describe('Techmen shift planning', () => {
     expect(() => planAssignments({ matches, scouts, start: 2, end: 0 })).toThrow('range')
   })
 })
+
+ it('matches imported and short event keys for coverage, scout breaks and duplicate schedule rejection', () => {
+   const matches = [{ key: '2026cabb_qm1', teams: [101,102] }]
+   const records = [{ kind: 'observation', team_number: 101, match_key: 'qm1', payload: { source: 'live' } }]
+   const plan = planAssignments({ matches, scouts: [{ id: 'a', unavailable: ['qm1'] }], records })
+   expect(plan.existing).toEqual([{ match: '2026cabb_qm1', team: 101 }])
+   expect(plan.gaps).toEqual([{ match: '2026cabb_qm1', team: 102, reason: 'No available scout' }])
+   expect(() => parseSchedule('qm1,101\n2026cabb_qm1,102')).toThrow('unique')
+   const prior = records.map(r => ({ ...r, match_key: '2026prior_qm1', payload: { source_scope: 'external' } }))
+   expect(planAssignments({ matches, scouts: [{ id: 'a' }, { id: 'b' }], records: prior }).proposals).toHaveLength(2)
+ })

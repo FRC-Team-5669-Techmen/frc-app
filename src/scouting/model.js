@@ -1,3 +1,4 @@
+import { isExternalEvidence, matchIdentity } from './provenance.js'
 // Proposed Techmen rules. TideScout does not publish these formulas.
 export const CAPABILITIES = Object.freeze([
   { key: 'trench', label: 'Passes under the TRENCH' },
@@ -28,8 +29,9 @@ function newest(records, key) {
 // Missing answers, did_not_see and not_applicable counts are scout responses,
 // while yes/no/disputed counts are matches. Callers must label them accordingly.
 export function reliability(records, team, capability) {
-  const rows = newest(records.filter(r => r.kind === 'observation' && r.team_number === Number(team)),
-    r => `${r.event_id}:${r.member_id}:${r.team_number}:${r.match_key}`)
+  const versions = newest(records.filter(r => r.kind === 'observation' && r.team_number === Number(team)),
+    r => r.id ?? `${r.event_id}:${r.member_id}:${r.team_number}:${String(r.match_key).trim().toLowerCase()}`)
+  const rows = newest(versions, r => `${r.event_id}:${r.member_id}:${r.team_number}:${matchIdentity(r)}`).filter(r => !isExternalEvidence(r))
   const matches = new Map()
   const out = { yes: 0, no: 0, denominator: 0, percent: null, sufficient: false, disputed: 0, didNotSee: 0, notApplicable: 0, missing: 0 }
   for (const row of rows) {
@@ -38,7 +40,7 @@ export function reliability(records, team, capability) {
     else if (answer === 'not_applicable') out.notApplicable++
     else if (answer !== 'yes' && answer !== 'no') out.missing++
     if (answer === 'yes' || answer === 'no') {
-      const key = `${row.event_id}:${row.match_key}`
+      const key = `${row.event_id}:${matchIdentity(row)}`
       if (!matches.has(key)) matches.set(key, new Set())
       matches.get(key).add(answer)
     }

@@ -217,3 +217,18 @@ describe('sync queue work selection', () => {
     expect((await store.listQueue('member-a','event-a')).every(o=>o.status==='synced')).toBe(true)
   })
 })
+
+
+describe('offline opening', () => {
+  it('opens the cached event without attempting unreachable network queries', async () => {
+    const { store } = fixture()
+    await store.putCache('member-a', 'event-a', { event: { id: 'event-a' }, records: [record] })
+    const api = client()
+    api.from = () => { throw new Error('Network query should not start offline') }
+    const args = { store, client: api, memberId: 'member-a', eventId: 'event-a', online: () => false }
+    expect(await loadScoutingEvent(args)).toMatchObject({ offline: true, error: null, records: [record] })
+    expect(await loadScoutingEvent({ ...args, eventId: 'uncached' })).toMatchObject({ offline: true, records: [], error: { code: 'OFFLINE_NOT_CACHED' } })
+    api.auth.getSession = async () => ({ data: { session: { user: { id: 'member-b' } } } })
+    expect(await loadScoutingEvent(args)).toMatchObject({ offline: false, records: [], error: { code: 'ACCOUNT_CHANGED' } })
+  })
+})

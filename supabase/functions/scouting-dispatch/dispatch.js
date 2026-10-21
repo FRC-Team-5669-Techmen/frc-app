@@ -6,9 +6,10 @@ const safeText = value => String(value ?? '').replace(/@(everyone|here)/gi, '@\u
 
 export function scoutingDiscordPayload(record) {
   const label = record.kind === 'observation' ? 'Match review' : 'Pit conversation'
+  const provenance = record.payload?.source_scope === 'external' ? ` | Prior-event footage: ${record.payload.source_event}` : ''
   const note = record.kind === 'observation' ? record.payload?.notes : record.payload?.text
   return {
-    content: safeText(`${label}${record.version > 1 ? ` | Correction v${record.version}` : ''} | Team ${record.team_number}${record.match_key ? ` | ${record.match_key}` : ''}\n${note ?? ''}`).slice(0, 1900),
+    content: safeText(`${label}${record.version > 1 ? ` | Correction v${record.version}` : ''} | Team ${record.team_number}${record.match_key ? ` | ${record.match_key}` : ''}${provenance}\n${note ?? ''}`).slice(0, 1900),
     allowed_mentions: { parse: [], roles: [], users: [], replied_user: false },
   }
 }

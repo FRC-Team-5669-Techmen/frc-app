@@ -72,3 +72,7 @@ Historical authorship is intentionally kept when accounts merge. The merge rules
 ## Continued-build verification, October 21, 2026
 
 The same retained PGlite command was rerun after adding immutable same-event/team pit replies and the manager-only eligible roster. Results: **62/62 scouting checks, 15/15 permissive mutants caught, and 563/563 checks across 23 SQL test files**. Both migration passes succeeded. New mutations widen reply event/team boundaries and roster authorization/eligibility; the unchanged tests catch each. Native PostgreSQL16, concurrent connections and live Supabase remain unverified.
+
+## Resumed source-boundary verification
+
+The latest retained harness run passed **72/72 scouting checks, 17/17 permissive mutants, and 573/573 SQL checks across 23 files**, with both migration passes successful. New tests cover prior-event provenance, source/assignment agreement, a reviewable external URL, and current-event short/full match alias uniqueness. Mutation controls remove the external match-prefix and assignment-scope guards and are caught. No native PostgreSQL, PostgREST or live Supabase claim follows from these WASM results.

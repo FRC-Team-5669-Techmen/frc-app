@@ -1,3 +1,4 @@
+import { matchIdentity } from '../../../scouting/provenance.js'
 // Fixture-only port of scouting rules. This proves browser workflows; SQL and
 // RLS are independently exercised by 0022_scouting_rls_test.sql.
 const EVENT = '16000000-0000-4000-8000-000000000001'
@@ -30,6 +31,12 @@ function save(ctx) {
   if (a.p_kind !== 'pick_list' && (!Number.isInteger(a.p_team) || a.p_team < 1)) return fail('Choose a team.')
   if (['assignment', 'observation'].includes(a.p_kind) && !a.p_match?.trim()) return fail('Enter the match.')
   if (a.p_kind === 'observation' && (!['live', 'video'].includes(p.source) || Object.values(p.answers ?? {}).some(v => !['yes', 'no', 'did_not_see', 'not_applicable'].includes(v)))) return fail('Choose an observation state explicitly.')
+  if (['observation', 'assignment'].includes(a.p_kind)) {
+    if ('source_scope' in p && !['current', 'external'].includes(p.source_scope)) return fail('Invalid footage scope.')
+    if ('source_event' in p && p.source_scope !== 'external') return fail('A source event needs external scope.')
+    if (p.source_scope === 'external' && (!/^\d{4}[a-z0-9]{2,40}$/.test(p.source_event || '') || !a.p_match.startsWith(`${p.source_event}_`) || !/^https:\/\/[^\s]+$/.test(p.video_url || '') || (a.p_kind === 'observation' && p.source !== 'video'))) return fail('Prior-event footage needs its source event, full match key and video URL.')
+    if (a.p_kind === 'observation' && p.assignment_id && !rows(db, 'scouting_records').some(r => r.id === p.assignment_id && r.kind === 'assignment' && r.event_id === a.p_event && r.team_number === a.p_team && r.match_key === a.p_match && r.payload.assignee === user.id && r.payload.status !== 'cancelled' && (r.payload.source_scope || 'current') === (p.source_scope || 'current') && (r.payload.source_event || null) === (p.source_event || null))) return fail('This assignment does not match your observation.')
+  }
   if (a.p_kind === 'pit' && Object.values(p.capabilities ?? {}).some(v => !['yes', 'no', 'unknown'].includes(v))) return fail('Choose a pit claim state.')
   if (a.p_kind === 'message' && (!p.text?.trim() || !['open', 'resolved'].includes(p.status))) return fail('Enter a message and status.')
   if (a.p_kind === 'message' && p.reply_to && !rows(db, 'scouting_records').some(r => r.id === p.reply_to && r.kind === 'message' && r.event_id === a.p_event && r.team_number === a.p_team && !r.payload.reply_to)) return fail('A reply must reference an original pit message for the same team and event.')
@@ -40,8 +47,8 @@ function save(ctx) {
   }
   if (!old && rows(db, 'scouting_records').some(r => r.event_id === a.p_event && r.kind === a.p_kind && (
     (['team', 'pit'].includes(a.p_kind) && r.team_number === a.p_team)
-    || (a.p_kind === 'observation' && r.member_id === user.id && r.team_number === a.p_team && r.match_key === a.p_match)
-    || (a.p_kind === 'assignment' && p.status !== 'cancelled' && r.payload.status !== 'cancelled' && r.payload.assignee === p.assignee && r.team_number === a.p_team && r.match_key === a.p_match)
+    || (a.p_kind === 'observation' && r.member_id === user.id && r.team_number === a.p_team && matchIdentity(r) === matchIdentity({ match_key: a.p_match, payload: p }))
+    || (a.p_kind === 'assignment' && p.status !== 'cancelled' && r.payload.status !== 'cancelled' && r.payload.assignee === p.assignee && r.team_number === a.p_team && matchIdentity(r) === matchIdentity({ match_key: a.p_match, payload: p }))
   ))) return fail('A record already exists. Refresh and edit it.', '40001')
   const at = stamp(now)
   const record = { id: a.p_id, event_id: a.p_event, member_id: old?.member_id ?? user.id, kind: a.p_kind, team_number: a.p_team, match_key: a.p_match, payload: structuredClone(p), version: (old?.version ?? 0) + 1, created_at: old?.created_at ?? at, updated_at: at }

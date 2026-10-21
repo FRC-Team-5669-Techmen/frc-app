@@ -29,3 +29,9 @@ Managers can paste a match schedule or accept the imported schedule, choose a ma
 Pit conversations support separately attributed replies with immutable original-thread links. Comparison voting has side-by-side evidence cards. Pit addresses display their source, time and freshness warning. Training now saves incomplete decisions, active mission, simulation answers and real-footage worksheets as drafts; completion does not award certification.
 
 The standalone review is built by `npm run scouting:preview` from the same route and fixture backend. `npm run scouting:preview:check` checks the compiled bundle under DOM emulation. Neither is a deployment or substitute for native browser/phone checks.
+
+## Recovery and evidence quality
+
+`Export event data` now includes account/event-scoped drafts, practice, pending operations, confirmed receipts and cached evidence in a versioned JSON archive. The archive is for reviewed recovery; it never automatically uploads or overwrites existing work. Offline event opening skips remote data queries. Team imports are atomic locally.
+
+Prior-event footage must retain its source event and full match key, appears with a provenance label and stays outside current-event reliability percentages. Full TBA and short current-event match labels share one logical identity. The coverage panel in Teams finds missing pit reports, thin or disputed evidence and prior-event context.

@@ -178,6 +178,29 @@ begin
  v:=pg_temp.val_as(p,format('select public.scouting_roster(%L)',e));
  perform pg_temp.rec(62,'parent cannot load assignment roster despite capability',v like 'err:42501:%',v);
 
+ v:=pg_temp.save_as(t,gen_random_uuid(),e,'observation','{"answers":{"trench":"yes"},"source":"video","video_url":"https://example.org/match","source_scope":"external","source_event":"2026cabb"}',0,gen_random_uuid(),5669,'2026cabb_qm1');
+ perform pg_temp.rec(63,'external footage preserves source event and full match identity',v not like 'err:%' and v::jsonb->'payload'->>'source_event'='2026cabb',v);
+ v:=pg_temp.save_as(t,gen_random_uuid(),e,'observation','{"answers":{},"source":"video","video_url":"https://example.org/match","source_scope":"external","source_event":"2026cabb"}',0,gen_random_uuid(),5669,'qm2');
+ perform pg_temp.rec(64,'external footage rejects ambiguous short match key',v like 'err:22023:%',v);
+ v:=pg_temp.save_as(t,gen_random_uuid(),e,'observation','{"answers":{},"source":"live","video_url":"https://example.org/match","source_scope":"external","source_event":"2026cabb"}',0,gen_random_uuid(),5669,'2026cabb_qm2');
+ perform pg_temp.rec(65,'external footage cannot claim live event evidence',v like 'err:22023:%',v);
+ v:=pg_temp.save_as(t,gen_random_uuid(),e,'observation','{"answers":{},"source":"video","source_scope":"external","source_event":"2026cabb"}',0,gen_random_uuid(),5669,'2026cabb_qm2');
+ perform pg_temp.rec(66,'external footage requires a reviewable URL',v like 'err:22023:%',v);
+ v:=pg_temp.save_as(t,gen_random_uuid(),e,'observation','{"answers":{},"source":"video","video_url":"https://example.org/match","source_scope":"external","source_event":"Unspecified"}',0,gen_random_uuid(),5669,'Unspecified_qm2');
+ perform pg_temp.rec(67,'external footage requires an explicit event key',v like 'err:22023:%',v);
+ aid:=gen_random_uuid();
+ v:=pg_temp.save_as(a,aid,e,'assignment',jsonb_build_object('assignee',t,'status','assigned','video_url','https://example.org/match','source_scope','external','source_event','2026cabb'),0,gen_random_uuid(),5669,'2026cabb_qm3');
+ perform pg_temp.rec(68,'manager can assign prior-event footage',v not like 'err:%',v);
+ v:=pg_temp.save_as(t,gen_random_uuid(),e,'observation',jsonb_build_object('answers',jsonb_build_object('trench','yes'),'source','video','video_url','https://example.org/match','assignment_id',aid),0,gen_random_uuid(),5669,'2026cabb_qm3');
+ perform pg_temp.rec(69,'assignment cannot be relabeled as current-event footage',v like 'err:22023:%',v);
+ v:=pg_temp.save_as(t,gen_random_uuid(),e,'observation',jsonb_build_object('answers',jsonb_build_object('trench','yes'),'source','video','video_url','https://example.org/match','source_scope','external','source_event','2026cabb','assignment_id',aid),0,gen_random_uuid(),5669,'2026cabb_qm3');
+ perform pg_temp.rec(70,'assignee retains prior-event provenance on capture',v not like 'err:%',v);
+
+ v:=pg_temp.save_as(s,gen_random_uuid(),e,'observation','{"answers":{"trench":"yes"},"source":"live"}',0,gen_random_uuid(),5669,'2026current_qm1');
+ perform pg_temp.rec(71,'full and short current-event keys cannot duplicate a logical observation',v like 'err:40001:%',v);
+ v:=pg_temp.save_as(t,gen_random_uuid(),e,'observation','{"answers":{"trench":"no"},"source":"live"}',0,gen_random_uuid(),5669,'qm1');
+ perform pg_temp.rec(72,'current qm1 stays distinct from external event qm1',v not like 'err:%',v);
+
 end
 $checks$;
 select n,check_name as "check",result,detail from t0022_results order by n;

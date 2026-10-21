@@ -1,3 +1,4 @@
+import { matchIdentity } from './provenance.js'
 // IndexedDB transactions make queue claims atomic across tabs. A request can be
 // retried after a lease expires, using the SAME operation id and immutable body;
 // the server supplies the exactly-once logical write guarantee.
@@ -78,7 +79,7 @@ export class ScoutingStore {
       for (const operation of operations) {
         if (all.some(o => o.record_id === operation.record_id)) throw error('PENDING_RECORD', 'This record already has an unsynchronized edit. Resolve or synchronize it before saving another version.')
         const a = operation.args
-        if (a.p_kind === 'assignment' && a.p_expected_version === 0 && all.some(o => o.args.p_kind === 'assignment' && o.args.p_match === a.p_match && o.args.p_payload.assignee === a.p_payload.assignee && o.args.p_payload.status !== 'cancelled')) throw error('PENDING_ASSIGNMENT', 'A queued assignment already uses this scout in this match. Sync and review the plan again.')
+        if (a.p_kind === 'assignment' && a.p_expected_version === 0 && all.some(o => o.args.p_kind === 'assignment' && matchIdentity({ match_key: o.args.p_match, payload: o.args.p_payload }) === matchIdentity({ match_key: a.p_match, payload: a.p_payload }) && o.args.p_payload.assignee === a.p_payload.assignee && o.args.p_payload.status !== 'cancelled')) throw error('PENDING_ASSIGNMENT', 'A queued assignment already uses this scout in this match. Sync and review the plan again.')
         all.push(operation)
       }
       for (const operation of operations) await tx.put('operations', operation)
@@ -156,6 +157,18 @@ export class ScoutingStore {
       if (op?.status === 'syncing') throw error('IN_FLIGHT', 'Wait for this save to finish before discarding it.')
       await tx.remove('operations', key)
     })
+  }
+  // One read transaction captures receipts, unsynced work, drafts and the last
+  // downloaded event together, without ever including another account/event.
+  async exportBackup(memberId, eventId) {
+    requireScope(memberId, eventId)
+    const scope = scopeKey(memberId, eventId), prefix = `${scope}:`
+    return this.backend.transaction(['operations', 'drafts', 'cache'], 'readonly', async tx => ({
+      format: 'techmen-scouting-device-v1', member_id: memberId, event_id: eventId, captured_at: this.now(),
+      operations: (await tx.all('operations')).filter(op => op.member_id === memberId && op.event_id === eventId),
+      drafts: (await tx.all('drafts')).filter(row => row.key.startsWith(prefix)).map(row => ({ draft_key: row.key.slice(prefix.length), value: row.value, updated_at: row.updatedAt })),
+      cache: (await tx.get('cache', scope)) ?? null,
+    }))
   }
   async saveDraft(memberId, eventId, draftKey, value) {
     requireScope(memberId, eventId)

@@ -21,16 +21,16 @@ See `EVIDENCE.md`, `CONTRACT.md`, math fixtures and acceptance mapping. No histo
 
 | Check | Actual result |
 | --- | --- |
-| Final combined `npm test` | 58 files; 918/918 tests passed |
-| `npm run build` | Passed; PWA generated with 457 precache entries |
+| Final combined `npm test` | 61 files; 934/934 tests passed |
+| `npm run build` | Passed; fresh output has 144 precache entries (about 1.9 MiB) |
 | Connector generation and check | Passed; 173 called functions, 171 reachable, 23 tools, zero direct table writes |
 | Design-system audit | Passed; 36 aliases across 3 grounds, 79 components, 315 files |
 | Discord calendar regression | 19/19 passed |
 | Historical content preservation | 50 original entries byte/SHA identical |
 | Independent mathematical oracles | 13 assertions passed |
-| React DOM workflows | 17 tests passed, included in combined suite |
+| React DOM workflows | 21 tests passed, included in combined suite |
 | Compiled portable review | All five tabs, mentor planner and parent denial render; zero script errors under DOM/IndexedDB emulation |
-| PostgreSQL 18.6 WASM (PGlite) | Full migration chain through 0022 applied twice; 62 new SQL checks, 15 permissive mutants and 563 checks across 23 rollback RLS suites passed |
+| PostgreSQL 18.6 WASM (PGlite) | Full migration chain through 0022 applied twice; 72 new SQL checks, 17 permissive mutants and 573 checks across 23 rollback RLS suites passed |
 | `git diff --check` | Passed |
 
 React DOM checks use jsdom and fake-indexeddb, including a native-dialog stub. They verify behavior under emulation, not browser layout or phone usability. PGlite is a single-connection WASM PostgreSQL runtime; it does not establish native PostgreSQL16, PostgREST or concurrent-connection correctness. See database-status.md and browser-status.md for reproducible commands and boundaries.
@@ -52,3 +52,9 @@ The portable checkpoint contains the implementation, Git history, source evidenc
 The final combined run includes reviewed shift planning with atomic local batch saves, eligible roster reads, immutable same-event/team pit replies, side-by-side evidence, pit-location provenance, persisted interactive practice, pick-list drafts, completed-assignment corrections and account-change sync recovery. The actual React screens are packaged in a network-disabled portable review, with separate release instructions and a prepared PR description.
 
 The requested interface visual is a static rendering of the actual React DOM using a print renderer with compatibility CSS. It is not a Chromium screenshot and must not be cited as a layout acceptance test.
+
+## Resumed reliability review (October 21)
+
+Added complete device/event exports, atomic local team imports, prior-event footage source boundaries, coverage filters, canonical short/full current-event match identity and direct offline-cache opening. Final combined run: 934/934 tests across 61 files. The 21 rendered DOM tests include prior-event capture, import failure/retry and backup success/failure. Database: 72/72 scouting checks, 17/17 permissive mutants caught, 573/573 checks across 23 SQL files, with two migration passes.
+
+A stale local output directory inflated one PWA cache measurement. A fresh `npm run build -- --outDir artifacts/scouting-production-check` generated 144 precache entries (1907.64 KiB); a subsequent standard-output build removed an intentional stale-file probe and left only the current assets. This does not establish device cache behavior. No deployment or live data was touched.

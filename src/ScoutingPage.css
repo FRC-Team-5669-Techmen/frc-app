@@ -183,3 +183,9 @@
 .sc-comparison-evidence dd { margin: 4px 0 14px; line-height: 1.5; }
 .sc-comparison-evidence .sc-card { min-width: 0; overflow-wrap: anywhere; }
 @media(max-width:800px) { .sc-comparison-evidence { grid-template-columns: 1fr; } }
+
+.sc-coverage-list { list-style: none; padding: 0; margin: 0; }
+.sc-coverage-list li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-top: 1px solid var(--border-strong); }
+.sc-coverage-list li > div { min-width: 0; overflow-wrap: anywhere; }
+.sc-coverage-list button { flex-shrink: 0; }
+@media (max-width: 640px) { .sc-coverage-list li { align-items: flex-start; flex-direction: column; } }

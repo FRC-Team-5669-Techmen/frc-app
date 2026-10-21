@@ -39,3 +39,5 @@ Prepared October 21, 2026 UTC. These changes are local reviewable source, not de
 - Provider-match previews can be accepted into the reviewed shift planner. Schedule drafts persist locally per account/event; reviewed assignments sync through the existing versioned RPC. They are not a new shared server schedule table.
 - A `sending` reservation left by a crashed dispatcher remains visibly unresolved. It is intentionally not automatically resent; an operator must inspect Discord before deciding on a new explicit communication.
 - Connector scouting reads cap at 1000 records and mark `truncated`; the full app export is the path for larger event archives.
+
+Prior-event observation notifications now include the recorded source event in the text, preserving the distinction outside the app. Mention suppression and duplicate-delivery handling remain unchanged. No real notification was sent during verification.

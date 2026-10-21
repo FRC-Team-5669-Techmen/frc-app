@@ -18,6 +18,8 @@ export async function runScoutingMutants(db, exec) {
  const validation=(await one("select pg_get_functiondef('scouting_private.validate(text,integer,text,jsonb,uuid)'::regprocedure) as definition")).definition
  const roster=(await one("select pg_get_functiondef('scouting_private.roster(uuid)'::regprocedure) as definition")).definition
  const mutants=[
+  ['external match provenance removed',validation.replace("or left(p_match,length(p_payload->>'source_event')+1) is distinct from (p_payload->>'source_event')||'_'",''),validation,[64]],
+  ['external assignment scope boundary removed',validation.replace("and coalesce(r.payload->>'source_scope','current')=coalesce(p_payload->>'source_scope','current')",'').replace("and (r.payload->>'source_event') is not distinct from (p_payload->>'source_event')",''),validation,[69]],
   ['reply event boundary widened',validation.replace("r.kind='message' and r.event_id=p_event and r.team_number=p_team", "r.kind='message' and r.team_number=p_team"),validation,[54]],
   ['reply team boundary widened',validation.replace("r.kind='message' and r.event_id=p_event and r.team_number=p_team", "r.kind='message' and r.event_id=p_event"),validation,[55]],
   ['assignment roster manager gate removed',roster.replace('if not scouting_private.can_manage(p_event) then','if false then'),roster,[60,62]],

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { CAPABILITIES } from './model'
+import { prepareFootageRecord } from './provenance'
 
 const TITLES = { observation: 'Match observation', pit: 'Pit report', assignment: 'Assign a scout', message: 'Pit message', team: 'Event team' }
 const ACTIONS = { observation: 'Save observation', pit: 'Save pit report', assignment: 'Save assignment', message: 'Save message', team: 'Save team' }
@@ -7,7 +8,7 @@ const ACTIONS = { observation: 'Save observation', pit: 'Save pit report', assig
 function initialValue(kind, record, team, assignment, replyTo) {
   const base = { id: record?.id ?? crypto.randomUUID(), version: record?.version ?? 0, team_number: String(record?.team_number ?? team ?? ''), match_key: record?.match_key ?? assignment?.match_key ?? '', payload: record?.payload ?? {} }
   const defaults = {
-    observation: { answers: {}, notes: '', source: assignment?.payload?.video_url ? 'video' : 'live', request_delivery: false, video_url: assignment?.payload?.video_url ?? '', ...(assignment ? { assignment_id: assignment.id } : {}) },
+    observation: { answers: {}, notes: '', source: assignment?.payload?.video_url ? 'video' : 'live', request_delivery: false, video_url: assignment?.payload?.video_url ?? '', ...(assignment ? { assignment_id: assignment.id, source_scope: assignment.payload?.source_scope || 'current', ...(assignment.payload?.source_event ? { source_event: assignment.payload.source_event } : {}) } : {}) },
     pit: { capabilities: {}, notes: '', pit_location: '' },
     message: { text: '', status: 'open', request_delivery: false, ...(replyTo ? { reply_to: replyTo.id } : {}) },
     assignment: { assignee: '', status: 'assigned', instructions: '', video_url: assignment?.payload?.video_url ?? '' },
@@ -62,7 +63,7 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
     e.preventDefault(); setError(''); setSaving(true)
     try {
       await writeSequence.current
-      const row = { id: value.id, version: value.version, kind, team_number: Number(value.team_number), match_key: ['observation', 'assignment'].includes(kind) ? value.match_key.trim() : null, payload: value.payload }
+      let row = { id: value.id, version: value.version, kind, team_number: Number(value.team_number), match_key: ['observation', 'assignment'].includes(kind) ? value.match_key.trim() : null, payload: value.payload }
       if (!Number.isInteger(row.team_number) || row.team_number < 1 || row.team_number > 99999) throw new Error('Enter a team number from 1 to 99999.')
       if (row.match_key === '') throw new Error('Enter the match label, such as qm1.')
       if (kind === 'observation' && !Object.keys(value.payload.answers).length && !value.payload.notes.trim()) throw new Error('Record an answer or a note before saving.')
@@ -70,6 +71,7 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
       if (value.payload.video_url && !/^https:\/\//i.test(value.payload.video_url)) throw new Error('Use an HTTPS video link.')
       if (kind === 'message' && !value.payload.text.trim()) throw new Error('Write a short note about the robot.')
       if (kind === 'assignment' && !value.payload.assignee) throw new Error('Choose a scout.')
+      if (['observation', 'assignment'].includes(kind)) row = prepareFootageRecord(row)
       await onSave(row)
       // A confirmed local save stays saved even if draft cleanup fails. The
       // draft carries the same record id, so reopening cannot create a duplicate.
@@ -94,6 +96,10 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
             {CAPABILITIES.map(c => <Choice key={c.key} label={c.label} value={p.answers[c.key]} options={[["yes", "Yes"], ["no", "No"], ["did_not_see", "Did not see"], ["not_applicable", "Not applicable"]]} onChange={v => answer('answers', c.key, v)} />)}
             <label>Notes<textarea maxLength="4000" placeholder="What happened? Which part of the match?" value={p.notes} onChange={e => payload('notes', e.target.value)} /></label>
             <label className="sc-checkbox"><input type="checkbox" checked={p.request_delivery === true} onChange={e => payload('request_delivery', e.target.checked)} /><span>Request Discord delivery after sync</span></label>
+          </>}
+          {((kind === 'observation' && p.source === 'video') || (kind === 'assignment' && p.video_url)) && <>
+            <label>Footage event<select value={p.source_scope || 'current'} onChange={e => payload('source_scope', e.target.value)}><option value="current">This event</option><option value="external">A different event</option></select></label>
+            {p.source_scope === 'external' && <><label>Source event key<input required maxLength="44" placeholder="2026cabb" value={p.source_event || ''} onChange={e => payload('source_event', e.target.value)} /></label><p className="sc-help">Use the full source match key above, such as 2026cabb_qm1. This footage stays visible as prior-event context and is excluded from this event's reliability percentages.</p></>}
           </>}
           {kind === 'pit' && <>
             <p className="sc-help">Record what the team claims. Match observations verify these claims separately.</p>

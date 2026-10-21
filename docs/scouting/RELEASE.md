@@ -14,6 +14,8 @@ The code is on local review branch `codex/scouting-2026-evidence`. It has not be
 
 Use an isolated, authorized staging project before production. This repository does not maintain applied migration history. Confirm prerequisite objects through 0021 in the target database; the existence of SQL files is not proof that they ran.
 
+If an earlier local draft of 0022 was applied in staging, check for short/full match aliases before rerunning: the updated uniqueness indexes refuse duplicate logical observations and assignments. Review those records; do not delete evidence to force the migration through.
+
 Apply in order:
 
 1. `supabase/migrations/0022_scouting.sql`
@@ -48,6 +50,8 @@ Use a training event and real phones, not a live competition. Record the phone/b
 - Two tabs/devices: make corrections from the same base version; require explicit conflict review. Change accounts while a save is queued; only the original actor may synchronize it.
 - Lead: preview a shift with fewer available scouts than robots; inspect coverage gaps, breaks, existing work and double-booking. Save, refresh, and confirm assignments. Concurrent leads must coordinate; the planner is not a global reservation system.
 - Pit crew: reply to another scout's question without rewriting it; verify the original author, reply author, revisions and location source/time.
+- Recovery: export an event containing unsynced work and partial practice; inspect its account/event scope, immutable operation IDs and draft keys. Confirm a failed export shows an error while the original work remains intact.
+- Footage: record a different event with its full source key; verify its note remains visible and its results do not enter the current-event percentages. Confirm short/full current-event labels cannot duplicate a logical observation.
 - Strategy: compare three teams with missing data and disputed observations; cancel a preview, then apply a reviewed order. Check support counts and DNP votes separately.
 - Practice: complete interactive drills, retain a partial session through reload, export the workbook and perform mentor assessment against a fixed pre-annotated footage set. Certification remains in IDEA Classroom.
 

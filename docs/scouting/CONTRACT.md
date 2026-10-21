@@ -29,3 +29,17 @@ Techmen ranking: yes / (yes+no) with denominator and minimum 3 observed trials; 
 A reviewed schedule plan uses the existing assignment record contract. One local IndexedDB transaction enqueues the complete batch; server writes remain individually validated, auditable and conflict-aware. Workload balancing and break exclusions are proposed Techmen policies. Existing assignments/observations count as covered. Incomplete coverage is explicit. Concurrent leads must coordinate: the preview is not a global server reservation. Schedule inputs and source timestamps are device/account/event drafts.
 
 Pit location display retains source and time. Addresses older than 24 hours (or unknown/future timestamps) are flagged for verification, not erased. This freshness warning is a Techmen choice. A firsthand pit report takes precedence over a directory import.
+
+## Footage event boundaries and match identity
+
+Observations and assignments may carry `source_scope: current|external` and an external `source_event` such as `2026cabb`. External footage requires an HTTPS URL and a full match key starting with that source event. An observation tied to an assignment must preserve the assignment's source scope. Prior-event footage remains visible and exportable, with explicit labels, but is excluded from current-event reliability. Legacy video records without scope are labeled “event scope not recorded”; a lead must review their provenance before relying on them.
+
+For current-event evidence, known TBA qualification/playoff keys (`2026cabb_qm1`, `2026cabb_sf1m1`, `2026cabb_f1m1`) and their short labels name the same match. Case and surrounding spaces do not create new matches. Observation and assignment uniqueness indexes, reliability grouping and shift coverage use this identity. External keys retain their source prefix. Corrections replace earlier versions before source scope is evaluated.
+
+## Portable recovery and coverage
+
+The event JSON export is `techmen-scouting-v2`. It contains the event snapshot, revisions, delivery statuses, unsynchronized operations and a `techmen-scouting-device-v1` snapshot of all operations/receipts, drafts (including practice) and cached data for this member/event. A confirmed receipt remains in the export even when a later download fails. This is a portable review/recovery archive, not a bulk import command; operation IDs, actor bindings and immutable request bodies must survive any reviewed recovery. No login credentials are exported.
+
+Team imports enqueue a reviewed batch in one IndexedDB transaction. Server writes remain separate validated operations. No partial local import is presented as a complete save. Offline opening skips remote data queries and uses the existing account/event cache; an uncached event requests an initial download.
+
+Coverage separates current-event matches, prior-event footage, local observations, missing pit reports, outstanding assignments and per-capability trials/disputes. Three trials per capability is a coverage threshold, not a robot-quality score or scouting certification.

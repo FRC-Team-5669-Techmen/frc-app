@@ -88,8 +88,14 @@ export async function readScoutingPages(client, table, { eventId, columns = '*',
   }
 }
 
-export async function loadScoutingEvent({ store, client, memberId, eventId, isCurrent = () => true }) {
+export async function loadScoutingEvent({ store, client, memberId, eventId, isCurrent = () => true, online = () => globalThis.navigator?.onLine !== false }) {
   if (!await current(client, memberId, isCurrent)) return { records: [], delivery: [], revisions: [], members: [], event: null, error: noLongerCurrent(), offline: false, missing: false }
+  if (!online()) {
+    const cached = await store.getCache(memberId, eventId)
+    if (!isCurrent()) return { records: [], delivery: [], revisions: [], members: [], event: null, error: noLongerCurrent(), offline: false, missing: false }
+    return { records: [], delivery: [], revisions: [], members: [], event: null, ...(cached?.value ?? {}), cachedAt: cached?.cachedAt ?? null,
+      offline: true, missing: false, error: cached ? null : { code: 'OFFLINE_NOT_CACHED', message: 'This event has not been downloaded on this device. Connect once to prepare it for offline scouting.' } }
+  }
   try {
     const requests = await Promise.all([
       readScoutingPages(client, 'scouting_records', { eventId }),
