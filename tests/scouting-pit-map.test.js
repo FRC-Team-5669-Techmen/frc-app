@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { normalizePitMap, mapDirectory, mapIsStale, importedMapKey } from '../src/scouting/pit-map-model.js'
+import { normalizePitMap, mapDirectory, mapIsStale, importedMapKey, validMapKey } from '../src/scouting/pit-map-model.js'
 import { importScouting } from '../supabase/functions/scouting-import/import.js'
 import { nexusMap } from '../src/dev/fixture/nexus-map.js'
 
@@ -66,6 +66,16 @@ describe('published Nexus map geometry and navigation', () => {
   })
 })
 describe('read-only map adapter authorization and failure boundaries (mocked providers)', () => {
+  it.each(['demo1234','offseason-showcase_26'])('supports documented Nexus demo/offseason keys %s without widening roster imports', async event_key => {
+    expect(validMapKey(event_key)).toBe(true)
+    const f = adapter(); f.body = {...body,event_key}
+    expect((await importScouting(f)).http).toBe(200)
+    expect(f.fetchImpl.mock.calls[0][0]).toBe(`https://frc.nexus/api/v1/event/${event_key}/map`)
+    const roster = adapter(); roster.body = {...body,event_key,mode:undefined}
+    expect((await importScouting(roster)).http).toBe(400)
+    expect(roster.fetchImpl).not.toHaveBeenCalled()
+    for (const key of ['../../private','https://evil.test','a/b','event?key=x','event#map','a'.repeat(65)]) expect(validMapKey(key)).toBe(false)
+  })
   it('allows eligible students, uses a fixed URL and retains source time without a write', async () => {
     const f = adapter(), result = await importScouting(f)
     expect(result).toMatchObject({ http:200,event_key:'2026dal',fetched_at:at,source:'nexus',schema:'nexus-v1.8.0' })

@@ -1,8 +1,8 @@
-import { normalizePitMap } from '../../supabase/functions/scouting-import/pit-map.js'
+import { normalizePitMap, validNexusEventKey } from '../../supabase/functions/scouting-import/pit-map.js'
 import { pitLocation } from './model.js'
 export { normalizePitMap }
 export const PIT_MAP_DRAFT = 'nexus-pit-map-v1'
-export const validMapKey = key => /^20\d{2}[a-z0-9_]{2,60}$/.test(key)
+export const validMapKey = validNexusEventKey
 export function importedMapKey(records) {
   const keys = [...new Set(records.filter(r => r.kind === 'team' && r.payload?.source === 'tba').flatMap(r => {
     const match = /^https:\/\/www\.thebluealliance\.com\/event\/(20\d{2}[a-z0-9_]{2,60})$/.exec(r.payload.source_url ?? '')

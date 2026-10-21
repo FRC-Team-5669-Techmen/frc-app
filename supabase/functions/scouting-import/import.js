@@ -1,6 +1,6 @@
 // Read-only upstream adapter. Saving the preview uses scouting_save, under
 // the same author, conflict and audit rules as manual team entry.
-import { normalizePitMap } from './pit-map.js'
+import { normalizePitMap, validNexusEventKey } from './pit-map.js'
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const EVENT = /^20\d{2}[a-z0-9_]{2,60}$/
 const TEAM = /^frc([1-9]\d{0,4})$/
@@ -77,7 +77,7 @@ export function normalizeTeamPreview({ teams, matches = [], pits = {}, estimates
 }
 
 export async function importScouting({ userClient, body, env = {}, fetchImpl = fetch, now = () => new Date().toISOString() }) {
-  if (!UUID.test(body?.event_id ?? '') || !EVENT.test(body?.event_key ?? '')) return { http: 400, error: 'Choose a calendar event and a valid provider event key, such as 2026dal.' }
+  if (!UUID.test(body?.event_id ?? '') || !(body?.mode === 'pit_map' ? validNexusEventKey(body?.event_key) : EVENT.test(body?.event_key ?? ''))) return { http: 400, error: 'Choose a calendar event and a valid provider event key, such as 2026dal.' }
   if (body.mode != null && body.mode !== 'pit_map') return { http: 400, error: 'Unknown scouting import mode.' }
   const auth = await userClient.auth.getUser()
   if (auth.error || !auth.data?.user) return { http: 401, error: 'Sign in first.' }

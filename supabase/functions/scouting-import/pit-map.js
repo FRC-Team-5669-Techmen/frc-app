@@ -2,6 +2,9 @@
 // upstream are accepted. Reject a malformed map as a whole: hiding a wall
 // while keeping its pits would give unsafe navigation advice.
 const object = value => !!value && typeof value === 'object' && !Array.isArray(value)
+// Nexus documents demo and arbitrary offseason keys. Restrict them to one
+// bounded URL-path segment; this never broadens TBA import or upstream hosts.
+export const validNexusEventKey = value => typeof value === 'string' && /^[a-z0-9][a-z0-9_-]{1,63}$/i.test(value)
 const bounded = value => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1000000
 function vector(value, positive = false) {
   if (!object(value) || !bounded(value.x) || !bounded(value.y) || (positive && (value.x <= 0 || value.y <= 0))) throw new Error('Invalid map dimensions')

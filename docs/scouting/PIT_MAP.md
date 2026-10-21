@@ -15,3 +15,5 @@ Source: [Nexus API v1.8.0](https://frc.nexus/api/v1/docs), `GET /event/{eventKey
 | Freshness | Retrieval time remains visible; 24-hour warning is Techmen policy | Old/future/invalid timestamps warn; refreshing another key cannot relabel the old map |
 
 Limits: geometry is a simplified venue guide, not a scale plan, accessible-route guarantee or live position. Source team assignments and scout corrections remain distinct. External staging/provider responses and actual phone usability require later field checks. Synthetic fixtures are derived from the published example and clearly labeled.
+
+Provider-key correction: Nexus also documents `demo1234` and arbitrary offseason event keys. The map path accepts a single 2–64 character ASCII letter/digit/underscore/hyphen segment, excluding URLs, paths, query strings and fragments. This is a bounded Techmen subset of the provider's unspecified arbitrary-key space. The manager-only TBA roster path keeps its season-style validation. Unit and browser controls must demonstrate that a demo map works while the same key is refused for a TBA roster import.
