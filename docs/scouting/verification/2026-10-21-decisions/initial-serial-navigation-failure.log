@@ -1,0 +1,16 @@
+certifications: 118/118 passed (375 and 1440)
+feedback: 227/227 passed (375 and 1440)
+announce: 125/125 passed (375 and 1440)
+FAIL [375] permissions · schedule · mig none · student · spec ran to the end -- threw: page.goto: Timeout 30000ms exceeded. | Call log: | [2m  - navigating to "http://127.0.0.1:5401/schedule?__fx=persona:student,mig:none", waiting until "load"[22m
+permissions: 110/111 passed (375 and 1440)
+display-history: 226/226 passed (375 and 1440)
+my-hours: 84/84 passed (375 and 1440)
+FAIL [1440] dashboard-checkout · mig pre-0014 · student2 (positive control) · spec ran to the end -- threw: page.goto: Target page, context or browser has been closed | Call log: | [2m  - navigating to "http://127.0.0.1:5401/dashboard?__fx=persona:student2,mig:0001,0002,0003,0004,0005,0006,0007,0008,0009,0010,0011,0012,0013", waiting until "load"[22m
+dashboard-checkout: 22/23 passed (375 and 1440)
+browser.newContext: Target page, context or browser has been closed
+    at async newContext (/workspace/frc-app/tools/e2e/lib.mjs:144:19)
+    at async Harness.init (/workspace/frc-app/tools/e2e/features.mjs:175:34)
+    at async main (/workspace/frc-app/tools/e2e/features.mjs:423:9) {
+  log: []
+}
+features e2e: 912/914 passed (375 and 1440)

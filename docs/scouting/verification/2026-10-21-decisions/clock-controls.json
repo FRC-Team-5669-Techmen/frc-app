@@ -1,0 +1,9 @@
+{
+  "dateFrozen": true,
+  "businessTimeAdvancedMs": 120000,
+  "nativePerformanceElapsedMs": 153,
+  "nativeAnimationFrames": 3,
+  "nativeTimerNotFastForwarded": true,
+  "nativeButtonAction": true,
+  "frozenAnimationNegativeControl": "detected"
+}

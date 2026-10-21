@@ -24,10 +24,11 @@ describe('reviewed match brief', () => {
   it('prints escaped text without active scripts/assets and labels stale estimates', () => {
     const d = { ...draft, opening: '<script>alert(1)</script>' }
     const records = [{ id: 't', event_id: 'e', version: 1, kind: 'team', team_number: 5669, payload: { name: '<img src=x onerror=alert(1)>', epa: 10, epa_fetched_at: '2026-10-01' } }]
-    const brief = freezeBrief(briefInputs(d, records, context), '2026-10-21T16:00:00Z'), html = printableBrief(brief)
+    const brief = freezeBrief(briefInputs(d, records, { ...context, cachedAt: 1792594800000 }), '2026-10-21T16:00:00Z'), html = printableBrief(brief)
     expect(brief.teams[0].estimate.stale).toBe(true)
     expect(html).toContain('&lt;script&gt;'); expect(html).toContain('&lt;img')
     expect(new JSDOM(html).window.document.querySelectorAll('script,img,iframe,link,[src],[onerror]')).toHaveLength(0)
+    expect(html).toContain('Evidence cache: 2026-10-21T15:00:00.000Z'); expect(brief.context.cachedAt).toBe(1792594800000)
     expect(html).toContain('No decisive evidence'); expect(html).toContain('Pending event saves excluded: 2')
   })
   it('takes attribution from the record envelope even if payload text imitates metadata', () => {
