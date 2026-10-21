@@ -110,6 +110,25 @@ $fn$;
 revoke all on function public.scouting_can_access(), public.scouting_can_manage(uuid) from public, anon;
 grant execute on function public.scouting_can_access(), public.scouting_can_manage(uuid) to authenticated, service_role;
 
+-- Minimal eligible roster for assignment controls; no emails or private profile fields.
+create or replace function scouting_private.roster(p_event uuid)
+returns jsonb language plpgsql stable security definer set search_path = pg_catalog as $fn$
+begin
+ if not scouting_private.can_manage(p_event) then raise exception using errcode='42501',message='Only a scouting manager can load the assignment roster.'; end if;
+ return coalesce((select jsonb_agg(jsonb_build_object('id',p.id,'full_name',p.full_name,'nickname',p.nickname) order by p.full_name,p.id)
+   from public.profiles p where scouting_private.can_access(p.id)), '[]'::jsonb);
+end
+$fn$;
+revoke all on function scouting_private.roster(uuid) from public,anon;
+grant execute on function scouting_private.roster(uuid) to authenticated,service_role;
+-- Does: Read eligible scout names for this event's assignment controls.
+create or replace function public.scouting_roster(p_event uuid)
+returns jsonb language sql stable security invoker set search_path = pg_catalog as $fn$
+ select scouting_private.roster(p_event);
+$fn$;
+revoke all on function public.scouting_roster(uuid) from public,anon;
+grant execute on function public.scouting_roster(uuid) to authenticated,service_role;
+
 alter table public.scouting_records enable row level security;
 alter table public.scouting_revisions enable row level security;
 alter table public.scouting_operations enable row level security;
@@ -145,7 +164,7 @@ begin
   when 'pit' then array['capabilities','notes','pit_location']
   when 'observation' then array['answers','notes','source','video_url','assignment_id','request_delivery']
   when 'assignment' then array['assignee','status','instructions','video_url']
-  when 'message' then array['text','status','request_delivery']
+  when 'message' then array['text','status','request_delivery','reply_to']
   when 'pick_list' then array['entries','reason']
   when 'team' then array['name','pit_location','source','source_url','fetched_at','epa','epa_source','epa_fetched_at','official_results','pit_source','pit_fetched_at'] end;
  if exists(select 1 from jsonb_object_keys(p_payload) x where not x=any(allowed)) then raise exception using errcode='22023',message='Unknown scouting field.'; end if;
@@ -181,6 +200,12 @@ begin
   if not scouting_private.can_access(who) then raise exception using errcode='22023',message='Choose an eligible scout.'; end if;
  elsif p_kind='message' then
   if length(btrim(coalesce(p_payload->>'text',''))) not between 1 and 2000 or coalesce(p_payload->>'status','') not in ('open','resolved') then raise exception using errcode='22023',message='A pit message needs text and open or resolved status.'; end if;
+  if p_payload ? 'reply_to' then
+   begin who := (p_payload->>'reply_to')::uuid; exception when others then raise exception using errcode='22023',message='Choose a saved pit conversation to reply to.'; end;
+   if not exists(select 1 from public.scouting_records r where r.id=who and r.kind='message' and r.event_id=p_event and r.team_number=p_team and not (r.payload ? 'reply_to')) then
+    raise exception using errcode='22023',message='A reply must reference an original pit message for the same team and event.';
+   end if;
+  end if;
  elsif p_kind='pick_list' then
   if jsonb_typeof(p_payload->'entries') is distinct from 'array' or jsonb_array_length(p_payload->'entries')>200 then raise exception using errcode='22023',message='A pick list contains at most 200 teams.'; end if;
   for v in select * from jsonb_array_elements(p_payload->'entries') loop
@@ -241,6 +266,7 @@ begin
  if found then
   if oldrow.event_id<>p_event or oldrow.kind<>p_kind or oldrow.team_number is distinct from p_team or oldrow.match_key is distinct from p_match then raise exception using errcode='22023',message='Record identity cannot change; create a new record.'; end if;
   if oldrow.member_id<>uid and (not manager or p_kind in ('observation','pick_list')) then raise exception using errcode='42501',message='You can only correct your own observation or pick list.'; end if;
+  if p_kind='message' and oldrow.payload->>'reply_to' is distinct from p_payload->>'reply_to' then raise exception using errcode='22023',message='A reply cannot move to another conversation.'; end if;
   if oldrow.version<>p_expected_version then raise exception using errcode='40001',message='This record changed. Refresh and review both versions before saving.'; end if;
   update public.scouting_records set payload=p_payload,version=version+1,updated_at=clock_timestamp() where id=p_id returning * into saved;
  else

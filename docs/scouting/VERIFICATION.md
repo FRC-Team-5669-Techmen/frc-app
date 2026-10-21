@@ -44,3 +44,12 @@ React DOM checks use jsdom and fake-indexeddb, including a native-dialog stub. T
 - Additional product fidelity gaps and next actions are listed in RESUME.md. No real Discord notifications were sent.
 
 The portable checkpoint contains the implementation, Git history, source evidence, test instructions and private original handoff (outside the public source tree). It is a continuation artifact, not a production-ready release.
+
+
+## Continued build (October 21)
+
+The expanded implementation has passed 912 tests across 58 files, production build, connector check (173 called functions, 171 reachable, 23 tools, zero direct table writes), design audit, calendar regression, history preservation and the 13 independent arithmetic assertions. Subsequent targeted additions are being consolidated for the next final run.
+
+PostgreSQL WASM was rerun: 62 scouting checks, 15 permissive mutants, 563 total SQL checks across 23 files. The compiled standalone review also renders all five tabs, mentor planner and parent denial with zero script errors under DOM/IndexedDB emulation. No real-browser or real-device claims follow from that.
+
+The requested interface visual is a static rendering of the actual React DOM using a print renderer with compatibility CSS. It is not a Chromium screenshot and must not be cited as a layout acceptance test.

@@ -155,6 +155,29 @@ begin
  v:=pg_temp.save_as(a,gen_random_uuid(),e,'team','{"name":"Techmen","source":"tba","source_url":"https://www.thebluealliance.com/team/5669/2026","fetched_at":"2026-10-20T18:00:00Z","pit_location":"A12","pit_source":"nexus","pit_fetched_at":"2026-10-20T18:01:00Z","epa":52.3,"epa_source":"statbotics","epa_fetched_at":"2026-10-20T18:02:00Z","official_results":[{"match_key":"2026test_qm1","alliance":"red","alliance_score":102,"score_breakdown":{"totalPoints":102},"source":"tba","fetched_at":"2026-10-20T18:00:00Z"}]}');
  perform pg_temp.rec(52,'normalized TBA Statbotics Nexus import retains each provenance',v not like 'err:%' and v::jsonb->'payload'->>'pit_source'='nexus' and v::jsonb->'payload'->>'epa'='52.3' and v::jsonb->'payload'->'official_results'->0->>'alliance_score'='102',v);
 
+ -- Replies preserve authorship and cannot be cross-linked into unrelated evidence.
+ d:=gen_random_uuid();
+ v:=pg_temp.save_as(t,d,e,'message',jsonb_build_object('text','Repair confirmed in the pits','status','open','reply_to',mid));
+ perform pg_temp.rec(53,'another scout replies without rewriting original message',v not like 'err:%' and v::jsonb->>'member_id'=t::text and v::jsonb->'payload'->>'reply_to'=mid::text,v);
+ v:=pg_temp.save_as(t,gen_random_uuid(),other_e,'message',jsonb_build_object('text','Wrong event','status','open','reply_to',mid));
+ perform pg_temp.rec(54,'cross-event reply rejected',v like 'err:22023:%',v);
+ v:=pg_temp.save_as(t,gen_random_uuid(),e,'message',jsonb_build_object('text','Wrong team','status','open','reply_to',mid),0,gen_random_uuid(),4414);
+ perform pg_temp.rec(55,'cross-team reply rejected',v like 'err:22023:%',v);
+ v:=pg_temp.save_as(t,gen_random_uuid(),e,'message',jsonb_build_object('text','Wrong kind','status','open','reply_to',id));
+ perform pg_temp.rec(56,'reply cannot reference a pit capability record',v like 'err:22023:%',v);
+ v:=pg_temp.save_as(t,gen_random_uuid(),e,'message',jsonb_build_object('text','Nested reply','status','open','reply_to',d));
+ perform pg_temp.rec(57,'nested reply rejected to retain original thread',v like 'err:22023:%',v);
+ v:=pg_temp.save_as(t,d,e,'message',jsonb_build_object('text','Detached reply','status','open'),1);
+ perform pg_temp.rec(58,'reply cannot be detached on correction',v like 'err:22023:%',v);
+ v:=pg_temp.val_as(a,format('select public.scouting_roster(%L)',e));
+ perform pg_temp.rec(59,'manager roster includes active student and excludes inactive staff and parent',v not like 'err:%' and v::jsonb @> jsonb_build_array(jsonb_build_object('id',s)) and not v::jsonb @> jsonb_build_array(jsonb_build_object('id',m)) and not v::jsonb @> jsonb_build_array(jsonb_build_object('id',p)),v);
+ v:=pg_temp.val_as(s,format('select public.scouting_roster(%L)',other_e));
+ perform pg_temp.rec(60,'event lead cannot load unrelated event assignment roster',v like 'err:42501:%',v);
+ v:=pg_temp.val_as(s,format('select public.scouting_roster(%L)',e));
+ perform pg_temp.rec(61,'event lead can load own event assignment roster',v not like 'err:%' and jsonb_array_length(v::jsonb)>0,v);
+ v:=pg_temp.val_as(p,format('select public.scouting_roster(%L)',e));
+ perform pg_temp.rec(62,'parent cannot load assignment roster despite capability',v like 'err:42501:%',v);
+
 end
 $checks$;
 select n,check_name as "check",result,detail from t0022_results order by n;

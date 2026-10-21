@@ -31,6 +31,8 @@ function save(ctx) {
   if (a.p_kind === 'observation' && (!['live', 'video'].includes(p.source) || Object.values(p.answers ?? {}).some(v => !['yes', 'no', 'did_not_see', 'not_applicable'].includes(v)))) return fail('Choose an observation state explicitly.')
   if (a.p_kind === 'pit' && Object.values(p.capabilities ?? {}).some(v => !['yes', 'no', 'unknown'].includes(v))) return fail('Choose a pit claim state.')
   if (a.p_kind === 'message' && (!p.text?.trim() || !['open', 'resolved'].includes(p.status))) return fail('Enter a message and status.')
+  if (a.p_kind === 'message' && p.reply_to && !rows(db, 'scouting_records').some(r => r.id === p.reply_to && r.kind === 'message' && r.event_id === a.p_event && r.team_number === a.p_team && !r.payload.reply_to)) return fail('A reply must reference an original pit message for the same team and event.')
+  if (old && a.p_kind === 'message' && old.payload.reply_to !== p.reply_to) return fail('A reply cannot move to another conversation.')
   if (a.p_kind === 'pick_list') {
     if (!Array.isArray(p.entries) || new Set(p.entries.map(e => e.team)).size !== p.entries.length || p.entries.some(e => !Number.isInteger(e.team) || e.team <= 0 || ![1, 2, 3, 'dnp'].includes(e.tier) || !Number.isInteger(e.rank) || e.rank <= 0)) return fail('A pick list needs unique teams, tiers, and positive ranks.')
     if (!old && rows(db, 'scouting_records').some(r => r.event_id === a.p_event && r.member_id === user.id && r.kind === 'pick_list')) return fail('Your pick list already exists. Reload it before editing.', '40001')
@@ -54,7 +56,7 @@ export default {
   migration: '0022',
   creates: {
     tables: ['scouting_records', 'scouting_revisions', 'scouting_operations', 'scouting_delivery'],
-    rpcs: ['scouting_save', 'scouting_can_manage', 'scouting_can_access'],
+    rpcs: ['scouting_save', 'scouting_can_manage', 'scouting_can_access', 'scouting_roster'],
   },
   seed: ({ ids, now }) => {
     const at = stamp(now)
@@ -87,6 +89,7 @@ export default {
   rpcs: {
     scouting_can_access: ctx => ok(eligible(ctx)),
     scouting_can_manage: ctx => ok(manages(ctx, ctx.args.p_event)),
+    scouting_roster: ctx => manages(ctx, ctx.args.p_event) ? ok(rows(ctx.db, 'profiles').filter(p => p.approved && p.status === 'active' && (!rows(ctx.db, 'member_roles').some(r => r.member_id === p.id && r.role === 'parent') || rows(ctx.db, 'member_roles').some(r => r.member_id === p.id && ['admin','mentor','lead'].includes(r.role)))).map(p => ({ id:p.id, full_name:p.full_name, nickname:p.nickname }))) : fail('Scouting manager required.', '42501'),
     scouting_save: save,
   },
   functions: {

@@ -36,6 +36,6 @@ Prepared October 21, 2026 UTC. These changes are local reviewable source, not de
 - Real-device offline behavior and first-time scout timing belong to the overall app verification; mocked integration tests establish none of those claims.
 - Nexus map geometry and AI parsing are not implemented; manual/verified pit addresses are available. Role pings are deliberately absent pending a reviewed role mapping.
 - Upstream HTTP cache metadata is returned but a shared server cache is not implemented. Imported snapshots retain retrieval time; the user explicitly refreshes and reviews before saving.
-- Provider-match preview is available for assignment creation, but match schedules are not persisted as a separate automatic assignment engine.
+- Provider-match previews can be accepted into the reviewed shift planner. Schedule drafts persist locally per account/event; reviewed assignments sync through the existing versioned RPC. They are not a new shared server schedule table.
 - A `sending` reservation left by a crashed dispatcher remains visibly unresolved. It is intentionally not automatically resent; an operator must inspect Discord before deciding on a new explicit communication.
 - Connector scouting reads cap at 1000 records and mark `truncated`; the full app export is the path for larger event archives.

@@ -29,8 +29,14 @@ The intended branch is `codex/scouting-2026-evidence`, based on `9bb3a07321f6fc8
 - Full retained browser suite at375px and1440px, real iPhone and Android, actual interruption/resume behavior, measured beginner usability.
 - Original video frames/audio and a fixed annotated real-match corpus. Synthetic fixtures are explicitly not match evidence.
 - Deployed integration configuration and provider API behavior; no test Discord messages were sent.
-- Nexus map geometry, verified role ping mapping and an automatic schedule assignment engine remain fidelity gaps. Pit addresses, manually assigned Scout This work and explicit source snapshots are implemented.
+- Nexus map geometry and verified Discord role ping mapping remain fidelity gaps. Pit addresses and provenance, manual assignments, a reviewed automatic shift planner, and explicit source snapshots are implemented. The planner is a Techmen design, not a verified TideScout algorithm.
 - Official certification assessment remains in IDEA Classroom. The in-app practice path prepares that assessment and must not award a conflicting certification.
 - Review the source, complete the above checks, push the branch and open the PR once GitHub write access works.
 
 Do not discard the implemented source or rebuild from scratch. Treat verification gaps as unfinished checks, not permission to claim success.
+
+## Expanded local implementation
+
+The continued build adds a shift planner with atomic local batch saves, eligible-scout roster, pit conversation replies, comparison evidence cards, pit-address provenance, serialized pick-list drafts, 32 interactive practice decisions plus six written match scenarios, and a real-footage workbook. Practice is locally persisted; official certification remains in IDEA Classroom.
+
+`npm run scouting:preview:check` builds a self-contained review HTML from the actual components and exercises the compiled bundle in jsdom with IndexedDB emulation. The portable archive includes `REVIEW.html`; open it in Chrome/Edge to inspect the fictional student/mentor/parent views. It blocks network connections and has no live credentials. It is not the production app or evidence of real-browser acceptance.

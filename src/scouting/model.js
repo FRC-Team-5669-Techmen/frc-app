@@ -114,3 +114,17 @@ export function filterTeams(records, { minEpa = '', capability = '', now = Date.
     return !capability || pits.some(p => p.event_id === row.event_id && p.team_number === row.team_number && p.payload?.capabilities?.[capability] === 'yes')
   })
 }
+
+// Pit addresses remain useful when old, but their age must not disappear.
+// A first-hand pit report takes precedence over an imported directory address.
+export function pitLocation(records, team, now = Date.now()) {
+  const pit = newest(records.filter(r => r.kind === 'pit' && r.team_number === Number(team)), r => r.team_number)[0]
+  const imported = newest(records.filter(r => r.kind === 'team' && r.team_number === Number(team)), r => r.team_number)[0]
+  const firstHand = !!pit?.payload?.pit_location?.trim()
+  const value = firstHand ? pit.payload.pit_location : imported?.payload?.pit_location
+  if (!value?.trim()) return { value: null, source: 'Not recorded', at: null, stale: false }
+  const source = firstHand ? 'Scout pit report' : imported.payload.pit_source === 'nexus' ? 'Nexus' : imported.payload.pit_source === 'manual' || imported.payload.source === 'manual' ? 'Manual entry' : 'Source not recorded'
+  const at = firstHand ? pit.updated_at || pit.created_at : imported.payload.pit_fetched_at || imported.updated_at
+  const time = Date.parse(at)
+  return { value, source, at: Number.isFinite(time) ? at : null, stale: !Number.isFinite(time) || time > now || now - time > 24 * 60 * 60 * 1000 }
+}

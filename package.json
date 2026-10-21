@@ -25,7 +25,9 @@
     "test:checkin": "node tools/e2e/checkin.mjs",
     "test:features": "node tools/e2e/features.mjs",
     "connector:build": "node tools/connector/build.mjs",
-    "connector:check": "node tools/connector/build.mjs --check"
+    "connector:check": "node tools/connector/build.mjs --check",
+    "scouting:preview": "node tools/scouting-preview/build.mjs",
+    "scouting:preview:check": "npm run scouting:preview && node tools/scouting-preview/check.mjs"
   },
   "dependencies": {
     "@fontsource/chakra-petch": "^5.2.7",

@@ -172,3 +172,14 @@
   .sc-footer { flex-direction: column; align-items: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) { .sc-wrap *, .sc-dialog * { transition: none !important; } }
+
+.sc-planner { margin-top: 24px; border-top: 1px solid var(--border-strong); padding-top: 24px; }
+.sc-planner-fields { display: grid; gap: 16px; min-width: 0; border: 0; margin: 0; padding: 0; }
+.sc-planner textarea { min-height: 120px; font-family: var(--font-mono); }
+.sc-planner li { margin-block: 8px; overflow-wrap: anywhere; }
+
+.sc-comparison-evidence { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.sc-comparison-evidence dt { font-weight: 600; margin-top: 12px; }
+.sc-comparison-evidence dd { margin: 4px 0 14px; line-height: 1.5; }
+.sc-comparison-evidence .sc-card { min-width: 0; overflow-wrap: anywhere; }
+@media(max-width:800px) { .sc-comparison-evidence { grid-template-columns: 1fr; } }

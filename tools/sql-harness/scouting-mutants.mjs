@@ -15,7 +15,13 @@ export async function runScoutingMutants(db, exec) {
  const save=(await one("select pg_get_functiondef('scouting_private.save(uuid,uuid,text,integer,text,jsonb,integer,uuid,uuid)'::regprocedure) as definition")).definition
  const access=(await one("select pg_get_functiondef('scouting_private.can_access(uuid)'::regprocedure) as definition")).definition
  const index=(await one("select pg_get_indexdef('public.scouting_one_observation'::regclass) as definition")).definition
+ const validation=(await one("select pg_get_functiondef('scouting_private.validate(text,integer,text,jsonb,uuid)'::regprocedure) as definition")).definition
+ const roster=(await one("select pg_get_functiondef('scouting_private.roster(uuid)'::regprocedure) as definition")).definition
  const mutants=[
+  ['reply event boundary widened',validation.replace("r.kind='message' and r.event_id=p_event and r.team_number=p_team", "r.kind='message' and r.team_number=p_team"),validation,[54]],
+  ['reply team boundary widened',validation.replace("r.kind='message' and r.event_id=p_event and r.team_number=p_team", "r.kind='message' and r.event_id=p_event"),validation,[55]],
+  ['assignment roster manager gate removed',roster.replace('if not scouting_private.can_manage(p_event) then','if false then'),roster,[60,62]],
+  ['assignment roster eligibility widened',roster.replace('where scouting_private.can_access(p.id)','where true'),roster,[59]],
   ['record read widened','alter policy scouting_records_read on public.scouting_records using (true)','alter policy scouting_records_read on public.scouting_records using ((select public.scouting_can_access()))',[3]],
   ['revision read widened','alter policy scouting_revisions_read on public.scouting_revisions using (true)','alter policy scouting_revisions_read on public.scouting_revisions using ((select public.scouting_can_access()))',[47]],
   ['delivery read widened','alter policy scouting_delivery_read on public.scouting_delivery using (true)','alter policy scouting_delivery_read on public.scouting_delivery using ((select public.scouting_can_access()))',[49]],

@@ -4,12 +4,12 @@ import { CAPABILITIES } from './model'
 const TITLES = { observation: 'Match observation', pit: 'Pit report', assignment: 'Assign a scout', message: 'Pit message', team: 'Event team' }
 const ACTIONS = { observation: 'Save observation', pit: 'Save pit report', assignment: 'Save assignment', message: 'Save message', team: 'Save team' }
 
-function initialValue(kind, record, team, assignment) {
+function initialValue(kind, record, team, assignment, replyTo) {
   const base = { id: record?.id ?? crypto.randomUUID(), version: record?.version ?? 0, team_number: String(record?.team_number ?? team ?? ''), match_key: record?.match_key ?? assignment?.match_key ?? '', payload: record?.payload ?? {} }
   const defaults = {
     observation: { answers: {}, notes: '', source: assignment?.payload?.video_url ? 'video' : 'live', request_delivery: false, video_url: assignment?.payload?.video_url ?? '', ...(assignment ? { assignment_id: assignment.id } : {}) },
     pit: { capabilities: {}, notes: '', pit_location: '' },
-    message: { text: '', status: 'open', request_delivery: false },
+    message: { text: '', status: 'open', request_delivery: false, ...(replyTo ? { reply_to: replyTo.id } : {}) },
     assignment: { assignee: '', status: 'assigned', instructions: '', video_url: assignment?.payload?.video_url ?? '' },
     team: { name: '', pit_location: '', source: 'manual' },
   }
@@ -24,14 +24,14 @@ export function Choice({ label, value, options, onChange }) {
 
 // Native dialog provides focus containment, Escape handling and focus return.
 // Persist the form before claiming a draft is safe on this device.
-export default function RecordForm({ kind, record, team, assignment, members, store, uid, eventId, onSave, onClose }) {
+export default function RecordForm({ kind, record, team, assignment, replyTo, members, store, uid, eventId, onSave, onClose }) {
   const dialog = useRef(null)
-  const [value, setValue] = useState(() => initialValue(kind, record, team, assignment))
+  const [value, setValue] = useState(() => initialValue(kind, record, team, assignment, replyTo))
   const [ready, setReady] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [draftStatus, setDraftStatus] = useState('Opening draft…')
-  const draftKey = `form:${kind}:${record?.id ?? assignment?.id ?? team ?? 'new'}`
+  const draftKey = `form:${kind}:${record?.id ?? replyTo?.id ?? assignment?.id ?? team ?? 'new'}`
   const mounted = useRef(true)
   const writeSequence = useRef(Promise.resolve())
   useEffect(() => {
@@ -85,7 +85,7 @@ export default function RecordForm({ kind, record, team, assignment, members, st
       <div className="sc-dialog-body">
         {record && <p className="sc-help">Your correction creates a new version. Earlier versions stay in the history.</p>}
         {!ready ? <p>Restoring draft…</p> : <>
-          <div className="sc-fields"><label>Team number<input inputMode="numeric" type="number" min="1" max="99999" required readOnly={!!record} value={value.team_number} onChange={e => change({ ...value, team_number: e.target.value })} /></label>
+          <div className="sc-fields"><label>Team number<input inputMode="numeric" type="number" min="1" max="99999" required readOnly={!!record || !!replyTo} value={value.team_number} onChange={e => change({ ...value, team_number: e.target.value })} /></label>
           {['observation', 'assignment'].includes(kind) && <label>Match<input required readOnly={!!record} maxLength="100" placeholder="qm1" value={value.match_key} onChange={e => change({ ...value, match_key: e.target.value })} /></label>}</div>
           {kind === 'observation' && <>
             <label>Source<select value={p.source} onChange={e => payload('source', e.target.value)}><option value="live">Live match</option><option value="video">Match video</option></select></label>
@@ -102,6 +102,7 @@ export default function RecordForm({ kind, record, team, assignment, members, st
             <label>Notes<textarea maxLength="4000" value={p.notes} onChange={e => payload('notes', e.target.value)} /></label>
           </>}
           {kind === 'message' && <>
+            {replyTo && <blockquote className="sc-help">Replying to: {replyTo.payload.text}</blockquote>}
             <label>Robot note<textarea required maxLength="2000" placeholder="What should the pit crew ask this team?" value={p.text} onChange={e => payload('text', e.target.value)} /></label>
             <p className="sc-help">Describe robots and match events. Keep names and personal details out of scouting notes.</p>
             <label>Status<select value={p.status} onChange={e => payload('status', e.target.value)}><option value="open">Open</option><option value="resolved">Resolved</option></select></label>
@@ -115,8 +116,8 @@ export default function RecordForm({ kind, record, team, assignment, members, st
             <label>Status<select value={p.status} onChange={e => payload('status', e.target.value)}><option value="assigned">Assigned</option><option value="complete">Complete</option><option value="cancelled">Cancelled</option></select></label>
           </>}
           {kind === 'team' && <>
-            <label>Team name<input required maxLength="200" value={p.name} onChange={e => payload('name', e.target.value)} /></label>
-            <label>Pit location<input maxLength="200" value={p.pit_location} onChange={e => payload('pit_location', e.target.value)} /></label>
+            <label>Team name<input required maxLength="200" value={p.name} onChange={e => change({ ...value, payload: { ...p, name: e.target.value, source: 'manual', source_url: '', fetched_at: new Date().toISOString() } })} /></label>
+            <label>Pit location<input maxLength="200" value={p.pit_location} onChange={e => change({ ...value, payload: { ...p, pit_location: e.target.value, pit_source: 'manual', pit_fetched_at: new Date().toISOString() } })} /></label>
             <p className="sc-help">This is a manual team record. Imported official results and statistical estimates retain their own source labels.</p>
           </>}
         </>}

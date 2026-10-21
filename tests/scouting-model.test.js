@@ -78,3 +78,15 @@ describe('capability and EPA filtering', () => {
     expect(filterTeams(teams, { minEpa: 'bad', now })).toEqual([])
   })
 })
+
+
+describe('pit location provenance', () => {
+  it('prefers an attributed pit report and flags age without erasing the address', async () => {
+    const { pitLocation } = await import('../src/scouting/model.js')
+    const now=Date.parse('2026-10-21T18:00:00Z')
+    const records=[{kind:'team',team_number:5669,payload:{pit_location:'A12',pit_source:'nexus',pit_fetched_at:'2026-10-21T17:00:00Z'}},{kind:'pit',team_number:5669,updated_at:'2026-10-19T18:00:00Z',payload:{pit_location:'C04'}}]
+    expect(pitLocation(records,5669,now)).toMatchObject({value:'C04',source:'Scout pit report',stale:true})
+    expect(pitLocation(records.slice(0,1),5669,now)).toMatchObject({value:'A12',source:'Nexus',stale:false})
+    expect(pitLocation(records,9999,now)).toMatchObject({value:null,at:null,source:'Not recorded'})
+  })
+})

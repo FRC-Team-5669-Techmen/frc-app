@@ -8,6 +8,8 @@ import { loadScoutingEvent, saveScoutingRecord, syncScoutingQueue } from './scou
 import RecordForm from './scouting/RecordForm'
 import PickLists from './scouting/PickLists'
 import Training from './scouting/Training'
+import SchedulePlanner from './scouting/SchedulePlanner'
+import PitLocation from './scouting/PitLocation'
 import './ScoutingPage.css'
 
 const when = value => value ? new Date(value).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' }) : 'Unknown time'
@@ -63,6 +65,7 @@ function EventScouting({ uid, eventId, staff }) {
   const [store, setStore] = useState(null)
   const [data, setData] = useState({ records: [], delivery: [], revisions: [], members: [], event: null })
   const [queue, setQueue] = useState([])
+  const [scouts, setScouts] = useState([])
   const [loading, setLoading] = useState(true)
   const [manager, setManager] = useState(staff)
   const [tab, setTab] = useState('scout')
@@ -91,9 +94,23 @@ function EventScouting({ uid, eventId, staff }) {
     setData(snapshot); setLoading(false)
     setQueue(await selectedStore.listQueue(uid, eventId))
     if (snapshot.error) setError(errorText(snapshot.error)); else setError('')
+    if (!navigator.onLine) {
+      const savedScouts = await selectedStore.getDraft(uid, eventId, 'eligible-scouts')
+      if (alive.current && savedScouts) { setScouts(savedScouts.scouts ?? []); setManager(savedScouts.manager === true) }
+    }
     if (navigator.onLine && !snapshot.missing) {
       const result = await supabase.rpc('scouting_can_manage', { p_event: eventId })
       if (alive.current) setManager(!result.error && result.data === true)
+      if (!result.error && result.data === true) {
+        const roster = await supabase.rpc('scouting_roster', { p_event: eventId })
+        if (alive.current) {
+          if (roster.error || !Array.isArray(roster.data)) { setScouts([]); setError('Could not load eligible scouts. Refresh before assigning a shift.') }
+          else {
+            setScouts(roster.data)
+            await selectedStore.saveDraft(uid, eventId, 'eligible-scouts', { scouts: roster.data, manager: true })
+          }
+        }
+      } else if (alive.current) setScouts([])
     }
   }, [store, uid, eventId])
 
@@ -129,6 +146,17 @@ function EventScouting({ uid, eventId, staff }) {
       sync().catch(e => { if (alive.current) setError(errorText(e)) })
     }
     return operation
+  }
+  async function saveBatch(proposals) {
+    if (!store) throw new Error('Device storage is unavailable. Nothing was saved.')
+    const operations = await store.enqueueBatch(uid, eventId, proposals)
+    // Local commit is the success boundary. A failed refresh cannot make a
+    // successfully saved batch look unsaved and invite a duplicate submission.
+    if (alive.current) {
+      setQueue(previous => [...previous, ...operations]); setNotice(`${operations.length} assignments saved on this device.`)
+      if (navigator.onLine) sync().catch(e => { if (alive.current) setError(errorText(e)) })
+    }
+    return operations
   }
   const records = useMemo(() => {
     const byId = new Map((data.records ?? []).map(r => [r.id, r]))
@@ -176,6 +204,7 @@ function EventScouting({ uid, eventId, staff }) {
       <div className="sc-section-head"><div><h2>Robots and evidence</h2><p className="sc-help">Pit claims are separate from match verification.</p></div><label className="sc-search">Find a team<input type="search" value={teamQuery} onChange={e => setTeamQuery(e.target.value)} placeholder="Number or name" /></label></div>
       {!numbers.length && <div className="sc-empty"><h3>No teams yet</h3><p>Your lead can import the event roster or add a team below. You can also record a pit report by team number.</p><button onClick={() => openForm('pit')}>New pit report</button></div>}
       <div className="sc-team-grid">{numbers.filter(n => `${n} ${nameFor(n)}`.toLowerCase().includes(teamQuery.toLowerCase())).map(n => { const team = teamRows.find(r => r.team_number === n), pit = pitFor(n); return <article className="sc-card sc-team-card" key={n}><div className="sc-section-head"><div><span className="sc-team-number">{n}</span><h3>{nameFor(n) || 'Team'}</h3></div><span className="sc-chip">{pit?.payload.pit_location || team?.payload.pit_location || 'Pit unknown'}</span></div>
+        <PitLocation records={records} team={n} />
         <div className="sc-evidence-grid">{CAPABILITIES.map(c => { const r = reliability(serverRecords, n, c.key); return <div className="sc-evidence" key={c.key}><h4>{c.label}</h4><span className="sc-help">Pit claim: {words(pit?.payload.capabilities?.[c.key])}</span><div className="sc-ratio">{r.percent === null ? 'No evidence' : `${Math.round(r.percent)}%`}<span>{r.yes}/{r.denominator} observed matches</span></div><p className="sc-help">{r.sufficient ? '3+ observed matches' : 'Provisional: fewer than 3 observed matches'}{r.disputed ? ` · ${r.disputed} disputed` : ''}</p><details><summary>Count details</summary><p className="sc-help">{r.no} observed failures. Excluded scout responses: {r.didNotSee} did not see, {r.notApplicable} not applicable, {r.missing} unanswered. Disputed matches are excluded.</p></details></div> })}</div>
         {team?.payload.epa != null && <p className="sc-help">Statbotics estimate: {team.payload.epa} EPA · {when(team.payload.epa_fetched_at)}. Not an official robot score.</p>}
         <div className="sc-actions"><button disabled={!!pit && !canEdit(pit)} onClick={() => openForm('pit', pit ? { record: pit } : { team: n })}>Pit report</button><button onClick={() => openForm('observation', { team: n })}>Observe</button><button onClick={() => openForm('message', { team: n })}>Message</button>{manager && team && canEdit(team) && <button onClick={() => openForm('team', { record: team })}>Edit team</button>}</div>
@@ -185,13 +214,13 @@ function EventScouting({ uid, eventId, staff }) {
     </section>}
     {tab === 'messages' && <section className="sc-stack" role="tabpanel" id="sc-panel-messages" aria-labelledby="sc-tab-messages"><div className="sc-section-head"><div><h2>Stands to pits</h2><p className="sc-help">Ask a focused question. Keep the answer with the robot's history.</p></div><button className="sc-primary" onClick={() => openForm('message')}>New pit message</button></div>
       {!records.some(r => r.kind === 'message') && <div className="sc-empty"><h3>No pit messages</h3><p>Flag a robot issue or a question for someone in the pits.</p></div>}
-      {records.filter(r => r.kind === 'message').sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at))).map(row => { const delivery = (data.delivery ?? []).filter(d => d.record_id === row.id && d.record_version === row.version).at(-1); return <article className="sc-card" key={row.id}><div className="sc-section-head"><h3>{row.team_number} {nameFor(row.team_number)}</h3><span className="sc-chip">{row.payload.status}</span></div><p className="sc-note">{row.payload.text}</p><p className="sc-help">Pit: {pitFor(row.team_number)?.payload.pit_location || teamRows.find(t => t.team_number === row.team_number)?.payload.pit_location || 'Location not recorded'}</p><p className="sc-help">{memberName(row.member_id)} · {row.localStatus ? 'Saved on this device' : `Synced · ${when(row.updated_at)}`}</p><p className="sc-delivery">Discord: {row.localStatus ? 'Waiting for sync' : delivery?.status?.replaceAll('_', ' ') || (row.payload.request_delivery ? 'Delivery requested; status unavailable' : 'Not requested')}</p>{['uncertain', 'sending'].includes(delivery?.status) && <p className="sc-help">Receipt is unconfirmed. Check Discord before any further action; an automatic resend could duplicate the message.</p>}<div className="sc-actions">{canEdit(row) && <button onClick={() => openForm('message', { record: row })}>Edit or resolve</button>}{row.payload.request_delivery && (row.member_id === uid || manager) && ['failed', 'not_configured', 'queued'].includes(delivery?.status) && <button disabled={!online || busy} onClick={async () => { setBusy(true); try { const r = await supabase.functions.invoke('scouting-dispatch', { body: { record_id: row.id, version: row.version } }); if (r.error) throw r.error; setNotice(`Discord: ${r.data?.status || 'status pending'}`); await refresh() } catch (e) { setError(`Message remains saved. ${errorText(e)}`) } finally { setBusy(false) } }}>Retry Discord delivery</button>}</div><details><summary>Correction history</summary><RevisionList row={row} revisions={data.revisions ?? []} memberName={memberName} /></details></article> })}
+      {records.filter(r => r.kind === 'message').sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at))).map(row => { const delivery = (data.delivery ?? []).filter(d => d.record_id === row.id && d.record_version === row.version).at(-1); return <article className="sc-card" key={row.id}><div className="sc-section-head"><h3>{row.team_number} {nameFor(row.team_number)}</h3><span className="sc-chip">{row.payload.status}</span></div>{row.payload.reply_to && <p className="sc-help">Reply to: {records.find(r => r.id === row.payload.reply_to)?.payload.text || 'Original message not loaded'}</p>}<p className="sc-note">{row.payload.text}</p><PitLocation records={records} team={row.team_number} /><p className="sc-help">{memberName(row.member_id)} · {row.localStatus ? 'Saved on this device' : `Synced · ${when(row.updated_at)}`}</p><p className="sc-delivery">Discord: {row.localStatus ? 'Waiting for sync' : delivery?.status?.replaceAll('_', ' ') || (row.payload.request_delivery ? 'Delivery requested; status unavailable' : 'Not requested')}</p>{['uncertain', 'sending'].includes(delivery?.status) && <p className="sc-help">Receipt is unconfirmed. Check Discord before any further action; an automatic resend could duplicate the message.</p>}<div className="sc-actions">{!row.localStatus && <button onClick={() => openForm('message', { team: row.team_number, replyTo: row.payload.reply_to ? records.find(r => r.id === row.payload.reply_to) : row })}>Reply to pit conversation</button>}{canEdit(row) && <button onClick={() => openForm('message', { record: row })}>Edit or resolve</button>}{row.payload.request_delivery && (row.member_id === uid || manager) && ['failed', 'not_configured', 'queued'].includes(delivery?.status) && <button disabled={!online || busy} onClick={async () => { setBusy(true); try { const r = await supabase.functions.invoke('scouting-dispatch', { body: { record_id: row.id, version: row.version } }); if (r.error) throw r.error; setNotice(`Discord: ${r.data?.status || 'status pending'}`); await refresh() } catch (e) { setError(`Message remains saved. ${errorText(e)}`) } finally { setBusy(false) } }}>Retry Discord delivery</button>}</div><details><summary>Correction history</summary><RevisionList row={row} revisions={data.revisions ?? []} memberName={memberName} /></details></article> })}
     </section>}
     {tab === 'picks' && store && <div role="tabpanel" id="sc-panel-picks" aria-labelledby="sc-tab-picks"><PickLists records={records} uid={uid} eventId={eventId} store={store} onSave={save} nameFor={nameFor} /></div>}
     {tab === 'practice' && store && <div role="tabpanel" id="sc-panel-practice" aria-labelledby="sc-tab-practice"><Training key={`${uid}:${eventId}`} store={store} memberId={uid} eventId={eventId} /></div>}
-    {manager && <ManageEvent eventId={eventId} teamRows={teamRows} members={data.members ?? []} onForm={openForm} onSave={save} online={online} />}
+    {manager && <ManageEvent store={store} uid={uid} records={records} onSaveBatch={saveBatch} eventId={eventId} teamRows={teamRows} members={scouts} onForm={openForm} onSave={save} online={online} />}
     <footer className="sc-footer"><button onClick={exportData}>Export event data</button><span>Claims, observations, official results, estimates and rankings remain distinct.</span></footer>
-    {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} members={data.members ?? []} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : save} onClose={() => setForm(null)} />}
+    {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : save} onClose={() => setForm(null)} />}
   </main>
 }
 
@@ -210,7 +239,7 @@ function QueuePanel({ queue, store, uid, eventId, serverRecords, onChange, onSav
   return <details className="sc-card sc-queue" open={queue.some(x => ['conflict', 'failed'].includes(x.status))}><summary>Saved work on this device ({queue.length})</summary><p className="sc-help">Local saves are durable in this browser. Keep this browser's data until they sync.</p>{error && <p role="alert" className="sc-error">{error}</p>}{queue.map(op => { const current = serverRecords.find(r => r.id === op.record_id) ?? serverRecords.find(r => r.kind === op.args.p_kind && (['pit', 'team'].includes(r.kind) ? r.team_number === op.args.p_team : r.kind === 'pick_list' ? r.member_id === uid : r.kind === 'observation' ? r.member_id === uid && r.team_number === op.args.p_team && r.match_key === op.args.p_match : r.kind === 'assignment' ? r.team_number === op.args.p_team && r.match_key === op.args.p_match && r.payload?.assignee === op.args.p_payload?.assignee && r.payload?.status !== 'cancelled' : false)); return <div className="sc-queue-item" key={op.id}><div><strong>{op.args.p_kind.replaceAll('_', ' ')} {op.args.p_team ?? ''} {op.args.p_match ?? ''}</strong><p>{op.status === 'local' ? 'Saved locally' : op.status}{op.error?.message ? `: ${op.error.message}` : ''}</p></div><div className="sc-actions">{op.status === 'failed' && op.retryable && <button onClick={async () => { try { await store.retry(uid, eventId, op.id); await onChange(); await onSync() } catch (e) { setError(errorText(e)) } }}>Retry save</button>}{op.status === 'failed' && !op.retryable && op.error?.code !== '42501' && <button onClick={() => onRepair(op)}>Edit rejected proposal</button>}{op.status === 'conflict' && <button onClick={() => setReview(review === op.id ? null : op.id)}>Review conflict</button>}</div>{review === op.id && <div className="sc-conflict"><div><h4>Your saved proposal</h4><pre className="sc-json">{JSON.stringify(op.args.p_payload, null, 2)}</pre></div><div><h4>Current server version {current?.version ?? 'not downloaded'}</h4><pre className="sc-json">{JSON.stringify(current?.payload ?? {}, null, 2)}</pre></div><p className="sc-help">Refresh first to compare the latest server record. Keeping the server version removes your queued proposal. Applying yours creates a new version and is checked again for conflicts.</p><div className="sc-actions"><button onClick={async () => { try { await store.discard(uid, eventId, op.id); await onChange(); setReview(null) } catch (e) { setError(errorText(e)) } }}>Keep server version</button><button className="sc-primary" disabled={!current} onClick={async () => { try { await store.replaceConflict(uid, eventId, op.id, { id: current.id, version: current.version, kind: op.args.p_kind, team_number: op.args.p_team, match_key: op.args.p_match, payload: op.args.p_payload }); await onChange(); setReview(null); await onSync() } catch (e) { setError(errorText(e)) } }}>Apply my reviewed proposal</button></div></div>}</div> })}</details>
 }
 
-function ManageEvent({ eventId, teamRows, onForm, onSave, online }) {
+function ManageEvent({ store, uid, records, onSaveBatch, eventId, teamRows, members, onForm, onSave, online }) {
   const [key, setKey] = useState('')
   const [preview, setPreview] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -241,5 +270,6 @@ function ManageEvent({ eventId, teamRows, onForm, onSave, online }) {
   return <details className="sc-card sc-manage"><summary>Manage event</summary><p className="sc-help">Scouting leads and staff manage teams and assignments. Each import is previewed before it is saved.</p><div className="sc-actions"><button onClick={() => onForm('team')}>Add event team</button><button onClick={() => onForm('assignment')}>Assign a scout</button></div>
     <div className="sc-import"><label>TBA event key<input placeholder="2026cabb" value={key} onChange={e => setKey(e.target.value)} maxLength="80" /></label><button disabled={!key.trim() || busy || !online} onClick={importPreview}>{busy ? 'Working…' : 'Preview event import'}</button></div>{error && <p role="alert" className="sc-error">{error}</p>}{notice && <p role="status">{notice}</p>}
     {preview && <div className="sc-preview"><h3>Import preview</h3><p>{preview.teams.length} teams · {preview.matches?.length ?? 0} scheduled matches</p><ul>{(preview.sources ?? []).map((source, i) => <li key={i}>{source.source}: {source.status}{source.message ? ` · ${source.message}` : ''}</li>)}</ul><p className="sc-help">Imported data keeps its source and retrieval time. Official scores are alliance totals. Statistical estimates remain separate.</p><details><summary>Review teams</summary><ul>{preview.teams.map(t => <li key={t.team_number}>{t.team_number} {t.payload.name} · {t.payload.pit_location || 'Pit unknown'} · EPA {t.payload.epa ?? 'unavailable'}</li>)}</ul></details><div className="sc-actions"><button disabled={busy} onClick={() => setPreview(null)}>Cancel import</button><button className="sc-primary" disabled={busy || !preview.teams.length} onClick={applyImport}>Save imported teams</button></div>{!!preview.matches?.length && <details><summary>Schedule and footage</summary>{preview.matches.map(match => <div className="sc-schedule-match" key={match.key}><h4>{match.key}</h4><div className="sc-actions">{match.teams.map(team => <button key={team} onClick={() => onForm('assignment', { team, assignment: { match_key: match.key, payload: { video_url: match.videos?.[0] ?? '' } } })}>Assign {team}</button>)}</div></div>)}</details>}</div>}
+    {store && <SchedulePlanner store={store} uid={uid} eventId={eventId} members={members} records={records} imported={preview} onSaveBatch={onSaveBatch} />}
   </details>
 }

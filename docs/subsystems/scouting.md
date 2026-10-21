@@ -21,3 +21,11 @@ Open the app and event while online before entering the venue. Cached event reco
 Apply migration 0022 only after the existing chain through 0021. Until its schema is installed, the page shows a setup state through `schemaMissing`. Edge integrations deploy separately by hand. No database or production deployment was performed by this branch.
 
 Training prepares students for mentor assessment; it does not write IDEA certification rows or revive the retired skills system. Certification remains an IDEA Classroom action.
+
+## Planning, replies and practice
+
+Managers can paste a match schedule or accept the imported schedule, choose a match range and available scouts, mark breaks, preview workload/coverage, and save the shift. Existing work is kept and uncovered robots are visible. Local batch enqueue is atomic; server authorization/conflicts remain per record. `scouting_roster` provides only eligible names and is event-manager gated.
+
+Pit conversations support separately attributed replies with immutable original-thread links. Comparison voting has side-by-side evidence cards. Pit addresses display their source, time and freshness warning. Training now saves incomplete decisions, active mission, simulation answers and real-footage worksheets as drafts; completion does not award certification.
+
+The standalone review is built by `npm run scouting:preview` from the same route and fixture backend. `npm run scouting:preview:check` checks the compiled bundle under DOM emulation. Neither is a deployment or substitute for native browser/phone checks.

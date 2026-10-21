@@ -67,3 +67,8 @@ supabase/migrations/0022_scouting_rls_test.sql
 Do not expose `scouting_private` in Supabase API schema settings. Edge Functions deploy separately. Root verification/deployment documentation describes those steps.
 
 Historical authorship is intentionally kept when accounts merge. The merge rules know all new member columns, so the existing unknown-column safety gate continues to work. The retained original account owns its old personal observations/list; the newly merged destination cannot rewrite that historical record. Deleting a member/event that owns scouting history is restricted by foreign keys, preventing silent destruction. Use existing inactive status for members. These are deliberate evidence-preservation choices, not claimed TideScout behavior.
+
+
+## Continued-build verification, October 21, 2026
+
+The same retained PGlite command was rerun after adding immutable same-event/team pit replies and the manager-only eligible roster. Results: **62/62 scouting checks, 15/15 permissive mutants caught, and 563/563 checks across 23 SQL test files**. Both migration passes succeeded. New mutations widen reply event/team boundaries and roster authorization/eligibility; the unchanged tests catch each. Native PostgreSQL16, concurrent connections and live Supabase remain unverified.

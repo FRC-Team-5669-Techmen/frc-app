@@ -58,17 +58,31 @@ export class ScoutingStore {
   }
   close() { this.backend.close?.() }
   async enqueue(memberId, eventId, record) {
+    return (await this.enqueueBatch(memberId, eventId, [record]))[0]
+  }
+  // A reviewed assignment plan lands entirely or not at all on this device.
+  // Server writes remain individual, versioned operations with visible outcomes.
+  async enqueueBatch(memberId, eventId, records) {
     requireScope(memberId, eventId)
-    const id = this.uuid(), recordId = record.id || this.uuid(), scope = scopeKey(memberId, eventId)
-    const operation = { key: `${scope}:${id}`, id, member_id: memberId, event_id: eventId, record_id: recordId,
-      args: { p_actor: memberId, p_id: recordId, p_event: eventId, p_kind: record.kind, p_team: record.team_number ?? null,
-        p_match: record.match_key || null, p_payload: clone(record.payload), p_expected_version: record.version ?? 0, p_operation: id },
-      status: 'local', createdAt: this.now(), updatedAt: this.now(), attempts: 0, error: null, result: null }
+    if (!Array.isArray(records) || !records.length || records.length > 6000) throw error('INVALID_BATCH', 'Choose between 1 and 6000 records.')
+    const scope = scopeKey(memberId, eventId)
+    const operations = records.map(record => {
+      const id = this.uuid(), recordId = record.id || this.uuid()
+      return { key: `${scope}:${id}`, id, member_id: memberId, event_id: eventId, record_id: recordId,
+        args: { p_actor: memberId, p_id: recordId, p_event: eventId, p_kind: record.kind, p_team: record.team_number ?? null,
+          p_match: record.match_key || null, p_payload: clone(record.payload), p_expected_version: record.version ?? 0, p_operation: id },
+        status: 'local', createdAt: this.now(), updatedAt: this.now(), attempts: 0, error: null, result: null }
+    })
     return this.backend.transaction(['operations'], 'readwrite', async tx => {
-      const pending = (await tx.all('operations')).find(o => o.member_id === memberId && o.event_id === eventId && o.record_id === recordId && o.status !== 'synced')
-      if (pending) throw error('PENDING_RECORD', 'This record already has an unsynchronized edit. Resolve or synchronize it before saving another version.')
-      await tx.put('operations', operation)
-      return clone(operation)
+      const all = (await tx.all('operations')).filter(o => o.member_id === memberId && o.event_id === eventId && o.status !== 'synced')
+      for (const operation of operations) {
+        if (all.some(o => o.record_id === operation.record_id)) throw error('PENDING_RECORD', 'This record already has an unsynchronized edit. Resolve or synchronize it before saving another version.')
+        const a = operation.args
+        if (a.p_kind === 'assignment' && a.p_expected_version === 0 && all.some(o => o.args.p_kind === 'assignment' && o.args.p_match === a.p_match && o.args.p_payload.assignee === a.p_payload.assignee && o.args.p_payload.status !== 'cancelled')) throw error('PENDING_ASSIGNMENT', 'A queued assignment already uses this scout in this match. Sync and review the plan again.')
+        all.push(operation)
+      }
+      for (const operation of operations) await tx.put('operations', operation)
+      return clone(operations)
     })
   }
   async replaceConflict(memberId, eventId, operationId, record) {
