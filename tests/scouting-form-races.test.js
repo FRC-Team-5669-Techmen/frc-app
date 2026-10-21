@@ -19,7 +19,7 @@ async function mount(store, onSave = vi.fn(), onClose = vi.fn()) {
   await act(async () => root.render(React.createElement(RecordForm, { kind: 'observation', team: 5669, members: [], store, uid: 'member', eventId: 'event', onSave, onClose })))
   await settle()
 }
-beforeEach(() => { globalThis.React=React; globalThis.IS_REACT_ACT_ENVIRONMENT=true; HTMLDialogElement.prototype.showModal=function(){this.open=true}; host=document.createElement('div');document.body.append(host);root=createRoot(host) })
+beforeEach(() => { globalThis.React=React; globalThis.IS_REACT_ACT_ENVIRONMENT=true; HTMLDialogElement.prototype.showModal=function(){this.open=true}; HTMLDialogElement.prototype.close=function(){this.open=false}; host=document.createElement('div');document.body.append(host);root=createRoot(host) })
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.restoreAllMocks() })
 
 it('does not say the latest draft is saved when only an earlier write has finished', async () => {
@@ -87,4 +87,16 @@ it('refuses to replace an unread existing draft and restores it after an explici
   expect(host.querySelector('button[type="submit"]').disabled).toBe(false)
   expect(host.querySelector('button[aria-pressed="true"]').textContent).toBe('Did not see')
   expect(store.saveDraft).not.toHaveBeenCalled()
+})
+
+
+it('returns focus to the opening control when React removes the dialog', async () => {
+  const opener=document.createElement('button');opener.textContent='Open observation';document.body.prepend(opener);opener.focus()
+  const store={getDraft:async()=>null,saveDraft:vi.fn(),deleteDraft:vi.fn()}
+  try {
+    await mount(store);host.querySelector('textarea').focus()
+    expect(document.activeElement).toBe(host.querySelector('textarea'))
+    await act(async()=>root.unmount())
+    expect(document.activeElement).toBe(opener)
+  } finally {opener.remove()}
 })

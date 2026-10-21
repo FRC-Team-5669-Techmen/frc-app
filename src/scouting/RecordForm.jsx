@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CAPABILITIES } from './model'
 import { prepareFootageRecord } from './provenance'
 
@@ -23,7 +23,8 @@ export function Choice({ label, value, options, onChange }) {
   </div></fieldset>
 }
 
-// Native dialog provides focus containment, Escape handling and focus return.
+// Native dialog provides modal containment and Escape handling. React removal
+// needs explicit focus return; removing an open dialog skips native close().
 // Persist the form before claiming a draft is safe on this device.
 export default function RecordForm({ kind, record, team, assignment, replyTo, members, store, uid, eventId, onSave, onClose }) {
   const dialog = useRef(null)
@@ -38,9 +39,17 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
   const writeSequence = useRef(Promise.resolve())
   const draftSequence = useRef(0)
   const submitting = useRef(false)
+  useLayoutEffect(() => {
+    const node = dialog.current, opener = document.activeElement, surface = node?.closest('.sc-wrap')
+    node?.showModal()
+    return () => {
+      node?.close()
+      if (opener?.isConnected && !opener.matches(':disabled')) opener.focus()
+      else if (surface?.isConnected) surface.querySelector('button:not(:disabled)')?.focus()
+    }
+  }, [])
   useEffect(() => {
     mounted.current = true
-    if (!dialog.current?.open) dialog.current?.showModal()
     store.getDraft(uid, eventId, draftKey).then(saved => {
       if (!mounted.current) return
       if (saved) setValue(saved)
