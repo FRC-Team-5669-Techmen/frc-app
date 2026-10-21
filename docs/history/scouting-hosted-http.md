@@ -2,7 +2,7 @@
 title: "Hosted scouting acceptance reveals and fixes PostgREST conflict retries"
 date: 2026-10-21
 branches: [codex/scouting-2026-evidence]
-commits: []
+commits: [de19a66a23a892da2bfdeed789969de61116bf55]
 migrations: [supabase/migrations/0022_scouting.sql]
 subsystems: ["Scouting", "Fixture mode"]
 ---

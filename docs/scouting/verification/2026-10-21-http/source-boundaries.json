@@ -34,5 +34,6 @@
     "checkin": 51,
     "browser_scope": "1632 unaffected assertions from broad run plus 169 final scouting assertions; the full broad process remains failed"
   },
-  "limits": "Real hosted token issuance from SQL-provisioned fictional users; no OTP/OAuth, hosted browser, provider success, Discord delivery, physical phones or human competence claim. HTTP-harness completion accounting followed the retained network run."
+  "limits": "Real hosted token issuance from SQL-provisioned fictional users; no OTP/OAuth, hosted browser, provider success, Discord delivery, physical phones or human competence claim. HTTP-harness completion accounting followed the retained network run.",
+  "application_commit": "de19a66a23a892da2bfdeed789969de61116bf55"
 }

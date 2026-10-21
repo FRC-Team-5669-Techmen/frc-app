@@ -1,6 +1,6 @@
 # Resume Team 5669 scouting
 
-**Branch:** `codex/scouting-2026-evidence` · [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). **Current continuation:** the hosted HTTP conflict fix described in `HOSTED_HTTP.md`; `db990e5` is the previous application checkpoint. Preserve the restored history and newer main `0a11c52` (merged as `f3518cf`); do not rebuild from main. Read `SCOUTING_START_HERE.md`, `CLAUDE.md`, `docs/subsystems/scouting.md`, `VERIFICATION.md` and `RELEASE.md`. Private original inputs stay outside public commits.
+**Branch:** `codex/scouting-2026-evidence` · [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). **Current application:** `de19a66a23a892da2bfdeed789969de61116bf55`. Later documentation/evidence commits may follow. `HOSTED_HTTP.md` describes the hosted conflict fix; `db990e5` is the previous application checkpoint. Preserve the restored history and newer main `0a11c52` (merged as `f3518cf`); do not rebuild from main. Read `SCOUTING_START_HERE.md`, `CLAUDE.md`, `docs/subsystems/scouting.md`, `VERIFICATION.md` and `RELEASE.md`. Private original inputs stay outside public commits.
 
 ## Complete, verified and still blocked
 
@@ -18,7 +18,7 @@
 
 ## Current verification
 
-Hosted continuation: **1031 unit/DOM tests; 55 real hosted HTTP assertions; 72 hosted rollback SQL/RLS assertions; native PostgreSQL 17.11: 72 SQL checks, 17 mutants and seven races.** Current 0022 uses PT409 to avoid the PostgREST 14 retry loop. Conflict review now waits for refreshed server context; a controlled delay test fails the previous state ordering and passes the fix. Build/connector/design/calendar/history and portable-review checks pass. `HOSTED_HTTP.md` and `VERIFICATION.md` retain failures, runtime/source boundaries and cleanup. Final scouting: **169/169**; built PWA/local API: **33/33**; check-in: **51/51**. The broad run passed all 1632 assertions in 14 unaffected modules but failed one scouting review assertion (1800/1801); the focused rerun after the state-ordering fix restores all 1801 expected feature coverage across explicit source boundaries. Do not describe that broad run as passing.
+Hosted continuation: **1031 unit/DOM tests; 55 real hosted HTTP assertions; 72 hosted rollback SQL/RLS assertions; native PostgreSQL 17.11: 72 SQL checks, 17 mutants and seven races.** Current 0022 uses PT409 to avoid the PostgREST 14 retry loop. Conflict review now waits for refreshed server context; a controlled delay test fails the previous state ordering and passes the fix. Build/connector/design/calendar/history and portable-review checks pass. Independent [CI 146](https://github.com/FRC-Team-5669-Techmen/frc-app/actions/runs/39661703736) passed on application `de19a66`, confirming 1031 tests and all required CI gates. `HOSTED_HTTP.md` and `VERIFICATION.md` retain failures, runtime/source boundaries and cleanup. Final scouting: **169/169**; built PWA/local API: **33/33**; check-in: **51/51**. The broad run passed all 1632 assertions in 14 unaffected modules but failed one scouting review assertion (1800/1801); the focused rerun after the state-ordering fix restores all 1801 expected feature coverage across explicit source boundaries. Do not describe that broad run as passing.
 
 Previous decision-support checkpoint (historical):
 

@@ -35,7 +35,7 @@ node:internal/errors:985
   const err = new Error(message);
               ^
 
-Error: Command failed: curl --config - --silent --show-error --max-time 30 --write-out 
+Error: Command failed: curl --config - --silent --show-error --max-time 30 --write-out
 %{http_code}
 curl: (28) Operation timed out after 30002 milliseconds with 0 bytes received
 

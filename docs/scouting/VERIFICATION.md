@@ -9,6 +9,7 @@ Actual HTTPS to Supabase works in this workspace. The isolated branch reported P
 | Executed check | Current result and boundary |
 | --- | --- |
 | Unit/DOM | **1031/1031, 71 files**; both conflict codes remain held for review, and a controlled delayed refresh prevents review against stale evidence |
+| Independent CI | [CI 146](https://github.com/FRC-Team-5669-Techmen/frc-app/actions/runs/39661703736) passed on application `de19a66`; actual Node 22.23.3/npm 10.9.9 logs confirm 1031 tests and all build/design/calendar/history gates |
 | Hosted HTTP | **49/49 + 3/3 revoked + 3/3 restored**; real GoTrue password/refresh JWTs, PostgREST and deployed Edge boundaries. Six SQL-provisioned fictional accounts; no OTP/OAuth or real notifications |
 | Hosted SQL/RLS | **72/72**, current 0022 applied twice; final rollback proof after guarded fixture cleanup leaves zero users/profiles/records |
 | Native PostgreSQL 17.11 | **72/72**, **17/17** permissive mutants caught and **7/7** separate-connection races; disposable local cluster with platform stand-ins |

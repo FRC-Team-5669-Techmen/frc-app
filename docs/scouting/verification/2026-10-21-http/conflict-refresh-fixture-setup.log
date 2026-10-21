@@ -23,4 +23,3 @@ TypeError: Cannot read properties of undefined (reading 'id')
       Tests  1 failed | 28 skipped (29)
    Start at  19:20:53
    Duration  2.10s (transform 756ms, setup 0ms, import 1.09s, tests 218ms, environment 645ms)
-

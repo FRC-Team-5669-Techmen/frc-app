@@ -16,6 +16,8 @@ Baseline: `f8d605633298ecc545265f9176ef1982270234f3` on `codex/scouting-2026-evi
 
 The retained HTTP runs precede only the harness follow-up that explicitly records `completed` and failed assertions in result JSONs. The verified application, SQL and request expectations are unchanged by that reporting-only follow-up. Current harness source is syntax-checked; a fresh isolated run will also report its completion flag.
 
+Independent [CI 146](https://github.com/FRC-Team-5669-Techmen/frc-app/actions/runs/39661703736) passed on application `de19a66`; `ci.log` and `ci.json` retain actual Node 22/npm 10 test/build/design/calendar/history results. Terminal ANSI styling was removed without changing result text.
+
 ## Failures retained
 
 `hosted-http-initial.log` and `hosted-http-second.log` each reached 32 passing assertions and then timed out at stale correction. Their result files contain only assertions completed before the transport exception; they are **incomplete failed runs**, not successful 32-check suites. `conflict-probes.log` retains an initial schema-cache miss for the custom HTTP probe and the serialization-only probe timeout. Supabase documentation is retained in `serialization-retries.md`. PostgREST 14.18 endlessly retried application-raised 40001; exact isolated authenticator backends were terminated. The fixed 47-check run is also retained, but the later 49-check run covers all three conflict branches.
@@ -31,3 +33,5 @@ TBA/Nexus credentials were inaccessible; actual unauthenticated endpoints return
 `advisors.json` retains existing platform warnings and the intentional service-only operations-table no-policy INFO. Two temporary diagnostic functions had mutable-search-path warnings; they are absent from shipped source and disappeared with branch deletion. No shipped scouting function appeared in the SECURITY DEFINER warnings. These observations are not a security clearance.
 
 Physical iPhone/Android recovery, student timings, mentor/coach acceptance, independent real-footage annotations, current TideScout parity and production/real-notification authorization remain open. No main push, production mutation/deployment, email or real Discord send occurred.
+
+Terminal trailing whitespace and final blank lines were normalized without changing result text; the artifact hashes describe the normalized retained files.
