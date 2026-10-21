@@ -232,3 +232,18 @@ call_app:
   args:
     name: {type: string, describe: "The action name find_tool gave", required: true}
     args: {type: object, describe: "Its arguments, by the names find_tool gave", required: true}
+
+scouting_event:
+  describe: Read an event's scouting records, personal pick lists and message delivery states.
+  say: ["show scouting for Beach Blitz", "what do we know about these robots", "check our scouting notes"]
+  kind: read
+  args:
+    event: {type: string, describe: "The calendar event name or id", required: true, resolve: event}
+
+preview_scouting_import:
+  describe: Preview team details, match schedules and available estimates from scouting providers without saving changes.
+  say: ["preview the Beach Blitz team import", "fetch the scouting event data", "look up this event's teams and matches"]
+  kind: read
+  args:
+    event: {type: string, describe: "The calendar event name or id", required: true, resolve: event}
+    event_key: {type: string, describe: "The provider event key, such as 2026dal", required: true}

@@ -228,6 +228,13 @@ export function supabaseConnectorBackend() {
       if (error) return { data: null, error: dbError(error) }
       return { data, error: null }
     },
+    // Only these fixed scouting functions; credentials remain the user's JWT.
+    async scoutingImport(session, body) {
+      return userClient(session.accessToken).functions.invoke('scouting-import', { body })
+    },
+    async scoutingDispatch(session, body) {
+      return userClient(session.accessToken).functions.invoke('scouting-dispatch', { body })
+    },
     async select(session, spec) {
       let q = userClient(session.accessToken).from(spec.table).select(spec.columns.join(', '))
       for (const [k, v] of Object.entries(spec.eq ?? {})) q = v === null ? q.is(k, null) : q.eq(k, v)

@@ -63,6 +63,7 @@ const SignoutsPage       = lazy(() => import('./SignoutsPage'))
 const StandingPage       = lazy(() => import('./StandingPage'))
 const StandingTeamPage   = lazy(() => import('./StandingTeamPage'))
 const RostersPage        = lazy(() => import('./RostersPage'))
+const ScoutingPage       = lazy(() => import('./ScoutingPage'))
 const SurveyPage         = lazy(() => import('./SurveyPage'))
 const SurveysAdmin       = lazy(() => import('./SurveysAdmin'))
 // Event family hub (migrations 0005/0006). The family page is public, like
@@ -422,6 +423,8 @@ export default function App() {
           <Route path="/signouts"        element={<SignoutsPage session={session} hasRole={hasRole} />} />
           <Route path="/standing"        element={<StandingPage session={session} hasRole={hasRole} />} />
           <Route path="/standing/team"   element={<StandingTeamPage hasRole={hasRole} />} />
+          <Route path="/scouting"        element={<ScoutingPage session={session} hasRole={hasRole} />} />
+          <Route path="/scouting/:eventId" element={<ScoutingPage session={session} hasRole={hasRole} />} />
           <Route path="/rosters"         element={<RostersPage session={session} hasRole={hasRole} />} />
           <Route path="/rosters/:id"     element={<RostersPage session={session} hasRole={hasRole} />} />
           <Route path="/emergency-info"  element={<EmergencyInfoPage session={session} hasRole={hasRole} />} />

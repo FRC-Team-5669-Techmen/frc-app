@@ -130,3 +130,9 @@ admin_set_member_name:
 admin_merge_member:
   describe: Merge a duplicate account into the member real account, moving everything it has. Always asks first and lists what moves.
   level: confirm
+
+# The invoker delegates to a private audited writer. Explicit level is required
+# because the source scanner does not inspect private-schema function bodies.
+scouting_save:
+  describe: Save or correct a scouting claim, observation, assignment, pit message, team record or personal pick list, preserving its history.
+  level: confirm

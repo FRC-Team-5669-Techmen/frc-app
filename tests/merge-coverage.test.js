@@ -58,7 +58,8 @@ export function memberColumns(text) {
   return out
 }
 
-const rulesText = readFileSync(join(ROOT, 'supabase/migrations/0020_member_admin.sql'), 'utf8')
+// The last replacement is authoritative; a removed rule must not survive from an older migration.
+const rulesText = chainFiles().flatMap((f) => [...readFileSync(join(ROOT, f), 'utf8').matchAll(/create or replace function public\._merge_member_rules\(\)[\s\S]*?\$fn\$;/gi)]).at(-1)?.[0] ?? ''
 const RULES = new Map([...rulesText.matchAll(/\('([a-z_]+)', '([a-z_]+)', '(profile|roles|grants|drop|keep|refuse|move)'\)/g)].map((m) => [`${m[1]}.${m[2]}`, m[3]]))
 
 describe('the merge knows every member column the SQL files create', () => {

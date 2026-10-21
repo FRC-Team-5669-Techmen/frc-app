@@ -72,7 +72,7 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 
 ### Roadmap (planned modules)
 
-- Custom scouting app and system.
+- Field validation of the new scouting system on real iPhone and Android devices.
 - Calculators and reference tables for robot design.
 - Automated FRC learning environment so students can build skills and take on more responsibility during the season. Offseason priority.
 - Job and task list with assignment to members.
@@ -225,4 +225,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-20. See `docs/history/frc-connector-writes-0014.md`.
+Last reviewed: 2026-10-20. Scouting implementation checkpoint: `docs/history/scouting-2026-evidence.md`.

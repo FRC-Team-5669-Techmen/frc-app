@@ -19,6 +19,8 @@ functions:
   register_driver_document: "records an uploaded license or insurance photo, and the connector carries no file bytes"
 
 edge:
+  scouting-dispatch: "not a separate tool: scouting_save at confirm dispatches its committed delivery request with the same user JWT"
+  scouting-import: "not a separate generated tool: preview_scouting_import reads this Edge Function as the same account, then scouting_save applies reviewed records"
   calendar-feed: "a calendar feed URL a phone calendar subscribes to; not an action"
   parent-response: "the public parent questionnaire, answered by a parent with the link; not an action"
   event-family: "a family's own event page by link, plus the staff mail queue drain; next connector ledger as a hand entry"

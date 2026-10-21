@@ -269,8 +269,21 @@ export async function write(ctx, planIn, opts = {}) {
     }
   }
   if (soft) return { status: 'refused', level, code: soft.reason, message: `${soft.message} Nothing it was asked for happened.` }
+  // This runs only after connector_call committed. A preview returns above.
+  // Repeated requests may check a reserved delivery, but the server's atomic
+  // reservation never sends a delivered/uncertain/sending version twice.
+  let delivery
+  if (plan.fn === 'scouting_save' && data.result?.payload?.request_delivery === true
+      && ['message', 'observation'].includes(data.result?.kind)) {
+    try {
+      const sent = await ctx.backend.scoutingDispatch?.(ctx.session, { record_id: data.result.id, version: data.result.version })
+      delivery = sent && !sent.error ? sent.data : { status: 'queued', message: 'The note is saved. Delivery could not be checked.' }
+    } catch {
+      delivery = { status: 'queued', message: 'The note is saved. Delivery could not be checked.' }
+    }
+  }
   return {
-    status: data.repeated ? 'repeated' : 'done', level, result: data.result, rows: data.rows ?? [], audit_id: data.audit_id, undo_available: undoAvailable,
+    status: data.repeated ? 'repeated' : 'done', level, result: data.result, ...(delivery ? { delivery } : {}), rows: data.rows ?? [], audit_id: data.audit_id, undo_available: undoAvailable,
     message: data.repeated
       ? 'This exact request was already done, so nothing was written again. Pass again: true only if he wants it done a second time.'
       : 'Done.',
