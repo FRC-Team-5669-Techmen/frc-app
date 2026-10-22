@@ -1,3 +1,5 @@
+> **Later continuation:** [PREVIEW.md](PREVIEW.md) records a new intentionally retained isolated app-preview backend and working Vercel CLI access. The deleted branches and connector blocker below describe the earlier runs, not the new preview.
+
 # Hosted HTTP continuation — October 21, 2026
 
 The workspace network was corrected. GitHub/npm returned HTTP 200, the production Auth health URL returned HTTP 401 without an API key (read-only reachability), and actual requests to a new isolated data-free branch succeeded. The previous CONNECT 403 is historical evidence, not the current blocker.

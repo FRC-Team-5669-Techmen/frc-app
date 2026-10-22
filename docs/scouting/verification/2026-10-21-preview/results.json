@@ -1,0 +1,205 @@
+{
+  "project_ref": "ntpaoznneqptenmgkcej",
+  "event": "91af1ed6-10eb-49af-b9de-0b91997aec0c",
+  "verified_at": "2026-10-21T23:56:02.201Z",
+  "completed": true,
+  "scope": "Real hosted GoTrue password/refresh JWTs; SQL-provisioned fictional accounts, no OTP/OAuth or Discord delivery",
+  "results": [
+    {
+      "label": "real hosted password grant for fictional admin",
+      "ok": true
+    },
+    {
+      "label": "GoTrue verifies admin token",
+      "ok": true
+    },
+    {
+      "label": "real hosted password grant for fictional student",
+      "ok": true
+    },
+    {
+      "label": "GoTrue verifies student token",
+      "ok": true
+    },
+    {
+      "label": "real hosted password grant for fictional other",
+      "ok": true
+    },
+    {
+      "label": "GoTrue verifies other token",
+      "ok": true
+    },
+    {
+      "label": "real hosted password grant for fictional parent",
+      "ok": true
+    },
+    {
+      "label": "GoTrue verifies parent token",
+      "ok": true
+    },
+    {
+      "label": "real hosted password grant for fictional parent_staff",
+      "ok": true
+    },
+    {
+      "label": "GoTrue verifies parent_staff token",
+      "ok": true
+    },
+    {
+      "label": "real hosted password grant for fictional unapproved",
+      "ok": true
+    },
+    {
+      "label": "GoTrue verifies unapproved token",
+      "ok": true
+    },
+    {
+      "label": "real hosted session refresh",
+      "ok": true
+    },
+    {
+      "label": "admin access is true",
+      "ok": true
+    },
+    {
+      "label": "student access is true",
+      "ok": true
+    },
+    {
+      "label": "parent access is false",
+      "ok": true
+    },
+    {
+      "label": "parent_staff access is true",
+      "ok": true
+    },
+    {
+      "label": "unapproved access is false",
+      "ok": true
+    },
+    {
+      "label": "admin manager boundary is true",
+      "ok": true
+    },
+    {
+      "label": "student manager boundary is false",
+      "ok": true
+    },
+    {
+      "label": "parent_staff manager boundary is true",
+      "ok": true
+    },
+    {
+      "label": "parent manager boundary is false",
+      "ok": true
+    },
+    {
+      "label": "student observation saved through hosted JWT/PostgREST",
+      "ok": true
+    },
+    {
+      "label": "same operation returns original hosted receipt",
+      "ok": true
+    },
+    {
+      "label": "another eligible scout reads confirmed distinct unknown and no",
+      "ok": true
+    },
+    {
+      "label": "parent cannot read scouting evidence",
+      "ok": true
+    },
+    {
+      "label": "parent cannot save scouting evidence",
+      "ok": true
+    },
+    {
+      "label": "unapproved cannot read scouting evidence",
+      "ok": true
+    },
+    {
+      "label": "unapproved cannot save scouting evidence",
+      "ok": true
+    },
+    {
+      "label": "hosted JWT actor cannot be spoofed",
+      "ok": true
+    },
+    {
+      "label": "another scout cannot correct author observation",
+      "ok": true
+    },
+    {
+      "label": "author correction creates version two",
+      "ok": true
+    },
+    {
+      "label": "stale hosted correction rejects explicit conflict",
+      "ok": true
+    },
+    {
+      "label": "new ID cannot duplicate the logical hosted observation",
+      "ok": true
+    },
+    {
+      "label": "missing correction target returns explicit hosted conflict",
+      "ok": true
+    },
+    {
+      "label": "hosted revision history retains two attributed versions",
+      "ok": true
+    },
+    {
+      "label": "direct hosted table write refused",
+      "ok": true
+    },
+    {
+      "label": "private receipt table cannot be read directly",
+      "ok": true
+    },
+    {
+      "label": "private scouting schema is outside exposed Data API schemas",
+      "ok": true
+    },
+    {
+      "label": "anonymous caller cannot execute scouting RPC",
+      "ok": true
+    },
+    {
+      "label": "modern publishable key supports authenticated Data API",
+      "ok": true
+    },
+    {
+      "label": "manager can read eligible scouting roster",
+      "ok": true
+    },
+    {
+      "label": "ordinary scout cannot read manager roster",
+      "ok": true
+    },
+    {
+      "label": "scouting-import gateway rejects invalid JWT",
+      "ok": true
+    },
+    {
+      "label": "scouting-dispatch gateway rejects invalid JWT",
+      "ok": true
+    },
+    {
+      "label": "deployed import accepts real manager JWT",
+      "ok": true
+    },
+    {
+      "label": "deployed import denies ordinary scout roster access",
+      "ok": true
+    },
+    {
+      "label": "eligible scout reaches deployed map configuration boundary",
+      "ok": true
+    },
+    {
+      "label": "deployed dispatch rejects missing record without sending",
+      "ok": true
+    }
+  ]
+}

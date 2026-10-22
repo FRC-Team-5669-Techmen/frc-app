@@ -4,19 +4,15 @@ This is the human checklist. The AI keeps responsibility for programming, databa
 
 The current application is a review candidate, not an installed production release. Do not start these phone exercises on the normal team site yet. First the AI must give you a working, separate test link, the correct test event, sign-in instructions and a build identifier. A fictional offline review file is useful for looking around, but cannot establish hosted login or synchronization.
 
-## 1. Do now: authorize the existing Vercel connection for the team
+## 1. Vercel access is resolved — no more connection-setting clicks
 
-**Network access now works.** The AI reached Supabase and completed 55 real hosted Auth/API/function assertions in a separate fictional test branch. That temporary branch was cleaned and deleted. Do not change your phone Wi-Fi or repeat the previous workspace-network instructions.
+The AI used Vercel's official device authorization, which you completed. The official CLI now accesses the existing frc-app project correctly. You do not need to reconnect the plugin or change the existing production database setting.
 
-**What is blocked now:** the connected Vercel app can list `frc-app`, but both connected accounts receive a team-scope 403 when inspecting the project in **mrpina-s-projects**. The AI cannot safely configure an isolated preview or give you a tested phone link yet. A normal preview pointing at production is not the test system.
+The new [isolated preview](https://frc-mabl9w5sn-mrpina-s-projects.vercel.app) is deployed and its compiled database address is verified. It has its own fictional test backend. Earlier preview links may still use production; use only this new link. Vercel Authentication remains enabled, so Vercel may ask you to sign in before displaying the app.
 
-1. Open the existing Vercel app connection settings in ChatGPT. Use the intended account that can access the **mrpina-s-projects** team and **frc-app** project.
-2. If the connection offers team authorization or account-scope approval, authorize that existing team. Keep passwords, login codes and tokens private; do not paste them into chat. Signing into the Vercel website alone does not establish access for this connection.
-3. Tell the AI that team access is available. The AI must recheck project inspection, create a new isolated test backend, configure the separate app preview and verify the link before assigning phone drills.
+Normal school Google/email sign-in inside the app still needs configuration verification. The AI's hosted browser check used a pre-issued fictional session; it does not establish human sign-in. Wait for the AI to supply verified sign-in instructions and the test event before doing phone exercises. No further Vercel setup action is needed from you right now.
 
-The service error recommends a team-authorization action, but no tool to generate that authorization link is available in this session. Exact settings-screen button names are not verified. If the connection cannot expose team authorization, report that result; do not create a second project or broaden production access as a workaround.
-
-**Done when:** the AI can inspect this project through the existing connection and supplies a verified separate test link. Network and Vercel access do not authorize production changes or Discord sends.
+[PREVIEW.md](PREVIEW.md) records the build, backend, verification boundaries and eventual cleanup. The test backend is retained and may incur usage charges. No production release or real Discord notification has occurred.
 
 ## 2. Let the AI prepare the test system
 

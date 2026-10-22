@@ -1,0 +1,21 @@
+{
+  "application_commit": "de19a66a23a892da2bfdeed789969de61116bf55",
+  "source_commit": "951fe6cb01cef170e5b39afe824348ef4fbe3b45",
+  "deployment": "dpl_8kNvU34ShqsT9xHnpyAqB7wKLik5",
+  "url": "https://frc-mabl9w5sn-mrpina-s-projects.vercel.app",
+  "project_ref": "ntpaoznneqptenmgkcej",
+  "branch_id": "0a77cdef-37f5-421a-ae4c-f75b83c25476",
+  "target": "preview",
+  "database_checks": 72,
+  "hosted_api_checks": 49,
+  "jobs": 0,
+  "queued_http": 0,
+  "delivery_rows": 0,
+  "compiled_database_url_verified": true,
+  "production_database_url_absent_from_entry_bundle": true,
+  "hashes": {
+    "hosted_index": "b1b0d063a20f148c745e415d19c42005fbef809bc16a97284682ef88d5926ffd",
+    "hosted_entry_bundle": "6725e816b6e8a4adee9fbb3409f15343a0d5662e3432e9ad3bdbfd20c67d9884",
+    "migration": "c0985d286ce6ba7f40907e86afd7cb01cd1a934b146c3be79e773895eaf24205"
+  }
+}

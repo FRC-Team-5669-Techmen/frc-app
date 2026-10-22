@@ -1,5 +1,7 @@
 # Resume Team 5669 scouting
 
+**Latest deployment update (October 21 Pacific):** [PREVIEW.md](PREVIEW.md) supersedes the Vercel-access blocker below. Official CLI access now works and a verified isolated Vercel preview is Ready: https://frc-mabl9w5sn-mrpina-s-projects.vercel.app . New retained test backend: `ntpaoznneqptenmgkcej`. Current proof: 72 rollback SQL checks, 49 hosted API checks, actual compiled database URL inspection and hosted Chromium event/observation loading. Normal school Google/email sign-in remains unverified; do not assign phone drills yet. Production and main remain unchanged. The separate MCP connection is registered but not authenticated.
+
 **Branch:** `codex/scouting-2026-evidence` · [draft PR #4](https://github.com/FRC-Team-5669-Techmen/frc-app/pull/4). **Current application:** `de19a66a23a892da2bfdeed789969de61116bf55`. Later documentation/evidence commits may follow. `HOSTED_HTTP.md` describes the hosted conflict fix; `db990e5` is the previous application checkpoint. Preserve the restored history and newer main `0a11c52` (merged as `f3518cf`); do not rebuild from main. Read `SCOUTING_START_HERE.md`, `CLAUDE.md`, `docs/subsystems/scouting.md`, `VERIFICATION.md` and `RELEASE.md`. Private original inputs stay outside public commits.
 
 ## Complete, verified and still blocked
