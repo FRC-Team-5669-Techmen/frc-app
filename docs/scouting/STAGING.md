@@ -1,0 +1,39 @@
+> **Later continuation:** [PREVIEW.md](PREVIEW.md) records a new intentionally retained isolated app-preview backend and working Vercel CLI access. The deleted branches and connector blocker below describe the earlier runs, not the new preview.
+
+# Hosted HTTP continuation — October 21, 2026
+
+The workspace network was corrected. GitHub/npm returned HTTP 200, the production Auth health URL returned HTTP 401 without an API key (read-only reachability), and actual requests to a new isolated data-free branch succeeded. The previous CONNECT 403 is historical evidence, not the current blocker.
+
+Branch `scouting-2026-http-review` (`cctevrqiuqdiswkgghwo`) copied schema without production data. It reported PostgreSQL **17.11** and PostgREST **14.18**. Prerequisite tables and zero users/profiles/jobs were checked before applying 0022. Both source Edge directories deployed ACTIVE with `verify_jwt=true`.
+
+Real hosted password grants and refresh tokens worked for six SQL-provisioned fictional `.invalid` accounts. The first two HTTP runs passed 32 assertions each, then stale corrections timed out at 30 seconds. An isolated serialization probe also timed out. Supabase documentation confirmed the PostgREST 14 infinite-retry bug for application-raised `40001`. The exact looping test backends were identified and terminated only in this branch. Source now uses `PT409` for all three domain conflicts, while the client preserves compatibility with older `40001` responses.
+
+The fixed suite passed **49/49**, including all three HTTP 409 cases. A separate **3/3 revoked + 3/3 restored** sequence reused the same JWT to verify live authorization rather than token metadata. Actual deployed import accepts a manager JWT, denies ordinary-scout roster access and reaches the ordinary-scout map configuration boundary. Dispatch rejects invalid JWTs and a missing-record request without any send. **No OTP email, school Google OAuth, provider success, bot/channel setup or real Discord delivery was tested.** `HOSTED_HTTP.md` retains exact reproduction steps and safety guards.
+
+TBA/Nexus endpoints returned 401 without keys; the isolated function reports missing configuration. Public Statbotics returned HTTP 500 with `[]` for `2026dal` and `2025casf`. These are reachable failures, not successful provider acceptance. Both connected Vercel accounts return a scoped 403 for the existing project/team, blocking a safely isolated shareable app preview. No app deployment was attempted.
+
+Current 0022 applied twice after the correction. The final **72/72** hosted rollback SQL/RLS proof passed. Before cleanup, six fictional users/profiles, five fictional records, nine revisions/operations, and **zero delivery rows/jobs/queued HTTP requests** were recorded. Guarded cleanup removed only those identified fixtures; the rollback proof then confirmed zero users/profiles/records, and a final catalog confirmed all eight counters zero. The test branch was **deleted successfully**; branch listing shows only default main. Read-only production postcheck still found PostgreSQL 17.6 and **zero scouting tables/functions**.
+
+Advisors retained the intentional no-policy INFO for the service-only operations table and existing platform SECURITY DEFINER warnings. Two temporary diagnostic functions also had mutable-search-path warnings; neither is part of the shipped source, and both disappeared with the deleted branch. No shipped scouting function appeared in the SECURITY DEFINER warnings. The warning record is retained, not treated as security clearance.
+
+No production mutation/deployment, main push, real notification or unattended test compute occurred. The retained `verification/2026-10-21-http/` record separates hosted HTTP, hosted SQL, native PostgreSQL, local built-PWA and fixture-browser evidence.
+
+---
+
+# Earlier hosted SQL-only proof — October 21, 2026 (historical)
+
+An isolated Supabase branch, `scouting-2026-verification` (`ghznodbtpvxlsyevmkla`), was created under the existing frc-app project without production data. PostgreSQL reported **17.11**. The initial catalog briefly appeared empty before the parent schema finished copying. An empty-schema bootstrap guard then refused to run, preserving the copied schema. No replacement foundation or Auth/storage/network stand-ins were installed.
+
+Migration **0022 applied twice**, unchanged from source. The retained `tools/sql-harness/scouting-hosted-proof.mjs --emit` generates a rollback-only wrapper around the existing 72-check scouting suite. It requires an empty staging database, inserts five fictional `.invalid` SQL test identities/profiles and a temporary connector-settings singleton, and refuses any result other than 72 PASS rows. All users, role changes, records and connector changes roll back. Its final hosted query confirmed **72 checks passed**, with **zero users, profiles, scouting records, operations and delivery rows** remaining. Cron jobs and queued HTTP requests were also zero.
+
+The initial fixture preparation exposed two empty-branch details: an Auth-schema trigger had not copied, so inserting a SQL test user did not automatically create its profile; and the connector singleton was absent because branch data did not copy. The first complete proof therefore failed connector checks 40/41 (70/72). Explicit rollback-only fixture setup corrected those prerequisites; the retained wrapper then passed. These are SQL-injected request claims, not hosted GoTrue login or a real HTTP JWT. No real student or school email was used.
+
+Both actual source directories deployed successfully as version 1, **ACTIVE, verify_jwt=true**. Deployment hashes and catalog/proof results are in [the retained JSON](verification/staging-2026-10-21.json). This proves source deployment/configuration, not an executed hosted Function request.
+
+Direct staging HTTPS through the workspace's inherited proxy failed with **CONNECT 403 / HTTP status 000**. No network bypass was attempted. Thus hosted Auth, REST/gateway behavior, source providers and actual delivery remain unverified. The local built-PWA test separately establishes 22/22 API/database assertions with synthetic Auth and fictional Nexus data; the local Deno entrypoints establish 12/12 HTTP boundaries with rejecting Auth. Neither substitutes for this blocked hosted path.
+
+Security advisors reported one scouting item: [RLS enabled without policies](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy) on `scouting_operations`. This receipt table intentionally has no client policy or direct client grants; validated private writes own it. The 72-check proof verifies the access boundary. No scouting function appeared in the advisor's public SECURITY DEFINER warnings. The cloned platform reported 85 anonymous and 168 authenticated SECURITY DEFINER warnings for existing non-scouting functions; those need separate review of their authorization bodies and were not changed by this scoped implementation. Advisor counts are not a security clearance.
+
+After preserving evidence, the temporary branch was **deleted successfully** to avoid unattended compute. Branch listing confirmed only the default main branch remained. A read-only production postcheck still found PostgreSQL 17.6 and **zero scouting tables/functions**. No production deployment, live-data modification, main push or real Discord message occurred.
+
+To repeat, create a new authorized isolated branch, wait for copied prerequisites through 0021, apply 0022 twice, review the emitted proof and execute it only in that empty branch. Keep `scouting_private` outside exposed API schemas. Use an environment with approved direct staging HTTPS for actual Auth/API acceptance. Retain results and clean up the temporary branch; physical-phone and mentor assessment remain separate gates.

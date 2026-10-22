@@ -1,0 +1,8 @@
+{
+  "app": "75fad888b88c3c2a8e547b74342a64a9c0906889",
+  "started": "2026-10-21T17:02:18.518868+00:00",
+  "status": "cancelled_after_failure",
+  "finished": "2026-10-21T17:10:27.291821+00:00",
+  "reason": "Single-process run timed out navigating schedule under missing migrations; full timer virtualization is being investigated. No full result claimed.",
+  "applicationChangedDuringRun": false
+}

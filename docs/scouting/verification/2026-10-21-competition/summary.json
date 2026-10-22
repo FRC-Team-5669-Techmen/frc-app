@@ -1,0 +1,31 @@
+{
+  "application_code_commit": "7a1ddcab51324076dc93cf8fb2d3c6691608799b",
+  "full_feature_commit": "7240bcb46a822f300c447db6dd65fad09edcc986",
+  "application_git_objects": {
+    "src": "b680d54a0525af5cbf23987b5341a3f4a9c676c9",
+    "api": "52b5b608cbf40081d8258440577277b3942fe703",
+    "supabase": "4cafb6887ef365c843aabf0da01adae9a08a40cc",
+    "tools": "1429fe555b4663720dbf6e78eee0a960c44dcf91",
+    "tests": "3ab6cde04f5bd64b15a2afb6b26ec2c49bc37425",
+    "package.json": "1470899d98484f28ba76e2638568f19d947ce5b6",
+    "package-lock.json": "9d7526a64cfe4d9e2bf33c45aff37b2d653ecb1b"
+  },
+  "latest_counts": {
+    "unit": 971,
+    "unit_files": 65,
+    "scouting_browser": 150,
+    "broader_feature_browser": 1766,
+    "checkin": 51,
+    "native_sql": 573,
+    "mutants": 17,
+    "races": 7,
+    "pwa": 22,
+    "deno_http": 12,
+    "hosted_sql": 72
+  },
+  "field_gates": {
+    "NOT_RUN": 13,
+    "PARTIAL": 3
+  },
+  "scope": "See VERIFICATION.md for exact source/runtime boundaries. Full regression predates filename/provider-key corrections; latest focused suites and CI cover them. Hosted SQL claims are injected, HTTP blocked; real phones/humans/providers/production not accepted."
+}

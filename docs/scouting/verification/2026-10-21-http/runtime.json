@@ -1,0 +1,7 @@
+{
+  "node": "v24.19.0",
+  "npm": "11.9.0",
+  "chromium": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+  "postgres": "postgres (PostgreSQL) 17.11 (Debian 17.11-0+deb13u1)",
+  "postgrest": "PostgREST 14.18"
+}

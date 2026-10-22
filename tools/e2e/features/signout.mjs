@@ -138,7 +138,7 @@ export default {
       title: 'Team meeting', kind: 'meeting', starts_at: new Date(Date.now() - 5 * 60_000).toISOString(),
       ends_at: new Date(Date.now() + 90 * 60_000).toISOString(),
     }).id);
-    await t.page.clock.fastForward(2 * 60_000);
+    await t.advanceTime(2 * 60_000);
     await t.open('/checkin?loc=shop-main', { persona: 'exempt', mig: 'all', ready: '.checkin-wrap button' });
     await t.press('.checkin-wrap button');
     await t.waitFor('.checkin-meeting');
@@ -148,7 +148,7 @@ export default {
     await t.shot('meeting-present');
     await t.evaluate((id) => window.__fx.patch('events', { id }, { starts_at: new Date(Date.now() - 25 * 60_000).toISOString() }), meetId);
     await putIn(t, P.student.id, 0);
-    await t.page.clock.fastForward(2 * 60_000);
+    await t.advanceTime(2 * 60_000);
     const sOut1 = (await outsOf(t, P.student.id)).length;
     await t.open('/checkin?loc=shop-main', { persona: 'student', mig: 'all', ready: '.checkin-wrap h1' });
     await t.waitFor('.checkin-loc');
@@ -180,7 +180,7 @@ export default {
     // ── FLL signs out directly ────────────────────────────────────────────
     t.as('0014 · FLL');
     await putIn(t, P.exempt.id, 0, 'volunteer');
-    await t.page.clock.fastForward(2 * 60_000);
+    await t.advanceTime(2 * 60_000);
     const fOut = (await outsOf(t, P.exempt.id)).length;
     await t.open('/checkin-volunteer?loc=fll-room', { persona: 'exempt', mig: 'all', ready: '.so-form' });
     t.eq('the FLL button signs out', await t.text('.so-submit'), 'Sign out');
@@ -195,7 +195,7 @@ export default {
     for (const [label, mig] of [['0014', 'all'], ['pre-0014', PRE_0014]]) {
       t.as(`${label} · quick pulse`);
       await t.open('/display', { persona: 'mentor', mig, reset: true, ready: '.pb-name-btn' });
-      await t.page.clock.fastForward(2 * 60_000);
+      await t.advanceTime(2 * 60_000);
       const riley = t.page.locator('.pb-name-btn', { hasText: P.student2.nick }).first();
       const ins = async () => (await t.rows('attendance_events')).filter((e) => e.user_id === P.student2.id).length;
       const n0 = await ins();
@@ -214,7 +214,7 @@ export default {
       t.eq('the second tap writes one IN, by the mentor, with an audit row', [evs.length, evs[0]?.type, evs[0]?.overridden_by === P.mentor.id, audit.length > 0], [1, 'in', true, true]);
       t.check('the board shows Riley present', (await t.page.locator('.pb-row.pb-present .pb-name', { hasText: P.student2.nick }).count()) === 1, '');
       await t.shot(`quick-pulse-${label}`, { full: false });
-      await t.page.clock.fastForward(2 * 60_000);
+      await t.advanceTime(2 * 60_000);
       await t.press('.qp-btn');
       await t.press('.qp-btn');
       await t.waitFor(() => document.querySelector('.qp-text')?.textContent === 'Not signed in');

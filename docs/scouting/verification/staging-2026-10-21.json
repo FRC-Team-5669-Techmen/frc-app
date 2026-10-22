@@ -1,0 +1,105 @@
+{
+  "date": "2026-10-21",
+  "scope": "Isolated hosted PostgreSQL and Edge deployment metadata; SQL-injected identities, no hosted Auth/API acceptance",
+  "code_commit": "7a1ddcab51324076dc93cf8fb2d3c6691608799b",
+  "parent_project": "pbuogcrhdywpzvcxbwsd",
+  "staging_project": "ghznodbtpvxlsyevmkla",
+  "branch_id": "94b80d0d-16ed-47c6-848c-3890b5539a09",
+  "branch_name": "scouting-2026-verification",
+  "with_data": false,
+  "migration_0022_applied_twice": true,
+  "proof": [
+    {
+      "staging_proof": {
+        "scope": "Hosted PostgreSQL RLS, SQL-injected request claims; not hosted Auth/API acceptance",
+        "asserted_passed_checks": 72,
+        "fixture_users_after_rollback": 0,
+        "scouting_rows_after_rollback": 0,
+        "fixture_profiles_after_rollback": 0
+      }
+    }
+  ],
+  "final_catalog": [
+    {
+      "final_staging_catalog": {
+        "users": 0,
+        "records": 0,
+        "delivery": 0,
+        "postgres": "17.11",
+        "profiles": 0,
+        "cron_jobs": 0,
+        "operations": 0,
+        "queued_http": 0,
+        "scouting_tables": [
+          "scouting_delivery",
+          "scouting_operations",
+          "scouting_records",
+          "scouting_revisions"
+        ]
+      }
+    }
+  ],
+  "edge_deployments": [
+    {
+      "id": "808bb16e-96af-46b7-a73b-fed355a2ba49",
+      "slug": "scouting-import",
+      "name": "scouting-import",
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": 1792592259383,
+      "updated_at": 1792592259383,
+      "verify_jwt": true,
+      "import_map": false,
+      "entrypoint_path": "file:///tmp/user_fn_ghznodbtpvxlsyevmkla_808bb16e-96af-46b7-a73b-fed355a2ba49_1/source/index.ts",
+      "ezbr_sha256": "c4cae04e23765d2f3135815db7066758506157699e303b12794d02ae6f2fa88d"
+    },
+    {
+      "id": "2b82e4cb-f9cf-4c72-9da0-ef67f0ffd16d",
+      "slug": "scouting-dispatch",
+      "name": "scouting-dispatch",
+      "status": "ACTIVE",
+      "version": 1,
+      "created_at": 1792592261288,
+      "updated_at": 1792592261288,
+      "verify_jwt": true,
+      "import_map": false,
+      "entrypoint_path": "file:///tmp/user_fn_ghznodbtpvxlsyevmkla_2b82e4cb-f9cf-4c72-9da0-ef67f0ffd16d_1/source/index.ts",
+      "ezbr_sha256": "968782800d98a12296e9c82eee76e1c4bd688ac7eb7dadbd510698f4186ca657"
+    }
+  ],
+  "security_advisors": [
+    {
+      "name": "rls_enabled_no_policy",
+      "level": "INFO",
+      "count": 17,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy",
+      "scouting": [
+        {
+          "detail": "Table \\`public.scouting_operations\\` has RLS enabled, but no policies exist",
+          "metadata": {
+            "name": "scouting_operations",
+            "type": "table",
+            "schema": "public"
+          },
+          "observed_at": "2026-10-21T14:17:42.102Z"
+        }
+      ]
+    },
+    {
+      "name": "anon_security_definer_function_executable",
+      "level": "WARN",
+      "count": 85,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable",
+      "scouting": []
+    },
+    {
+      "name": "authenticated_security_definer_function_executable",
+      "level": "WARN",
+      "count": 168,
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable",
+      "scouting": []
+    }
+  ],
+  "http_blocker": "curl via inherited HTTPS proxy: CONNECT tunnel failed, response 403; HTTP status 000. No bypass attempted.",
+  "cleanup": "Deleted successfully after retaining evidence; list_branches confirms only the default main branch remains."
+}

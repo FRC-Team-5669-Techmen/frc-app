@@ -71,6 +71,7 @@ const FEATURES = Object.freeze([
   'standing',
   'rosters',
   'families',
+  'scouting',
 ]);
 
 
@@ -174,7 +175,9 @@ class Harness {
     const { context, blocked } = await newContext(this.browser, this.vp);
     this.context = context;
     this.blocked = blocked;
-    await context.clock.install({ time: CLOCK_START });
+    // Business dates are deterministic; rendering, animation and retry timers
+    // stay native. Full timer virtualization is unnecessary for these UI flows.
+    await context.clock.setFixedTime(CLOCK_START);
     await this.newPage();
   }
 
@@ -290,6 +293,12 @@ class Harness {
     return this.page.evaluate(fn, arg);
   }
 
+  /** Advance business time without skipping rendering/retry timers. */
+  async advanceTime(ms) {
+    const now = await this.page.evaluate(() => Date.now());
+    await this.context.clock.setFixedTime(new Date(now + ms));
+  }
+
   /** Tap on the phone, click on the laptop. */
   async press(target) {
     const loc = typeof target === 'string' ? this.page.locator(target).first() : target;
@@ -319,7 +328,7 @@ class Harness {
     try {
       await fn();
     } catch (e) {
-      this.check(label, false, `threw: ${e?.message?.split('\n')[0] ?? e}`);
+      this.check(label, false, `threw: ${e?.message ?? e}`);
       await this.shot(`${label.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-THREW`);
     }
   }
@@ -438,7 +447,7 @@ async function main() {
     if (!flag(args, 'keep-server', false)) await server.stop();
   }
 
-  writeFileSync(path.join(OUT, 'results.json'), JSON.stringify({ clockStart: CLOCK_START.toISOString(), features: wanted, results }, null, 2));
+  writeFileSync(path.join(OUT, 'results.json'), JSON.stringify({ clockStart: CLOCK_START.toISOString(), clockMode: 'fixed-date-real-timers', features: wanted, results }, null, 2));
   const passed = results.filter((r) => r.ok).length;
   console.log(`features e2e: ${passed}/${results.length} passed (375 and 1440)`);
   process.exit(passed === results.length && results.length > 0 ? 0 : 1);

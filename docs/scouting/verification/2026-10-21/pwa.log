@@ -1,0 +1,44 @@
+frozen SQL: 55/55 files applied
+migration 0001_idea_certifications_mirror.sql: applied twice
+migration 0002_feedback_console.sql: applied twice
+migration 0003_discord_announcements.sql: applied twice
+migration 0004_member_permissions.sql: applied twice
+migration 0005_event_family_hub.sql: applied twice
+migration 0006_beach_blitz_seed.sql: applied twice
+migration 0007_event_hub_open_link.sql: applied twice
+migration 0008_event_hub_families.sql: applied twice
+migration 0009_event_hub_households.sql: applied twice
+migration 0010_event_hub_roster_names.sql: applied twice
+migration 0011_event_hub_parent_service_hours.sql: applied twice
+migration 0012_jobs_idea_cert_gate.sql: applied twice
+migration 0013_handbook_acknowledgments.sql: applied twice
+migration 0014_session_signout.sql: applied twice
+migration 0015_member_standing.sql: applied twice
+migration 0016_event_rosters.sql: applied twice
+migration 0017_families_and_records.sql: applied twice
+migration 0018_connector.sql: applied twice
+migration 0019_connector_writes.sql: applied twice
+migration 0020_member_admin.sql: applied twice
+migration 0021_connector_deleted_rows.sql: applied twice
+migration 0022_scouting.sql: applied twice
+PASS scouting PWA: built app loads event through real PostgREST
+PASS scouting PWA: production service worker controls the page
+PASS scouting PWA: cold navigation works offline even after the stored Auth session expires
+PASS scouting PWA: installed PWA start URL reopens the prepared event offline
+PASS scouting PWA: offline observation has no server record
+PASS scouting PWA: native IndexedDB queue survives built-PWA reload
+PASS scouting PWA: lost HTTP response preserves the queued proposal after server commit
+PASS scouting PWA: reconnect creates exactly one attributed observation
+PASS scouting PWA: repeated launch creates no duplicate logical records
+PASS scouting PWA: interrupted-page test reaches a real committed save before response
+PASS scouting PWA: a restarted page automatically recovers its expired lease without another submit
+PASS scouting PWA: exiting prepared mode removes capture access
+PASS scouting PWA: offline identity stays cleared across reload
+PASS scouting PWA: parent JWT sees no scouting rows through PostgREST
+PASS scouting PWA: parent JWT cannot save through PostgREST
+PASS scouting PWA: authenticated client cannot bypass validated write RPC
+PASS scouting PWA: connector HTTP preview rolls back without creating evidence
+PASS scouting PWA: connector HTTP commit preserves identity and audit
+PASS scouting PWA: connector HTTP refuses an unauthorized account
+scouting PWA: 19/19 passed
+sql harness: 0/0 checks passed across 0 test file(s)

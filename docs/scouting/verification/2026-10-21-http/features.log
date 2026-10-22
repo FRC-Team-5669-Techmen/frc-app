@@ -1,0 +1,7 @@
+
+> frc-app@0.1.0 test:features
+> node tools/e2e/features.mjs
+
+certifications: 118/118 passed (375 and 1440)
+feedback: 227/227 passed (375 and 1440)
+FAIL [375] announce · mig none · student · spec ran to the end -- threw: page.waitForTimeout: Target page, context or browser has been closed |     at Harness.settle (/workspace/frc-app/tools/e2e/features.mjs:231:23) |     at async Harness.open (/workspace/frc-app/tools/e2e/features.mjs:215:17)

@@ -1,0 +1,47 @@
+PASS hosted: real hosted password grant for fictional admin
+PASS hosted: GoTrue verifies admin token
+PASS hosted: real hosted password grant for fictional student
+PASS hosted: GoTrue verifies student token
+PASS hosted: real hosted password grant for fictional other
+PASS hosted: GoTrue verifies other token
+PASS hosted: real hosted password grant for fictional parent
+PASS hosted: GoTrue verifies parent token
+PASS hosted: real hosted password grant for fictional parent_staff
+PASS hosted: GoTrue verifies parent_staff token
+PASS hosted: real hosted password grant for fictional unapproved
+PASS hosted: GoTrue verifies unapproved token
+PASS hosted: real hosted session refresh
+PASS hosted: admin access is true
+PASS hosted: student access is true
+PASS hosted: parent access is false
+PASS hosted: parent_staff access is true
+PASS hosted: unapproved access is false
+PASS hosted: admin manager boundary is true
+PASS hosted: student manager boundary is false
+PASS hosted: parent_staff manager boundary is true
+PASS hosted: parent manager boundary is false
+PASS hosted: student observation saved through hosted JWT/PostgREST
+PASS hosted: same operation returns original hosted receipt
+PASS hosted: another eligible scout reads confirmed distinct unknown and no
+PASS hosted: parent cannot read scouting evidence
+PASS hosted: parent cannot save scouting evidence
+PASS hosted: unapproved cannot read scouting evidence
+PASS hosted: unapproved cannot save scouting evidence
+PASS hosted: hosted JWT actor cannot be spoofed
+PASS hosted: another scout cannot correct author observation
+PASS hosted: author correction creates version two
+PASS hosted: stale hosted correction rejects explicit conflict
+PASS hosted: hosted revision history retains two attributed versions
+PASS hosted: direct hosted table write refused
+PASS hosted: private receipt table cannot be read directly
+PASS hosted: private scouting schema is outside exposed Data API schemas
+PASS hosted: anonymous caller cannot execute scouting RPC
+PASS hosted: modern publishable key supports authenticated Data API
+PASS hosted: manager can read eligible scouting roster
+PASS hosted: ordinary scout cannot read manager roster
+PASS hosted: scouting-import gateway rejects invalid JWT
+PASS hosted: scouting-dispatch gateway rejects invalid JWT
+PASS hosted: deployed import accepts real manager JWT
+PASS hosted: deployed import denies ordinary scout roster access
+PASS hosted: eligible scout reaches deployed map configuration boundary
+PASS hosted: deployed dispatch rejects missing record without sending

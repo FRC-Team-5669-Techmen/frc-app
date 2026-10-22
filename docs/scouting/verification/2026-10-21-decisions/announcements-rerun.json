@@ -1,0 +1,1008 @@
+{
+  "clockStart": "2026-10-01T23:00:00.000Z",
+  "features": [
+    "announce"
+  ],
+  "results": [
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "h1 reads Announce (textContent; CSS uppercases it)",
+      "ok": true,
+      "measurement": "\"Announce\""
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "the fixture's own answer (a 404) reads not deployed: sending is off, with no empty list in it",
+      "ok": true,
+      "measurement": "data-state not_deployed: \"The announce function is not deployed yet. You can compose and preview; sending is off until it is deployed.\""
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "channel chips, #announcements pressed",
+      "ok": true,
+      "measurement": "[\"#announcements:true\",\"#general:false\",\"#event-logistics:false\",\"#parents:false\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "exactly the 7 active roles as chips, in order (no @Student: inactive)",
+      "ok": true,
+      "measurement": "[\"@Mechanical\",\"@Electrical\",\"@Programming\",\"@CAD\",\"@Business/Media\",\"@Scouting\",\"@Drive Team\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "message box with an empty counter, and the poll and embed toggles",
+      "ok": true,
+      "measurement": "{\"area\":1,\"counter\":\"0/2000\",\"toggles\":[\"Add a poll\",\"Add an embed\"]}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "\"Review and send\" is off with nothing written",
+      "ok": true,
+      "measurement": "disabled"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "preview: Team bot, nothing to send yet, and the exact payload",
+      "ok": true,
+      "measurement": "{\"author\":\"Team bot\",\"empty\":\"Nothing to send yet.\",\"details\":\"Exact payload\"}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "Discord roles: 8 rows, Student marked Inactive with Activate",
+      "ok": true,
+      "measurement": "[{\"name\":\"Student\",\"inactive\":true,\"toggle\":\"Activate\"}]"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "an \"Add role\" form",
+      "ok": true,
+      "measurement": "\"Add role\""
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "Recent announcements, newest first: Unconfirmed, Failed, Sent",
+      "ok": true,
+      "measurement": "[\"Unconfirmed #announcements\",\"Failed #parents\",\"Sent #announcements\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "the failed row says what Discord refused",
+      "ok": true,
+      "measurement": "The bot is missing a permission in #parents. It needs View Channel and Send Messages, plus Embed Links for an embed and Send Polls for a poll."
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "no not-set-up card and no admin sentence",
+      "ok": true,
+      "measurement": "{\"setup\":0,\"denied\":false}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "@everyone renders with a zero-width space, never as a literal mass ping",
+      "ok": true,
+      "measurement": "\"@Mechanical @​everyone hello\""
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "payload: parse [] and roles exactly the one ticked id",
+      "ok": true,
+      "measurement": "{\"parse\":[],\"roles\":[\"100000000000000001\"]}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "the raw payload text holds \"parse\": [] and the id (the lane's one-line substring never occurs: pretty-printed)",
+      "ok": true,
+      "measurement": "both present; one-line form absent"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "ticking @CAD: roles are exactly both ids, in role order",
+      "ok": true,
+      "measurement": "[\"100000000000000001\",\"100000000000000004\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "the content pings exactly the ticked roles on its first line",
+      "ok": true,
+      "measurement": "\"<@&100000000000000001> <@&100000000000000004>\""
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "unticking @Mechanical: roles are exactly the one left",
+      "ok": true,
+      "measurement": "[\"100000000000000004\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "nothing ticked: roles [] and still parse []",
+      "ok": true,
+      "measurement": "{\"parse\":[],\"roles\":[]}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "\"Review and send\" is on once there is text",
+      "ok": true,
+      "measurement": "enabled"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "\"Check with server\" is off while the function cannot answer a preview",
+      "ok": true,
+      "measurement": "function state not_deployed"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "the confirm step shows \"Send now\", and it is OFF",
+      "ok": true,
+      "measurement": "present, disabled"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "it says why sending is off, with no empty list in it",
+      "ok": true,
+      "measurement": "\"Sending is off. The announce function is not deployed yet.\""
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "the confirm sentence names the channel and the ping",
+      "ok": true,
+      "measurement": "Post to #announcements as the team bot, notifying @Mechanical. It cannot be unsent from this page."
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "every visible button, chip, input and textarea at least 44px tall",
+      "ok": true,
+      "measurement": "46 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "at 375 the preview sits below the composer",
+      "ok": true,
+      "measurement": "{\"composerBottom\":920,\"previewTop\":936}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "Deactivate: the chip goes, the row reads Inactive, the ticked id drops out of the payload",
+      "ok": true,
+      "measurement": "6 chips; roles []"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "the store holds the deactivation",
+      "ok": true,
+      "measurement": "false"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "Activate: the chip is back in its place",
+      "ok": true,
+      "measurement": "[\"@Mechanical\",\"@Electrical\",\"@Programming\",\"@CAD\",\"@Business/Media\",\"@Scouting\",\"@Drive Team\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "a short id is refused with the 17-to-20-digits sentence and nothing is written",
+      "ok": true,
+      "measurement": "\"A role id is 17 to 20 digits and nothing else. Copy it from Discord; never type one from memory.\", 8 rows"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "a valid id adds the role, and its chip appears",
+      "ok": true,
+      "measurement": "@Mechanical, @Electrical, @Programming, @CAD, @Business/Media, @Scouting, @Drive Team, @Pit Crew"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "the new role's own row agrees with its chip and the store: not Inactive, toggle reads Deactivate, stored active true",
+      "ok": true,
+      "measurement": "pill 0, toggle \"Deactivate\"; stored active true"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "Delete arms first and names what it deletes",
+      "ok": true,
+      "measurement": "Delete Pit Crew? Past posts keep their copy."
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "positive control: nothing deleted on the first click",
+      "ok": true,
+      "measurement": "9 rows"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin",
+      "label": "the second click deletes it: 8 rows and the 7 chips",
+      "ok": true,
+      "measurement": "{\"rows\":8,\"chips\":[\"@Mechanical\",\"@Electrical\",\"@Programming\",\"@CAD\",\"@Business/Media\",\"@Scouting\",\"@Drive Team\"]}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · no roles",
+      "label": "\"No roles yet. Add roles first\" and no role chips",
+      "ok": true,
+      "measurement": "1 note, 0 chips"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · no roles",
+      "label": "with no roles the payload pings nobody",
+      "ok": true,
+      "measurement": "{\"parse\":[],\"roles\":[]}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · no roles",
+      "label": "a bad id: refused with the 17-to-20-digits sentence, still no chips",
+      "ok": true,
+      "measurement": "A role id is 17 to 20 digits and nothing else. Copy it from Discord; never type one from memory."
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · no roles",
+      "label": "a valid id: the @Programming chip returns and the note goes",
+      "ok": true,
+      "measurement": "@Programming"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · function not deployed",
+      "label": "not deployed: the plain sentence",
+      "ok": true,
+      "measurement": "{\"state\":\"not_deployed\",\"line\":\"The announce function is not deployed yet. You can compose and preview; sending is off until it is deployed.\"}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · function not deployed",
+      "label": "\"Check with server\" is off while not deployed; \"Review and send\" is on",
+      "ok": true,
+      "measurement": "off / on"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · function not deployed",
+      "label": "\"Send now\" present and OFF",
+      "ok": true,
+      "measurement": "disabled"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · function still answering",
+      "label": "still checking: the loading line",
+      "ok": true,
+      "measurement": "{\"state\":\"loading\",\"line\":\"Checking the announce function…\"}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · function still answering",
+      "label": "\"Send now\" OFF, and the confirm step says it is still checking (never \"answered\")",
+      "ok": true,
+      "measurement": "Sending is off. Still checking the announce function."
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · function needs setup",
+      "label": "needs setup: the function names what is missing",
+      "ok": true,
+      "measurement": "{\"state\":\"needs-setup\",\"line\":\"Needs setup before anything can be sent: DISCORD_BOT_TOKEN. You can still compose and preview.\"}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · function needs setup",
+      "label": "\"Send now\" OFF, and the confirm step says what is missing",
+      "ok": true,
+      "measurement": "Sending is off. Needs setup before anything can be sent: DISCORD_BOT_TOKEN."
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · function ready",
+      "label": "ready: connected",
+      "ok": true,
+      "measurement": "{\"state\":\"ready\",\"line\":\"Announce function connected.\"}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · function ready",
+      "label": "positive control: with the function ready \"Send now\" is ON",
+      "ok": true,
+      "measurement": "enabled"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · function ready",
+      "label": "one send, carrying exactly the two ticked role ids and a request id",
+      "ok": true,
+      "measurement": "[\"100000000000000002\",\"100000000000000007\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · admin · function ready",
+      "label": "the result says Sent",
+      "ok": true,
+      "measurement": "\"Sent\""
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig none · admin",
+      "label": "the Not set up yet card names the migration file",
+      "ok": true,
+      "measurement": "Not set up yetDiscord announcements need a database change that has not been applied yet (supabase/migrations/0003_disco"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig none · admin",
+      "label": "nothing else: no composer, no role editor, no log (all present with 0003)",
+      "ok": true,
+      "measurement": "{\"textarea\":0,\"review\":0,\"roles\":0,\"log\":0}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig none · admin",
+      "label": "the page asks the function nothing before 0003",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig none · admin",
+      "label": "h1 still reads Announce",
+      "ok": true,
+      "measurement": "\"Announce\""
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig none · admin",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · mentor",
+      "label": "one sentence; no composer, no chips, no reads, no function call",
+      "ok": true,
+      "measurement": "{\"sentence\":\"Admin access required.\",\"textarea\":0,\"chips\":0,\"reads\":0,\"invokes\":0}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig all · student",
+      "label": "one sentence; no composer, no chips, no reads, no function call",
+      "ok": true,
+      "measurement": "{\"sentence\":\"Admin access required.\",\"textarea\":0,\"chips\":0,\"reads\":0,\"invokes\":0}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig none · mentor",
+      "label": "one sentence; no composer, no chips, no reads, no function call",
+      "ok": true,
+      "measurement": "{\"sentence\":\"Admin access required.\",\"textarea\":0,\"chips\":0,\"reads\":0,\"invokes\":0}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "mig none · student",
+      "label": "one sentence; no composer, no chips, no reads, no function call",
+      "ok": true,
+      "measurement": "{\"sentence\":\"Admin access required.\",\"textarea\":0,\"chips\":0,\"reads\":0,\"invokes\":0}"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "nav · admin",
+      "label": "Announce in the avatar menu: 1",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "nav · mentor",
+      "label": "Announce in the avatar menu: 0",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "announce",
+      "vp": "375",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "h1 reads Announce (textContent; CSS uppercases it)",
+      "ok": true,
+      "measurement": "\"Announce\""
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "the fixture's own answer (a 404) reads not deployed: sending is off, with no empty list in it",
+      "ok": true,
+      "measurement": "data-state not_deployed: \"The announce function is not deployed yet. You can compose and preview; sending is off until it is deployed.\""
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "channel chips, #announcements pressed",
+      "ok": true,
+      "measurement": "[\"#announcements:true\",\"#general:false\",\"#event-logistics:false\",\"#parents:false\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "exactly the 7 active roles as chips, in order (no @Student: inactive)",
+      "ok": true,
+      "measurement": "[\"@Mechanical\",\"@Electrical\",\"@Programming\",\"@CAD\",\"@Business/Media\",\"@Scouting\",\"@Drive Team\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "message box with an empty counter, and the poll and embed toggles",
+      "ok": true,
+      "measurement": "{\"area\":1,\"counter\":\"0/2000\",\"toggles\":[\"Add a poll\",\"Add an embed\"]}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "\"Review and send\" is off with nothing written",
+      "ok": true,
+      "measurement": "disabled"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "preview: Team bot, nothing to send yet, and the exact payload",
+      "ok": true,
+      "measurement": "{\"author\":\"Team bot\",\"empty\":\"Nothing to send yet.\",\"details\":\"Exact payload\"}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "Discord roles: 8 rows, Student marked Inactive with Activate",
+      "ok": true,
+      "measurement": "[{\"name\":\"Student\",\"inactive\":true,\"toggle\":\"Activate\"}]"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "an \"Add role\" form",
+      "ok": true,
+      "measurement": "\"Add role\""
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "Recent announcements, newest first: Unconfirmed, Failed, Sent",
+      "ok": true,
+      "measurement": "[\"Unconfirmed #announcements\",\"Failed #parents\",\"Sent #announcements\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "the failed row says what Discord refused",
+      "ok": true,
+      "measurement": "The bot is missing a permission in #parents. It needs View Channel and Send Messages, plus Embed Links for an embed and Send Polls for a poll."
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "no not-set-up card and no admin sentence",
+      "ok": true,
+      "measurement": "{\"setup\":0,\"denied\":false}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "@everyone renders with a zero-width space, never as a literal mass ping",
+      "ok": true,
+      "measurement": "\"@Mechanical @​everyone hello\""
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "payload: parse [] and roles exactly the one ticked id",
+      "ok": true,
+      "measurement": "{\"parse\":[],\"roles\":[\"100000000000000001\"]}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "the raw payload text holds \"parse\": [] and the id (the lane's one-line substring never occurs: pretty-printed)",
+      "ok": true,
+      "measurement": "both present; one-line form absent"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "ticking @CAD: roles are exactly both ids, in role order",
+      "ok": true,
+      "measurement": "[\"100000000000000001\",\"100000000000000004\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "the content pings exactly the ticked roles on its first line",
+      "ok": true,
+      "measurement": "\"<@&100000000000000001> <@&100000000000000004>\""
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "unticking @Mechanical: roles are exactly the one left",
+      "ok": true,
+      "measurement": "[\"100000000000000004\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "nothing ticked: roles [] and still parse []",
+      "ok": true,
+      "measurement": "{\"parse\":[],\"roles\":[]}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "\"Review and send\" is on once there is text",
+      "ok": true,
+      "measurement": "enabled"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "\"Check with server\" is off while the function cannot answer a preview",
+      "ok": true,
+      "measurement": "function state not_deployed"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "the confirm step shows \"Send now\", and it is OFF",
+      "ok": true,
+      "measurement": "present, disabled"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "it says why sending is off, with no empty list in it",
+      "ok": true,
+      "measurement": "\"Sending is off. The announce function is not deployed yet.\""
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "the confirm sentence names the channel and the ping",
+      "ok": true,
+      "measurement": "Post to #announcements as the team bot, notifying @Mechanical. It cannot be unsent from this page."
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "at 1440 the preview sits beside the composer",
+      "ok": true,
+      "measurement": "{\"composerRight\":804,\"previewLeft\":820,\"composerTop\":227,\"previewTop\":227}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "Deactivate: the chip goes, the row reads Inactive, the ticked id drops out of the payload",
+      "ok": true,
+      "measurement": "6 chips; roles []"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "the store holds the deactivation",
+      "ok": true,
+      "measurement": "false"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "Activate: the chip is back in its place",
+      "ok": true,
+      "measurement": "[\"@Mechanical\",\"@Electrical\",\"@Programming\",\"@CAD\",\"@Business/Media\",\"@Scouting\",\"@Drive Team\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "a short id is refused with the 17-to-20-digits sentence and nothing is written",
+      "ok": true,
+      "measurement": "\"A role id is 17 to 20 digits and nothing else. Copy it from Discord; never type one from memory.\", 8 rows"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "a valid id adds the role, and its chip appears",
+      "ok": true,
+      "measurement": "@Mechanical, @Electrical, @Programming, @CAD, @Business/Media, @Scouting, @Drive Team, @Pit Crew"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "the new role's own row agrees with its chip and the store: not Inactive, toggle reads Deactivate, stored active true",
+      "ok": true,
+      "measurement": "pill 0, toggle \"Deactivate\"; stored active true"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "Delete arms first and names what it deletes",
+      "ok": true,
+      "measurement": "Delete Pit Crew? Past posts keep their copy."
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "positive control: nothing deleted on the first click",
+      "ok": true,
+      "measurement": "9 rows"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin",
+      "label": "the second click deletes it: 8 rows and the 7 chips",
+      "ok": true,
+      "measurement": "{\"rows\":8,\"chips\":[\"@Mechanical\",\"@Electrical\",\"@Programming\",\"@CAD\",\"@Business/Media\",\"@Scouting\",\"@Drive Team\"]}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · no roles",
+      "label": "\"No roles yet. Add roles first\" and no role chips",
+      "ok": true,
+      "measurement": "1 note, 0 chips"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · no roles",
+      "label": "with no roles the payload pings nobody",
+      "ok": true,
+      "measurement": "{\"parse\":[],\"roles\":[]}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · no roles",
+      "label": "a bad id: refused with the 17-to-20-digits sentence, still no chips",
+      "ok": true,
+      "measurement": "A role id is 17 to 20 digits and nothing else. Copy it from Discord; never type one from memory."
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · no roles",
+      "label": "a valid id: the @Programming chip returns and the note goes",
+      "ok": true,
+      "measurement": "@Programming"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · function not deployed",
+      "label": "not deployed: the plain sentence",
+      "ok": true,
+      "measurement": "{\"state\":\"not_deployed\",\"line\":\"The announce function is not deployed yet. You can compose and preview; sending is off until it is deployed.\"}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · function not deployed",
+      "label": "\"Check with server\" is off while not deployed; \"Review and send\" is on",
+      "ok": true,
+      "measurement": "off / on"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · function not deployed",
+      "label": "\"Send now\" present and OFF",
+      "ok": true,
+      "measurement": "disabled"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · function still answering",
+      "label": "still checking: the loading line",
+      "ok": true,
+      "measurement": "{\"state\":\"loading\",\"line\":\"Checking the announce function…\"}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · function still answering",
+      "label": "\"Send now\" OFF, and the confirm step says it is still checking (never \"answered\")",
+      "ok": true,
+      "measurement": "Sending is off. Still checking the announce function."
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · function needs setup",
+      "label": "needs setup: the function names what is missing",
+      "ok": true,
+      "measurement": "{\"state\":\"needs-setup\",\"line\":\"Needs setup before anything can be sent: DISCORD_BOT_TOKEN. You can still compose and preview.\"}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · function needs setup",
+      "label": "\"Send now\" OFF, and the confirm step says what is missing",
+      "ok": true,
+      "measurement": "Sending is off. Needs setup before anything can be sent: DISCORD_BOT_TOKEN."
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · function ready",
+      "label": "ready: connected",
+      "ok": true,
+      "measurement": "{\"state\":\"ready\",\"line\":\"Announce function connected.\"}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · function ready",
+      "label": "positive control: with the function ready \"Send now\" is ON",
+      "ok": true,
+      "measurement": "enabled"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · function ready",
+      "label": "one send, carrying exactly the two ticked role ids and a request id",
+      "ok": true,
+      "measurement": "[\"100000000000000002\",\"100000000000000007\"]"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · admin · function ready",
+      "label": "the result says Sent",
+      "ok": true,
+      "measurement": "\"Sent\""
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig none · admin",
+      "label": "the Not set up yet card names the migration file",
+      "ok": true,
+      "measurement": "Not set up yetDiscord announcements need a database change that has not been applied yet (supabase/migrations/0003_disco"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig none · admin",
+      "label": "nothing else: no composer, no role editor, no log (all present with 0003)",
+      "ok": true,
+      "measurement": "{\"textarea\":0,\"review\":0,\"roles\":0,\"log\":0}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig none · admin",
+      "label": "the page asks the function nothing before 0003",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig none · admin",
+      "label": "h1 still reads Announce",
+      "ok": true,
+      "measurement": "\"Announce\""
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig none · admin",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · mentor",
+      "label": "one sentence; no composer, no chips, no reads, no function call",
+      "ok": true,
+      "measurement": "{\"sentence\":\"Admin access required.\",\"textarea\":0,\"chips\":0,\"reads\":0,\"invokes\":0}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig all · student",
+      "label": "one sentence; no composer, no chips, no reads, no function call",
+      "ok": true,
+      "measurement": "{\"sentence\":\"Admin access required.\",\"textarea\":0,\"chips\":0,\"reads\":0,\"invokes\":0}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig none · mentor",
+      "label": "one sentence; no composer, no chips, no reads, no function call",
+      "ok": true,
+      "measurement": "{\"sentence\":\"Admin access required.\",\"textarea\":0,\"chips\":0,\"reads\":0,\"invokes\":0}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "mig none · student",
+      "label": "one sentence; no composer, no chips, no reads, no function call",
+      "ok": true,
+      "measurement": "{\"sentence\":\"Admin access required.\",\"textarea\":0,\"chips\":0,\"reads\":0,\"invokes\":0}"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "nav · admin",
+      "label": "Announce in the avatar menu: 1",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "nav · mentor",
+      "label": "Announce in the avatar menu: 0",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "announce",
+      "vp": "1440",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    }
+  ]
+}

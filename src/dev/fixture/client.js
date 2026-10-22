@@ -432,3 +432,6 @@ export const fixture = {
 }
 
 try { if (typeof window !== 'undefined') window.__fx = fixture } catch { /* ignore */ }
+
+// Same local-identity surface as the real Supabase client, without a network call.
+export const getStoredSessionMemberId = () => currentUser()?.id ?? null

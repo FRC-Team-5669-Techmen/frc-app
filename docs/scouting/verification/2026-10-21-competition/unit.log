@@ -1,0 +1,12 @@
+
+> frc-app@0.1.0 test
+> vitest run --maxWorkers=1
+
+
+ RUN  v4.1.11 /workspace/work/map-portability
+
+
+ Test Files  65 passed (65)
+      Tests  971 passed (971)
+   Start at  14:08:01
+   Duration  95.93s (transform 6.15s, setup 0ms, import 13.80s, tests 57.18s, environment 2.22s)

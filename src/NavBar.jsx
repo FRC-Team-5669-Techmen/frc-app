@@ -22,6 +22,7 @@ const IconSkills    = () => <Svg><circle cx="12" cy="9" r="5.5" /><path d="M8.5 
 const CONTEXT_TAGS = [
   ['/dashboard',   'CMD'],
   ['/schedule',    'SCHEDULE'],
+  ['/scouting',    'SCOUTING'],
   ['/my-hours',    'HRS//SELF'],
   ['/hours',       'HRS//TEAM'],
   ['/log-hours',   'HRS//LOG'],
@@ -145,6 +146,7 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
             <NavLink to="/standing" end className={itemClass}>My standing</NavLink>
           )}
           {/* Event rosters (0016): every member reads a posted roster. */}
+          {!isParent && <NavLink to="/scouting" className={itemClass}>Scouting</NavLink>}
           {!isParent && <NavLink to="/rosters" className={itemClass}>Event rosters</NavLink>}
           {/* 0017: the leaderboard and sub-team status for members; emergency
               information for parents (staff open it from the staff block);

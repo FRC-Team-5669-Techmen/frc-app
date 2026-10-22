@@ -1,0 +1,410 @@
+{
+  "clockStart": "2026-10-01T23:00:00.000Z",
+  "results": [
+    {
+      "vp": "375",
+      "id": "a-nfc-checkin",
+      "name": "NFC check-in at the shop writes one build IN with geo_ok true",
+      "ok": true,
+      "detail": "1 IN, category build, geo_ok true; alerts: 0 on confirm, 1 on the receipt",
+      "ms": 2856
+    },
+    {
+      "vp": "375",
+      "id": "b-dashboard-checkout",
+      "name": "dashboard reads Checked in, Check Out flips it and writes an OUT",
+      "ok": true,
+      "detail": "tile Checked in -> Not checked in, 1 OUT (location button)",
+      "ms": 2780
+    },
+    {
+      "vp": "375",
+      "id": "c1-nfc-checkin-again",
+      "name": "a second NFC check-in the same day succeeds",
+      "ok": true,
+      "detail": "1 IN (third event today)",
+      "ms": 2249
+    },
+    {
+      "vp": "375",
+      "id": "c2-nfc-checkout",
+      "name": "the next NFC tap checks OUT (not back to the check-in screen)",
+      "ok": true,
+      "detail": "1 OUT; today reads in,out,in,out",
+      "ms": 2402
+    },
+    {
+      "vp": "375",
+      "id": "d-duplicate-tap",
+      "name": "a second tap within 60 s reads ALREADY and writes nothing",
+      "ok": true,
+      "detail": "0 writes inside the window, against 1 write(s) by the same tag outside it (c2); 1 alert",
+      "ms": 5404
+    },
+    {
+      "vp": "375",
+      "id": "e1-geofence-range",
+      "name": "2 km away reads Not at the shop and writes nothing; in range it writes",
+      "ok": true,
+      "detail": "0 writes at 2 km, against 1 IN from the same screen at the shop",
+      "ms": 6506
+    },
+    {
+      "vp": "375",
+      "id": "e2-geofence-denied",
+      "name": "denied location reads Location denied and writes nothing; granted it writes",
+      "ok": true,
+      "detail": "0 writes with permission denied, against 1 IN once granted",
+      "ms": 9597
+    },
+    {
+      "vp": "375",
+      "id": "e3-exempt-no-location",
+      "name": "an exempt student checks in with no location; a non-exempt one cannot",
+      "ok": true,
+      "detail": "exempt: 1 IN with geo_ok false and no location permission; non-exempt in the same context: 0 writes",
+      "ms": 5282
+    },
+    {
+      "vp": "375",
+      "id": "f1-volunteer-checkin",
+      "name": "/checkin-volunteer at the FLL room writes a volunteer IN",
+      "ok": true,
+      "detail": "1 IN, category volunteer, geo_ok true",
+      "ms": 2171
+    },
+    {
+      "vp": "375",
+      "id": "f2-volunteer-checkout",
+      "name": "tapping /checkin-volunteer again later checks out",
+      "ok": true,
+      "detail": "1 OUT",
+      "ms": 2471
+    },
+    {
+      "vp": "375",
+      "id": "R1-back-swipe",
+      "name": "back from VIEW STATUS onto a check-in receipt asks (0 writes); the tap writes 1 OUT",
+      "ok": true,
+      "detail": "back-swipe: \"Checked in since 4:12 PM\" with a Check out button, 0 writes; one tap: 1 OUT",
+      "ms": 3951
+    },
+    {
+      "vp": "375",
+      "id": "R2-reload-receipt",
+      "name": "reloading a check-in receipt never writes; a fresh tap from the same state does",
+      "ok": true,
+      "detail": "reload: ALREADY IN, then \"Checked in since\", 0 writes; a fresh tap in a new tab: 1 OUT with no confirm",
+      "ms": 5169
+    },
+    {
+      "vp": "375",
+      "id": "R3-hidden-out-receipt",
+      "name": "a CHECKED OUT receipt hidden 2 min stays a receipt (0 writes); it updates when another tab checks in",
+      "ok": true,
+      "detail": "held: CHECKED OUT, 1 re-read(s), 0 writes; after another tab checked in: \"Checked in since\", 0 writes",
+      "ms": 7772
+    },
+    {
+      "vp": "375",
+      "id": "R5-hidden-in-receipt",
+      "name": "a CHECKED IN receipt hidden 2 min stays a receipt, with a re-read and 0 writes",
+      "ok": true,
+      "detail": "held: CHECKED IN, 1 re-read(s), 0 writes (R6 is the receipt that no longer holds)",
+      "ms": 2240
+    },
+    {
+      "vp": "375",
+      "id": "R6-receipt-no-longer-holds",
+      "name": "a CHECKED IN receipt refreshes to the check-in prompt after another tab checked out; A writes nothing",
+      "ok": true,
+      "detail": "tab B: 1 OUT; tab A back after 2 min: \"Tap to confirm your check-in\", 0 writes",
+      "ms": 4960
+    },
+    {
+      "vp": "375",
+      "id": "R7-same-tab-repeat-tap",
+      "name": "the same URL again in the same tab asks (0 writes); one tap writes 1 OUT",
+      "ok": true,
+      "detail": "same tab, same URL: \"Checked in since\" and 0 writes; one tap: 1 OUT",
+      "ms": 3465
+    },
+    {
+      "vp": "375",
+      "id": "R8-resume-claim-error",
+      "name": "a claim_profile error as the tab comes back leaves the page up; a real \"no\" shows the access gate; 0 writes",
+      "ok": true,
+      "detail": "error on resume: receipt up, no gate; a real \"no\": the gate; the real \"yes\": back to \"Checked in since\", 0 writes throughout",
+      "ms": 3415
+    },
+    {
+      "vp": "375",
+      "id": "R9-boot-claim-race",
+      "name": "a fresh tap whose second boot claim fails still checks out (1 OUT, no gate); a real \"no\" first shows the gate (0 writes)",
+      "ok": true,
+      "detail": "boot claims injected ok, injected error, injected error: CHECKED OUT, 1 OUT, no gate; a real \"no\" first: the gate, 0 writes",
+      "ms": 7789
+    },
+    {
+      "vp": "375",
+      "id": "R10-resume-roles-error",
+      "name": "a checked-in mentor: a member_roles error as the tab comes back keeps the dashboard and Check Out (no form); a real empty answer shows the form; then 1 OUT",
+      "ok": true,
+      "detail": "error on resume: dashboard and Check Out up, no form; a real empty answer: the form; the real roles: back, 0 writes, then 1 OUT",
+      "ms": 5003
+    },
+    {
+      "vp": "375",
+      "id": "V1-volunteer-switch",
+      "name": "the volunteer tag over a build session asks to switch (0 writes); the tap writes OUT + volunteer IN",
+      "ok": true,
+      "detail": "arrival: switch offer, 0 writes; tap: OUT (build session closed) + IN volunteer, geo_ok true",
+      "ms": 5053
+    },
+    {
+      "vp": "375",
+      "id": "V2-volunteer-reload",
+      "name": "reloading a volunteer receipt asks (0 writes); the tap writes 1 volunteer OUT",
+      "ok": true,
+      "detail": "reload: \"Volunteering since\" and 0 writes; tap: 1 OUT, category volunteer",
+      "ms": 1742
+    },
+    {
+      "vp": "375",
+      "id": "V3-volunteer-back-swipe",
+      "name": "back onto a volunteer receipt asks (0 writes); a fresh volunteer tap checks out with no confirm",
+      "ok": true,
+      "detail": "back-swipe: \"Volunteering since\", 0 writes; a fresh tap in a new tab: 1 OUT with no confirm",
+      "ms": 3457
+    },
+    {
+      "vp": "375",
+      "id": "g-signed-out-bounce",
+      "name": "a signed-out visitor is bounced to /login with the check-in saved",
+      "ok": true,
+      "detail": "bounced to /login with pendingCheckin=/checkin?loc=shop-main; signing in returned to it (0 writes while signed out)",
+      "ms": 1988
+    },
+    {
+      "vp": "375",
+      "id": "z-touch",
+      "name": "every full-page shot leaves the phone tab with a coarse pointer",
+      "ok": true,
+      "detail": "32 shots: 5 of 32 had dropped to a fine pointer (b-dashboard-checkout, e3-exempt-no-location, R9-boot-claim-race-gate, R10-resume-roles-error-held, R10-resume-roles-error-form), all 32 coarse with 1 touch point after the restore"
+    },
+    {
+      "vp": "375",
+      "id": "z-console",
+      "name": "no unexpected console errors",
+      "ok": true,
+      "detail": "0 errors, 0 external request(s) blocked"
+    },
+    {
+      "vp": "375",
+      "id": "M-midnight-presence",
+      "name": "a check-in at 11:40 PM reads present at 12:30 AM on the tile, the glance and the board; past the cap, absent on all three",
+      "ok": true,
+      "ms": 11800,
+      "detail": "11:40 PM: tile Checked in, Sam present on the board (2), glance 2; 11:40 AM the day before: Not checked in, absent (1), glance 1"
+    },
+    {
+      "vp": "1440",
+      "id": "a-nfc-checkin",
+      "name": "NFC check-in at the shop writes one build IN with geo_ok true",
+      "ok": true,
+      "detail": "1 IN, category build, geo_ok true; alerts: 0 on confirm, 1 on the receipt",
+      "ms": 2628
+    },
+    {
+      "vp": "1440",
+      "id": "b-dashboard-checkout",
+      "name": "dashboard reads Checked in, Check Out flips it and writes an OUT",
+      "ok": true,
+      "detail": "tile Checked in -> Not checked in, 1 OUT (location button)",
+      "ms": 3035
+    },
+    {
+      "vp": "1440",
+      "id": "c1-nfc-checkin-again",
+      "name": "a second NFC check-in the same day succeeds",
+      "ok": true,
+      "detail": "1 IN (third event today)",
+      "ms": 1796
+    },
+    {
+      "vp": "1440",
+      "id": "c2-nfc-checkout",
+      "name": "the next NFC tap checks OUT (not back to the check-in screen)",
+      "ok": true,
+      "detail": "1 OUT; today reads in,out,in,out",
+      "ms": 2336
+    },
+    {
+      "vp": "1440",
+      "id": "d-duplicate-tap",
+      "name": "a second tap within 60 s reads ALREADY and writes nothing",
+      "ok": true,
+      "detail": "0 writes inside the window, against 1 write(s) by the same tag outside it (c2); 1 alert",
+      "ms": 18689
+    },
+    {
+      "vp": "1440",
+      "id": "e1-geofence-range",
+      "name": "2 km away reads Not at the shop and writes nothing; in range it writes",
+      "ok": true,
+      "detail": "0 writes at 2 km, against 1 IN from the same screen at the shop",
+      "ms": 2929
+    },
+    {
+      "vp": "1440",
+      "id": "e2-geofence-denied",
+      "name": "denied location reads Location denied and writes nothing; granted it writes",
+      "ok": true,
+      "detail": "0 writes with permission denied, against 1 IN once granted",
+      "ms": 3077
+    },
+    {
+      "vp": "1440",
+      "id": "e3-exempt-no-location",
+      "name": "an exempt student checks in with no location; a non-exempt one cannot",
+      "ok": true,
+      "detail": "exempt: 1 IN with geo_ok false and no location permission; non-exempt in the same context: 0 writes",
+      "ms": 6079
+    },
+    {
+      "vp": "1440",
+      "id": "f1-volunteer-checkin",
+      "name": "/checkin-volunteer at the FLL room writes a volunteer IN",
+      "ok": true,
+      "detail": "1 IN, category volunteer, geo_ok true",
+      "ms": 2689
+    },
+    {
+      "vp": "1440",
+      "id": "f2-volunteer-checkout",
+      "name": "tapping /checkin-volunteer again later checks out",
+      "ok": true,
+      "detail": "1 OUT",
+      "ms": 1894
+    },
+    {
+      "vp": "1440",
+      "id": "R1-back-swipe",
+      "name": "back from VIEW STATUS onto a check-in receipt asks (0 writes); the tap writes 1 OUT",
+      "ok": true,
+      "detail": "back-swipe: \"Checked in since 4:12 PM\" with a Check out button, 0 writes; one tap: 1 OUT",
+      "ms": 3354
+    },
+    {
+      "vp": "1440",
+      "id": "R2-reload-receipt",
+      "name": "reloading a check-in receipt never writes; a fresh tap from the same state does",
+      "ok": true,
+      "detail": "reload: ALREADY IN, then \"Checked in since\", 0 writes; a fresh tap in a new tab: 1 OUT with no confirm",
+      "ms": 6386
+    },
+    {
+      "vp": "1440",
+      "id": "R3-hidden-out-receipt",
+      "name": "a CHECKED OUT receipt hidden 2 min stays a receipt (0 writes); it updates when another tab checks in",
+      "ok": true,
+      "detail": "held: CHECKED OUT, 1 re-read(s), 0 writes; after another tab checked in: \"Checked in since\", 0 writes",
+      "ms": 5805
+    },
+    {
+      "vp": "1440",
+      "id": "R5-hidden-in-receipt",
+      "name": "a CHECKED IN receipt hidden 2 min stays a receipt, with a re-read and 0 writes",
+      "ok": true,
+      "detail": "held: CHECKED IN, 1 re-read(s), 0 writes (R6 is the receipt that no longer holds)",
+      "ms": 2628
+    },
+    {
+      "vp": "1440",
+      "id": "R6-receipt-no-longer-holds",
+      "name": "a CHECKED IN receipt refreshes to the check-in prompt after another tab checked out; A writes nothing",
+      "ok": true,
+      "detail": "tab B: 1 OUT; tab A back after 2 min: \"Tap to confirm your check-in\", 0 writes",
+      "ms": 10940
+    },
+    {
+      "vp": "1440",
+      "id": "R7-same-tab-repeat-tap",
+      "name": "the same URL again in the same tab asks (0 writes); one tap writes 1 OUT",
+      "ok": true,
+      "detail": "same tab, same URL: \"Checked in since\" and 0 writes; one tap: 1 OUT",
+      "ms": 3978
+    },
+    {
+      "vp": "1440",
+      "id": "R8-resume-claim-error",
+      "name": "a claim_profile error as the tab comes back leaves the page up; a real \"no\" shows the access gate; 0 writes",
+      "ok": true,
+      "detail": "error on resume: receipt up, no gate; a real \"no\": the gate; the real \"yes\": back to \"Checked in since\", 0 writes throughout",
+      "ms": 3660
+    },
+    {
+      "vp": "1440",
+      "id": "R9-boot-claim-race",
+      "name": "a fresh tap whose second boot claim fails still checks out (1 OUT, no gate); a real \"no\" first shows the gate (0 writes)",
+      "ok": true,
+      "detail": "boot claims injected ok, injected error, injected error: CHECKED OUT, 1 OUT, no gate; a real \"no\" first: the gate, 0 writes",
+      "ms": 9386
+    },
+    {
+      "vp": "1440",
+      "id": "R10-resume-roles-error",
+      "name": "a checked-in mentor: a member_roles error as the tab comes back keeps the dashboard and Check Out (no form); a real empty answer shows the form; then 1 OUT",
+      "ok": true,
+      "detail": "error on resume: dashboard and Check Out up, no form; a real empty answer: the form; the real roles: back, 0 writes, then 1 OUT",
+      "ms": 6592
+    },
+    {
+      "vp": "1440",
+      "id": "V1-volunteer-switch",
+      "name": "the volunteer tag over a build session asks to switch (0 writes); the tap writes OUT + volunteer IN",
+      "ok": true,
+      "detail": "arrival: switch offer, 0 writes; tap: OUT (build session closed) + IN volunteer, geo_ok true",
+      "ms": 4774
+    },
+    {
+      "vp": "1440",
+      "id": "V2-volunteer-reload",
+      "name": "reloading a volunteer receipt asks (0 writes); the tap writes 1 volunteer OUT",
+      "ok": true,
+      "detail": "reload: \"Volunteering since\" and 0 writes; tap: 1 OUT, category volunteer",
+      "ms": 2258
+    },
+    {
+      "vp": "1440",
+      "id": "V3-volunteer-back-swipe",
+      "name": "back onto a volunteer receipt asks (0 writes); a fresh volunteer tap checks out with no confirm",
+      "ok": true,
+      "detail": "back-swipe: \"Volunteering since\", 0 writes; a fresh tap in a new tab: 1 OUT with no confirm",
+      "ms": 6166
+    },
+    {
+      "vp": "1440",
+      "id": "g-signed-out-bounce",
+      "name": "a signed-out visitor is bounced to /login with the check-in saved",
+      "ok": true,
+      "detail": "bounced to /login with pendingCheckin=/checkin?loc=shop-main; signing in returned to it (0 writes while signed out)",
+      "ms": 6157
+    },
+    {
+      "vp": "1440",
+      "id": "z-console",
+      "name": "no unexpected console errors",
+      "ok": true,
+      "detail": "0 errors, 0 external request(s) blocked"
+    },
+    {
+      "vp": "1440",
+      "id": "M-midnight-presence",
+      "name": "a check-in at 11:40 PM reads present at 12:30 AM on the tile, the glance and the board; past the cap, absent on all three",
+      "ok": true,
+      "ms": 23009,
+      "detail": "11:40 PM: tile Checked in, Sam present on the board (2), glance 2; 11:40 AM the day before: Not checked in, absent (1), glance 1"
+    }
+  ]
+}

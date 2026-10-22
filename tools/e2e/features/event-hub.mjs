@@ -457,7 +457,10 @@ export default {
       const bar = await t.text('[data-testid="eh-savebar"]');
       t.check('a failed save says "Not saved, retrying" by the field and at the foot of the screen, and keeps what was typed', during === '(555) 555-0177' && /retrying/.test(bar),
         `input "${during}"; foot "${bar}"`);
-      await t.page.clock.fastForward(20_000);
+      // Observe actual retry timers. Do not accept another field's older Saved
+      // marker while this phone-number save is still retrying.
+      await t.page.waitForFunction(() => window.__ehFails === 2 &&
+        ![...document.querySelectorAll('[data-testid="eh-save"]')].some(n => /retrying|saving/i.test(n.textContent)), null, { timeout: 20_000 });
       await waitSaved(t);
       const r = (await store(t, 'hub_responses')).find((x) => x.invite_id.endsWith('400'));
       const fails = await t.evaluate(() => window.__ehFails);

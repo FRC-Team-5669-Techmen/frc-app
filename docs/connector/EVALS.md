@@ -34,3 +34,12 @@ A living list. Each line is something he would say to Claude, the tool that shou
 | 28 | "Riley's real name is Riley Ortega." | `set_member_name` | Runs at once: her full name changes, her nickname does not; one trail row; "undo that" puts the old name back. |
 | 29 | "Merge Riley's summer Gmail account into her school account." | `merge_accounts` | A preview first listing the rows per table that will move; on "yes" nothing names the Gmail account any more, it is inactive with a note, the school account has everything, and two trail rows. Two Rileys: Claude asks which. |
 | 30 | "Move the outreach event to Sunday." | `find_tool` then `call_app` (`schedule_update_event`) | A preview first (a generated entry always asks); on "yes" the event moves, as him. |
+
+
+## Scouting (0022)
+
+- "Show scouting for Beach Blitz": `scouting_event` resolves the calendar event and reads records/delivery as the caller. No parent-only access.
+- "Fetch the event teams": `preview_scouting_import` makes a read-only upstream preview. Missing credentials and upstream failures are visible; no empty replacement is saved.
+- "Save this scouting observation": find `scouting_save`, then `call_app` with the record id, event, kind, team, match, payload, expected version and stable operation UUID. Always confirm. Preview rolls back records, revisions and delivery reservations.
+- "Send this pit question": `scouting_save` with `kind=message` and `request_delivery=true` confirms before committing, then attempts the same authenticated dispatcher the browser uses. The result distinguishes saved data from delivery. A repeated request never duplicates a delivered or ambiguous message.
+- A stale expected version refuses with 40001. An operation UUID replay with changed content refuses. Unknown observations retain their explicit states.

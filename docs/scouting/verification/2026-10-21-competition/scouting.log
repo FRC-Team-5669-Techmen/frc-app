@@ -1,0 +1,6 @@
+
+> frc-app@0.1.0 test:features
+> node tools/e2e/features.mjs --only scouting --port 5403
+
+scouting: 150/150 passed (375 and 1440)
+features e2e: 150/150 passed (375 and 1440)

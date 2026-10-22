@@ -1,0 +1,871 @@
+{
+  "engine": "axe-core 4.11.1",
+  "scope": "Scouting region/dialog, WCAG 2 A/AA and 2.1 A/AA rules, fictional fixture backend, native Chromium desktop/touch emulation; manual review still required",
+  "negativeControls": "Unnamed button detected at each width; tab-arrow focus/selection, 24 dialog Tab steps and Escape focus return checked",
+  "results": [
+    {
+      "width": 375,
+      "state": "scout-this",
+      "violations": [],
+      "incomplete": [],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "link-in-text-block",
+        "link-name",
+        "nested-interactive",
+        "summary-name"
+      ]
+    },
+    {
+      "width": 375,
+      "state": "teams",
+      "violations": [],
+      "incomplete": [],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "link-in-text-block",
+        "link-name",
+        "nested-interactive",
+        "summary-name"
+      ]
+    },
+    {
+      "width": 375,
+      "state": "pit-messages",
+      "violations": [],
+      "incomplete": [],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "link-in-text-block",
+        "link-name",
+        "nested-interactive",
+        "summary-name"
+      ]
+    },
+    {
+      "width": 375,
+      "state": "pick-lists",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                "button[aria-label=\"Move 4414 down\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[aria-label=\"Move 1538 up\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        }
+      ],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "link-in-text-block",
+        "link-name",
+        "list",
+        "listitem",
+        "nested-interactive",
+        "select-name",
+        "summary-name"
+      ]
+    },
+    {
+      "width": 375,
+      "state": "practice",
+      "violations": [],
+      "incomplete": [],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "link-in-text-block",
+        "link-name",
+        "nested-interactive",
+        "summary-name"
+      ]
+    },
+    {
+      "width": 375,
+      "state": "downloaded-map",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                "text[dominant-baseline=\"central\"][font-size=\"20\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[font-size=\"11\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 1020) rotate(0)\"] > text[font-size=\"20\"] > tspan[y=\"-4\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 1020) rotate(0)\"] > text[font-size=\"20\"] > tspan[dy=\"26\"][font-size=\"16\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 920) rotate(0)\"] > text[font-size=\"20\"] > tspan[y=\"-4\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 920) rotate(0)\"] > text[font-size=\"20\"] > tspan[dy=\"26\"][font-size=\"16\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(270 970) rotate(15)\"] > text[font-size=\"20\"] > tspan[y=\"-4\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(270 970) rotate(15)\"] > text[font-size=\"20\"] > tspan[dy=\"26\"][font-size=\"16\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "tspan[y=\"6.666666666666667\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            }
+          ]
+        }
+      ],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "link-in-text-block",
+        "link-name",
+        "nested-interactive",
+        "select-name",
+        "summary-name",
+        "svg-img-alt"
+      ]
+    },
+    {
+      "width": 375,
+      "state": "recovery-input",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                "text[dominant-baseline=\"central\"][font-size=\"20\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[font-size=\"11\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 1020) rotate(0)\"] > text[font-size=\"20\"] > tspan[y=\"-4\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 1020) rotate(0)\"] > text[font-size=\"20\"] > tspan[dy=\"26\"][font-size=\"16\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 920) rotate(0)\"] > text[font-size=\"20\"] > tspan[y=\"-4\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 920) rotate(0)\"] > text[font-size=\"20\"] > tspan[dy=\"26\"][font-size=\"16\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(270 970) rotate(15)\"] > text[font-size=\"20\"] > tspan[y=\"-4\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(270 970) rotate(15)\"] > text[font-size=\"20\"] > tspan[dy=\"26\"][font-size=\"16\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "tspan[y=\"6.666666666666667\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            }
+          ]
+        }
+      ],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "link-in-text-block",
+        "link-name",
+        "nested-interactive",
+        "select-name",
+        "summary-name",
+        "svg-img-alt"
+      ]
+    },
+    {
+      "width": 375,
+      "state": "observation-dialog",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                ".sc-checkbox > span"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            }
+          ]
+        }
+      ],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "nested-interactive",
+        "scrollable-region-focusable",
+        "select-name"
+      ]
+    },
+    {
+      "width": 375,
+      "state": "observation-dialog-scrolled",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                ".sc-fields > label:nth-child(1)"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".sc-fields > label:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".sc-form-fields > label:nth-child(3)"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".sc-form-fields > p"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            }
+          ]
+        }
+      ],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "nested-interactive",
+        "scrollable-region-focusable",
+        "select-name"
+      ]
+    },
+    {
+      "width": 1440,
+      "state": "scout-this",
+      "violations": [],
+      "incomplete": [],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "link-in-text-block",
+        "link-name",
+        "nested-interactive",
+        "summary-name"
+      ]
+    },
+    {
+      "width": 1440,
+      "state": "teams",
+      "violations": [],
+      "incomplete": [],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "link-in-text-block",
+        "link-name",
+        "nested-interactive",
+        "summary-name"
+      ]
+    },
+    {
+      "width": 1440,
+      "state": "pit-messages",
+      "violations": [],
+      "incomplete": [],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "link-in-text-block",
+        "link-name",
+        "nested-interactive",
+        "summary-name"
+      ]
+    },
+    {
+      "width": 1440,
+      "state": "pick-lists",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                "button[aria-label=\"Move 4414 down\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            },
+            {
+              "target": [
+                "button[aria-label=\"Move 1538 up\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element content contains only non-text characters"
+            }
+          ]
+        }
+      ],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "link-in-text-block",
+        "link-name",
+        "list",
+        "listitem",
+        "nested-interactive",
+        "select-name",
+        "summary-name"
+      ]
+    },
+    {
+      "width": 1440,
+      "state": "practice",
+      "violations": [],
+      "incomplete": [],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "link-in-text-block",
+        "link-name",
+        "nested-interactive",
+        "summary-name"
+      ]
+    },
+    {
+      "width": 1440,
+      "state": "downloaded-map",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                "text[dominant-baseline=\"central\"][font-size=\"20\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[font-size=\"11\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 1020) rotate(0)\"] > text[font-size=\"20\"] > tspan[y=\"-4\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 1020) rotate(0)\"] > text[font-size=\"20\"] > tspan[dy=\"26\"][font-size=\"16\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 920) rotate(0)\"] > text[font-size=\"20\"] > tspan[y=\"-4\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 920) rotate(0)\"] > text[font-size=\"20\"] > tspan[dy=\"26\"][font-size=\"16\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(270 970) rotate(15)\"] > text[font-size=\"20\"] > tspan[y=\"-4\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(270 970) rotate(15)\"] > text[font-size=\"20\"] > tspan[dy=\"26\"][font-size=\"16\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "tspan[y=\"6.666666666666667\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            }
+          ]
+        }
+      ],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "link-in-text-block",
+        "link-name",
+        "nested-interactive",
+        "scrollable-region-focusable",
+        "select-name",
+        "summary-name",
+        "svg-img-alt"
+      ]
+    },
+    {
+      "width": 1440,
+      "state": "recovery-input",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                "text[dominant-baseline=\"central\"][font-size=\"20\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it is overlapped by another element"
+            },
+            {
+              "target": [
+                "text[font-size=\"11\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 1020) rotate(0)\"] > text[font-size=\"20\"] > tspan[y=\"-4\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 1020) rotate(0)\"] > text[font-size=\"20\"] > tspan[dy=\"26\"][font-size=\"16\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 920) rotate(0)\"] > text[font-size=\"20\"] > tspan[y=\"-4\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(70 920) rotate(0)\"] > text[font-size=\"20\"] > tspan[dy=\"26\"][font-size=\"16\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(270 970) rotate(15)\"] > text[font-size=\"20\"] > tspan[y=\"-4\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "g[transform=\"translate(270 970) rotate(15)\"] > text[font-size=\"20\"] > tspan[dy=\"26\"][font-size=\"16\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            },
+            {
+              "target": [
+                "tspan[y=\"6.666666666666667\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because element contains an image node"
+            }
+          ]
+        }
+      ],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "avoid-inline-spacing",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "link-in-text-block",
+        "link-name",
+        "nested-interactive",
+        "scrollable-region-focusable",
+        "select-name",
+        "summary-name",
+        "svg-img-alt"
+      ]
+    },
+    {
+      "width": 1440,
+      "state": "observation-dialog",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                ".sc-checkbox > span"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            }
+          ]
+        }
+      ],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "nested-interactive",
+        "scrollable-region-focusable",
+        "select-name"
+      ]
+    },
+    {
+      "width": 1440,
+      "state": "observation-dialog-scrolled",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+          "helpUrl": "https://dequeuniversity.com/rules/axe/4.11/color-contrast?application=axeAPI",
+          "nodes": [
+            {
+              "target": [
+                ".sc-fields > label:nth-child(1)"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            },
+            {
+              "target": [
+                ".sc-fields > label:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  Element's background color could not be determined because it's partially obscured by another element"
+            }
+          ]
+        }
+      ],
+      "passedRules": [
+        "aria-allowed-attr",
+        "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-roles",
+        "aria-valid-attr-value",
+        "aria-valid-attr",
+        "button-name",
+        "color-contrast",
+        "duplicate-id-aria",
+        "form-field-multiple-labels",
+        "label",
+        "nested-interactive",
+        "scrollable-region-focusable",
+        "select-name"
+      ]
+    }
+  ]
+}

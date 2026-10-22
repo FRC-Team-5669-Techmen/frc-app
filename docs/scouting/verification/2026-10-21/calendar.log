@@ -1,0 +1,25 @@
+
+> frc-app@0.1.0 discord:calendar:test
+> node scripts/discord/calendar-sync.test.mjs
+
+  PASS  report-only posts nothing and writes no tracking rows
+  PASS  first live run posts to #calendar and records the message id
+  PASS  second run over unchanged data posts NOTHING (no double post)
+  PASS  a changed event EDITS the existing message instead of posting again
+  PASS  a deleted event strikes the message and marks it cancelled, never deletes
+  PASS  cancellation is idempotent — a second sweep does not re-edit
+  PASS  reminder_24h is retired: an event inside 24h never creates one
+  PASS  retiring 24h does not skip, delay or double-fire the 2h reminder
+  PASS  2h reminder fires; no 24h slot is opened or superseded
+  PASS  an event naming a subteam pings that role, and only that role
+  PASS  an event naming no subteam pings nobody
+  PASS  a 4xx on create releases the reservation; an ambiguous failure keeps it
+  PASS  a failing cancellation sweep no longer stops reminders from posting
+  PASS  a JWT failure is retried at most twice, and a recoverable one succeeds
+  PASS  a retried run cannot create a second row or a second Discord message
+  PASS  only auth-shaped failures are retried, never anything else
+  PASS  a 2h reminder that was never sent is logged as reminder_missed, once
+  PASS  a reminder that fired normally is never logged as missed
+  PASS  every run is logged
+
+19/19 passed

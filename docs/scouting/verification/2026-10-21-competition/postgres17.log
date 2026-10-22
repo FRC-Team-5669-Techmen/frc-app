@@ -1,0 +1,96 @@
+frozen SQL: 55/55 files applied
+migration 0001_idea_certifications_mirror.sql: applied twice
+migration 0002_feedback_console.sql: applied twice
+migration 0003_discord_announcements.sql: applied twice
+migration 0004_member_permissions.sql: applied twice
+migration 0005_event_family_hub.sql: applied twice
+migration 0006_beach_blitz_seed.sql: applied twice
+migration 0007_event_hub_open_link.sql: applied twice
+migration 0008_event_hub_families.sql: applied twice
+migration 0009_event_hub_households.sql: applied twice
+migration 0010_event_hub_roster_names.sql: applied twice
+migration 0011_event_hub_parent_service_hours.sql: applied twice
+migration 0012_jobs_idea_cert_gate.sql: applied twice
+migration 0013_handbook_acknowledgments.sql: applied twice
+migration 0014_session_signout.sql: applied twice
+migration 0015_member_standing.sql: applied twice
+migration 0016_event_rosters.sql: applied twice
+migration 0017_families_and_records.sql: applied twice
+migration 0018_connector.sql: applied twice
+migration 0019_connector_writes.sql: applied twice
+migration 0020_member_admin.sql: applied twice
+migration 0021_connector_deleted_rows.sql: applied twice
+migration 0022_scouting.sql: applied twice
+supabase/feedback_rls_test.sql: 1 PASS, 0 FAIL, 0 SKIP (raise-style test)
+supabase/member_applications_rls_test.sql: 1 PASS, 0 FAIL, 0 SKIP (raise-style test)
+supabase/parent_responses_rls_test.sql: 1 PASS, 0 FAIL, 0 SKIP (raise-style test)
+supabase/migrations/0001_idea_certifications_mirror_rls_test.sql: 27 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0002_feedback_console_rls_test.sql: 24 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0003_discord_announcements_rls_test.sql: 24 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0004_member_permissions_rls_test.sql: 33 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0005_event_family_hub_rls_test.sql: 69 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0007_event_hub_open_link_rls_test.sql: 17 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0008_event_hub_families_rls_test.sql: 42 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0009_event_hub_households_rls_test.sql: 11 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0010_event_hub_roster_names_rls_test.sql: 12 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0012_jobs_idea_cert_gate_rls_test.sql: 27 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0013_handbook_acknowledgments_rls_test.sql: 16 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0014_session_signout_rls_test.sql: 23 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0015_member_standing_rls_test.sql: 26 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0016_event_rosters_rls_test.sql: 17 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0017_families_and_records_rls_test.sql: 19 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0018_connector_rls_test.sql: 23 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0019_connector_writes_rls_test.sql: 72 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0020_member_admin_rls_test.sql: 8 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0021_connector_deleted_rows_rls_test.sql: 8 PASS, 0 FAIL, 0 SKIP
+supabase/migrations/0022_scouting_rls_test.sql: 72 PASS, 0 FAIL, 0 SKIP
+scouting mutant CAUGHT: external match provenance removed; failed 64
+scouting mutant CAUGHT: external assignment scope boundary removed; failed 69
+scouting mutant CAUGHT: reply event boundary widened; failed 54
+scouting mutant CAUGHT: reply team boundary widened; failed 55
+scouting mutant CAUGHT: assignment roster manager gate removed; failed 60,62
+scouting mutant CAUGHT: assignment roster eligibility widened; failed 59
+scouting mutant CAUGHT: record read widened; failed 3
+scouting mutant CAUGHT: revision read widened; failed 47
+scouting mutant CAUGHT: delivery read widened; failed 49
+scouting mutant CAUGHT: parent gate removed; failed 45,47,49,59,62
+scouting mutant CAUGHT: approval gate removed; failed 27
+scouting mutant CAUGHT: active gate removed; failed 46,59
+scouting mutant CAUGHT: version check removed; failed 12,14,48
+scouting mutant CAUGHT: actor binding removed; failed 44
+scouting mutant CAUGHT: ownership guard removed; failed 13,14,16,17,29
+scouting mutant CAUGHT: duplicate operation body accepted; failed 10
+scouting mutant CAUGHT: duplicate logical observations accepted; failed 18,71
+scouting mutants: 17/17 caught
+PASS scouting race: overlapping identical retry returns the exact committed receipt
+PASS scouting race: identical retry creates one record, one revision and one receipt
+PASS scouting race: overlapping stale correction is refused with 40001
+PASS scouting race: winning correction and exactly two revisions survive
+PASS scouting race: simultaneous fresh IDs cannot duplicate a logical observation
+PASS scouting race: two live connections cannot both reserve notification delivery
+PASS scouting race: dispatcher reserves the immutable revision with the observation untouched
+scouting race: 7/7 passed (native PostgreSQL, separate connections; no HTTP or external sends)
+PASS scouting PWA: built app loads event through real PostgREST
+PASS scouting PWA: production service worker controls the page
+PASS scouting PWA: built map adapter authorizes through local PostgREST and caches fictional Nexus geometry
+PASS scouting PWA: cold navigation works offline even after the stored Auth session expires
+PASS scouting PWA: installed PWA start URL reopens the prepared event offline
+PASS scouting PWA: cold offline map survives with real service worker and IndexedDB
+PASS scouting PWA: offline observation has no server record
+PASS scouting PWA: native IndexedDB queue survives built-PWA reload
+PASS scouting PWA: lost HTTP response preserves the queued proposal after server commit
+PASS scouting PWA: reconnect creates exactly one attributed observation
+PASS scouting PWA: repeated launch creates no duplicate logical records
+PASS scouting PWA: interrupted-page test reaches a real committed save before response
+PASS scouting PWA: a restarted page automatically recovers its expired lease without another submit
+PASS scouting PWA: exiting prepared mode removes capture access
+PASS scouting PWA: offline identity stays cleared across reload
+PASS scouting PWA: parent JWT sees no scouting rows through PostgREST
+PASS scouting PWA: parent JWT cannot save through PostgREST
+PASS scouting PWA: map adapter refuses a parent through the actual local eligibility RPC before provider access
+PASS scouting PWA: authenticated client cannot bypass validated write RPC
+PASS scouting PWA: connector HTTP preview rolls back without creating evidence
+PASS scouting PWA: connector HTTP commit preserves identity and audit
+PASS scouting PWA: connector HTTP refuses an unauthorized account
+scouting PWA: 22/22 passed
+sql harness: 573/573 checks passed across 23 test file(s)

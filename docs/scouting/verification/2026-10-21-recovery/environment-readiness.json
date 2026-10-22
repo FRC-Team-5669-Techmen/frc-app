@@ -1,0 +1,16 @@
+{
+  "observedAt": "2026-10-21 15:45:21 UTC",
+  "source": "cloud_environment.environment_status",
+  "observationsCurrent": true,
+  "networkMode": "restricted",
+  "networkState": "enforced",
+  "presets": [
+    "package_managers"
+  ],
+  "customAllowedHosts": [],
+  "hasSupabaseApiHost": false,
+  "capabilitiesCount": 0,
+  "configuredSecretBindings": 0,
+  "outboundIdentityAliases": 0,
+  "limitation": "Configuration observation only. Earlier actual staging HTTPS CONNECT 403 is retained in STAGING.md. No new hosted request or staging recreation was attempted."
+}

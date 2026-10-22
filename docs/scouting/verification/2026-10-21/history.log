@@ -1,0 +1,12 @@
+
+> frc-app@0.1.0 history:verify
+> node docs/history/_tools/verify-split.mjs
+
+entries reassembled : 50 (expected 50)
+reassembled bytes   : 109839 (expected 109839)
+reassembled sha256  : b85db0a6aa3588f5d12b8c85a159ade43b36327f1f8e9c327d6bca9c15e4aa59
+reference sha256    : b85db0a6aa3588f5d12b8c85a159ade43b36327f1f8e9c327d6bca9c15e4aa59
+source byte compare : IDENTICAL against _source/claude-md-log-2026-09-02.txt
+sha256 compare      : IDENTICAL
+
+OK: the split is lossless. Every byte of the pre-split paragraph is present, in order, across 50 entries (15 written since).

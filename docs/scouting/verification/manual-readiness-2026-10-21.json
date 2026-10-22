@@ -1,0 +1,25 @@
+{
+  "recordedAt": "2026-10-21 18:37:43 UTC",
+  "scope": "Read-only environment readiness and unauthenticated Supabase health connection; no database mutation",
+  "environment": {
+    "observationsCurrent": true,
+    "networkMode": "restricted",
+    "networkState": "enforced",
+    "customAllowedHosts": [],
+    "presets": [
+      "package_managers"
+    ]
+  },
+  "probe": {
+    "url": "https://pbuogcrhdywpzvcxbwsd.supabase.co/auth/v1/health",
+    "result": "curl (56) CONNECT tunnel failed, response 403; endpoint HTTP status 000",
+    "reachedSupabase": false
+  },
+  "capabilities": {
+    "managedWorkspacePolicyEditor": false,
+    "vercelSandboxPolicyEditor": "Available, different runtime; not used",
+    "connectedBrowserControlTool": false
+  },
+  "acceptanceGatesChanged": false,
+  "applicationChanged": false
+}

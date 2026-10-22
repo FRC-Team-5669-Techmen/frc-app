@@ -1,0 +1,29 @@
+{
+  "scope": "Synthetic large event, fixture backend, native Chromium at desktop/touch-emulated widths; shared container timing only, not field performance",
+  "results": [
+    {
+      "width": 375,
+      "ok": true,
+      "records": 1682,
+      "revisions": 1682,
+      "observations": 1440,
+      "teams": 120,
+      "loadMs": 2549,
+      "teamsMs": 1354,
+      "searchMs": 105,
+      "checks": "Complete cache and export beyond 1,000 rows; last team visible; four pages and last-team search; independent 4/6 denominator and excluded states; 120 tied median ranks and support counts; zero script errors or remote requests"
+    },
+    {
+      "width": 1440,
+      "ok": true,
+      "records": 1682,
+      "revisions": 1682,
+      "observations": 1440,
+      "teams": 120,
+      "loadMs": 5567,
+      "teamsMs": 2167,
+      "searchMs": 106,
+      "checks": "Complete cache and export beyond 1,000 rows; last team visible; four pages and last-team search; independent 4/6 denominator and excluded states; 120 tied median ranks and support counts; zero script errors or remote requests"
+    }
+  ]
+}

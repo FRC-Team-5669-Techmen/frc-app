@@ -38,8 +38,9 @@ import { isSchemaMissing } from './schemaMissing.js'
 
 export const CAP_EVENTS_CREATE = 'events.create'
 export const CAP_SIGNOUT_APPROVE = 'signout.approve'
+export const CAP_SCOUTING_MANAGE = 'scouting.manage'
 
-// Mirrors the rows 0004 and 0014 seed into public.capabilities (key + label must match;
+// Mirrors the rows 0004, 0014, and 0022 seed into public.capabilities (key + label must match;
 // the test enforces it). A new capability is a new row there AND here.
 export const CAPABILITIES = Object.freeze([
   Object.freeze({
@@ -55,6 +56,7 @@ export const CAPABILITIES = Object.freeze([
     short: 'Approves sign-outs',
     hint: 'Approve or send back other members\' sign-out requests on /signouts. Never their own.',
   }),
+  Object.freeze({ key: CAP_SCOUTING_MANAGE, label: 'Can manage scouting', short: 'Manages scouting', hint: 'Assign scouts and maintain team data. Parent-only accounts cannot use scouting.' }),
 ])
 
 export const STAFF_ROLES = Object.freeze(['mentor', 'lead', 'admin'])

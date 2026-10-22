@@ -1,0 +1,25 @@
+certifications: 118/118 passed (375 and 1440)
+feedback: 227/227 passed (375 and 1440)
+FAIL [1440] announce · mig none · student · spec ran to the end -- threw: page.waitForSelector: Timeout 15000ms exceeded. | Call log: | [2m  - waiting for locator('.an-wrap')[22m
+announce: 122/123 passed (375 and 1440)
+permissions: 153/153 passed (375 and 1440)
+display-history: 226/226 passed (375 and 1440)
+my-hours: 84/84 passed (375 and 1440)
+dashboard-checkout: 30/30 passed (375 and 1440)
+event-hub: 207/207 passed (375 and 1440)
+job-certs: 109/109 passed (375 and 1440)
+handbook: 92/92 passed (375 and 1440)
+FAIL [375] signout · 0014 · FLL · one OUT with the note, no request -- got [0,null,0], expected [1,"Helped team 4521 with their attachment",0]
+signout: 89/90 passed (375 and 1440)
+standing: 69/69 passed (375 and 1440)
+rosters: 27/27 passed (375 and 1440)
+families: 75/75 passed (375 and 1440)
+FAIL [375] scouting · practice progression · practice completion and footage corrections remain reviewable -- threw: locator.tap: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('region', { name: 'Practice match lab', exact: true }).getByRole('group', { name: 'Intakes FUEL from the floor', exact: true }).getByRole('button', { name: 'Yes', exact: true })[22m
+[2m    - locator resolved to <button aria-pressed="false">Yes</button>[22m
+[2m  - attempting tap action[22m
+[2m    - waiting for element to be visible, enabled and stable[22m
+
+scouting: 162/163 passed (375 and 1440)
+features e2e: 1790/1793 passed (375 and 1440)

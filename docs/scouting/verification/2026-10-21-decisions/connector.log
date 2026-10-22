@@ -1,0 +1,5 @@
+
+> frc-app@0.1.0 connector:check
+> node tools/connector/build.mjs --check
+
+connector registry is current

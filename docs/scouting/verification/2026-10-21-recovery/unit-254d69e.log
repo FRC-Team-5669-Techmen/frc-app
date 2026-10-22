@@ -1,0 +1,12 @@
+
+> frc-app@0.1.0 test
+> vitest run --maxWorkers=1
+
+
+ RUN  v4.1.11 /workspace/frc-app
+
+
+ Test Files  68 passed (68)
+      Tests  1002 passed (1002)
+   Start at  15:08:08
+   Duration  98.87s (transform 12.34s, setup 0ms, import 24.18s, tests 48.90s, environment 8.11s)

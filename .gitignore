@@ -14,6 +14,7 @@ dist
 # ...and the repo's own skills, which travel with the repo like any other docs.
 !.claude/skills/
 artifacts/
+/work/
 .ds-sync/
 ds-bundle/
 .design-sync/.cache/
@@ -21,3 +22,4 @@ ds-bundle/
 
 # The history index is GENERATED (npm run history:index), never committed.
 docs/history/_generated/
+/.vercel/

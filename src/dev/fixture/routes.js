@@ -41,6 +41,8 @@ export const ROUTES = Object.freeze([
   { path: '/handbook', url: '/handbook', group: 'member', label: 'Member handbook' },
   { path: '/trips', url: '/trips', group: 'member', label: 'Trips' },
   { path: '/standing', url: '/standing', group: 'member', label: 'My standing' },
+  { path: '/scouting', url: '/scouting', group: 'member', label: 'Scouting events' },
+  { path: '/scouting/:eventId', url: '/scouting/16000000-0000-4000-8000-000000000001', group: 'member', label: 'Event scouting' },
   { path: '/rosters', url: '/rosters', group: 'member', label: 'Event rosters' },
   { path: '/leaderboard', url: '/leaderboard', group: 'member', label: 'Hours leaderboard' },
   { path: '/status-reports', url: '/status-reports', group: 'member', label: 'Sub-team status' },

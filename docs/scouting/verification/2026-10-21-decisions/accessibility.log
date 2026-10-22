@@ -1,0 +1,21 @@
+PASS scouting accessibility 375 scout-this: 0 violations; 0 manual-review rules
+PASS scouting accessibility 375 teams: 0 violations; 0 manual-review rules
+PASS scouting accessibility 375 pit-messages: 0 violations; 0 manual-review rules
+PASS scouting accessibility 375 pick-lists: 0 violations; 1 manual-review rules
+PASS scouting accessibility 375 practice: 0 violations; 0 manual-review rules
+PASS scouting accessibility 375 match-brief: 0 violations; 0 manual-review rules
+PASS scouting accessibility 375 downloaded-map: 0 violations; 1 manual-review rules
+PASS scouting accessibility 375 recovery-input: 0 violations; 1 manual-review rules
+PASS scouting accessibility 375 observation-dialog: 0 violations; 1 manual-review rules
+PASS scouting accessibility 375 observation-dialog-scrolled: 0 violations; 1 manual-review rules
+PASS scouting accessibility 1440 scout-this: 0 violations; 0 manual-review rules
+PASS scouting accessibility 1440 teams: 0 violations; 0 manual-review rules
+PASS scouting accessibility 1440 pit-messages: 0 violations; 0 manual-review rules
+PASS scouting accessibility 1440 pick-lists: 0 violations; 1 manual-review rules
+PASS scouting accessibility 1440 practice: 0 violations; 0 manual-review rules
+PASS scouting accessibility 1440 match-brief: 0 violations; 0 manual-review rules
+PASS scouting accessibility 1440 downloaded-map: 0 violations; 1 manual-review rules
+PASS scouting accessibility 1440 recovery-input: 0 violations; 1 manual-review rules
+PASS scouting accessibility 1440 observation-dialog: 0 violations; 1 manual-review rules
+PASS scouting accessibility 1440 observation-dialog-scrolled: 0 violations; 1 manual-review rules
+scouting accessibility: 20/20 scans without automated violations

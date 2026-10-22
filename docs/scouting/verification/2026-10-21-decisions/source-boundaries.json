@@ -1,0 +1,246 @@
+{
+  "applicationCommit": "db990e51fc24c24a42d8c202eb9107cc7ad33a9e",
+  "verifiedAt": "2026-10-21T17:44:31.273120+00:00",
+  "finalSerialFeatures": {
+    "execution": "Two disjoint serial batches on unchanged db990e5; not a single-process run",
+    "passed": 1801,
+    "failed": 0,
+    "counts": {
+      "certifications": 118,
+      "feedback": 227,
+      "announce": 125,
+      "permissions": 153,
+      "display-history": 226,
+      "my-hours": 84,
+      "dashboard-checkout": 30,
+      "event-hub": 207,
+      "job-certs": 109,
+      "handbook": 92,
+      "signout": 90,
+      "standing": 69,
+      "rosters": 27,
+      "families": 75,
+      "scouting": 169
+    },
+    "status": {
+      "app": "db990e51fc24c24a42d8c202eb9107cc7ad33a9e",
+      "started": "2026-10-21T17:23:41.311445+00:00",
+      "status": "complete",
+      "checks": [
+        {
+          "name": "unit-dom",
+          "command": [
+            "npm",
+            "test",
+            "--",
+            "--maxWorkers=1"
+          ],
+          "started": "2026-10-21T17:30:56.923579+00:00",
+          "status": "complete",
+          "finished": "2026-10-21T17:32:02.977554+00:00",
+          "exitCode": 0
+        },
+        {
+          "name": "build",
+          "command": [
+            "npm",
+            "run",
+            "build"
+          ],
+          "started": "2026-10-21T17:32:02.991050+00:00",
+          "status": "complete",
+          "finished": "2026-10-21T17:32:08.894147+00:00",
+          "exitCode": 0
+        },
+        {
+          "name": "connector",
+          "command": [
+            "npm",
+            "run",
+            "connector:check"
+          ],
+          "started": "2026-10-21T17:32:08.905586+00:00",
+          "status": "complete",
+          "finished": "2026-10-21T17:32:09.373345+00:00",
+          "exitCode": 0
+        },
+        {
+          "name": "design",
+          "command": [
+            "npm",
+            "run",
+            "ds:audit"
+          ],
+          "started": "2026-10-21T17:32:09.384547+00:00",
+          "status": "complete",
+          "finished": "2026-10-21T17:32:10.049261+00:00",
+          "exitCode": 0
+        },
+        {
+          "name": "calendar",
+          "command": [
+            "npm",
+            "run",
+            "discord:calendar:test"
+          ],
+          "started": "2026-10-21T17:32:10.059735+00:00",
+          "status": "complete",
+          "finished": "2026-10-21T17:32:10.313352+00:00",
+          "exitCode": 0
+        },
+        {
+          "name": "history",
+          "command": [
+            "npm",
+            "run",
+            "history:verify"
+          ],
+          "started": "2026-10-21T17:32:10.322270+00:00",
+          "status": "complete",
+          "finished": "2026-10-21T17:32:10.535575+00:00",
+          "exitCode": 0
+        },
+        {
+          "name": "decision-browser",
+          "command": [
+            "node",
+            "tools/e2e/scouting-decisions.mjs"
+          ],
+          "started": "2026-10-21T17:32:10.545229+00:00",
+          "status": "complete",
+          "finished": "2026-10-21T17:32:26.290730+00:00",
+          "exitCode": 0
+        },
+        {
+          "name": "mutation-controls",
+          "command": [
+            "node",
+            "tools/e2e/scouting-decision-controls.mjs"
+          ],
+          "started": "2026-10-21T17:32:26.299025+00:00",
+          "status": "complete",
+          "finished": "2026-10-21T17:32:26.380850+00:00",
+          "exitCode": 0
+        },
+        {
+          "name": "pwa",
+          "command": [
+            "node",
+            "tools/sql-harness/run.mjs",
+            "--tests",
+            "none",
+            "--node",
+            "tools/e2e/scouting-pwa.mjs"
+          ],
+          "started": "2026-10-21T17:32:26.399431+00:00",
+          "status": "complete",
+          "finished": "2026-10-21T17:33:16.773421+00:00",
+          "exitCode": 0
+        },
+        {
+          "name": "accessibility",
+          "command": [
+            "node",
+            "tools/e2e/scouting-accessibility.mjs"
+          ],
+          "started": "2026-10-21T17:33:16.785046+00:00",
+          "status": "complete",
+          "finished": "2026-10-21T17:33:32.801925+00:00",
+          "exitCode": 0
+        },
+        {
+          "name": "portable-review",
+          "command": [
+            "npm",
+            "run",
+            "scouting:preview:check"
+          ],
+          "started": "2026-10-21T17:33:32.815410+00:00",
+          "status": "complete",
+          "finished": "2026-10-21T17:33:35.897006+00:00",
+          "exitCode": 0
+        },
+        {
+          "name": "features",
+          "command": [
+            "node",
+            "tools/e2e/features.mjs",
+            "--only",
+            "certifications,feedback,announce,display-history,my-hours,dashboard-checkout,job-certs,handbook,standing,rosters,families",
+            "--port",
+            "5401"
+          ],
+          "started": "2026-10-21T17:33:35.907118+00:00",
+          "status": "complete",
+          "finished": "2026-10-21T17:44:24.744943+00:00",
+          "exitCode": 0
+        }
+      ],
+      "finished": "2026-10-21T17:44:24.785304+00:00",
+      "exitCode": 0,
+      "applicationChangedDuringRun": false
+    }
+  },
+  "initialBroadAttempt": {
+    "passed": 1790,
+    "total": 1793,
+    "failures": [
+      {
+        "feature": "announce",
+        "vp": "1440",
+        "state": "mig none \u00b7 student",
+        "label": "spec ran to the end",
+        "ok": false,
+        "measurement": "threw: page.waitForSelector: Timeout 15000ms exceeded. | Call log: | \u001b[2m  - waiting for locator('.an-wrap')\u001b[22m"
+      },
+      {
+        "feature": "signout",
+        "vp": "375",
+        "state": "0014 \u00b7 FLL",
+        "label": "one OUT with the note, no request",
+        "ok": false,
+        "measurement": "got [0,null,0], expected [1,\"Helped team 4521 with their attachment\",0]"
+      },
+      {
+        "feature": "scouting",
+        "vp": "375",
+        "state": "practice progression",
+        "label": "practice completion and footage corrections remain reviewable",
+        "ok": false,
+        "measurement": "threw: locator.tap: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('region', { name: 'Practice match lab', exact: true }).getByRole('group', { name: 'Intakes FUEL from the floor', exact: true }).getByRole('button', { name: 'Yes', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <button aria-pressed=\"false\">Yes</button>\u001b[22m\n\u001b[2m  - attempting tap action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n"
+      }
+    ]
+  },
+  "predecessorAttempt": {
+    "commit": "8fef9330a0fdb9677dc7231c9dfba7bcd7b68ee9",
+    "passed": 1797,
+    "total": 1798,
+    "failures": [
+      {
+        "feature": "event-hub",
+        "vp": "1440",
+        "state": "the family car takes a brother or sister alone, and not an outsider",
+        "label": "households (0009)",
+        "ok": false,
+        "measurement": "threw: page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('[data-testid=\"eh-status\"]')\u001b[22m\n"
+      }
+    ]
+  },
+  "applicationTests": 1028,
+  "nativeDecisionWorkflowAssertions": 46,
+  "builtPwaChecks": 28,
+  "clockMode": "fixed-date-real-timers",
+  "targetedNativeClockAssertions": 619,
+  "cancelledSerialAttempt": {
+    "app": "75fad888b88c3c2a8e547b74342a64a9c0906889",
+    "started": "2026-10-21T17:02:18.518868+00:00",
+    "status": "cancelled_after_failure",
+    "finished": "2026-10-21T17:10:27.291821+00:00",
+    "reason": "Single-process run timed out navigating schedule under missing migrations; full timer virtualization is being investigated. No full result claimed.",
+    "applicationChangedDuringRun": false
+  },
+  "physicalDevices": false,
+  "hostedAuth": false,
+  "realNotificationsSent": false,
+  "productionModified": false
+}

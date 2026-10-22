@@ -4,6 +4,7 @@ import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import { resolveCurrentSeason } from './seasons'
 import { nextApproval, nextRoles, nextOnboardedAt } from './claimApproval'
+import { clearOfflineScoutingAccountUnless, readOfflineScoutingAccount } from './scouting/offlineIdentity'
 import NavBar from './NavBar'
 import ErrorBoundary from './ErrorBoundary'
 import './App.css'
@@ -63,6 +64,8 @@ const SignoutsPage       = lazy(() => import('./SignoutsPage'))
 const StandingPage       = lazy(() => import('./StandingPage'))
 const StandingTeamPage   = lazy(() => import('./StandingTeamPage'))
 const RostersPage        = lazy(() => import('./RostersPage'))
+const ScoutingPage       = lazy(() => import('./ScoutingPage'))
+const OfflineScouting    = lazy(() => import('./scouting/OfflineScouting'))
 const SurveyPage         = lazy(() => import('./SurveyPage'))
 const SurveysAdmin       = lazy(() => import('./SurveysAdmin'))
 // Event family hub (migrations 0005/0006). The family page is public, like
@@ -120,6 +123,13 @@ function CheckinRedirect() {
 }
 
 export default function App() {
+  const [networkOnline, setNetworkOnline] = useState(() => navigator.onLine)
+  const [offlineScoutingBoot] = useState(() => !navigator.onLine && (/^\/scouting(?:\/|$)/.test(window.location.pathname) || (window.location.pathname === '/' && !!readOfflineScoutingAccount())))
+  useEffect(() => {
+    const online = () => setNetworkOnline(true), offline = () => setNetworkOnline(false)
+    window.addEventListener('online', online); window.addEventListener('offline', offline)
+    return () => { window.removeEventListener('online', online); window.removeEventListener('offline', offline) }
+  }, [])
   const [session, setSession] = useState(undefined)
   const [roles, setRoles]     = useState([])
   const [approved, setApproved] = useState(null)
@@ -210,12 +220,14 @@ export default function App() {
 
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
+        if (session || navigator.onLine) clearOfflineScoutingAccountUnless(session?.user?.id)
         setSession(session)
         if (session) claimAndLoad(session.user.id)
       })
       .catch(() => setSession(null))
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session || navigator.onLine || _event === 'SIGNED_OUT') clearOfflineScoutingAccountUnless(session?.user?.id)
       setSession(session)
       if (session) {
         claimAndLoad(session.user.id)
@@ -236,7 +248,7 @@ export default function App() {
       }
     })
     return () => subscription.unsubscribe()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [networkOnline]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-run the onboarding tour once, on the dashboard, after roles load so the
   // right track is chosen. Marks onboarded_at on finish/skip so it never repeats.
@@ -271,6 +283,10 @@ export default function App() {
     run()
     return () => clearTimeout(timer)
   }, [session, approved, onboardedAt, roles, appSeason, location.pathname])
+
+  // A cold offline start cannot refresh an expired Auth token or claim approval.
+  // Only the prepared scouting cache is opened; all online gates remain intact.
+  if (offlineScoutingBoot && !networkOnline && (/^\/scouting(?:\/|$)/.test(location.pathname) || location.pathname === '/')) return <ErrorBoundary key="offline-scouting"><Suspense fallback={<Splash />}><OfflineScouting /></Suspense></ErrorBoundary>
 
   if (session === undefined) return <Splash />
 
@@ -425,6 +441,8 @@ export default function App() {
           <Route path="/signouts"        element={<SignoutsPage session={session} hasRole={hasRole} />} />
           <Route path="/standing"        element={<StandingPage session={session} hasRole={hasRole} />} />
           <Route path="/standing/team"   element={<StandingTeamPage hasRole={hasRole} />} />
+          <Route path="/scouting"        element={<ScoutingPage session={session} hasRole={hasRole} />} />
+          <Route path="/scouting/:eventId" element={<ScoutingPage session={session} hasRole={hasRole} />} />
           <Route path="/rosters"         element={<RostersPage session={session} hasRole={hasRole} />} />
           <Route path="/rosters/:id"     element={<RostersPage session={session} hasRole={hasRole} />} />
           <Route path="/emergency-info"  element={<EmergencyInfoPage session={session} hasRole={hasRole} />} />

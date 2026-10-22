@@ -25,7 +25,9 @@
     "test:checkin": "node tools/e2e/checkin.mjs",
     "test:features": "node tools/e2e/features.mjs",
     "connector:build": "node tools/connector/build.mjs",
-    "connector:check": "node tools/connector/build.mjs --check"
+    "connector:check": "node tools/connector/build.mjs --check",
+    "scouting:preview": "node tools/scouting-preview/build.mjs",
+    "scouting:preview:check": "npm run scouting:preview && node tools/scouting-preview/check.mjs"
   },
   "dependencies": {
     "@fontsource/chakra-petch": "^5.2.7",
@@ -41,6 +43,8 @@
     "@discordjs/rest": "^2.6.3",
     "@vitejs/plugin-react": "^4.3.1",
     "discord-api-types": "^0.38.53",
+    "fake-indexeddb": "6.2.6",
+    "jsdom": "30.1.3",
     "pg": "8.16.3",
     "playwright-core": "^1.62.1",
     "supabase": "^2.114.0",

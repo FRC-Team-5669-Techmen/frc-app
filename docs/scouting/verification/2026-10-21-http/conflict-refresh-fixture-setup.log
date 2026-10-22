@@ -1,0 +1,25 @@
+
+ RUN  v4.1.11 /workspace/frc-app
+
+ ❯ tests/scouting-dom.test.js (29 tests | 1 failed | 28 skipped) 218ms
+     × keeps conflict review closed until its current server evidence finishes refreshing 216ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/scouting-dom.test.js > rendered scouting with IndexedDB emulation > keeps conflict review closed until its current server evidence finishes refreshing
+TypeError: Cannot read properties of undefined (reading 'id')
+ ❯ tests/scouting-dom.test.js:252:97
+    250|     const store = await createScoutingStore()
+    251|     const before = fixture.rows('scouting_records').find(r => r.kind =…
+    252|     const concurrent = await supabase.rpc('scouting_save', { p_actor: …
+       |                                                                                                 ^
+    253|       p_team: before.team_number, p_match: before.match_key, p_payload…
+    254|       p_expected_version: before.version, p_operation: crypto.randomUU…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 28 skipped (29)
+   Start at  19:20:53
+   Duration  2.10s (transform 756ms, setup 0ms, import 1.09s, tests 218ms, environment 645ms)

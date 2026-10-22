@@ -68,11 +68,12 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 - **Member standing**: absences, break weeks, the weekly and monthly checks, probation and removal, grades, discipline, safety, incidents, voids, FLL mentors, notices (0015). [`docs/subsystems/standing.md`](docs/subsystems/standing.md)
 - **Event rosters**: roles, eligibility, event-day attendance, conflicts, the family sign-up rule, the carpool lock (0016). [`docs/subsystems/rosters.md`](docs/subsystems/rosters.md)
 - **Families and records**: the family link, emergency information, driver documents, the no-photo list, sub-team status, the leaderboard, the onboarding checklist and shop gate, training, handbook versions, letter progress (0017). [`docs/subsystems/families-and-records.md`](docs/subsystems/families-and-records.md)
+- **Scouting**: event observations, offline queue, shift planning, pit conversations, pick lists and practice. [`docs/subsystems/scouting.md`](docs/subsystems/scouting.md).
 - **Connector**: Claude acting as the admin through `/mcp` (0018); every write via `src/writeVia.js` (0019). [`docs/subsystems/connector.md`](docs/subsystems/connector.md)
 
 ### Roadmap (planned modules)
 
-- Custom scouting app and system.
+- Field validation of the new scouting system on real iPhone and Android devices.
 - Calculators and reference tables for robot design.
 - Automated FRC learning environment so students can build skills and take on more responsibility during the season. Offseason priority.
 - Job and task list with assignment to members.
@@ -152,7 +153,7 @@ This applies to every change. Prompts do not need to restate it.
 **Always:**
 
 - **`npm run build` is green**, and so are `npm test`, `npm run ds:audit`, `npm run discord:calendar:test` and `npm run history:verify`. Those five are what CI runs. A session reports the numbers, not the adjective.
-- **State plainly what was NOT verified, and why.** Nothing in this container can reach the live Supabase project — no credentials exist here — so any claim about RLS behaving on the real database, about a migration having been applied, or about a signed-in surface, is unverified and says so. **"Not verified" is a result; silence is not.**
+- **State plainly what was NOT verified, and why.** Local test commands use disposable data and never establish live deployment or RLS. A configured connector can inspect the live catalog read-only; report exactly which objects were found. A live write, migration, integration send or deployment still requires the task’s authorization. Do not infer signed-in production behavior from catalog access. **"Not verified" is a result; silence is not.**
 - **A measurement that cannot be repeated is a claim about the past.** For months every bundle here wrote a headless Chromium harness, drove the real components against a stubbed `./supabase`, reported numbers, and then DELETED the harness. Those numbers are in `docs/history/` — 78/78, 54 checks, 62/62, 44/44 — and not one can be re-run. **Do not do this again.** A harness worth writing is worth keeping: add a route spec under `tools/browser-verify/routes/`, a fixture-mode spec under `tools/e2e/features/`, or a test under `tests/`.
 - **Every test and every check needs a positive control.** An assertion that something is absent, empty, refused or zero is satisfied by a module that has stopped working entirely. Drive the same fixture the other way round in the same file. This is not a style preference: `tests/anomaly-pairing.test.js` mutates the shipped pairing function in memory and requires three ledgers to break, because without that every assertion in it would pass against a function returning an empty set.
 - **Assert both directions of any visibility or gating claim.** Name what must be PRESENT alongside what must be ABSENT, and report both counts. "The parent view has no staff controls" is not a result; "0 of 3 staff links, against 3 on the same fixture with `isStaff` true" is.
@@ -177,6 +178,8 @@ This applies to every change. Prompts do not need to restate it.
 10. **The system is in active pilot.** Favor changes safe to ship to live users, and flag anything that could disrupt an in-progress check-in session.
 
 ### Branches, and what happens to them
+
+**Scouting review exception (explicit user instruction):** continue `codex/scouting-2026-evidence` and draft PR #4, preserving newer remote changes. Do not apply the solo-mode main-push rule to this scouting run. Main pushes, production deployment/database changes and real Discord sends require separate explicit release authorization. Read `docs/scouting/RESUME.md` and `RELEASE.md` before continuing; routine review-branch implementation, tests and checkpoint pushes are already authorized.
 
 **A session working alone (solo mode) commits and pushes straight to `main`** — Mr. Pina's rule since 2026-09-27, recorded in [`docs/decisions/05-solo-mode-on-frc-app.md`](docs/decisions/05-solo-mode-on-frc-app.md) — and only after the local gate passes on the exact tree being pushed: `npm run build`, `npm test`, `npm run ds:audit`, `npm run discord:calendar:test`, `npm run history:verify`, `npm run test:checkin` and `npm run test:features`, each read by its summary line, because a runner can exit 0 with a failure. In this mode CI reports after the fact rather than gating: every push to `main` deploys the PWA to students who may be mid-check-in, and on 2026-10-01 production went live 14 seconds before CI finished. SQL still reaches the database only by hand, so code that reads a migration not yet applied must detect it through `src/schemaMissing.js` and degrade to a plain "not set up yet" state, never fail. If `main` moved, rebase onto it and run the whole gate again before pushing, and rebase only commits that have not been pushed anywhere: `integrate.yml` may already have merged them into `integration`, and their rewritten copies then conflict with it (after the rebase of 2026-10-01 every Integrate run failed that way). **Parallel work — two or more sessions at once — keeps the branch path below** (a `claude/**` branch, `integrate.yml` collecting it into `integration`, `deploy.yml` moving `main`), because two sessions cannot both gate `main`.
 
@@ -225,4 +228,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-20. See `docs/history/frc-connector-writes-0014.md`.
+Last reviewed: 2026-10-21. Scouting now returns PT409 domain conflicts to avoid PostgREST 14 retries; real isolated hosted Auth/API evidence and the Vercel access blocker are retained. Vercel CLI access and an isolated scouting preview are now verified; normal human sign-in remains open. Latest record: `docs/history/scouting-vercel-preview.md`.

@@ -56,6 +56,25 @@ const notSetUp = (what) => ({ status: 'not_set_up', message: `${what} is not set
 // ── The hand reads ───────────────────────────────────────────────────────────
 
 const READS = {
+  async scouting_event(ctx, a) {
+    const resolved = await RESOLVERS.event(ctx, a.event)
+    if (!resolved.event) return resolved
+    const spec = { table: 'scouting_records', columns: ['*'], eq: { event_id: resolved.event.id }, order: [['updated_at', 'desc']], limit: 1000 }
+    const records = await ctx.backend.select(ctx.session, spec)
+    if (records.error) return isSchemaMissing(records.error) ? notSetUp('Scouting') : { status: 'refused', message: records.error.message }
+    const delivery = await ctx.backend.select(ctx.session, { table: 'scouting_delivery', columns: ['*'], eq: { event_id: resolved.event.id }, limit: 1000 })
+    return { status: 'ok', event: resolved.event, records: records.data, delivery: delivery.error ? [] : delivery.data,
+      truncated: records.data.length === 1000, delivery_error: delivery.error ? 'Delivery status unavailable.' : null,
+      note: 'Claims, observations, official alliance results and statistical estimates are distinct evidence. Missing observations are not failures.' }
+  },
+  async preview_scouting_import(ctx, a) {
+    const resolved = await RESOLVERS.event(ctx, a.event)
+    if (!resolved.event) return resolved
+    if (!ctx.backend.scoutingImport) return { status: 'not_available', message: 'Import preview is unavailable in this environment.' }
+    const result = await ctx.backend.scoutingImport(ctx.session, { event_id: resolved.event.id, event_key: a.event_key, ...(a.mode ? { mode: a.mode } : {}) })
+    if (result.error) return { status: 'unavailable', message: 'Import preview is unavailable. Existing scouting data is unchanged.' }
+    return { status: 'ok', preview: result.data }
+  },
   async find_member(ctx, a) {
     const r = await resolveMember(ctx, a.name)
     if (!r.member) return r
@@ -387,6 +406,8 @@ async function callApp(ctx, a) {
       : { status: 'not_found', message: `The app has no action named ${fname}. Call find_tool with his words; if nothing fits, call report_gap.` }
   }
   const args = { ...(a.args && typeof a.args === 'object' && !Array.isArray(a.args) ? a.args : {}) }
+  // Bind scouting operations to the token account, never a user-supplied actor.
+  if (fname === 'scouting_save') args.p_actor = ctx.session.user.id
   // A name where a member or event id goes is resolved the way the hand
   // entries resolve it; an unknown or ambiguous one writes nothing.
   for (const form of entry.forms) {

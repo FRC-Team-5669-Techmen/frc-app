@@ -1,0 +1,8 @@
+.review-bar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; padding:20px max(20px,calc((100% - 1192px)/2)); background:var(--surface); border-bottom:1px solid var(--gold-dim); }
+.review-bar strong { font-family:var(--font-ui); letter-spacing:.07em; }
+.review-bar p,.review-guide p { font-size:13px; color:var(--steel); margin-top:8px; line-height:1.5; }
+.review-bar label { display:grid; gap:6px; font-size:13px; }
+.review-bar select { min-height:44px; padding:8px; color:var(--text); background:var(--bg); border:1px solid var(--border-strong); }
+.review-guide { max-width:1192px; margin:16px auto; padding:16px 24px; color:var(--steel); }
+.review-guide summary { cursor:pointer; min-height:44px; display:flex; align-items:center; color:var(--text); }
+.review-guide li { margin:10px 0 10px 20px; line-height:1.5; }

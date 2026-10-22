@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-21",
+  "branch": "codex/scouting-2026-evidence",
+  "baseline": "f8d605633298ecc545265f9176ef1982270234f3",
+  "staging_project": "cctevrqiuqdiswkgghwo",
+  "branch_id": "a7d4a09a-d18f-4591-873a-f63f7178af57",
+  "with_data": false,
+  "migration_fixed_applied_twice": true,
+  "http_catalog_before_cleanup": [
+    {
+      "final_http_catalog": {
+        "users": 6,
+        "records": 5,
+        "delivery": 0,
+        "postgres": "17.11",
+        "profiles": 6,
+        "cron_jobs": 0,
+        "postgrest": "PostgREST 14.18",
+        "revisions": 9,
+        "operations": 9,
+        "queued_http": 0
+      }
+    }
+  ],
+  "hosted_sql_proof": [
+    {
+      "staging_proof": {
+        "scope": "Hosted PostgreSQL RLS, SQL-injected request claims; not hosted Auth/API acceptance",
+        "asserted_passed_checks": 72,
+        "fixture_users_after_rollback": 0,
+        "scouting_rows_after_rollback": 0,
+        "fixture_profiles_after_rollback": 0
+      }
+    }
+  ],
+  "cleanup_catalog": [
+    {
+      "cleanup_catalog": {
+        "users": 0,
+        "records": 0,
+        "delivery": 0,
+        "profiles": 0,
+        "cron_jobs": 0,
+        "revisions": 0,
+        "operations": 0,
+        "queued_http": 0
+      }
+    }
+  ],
+  "branch_cleanup": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"success\":true}"
+      }
+    ],
+    "structuredContent": null,
+    "isError": false
+  },
+  "branch_listing": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"branches\":[{\"id\":\"a8d8a50f-ad2b-4ab2-80fb-0ea4a7eb172e\",\"name\":\"main\",\"project_ref\":\"pbuogcrhdywpzvcxbwsd\",\"is_default\":true,\"persistent\":false,\"status\":\"FUNCTIONS_DEPLOYED\",\"created_at\":\"2026-10-21T14:10:15.131964+00:00\",\"updated_at\":\"2026-10-21T14:10:15.131964+00:00\",\"parent_project_ref\":\"pbuogcrhdywpzvcxbwsd\",\"with_data\":false,\"preview_project_status\":\"ACTIVE_HEALTHY\"}]}"
+      }
+    ],
+    "structuredContent": null,
+    "isError": false
+  },
+  "production_read_only_postcheck": [
+    {
+      "postgres": "17.6",
+      "scouting_tables": 0,
+      "scouting_functions": 0
+    }
+  ],
+  "network": "Inherited proxy; GitHub and npm HTTP 200, Supabase HTTP 401 without API key; actual staging Auth/REST/Edge successful with project key and fictional JWTs",
+  "providers": {
+    "tba": "401 without key",
+    "nexus": "401 without key",
+    "statbotics": "HTTP 500 with [] for 2026dal and 2025casf; no source success claimed"
+  },
+  "vercel": "Both connected accounts get scoped 403 for team_t21qnb2a8oRqQy7beqKF5LZJ / prj_eDfnffVycoAO4YJIfKY9SiBaDMwR; no team authorization tool or CLI credential available; no app deployment attempted"
+}

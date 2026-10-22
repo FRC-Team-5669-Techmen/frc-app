@@ -1,0 +1,4964 @@
+{
+  "clockStart": "2026-10-01T23:00:00.000Z",
+  "clockMode": "fixed-date-real-timers",
+  "features": [
+    "signout",
+    "event-hub",
+    "permissions",
+    "scouting"
+  ],
+  "results": [
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Sam taps out",
+      "label": "the note form, nothing written",
+      "ok": true,
+      "measurement": "[1,0,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Sam taps out",
+      "label": "the button asks, it does not sign out",
+      "ok": true,
+      "measurement": "\"Ask to sign out\""
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Sam taps out",
+      "label": "sign-out controls at least 44px on the phone",
+      "ok": true,
+      "measurement": "2 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Sam taps out",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Sam taps out",
+      "label": "an empty note is refused, 0 requests",
+      "ok": true,
+      "measurement": "Write a short note of what you did."
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Sam taps out",
+      "label": "one pending request with the note and the tick, 0 OUTs",
+      "ok": true,
+      "measurement": "[1,\"pending\",\"Wired the intake motor\",true,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Sam taps out",
+      "label": "a reload shows the wait and writes nothing",
+      "ok": true,
+      "measurement": "[1,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Sam is not an approver",
+      "label": "Sam: no queue, told who approves",
+      "ok": true,
+      "measurement": "[0,true]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Sam is not an approver",
+      "label": "Sam: no Sign-outs in the menu",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Riley approves",
+      "label": "Riley: the Sign-outs entry (1 against 0 for Sam)",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Riley approves",
+      "label": "Riley sees Sam waiting with his note",
+      "ok": true,
+      "measurement": "[1,\"Sam\",\"Wired the intake motor\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Riley approves",
+      "label": "approve buttons at least 44px on the phone",
+      "ok": true,
+      "measurement": "2 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Riley approves",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Riley approves",
+      "label": "approving wrote one OUT with the note",
+      "ok": true,
+      "measurement": "[1,\"Wired the intake motor\",\"manual\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Riley approves",
+      "label": "Decided today names Riley",
+      "ok": true,
+      "measurement": "Sam Approved4:00 PM by Riley"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · own requests are never in your queue",
+      "label": "Riley does not see her own request",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · own requests are never in your queue",
+      "label": "the mentor sees it (1 against 0)",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · own requests are never in your queue",
+      "label": "sent back, not signed out",
+      "ok": true,
+      "measurement": "[\"returned\",0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · own requests are never in your queue",
+      "label": "the tag route shows the reason",
+      "ok": true,
+      "measurement": "Sent back. Sweep the mill area first"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Approve all",
+      "label": "the mentor menu has Sign-outs",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Approve all",
+      "label": "two waiting, one Approve all",
+      "ok": true,
+      "measurement": "[2,\"Approve all 2\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · Approve all",
+      "label": "both sessions closed (1 OUT each)",
+      "ok": true,
+      "measurement": "[1,1]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · meeting present and late",
+      "label": "Casey checks in 7 minutes in: PRESENT, one row",
+      "ok": true,
+      "measurement": "[true,1,\"present\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · meeting present and late",
+      "label": "Sam, signed in, scans 25 minutes in: LATE, stays signed in (0 OUTs, 0 requests)",
+      "ok": true,
+      "measurement": "[true,\"late\",0,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · meeting present and late",
+      "label": "Sign out instead is offered",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · dashboard",
+      "label": "Check Out opens the note, nothing written",
+      "ok": true,
+      "measurement": "[1,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · dashboard",
+      "label": "the tile waits for approval; one request from the button",
+      "ok": true,
+      "measurement": "[1,1,\"button\",0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · dashboard",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · FLL",
+      "label": "the FLL button signs out",
+      "ok": true,
+      "measurement": "\"Sign out\""
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · FLL",
+      "label": "one OUT with the note, no request",
+      "ok": true,
+      "measurement": "[1,\"Helped team 4521 with their attachment\",0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · quick pulse",
+      "label": "Riley reads not signed in; the button signs in",
+      "ok": true,
+      "measurement": "[\"Not signed in\",\"Sign in now\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · quick pulse",
+      "label": "the quick button at least 44px on the phone",
+      "ok": true,
+      "measurement": "1 visible, smallest 48px, pointer coarse"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · quick pulse",
+      "label": "one tap arms it and writes nothing",
+      "ok": true,
+      "measurement": "[\"Tap again to sign Riley in\",0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · quick pulse",
+      "label": "the second tap writes one IN, by the mentor, with an audit row",
+      "ok": true,
+      "measurement": "[1,\"in\",true,true]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · quick pulse",
+      "label": "the board shows Riley present",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "0014 · quick pulse",
+      "label": "two more taps sign her out (IN then OUT)",
+      "ok": true,
+      "measurement": "[\"in\",\"out\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "pre-0014 · quick pulse",
+      "label": "Riley reads not signed in; the button signs in",
+      "ok": true,
+      "measurement": "[\"Not signed in\",\"Sign in now\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "pre-0014 · quick pulse",
+      "label": "the quick button at least 44px on the phone",
+      "ok": true,
+      "measurement": "1 visible, smallest 48px, pointer coarse"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "pre-0014 · quick pulse",
+      "label": "one tap arms it and writes nothing",
+      "ok": true,
+      "measurement": "[\"Tap again to sign Riley in\",0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "pre-0014 · quick pulse",
+      "label": "the second tap writes one IN, by the mentor, with an audit row",
+      "ok": true,
+      "measurement": "[1,\"in\",true,true]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "pre-0014 · quick pulse",
+      "label": "the board shows Riley present",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "pre-0014 · quick pulse",
+      "label": "two more taps sign her out (IN then OUT)",
+      "ok": true,
+      "measurement": "[\"in\",\"out\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "quick pulse · a student board has no control",
+      "label": "0 name buttons and 0 quick buttons for a student",
+      "ok": true,
+      "measurement": "[0,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "pre-0014",
+      "label": "/signouts: not set up yet, no queue",
+      "ok": true,
+      "measurement": "[true,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "pre-0014",
+      "label": "no Sign-outs in the mentor menu (1 with 0014)",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "pre-0014",
+      "label": "the tag checks out with one tap: 1 OUT, no form",
+      "ok": true,
+      "measurement": "[1,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "375",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Sam taps out",
+      "label": "the note form, nothing written",
+      "ok": true,
+      "measurement": "[1,0,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Sam taps out",
+      "label": "the button asks, it does not sign out",
+      "ok": true,
+      "measurement": "\"Ask to sign out\""
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Sam taps out",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Sam taps out",
+      "label": "an empty note is refused, 0 requests",
+      "ok": true,
+      "measurement": "Write a short note of what you did."
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Sam taps out",
+      "label": "one pending request with the note and the tick, 0 OUTs",
+      "ok": true,
+      "measurement": "[1,\"pending\",\"Wired the intake motor\",true,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Sam taps out",
+      "label": "a reload shows the wait and writes nothing",
+      "ok": true,
+      "measurement": "[1,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Sam is not an approver",
+      "label": "Sam: no queue, told who approves",
+      "ok": true,
+      "measurement": "[0,true]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Sam is not an approver",
+      "label": "Sam: no Sign-outs in the menu",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Riley approves",
+      "label": "Riley: the Sign-outs entry (1 against 0 for Sam)",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Riley approves",
+      "label": "Riley sees Sam waiting with his note",
+      "ok": true,
+      "measurement": "[1,\"Sam\",\"Wired the intake motor\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Riley approves",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Riley approves",
+      "label": "approving wrote one OUT with the note",
+      "ok": true,
+      "measurement": "[1,\"Wired the intake motor\",\"manual\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Riley approves",
+      "label": "Decided today names Riley",
+      "ok": true,
+      "measurement": "Sam Approved4:00 PM by Riley"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · own requests are never in your queue",
+      "label": "Riley does not see her own request",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · own requests are never in your queue",
+      "label": "the mentor sees it (1 against 0)",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · own requests are never in your queue",
+      "label": "sent back, not signed out",
+      "ok": true,
+      "measurement": "[\"returned\",0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · own requests are never in your queue",
+      "label": "the tag route shows the reason",
+      "ok": true,
+      "measurement": "Sent back. Sweep the mill area first"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Approve all",
+      "label": "the mentor menu has Sign-outs",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Approve all",
+      "label": "two waiting, one Approve all",
+      "ok": true,
+      "measurement": "[2,\"Approve all 2\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · Approve all",
+      "label": "both sessions closed (1 OUT each)",
+      "ok": true,
+      "measurement": "[1,1]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · meeting present and late",
+      "label": "Casey checks in 7 minutes in: PRESENT, one row",
+      "ok": true,
+      "measurement": "[true,1,\"present\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · meeting present and late",
+      "label": "Sam, signed in, scans 25 minutes in: LATE, stays signed in (0 OUTs, 0 requests)",
+      "ok": true,
+      "measurement": "[true,\"late\",0,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · meeting present and late",
+      "label": "Sign out instead is offered",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · dashboard",
+      "label": "Check Out opens the note, nothing written",
+      "ok": true,
+      "measurement": "[1,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · dashboard",
+      "label": "the tile waits for approval; one request from the button",
+      "ok": true,
+      "measurement": "[1,1,\"button\",0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · dashboard",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · FLL",
+      "label": "the FLL button signs out",
+      "ok": true,
+      "measurement": "\"Sign out\""
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · FLL",
+      "label": "one OUT with the note, no request",
+      "ok": true,
+      "measurement": "[1,\"Helped team 4521 with their attachment\",0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · quick pulse",
+      "label": "Riley reads not signed in; the button signs in",
+      "ok": true,
+      "measurement": "[\"Not signed in\",\"Sign in now\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · quick pulse",
+      "label": "one tap arms it and writes nothing",
+      "ok": true,
+      "measurement": "[\"Tap again to sign Riley in\",0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · quick pulse",
+      "label": "the second tap writes one IN, by the mentor, with an audit row",
+      "ok": true,
+      "measurement": "[1,\"in\",true,true]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · quick pulse",
+      "label": "the board shows Riley present",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "0014 · quick pulse",
+      "label": "two more taps sign her out (IN then OUT)",
+      "ok": true,
+      "measurement": "[\"in\",\"out\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "pre-0014 · quick pulse",
+      "label": "Riley reads not signed in; the button signs in",
+      "ok": true,
+      "measurement": "[\"Not signed in\",\"Sign in now\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "pre-0014 · quick pulse",
+      "label": "one tap arms it and writes nothing",
+      "ok": true,
+      "measurement": "[\"Tap again to sign Riley in\",0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "pre-0014 · quick pulse",
+      "label": "the second tap writes one IN, by the mentor, with an audit row",
+      "ok": true,
+      "measurement": "[1,\"in\",true,true]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "pre-0014 · quick pulse",
+      "label": "the board shows Riley present",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "pre-0014 · quick pulse",
+      "label": "two more taps sign her out (IN then OUT)",
+      "ok": true,
+      "measurement": "[\"in\",\"out\"]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "quick pulse · a student board has no control",
+      "label": "0 name buttons and 0 quick buttons for a student",
+      "ok": true,
+      "measurement": "[0,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "pre-0014",
+      "label": "/signouts: not set up yet, no queue",
+      "ok": true,
+      "measurement": "[true,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "pre-0014",
+      "label": "no Sign-outs in the mentor menu (1 with 0014)",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "pre-0014",
+      "label": "the tag checks out with one tap: 1 OUT, no form",
+      "ok": true,
+      "measurement": "[1,0]"
+    },
+    {
+      "feature": "signout",
+      "vp": "1440",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "family page, signed out",
+      "label": "no nav bar and no feedback launcher on /e, against both on /trips",
+      "ok": true,
+      "measurement": "/e: nav 0, launcher 0; /trips: nav 1, launcher 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "family page, signed out",
+      "label": "the menu offers Trips once to a student and once to staff, and not to a parent-only account (it uses its link)",
+      "ok": true,
+      "measurement": "student 1, mentor 1, parent 0 of 5 menu links"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam, fresh: Who is coming",
+      "label": "four parts and a Finish tile, in order",
+      "ok": true,
+      "measurement": "[\"Who\",\"Rides\",\"Food\",\"Contacts\",\"Finish\"]"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam, fresh: Who is coming",
+      "label": "a fresh family starts on part 1 with nothing done; the status names the due date and keeps no running count",
+      "ok": true,
+      "measurement": "0 of 4 parts done; Part 1 of 4; Sign-up due Sat, Oct 3."
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam, fresh: Who is coming",
+      "label": "days in date order: Friday, Saturday, Sunday (decision 45)",
+      "ok": true,
+      "measurement": "Friday / Saturday / Sunday"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam, fresh: Who is coming",
+      "label": "Friday's card comes before its question; the other days have none",
+      "ok": true,
+      "measurement": "intro cards 1, before the question: true"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam, fresh: Who is coming",
+      "label": "every question has an (i): one opens on a tap with its explanation and closes on \"Got it\"",
+      "ok": true,
+      "measurement": "cards before 0, open \"Choose Not sure yet if you do not know. ...\", after 0; (i) buttons on the part 4"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam, fresh: Who is coming",
+      "label": "a tap saves at once and says \"Saved h:mm\"; the store holds it",
+      "ok": true,
+      "measurement": "note \"Saved 4:00 PM\"; store attending yes"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam, fresh: Who is coming",
+      "label": "staying options come from the days",
+      "ok": true,
+      "measurement": "[\"No, we go home each night\",\"Friday night\",\"Saturday night\",\"Friday and Saturday nights\"]"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam, fresh: Who is coming",
+      "label": "adults: \"5 or more\" opens a number box that saves 12; picking 1 saves 1 and closes it",
+      "ok": true,
+      "measurement": "box 0 -> open, stored 12, then 1, box 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam, fresh: Who is coming",
+      "label": "the Who tile turns done and the count moves; Rides is not done yet",
+      "ok": true,
+      "measurement": "Who true, Rides false; 1 of 4 parts done"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Rides",
+      "label": "Next goes to part 2, which starts with the one-child rule and shows the days answered",
+      "ok": true,
+      "measurement": "Part 2 of 4; rule 1; day cards 3"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Rides",
+      "label": "the way there starts with nothing picked (no default counted as an answer); choosing the carpool brings the Bosco Tech question and the seat picker",
+      "ok": true,
+      "measurement": "cards 3, picked 0 -> 1; Bosco Tech question 0 -> 1; seat picker 0 -> 1; Rides tile \"Rides2 left\"; stored carpool"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Rides",
+      "label": "an answered question shrinks to the chosen card and a Change button",
+      "ok": true,
+      "measurement": "cards 2 -> 1; Change 1; stored self"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Rides",
+      "label": "Finish before the end says what is left, one tappable line each, and flags that Sam has no seat",
+      "ok": true,
+      "measurement": "\"5 answers still needed\"; 5 lines; needs-seat 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Rides",
+      "label": "the seat flag leads back to Rides, where the seat picker sits under the question: the empty mentor van offers no Claim and says why, a family car offers one",
+      "ok": true,
+      "measurement": "Part 2 of 4; van Claim 0, van note 1, Kim Claim 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Rides",
+      "label": "claiming the seat there also seats Sam home in the same family's car; each run then lists only Sam's car",
+      "ok": true,
+      "measurement": "seats to:104, home:108; \"Sam's seat for the drive there\" / \"Sam's seat for the drive home\"; listed 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Food and Contacts",
+      "label": "with a seat the flag is gone, and a line in the list opens its part",
+      "ok": true,
+      "measurement": "needs-seat 0; Part 3 of 4"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Food and Contacts",
+      "label": "part 4: a phone typed as digits is shown formatted and stored as typed",
+      "ok": true,
+      "measurement": "Part 4 of 4; shown \"(555) 555-0142\"; stored \"5555550142\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Food and Contacts",
+      "label": "every required answer saved: the status says sign-up is done and the final check is due",
+      "ok": true,
+      "measurement": "Sign-up done. Final check due Tue, Oct 6."
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Finish",
+      "label": "Finish lands on lock-in, one card per day, with the plan in words",
+      "ok": true,
+      "measurement": "3 day cards; Saturday there \"Kim Nguyen's car\", home \"Kim Nguyen's car\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Finish",
+      "label": "one tap confirms the day: \"All set\", every part done, and the Finish tile goes from Confirm to Done",
+      "ok": true,
+      "measurement": "All set. See you Fri, Oct 9.; \"You are all set\"; 4 of 4 parts done; Finish tile Confirm -> Done"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Finish",
+      "label": "44px floor on every family-page control (lock-in done)",
+      "ok": true,
+      "measurement": "13 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Finish",
+      "label": "no horizontal scroll on the family page",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Finish",
+      "label": "44px floor on every control in Rides",
+      "ok": true,
+      "measurement": "27 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam: Finish",
+      "label": "no horizontal scroll in Rides",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "every page of the form",
+      "label": "Event info and the parent GroupMe are on every page of the form",
+      "ok": true,
+      "measurement": "Who 1/1, Rides 1/1, Food 1/1, Contacts 1/1, Finish 1/1; GroupMe https://groupme.com/join_group/fixture-parents"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "every page of the form",
+      "label": "the carpool board and the food sign-up are drawn as feature cards with an Open label; \"Delete our sign-up\" is on Finish too",
+      "ok": true,
+      "measurement": "board 1, food 1 (plain folds on Food 0); delete on Finish 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "every page of the form",
+      "label": "Event info opens with the event website and the GroupMe ahead of every section",
+      "ok": true,
+      "measurement": "site https://beachblitz.org/; links first true; GroupMe 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "every page of the form",
+      "label": "44px floor with the info bar",
+      "ok": true,
+      "measurement": "12 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "every page of the form",
+      "label": "an event with no GroupMe link shows no GroupMe button; Event info is still there",
+      "ok": true,
+      "measurement": "GroupMe 0, info 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam, two failed saves",
+      "label": "a failed save says \"Not saved, retrying\" by the field and at the foot of the screen, and keeps what was typed",
+      "ok": true,
+      "measurement": "input \"(555) 555-0177\"; foot \"Not saved yet, retrying\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam, two failed saves",
+      "label": "it lands after the failures, and the store holds exactly the typed value",
+      "ok": true,
+      "measurement": "failed sends 2; store \"(555) 555-0177\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Sam, two failed saves",
+      "label": "without a failure the next save lands at once, and the failure note at the foot of the screen is gone",
+      "ok": true,
+      "measurement": "store \"5555550188\"; failure notes 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Saturday, to the venue",
+      "label": "the driver's phone (consented) reaches the family in that car and not a family outside it",
+      "ok": true,
+      "measurement": "Riley (in Morgan Exempt's car) 1, Jordan (in no car) 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Saturday, to the venue",
+      "label": "an open pickup spot reaches the pickup driver only: not a driver without pickups, not a family",
+      "ok": true,
+      "measurement": "Casey (takes pickups) 1, Taylor (does not) 0, Jordan 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Saturday, to the venue",
+      "label": "after acceptance the spot is on the accepting driver's rider list, and nobody else's board",
+      "ok": true,
+      "measurement": "Casey 1, Taylor 0, Morgan's own family 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Saturday, to the venue",
+      "label": "staff see the accepted spot and the consented phones",
+      "ok": true,
+      "measurement": "spots 1, phones 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Saturday, to the venue",
+      "label": "allergy names are staff-only; families see the counts",
+      "ok": true,
+      "measurement": "staff name rows 3; family name lists 0; family strip \"Allergies: Peanut (1)\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Jordan and Avery, one seat, from the seat picker",
+      "label": "both families were offered the last seat, and the car warned it leaves early",
+      "ok": true,
+      "measurement": "offered to both: true; confirm \"This car leaves the venue at 3:00 PM, before the day ends.Claim itCanc\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Jordan and Avery, one seat, from the seat picker",
+      "label": "one wins; the other reads \"That car just filled. Pick another.\"",
+      "ok": true,
+      "measurement": "loser sees \"That car just filled. Pick another.\"; riders in the 2-seat car 2"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Rowan and the empty mentor van",
+      "label": "the rule is stated at the top of Rides; the empty van offers no Claim and says a mentor seats two; a claim forced past the page is refused",
+      "ok": true,
+      "measurement": "rule shown true; van Claim 0; forced 409 \"This car would carry one student alone w\"; riders 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Rowan and the empty mentor van",
+      "label": "positive control: a family car (the driver's own student aboard) takes one rider",
+      "ok": true,
+      "measurement": "riders in Kim Nguyen's car 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a mentor seats two in the empty van (0008)",
+      "label": "the empty van offers \"seat two together\" instead of a one-student move; both are seated and no override is left on the car",
+      "ok": true,
+      "measurement": "one-student move 0; choices 3; seated 2; override \"\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Quinn leaves Coach Max's Sunday car",
+      "label": "giving up a seat asks first, and nothing changes until \"Yes\"",
+      "ok": true,
+      "measurement": "\"Give up this seat? Your student will nee\"; riders before yes 2"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Quinn leaves Coach Max's Sunday car",
+      "label": "leaving is allowed; the car turns red and mentors are emailed",
+      "ok": true,
+      "measurement": "card \"Needs a second rider\"; car_red emails 0 -> 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Quinn leaves Coach Max's Sunday car",
+      "label": "a red car cannot be marked Left without a reason; with one it leaves and the reason is kept",
+      "ok": true,
+      "measurement": "without: \"This car has one student who is not the driver's o\"; with: left true, reason \"Jamie's parent rides along\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "windows",
+      "label": "a car that departed offers no \"Give up this seat\"; the same family's car that has not left does",
+      "ok": true,
+      "measurement": "Friday (Departed 3:50 PM) 0, Saturday 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "windows",
+      "label": "a family is not offered \"Leaving now\" weeks before the day",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "windows",
+      "label": "a meal that started offers no Claim; one that has not does",
+      "ok": true,
+      "measurement": "started 0, Fri dinner 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "windows",
+      "label": "after the event ends nothing is offered to change and there is no tracker; a live event offers answers and its tracker",
+      "ok": true,
+      "measurement": "\"Fixture Scrimmage is over. Thank you!\"; enabled controls: ended 0, live 13; tracker 0 / 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "event info, folded",
+      "label": "event info is a list of closed sections that open on a tap, and Back returns to the form",
+      "ok": true,
+      "measurement": "6 sections, 0 open -> 1; height 1406 -> 1490; back to tracker 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "student on /trips/<id>",
+      "label": "a student sees cars and riders, with no write control and no phone or spot (staff on the same board see them)",
+      "ok": true,
+      "measurement": "riders 1; write controls 0; phones/spots 0 against staff 3"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out",
+      "label": "the open link lists students with this season's application, a student lead among them, and no mentor or admin",
+      "ok": true,
+      "measurement": "14 listed: Avery Chen, Casey Exempt, Dakota Hale, Jamie Brooks..."
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out",
+      "label": "44px floor on every control of the open link",
+      "ok": true,
+      "measurement": "20 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out",
+      "label": "no horizontal scroll on the open link",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out",
+      "label": "typing filters the list; without the parent-or-guardian tick it does not start, and says why",
+      "ok": true,
+      "measurement": "1 match for \"dak\"; \"Please tick the box to confirm you are this student's parent or guardian.\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out",
+      "label": "the first person for a student goes straight into the form, told to bookmark it and that the link is emailed",
+      "ok": true,
+      "measurement": "/e/AY3...; student \"Dakota Hale\"; 5 tiles"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out",
+      "label": "one family is created for Dakota, with the email that was typed, and one welcome email is queued",
+      "ok": true,
+      "measurement": "invites 1, emails [\"dana.hale@example.com\"], welcome emails 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out",
+      "label": "Contacts lists who is on the page (the joiner marked You); adding another parent with a name sends them their own link",
+      "ok": true,
+      "measurement": "people 1 -> Dana HaleYou / Pat Hale; \"Sent a link to Pat.Hale@example.com.\"; emails [\"dana.hale@example.com\",\"pat.hale@example.com\"]; added emails 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out",
+      "label": "opening the link again on the same phone offers \"Continue for Dakota Hale\"",
+      "ok": true,
+      "measurement": "Welcome backYou already started for Dakota Hale.Continue for"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out",
+      "label": "once a family started, a second person is not let in: the link is emailed to that family, address masked, and the asker is not added",
+      "ok": true,
+      "measurement": "\"Your family already startedSomeone in Riley Student's family has alrea...\"; family page shown 0; join emails 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out",
+      "label": "a dead link points to the sign-up form (no add-parent card on it), and /e alone opens the sign-up form",
+      "ok": true,
+      "measurement": "link 1, add-parent 0, /e -> /join"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out",
+      "label": "the mentor page shows the family sign-up link for this event",
+      "ok": true,
+      "measurement": "http://127.0.0.1:5401/join/e0b00000-0000-4000-8000-000000000001"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out",
+      "label": "the open link tells a driving mentor where to add a car",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out, with 0010",
+      "label": "with 0010 the lead-student and the student named by the application are listed; the mentor-student, the mentor and the admin are not",
+      "ok": true,
+      "measurement": "Robin 1, Jesse Vega 1; Drew (mentor) 0, Max/Ada 0; 14 listed"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out, with 0010",
+      "label": "no name on the open link contains an at sign or the joke nickname (the list is not empty)",
+      "ok": true,
+      "measurement": "14 names, 0 with an at sign"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out, with 0010",
+      "label": "a parent starts the lead-student family on the open link and lands on the family page",
+      "ok": true,
+      "measurement": "student \"Robin Park\"; Robin invites 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out, with 0010",
+      "label": "the family page names the student from the application, never the profile email or nickname",
+      "ok": true,
+      "measurement": "student \"Jesse Vega\"; profile email on page false, nickname false"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out, with 0010",
+      "label": "Add them makes invites by the same rule (Robin and Jesse in, the mentor-student out), and the Families list names them from the application",
+      "ok": true,
+      "measurement": "Add them offered 1; invites Robin 1, Jesse 1, Drew 0; 14 families, 0 with an at sign"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent on /join, signed out, with 0010",
+      "label": "no horizontal scroll on the mentor Families list",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "mig 0001,0002,0003,0004,0005,0007,0008,0009,0011,0012,0013,0014,0015,0016,0017,0022",
+      "label": "without 0010: Robin is not listed and Jesse shows as the profile email (the two faults 0010 fixes); the mentor-student is still not listed",
+      "ok": true,
+      "measurement": "13 listed; Robin false; Jesse as email true"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent drives other students, without their own",
+      "label": "Quinn is not coming Saturday, yet a parent can still drive: the optional question waits behind a heading; saying yes opens the car questions and the driver checks",
+      "ok": true,
+      "measurement": "question shown before opening 0; No / Yes, going there / Yes, coming home / Yes, both ways; car questions 0 -> 1; checks 0 -> 1; \"How many students fit?\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent drives other students, without their own",
+      "label": "the car is listed for the run chosen and no other, and says it takes two students together (her own student is not in it)",
+      "ok": true,
+      "measurement": "cars to/3; my car shown 1; \"Your car takes two or more students together (one-\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a parent drives other students, without their own",
+      "label": "answering No takes the car off the carpool",
+      "ok": true,
+      "measurement": "cars 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "one guardian removes another; a family leaves the trip",
+      "label": "with two on the page each has Remove; removing Pat leaves one, and the last one cannot be removed (only the family can leave)",
+      "ok": true,
+      "measurement": "Remove buttons 2 -> 0; people 1; emails [\"dana.hale@example.com\"]"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "one guardian removes another; a family leaves the trip",
+      "label": "\"Remove our family\" takes the family off the trip: the page says so, mentors are told, and the old link no longer opens",
+      "ok": true,
+      "measurement": "families for Dakota 0; removal emails 0 -> 1; old link dead 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "one guardian removes another; a family leaves the trip",
+      "label": "the student can be signed up again afterwards, straight in",
+      "ok": true,
+      "measurement": "families for Dakota 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a mentor removes a family; the rule is always on",
+      "label": "opening a family shows its Delete card on screen, above \"Edit <name>'s answers\", with no jump into the form",
+      "ok": true,
+      "measurement": "Delete card at 711px of 812; above the form true"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a mentor removes a family; the rule is always on",
+      "label": "a mentor deletes a sign-up from the list: Delete asks first (nothing gone yet), Yes removes the row and the family",
+      "ok": true,
+      "measurement": "asked 1, still there before yes 1; rows 11 -> 10; Jordan's family 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a mentor removes a family; the rule is always on",
+      "label": "setup shows the one-child rule as always on, with no switch",
+      "ok": true,
+      "measurement": "always-on chip 1; switches 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "without 0008 (mig 0001,0002,0003,0004,0005,0007,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022)",
+      "label": "without 0008 there is no drive-without-your-own question, no leaving, no people list and no \"5 or more\" (adding a parent stays, from 0007); with 0008 \"5 or more\" is back",
+      "ok": true,
+      "measurement": "drive 0, leave 0, people 0, add 1, 5-or-more 0 / with 0008 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Dana signs up Dakota, then Skyler",
+      "label": "\"Add another student\" opens the sign-up with the parent name, email and tick already filled in",
+      "ok": true,
+      "measurement": "others listed 0; \"Dana Hale\", \"dana.hale@example.com\", ticked true"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Dana signs up Dakota, then Skyler",
+      "label": "the second student gets their own page, on the same email, and it lists the first",
+      "ok": true,
+      "measurement": "page \"Skyler Diaz\"; lists Dakota Hale; emails [\"dana.hale@example.com\"]"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "Dana signs up Dakota, then Skyler",
+      "label": "\"Open Dakota's page\" goes straight there, and that page lists Skyler",
+      "ok": true,
+      "measurement": "Skyler Diaz"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "the family car takes a brother or sister alone, and not an outsider",
+      "label": "the family car offers Skyler a seat, labelled as the family car, and takes Skyler alone; an outsider sees it closed with the one-child note",
+      "ok": true,
+      "measurement": "car true; label 1; riders 1; outsider Claim 0, note 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "contacts copied from the other page",
+      "label": "\"Copy from Dakota's page\" fills the empty contacts on Skyler's page",
+      "ok": true,
+      "measurement": "card 1; phone 5555550123; emergency Lou Hale 5555550124"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "contacts copied from the other page",
+      "label": "no horizontal scroll with the household card",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "contacts copied from the other page",
+      "label": "44px floor on every control with the household card",
+      "ok": true,
+      "measurement": "33 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "without 0009 (mig 0001,0002,0003,0004,0005,0007,0008,0010,0011,0012,0013,0014,0015,0016,0017,0022)",
+      "label": "Skyler's Who page reminds to count adults once; without 0009 there is no household card, with it there is",
+      "ok": true,
+      "measurement": "adults note 1; card without 0, with 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a dead remembered link",
+      "label": "/join offers Continue for a remembered link that opens, and forgets one that does not and shows the form",
+      "ok": true,
+      "measurement": "live: card 1, kept true; dead: card 0, form 1, kept null"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a dead remembered link",
+      "label": "44px floor on the welcome-back card",
+      "ok": true,
+      "measurement": "3 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a dead remembered link",
+      "label": "the dead-link page forgets that link; \"Forget this on this device\" forgets a live one and shows the form",
+      "ok": true,
+      "measurement": "after dead page null; after Forget null, form 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "the seeded note",
+      "label": "44px floor on Event info with the service hours section",
+      "ok": true,
+      "measurement": "12 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "the seeded note",
+      "label": "no horizontal scroll on Event info with the service hours section",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "the seeded note",
+      "label": "with a note, all five spots show it (the banner is the stored sentence), the driver fold says so, and Event info links volunteering",
+      "ok": true,
+      "measurement": "join 1, banner 1, adults 1, drive 2, info 1; fold subs 1; volunteer link 1; \"Driving, attending, and volunteering at Fixture Blitz all count toward parent service hours.\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "the service hours CSV",
+      "label": "the CSV opens with the count-not-names note, then the header, then one row per family per day; drove matches the cars in the store, both ways",
+      "ok": true,
+      "measurement": "30 rows for 10 families x 3 days; drove yes 3 (cars 3), no 27; \"Fixture-Blitz-parent-service-hours.csv\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "a mentor clears the note",
+      "label": "Setup edits the note; saved blank it is stored as null and none of the five spots shows anything",
+      "ok": true,
+      "measurement": "field 1; stored null; join 0, banner 0, adults 0, drive 0, info 0; fold subs 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "without 0011 (mig 0001,0002,0003,0004,0005,0007,0008,0009,0010,0012,0013,0014,0015,0016,0017,0022)",
+      "label": "without 0011 nothing shows, Setup has no note field and still saves the event, and there is no service hours export",
+      "ok": true,
+      "measurement": "join 0, banner 0, adults 0, drive 0, info 0; field 0; save errors 0; export 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "mentor page",
+      "label": "five readiness lines",
+      "ok": true,
+      "measurement": "5 lines"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "mentor page",
+      "label": "Send invites confirms with the count first, then queues exactly that many",
+      "ok": true,
+      "measurement": "confirm says 10; families with an email 10; queued 10"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "mentor page",
+      "label": "setup edits every day",
+      "ok": true,
+      "measurement": "3 day editors"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "mentor page",
+      "label": "no horizontal scroll on the mentor page",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "mentor page",
+      "label": "a student opening the mentor page gets \"Staff only.\"",
+      "ok": true,
+      "measurement": "Staff only."
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "mig 0001,0002,0003,0004,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022",
+      "label": "not set up: /trips and the mentor page say so, the family page cannot open; with 0005 the trips list has rows",
+      "ok": true,
+      "measurement": "trips missing line 1; mentor \"Trips are not set up yet: migration 0005 has not been applied.\"; family page unreachable true; rows with 0005 2"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "375",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "family page, signed out",
+      "label": "no nav bar and no feedback launcher on /e, against both on /trips",
+      "ok": true,
+      "measurement": "/e: nav 0, launcher 0; /trips: nav 1, launcher 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "family page, signed out",
+      "label": "the menu offers Trips once to a student and once to staff, and not to a parent-only account (it uses its link)",
+      "ok": true,
+      "measurement": "student 1, mentor 1, parent 0 of 5 menu links"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam, fresh: Who is coming",
+      "label": "four parts and a Finish tile, in order",
+      "ok": true,
+      "measurement": "[\"Who\",\"Rides\",\"Food\",\"Contacts\",\"Finish\"]"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam, fresh: Who is coming",
+      "label": "a fresh family starts on part 1 with nothing done; the status names the due date and keeps no running count",
+      "ok": true,
+      "measurement": "0 of 4 parts done; Part 1 of 4; Sign-up due Sat, Oct 3."
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam, fresh: Who is coming",
+      "label": "days in date order: Friday, Saturday, Sunday (decision 45)",
+      "ok": true,
+      "measurement": "Friday / Saturday / Sunday"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam, fresh: Who is coming",
+      "label": "Friday's card comes before its question; the other days have none",
+      "ok": true,
+      "measurement": "intro cards 1, before the question: true"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam, fresh: Who is coming",
+      "label": "every question has an (i): one opens on a tap with its explanation and closes on \"Got it\"",
+      "ok": true,
+      "measurement": "cards before 0, open \"Choose Not sure yet if you do not know. ...\", after 0; (i) buttons on the part 4"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam, fresh: Who is coming",
+      "label": "a tap saves at once and says \"Saved h:mm\"; the store holds it",
+      "ok": true,
+      "measurement": "note \"Saved 4:00 PM\"; store attending yes"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam, fresh: Who is coming",
+      "label": "staying options come from the days",
+      "ok": true,
+      "measurement": "[\"No, we go home each night\",\"Friday night\",\"Saturday night\",\"Friday and Saturday nights\"]"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam, fresh: Who is coming",
+      "label": "adults: \"5 or more\" opens a number box that saves 12; picking 1 saves 1 and closes it",
+      "ok": true,
+      "measurement": "box 0 -> open, stored 12, then 1, box 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam, fresh: Who is coming",
+      "label": "the Who tile turns done and the count moves; Rides is not done yet",
+      "ok": true,
+      "measurement": "Who true, Rides false; 1 of 4 parts done"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Rides",
+      "label": "Next goes to part 2, which starts with the one-child rule and shows the days answered",
+      "ok": true,
+      "measurement": "Part 2 of 4; rule 1; day cards 3"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Rides",
+      "label": "the way there starts with nothing picked (no default counted as an answer); choosing the carpool brings the Bosco Tech question and the seat picker",
+      "ok": true,
+      "measurement": "cards 3, picked 0 -> 1; Bosco Tech question 0 -> 1; seat picker 0 -> 1; Rides tile \"Rides2 left\"; stored carpool"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Rides",
+      "label": "an answered question shrinks to the chosen card and a Change button",
+      "ok": true,
+      "measurement": "cards 2 -> 1; Change 1; stored self"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Rides",
+      "label": "Finish before the end says what is left, one tappable line each, and flags that Sam has no seat",
+      "ok": true,
+      "measurement": "\"5 answers still needed\"; 5 lines; needs-seat 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Rides",
+      "label": "the seat flag leads back to Rides, where the seat picker sits under the question: the empty mentor van offers no Claim and says why, a family car offers one",
+      "ok": true,
+      "measurement": "Part 2 of 4; van Claim 0, van note 1, Kim Claim 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Rides",
+      "label": "claiming the seat there also seats Sam home in the same family's car; each run then lists only Sam's car",
+      "ok": true,
+      "measurement": "seats to:104, home:108; \"Sam's seat for the drive there\" / \"Sam's seat for the drive home\"; listed 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Food and Contacts",
+      "label": "with a seat the flag is gone, and a line in the list opens its part",
+      "ok": true,
+      "measurement": "needs-seat 0; Part 3 of 4"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Food and Contacts",
+      "label": "part 4: a phone typed as digits is shown formatted and stored as typed",
+      "ok": true,
+      "measurement": "Part 4 of 4; shown \"(555) 555-0142\"; stored \"5555550142\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Food and Contacts",
+      "label": "every required answer saved: the status says sign-up is done and the final check is due",
+      "ok": true,
+      "measurement": "Sign-up done. Final check due Tue, Oct 6."
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Finish",
+      "label": "Finish lands on lock-in, one card per day, with the plan in words",
+      "ok": true,
+      "measurement": "3 day cards; Saturday there \"Kim Nguyen's car\", home \"Kim Nguyen's car\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Finish",
+      "label": "one tap confirms the day: \"All set\", every part done, and the Finish tile goes from Confirm to Done",
+      "ok": true,
+      "measurement": "All set. See you Fri, Oct 9.; \"You are all set\"; 4 of 4 parts done; Finish tile Confirm -> Done"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Finish",
+      "label": "no horizontal scroll on the family page",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam: Finish",
+      "label": "no horizontal scroll in Rides",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "every page of the form",
+      "label": "Event info and the parent GroupMe are on every page of the form",
+      "ok": true,
+      "measurement": "Who 1/1, Rides 1/1, Food 1/1, Contacts 1/1, Finish 1/1; GroupMe https://groupme.com/join_group/fixture-parents"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "every page of the form",
+      "label": "the carpool board and the food sign-up are drawn as feature cards with an Open label; \"Delete our sign-up\" is on Finish too",
+      "ok": true,
+      "measurement": "board 1, food 1 (plain folds on Food 0); delete on Finish 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "every page of the form",
+      "label": "Event info opens with the event website and the GroupMe ahead of every section",
+      "ok": true,
+      "measurement": "site https://beachblitz.org/; links first true; GroupMe 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "every page of the form",
+      "label": "an event with no GroupMe link shows no GroupMe button; Event info is still there",
+      "ok": true,
+      "measurement": "GroupMe 0, info 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam, two failed saves",
+      "label": "a failed save says \"Not saved, retrying\" by the field and at the foot of the screen, and keeps what was typed",
+      "ok": true,
+      "measurement": "input \"(555) 555-0177\"; foot \"Not saved yet, retrying\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam, two failed saves",
+      "label": "it lands after the failures, and the store holds exactly the typed value",
+      "ok": true,
+      "measurement": "failed sends 2; store \"(555) 555-0177\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Sam, two failed saves",
+      "label": "without a failure the next save lands at once, and the failure note at the foot of the screen is gone",
+      "ok": true,
+      "measurement": "store \"5555550188\"; failure notes 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Saturday, to the venue",
+      "label": "the driver's phone (consented) reaches the family in that car and not a family outside it",
+      "ok": true,
+      "measurement": "Riley (in Morgan Exempt's car) 1, Jordan (in no car) 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Saturday, to the venue",
+      "label": "an open pickup spot reaches the pickup driver only: not a driver without pickups, not a family",
+      "ok": true,
+      "measurement": "Casey (takes pickups) 1, Taylor (does not) 0, Jordan 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Saturday, to the venue",
+      "label": "after acceptance the spot is on the accepting driver's rider list, and nobody else's board",
+      "ok": true,
+      "measurement": "Casey 1, Taylor 0, Morgan's own family 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Saturday, to the venue",
+      "label": "staff see the accepted spot and the consented phones",
+      "ok": true,
+      "measurement": "spots 1, phones 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Saturday, to the venue",
+      "label": "allergy names are staff-only; families see the counts",
+      "ok": true,
+      "measurement": "staff name rows 3; family name lists 0; family strip \"Allergies: Peanut (1)\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Jordan and Avery, one seat, from the seat picker",
+      "label": "both families were offered the last seat, and the car warned it leaves early",
+      "ok": true,
+      "measurement": "offered to both: true; confirm \"This car leaves the venue at 3:00 PM, before the day ends.Claim itCanc\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Jordan and Avery, one seat, from the seat picker",
+      "label": "one wins; the other reads \"That car just filled. Pick another.\"",
+      "ok": true,
+      "measurement": "loser sees \"That car just filled. Pick another.\"; riders in the 2-seat car 2"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Rowan and the empty mentor van",
+      "label": "the rule is stated at the top of Rides; the empty van offers no Claim and says a mentor seats two; a claim forced past the page is refused",
+      "ok": true,
+      "measurement": "rule shown true; van Claim 0; forced 409 \"This car would carry one student alone w\"; riders 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Rowan and the empty mentor van",
+      "label": "positive control: a family car (the driver's own student aboard) takes one rider",
+      "ok": true,
+      "measurement": "riders in Kim Nguyen's car 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a mentor seats two in the empty van (0008)",
+      "label": "the empty van offers \"seat two together\" instead of a one-student move; both are seated and no override is left on the car",
+      "ok": true,
+      "measurement": "one-student move 0; choices 3; seated 2; override \"\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Quinn leaves Coach Max's Sunday car",
+      "label": "giving up a seat asks first, and nothing changes until \"Yes\"",
+      "ok": true,
+      "measurement": "\"Give up this seat? Your student will nee\"; riders before yes 2"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Quinn leaves Coach Max's Sunday car",
+      "label": "leaving is allowed; the car turns red and mentors are emailed",
+      "ok": true,
+      "measurement": "card \"Needs a second rider\"; car_red emails 0 -> 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Quinn leaves Coach Max's Sunday car",
+      "label": "a red car cannot be marked Left without a reason; with one it leaves and the reason is kept",
+      "ok": true,
+      "measurement": "without: \"This car has one student who is not the driver's o\"; with: left true, reason \"Jamie's parent rides along\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "windows",
+      "label": "a car that departed offers no \"Give up this seat\"; the same family's car that has not left does",
+      "ok": true,
+      "measurement": "Friday (Departed 3:50 PM) 0, Saturday 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "windows",
+      "label": "a family is not offered \"Leaving now\" weeks before the day",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "windows",
+      "label": "a meal that started offers no Claim; one that has not does",
+      "ok": true,
+      "measurement": "started 0, Fri dinner 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "windows",
+      "label": "after the event ends nothing is offered to change and there is no tracker; a live event offers answers and its tracker",
+      "ok": true,
+      "measurement": "\"Fixture Scrimmage is over. Thank you!\"; enabled controls: ended 0, live 13; tracker 0 / 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "event info, folded",
+      "label": "event info is a list of closed sections that open on a tap, and Back returns to the form",
+      "ok": true,
+      "measurement": "6 sections, 0 open -> 1; height 1224 -> 1308; back to tracker 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "student on /trips/<id>",
+      "label": "a student sees cars and riders, with no write control and no phone or spot (staff on the same board see them)",
+      "ok": true,
+      "measurement": "riders 1; write controls 0; phones/spots 0 against staff 3"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out",
+      "label": "the open link lists students with this season's application, a student lead among them, and no mentor or admin",
+      "ok": true,
+      "measurement": "14 listed: Avery Chen, Casey Exempt, Dakota Hale, Jamie Brooks..."
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out",
+      "label": "no horizontal scroll on the open link",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out",
+      "label": "typing filters the list; without the parent-or-guardian tick it does not start, and says why",
+      "ok": true,
+      "measurement": "1 match for \"dak\"; \"Please tick the box to confirm you are this student's parent or guardian.\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out",
+      "label": "the first person for a student goes straight into the form, told to bookmark it and that the link is emailed",
+      "ok": true,
+      "measurement": "/e/DdK...; student \"Dakota Hale\"; 5 tiles"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out",
+      "label": "one family is created for Dakota, with the email that was typed, and one welcome email is queued",
+      "ok": true,
+      "measurement": "invites 1, emails [\"dana.hale@example.com\"], welcome emails 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out",
+      "label": "Contacts lists who is on the page (the joiner marked You); adding another parent with a name sends them their own link",
+      "ok": true,
+      "measurement": "people 1 -> Dana HaleYou / Pat Hale; \"Sent a link to Pat.Hale@example.com.\"; emails [\"dana.hale@example.com\",\"pat.hale@example.com\"]; added emails 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out",
+      "label": "opening the link again on the same phone offers \"Continue for Dakota Hale\"",
+      "ok": true,
+      "measurement": "Welcome backYou already started for Dakota Hale.Continue for"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out",
+      "label": "once a family started, a second person is not let in: the link is emailed to that family, address masked, and the asker is not added",
+      "ok": true,
+      "measurement": "\"Your family already startedSomeone in Riley Student's family has alrea...\"; family page shown 0; join emails 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out",
+      "label": "a dead link points to the sign-up form (no add-parent card on it), and /e alone opens the sign-up form",
+      "ok": true,
+      "measurement": "link 1, add-parent 0, /e -> /join"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out",
+      "label": "the mentor page shows the family sign-up link for this event",
+      "ok": true,
+      "measurement": "http://127.0.0.1:5401/join/e0b00000-0000-4000-8000-000000000001"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out",
+      "label": "the open link tells a driving mentor where to add a car",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out, with 0010",
+      "label": "with 0010 the lead-student and the student named by the application are listed; the mentor-student, the mentor and the admin are not",
+      "ok": true,
+      "measurement": "Robin 1, Jesse Vega 1; Drew (mentor) 0, Max/Ada 0; 14 listed"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out, with 0010",
+      "label": "no name on the open link contains an at sign or the joke nickname (the list is not empty)",
+      "ok": true,
+      "measurement": "14 names, 0 with an at sign"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out, with 0010",
+      "label": "a parent starts the lead-student family on the open link and lands on the family page",
+      "ok": true,
+      "measurement": "student \"Robin Park\"; Robin invites 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out, with 0010",
+      "label": "the family page names the student from the application, never the profile email or nickname",
+      "ok": true,
+      "measurement": "student \"Jesse Vega\"; profile email on page false, nickname false"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out, with 0010",
+      "label": "Add them makes invites by the same rule (Robin and Jesse in, the mentor-student out), and the Families list names them from the application",
+      "ok": true,
+      "measurement": "Add them offered 1; invites Robin 1, Jesse 1, Drew 0; 14 families, 0 with an at sign"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent on /join, signed out, with 0010",
+      "label": "no horizontal scroll on the mentor Families list",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "mig 0001,0002,0003,0004,0005,0007,0008,0009,0011,0012,0013,0014,0015,0016,0017,0022",
+      "label": "without 0010: Robin is not listed and Jesse shows as the profile email (the two faults 0010 fixes); the mentor-student is still not listed",
+      "ok": true,
+      "measurement": "13 listed; Robin false; Jesse as email true"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent drives other students, without their own",
+      "label": "Quinn is not coming Saturday, yet a parent can still drive: the optional question waits behind a heading; saying yes opens the car questions and the driver checks",
+      "ok": true,
+      "measurement": "question shown before opening 0; No / Yes, going there / Yes, coming home / Yes, both ways; car questions 0 -> 1; checks 0 -> 1; \"How many students fit?\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent drives other students, without their own",
+      "label": "the car is listed for the run chosen and no other, and says it takes two students together (her own student is not in it)",
+      "ok": true,
+      "measurement": "cars to/3; my car shown 1; \"Your car takes two or more students together (one-\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a parent drives other students, without their own",
+      "label": "answering No takes the car off the carpool",
+      "ok": true,
+      "measurement": "cars 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "one guardian removes another; a family leaves the trip",
+      "label": "with two on the page each has Remove; removing Pat leaves one, and the last one cannot be removed (only the family can leave)",
+      "ok": true,
+      "measurement": "Remove buttons 2 -> 0; people 1; emails [\"dana.hale@example.com\"]"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "one guardian removes another; a family leaves the trip",
+      "label": "\"Remove our family\" takes the family off the trip: the page says so, mentors are told, and the old link no longer opens",
+      "ok": true,
+      "measurement": "families for Dakota 0; removal emails 0 -> 1; old link dead 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "one guardian removes another; a family leaves the trip",
+      "label": "the student can be signed up again afterwards, straight in",
+      "ok": true,
+      "measurement": "families for Dakota 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a mentor removes a family; the rule is always on",
+      "label": "opening a family shows its Delete card on screen, above \"Edit <name>'s answers\", with no jump into the form",
+      "ok": true,
+      "measurement": "Delete card at 442px of 900; above the form true"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a mentor removes a family; the rule is always on",
+      "label": "a mentor deletes a sign-up from the list: Delete asks first (nothing gone yet), Yes removes the row and the family",
+      "ok": true,
+      "measurement": "asked 1, still there before yes 1; rows 11 -> 10; Jordan's family 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a mentor removes a family; the rule is always on",
+      "label": "setup shows the one-child rule as always on, with no switch",
+      "ok": true,
+      "measurement": "always-on chip 1; switches 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "without 0008 (mig 0001,0002,0003,0004,0005,0007,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022)",
+      "label": "without 0008 there is no drive-without-your-own question, no leaving, no people list and no \"5 or more\" (adding a parent stays, from 0007); with 0008 \"5 or more\" is back",
+      "ok": true,
+      "measurement": "drive 0, leave 0, people 0, add 1, 5-or-more 0 / with 0008 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Dana signs up Dakota, then Skyler",
+      "label": "\"Add another student\" opens the sign-up with the parent name, email and tick already filled in",
+      "ok": true,
+      "measurement": "others listed 0; \"Dana Hale\", \"dana.hale@example.com\", ticked true"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Dana signs up Dakota, then Skyler",
+      "label": "the second student gets their own page, on the same email, and it lists the first",
+      "ok": true,
+      "measurement": "page \"Skyler Diaz\"; lists Dakota Hale; emails [\"dana.hale@example.com\"]"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "Dana signs up Dakota, then Skyler",
+      "label": "\"Open Dakota's page\" goes straight there, and that page lists Skyler",
+      "ok": true,
+      "measurement": "Skyler Diaz"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "the family car takes a brother or sister alone, and not an outsider",
+      "label": "the family car offers Skyler a seat, labelled as the family car, and takes Skyler alone; an outsider sees it closed with the one-child note",
+      "ok": true,
+      "measurement": "car true; label 1; riders 1; outsider Claim 0, note 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "contacts copied from the other page",
+      "label": "\"Copy from Dakota's page\" fills the empty contacts on Skyler's page",
+      "ok": true,
+      "measurement": "card 1; phone 5555550123; emergency Lou Hale 5555550124"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "contacts copied from the other page",
+      "label": "no horizontal scroll with the household card",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "without 0009 (mig 0001,0002,0003,0004,0005,0007,0008,0010,0011,0012,0013,0014,0015,0016,0017,0022)",
+      "label": "Skyler's Who page reminds to count adults once; without 0009 there is no household card, with it there is",
+      "ok": true,
+      "measurement": "adults note 1; card without 0, with 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a dead remembered link",
+      "label": "/join offers Continue for a remembered link that opens, and forgets one that does not and shows the form",
+      "ok": true,
+      "measurement": "live: card 1, kept true; dead: card 0, form 1, kept null"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a dead remembered link",
+      "label": "the dead-link page forgets that link; \"Forget this on this device\" forgets a live one and shows the form",
+      "ok": true,
+      "measurement": "after dead page null; after Forget null, form 1"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "the seeded note",
+      "label": "no horizontal scroll on Event info with the service hours section",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "the seeded note",
+      "label": "with a note, all five spots show it (the banner is the stored sentence), the driver fold says so, and Event info links volunteering",
+      "ok": true,
+      "measurement": "join 1, banner 1, adults 1, drive 2, info 1; fold subs 1; volunteer link 1; \"Driving, attending, and volunteering at Fixture Blitz all count toward parent service hours.\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "the service hours CSV",
+      "label": "the CSV opens with the count-not-names note, then the header, then one row per family per day; drove matches the cars in the store, both ways",
+      "ok": true,
+      "measurement": "30 rows for 10 families x 3 days; drove yes 3 (cars 3), no 27; \"Fixture-Blitz-parent-service-hours.csv\""
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "a mentor clears the note",
+      "label": "Setup edits the note; saved blank it is stored as null and none of the five spots shows anything",
+      "ok": true,
+      "measurement": "field 1; stored null; join 0, banner 0, adults 0, drive 0, info 0; fold subs 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "without 0011 (mig 0001,0002,0003,0004,0005,0007,0008,0009,0010,0012,0013,0014,0015,0016,0017,0022)",
+      "label": "without 0011 nothing shows, Setup has no note field and still saves the event, and there is no service hours export",
+      "ok": true,
+      "measurement": "join 0, banner 0, adults 0, drive 0, info 0; field 0; save errors 0; export 0"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "mentor page",
+      "label": "five readiness lines",
+      "ok": true,
+      "measurement": "5 lines"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "mentor page",
+      "label": "Send invites confirms with the count first, then queues exactly that many",
+      "ok": true,
+      "measurement": "confirm says 10; families with an email 10; queued 10"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "mentor page",
+      "label": "setup edits every day",
+      "ok": true,
+      "measurement": "3 day editors"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "mentor page",
+      "label": "no horizontal scroll on the mentor page",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "mentor page",
+      "label": "a student opening the mentor page gets \"Staff only.\"",
+      "ok": true,
+      "measurement": "Staff only."
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "mig 0001,0002,0003,0004,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022",
+      "label": "not set up: /trips and the mentor page say so, the family page cannot open; with 0005 the trips list has rows",
+      "ok": true,
+      "measurement": "trips missing line 1; mentor \"Trips are not set up yet: migration 0005 has not been applied.\"; family page unreachable true; rows with 0005 2"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    },
+    {
+      "feature": "event-hub",
+      "vp": "1440",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "oracle",
+      "label": "the store: Sam added 3 upcoming events he may change (CAD review, 2 Scouting practice)",
+      "ok": true,
+      "measurement": "[\"CAD design review (student-run)\",\"Scouting practice\",\"Scouting practice\"]"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student",
+      "label": "\"+ New event\": 1",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student",
+      "label": "holder: Edit and Delete on exactly the events they added that are not mandatory",
+      "ok": true,
+      "measurement": "[\"CAD design review (student-run)\",\"Scouting practice\",\"Scouting practice\"]"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student",
+      "label": "holder: none on any Build session (staff-added) or on the mandatory Team photo",
+      "ok": true,
+      "measurement": "0 of 9 editable"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student",
+      "label": "holder form: the holder note, and no Mandatory toggle (1 for staff)",
+      "ok": true,
+      "measurement": "{\"note\":\"You can add events, and edit or delete the ones you added. Only staff can make an event mandatory.\",\"mandatory\":0}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student",
+      "label": "holder: editing a Scouting practice offers \"Whole series (2)\"",
+      "ok": true,
+      "measurement": "\"Whole series (2)\""
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student2",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student2",
+      "label": "\"+ New event\": 0",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student2",
+      "label": "0 Edit/Delete on all 22 events",
+      "ok": true,
+      "measurement": "0 editable"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student2",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · mentor",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · mentor",
+      "label": "\"+ New event\": 1",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · mentor",
+      "label": "staff: Edit and Delete on every event",
+      "ok": true,
+      "measurement": "22 of 22"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · mentor",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · mentor",
+      "label": "staff form: the Mandatory toggle, no holder note",
+      "ok": true,
+      "measurement": "{\"note\":null,\"mandatory\":1}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · mentor",
+      "label": "touch: \"+ New event\", Edit and Delete at least 44px",
+      "ok": true,
+      "measurement": "45 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · mentor",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student",
+      "label": "\"+ New event\": 0",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student",
+      "label": "0 Edit/Delete on all 22 events",
+      "ok": true,
+      "measurement": "0 editable"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student2",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student2",
+      "label": "\"+ New event\": 0",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student2",
+      "label": "0 Edit/Delete on all 22 events",
+      "ok": true,
+      "measurement": "0 editable"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student2",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · mentor",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · mentor",
+      "label": "\"+ New event\": 1",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · mentor",
+      "label": "staff: Edit and Delete on every event",
+      "ok": true,
+      "measurement": "22 of 22"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · mentor",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · mentor",
+      "label": "staff form: the Mandatory toggle, no holder note",
+      "ok": true,
+      "measurement": "{\"note\":null,\"mandatory\":1}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · student",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · student",
+      "label": "\"+ New event\": 0",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · student",
+      "label": "0 Edit/Delete on all 22 events",
+      "ok": true,
+      "measurement": "0 editable"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · student",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · student2",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · student2",
+      "label": "\"+ New event\": 0",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · student2",
+      "label": "0 Edit/Delete on all 22 events",
+      "ok": true,
+      "measurement": "0 editable"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · student2",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · mentor",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · mentor",
+      "label": "\"+ New event\": 1",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · mentor",
+      "label": "staff: Edit and Delete on every event",
+      "ok": true,
+      "measurement": "22 of 22"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · mentor",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig none · mentor",
+      "label": "staff form: the Mandatory toggle, no holder note",
+      "ok": true,
+      "measurement": "{\"note\":null,\"mandatory\":1}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · comparison",
+      "label": "without 0004 (mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022) the holder sees exactly what a non-holder sees",
+      "ok": true,
+      "measurement": "{\"titles\":[\"Build session\",\"All-team meeting\",\"CAD design review (student-run)\",\"Saturday build\",\"Machine shop training\",\"Build session\",\"Scouting practice\",\"FLL volunteer day\",\"Team photo\",\"Build session\",\"Community STEM night\",\"Build session\",\"SoCal Showdown\",\"Saturday build\",\"Scouting practice\",\"Build session\",\"Fixture Regional\",\"Team potluck\",\"Build session\",\"Saturday build\",\"Build session\",\"Build session\"],\"newBtn\":0,\"editable\":[]}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · comparison",
+      "label": "without 0004 (mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022) staff see exactly what they see with it",
+      "ok": true,
+      "measurement": "{\"titles\":[\"Build session\",\"All-team meeting\",\"CAD design review (student-run)\",\"Saturday build\",\"Machine shop training\",\"Build session\",\"Scouting practice\",\"FLL volunteer day\",\"Team photo\",\"Build session\",\"Community STEM night\",\"Build session\",\"SoCal Showdown\",\"Saturday build\",\"Scouting practice\",\"Build session\",\"Fixture Regional\",\"Team potluck\",\"Build session\",\"Saturday build\",\"Build session\",\"Build session\"],\"newBtn\":1,\"editable\":[\"All-team meeting\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"CAD design review (student-run)\",\"Community STEM night\",\"FLL volunteer day\",\"Fixture Regional\",\"Machine shop training\",\"Saturday build\",\"Saturday build\",\"Saturday build\",\"Scouting practice\",\"Scouting practice\",\"SoCal Showdown\",\"Team photo\",\"Team potluck\"]}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · comparison",
+      "label": "without 0004 (mig none) the holder sees exactly what a non-holder sees",
+      "ok": true,
+      "measurement": "{\"titles\":[\"Build session\",\"All-team meeting\",\"CAD design review (student-run)\",\"Saturday build\",\"Machine shop training\",\"Build session\",\"Scouting practice\",\"FLL volunteer day\",\"Team photo\",\"Build session\",\"Community STEM night\",\"Build session\",\"SoCal Showdown\",\"Saturday build\",\"Scouting practice\",\"Build session\",\"Fixture Regional\",\"Team potluck\",\"Build session\",\"Saturday build\",\"Build session\",\"Build session\"],\"newBtn\":0,\"editable\":[]}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · comparison",
+      "label": "without 0004 (mig none) staff see exactly what they see with it",
+      "ok": true,
+      "measurement": "{\"titles\":[\"Build session\",\"All-team meeting\",\"CAD design review (student-run)\",\"Saturday build\",\"Machine shop training\",\"Build session\",\"Scouting practice\",\"FLL volunteer day\",\"Team photo\",\"Build session\",\"Community STEM night\",\"Build session\",\"SoCal Showdown\",\"Saturday build\",\"Scouting practice\",\"Build session\",\"Fixture Regional\",\"Team potluck\",\"Build session\",\"Saturday build\",\"Build session\",\"Build session\"],\"newBtn\":1,\"editable\":[\"All-team meeting\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"CAD design review (student-run)\",\"Community STEM night\",\"FLL volunteer day\",\"Fixture Regional\",\"Machine shop training\",\"Saturday build\",\"Saturday build\",\"Saturday build\",\"Scouting practice\",\"Scouting practice\",\"SoCal Showdown\",\"Team photo\",\"Team potluck\"]}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · comparison",
+      "label": "positive control: with 0004 the holder does NOT see what a non-holder sees",
+      "ok": true,
+      "measurement": "holder 3 editable + 1 new, non-holder 0 + 0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student creates",
+      "label": "the event is stored as the holder's, never mandatory",
+      "ok": true,
+      "measurement": "{\"created_by\":\"student\",\"mandatory\":false,\"kind\":\"meeting\"}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student creates",
+      "label": "and it carries Edit/Delete for its author",
+      "ok": true,
+      "measurement": "{\"title\":\"Sam's CAD lab\",\"edit\":true,\"del\":true}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "schedule · mig all · student creates",
+      "label": "positive control: a non-holder sees the new event with no Edit/Delete",
+      "ok": true,
+      "measurement": "{\"title\":\"Sam's CAD lab\",\"edit\":false,\"del\":false}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "one \"Adds events\" tag in the collapsed list (Sam's)",
+      "ok": true,
+      "measurement": "{\"dom\":1,\"text\":[\"Adds events\"]}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "at 375 the tag is hidden",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "Sam's detail rows include Roles, Permissions, Status and Geo exempt",
+      "ok": true,
+      "measurement": "Email, Subteams, Roles, Permissions, Status, Geo exempt, Access, Hours, Profile, Danger zone"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "Sam: \"Can add calendar events\" pressed",
+      "ok": true,
+      "measurement": "{\"label\":\"Can add calendar events\",\"pressed\":\"true\"}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "Riley: not pressed",
+      "ok": true,
+      "measurement": "\"false\""
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "a mentor: the toggle plus \"Their staff role already allows this.\"",
+      "ok": true,
+      "measurement": "{\"toggles\":1,\"note\":\"Their staff role already allows this.\"}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "positive control: no staff note for a student",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "granting Riley: pressed, a second tag, and a stored grant",
+      "ok": true,
+      "measurement": "pressed true, 2 tags, 1 grant row(s)"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster grant → schedule · student2",
+      "label": "the grant unlocks \"+ New event\" for Riley",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig pre-0014 · admin revokes",
+      "label": "revoking Riley: unpressed, one tag, no grant row",
+      "ok": true,
+      "measurement": "pressed false"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster revoke → schedule · student2",
+      "label": "the revoke locks \"+ New event\" again",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig all · two capabilities",
+      "label": "two tags: Riley approves sign-outs, Sam adds events",
+      "ok": true,
+      "measurement": "[\"Adds events\",\"Approves sign-outs\"]"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig all · two capabilities",
+      "label": "Sam: both toggles, only calendar pressed",
+      "ok": true,
+      "measurement": "[[\"Can add calendar events\",\"Can approve sign-outs\"],[\"true\",\"false\"]]"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · admin",
+      "label": "Permissions row says Not set up yet, naming the file",
+      "ok": true,
+      "measurement": "\"Not set up yet. Apply supabase/migrations/0004_member_permissions.sql to grant these.\""
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · admin",
+      "label": "0 toggles and 0 tags (1 and 1 with 0004), no page error",
+      "ok": true,
+      "measurement": "{\"toggles\":0,\"tags\":0,\"err\":0}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · admin",
+      "label": "the rest of the member detail is unchanged (the same rows as with 0004)",
+      "ok": true,
+      "measurement": "[\"Email\",\"Subteams\",\"Roles\",\"Permissions\",\"Status\",\"Geo exempt\",\"Access\",\"Hours\",\"Profile\",\"Danger zone\"]"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig none · admin",
+      "label": "Permissions row says Not set up yet, naming the file",
+      "ok": true,
+      "measurement": "\"Not set up yet. Apply supabase/migrations/0004_member_permissions.sql to grant these.\""
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig none · admin",
+      "label": "0 toggles and 0 tags (1 and 1 with 0004), no page error",
+      "ok": true,
+      "measurement": "{\"toggles\":0,\"tags\":0,\"err\":0}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig none · admin",
+      "label": "the rest of the member detail is unchanged (the same rows as with 0004)",
+      "ok": true,
+      "measurement": "[\"Email\",\"Subteams\",\"Roles\",\"Permissions\",\"Status\",\"Geo exempt\",\"Access\",\"Hours\",\"Profile\",\"Danger zone\"]"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mig none · admin",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · mentor",
+      "label": "the existing admin-only sentence",
+      "ok": true,
+      "measurement": "{\"denied\":\"You need the admin role to view this page.\",\"list\":0}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "roster · student",
+      "label": "the existing admin-only sentence",
+      "ok": true,
+      "measurement": "{\"denied\":\"You need the admin role to view this page.\",\"list\":0}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "375",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "oracle",
+      "label": "the store: Sam added 3 upcoming events he may change (CAD review, 2 Scouting practice)",
+      "ok": true,
+      "measurement": "[\"CAD design review (student-run)\",\"Scouting practice\",\"Scouting practice\"]"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student",
+      "label": "\"+ New event\": 1",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student",
+      "label": "holder: Edit and Delete on exactly the events they added that are not mandatory",
+      "ok": true,
+      "measurement": "[\"CAD design review (student-run)\",\"Scouting practice\",\"Scouting practice\"]"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student",
+      "label": "holder: none on any Build session (staff-added) or on the mandatory Team photo",
+      "ok": true,
+      "measurement": "0 of 9 editable"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student",
+      "label": "holder form: the holder note, and no Mandatory toggle (1 for staff)",
+      "ok": true,
+      "measurement": "{\"note\":\"You can add events, and edit or delete the ones you added. Only staff can make an event mandatory.\",\"mandatory\":0}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student",
+      "label": "holder: editing a Scouting practice offers \"Whole series (2)\"",
+      "ok": true,
+      "measurement": "\"Whole series (2)\""
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student2",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student2",
+      "label": "\"+ New event\": 0",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student2",
+      "label": "0 Edit/Delete on all 22 events",
+      "ok": true,
+      "measurement": "0 editable"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student2",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · mentor",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · mentor",
+      "label": "\"+ New event\": 1",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · mentor",
+      "label": "staff: Edit and Delete on every event",
+      "ok": true,
+      "measurement": "22 of 22"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · mentor",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · mentor",
+      "label": "staff form: the Mandatory toggle, no holder note",
+      "ok": true,
+      "measurement": "{\"note\":null,\"mandatory\":1}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · mentor",
+      "label": "desktop, plate on: Edit/Delete keep the 44px floor",
+      "ok": true,
+      "measurement": "44 buttons, 44-44px"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student",
+      "label": "\"+ New event\": 0",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student",
+      "label": "0 Edit/Delete on all 22 events",
+      "ok": true,
+      "measurement": "0 editable"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student2",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student2",
+      "label": "\"+ New event\": 0",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student2",
+      "label": "0 Edit/Delete on all 22 events",
+      "ok": true,
+      "measurement": "0 editable"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · student2",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · mentor",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · mentor",
+      "label": "\"+ New event\": 1",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · mentor",
+      "label": "staff: Edit and Delete on every event",
+      "ok": true,
+      "measurement": "22 of 22"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · mentor",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · mentor",
+      "label": "staff form: the Mandatory toggle, no holder note",
+      "ok": true,
+      "measurement": "{\"note\":null,\"mandatory\":1}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · student",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · student",
+      "label": "\"+ New event\": 0",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · student",
+      "label": "0 Edit/Delete on all 22 events",
+      "ok": true,
+      "measurement": "0 editable"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · student",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · student2",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · student2",
+      "label": "\"+ New event\": 0",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · student2",
+      "label": "0 Edit/Delete on all 22 events",
+      "ok": true,
+      "measurement": "0 editable"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · student2",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · mentor",
+      "label": "the agenda lists the upcoming events",
+      "ok": true,
+      "measurement": "22 events"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · mentor",
+      "label": "\"+ New event\": 1",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · mentor",
+      "label": "staff: Edit and Delete on every event",
+      "ok": true,
+      "measurement": "22 of 22"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · mentor",
+      "label": "no error banner",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig none · mentor",
+      "label": "staff form: the Mandatory toggle, no holder note",
+      "ok": true,
+      "measurement": "{\"note\":null,\"mandatory\":1}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · comparison",
+      "label": "without 0004 (mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022) the holder sees exactly what a non-holder sees",
+      "ok": true,
+      "measurement": "{\"titles\":[\"Build session\",\"All-team meeting\",\"CAD design review (student-run)\",\"Saturday build\",\"Machine shop training\",\"Build session\",\"Scouting practice\",\"FLL volunteer day\",\"Team photo\",\"Build session\",\"Community STEM night\",\"Build session\",\"SoCal Showdown\",\"Saturday build\",\"Scouting practice\",\"Build session\",\"Fixture Regional\",\"Team potluck\",\"Build session\",\"Saturday build\",\"Build session\",\"Build session\"],\"newBtn\":0,\"editable\":[]}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · comparison",
+      "label": "without 0004 (mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022) staff see exactly what they see with it",
+      "ok": true,
+      "measurement": "{\"titles\":[\"Build session\",\"All-team meeting\",\"CAD design review (student-run)\",\"Saturday build\",\"Machine shop training\",\"Build session\",\"Scouting practice\",\"FLL volunteer day\",\"Team photo\",\"Build session\",\"Community STEM night\",\"Build session\",\"SoCal Showdown\",\"Saturday build\",\"Scouting practice\",\"Build session\",\"Fixture Regional\",\"Team potluck\",\"Build session\",\"Saturday build\",\"Build session\",\"Build session\"],\"newBtn\":1,\"editable\":[\"All-team meeting\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"CAD design review (student-run)\",\"Community STEM night\",\"FLL volunteer day\",\"Fixture Regional\",\"Machine shop training\",\"Saturday build\",\"Saturday build\",\"Saturday build\",\"Scouting practice\",\"Scouting practice\",\"SoCal Showdown\",\"Team photo\",\"Team potluck\"]}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · comparison",
+      "label": "without 0004 (mig none) the holder sees exactly what a non-holder sees",
+      "ok": true,
+      "measurement": "{\"titles\":[\"Build session\",\"All-team meeting\",\"CAD design review (student-run)\",\"Saturday build\",\"Machine shop training\",\"Build session\",\"Scouting practice\",\"FLL volunteer day\",\"Team photo\",\"Build session\",\"Community STEM night\",\"Build session\",\"SoCal Showdown\",\"Saturday build\",\"Scouting practice\",\"Build session\",\"Fixture Regional\",\"Team potluck\",\"Build session\",\"Saturday build\",\"Build session\",\"Build session\"],\"newBtn\":0,\"editable\":[]}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · comparison",
+      "label": "without 0004 (mig none) staff see exactly what they see with it",
+      "ok": true,
+      "measurement": "{\"titles\":[\"Build session\",\"All-team meeting\",\"CAD design review (student-run)\",\"Saturday build\",\"Machine shop training\",\"Build session\",\"Scouting practice\",\"FLL volunteer day\",\"Team photo\",\"Build session\",\"Community STEM night\",\"Build session\",\"SoCal Showdown\",\"Saturday build\",\"Scouting practice\",\"Build session\",\"Fixture Regional\",\"Team potluck\",\"Build session\",\"Saturday build\",\"Build session\",\"Build session\"],\"newBtn\":1,\"editable\":[\"All-team meeting\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"Build session\",\"CAD design review (student-run)\",\"Community STEM night\",\"FLL volunteer day\",\"Fixture Regional\",\"Machine shop training\",\"Saturday build\",\"Saturday build\",\"Saturday build\",\"Scouting practice\",\"Scouting practice\",\"SoCal Showdown\",\"Team photo\",\"Team potluck\"]}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · comparison",
+      "label": "positive control: with 0004 the holder does NOT see what a non-holder sees",
+      "ok": true,
+      "measurement": "holder 3 editable + 1 new, non-holder 0 + 0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student creates",
+      "label": "the event is stored as the holder's, never mandatory",
+      "ok": true,
+      "measurement": "{\"created_by\":\"student\",\"mandatory\":false,\"kind\":\"meeting\"}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student creates",
+      "label": "and it carries Edit/Delete for its author",
+      "ok": true,
+      "measurement": "{\"title\":\"Sam's CAD lab\",\"edit\":true,\"del\":true}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "schedule · mig all · student creates",
+      "label": "positive control: a non-holder sees the new event with no Edit/Delete",
+      "ok": true,
+      "measurement": "{\"title\":\"Sam's CAD lab\",\"edit\":false,\"del\":false}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "one \"Adds events\" tag in the collapsed list (Sam's)",
+      "ok": true,
+      "measurement": "{\"dom\":1,\"text\":[\"Adds events\"]}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "at 1440 the tag is shown",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "Sam's detail rows include Roles, Permissions, Status and Geo exempt",
+      "ok": true,
+      "measurement": "Email, Subteams, Roles, Permissions, Status, Geo exempt, Access, Hours, Profile, Danger zone"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "Sam: \"Can add calendar events\" pressed",
+      "ok": true,
+      "measurement": "{\"label\":\"Can add calendar events\",\"pressed\":\"true\"}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "Riley: not pressed",
+      "ok": true,
+      "measurement": "\"false\""
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "a mentor: the toggle plus \"Their staff role already allows this.\"",
+      "ok": true,
+      "measurement": "{\"toggles\":1,\"note\":\"Their staff role already allows this.\"}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "positive control: no staff note for a student",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig pre-0014 · admin",
+      "label": "granting Riley: pressed, a second tag, and a stored grant",
+      "ok": true,
+      "measurement": "pressed true, 2 tags, 1 grant row(s)"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster grant → schedule · student2",
+      "label": "the grant unlocks \"+ New event\" for Riley",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig pre-0014 · admin revokes",
+      "label": "revoking Riley: unpressed, one tag, no grant row",
+      "ok": true,
+      "measurement": "pressed false"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster revoke → schedule · student2",
+      "label": "the revoke locks \"+ New event\" again",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig all · two capabilities",
+      "label": "two tags: Riley approves sign-outs, Sam adds events",
+      "ok": true,
+      "measurement": "[\"Adds events\",\"Approves sign-outs\"]"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig all · two capabilities",
+      "label": "Sam: both toggles, only calendar pressed",
+      "ok": true,
+      "measurement": "[[\"Can add calendar events\",\"Can approve sign-outs\"],[\"true\",\"false\"]]"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · admin",
+      "label": "Permissions row says Not set up yet, naming the file",
+      "ok": true,
+      "measurement": "\"Not set up yet. Apply supabase/migrations/0004_member_permissions.sql to grant these.\""
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · admin",
+      "label": "0 toggles and 0 tags (1 and 1 with 0004), no page error",
+      "ok": true,
+      "measurement": "{\"toggles\":0,\"tags\":0,\"err\":0}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig 0001,0002,0003,0005,0007,0008,0009,0010,0011,0012,0013,0014,0015,0016,0017,0022 · admin",
+      "label": "the rest of the member detail is unchanged (the same rows as with 0004)",
+      "ok": true,
+      "measurement": "[\"Email\",\"Subteams\",\"Roles\",\"Permissions\",\"Status\",\"Geo exempt\",\"Access\",\"Hours\",\"Profile\",\"Danger zone\"]"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig none · admin",
+      "label": "Permissions row says Not set up yet, naming the file",
+      "ok": true,
+      "measurement": "\"Not set up yet. Apply supabase/migrations/0004_member_permissions.sql to grant these.\""
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig none · admin",
+      "label": "0 toggles and 0 tags (1 and 1 with 0004), no page error",
+      "ok": true,
+      "measurement": "{\"toggles\":0,\"tags\":0,\"err\":0}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig none · admin",
+      "label": "the rest of the member detail is unchanged (the same rows as with 0004)",
+      "ok": true,
+      "measurement": "[\"Email\",\"Subteams\",\"Roles\",\"Permissions\",\"Status\",\"Geo exempt\",\"Access\",\"Hours\",\"Profile\",\"Danger zone\"]"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mig none · admin",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · mentor",
+      "label": "the existing admin-only sentence",
+      "ok": true,
+      "measurement": "{\"denied\":\"You need the admin role to view this page.\",\"list\":0}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "roster · student",
+      "label": "the existing admin-only sentence",
+      "ok": true,
+      "measurement": "{\"denied\":\"You need the admin role to view this page.\",\"list\":0}"
+    },
+    {
+      "feature": "permissions",
+      "vp": "1440",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "student event",
+      "label": "student reaches scouting",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "student event",
+      "label": "manager controls hidden for student",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "student event",
+      "label": "fixture has no invalid seeded rows",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "student event",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "student event",
+      "label": "student controls at least 44px",
+      "ok": true,
+      "measurement": "17 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "new observation starts with no selected answers",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "capture controls at least 44px",
+      "ok": true,
+      "measurement": "18 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "one durable observation reaches the server fixture",
+      "ok": true,
+      "measurement": "9bf06b59-cb65-4210-9a68-7e7d5f72a1b7"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "Did not see remains distinct from No and Yes",
+      "ok": true,
+      "measurement": "{\"trench\":\"did_not_see\",\"bump\":\"no\",\"ground_intake\":\"yes\"}"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "observation attribution comes from the signed-in member",
+      "ok": true,
+      "measurement": "\"00000000-0000-0000-0000-0000000000c1\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "fresh record starts at version one",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "capture observation",
+      "label": "one revision exists for submitted observation",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "draft recovery",
+      "label": "interrupted match draft restored",
+      "ok": true,
+      "measurement": "\"qm8\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "draft recovery",
+      "label": "interrupted notes restored",
+      "ok": true,
+      "measurement": "\"Unsubmitted draft survives closing and reload.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "draft recovery",
+      "label": "unsubmitted draft created no server observation",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "simulated offline capture",
+      "label": "offline save does not claim a server record",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "simulated offline capture",
+      "label": "local queue remains visible after reload",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "simulated offline capture",
+      "label": "another account cannot see the local proposal",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "simulated offline capture",
+      "label": "another account cannot synchronize the saved operation",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "simulated offline capture",
+      "label": "reconnect synchronizes the saved local observation",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "simulated offline capture",
+      "label": "repeat synchronization does not duplicate the logical record",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "team cards expose names and claims",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "map renders four fictional source pits",
+      "ok": true,
+      "measurement": "4"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "map renders source wall geometry",
+      "ok": true,
+      "measurement": "\"-10\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "map flags firsthand location conflict",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "selection highlights exactly one map pit",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "rotation swaps the independent map dimensions",
+      "ok": true,
+      "measurement": "\"0 0 1293 840\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "map controls at least 44px",
+      "ok": true,
+      "measurement": "8 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "documented Nexus demo key is accepted for map downloads",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "offline reload preserves cached pit geometry",
+      "ok": true,
+      "measurement": "4"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "offline reload preserves the actual downloaded Nexus key",
+      "ok": true,
+      "measurement": "\"demo1234\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "offline map cannot initiate a provider download",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "team controls at least 44px",
+      "ok": true,
+      "measurement": "50 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "saved message remains readable despite failed delivery",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "teams and evidence",
+      "label": "failed delivery is not presented as delivered",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "individual list shows four fixture teams",
+      "ok": true,
+      "measurement": "saves for this account and event. Wait for “saved on this device” before exporting; keep the file with your team.Recover pending saves from a backupUse an event JSON exported by this account for this event. Review it here before restoring. Existing work stays in place. Recovered saves wait for your review before they can sync.This recovers queued submissions only. Practice, unsubmitted drafts, downloaded maps and cached data stay in the archive for manual review with your lead.Event backup JSON "
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "own list initially has four unique entries",
+      "ok": true,
+      "measurement": "4"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "pick-list controls at least 44px",
+      "ok": true,
+      "measurement": "35 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "preview computes the independently expected order",
+      "ok": true,
+      "measurement": "[\"5669 · Tier 1 · position 1\",\"1538 · Tier 1 · position 2\",\"4414 · Tier 2 · position 1\",\"1323 · Tier 3 · position 1\"]"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "preview leaves saved list unchanged",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "cancel leaves saved list unchanged",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "explicit apply commits one new list version",
+      "ok": true,
+      "measurement": "2"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "apply preserves unselected team and selected slots",
+      "ok": true,
+      "measurement": "[5669,1538,4414,1323]"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pick list",
+      "label": "master labels Techmen aggregation choice and support",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "correction conflict",
+      "label": "concurrent fixture writer creates version two",
+      "ok": true,
+      "measurement": "2"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "correction conflict",
+      "label": "stale edit did not overwrite newer server notes",
+      "ok": true,
+      "measurement": "\"Another tab corrected this observation first.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "correction conflict",
+      "label": "review displays both proposals",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "correction conflict",
+      "label": "explicit review commits a third version",
+      "ok": true,
+      "measurement": "3"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "correction conflict",
+      "label": "reviewed correction is the latest evidence",
+      "ok": true,
+      "measurement": "\"My reviewed correction keeps the blocked view explicit.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "correction conflict",
+      "label": "all three correction snapshots are retained",
+      "ok": true,
+      "measurement": "3"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "manager",
+      "label": "manager controls shown to mentor",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "parent-only",
+      "label": "parent-only cannot open a capture form",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "parent-only",
+      "label": "parent-only cannot read scouting records in fixture",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "parent-only",
+      "label": "parent-only fixture RPC refuses capture",
+      "ok": true,
+      "measurement": "\"42501\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "parent-only",
+      "label": "incomplete practice note survives reload",
+      "ok": true,
+      "measurement": "\"Keep the claim separate from a visible match observation.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "parent-only",
+      "label": "incomplete exercise cannot record a finished mission",
+      "ok": true,
+      "measurement": "true"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "parent-only",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "a completed interactive mission is durably recorded",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "withdrawing the activity acknowledgment withdraws completion",
+      "ok": true,
+      "measurement": "true"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "frozen first-pass evidence cannot be casually overwritten",
+      "ok": true,
+      "measurement": "true"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "first-pass uncertainty survives reviewed correction and reload",
+      "ok": true,
+      "measurement": "\"did_not_see\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "the separately recorded correction survives reload",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "practice footage never creates competition records",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "all eight interactive mission workflows can be completed",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "practice export preserves eight completions without awarding certification",
+      "ok": true,
+      "measurement": "8"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "practice export explicitly refuses a certification claim",
+      "ok": true,
+      "measurement": "false"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "activity plan is distinct from measured time",
+      "ok": true,
+      "measurement": "null"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "export preserves first-pass uncertainty and later correction",
+      "ok": true,
+      "measurement": "[\"did_not_see\",\"yes\"]"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "practice controls at least 44px",
+      "ok": true,
+      "measurement": "40 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "practice progression",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "actual downloaded archive contains the unsent operation",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "wrong-account archive creates no observation",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "preview alone makes no server record",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "recovery controls at least 44px",
+      "ok": true,
+      "measurement": "5 visible, smallest 44px, pointer coarse"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "reload, reconnect and Sync now leave recovered work held",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "reviewed recovery creates one original logical record",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "recovered uncertainty remains explicit",
+      "ok": true,
+      "measurement": "{\"trench\":\"did_not_see\"}"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "reviewed recovery creates one revision",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "reimport cannot select an already restored save",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "preview writes no assignments",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "reviewed plan creates exactly two assignments",
+      "ok": true,
+      "measurement": "2"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "backup recovery",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 375, clientWidth 375"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "pre-0022",
+      "label": "missing schema offers no active capture action",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "375",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "student event",
+      "label": "student reaches scouting",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "student event",
+      "label": "manager controls hidden for student",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "student event",
+      "label": "fixture has no invalid seeded rows",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "student event",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "capture observation",
+      "label": "new observation starts with no selected answers",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "capture observation",
+      "label": "one durable observation reaches the server fixture",
+      "ok": true,
+      "measurement": "cbfa4ab3-79af-4c7e-a77a-3ee282cb1025"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "capture observation",
+      "label": "Did not see remains distinct from No and Yes",
+      "ok": true,
+      "measurement": "{\"trench\":\"did_not_see\",\"bump\":\"no\",\"ground_intake\":\"yes\"}"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "capture observation",
+      "label": "observation attribution comes from the signed-in member",
+      "ok": true,
+      "measurement": "\"00000000-0000-0000-0000-0000000000c1\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "capture observation",
+      "label": "fresh record starts at version one",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "capture observation",
+      "label": "one revision exists for submitted observation",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "draft recovery",
+      "label": "interrupted match draft restored",
+      "ok": true,
+      "measurement": "\"qm8\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "draft recovery",
+      "label": "interrupted notes restored",
+      "ok": true,
+      "measurement": "\"Unsubmitted draft survives closing and reload.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "draft recovery",
+      "label": "unsubmitted draft created no server observation",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "simulated offline capture",
+      "label": "offline save does not claim a server record",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "simulated offline capture",
+      "label": "local queue remains visible after reload",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "simulated offline capture",
+      "label": "another account cannot see the local proposal",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "simulated offline capture",
+      "label": "another account cannot synchronize the saved operation",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "simulated offline capture",
+      "label": "reconnect synchronizes the saved local observation",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "simulated offline capture",
+      "label": "repeat synchronization does not duplicate the logical record",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "team cards expose names and claims",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "map renders four fictional source pits",
+      "ok": true,
+      "measurement": "4"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "map renders source wall geometry",
+      "ok": true,
+      "measurement": "\"-10\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "map flags firsthand location conflict",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "selection highlights exactly one map pit",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "rotation swaps the independent map dimensions",
+      "ok": true,
+      "measurement": "\"0 0 1293 840\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "documented Nexus demo key is accepted for map downloads",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "offline reload preserves cached pit geometry",
+      "ok": true,
+      "measurement": "4"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "offline reload preserves the actual downloaded Nexus key",
+      "ok": true,
+      "measurement": "\"demo1234\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "offline map cannot initiate a provider download",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "saved message remains readable despite failed delivery",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "teams and evidence",
+      "label": "failed delivery is not presented as delivered",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "individual list shows four fixture teams",
+      "ok": true,
+      "measurement": "saves for this account and event. Wait for “saved on this device” before exporting; keep the file with your team.Recover pending saves from a backupUse an event JSON exported by this account for this event. Review it here before restoring. Existing work stays in place. Recovered saves wait for your review before they can sync.This recovers queued submissions only. Practice, unsubmitted drafts, downloaded maps and cached data stay in the archive for manual review with your lead.Event backup JSON "
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "own list initially has four unique entries",
+      "ok": true,
+      "measurement": "4"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "preview computes the independently expected order",
+      "ok": true,
+      "measurement": "[\"5669 · Tier 1 · position 1\",\"1538 · Tier 1 · position 2\",\"4414 · Tier 2 · position 1\",\"1323 · Tier 3 · position 1\"]"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "preview leaves saved list unchanged",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "cancel leaves saved list unchanged",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "explicit apply commits one new list version",
+      "ok": true,
+      "measurement": "2"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "apply preserves unselected team and selected slots",
+      "ok": true,
+      "measurement": "[5669,1538,4414,1323]"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pick list",
+      "label": "master labels Techmen aggregation choice and support",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "correction conflict",
+      "label": "concurrent fixture writer creates version two",
+      "ok": true,
+      "measurement": "2"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "correction conflict",
+      "label": "stale edit did not overwrite newer server notes",
+      "ok": true,
+      "measurement": "\"Another tab corrected this observation first.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "correction conflict",
+      "label": "review displays both proposals",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "correction conflict",
+      "label": "explicit review commits a third version",
+      "ok": true,
+      "measurement": "3"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "correction conflict",
+      "label": "reviewed correction is the latest evidence",
+      "ok": true,
+      "measurement": "\"My reviewed correction keeps the blocked view explicit.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "correction conflict",
+      "label": "all three correction snapshots are retained",
+      "ok": true,
+      "measurement": "3"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "manager",
+      "label": "manager controls shown to mentor",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "parent-only",
+      "label": "parent-only cannot open a capture form",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "parent-only",
+      "label": "parent-only cannot read scouting records in fixture",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "parent-only",
+      "label": "parent-only fixture RPC refuses capture",
+      "ok": true,
+      "measurement": "\"42501\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "parent-only",
+      "label": "incomplete practice note survives reload",
+      "ok": true,
+      "measurement": "\"Keep the claim separate from a visible match observation.\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "parent-only",
+      "label": "incomplete exercise cannot record a finished mission",
+      "ok": true,
+      "measurement": "true"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "parent-only",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "a completed interactive mission is durably recorded",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "withdrawing the activity acknowledgment withdraws completion",
+      "ok": true,
+      "measurement": "true"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "frozen first-pass evidence cannot be casually overwritten",
+      "ok": true,
+      "measurement": "true"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "first-pass uncertainty survives reviewed correction and reload",
+      "ok": true,
+      "measurement": "\"did_not_see\""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "the separately recorded correction survives reload",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "practice footage never creates competition records",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "all eight interactive mission workflows can be completed",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "practice export preserves eight completions without awarding certification",
+      "ok": true,
+      "measurement": "8"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "practice export explicitly refuses a certification claim",
+      "ok": true,
+      "measurement": "false"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "activity plan is distinct from measured time",
+      "ok": true,
+      "measurement": "null"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "export preserves first-pass uncertainty and later correction",
+      "ok": true,
+      "measurement": "[\"did_not_see\",\"yes\"]"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "practice progression",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "actual downloaded archive contains the unsent operation",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "wrong-account archive creates no observation",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "preview alone makes no server record",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "reload, reconnect and Sync now leave recovered work held",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "reviewed recovery creates one original logical record",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "recovered uncertainty remains explicit",
+      "ok": true,
+      "measurement": "{\"trench\":\"did_not_see\"}"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "reviewed recovery creates one revision",
+      "ok": true,
+      "measurement": "1"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "reimport cannot select an already restored save",
+      "ok": true,
+      "measurement": ""
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "preview writes no assignments",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "reviewed plan creates exactly two assignments",
+      "ok": true,
+      "measurement": "2"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "backup recovery",
+      "label": "no horizontal page scroll",
+      "ok": true,
+      "measurement": "scrollWidth 1440, clientWidth 1440"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "pre-0022",
+      "label": "missing schema offers no active capture action",
+      "ok": true,
+      "measurement": "0"
+    },
+    {
+      "feature": "scouting",
+      "vp": "1440",
+      "state": "whole run",
+      "label": "0 unexpected console errors",
+      "ok": true,
+      "measurement": "0 errors (0 expected), 0 external request(s) blocked"
+    }
+  ]
+}

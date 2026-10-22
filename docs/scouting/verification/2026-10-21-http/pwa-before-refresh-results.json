@@ -1,0 +1,143 @@
+{
+  "scope": "Built app, native Chromium, real local PostgREST/PostgreSQL; synthetic auth; real map adapter with fictional Nexus response; no live services or real phones",
+  "soak": {
+    "requestedMinutes": 0,
+    "startedAt": null,
+    "finishedAt": null,
+    "rounds": []
+  },
+  "results": [
+    {
+      "label": "built app loads event through real PostgREST",
+      "ok": true
+    },
+    {
+      "label": "production service worker controls the page",
+      "ok": true
+    },
+    {
+      "label": "built map adapter authorizes through local PostgREST and caches fictional Nexus geometry",
+      "ok": true
+    },
+    {
+      "label": "cold navigation works offline even after the stored Auth session expires",
+      "ok": true
+    },
+    {
+      "label": "installed PWA start URL reopens the prepared event offline",
+      "ok": true
+    },
+    {
+      "label": "cold offline map survives with real service worker and IndexedDB",
+      "ok": true
+    },
+    {
+      "label": "offline observation has no server record",
+      "ok": true
+    },
+    {
+      "label": "native IndexedDB queue survives built-PWA reload",
+      "ok": true
+    },
+    {
+      "label": "lost HTTP response preserves the queued proposal after server commit",
+      "ok": true
+    },
+    {
+      "label": "lost-response backup preserves the actual operation identity",
+      "ok": true
+    },
+    {
+      "label": "fresh-profile recovery holds the save across reload without another server revision",
+      "ok": true
+    },
+    {
+      "label": "reviewed recovered request uses its original server receipt",
+      "ok": true
+    },
+    {
+      "label": "malformed domain data is held out of evidence and rejected by actual SQL validation",
+      "ok": true
+    },
+    {
+      "label": "rejected recovery cannot bypass validation through form editing",
+      "ok": true
+    },
+    {
+      "label": "explicitly removing a rejected recovered copy leaves original synchronized evidence intact",
+      "ok": true
+    },
+    {
+      "label": "reconnect creates exactly one attributed observation",
+      "ok": true
+    },
+    {
+      "label": "repeated launch creates no duplicate logical records",
+      "ok": true
+    },
+    {
+      "label": "interrupted-page test reaches a real committed save before response",
+      "ok": true
+    },
+    {
+      "label": "a restarted page automatically recovers its expired lease without another submit",
+      "ok": true
+    },
+    {
+      "label": "exiting prepared mode removes capture access",
+      "ok": true
+    },
+    {
+      "label": "offline identity stays cleared across reload",
+      "ok": true
+    },
+    {
+      "label": "parent JWT sees no scouting rows through PostgREST",
+      "ok": true
+    },
+    {
+      "label": "parent JWT cannot save through PostgREST",
+      "ok": true
+    },
+    {
+      "label": "map adapter refuses a parent through the actual local eligibility RPC before provider access",
+      "ok": true
+    },
+    {
+      "label": "authenticated client cannot bypass validated write RPC",
+      "ok": true
+    },
+    {
+      "label": "connector HTTP preview rolls back without creating evidence",
+      "ok": true
+    },
+    {
+      "label": "connector HTTP commit preserves identity and audit",
+      "ok": true
+    },
+    {
+      "label": "connector HTTP refuses an unauthorized account",
+      "ok": true
+    },
+    {
+      "label": "concurrent correction succeeds through actual PostgREST",
+      "ok": true
+    },
+    {
+      "label": "stale PWA save receives HTTP 409 with PT409",
+      "ok": true
+    },
+    {
+      "label": "HTTP conflict preserves newer server evidence and queued proposal",
+      "ok": true
+    },
+    {
+      "label": "actual HTTP conflict review displays both proposals",
+      "ok": true
+    },
+    {
+      "label": "explicit PWA review commits a third attributed version",
+      "ok": true
+    }
+  ]
+}

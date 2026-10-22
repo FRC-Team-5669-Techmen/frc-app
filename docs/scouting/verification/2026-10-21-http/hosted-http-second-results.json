@@ -1,0 +1,136 @@
+{
+  "project_ref": "cctevrqiuqdiswkgghwo",
+  "event": "9d5d44ac-6e5b-466a-bd00-a24b8046b6cb",
+  "verified_at": "2026-10-21T18:59:21.738Z",
+  "scope": "Real hosted GoTrue password/refresh JWTs; SQL-provisioned fictional accounts, no OTP/OAuth or Discord delivery",
+  "results": [
+    {
+      "label": "real hosted password grant for fictional admin",
+      "ok": true
+    },
+    {
+      "label": "GoTrue verifies admin token",
+      "ok": true
+    },
+    {
+      "label": "real hosted password grant for fictional student",
+      "ok": true
+    },
+    {
+      "label": "GoTrue verifies student token",
+      "ok": true
+    },
+    {
+      "label": "real hosted password grant for fictional other",
+      "ok": true
+    },
+    {
+      "label": "GoTrue verifies other token",
+      "ok": true
+    },
+    {
+      "label": "real hosted password grant for fictional parent",
+      "ok": true
+    },
+    {
+      "label": "GoTrue verifies parent token",
+      "ok": true
+    },
+    {
+      "label": "real hosted password grant for fictional parent_staff",
+      "ok": true
+    },
+    {
+      "label": "GoTrue verifies parent_staff token",
+      "ok": true
+    },
+    {
+      "label": "real hosted password grant for fictional unapproved",
+      "ok": true
+    },
+    {
+      "label": "GoTrue verifies unapproved token",
+      "ok": true
+    },
+    {
+      "label": "real hosted session refresh",
+      "ok": true
+    },
+    {
+      "label": "admin access is true",
+      "ok": true
+    },
+    {
+      "label": "student access is true",
+      "ok": true
+    },
+    {
+      "label": "parent access is false",
+      "ok": true
+    },
+    {
+      "label": "parent_staff access is true",
+      "ok": true
+    },
+    {
+      "label": "unapproved access is false",
+      "ok": true
+    },
+    {
+      "label": "admin manager boundary is true",
+      "ok": true
+    },
+    {
+      "label": "student manager boundary is false",
+      "ok": true
+    },
+    {
+      "label": "parent_staff manager boundary is true",
+      "ok": true
+    },
+    {
+      "label": "parent manager boundary is false",
+      "ok": true
+    },
+    {
+      "label": "student observation saved through hosted JWT/PostgREST",
+      "ok": true
+    },
+    {
+      "label": "same operation returns original hosted receipt",
+      "ok": true
+    },
+    {
+      "label": "another eligible scout reads confirmed distinct unknown and no",
+      "ok": true
+    },
+    {
+      "label": "parent cannot read scouting evidence",
+      "ok": true
+    },
+    {
+      "label": "parent cannot save scouting evidence",
+      "ok": true
+    },
+    {
+      "label": "unapproved cannot read scouting evidence",
+      "ok": true
+    },
+    {
+      "label": "unapproved cannot save scouting evidence",
+      "ok": true
+    },
+    {
+      "label": "hosted JWT actor cannot be spoofed",
+      "ok": true
+    },
+    {
+      "label": "another scout cannot correct author observation",
+      "ok": true
+    },
+    {
+      "label": "author correction creates version two",
+      "ok": true
+    }
+  ]
+}

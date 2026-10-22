@@ -1,0 +1,76 @@
+
+> frc-app@0.1.0 scouting:preview:check
+> npm run scouting:preview && node tools/scouting-preview/check.mjs
+
+
+> frc-app@0.1.0 scouting:preview
+> node tools/scouting-preview/build.mjs
+
+▲ [WARNING] Use "src/scouting/PitMap.jsx" instead of "src/scouting/pitMap.jsx" to avoid issues with case-sensitive file systems [different-path-case]
+
+    src/scouting/PitMap.jsx:2:102:
+      2 │ ...tale, normalizePitMap, PIT_MAP_DRAFT, validMapKey } from './pitMap'
+        ╵                                                             ~~~~~~~~~~
+
+✘ [ERROR] No matching export in "src/scouting/PitMap.jsx" for import "importedMapKey"
+
+    src/scouting/PitMap.jsx:2:9:
+      2 │ import { importedMapKey, mapDirectory, mapIsStale, normalizePitMap,...
+        ╵          ~~~~~~~~~~~~~~
+
+✘ [ERROR] No matching export in "src/scouting/PitMap.jsx" for import "mapDirectory"
+
+    src/scouting/PitMap.jsx:2:25:
+      2 │ import { importedMapKey, mapDirectory, mapIsStale, normalizePitMap,...
+        ╵                          ~~~~~~~~~~~~
+
+✘ [ERROR] No matching export in "src/scouting/PitMap.jsx" for import "mapIsStale"
+
+    src/scouting/PitMap.jsx:2:39:
+      2 │ ...ortedMapKey, mapDirectory, mapIsStale, normalizePitMap, PIT_MAP_...
+        ╵                               ~~~~~~~~~~
+
+✘ [ERROR] No matching export in "src/scouting/PitMap.jsx" for import "normalizePitMap"
+
+    src/scouting/PitMap.jsx:2:51:
+      2 │ ...apDirectory, mapIsStale, normalizePitMap, PIT_MAP_DRAFT, validMa...
+        ╵                             ~~~~~~~~~~~~~~~
+
+✘ [ERROR] No matching export in "src/scouting/PitMap.jsx" for import "PIT_MAP_DRAFT"
+
+    src/scouting/PitMap.jsx:2:68:
+      2 │ ...IsStale, normalizePitMap, PIT_MAP_DRAFT, validMapKey } from './p...
+        ╵                              ~~~~~~~~~~~~~
+
+✘ [ERROR] No matching export in "src/scouting/PitMap.jsx" for import "validMapKey"
+
+    src/scouting/PitMap.jsx:2:83:
+      2 │ ...tale, normalizePitMap, PIT_MAP_DRAFT, validMapKey } from './pitMap'
+        ╵                                          ~~~~~~~~~~~
+
+/workspace/work/frc-app/node_modules/esbuild/lib/main.js:1472
+  let error = new Error(text);
+              ^
+
+Error: Build failed with 6 errors:
+src/scouting/PitMap.jsx:2:9: ERROR: No matching export in "src/scouting/PitMap.jsx" for import "importedMapKey"
+src/scouting/PitMap.jsx:2:25: ERROR: No matching export in "src/scouting/PitMap.jsx" for import "mapDirectory"
+src/scouting/PitMap.jsx:2:39: ERROR: No matching export in "src/scouting/PitMap.jsx" for import "mapIsStale"
+src/scouting/PitMap.jsx:2:51: ERROR: No matching export in "src/scouting/PitMap.jsx" for import "normalizePitMap"
+src/scouting/PitMap.jsx:2:68: ERROR: No matching export in "src/scouting/PitMap.jsx" for import "PIT_MAP_DRAFT"
+...
+    at failureErrorWithLog (/workspace/work/frc-app/node_modules/esbuild/lib/main.js:1472:15)
+    at /workspace/work/frc-app/node_modules/esbuild/lib/main.js:945:25
+    at runOnEndCallbacks (/workspace/work/frc-app/node_modules/esbuild/lib/main.js:1315:45)
+    at buildResponseToResult (/workspace/work/frc-app/node_modules/esbuild/lib/main.js:943:7)
+    at /workspace/work/frc-app/node_modules/esbuild/lib/main.js:970:16
+    at responseCallbacks.<computed> (/workspace/work/frc-app/node_modules/esbuild/lib/main.js:622:9)
+    at handleIncomingPacket (/workspace/work/frc-app/node_modules/esbuild/lib/main.js:677:12)
+    at Socket.readFromStdout (/workspace/work/frc-app/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:509:28)
+    at addChunk (node:internal/streams/readable:563:12) {
+  errors: [Getter/Setter],
+  warnings: [Getter/Setter]
+}
+
+Node.js v24.19.0
