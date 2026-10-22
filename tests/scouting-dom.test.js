@@ -35,14 +35,14 @@ async function input(element, value) {
     element.dispatchEvent(new Event('input', { bubbles: true })); await pause(1)
   })
 }
-async function mount(persona = 'student', roles) {
+async function mount(persona = 'student', roles, route = `/scouting/${EVENT}`) {
   fixture.setPersona(persona)
   const { data } = await supabase.auth.getSession()
   const actualRoles = roles ?? fixture.rows('member_roles').filter(r => r.member_id === IDS[persona]).map(r => r.role)
   root = createRoot(host)
-  await act(async () => root.render(React.createElement(MemoryRouter, { initialEntries: [`/scouting/${EVENT}`] },
-    React.createElement(Routes, null, React.createElement(Route, { path: '/scouting/:eventId', element: React.createElement(ScoutingPage, { session: data.session, hasRole: r => actualRoles.includes(r) }) })))))
-  await settle(() => host.querySelector('[data-scout-page="event"]') || host.textContent.includes('available to student and staff accounts') || host.textContent.includes('not set up yet') || host.textContent.includes('Scouting access unavailable'), 'event render')
+  await act(async () => root.render(React.createElement(MemoryRouter, { initialEntries: [route] },
+    React.createElement(Routes, null, React.createElement(Route, { path: '/scouting/:eventId?', element: React.createElement(ScoutingPage, { session: data.session, hasRole: r => actualRoles.includes(r) }) })))))
+  await settle(() => host.querySelector('[data-scout-page="event"]') || host.querySelector('[data-scout-page="events"]') || host.textContent.includes('available to student and staff accounts') || host.textContent.includes('not set up yet') || host.textContent.includes('Scouting access unavailable'), 'event render')
 }
 async function unmount() { if (root) { await act(async () => root.unmount()); root = null } }
 function setOnline(value) {
@@ -71,6 +71,33 @@ beforeEach(() => {
 afterEach(async () => { await unmount(); host.remove(); vi.restoreAllMocks() })
 
 describe('rendered scouting with IndexedDB emulation', () => {
+  it('lists competitions without routine calendar training, builds or meetings', async () => {
+    const base = fixture.rows('events')[0]
+    fixture.db.events = ['competition', 'training', 'build', 'meeting'].map((kind, i) => ({ ...base, id: `16000000-0000-4000-8000-00000000000${i+1}`, kind, title: `Calendar ${kind}` }))
+    await mount('student', undefined, '/scouting')
+    await settle(() => host.querySelectorAll('.sc-event-card').length === 1)
+    expect(host.querySelector('.sc-event-card').textContent).toContain('Calendar competition')
+    expect(host.textContent).not.toContain('Calendar training')
+    expect(fixture.rows('events')).toHaveLength(4)
+  })
+  it('filters old offline indexes and explains a calendar with no competitions', async () => {
+    const store = await createScoutingStore()
+    const events = [{ id: EVENT, kind: 'competition', title: 'Regional' }, { id: 'training', kind: 'training', title: 'After School FRC Training' }]
+    await store.saveDraft(IDS.student, 'event-index', 'events', events)
+    setOnline(false)
+    await mount('student', undefined, '/scouting')
+    await settle(() => host.querySelectorAll('.sc-event-card').length === 1)
+    expect(host.querySelector('.sc-event-card').textContent).toContain('Regional')
+    expect(host.textContent).not.toContain('After School FRC Training')
+    await unmount()
+    await store.saveDraft(IDS.student, 'event-index', 'events', events.slice(1))
+    await mount('student', undefined, '/scouting')
+    await settle(() => host.textContent.includes('No competitions scheduled'))
+    expect(host.querySelectorAll('.sc-event-card')).toHaveLength(0)
+    expect(host.querySelector('a[href="/schedule"]')).not.toBeNull()
+    expect(await store.getDraft(IDS.student, 'event-index', 'events')).toEqual(events.slice(1))
+    store.close()
+  })
   it.each(['42501', 'PGRST301', 'ACCOUNT_CHANGED'])('hides cached receipts and drafting controls after definitive %s denial without deleting local work', async code => {
     await mount(); await settle(() => !buttons('Sync now')[0]?.disabled, 'initial sync idle')
     const store = await createScoutingStore()

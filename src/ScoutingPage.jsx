@@ -51,7 +51,7 @@ function ScoutingEvents({ uid }) {
         const saved = await store.getDraft(uid, 'event-index', 'events')
         if (live && saved) { setEvents(saved); setCached(true) }
         if (!navigator.onLine) { if (live && !saved) { setEvents([]); setError('No event list is saved here. Open the event link you prepared, or reconnect once.') }; return }
-        const result = await supabase.from('events').select('id,title,kind,starts_at,ends_at,location').in('kind', ['competition', 'training']).order('starts_at', { ascending: false })
+        const result = await supabase.from('events').select('id,title,kind,starts_at,ends_at,location').eq('kind', 'competition').order('starts_at', { ascending: false })
         if (result.error) throw result.error
         if (live) { setEvents(result.data ?? []); setCached(false); setError('') }
         await store.saveDraft(uid, 'event-index', 'events', result.data ?? [])
@@ -61,14 +61,15 @@ function ScoutingEvents({ uid }) {
     load()
     return () => { live = false }
   }, [uid, retry])
-  const filtered = (events ?? []).filter(e => `${e.title} ${e.location ?? ''}`.toLowerCase().includes(query.toLowerCase()))
+  // Also filter older offline indexes, which included routine training sessions.
+  const filtered = (events ?? []).filter(e => e.kind === 'competition' && `${e.title} ${e.location ?? ''}`.toLowerCase().includes(query.toLowerCase()))
   return <main className="sc-wrap" data-scout-page="events">
     <header className="sc-head"><div><span className="sc-eyebrow">Techmen field intelligence</span><h1>Scouting</h1><p>One event. Shared evidence. Better decisions.</p></div><span className="sc-season">REBUILT / 2026</span></header>
     <div className="sc-intro"><span className="sc-intro-number">01</span><div><h2>Choose your event</h2><p>Open the event while connected to save its data for the stands. Observations and notes stay on this device until they sync.</p></div></div>
     <label className="sc-search">Find an event<input type="search" placeholder="Event name or venue" value={query} onChange={e => setQuery(e.target.value)} /></label>
     {cached && <p className="sc-notice">Showing the event list saved on this device.</p>}
     {error && <div className="sc-notice" role="status"><p>Could not refresh events. {error}</p><button onClick={() => setRetry(n => n + 1)}>Try again</button></div>}
-    {!events ? <p role="status">Loading events…</p> : !filtered.length ? <div className="sc-empty"><h2>No matching events</h2><p>Your lead can add a competition or training event in Schedule.</p><Link className="sc-link" to="/schedule">Open Schedule</Link></div> : <div className="sc-event-grid">{filtered.map(event => <Link className="sc-event-card" key={event.id} to={`/scouting/${event.id}`}><span className="sc-eyebrow">{event.kind}</span><h2>{event.title}</h2><p>{event.location || 'Venue not listed'}</p><span className="sc-event-foot"><span>{when(event.starts_at)}</span><b>Open scouting →</b></span></Link>)}</div>}
+    {!events ? <p role="status">Loading events…</p> : !filtered.length ? <div className="sc-empty"><h2>{query ? 'No matching competitions' : 'No competitions scheduled'}</h2><p>Scouting lists competition events only. Your lead can add one in Schedule and set its type to competition.</p><Link className="sc-link" to="/schedule">Open Schedule</Link></div> : <div className="sc-event-grid">{filtered.map(event => <Link className="sc-event-card" key={event.id} to={`/scouting/${event.id}`}><span className="sc-eyebrow">{event.kind}</span><h2>{event.title}</h2><p>{event.location || 'Venue not listed'}</p><span className="sc-event-foot"><span>{when(event.starts_at)}</span><b>Open scouting →</b></span></Link>)}</div>}
   </main>
 }
 
