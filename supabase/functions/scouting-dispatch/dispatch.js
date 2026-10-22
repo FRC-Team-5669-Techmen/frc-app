@@ -47,6 +47,9 @@ export async function dispatchScouting({ userClient, serviceClient, body, env = 
     if (done.error) return { http: 200, status: 'uncertain', delivery: { ...delivery, status: 'sending' }, message: 'Delivery receipt could not be saved. Check Discord before taking further action.' }
     return { http: 200, status, delivery: done.data, message }
   }
+  if (env.SCOUTING_DISCORD_ENABLED !== 'true') {
+    return finish('not_configured', 'Scouting Discord delivery is disabled. Your scouting note is saved.')
+  }
   if (!env.DISCORD_BOT_TOKEN || !env.DISCORD_GUILD_ID) {
     return finish('not_configured', 'Discord is not configured. Your scouting note is saved.')
   }

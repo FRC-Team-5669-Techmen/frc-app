@@ -17,6 +17,7 @@ Deno.serve(async (request: Request) => {
     const userClient = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: authorization } }, auth: noSession })
     const serviceClient = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: noSession })
     const result = await dispatchScouting({ userClient, serviceClient, body: JSON.parse(text), env: {
+      SCOUTING_DISCORD_ENABLED: Deno.env.get('SCOUTING_DISCORD_ENABLED'),
       DISCORD_BOT_TOKEN: Deno.env.get('DISCORD_BOT_TOKEN'), DISCORD_GUILD_ID: Deno.env.get('DISCORD_GUILD_ID'),
     } })
     const { http, ...body } = result

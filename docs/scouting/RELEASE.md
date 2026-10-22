@@ -1,5 +1,7 @@
 # Scouting release and field acceptance
 
+**October 21 Pacific release authorization:** the owner explicitly requested production release and pushing this update to main. The operator is completing live schema/function checks and the exact-source CI gate before the release workflow. The historical prohibitions below describe the earlier review-only period. Production data must be preserved. Scouting Discord delivery defaults off unless `SCOUTING_DISCORD_ENABLED=true`; existing team notification services are unchanged. Physical-phone, mentor, provider-success and competition acceptance remain incomplete and are not implied by this release.
+
 The code is pushed to review branch `codex/scouting-2026-evidence`, with draft PR #4 open. It has not been merged or deployed to production, and no scouting SQL has been applied to the live database. Git pushes may create automatic Vercel review previews. Use `VERIFICATION.md` for actual checks and `RESUME.md` for remaining source-fidelity gaps.
 
 Nontechnical owner: use **[YOUR_CHECKLIST.md](YOUR_CHECKLIST.md)**. The engineering commands below belong to the implementing AI/operator, not homework for the owner.
@@ -45,6 +47,7 @@ Server-only configuration:
 | --- | --- |
 | `TBA_AUTH_KEY` | TBA event roster and match preview |
 | `NEXUS_API_KEY` | Nexus pit addresses and geometry maps |
+| `SCOUTING_DISCORD_ENABLED` | Explicit opt-in; leave unset/false for this release |
 | `DISCORD_BOT_TOKEN` | Existing team's Discord bot |
 | `DISCORD_GUILD_ID` | Existing team's Discord server |
 

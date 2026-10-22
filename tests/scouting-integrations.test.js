@@ -7,7 +7,7 @@ import { memoryBackend, testClock, testRandom } from './connector/memory-backend
 
 const id = '20000000-0000-4000-8000-000000000002'
 const userId = '10000000-0000-4000-8000-000000000001'
-const env = { DISCORD_BOT_TOKEN: 'private-bot-token', DISCORD_GUILD_ID: '123456789012345678', TBA_AUTH_KEY: 'private-tba-key', NEXUS_API_KEY: 'private-nexus-key' }
+const env = { SCOUTING_DISCORD_ENABLED: 'true', DISCORD_BOT_TOKEN: 'private-bot-token', DISCORD_GUILD_ID: '123456789012345678', TBA_AUTH_KEY: 'private-tba-key', NEXUS_API_KEY: 'private-nexus-key' }
 const record = { id, event_id: id, member_id: userId, kind: 'message', team_number: 4414, version: 1, payload: { text: 'Auto stopped. @everyone <@123456789012345678>', request_delivery: true } }
 const response = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } })
 
@@ -34,6 +34,17 @@ function fixture({ manager = false, user = userId, visible = true } = {}) {
 }
 
 describe('scouting Discord delivery with mocked network', () => {
+  it('never contacts Discord without explicit enablement, even with valid bot credentials', async () => {
+    for (const enabled of [undefined, 'false', 'TRUE', true]) {
+      const f = fixture()
+      const result = await dispatchScouting({ ...f, env: { ...env, SCOUTING_DISCORD_ENABLED: enabled } })
+      expect(result.status).toBe('not_configured')
+      expect(result.message).toContain('disabled')
+      expect(f.state().status).toBe('not_configured')
+      expect(f.fetchImpl).not.toHaveBeenCalled()
+    }
+    expect((await dispatchScouting(fixture())).status).toBe('delivered')
+  })
   it('reserves, sends once and distinguishes the stored receipt from the note', async () => {
     const f = fixture()
     expect((await dispatchScouting(f)).status).toBe('delivered')
