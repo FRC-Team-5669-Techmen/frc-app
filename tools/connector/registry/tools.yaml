@@ -43,6 +43,35 @@ list_members:
     role: {type: string, describe: "Only members holding this role", enum: [student, mentor, lead, admin, parent]}
     status: {type: string, describe: "Only members with this status (active by default)", enum: [active, inactive, alumni, all]}
 
+team_attendance:
+  describe: Every member's signed-in hours, check-ins and last check-in in one list, lowest first, to see who has not shown up. Filters by role, status, hours or no check-in since a date.
+  say: ["who has not shown up", "list everyone's hours", "who hasn't checked in since September", "which students have under 5 hours", "who should I take off the roster"]
+  kind: read
+  args:
+    role: {type: string, describe: "Only members holding this role", enum: [student, mentor, lead, admin, parent]}
+    status: {type: string, describe: "Only members with this status (active by default)", enum: [active, inactive, alumni, all]}
+    min_hours: {type: number, describe: "Only members with at least this many signed-in hours"}
+    max_hours: {type: number, describe: "Only members with at most this many signed-in hours"}
+    no_checkin_since: {type: string, describe: "Only members with no check-in on or after this date, YYYY-MM-DD (never checked in counts)"}
+    since: {type: string, describe: "Also count hours and check-ins since this date, YYYY-MM-DD"}
+    include: {type: string, describe: "members (default) leaves out parent-only accounts and approved emails with no account; all keeps them, marked", enum: [members, all]}
+    sort: {type: string, describe: "hours (lowest first, default), hours_desc, last_check_in (oldest first) or name", enum: [hours, hours_desc, last_check_in, name]}
+    limit: {type: integer, describe: "How many to list (300 at most, the default)"}
+
+set_member_status:
+  describe: Mark one or many members inactive, alumni or active in one change, with the reason. Always asks first and lists every name.
+  say: ["mark these five inactive, they never came", "take Riley and Sam off the active roster", "make the seniors who left alumni", "put Jordan back to active"]
+  kind: function
+  function: admin_set_member_status_bulk
+  args:
+    members: {type: array, items: string, describe: "The members, by name or email, as a list", required: true, resolve: members}
+    status: {type: string, describe: "The status to set", required: true, enum: [inactive, alumni, active]}
+    reason: {type: string, describe: "Why, in his words; kept on each member's admin log", required: true}
+  map:
+    p_members: $resolved.members.ids
+    p_status: $args.status
+    p_reason: $args.reason
+
 todays_signins:
   describe: Who checked in today, who is still in the shop, and which sign-outs are waiting.
   say: ["who's here today", "who signed in today", "who is still in the shop", "any sign-outs waiting"]
@@ -332,6 +361,72 @@ list_human_players:
   args:
     season: {type: string, describe: "this season (default) or all time", enum: [current, all]}
     limit: {type: integer, describe: "How many ranked players to list (10 by default)"}
+# ledger 0024 Part 2: the season and competition audit (docs/decisions/51).
+sign_in_out:
+  describe: Sign a member in or out of the shop now (or at a time he says), the way the quick pulse control does. Undo removes the check-in or check-out.
+  say: ["sign Riley in", "sign Sam out", "check Jordan in at 3:30", "Casey forgot to sign out at 6"]
+  kind: function
+  function: staff_add_event
+  args:
+    member: {type: string, describe: "The member (a name or email)", required: true, resolve: member}
+    direction: {type: string, describe: "in or out", required: true, enum: [in, out]}
+    at: {type: string, describe: "When, YYYY-MM-DD HH:MM Los Angeles time; now when not said"}
+    category: {type: string, describe: "Which kind of hours (build by default)", enum: [build, outreach, volunteer, competition]}
+    reason: {type: string, describe: "Why, if he said; kept on the attendance audit"}
+  map:
+    p_member: $resolved.member.id
+    p_type: $args.direction
+    p_event_time: $la.at
+    p_category: $args.category
+    p_reason: $args.reason
+
+trip_signups:
+  describe: Which families on a trip have not answered the trip form yet, and which said FIRST registration or the school form is not done.
+  say: ["which families haven't signed up for Beach Blitz", "who still needs to fill out the trip form", "who hasn't done FIRST registration", "trip sign-up status"]
+  kind: read
+  args:
+    trip: {type: string, describe: "The trip (part of its title); the next one when not said"}
+
+auto_routines:
+  describe: The auto routines with their success streaks, success rate over the last ten runs, and which are competition-ready.
+  say: ["which autos are ready", "how is the two-piece auto doing", "auto streaks", "what's our most reliable auto"]
+  kind: read
+  args:
+    show: {type: string, describe: "active routines (default), only ready ones, or all including retired", enum: [active, ready, all]}
+
+preview_announcement:
+  describe: Check a Discord announcement as a dry run, with the exact message and pings it would post. Never posts; he sends it from the Announce page.
+  say: ["draft a Discord announcement that build is canceled", "preview an announcement pinging the parents", "what would the Discord post look like"]
+  kind: read
+  args:
+    message: {type: string, describe: "The announcement text", required: true}
+    channel: {type: string, describe: "The channel (announcements by default)", enum: [announcements, general, event-logistics, parents]}
+    roles: {type: array, items: string, describe: "Announcement role names to ping, if any"}
+
+log_auto_run:
+  describe: Log one run of an auto routine as success, partial or fail, with what went wrong and the battery. Always asks first.
+  say: ["log the two-piece auto as a success", "the taxi auto failed, it hit the wall", "auto run partial on B07", "log a fail for the center auto"]
+  kind: function
+  function: auto_log_run
+  args:
+    routine: {type: string, describe: "The auto routine's name", required: true, resolve: routine}
+    result: {type: string, describe: "How it went", required: true, enum: [success, partial, fail]}
+    problem: {type: string, describe: "What went wrong, if he said"}
+    battery: {type: string, describe: "The battery label, such as B07, if said", resolve: battery}
+    location: {type: string, describe: "Where it ran (shop, field, an event), if said"}
+  map:
+    p_routine: $resolved.routine.id
+    p_result: $args.result
+    p_problem: $args.problem
+    p_battery: $resolved.battery.id
+    p_location: $args.location
+
+event_roster:
+  describe: An event's roster as staff see it - who has which role (driver, pit crew, scout and so on), whether it is posted, and declared conflicts.
+  say: ["who's on the Beach Blitz roster", "who is driving at the competition", "is the roster posted", "who said they can't make it"]
+  kind: read
+  args:
+    event: {type: string, describe: "The event (a title, a date, or its id)", required: true, resolve: event}
 
 role_board:
   describe: The role board for an event (Beach Blitz by default when named) - per time slot and role, who is assigned, backup and asked, and how many are still needed.

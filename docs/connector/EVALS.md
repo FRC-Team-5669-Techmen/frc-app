@@ -38,6 +38,15 @@ A living list. Each line is something he would say to Claude, the tool that shou
 | 32 | "Which batteries are ready?" | `list_batteries` (show match_ready) | Runs at once, reads only: competition batteries that are charged and not flagged, worst first, with the resting voltage and brownout count. Before 0026 is pasted: not set up yet. |
 | 33 | "Log B07 for qual 12, 12.9 before, 11.8 after, no brownout." | `log_battery_run` | A preview first; on "yes" one run, logged by him, and a charged B07 becomes needs charge. "Battery 7" with two batteries numbered 7: Claude asks which. |
 | 34 | "B03 is on the charger." | `set_battery_charge` | Runs at once; B03 reads charging; "undo that" puts its old state back. |
+| 35 | "Who has not shown up? Give me a list of who to take off the roster." | `team_attendance` | Runs at once, reads only: active members (no parents, no accountless emails) lowest hours first, with check-ins and last check-in; the count never checked in. |
+| 36 | "Who hasn't checked in since September?" | `team_attendance` (no_checkin_since 2026-09-01, role student) | Only students whose last check-in is before September 1, or who never checked in. |
+| 37 | "Mark Jordan, Sam and Casey inactive, they never came." | `set_member_status` | A preview first listing the three names and their status now; on "yes" all three inactive, one admin log row each with the reason. Two Sams: Claude asks which, and nobody is changed. |
+| 38 | "Sign Riley in." | `sign_in_out` | Runs at once: one IN now, build; "undo that" removes it. Already in: says so, nothing written. A sign-out request waiting: points to `approve_signout`. |
+| 39 | "Which families haven't signed up for Beach Blitz?" | `trip_signups` | Runs at once: families not answered first, then who ticked FIRST registration not done. |
+| 40 | "Which autos are ready?" | `auto_routines` (show ready) | Runs at once: routines with five successes in a row. |
+| 41 | "Draft a Discord announcement that build is canceled, ping parents." | `preview_announcement` | The exact post as a dry run; nothing posted; he sends it from /announce. |
+| 42 | "The taxi auto failed on B07, it hit the wall." | `log_auto_run` | A preview first; on "yes" one auto run, fail, with the problem and B07; the taxi streak resets to 0. |
+| 43 | "Who's on the Beach Blitz roster?" | `event_roster` | Runs at once: each member with their roles, posted or not, and open conflicts. |
 
 ## Scouting (0022)
 

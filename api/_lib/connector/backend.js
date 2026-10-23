@@ -232,6 +232,11 @@ export function supabaseConnectorBackend() {
     async scoutingImport(session, body) {
       return userClient(session.accessToken).functions.invoke('scouting-import', { body })
     },
+    // The announcement dry run only: the action is fixed here, never taken
+    // from the caller, so the connector cannot post to Discord (ledger 0024).
+    async announcePreview(session, draft) {
+      return userClient(session.accessToken).functions.invoke('discord-announce', { body: { action: 'preview', draft } })
+    },
     async scoutingDispatch(session, body) {
       return userClient(session.accessToken).functions.invoke('scouting-dispatch', { body })
     },

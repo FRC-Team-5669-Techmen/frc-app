@@ -140,4 +140,39 @@ export async function resolveBattery(ctx, q) {
   return { status: 'ambiguous', message: `${hits.length} batteries match "${q}": ${hits.map((b) => b.label).join(', ')}. Ask him which.`, candidates: hits.map((b) => ({ id: b.id, label: b.label })) }
 }
 
-export const RESOLVERS = { member: resolveMember, event: resolveEvent, signout: resolveSignout, battery: resolveBattery }
+/**
+ * Several members at once, for a change made to many (set_member_status). A
+ * list, or one string separated by commas or "and". Every name must resolve
+ * to exactly one member; the first that does not answers for the whole call,
+ * so nothing is written until every name is settled.
+ */
+export async function resolveMembers(ctx, q) {
+  const raw = Array.isArray(q) ? q : String(q ?? '').split(/\s*(?:,|;|\n|\band\b)\s*/i)
+  const names = [...new Set(raw.map((x) => String(x ?? '').trim()).filter(Boolean))]
+  if (!names.length) return { status: 'invalid', message: 'Name at least one member. Nothing was changed.' }
+  if (names.length > 200) return { status: 'invalid', message: 'At most 200 members in one change. Nothing was changed.' }
+  const hits = []
+  for (const n of names) {
+    const r = await resolveMember(ctx, n)
+    if (!r.member) return { ...r, message: `${r.message} (for "${n}"; nothing was changed for anyone)`, name: n }
+    if (!hits.some((h) => h.id === r.member.id)) hits.push(r.member)
+  }
+  return { members: { ids: hits.map((m) => m.id), names: hits.map((m) => m.name), list: hits } }
+}
+
+/** One auto routine by its name (ledger 0024); active routines win a tie. */
+export async function resolveRoutine(ctx, q) {
+  const r = await ctx.backend.select(ctx.session, { table: 'auto_routines', columns: ['id', 'name', 'active'], limit: 500 })
+  if (r.error) return { status: r.error.code && ['42P01', 'PGRST205'].includes(r.error.code) ? 'not_set_up' : 'refused', message: r.error.code && ['42P01', 'PGRST205'].includes(r.error.code) ? 'The auto routine log is not set up yet. Nothing was changed.' : r.error.message }
+  const want = norm(q)
+  if (!want) return { status: 'not_found', message: 'Which auto routine? Ask him for its name.' }
+  let hits = r.data.filter((x) => norm(x.name) === want)
+  if (!hits.length) hits = r.data.filter((x) => norm(x.name).includes(want))
+  const active = hits.filter((x) => x.active !== false)
+  if (active.length) hits = active
+  if (hits.length === 1) return { routine: hits[0] }
+  if (!hits.length) return { status: 'not_found', message: `No auto routine is named "${q}". The routines are ${r.data.filter((x) => x.active !== false).map((x) => x.name).join(', ') || 'none yet'}.` }
+  return { status: 'ambiguous', message: `${hits.length} routines match "${q}": ${hits.map((x) => x.name).join(', ')}. Ask him which.`, candidates: hits.map((x) => ({ id: x.id, name: x.name })) }
+}
+
+export const RESOLVERS = { routine: resolveRoutine, member: resolveMember, members: resolveMembers, event: resolveEvent, signout: resolveSignout, battery: resolveBattery }

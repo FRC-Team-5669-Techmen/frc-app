@@ -60,7 +60,8 @@ create table if not exists auth.users (
   id                 uuid primary key default gen_random_uuid(),
   email              text,
   raw_user_meta_data jsonb not null default '{}'::jsonb,
-  created_at         timestamptz not null default now()
+  created_at         timestamptz not null default now(),
+  last_sign_in_at    timestamptz  -- the real auth.users has it; 0032 reads it
 );
 
 create or replace function auth.uid() returns uuid language sql stable as $fn$
@@ -171,6 +172,8 @@ $fn$;
 -- applying a file. It is the only rewrite it makes.
 
 -- ── the Supabase starter's two tables ────────────────────────────────────────
+-- NOTE: the LIVE profiles table has no created_at (0034 exists because 0032
+-- read it and failed in production). Never read p.created_at in a migration.
 create table if not exists public.profiles (
   id         uuid primary key references auth.users(id) on delete cascade,
   full_name  text,
