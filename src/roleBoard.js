@@ -7,8 +7,8 @@
 // Each request carries a per slot status: asked, assigned or backup.
 
 export const ROLE_ORDER = Object.freeze([
-  'team_captain', 'driver', 'operator', 'human_player', 'drive_coach', 'pit_crew', 'battery_captain',
-  'scouting_lead', 'scout', 'safety_captain', 'media', 'impact_presenter', 'pit_speaker',
+  'driver', 'operator', 'human_player', 'drive_coach', 'pit_crew', 'battery_captain',
+  'team_captain', 'scouting_lead', 'scout', 'safety_captain', 'media', 'impact_presenter', 'pit_speaker',
 ])
 export const ROLE_LABELS = Object.freeze({
   team_captain: 'Team captain', driver: 'Driver', operator: 'Operator', human_player: 'Human player', drive_coach: 'Drive coach', pit_crew: 'Pit crew',

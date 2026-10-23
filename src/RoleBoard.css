@@ -109,3 +109,5 @@ thead .rb-slot-col { z-index: 3; }
 /* Room under the last person so the feedback button never covers a chip. */
 .rb-assign { padding-bottom: 5.5rem; }
 @media (min-width: 720px) { .rb-assign { padding-bottom: 1.25rem; } }
+.rb-swipe { margin: 0 0 0.35rem; font-size: 0.75rem; color: var(--steel); }
+@media (min-width: 1100px) { .rb-swipe { display: none; } }

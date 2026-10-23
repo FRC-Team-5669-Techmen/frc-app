@@ -106,6 +106,7 @@ export default function RoleBoardPage({ session, hasRole = () => false }) {
       {!view.days.length ? (
         <div className="rb-empty"><h2>No time slots yet</h2><p>{staff ? 'Start from the Beach Blitz slots, or add your own below.' : 'A mentor adds the time slots for this event.'}</p></div>
       ) : (<>
+        <p className="rb-swipe hud-mono">Swipe the grid sideways for every role →</p>
         <div className="rb-grid-scroll">
           <table className="rb-grid">
             <thead><tr><th scope="col" className="rb-slot-col">Time</th>{view.roles.map((r) => <th key={r} scope="col">{roleLabel(r)}</th>)}</tr></thead>
