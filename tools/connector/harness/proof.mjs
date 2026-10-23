@@ -127,9 +127,10 @@ function directCall(fn, args) {
   const keys = Object.keys(args)
   const sql = `select to_jsonb(public.${fn}(${keys.map((k, i) => `${k} => $${i + 1}`).join(', ')})) as r`
   const values = keys.map((k) => (Array.isArray(args[k]) || (args[k] && typeof args[k] === 'object') ? JSON.stringify(args[k]) : args[k]))
-  // Arrays go to Postgres as arrays, not JSON.
-  return q(sql.replace(/\$(\d+)/g, (m, i) => (Array.isArray(args[keys[i - 1]]) ? `${m}::${typeFor(fn, keys[i - 1])}` : m)),
-    keys.map((k, i) => (Array.isArray(args[k]) ? args[k] : values[i])))
+  // Arrays go to Postgres as arrays, not JSON; a jsonb argument holding an array stays JSON (0035).
+  const pgArray = (k) => Array.isArray(args[k]) && !/^jsonb?$/.test(typeFor(fn, k))
+  return q(sql.replace(/\$(\d+)/g, (m, i) => (pgArray(keys[i - 1]) ? `${m}::${typeFor(fn, keys[i - 1])}` : m)),
+    keys.map((k, i) => (pgArray(k) ? args[k] : values[i])))
 }
 function typeFor(fn, arg) {
   for (const f of REGISTRY.functions[fn]?.forms ?? []) for (const a of f.args) if (a.name === arg) return a.type
@@ -152,6 +153,10 @@ async function fixtures() {
   const hi = await q(`insert into public.hub_invites (id, event_id, student_id, emails) values ('0f000000-0000-4000-8000-000000000123', $1, $2, array['riley.family@example.invalid']) returning id`, [he.rows[0].id, ID.riley])
   // ledger 0017: one battery to log and charge (0026). Fixed id for the same reason.
   const bt = await q(`insert into public.batteries (id, label, status, charge_state) values ('0f000000-0000-4000-8000-000000000026', 'PF99', 'competition', 'charged') returning id`)
+  // ledger 0026: a Meet a team box on the proof event (0035), when 0035 is there.
+  if ((await q(`select to_regprocedure('public.staff_meet_team_fill(uuid, boolean)') is not null as ok`)).rows[0].ok) {
+    await q(`insert into public.role_slots (id, event_id, day, label, starts_at, ends_at, needs) values ('0f000000-0000-4000-8000-000000000035', $1, current_date + 2, 'Proof quals', now() + interval '2 days', now() + interval '2 days 1 hour', '{"meet_team":3}')`, [ev.rows[0].id])
+  }
   return { event: ev.rows[0].id, logged: lh.rows[0].id, attendance: ae.rows[0].id, feedback: fb.rows[0].id, signout: sr.rows[0].id, invite: hi.rows[0].id, battery: bt.rows[0].id }
 }
 
@@ -183,6 +188,10 @@ const SAMPLES = {
   // ledger 0024 (0032)
   admin_set_member_status_bulk: () => ({ p_members: [ID.riley, ID.sam], p_status: 'inactive', p_reason: 'Proof never came' }),
   staff_add_event: () => ({ p_member: ID.sam, p_type: 'in', p_event_time: new Date(Date.now() - 3600e3).toISOString(), p_category: 'build', p_reason: 'Proof sign-in' }),
+  // ledger 0026 (0035)
+  staff_meet_team_fill: (fx) => ({ p_event: fx.event, p_apply: true }),
+  team_connection_save: (fx) => ({ p_id: null, p_event: fx.event, p_team: 254, p_team_name: 'Proof Poofs', p_contact: { name: 'Jordan', role: 'mentor' }, p_does_well: 'Spares cart',
+    p_org_tags: ['subteams'], p_org_note: null, p_resource_tags: ['mentoring'], p_resource_note: null, p_copy: 'Label the spares', p_follow_up: false, p_follow_up_note: null }),
 }
 
 /** Placeholder arguments of the right types, for a function with no sample. */

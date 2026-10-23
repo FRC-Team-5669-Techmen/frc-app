@@ -97,6 +97,7 @@ function ScoutingEvents({ uid }) {
     <header className="sc-head"><div><span className="sc-eyebrow">Techmen field intelligence</span><h1>Scouting</h1><p>One event. Shared evidence. Better decisions.</p></div><span className="sc-season">REBUILT / 2026</span></header>
     <div className="sc-intro"><span className="sc-intro-number">01</span><div><h2>Choose your event</h2><p>Open the event while connected to save its data for the stands. Observations and notes stay on this device until they sync.</p></div></div>
     <Link className="sc-practice-link" to="/scouting/practice"><span className="sc-eyebrow">No event needed</span><strong>Practice scouting now</strong><span>Missions, drills and the practice match lab. Progress stays on this device.</span></Link>
+    <Link className="sc-practice-link" to="/meet" data-meet-link><span className="sc-eyebrow">Every competition</span><strong>Meet a team</strong><span>Talk to another team and log what they do well. Read every team we met.</span></Link>
     <label className="sc-search">Find an event<input type="search" placeholder="Event name or venue" value={query} onChange={e => setQuery(e.target.value)} /></label>
     {cached && <p className="sc-notice">Showing the event list saved on this device.</p>}
     {error && <div className="sc-notice" role="status"><p>Could not refresh events. {error}</p><button onClick={() => setRetry(n => n + 1)}>Try again</button></div>}
@@ -294,6 +295,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
   return <main className="sc-wrap" data-scout-page="event">
     <Link className="sc-back" to="/scouting">← Events</Link>
     <header className="sc-head"><div><span className="sc-eyebrow">Techmen scouting</span><h1>{data.event?.title || 'Event scouting'}</h1><p>{data.event?.location || 'Observe. Compare. Decide.'}</p></div><button className="sc-primary" disabled={!store || !data.event} onClick={() => openForm('observation')}>New observation</button></header>
+    <Link className="sc-link" to={`/meet/${eventId}`} data-meet-link>Meet a team at this event →</Link>
     <div className="sc-status-row"><span className="sc-status"><i className={online ? '' : 'sc-offline-dot'} />{online && !data.offline ? 'Connected' : 'Offline copy'}{data.cachedAt ? ` · updated ${when(data.cachedAt)}` : ''}</span><span className="sc-status">{pending.length ? `${pending.length} waiting to sync` : 'All saved work synced'}</span><button disabled={busy || !online || !store} onClick={sync}>Sync now</button><button disabled={busy || !online || !store} onClick={() => refresh().catch(e => setError(errorText(e)))}>Refresh</button></div>
     {error && <p role="alert" className="sc-error">{error}</p>}
     {notice && <div className="sc-notice" role="status"><span>{notice}</span><button aria-label="Dismiss save notice" onClick={() => setNotice('')}>Dismiss</button></div>}

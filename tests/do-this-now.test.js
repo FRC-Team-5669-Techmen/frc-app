@@ -50,4 +50,16 @@ describe('do this now', () => {
     expect(items[0]).toMatchObject({ to: '/roles/e1', tone: 'urgent' })
     expect(doThisNow({ roleBoards: [{ event_id: 'e1', title: 'Beach Blitz', unfilled: 3, mine: 2 }], now: NOW })[0].tone).toBe('todo')
   })
+
+  it('Meet a team (0035) shows with the slot time and opens the event; nothing owed shows nothing', () => {
+    const later = { label: 'Qualifications 3', starts_at: '2026-10-24T20:00:00Z', ends_at: '2026-10-24T21:15:00Z', status: 'assigned' }
+    const items = doThisNow({ meetTeam: [{ event_id: 'e1', title: 'Beach Blitz', slot: later }], now: NOW })
+    expect(items).toHaveLength(1)
+    expect(items[0]).toMatchObject({ key: 'meet:e1', title: 'Meet a team', to: '/meet/e1', tone: 'todo' })
+    expect(items[0].detail).toContain('Your slot: Oct 24, 1:00 PM')
+    // Once the slot has started, or with no slot at all, it is urgent.
+    expect(doThisNow({ meetTeam: [{ event_id: 'e1', title: 'Beach Blitz', slot: { ...later, starts_at: '2026-10-24T17:00:00Z' } }], now: NOW })[0].tone).toBe('urgent')
+    expect(doThisNow({ meetTeam: [{ event_id: 'e1', title: 'Beach Blitz', slot: null }], now: NOW })[0]).toMatchObject({ tone: 'urgent', detail: 'Talk to another team at Beach Blitz, then log it.' })
+    expect(doThisNow({ meetTeam: [], now: NOW })).toHaveLength(0)
+  })
 })

@@ -14,7 +14,7 @@ const refuse = (message, code) => ({ data: null, error: { code, message, details
 const ok = (data) => ({ data, error: null })
 const SID = (n) => `28000000-0000-4000-8000-${String(n).padStart(12, '0')}`
 const AID = (n) => `28100000-0000-4000-8000-${String(n).padStart(12, '0')}`
-const ROLES = ['driver', 'operator', 'human_player', 'drive_coach', 'pit_crew', 'impact_presenter', 'pit_speaker', 'scouting_lead', 'scout', 'media', 'safety_captain', 'battery_captain', 'team_captain']
+const ROLES = ['driver', 'operator', 'human_player', 'drive_coach', 'pit_crew', 'impact_presenter', 'pit_speaker', 'scouting_lead', 'scout', 'media', 'safety_captain', 'battery_captain', 'team_captain', 'meet_team'] // meet_team: 0035 (ledger 0026)
 const TPL = '28400000-0000-4000-8000-000000000001'
 const ALLIANCE = { team_captain: 1, scouting_lead: 1, drive_coach: 1 }
 const statusOf = (r) => r.status ?? 'asked'

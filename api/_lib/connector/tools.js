@@ -14,6 +14,7 @@ import { batteryBoard, chargeLabel, statusLabel, kindLabel, brownoutLabel, CHECK
 import { leaderboard as driverLeaderboard, SCORE_RULES } from '../../../src/driverScore.js'
 import { AUTO_READY_STREAK, RATE_WINDOW, resultLabel, routineBoard } from '../../../src/autos.js'
 import { boardView, roleLabel } from '../../../src/roleBoard.js'
+import { groupByTeam, tagLabel } from '../../../src/meetTeam.js'
 
 export class UnknownTool extends Error {}
 
@@ -276,6 +277,47 @@ const READS = {
         })),
       })),
       how_to_change: 'assign_roles: items of {member, role, status: assigned|backup|asked|removed} with slot (label), or day (date or weekday) for every slot that day needing the role.',
+    }
+  },
+
+  // Meet a team (0035, ledger 0026): the shared notes for one event, grouped
+  // by team with the page's own model (src/meetTeam.js groupByTeam).
+  async meet_team_notes(ctx, a) {
+    const ev = await RESOLVERS.event(ctx, a.event)
+    if (!ev.event) return ev
+    const r = await ctx.backend.rpc(ctx.session, 'meet_team_event', { p_event: ev.event.id })
+    if (r.error) return isSchemaMissing(r.error) ? notSetUp('Meet a team') : { status: 'refused', message: r.error.message }
+    const groups = groupByTeam(r.data.connections ?? []).filter((g) => !a.team || g.team_number === Number(a.team))
+    return {
+      status: 'ok', event: { id: ev.event.id, title: r.data.event.title },
+      teams_met: groups.length, notes: groups.reduce((n, g) => n + g.notes.length, 0),
+      teams: groups.map((g) => ({
+        team: g.team_number, name: g.team_name || null,
+        notes: g.notes.map((c) => ({
+          logged_by: c.logged_by, does_well: c.does_well,
+          organized: [...(c.org_tags ?? []).map(tagLabel), c.org_note].filter(Boolean).join('; ') || null,
+          offers: [...(c.resource_tags ?? []).map(tagLabel), c.resource_note].filter(Boolean).join('; ') || null,
+          copy_this: c.copy_this, follow_up: c.follow_up ? (c.follow_up_note || 'yes') : null,
+          contact: c.contact ? [c.contact.name, c.contact.role, c.contact.email, c.contact.discord, c.contact.social].filter(Boolean).join(', ') || null : null,
+        })),
+      })),
+    }
+  },
+
+  async meet_team_progress(ctx, a) {
+    const ev = await RESOLVERS.event(ctx, a.event)
+    if (!ev.event) return ev
+    const r = await ctx.backend.rpc(ctx.session, 'meet_team_progress', { p_event: ev.event.id })
+    if (r.error) return isSchemaMissing(r.error) ? notSetUp('Meet a team') : { status: 'refused', message: r.error.message }
+    const by = (s) => (r.data.people ?? []).filter((x) => x.state === s)
+    const slot = (x) => (x.slots?.[0] ? `${x.slots[0].label}, ${laDay(x.slots[0].starts_at)} ${laClock(x.slots[0].starts_at)}` : null)
+    return {
+      status: 'ok', event: { id: ev.event.id, title: r.data.event.title },
+      done: r.data.done, slotted_not_logged: r.data.slotted, no_slot: r.data.no_slot,
+      not_logged_yet: by('slotted').map((x) => ({ name: x.name, slot: slot(x) })),
+      without_slot: by('no_slot').map((x) => x.name),
+      done_by: by('done').map((x) => ({ name: x.name, teams: x.teams })),
+      how_to_fill: 'give_meet_team_slots puts everyone without a slot into the Meet a team boxes (asks first).',
     }
   },
 

@@ -9,6 +9,12 @@
 // route (tests/updates.test.js checks it against App.jsx).
 
 export const UPDATES = Object.freeze([
+  { date: '2026-10-23', title: 'Meet a team', route: '/meet', items: [
+    'At every competition, talk to another team and log what they do well.',
+    'Chips for how they run and what they offer. One thing we should copy.',
+    'Everyone gets a time slot on the role board. Home reminds you until you log one.',
+    'Read every team the whole team met, grouped by team number.',
+  ] },
   { date: '2026-10-23', title: 'Light mode', route: '/profile', items: [
     'Pick Light, Dark or System on your profile, or from the account menu.',
     'Your choice stays on this device. Dark is still the default.',

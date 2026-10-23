@@ -47,6 +47,9 @@ A living list. Each line is something he would say to Claude, the tool that shou
 | 41 | "Draft a Discord announcement that build is canceled, ping parents." | `preview_announcement` | The exact post as a dry run; nothing posted; he sends it from /announce. |
 | 42 | "The taxi auto failed on B07, it hit the wall." | `log_auto_run` | A preview first; on "yes" one auto run, fail, with the problem and B07; the taxi streak resets to 0. |
 | 43 | "Who's on the Beach Blitz roster?" | `event_roster` | Runs at once: each member with their roles, posted or not, and open conflicts. |
+| 44 | "What did we learn from other teams at Beach Blitz?" | `meet_team_notes` | Runs at once, reads only: each team met, grouped by number, with what they do well, how they run, what they offer, what to copy, follow ups, contacts and who logged it. Before 0035: not set up yet. |
+| 45 | "Who hasn't met a team yet?" | `meet_team_progress` | Runs at once: done, slotted but nothing logged (with their slot), and no slot, by name. |
+| 46 | "Give everyone a Meet a team slot." | `give_meet_team_slots` | A preview first listing every name and slot and who could not be placed and why; on "yes" each becomes assigned Meet a team in that box on the role board. A second run places nobody new. |
 
 ## Scouting (0022)
 

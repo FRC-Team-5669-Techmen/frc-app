@@ -27,6 +27,7 @@ export const ROLES = Object.freeze([
   { key: 'safety_captain', label: 'Safety captain' },
   { key: 'battery_captain', label: 'Battery captain' }, // 0028 (ledger 0017)
   { key: 'team_captain', label: 'Team captain' }, // 0031 (ledger 0023)
+  { key: 'meet_team', label: 'Meet a team' }, // 0035 (ledger 0026)
 ])
 const roleLabel = (k) => ROLES.find((r) => r.key === k)?.label ?? k
 const fmtWhen = (iso) => new Date(iso).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })

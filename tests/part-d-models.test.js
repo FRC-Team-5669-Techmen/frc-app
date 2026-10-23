@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest'
 import { cellState, boardView, countLine, statusOf, ROLE_ORDER } from '../src/roleBoard.js'
 import { routineStats, routineBoard, AUTO_READY_STREAK } from '../src/autos.js'
 import { PHASES, MATCH_SECONDS, matchState, inactiveFirstFrom, cueTimes, fmtClock } from '../src/matchSim.js'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 
 describe('role board', () => {
   it('cell states', () => {
@@ -35,13 +35,18 @@ describe('role board', () => {
     expect(statusOf({ assigned: false })).toBe('asked')
     expect(statusOf({ status: 'backup', assigned: false })).toBe('backup')
   })
-  it('the role list matches 0031 (team captain included) and the roster page', () => {
-    const sql = readFileSync(new URL('../supabase/migrations/0031_role_board_v2.sql', import.meta.url), 'utf8')
+  it('the role list matches the newest _role_valid (0035: meet_team) and the roster page', () => {
+    // The newest numbered migration that redefines _role_valid is the live list (0031 added team_captain, 0035 meet_team).
+    const dir = new URL('../supabase/migrations/', import.meta.url)
+    const latest = readdirSync(dir).filter((f) => /^\d{4}_.*\.sql$/.test(f) && !f.endsWith('_rls_test.sql'))
+      .sort().filter((f) => /function public\._role_valid\(p_role text\)/.test(readFileSync(new URL(f, dir), 'utf8'))).pop()
+    const sql = readFileSync(new URL(latest, dir), 'utf8')
     const check = /_role_valid\(p_role text\)[\s\S]*?select p_role in \(([^)]*)\)/.exec(sql)[1]
     expect([...check.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort()).toEqual([...ROLE_ORDER].sort())
     const page = readFileSync(new URL('../src/RostersPage.jsx', import.meta.url), 'utf8')
     expect(page).toMatch(/key: 'battery_captain'/)
     expect(page).toMatch(/key: 'team_captain'/)
+    expect(page).toMatch(/key: 'meet_team'/)
   })
 })
 

@@ -8,12 +8,12 @@
 
 export const ROLE_ORDER = Object.freeze([
   'driver', 'operator', 'human_player', 'drive_coach', 'pit_crew', 'battery_captain',
-  'team_captain', 'scouting_lead', 'scout', 'safety_captain', 'media', 'impact_presenter', 'pit_speaker',
+  'team_captain', 'scouting_lead', 'scout', 'safety_captain', 'media', 'impact_presenter', 'pit_speaker', 'meet_team',
 ])
 export const ROLE_LABELS = Object.freeze({
   team_captain: 'Team captain', driver: 'Driver', operator: 'Operator', human_player: 'Human player', drive_coach: 'Drive coach', pit_crew: 'Pit crew',
   battery_captain: 'Battery captain', scouting_lead: 'Scouting lead', scout: 'Scout', safety_captain: 'Safety captain',
-  media: 'Media', impact_presenter: 'Impact presenter', pit_speaker: 'Pit speaker',
+  media: 'Media', impact_presenter: 'Impact presenter', pit_speaker: 'Pit speaker', meet_team: 'Meet a team',
 })
 export const roleLabel = (r) => ROLE_LABELS[r] ?? r
 export const STATUS_LABELS = Object.freeze({ assigned: 'Assigned', backup: 'Backup', asked: 'Asked' })

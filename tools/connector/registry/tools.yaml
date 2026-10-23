@@ -437,8 +437,33 @@ assign_roles:
   function: staff_set_role_statuses
   args:
     event: {type: string, describe: "The event (a title, a date, or its id)", required: true, resolve: event}
-    items: {type: array, items: object, describe: "The changes. Each: member (a name, or me), role (team_captain, driver, operator, human_player, drive_coach, pit_crew, battery_captain, scouting_lead, scout, safety_captain, media, impact_presenter, pit_speaker), status (assigned, backup, asked, removed), and slot (its label, such as Qualifications 3) or day (a date or weekday: every slot that day needing the role).", required: true}
+    items: {type: array, items: object, describe: "The changes. Each: member (a name, or me), role (team_captain, driver, operator, human_player, drive_coach, pit_crew, battery_captain, scouting_lead, scout, safety_captain, media, impact_presenter, pit_speaker, meet_team), status (assigned, backup, asked, removed), and slot (its label, such as Qualifications 3) or day (a date or weekday: every slot that day needing the role).", required: true}
   map:
     p_event: $resolved.event.id
     p_items: $args.items
 
+meet_team_notes:
+  describe: The Meet a team notes for a competition - every team the students met, what each does well, how they run, what they offer, what to copy, and who logged it.
+  say: ["what did we learn from other teams at Beach Blitz", "which teams did we meet", "what does 254 do well", "who offered us help at the competition", "which teams should we follow up with"]
+  kind: read
+  args:
+    event: {type: string, describe: "The event (a title, a date, or its id)", required: true, resolve: event}
+    team: {type: integer, describe: "Only this team number"}
+
+meet_team_progress:
+  describe: Who has done Meet a team at a competition - done, given a time slot but nothing logged yet, or no slot.
+  say: ["who hasn't met a team yet", "Meet a team progress for Beach Blitz", "who still owes a Meet a team note", "who has no Meet a team slot"]
+  kind: read
+  args:
+    event: {type: string, describe: "The event (a title, a date, or its id)", required: true, resolve: event}
+
+give_meet_team_slots:
+  describe: Give every active student without a Meet a team slot one at a competition, spread evenly, skipping slots where they have another role. Always asks first and lists every name and slot.
+  say: ["give everyone a Meet a team slot", "assign Meet a team slots for Beach Blitz", "put everyone without a slot into Meet a team", "fill the Meet a team boxes"]
+  kind: function
+  function: staff_meet_team_fill
+  args:
+    event: {type: string, describe: "The event (a title, a date, or its id)", required: true, resolve: event}
+  map:
+    p_event: $resolved.event.id
+    p_apply: true

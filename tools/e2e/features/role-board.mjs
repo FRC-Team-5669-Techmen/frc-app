@@ -46,7 +46,11 @@ export default {
     await ask('Qualifications 1', 'scout')
     await ask('Qualifications 1', 'pit_crew')
     await ask('Qualifications 2', 'battery_captain')
-    const mine = async () => (await t.rows('role_requests')).filter((r) => r.member_id === P.student.id)
+    // Only this event's boxes: another feature's seed (meetteam.js, 0035) gives Sam a box at its own event.
+    const mine = async () => {
+      const slots = new Set((await t.rows('role_slots')).filter((s) => s.event_id === EV).map((s) => s.id))
+      return (await t.rows('role_requests')).filter((r) => r.member_id === P.student.id && slots.has(r.slot_id))
+    }
     t.eq('3 requests in the store after 3 taps', (await mine()).length, 3)
     t.eq('each box Sam asked for reads You: Asked (3 of 3)', await t.count('.rb-cell .rb-chip-asked'), 3)
     await t.press(cell('Qualifications 1', 'scout'))

@@ -72,6 +72,7 @@ export default function RoleBoardPage({ session, hasRole = () => false }) {
   return (
     <main className="rb-wrap" data-page="role-board">
       <Link className="rb-back" to={`/rosters/${eventId}`}>← Event roster</Link>
+      {view.roles.includes('meet_team') && <Link className="rb-back rb-meet" to={`/meet/${eventId}`}>Meet a team →</Link>}
       <header className="rb-head">
         <div>
           <span className="rb-eyebrow">Role board</span>

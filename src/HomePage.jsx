@@ -395,11 +395,13 @@ export default function HomePage({ session, hasRole = () => false }) {
 function useDoThisNow(uid, isStaff) {
   const [src, setSrc] = useState(null)
   const load = useCallback(async () => {
-    const [extras, notices, surveys, boards] = await Promise.all([
+    const [extras, notices, surveys, boards, meet] = await Promise.all([
       isStaff ? Promise.resolve({ data: null }) : supabase.rpc('member_extras', { p_member: uid }),
       supabase.from('member_notices').select('id, kind, title, created_at, read_at').eq('member_id', uid).eq('kind', 'signup').is('read_at', null).order('created_at', { ascending: false }).limit(10),
       isStaff ? Promise.resolve({ data: [] }) : supabase.from('surveys').select('id, title, opens_at, closes_at, is_open').eq('is_open', true),
       supabase.rpc('role_board_open_events'),
+      // Meet a team (0035): students only; missing before the migration, then nothing shows.
+      isStaff ? Promise.resolve({ data: [] }) : supabase.rpc('meet_team_todo'),
     ])
     let survey = null
     const open = !surveys.error ? resolveOpenSurvey(surveys.data ?? []) : null
@@ -412,6 +414,7 @@ function useDoThisNow(uid, isStaff) {
       notices: notices.error && !isSchemaMissing(notices.error) ? [] : (notices.data ?? []),
       survey,
       roleBoards: boards.error ? [] : (boards.data ?? []),
+      meetTeam: meet.error ? [] : (meet.data ?? []),
     })
   }, [uid, isStaff])
   useEffect(() => { load() }, [load])

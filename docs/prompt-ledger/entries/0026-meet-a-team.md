@@ -1,0 +1,11 @@
+# 0026 Meet a team: a connection note per member per competition, with its own role board slot
+- Issued: 2026-10-23
+- Model: Opus 5.5, solo, local worktree branch local/meet (based on origin/main 11cb67d); the coordinator lands it on main
+- By: the IDEA & FRC chat (claude.ai) coordinator, run as a Claude Code subagent started 2026-10-23T21:57Z.
+- Owns: supabase/migrations/0035_*, tools/sql-harness/mutants-0035.mjs, src/pages/MeetTeam*.jsx, src/meetTeam*.js, tests/meet-team-*.test.js, tools/e2e/features/meet-team.mjs, tools/connector/registry/meet_team*.yaml, docs/subsystems/meet-a-team.md, docs/history/meet-a-team-0026.md, this entry; small edits to the role board role vocabulary, Home's Do this now, the connector registry and the fixture schema.
+- Not owned: migration 0033 and ledger 0025 (the human player leaderboard, a parallel branch).
+- Migration permitted: yes. Number assigned by the coordinator: 0035.
+- Claims: ledger 0026; migration 0035 with its _rls_test.sql.
+- Status: committed locally, not pushed (coordinator lands it)
+- Branch: local/meet
+- Notes: first use is Beach Blitz (event f891929e-d8bb-4a3e-9f12-c5c0aca3e886); 0035 adds meet_team boxes to its existing slots idempotently.

@@ -45,6 +45,8 @@ export const ROUTES = Object.freeze([
   { path: '/manage', url: '/manage', group: 'staff', label: 'Team admin' },
   { path: '/roles/:eventId', url: '/roles/16000000-0000-4000-8000-000000000001', group: 'member', label: 'Role board (Fixture Regional)' },
   { path: '/autos', url: '/autos', group: 'member', label: 'Autos' },
+  { path: '/meet', url: '/meet', group: 'member', label: 'Meet a team' },
+  { path: '/meet/:eventId', url: '/meet/35000000-0000-4000-8000-000000000001', group: 'member', label: 'Meet a team (Fixture Blitz)' },
   { path: '/drivers', url: '/drivers', group: 'member', label: 'Drivers' },
   { path: '/match-sim', url: '/match-sim', group: 'member', label: 'Match simulator' },
   { path: '/updates', url: '/updates', group: 'member', label: "What's new" },

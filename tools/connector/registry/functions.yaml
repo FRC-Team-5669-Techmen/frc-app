@@ -202,6 +202,18 @@ staff_set_role_statuses:
   describe: Change many role board boxes at once - assign, back up, set to asked or remove members by name, for a slot or a whole day. Always asks first.
   level: confirm
 
+staff_meet_team_fill:
+  describe: Give every active student without a Meet a team slot one, spread evenly across the Meet a team boxes, skipping slots where they hold another role. Always asks first.
+  level: confirm
+
+team_connection_save:
+  describe: Save a Meet a team note about another team at a competition. Always asks first.
+  level: confirm
+
+team_connection_delete:
+  describe: Delete a Meet a team note. Always asks first.
+  level: confirm
+
 staff_set_request_status:
   describe: Mark one person in a role board box assigned, backup or asked, or remove them from it. Always asks first.
   level: confirm

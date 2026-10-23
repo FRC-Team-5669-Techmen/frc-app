@@ -78,6 +78,7 @@ const FEATURES = Object.freeze([
   'theme-updates',
   'drivers',
   'role-board',
+  'meet-team',
 ]);
 
 
