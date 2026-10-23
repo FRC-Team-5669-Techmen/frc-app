@@ -157,6 +157,42 @@ describe('the invariants these particular workflows have to hold', () => {
     expect(read('deploy.yml')).toMatch(/!= "DEPLOY"/)
   })
 
+  test('migrate.yml: push to main on supabase/migrations/** plus dispatch, serialized, never cancelled', () => {
+    const d = doc('migrate.yml')
+    const on = d.on ?? d[true]
+    expect(on.push.branches).toEqual(['main'])
+    expect(on.push.paths).toEqual(['supabase/migrations/**'])
+    expect(on).toHaveProperty('workflow_dispatch')
+    expect(d.concurrency['cancel-in-progress']).toBe(false)
+    expect(d.permissions).toEqual({ contents: 'read' })
+  })
+
+  test('migrate.yml: an absent secret is a green notice, and every later step is gated on it', () => {
+    const steps = doc('migrate.yml').jobs.migrate.steps
+    const first = steps[0]
+    expect(first.env.HAS_URL).toMatch(/secrets\.SUPABASE_MIGRATE_DB_URL != ''/)
+    expect(first.run).toMatch(/::notice::SUPABASE_MIGRATE_DB_URL is not set/)
+    expect(first.run).not.toMatch(/exit 1/)
+    const gated = steps.slice(1)
+    expect(gated.length).toBeGreaterThanOrEqual(3)
+    for (const s of gated) expect(s.if, `${s.name ?? s.uses} runs without the secret`).toBe("steps.configured.outputs.ok == 'true'")
+  })
+
+  test('migrate.yml: the secret reaches the tool only through env, and nothing else reads a credential', () => {
+    const src = read('migrate.yml')
+    const apply = doc('migrate.yml').jobs.migrate.steps.find((s) => s.name === 'Apply pending migrations')
+    expect(apply.env.SUPABASE_MIGRATE_DB_URL).toBe('${{ secrets.SUPABASE_MIGRATE_DB_URL }}')
+    expect(apply.run).toMatch(/node tools\/apply-migration\.mjs/)
+    expect(apply.run).not.toMatch(/secrets\./)
+    expect(apply.run).not.toMatch(/echo[^\n]*SUPABASE_MIGRATE_DB_URL/)
+    // comments name these to say they are absent; the YAML itself may not
+    const code = src.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n')
+    expect(code).not.toMatch(/SUPABASE_ACCESS_TOKEN|db push|SERVICE_ROLE/)
+    expect(src).toMatch(/SUPABASE_ACCESS_TOKEN/) // positive control: the comment filter is what passes it
+    // positive control: the secret IS referenced, exactly twice (the probe and the apply)
+    expect(src.match(/secrets\.SUPABASE_MIGRATE_DB_URL/g)).toHaveLength(2)
+  })
+
   test('no workflow force-pushes anything', () => {
     for (const f of FILES) {
       expect(read(f), `${f} force-pushes`).not.toMatch(/push[^\n]*--force(?!-with-lease="refs)/)

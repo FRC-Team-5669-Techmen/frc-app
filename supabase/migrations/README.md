@@ -17,7 +17,7 @@ its test) and `0011` (the parent service hours note and export) the same
 day. `0011` changes no grant or policy, so it has no `_rls_test.sql`; it is
 proven by `tools/sql-harness/check-0011.mjs`. `0012` (job claiming gated
 on the IDEA certifications mirror, with its test) landed on 2026-10-16. `0013` (handbook signatures, with its test) landed on
-2026-10-19, `0014` (sign-out requests and meeting check-in, with its test; needs 0004) `0015` (member standing, with its test; needs 0014) `0016` (event rosters, with its test; needs 0015, and the hub for its last block) and `0017` (families and records, with its test; needs 0015) the same day. `0018` (the connector, with its test) landed on 2026-10-19; `0019` (every page write as a function, with its test), `0020` (set a member name and merge accounts, with its test) and `0021` (deleted rows in connector previews and audit rows, with its test) on 2026-10-20, ledger 0014, each needing everything before it. `0022` (scouting, with its test) landed on 2026-10-21, ledger 0015. `0023` (family link recovery: a mentor sends one family its event hub link, the open link contact, trip sign-ups on the family link; with its test; needs 0005 to 0011 and 0017) landed on 2026-10-22, ledger 0016, with `0024` (the feedback inbox: sign-out sent-back push, the access request email, answers to feedback; with its test; needs 0002, 0014, 0015, `access_requests.sql` and `push_notifications.sql`) and `0025` (the absence rules matched to the handbook; with its test; needs 0014 and 0015, and re-defines four 0015 functions, so paste it again after any re-paste of 0015). `0026` (the battery log, with its test; needs the frozen foundation only, and replaces `_merge_member_rules` from 0024, so paste it again after any re-paste of 0020, 0022 or 0024) landed on 2026-10-23, ledger 0017, with `0027` (scouting REBUILT match fields, with its test; needs 0022, and re-defines 0022's `scouting_private.validate`, so paste 0027 again after any re-paste of 0022).
+2026-10-19, `0014` (sign-out requests and meeting check-in, with its test; needs 0004) `0015` (member standing, with its test; needs 0014) `0016` (event rosters, with its test; needs 0015, and the hub for its last block) and `0017` (families and records, with its test; needs 0015) the same day. `0018` (the connector, with its test) landed on 2026-10-19; `0019` (every page write as a function, with its test), `0020` (set a member name and merge accounts, with its test) and `0021` (deleted rows in connector previews and audit rows, with its test) on 2026-10-20, ledger 0014, each needing everything before it. `0022` (scouting, with its test) landed on 2026-10-21, ledger 0015. `0023` (family link recovery: a mentor sends one family its event hub link, the open link contact, trip sign-ups on the family link; with its test; needs 0005 to 0011 and 0017) landed on 2026-10-22, ledger 0016, with `0024` (the feedback inbox: sign-out sent-back push, the access request email, answers to feedback; with its test; needs 0002, 0014, 0015, `access_requests.sql` and `push_notifications.sql`) and `0025` (the absence rules matched to the handbook; with its test; needs 0014 and 0015, and re-defines four 0015 functions, so paste it again after any re-paste of 0015). `0026` (the battery log, with its test; needs the frozen foundation only, and replaces `_merge_member_rules` from 0024, so paste it again after any re-paste of 0020, 0022 or 0024) landed on 2026-10-23, ledger 0017, with `0027` (scouting REBUILT match fields, with its test; needs 0022, and re-defines 0022's `scouting_private.validate`, so paste 0027 again after any re-paste of 0022). The same day, ledger 0021 added the Migrate workflow; as of then 0001 to 0026 are applied by hand and 0027 and 0028 are not (they are the first the workflow applies).
 
 **Every numbered test can now be run here, before anyone pastes it.**
 `node tools/sql-harness/run.mjs` builds a throwaway PostgreSQL 16 with Supabase
@@ -89,15 +89,34 @@ this rule exists to move.
 
 ## How SQL actually reaches this database
 
-**By hand, in the Supabase SQL editor, and nothing in this repository records
-which files have been run.**
+**By hand, in the Supabase SQL editor, until the repository secret
+`SUPABASE_MIGRATE_DB_URL` is set. After that, `.github/workflows/migrate.yml`
+applies every file in this directory that the database has not recorded.**
+`docs/subsystems/database.md` has the whole path and the one-time setup.
 
-Read that twice before writing a migration, because every other rule here
-follows from it:
+What the workflow does with this directory, on a push to `main` touching it:
 
-- There is **no** `supabase_migrations.schema_migrations` history table in play,
-  no `supabase db push` in any workflow, and no CI step that touches the live
-  project. CI reads no credential at all.
+- applies every `NNNN_name.sql` not recorded in
+  `supabase_migrations.schema_migrations`, in number order, each in its own
+  transaction with its record row inside it, stopping at the first failure.
+  **Never** an `_rls_test.sql`, never the frozen files. Two files with one
+  number stop it before it connects.
+- 0001 to 0026 are recorded as hand-applied by the tool itself
+  (`BASELINE` in `tools/apply-migration.mjs`) and are never replayed. Do not
+  extend that list; a later file is recorded by being applied.
+- so a migration that lands on `main` is live a minute later, while Vercel
+  deploys the same push. It must still be re-runnable, and code that reads it
+  must still degrade through `src/schemaMissing.js`.
+- **A file pasted by hand after the secret exists is not recorded.** Record it:
+  `insert into supabase_migrations.schema_migrations (version, name) values
+  ('NNNN', 'name_after_the_number') on conflict do nothing;`
+- `node tools/apply-migration.mjs --dry-run --offline` lists what is pending
+  beyond the baseline without a database.
+
+Until the secret exists, the rest of this section holds as written:
+
+- There is no `supabase db push` in any workflow, and `ci.yml` reads no
+  credential. Without the secret, nothing records which files have run.
 - So **a file existing on `main` says nothing about the database having it.** The
   only proof a migration is live is querying the live project for the objects it
   creates -- the table, the index by name, the constraint by name, the function
@@ -112,7 +131,8 @@ follows from it:
   be deployed from the Dashboard editor.
 
 **This is why `deploy.yml` asks for a typed confirmation** rather than a button
-press. The sentence a person types is the one fact no check in this repository
+press (its sentence predates the Migrate workflow; once the secret exists, a
+migration that reaches `main` is applied by that workflow). The sentence a person types is the one fact no check in this repository
 can establish: that the SQL this deploy depends on has already been run. A
 deploy of code whose migration has not been applied ships an app that calls a
 table the database does not have, to students who are checking in on their

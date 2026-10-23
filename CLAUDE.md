@@ -129,9 +129,9 @@ What `test:checkin` and `test:features` print, why `ds:capture` fails in this co
 
 ## Database, and how SQL actually reaches it
 
-**By hand, in the Supabase SQL editor, and nothing in this repository records which files have been run.** Every rule below follows from that one fact, and it is the fact most likely to be assumed away.
+**By hand, in the Supabase SQL editor, until the `SUPABASE_MIGRATE_DB_URL` repository secret is set; after that, by `.github/workflows/migrate.yml`.** On a push to `main` touching `supabase/migrations/`, it applies every numbered migration not recorded in `supabase_migrations.schema_migrations`, in order, one transaction each, stopping at the first failure; 0001 to 0026 are seeded as hand-applied (`tools/apply-migration.mjs`, [`docs/subsystems/database.md`](docs/subsystems/database.md)).
 
-- There is **no** `supabase_migrations.schema_migrations` history table in play, no `supabase db push` in any workflow, and no CI step that touches the live project. **CI reads no credential at all.**
+- No `supabase db push` anywhere, and `ci.yml` reads no credential. Without the secret, nothing records what ran, and a file pasted by hand is never recorded (the one-row insert in the migrations README fixes that).
 - So **a file existing on `main` says nothing about the database having it.** The only proof a migration is live is querying the live project for the objects it creates — the table, the index by name, the constraint by name, the function in `pg_proc` — and reporting what was found. Not that a file exists. Not that a report said "applied".
 - **Which SQL files exist** (the frozen unnumbered ones, the numbered migrations, which have an `_rls_test.sql` sibling): [`docs/subsystems/database.md`](docs/subsystems/database.md).
 - **From 2026-09-02 forward, a new SQL file is a numbered migration under [`supabase/migrations/`](supabase/migrations/), with its test beside it.** Read that directory's README before writing one: it carries the numbering rule, the frozen-foundation rule (nothing under `supabase/*.sql` or `sql/` is ever renumbered or moved), and the conventions learned from files that had to be pasted twice.
@@ -229,4 +229,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-23. Battery log, scouting and nav lines updated (ledger 0017). Previously 2026-10-21: Scouting now returns PT409 domain conflicts to avoid PostgREST 14 retries; real isolated hosted Auth/API evidence and the Vercel access blocker are retained. Vercel CLI access and an isolated scouting preview are now verified; normal human sign-in remains open. Latest record: `docs/history/scouting-vercel-preview.md`.
+Last reviewed: 2026-10-23. Automatic migrations (`migrate.yml`, ledger 0021) added to the Database section. Earlier the same day: battery log, scouting and nav lines (ledger 0017). Latest record: `docs/history/auto-migrations-0021.md`.

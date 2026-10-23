@@ -6,6 +6,7 @@
  *
  *   node tools/sql-harness/run.mjs                      # apply everything, run every test
  *   node tools/sql-harness/run.mjs --migrations 0001,0005,0006
+ *   node tools/sql-harness/run.mjs --migrations 0001-0026     # a range
  *   node tools/sql-harness/run.mjs --tests supabase/migrations/0005_event_family_hub_rls_test.sql
  *   node tools/sql-harness/run.mjs --sql extra.sql      # also run a file after the tests (repeatable, comma list)
  *   node tools/sql-harness/run.mjs --keep               # leave the server up; prints how to psql into it
@@ -102,7 +103,14 @@ const allMigrations = readdirSync(MIG_DIR)
 const migFlag = flag('migrations', 'all');
 const wantedNums = migFlag === 'all' ? null
   : migFlag === 'none' ? []
-  : String(migFlag).split(',').map((s) => s.trim().padStart(4, '0'));
+  // A range is accepted too: `--migrations 0001-0026` (migrate-e2e.mjs uses it).
+  : String(migFlag).split(',').flatMap((s) => {
+    const r = s.trim().match(/^(\d{1,4})-(\d{1,4})$/);
+    if (!r) return [s.trim().padStart(4, '0')];
+    const out = [];
+    for (let k = Number(r[1]); k <= Number(r[2]); k += 1) out.push(String(k).padStart(4, '0'));
+    return out;
+  });
 const migrations = allMigrations.filter((f) => wantedNums == null || wantedNums.includes(f.slice(0, 4)));
 
 const mutations = flags('mutate').map((m) => {

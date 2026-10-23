@@ -1,0 +1,111 @@
+name: Migrate
+
+# APPLY EVERY UNRECORDED NUMBERED MIGRATION TO THE LIVE DATABASE, IN ORDER, ON
+# A PUSH TO `main` THAT TOUCHES `supabase/migrations/`.
+#
+# Ported from pina-hash/idea-app's `.github/workflows/migrate.yml` and cut down.
+# `tools/apply-migration.mjs` is the whole apply path; read its header before
+# changing anything here. This file only decides when to run it and with what.
+#
+# WHAT THE TOOL DOES, so this file does none of it:
+#   * creates `supabase_migrations.schema_migrations` if missing and records
+#     0001 to 0026 there (applied by hand before this workflow existed), so no
+#     old file is ever replayed
+#   * applies every numbered file in `supabase/migrations/` that is not
+#     recorded, in number order -- never an `_rls_test.sql`, never the frozen
+#     `supabase/*.sql` or `sql/` files
+#   * each file in its own transaction with its record row inside it; a raise
+#     rolls that file back, records nothing, and stops the run
+#   * never prints the connection string or its password
+#
+# NOT CONFIGURED IS GREEN. Until SUPABASE_MIGRATE_DB_URL is set on the
+# repository, this run says so in a notice and exits 0, and SQL still reaches
+# the database by hand in the Supabase SQL editor (CLAUDE.md). A red mark on
+# every push until then would be a red mark nobody reads.
+#
+# WHY `main`. `main` is what Vercel deploys. The apply and the deploy start on
+# the same push; code that reads a new migration still has to degrade through
+# `src/schemaMissing.js` for the minute or two between them.
+#
+# NO SUPABASE CLI, NO `supabase db push`, NO SUPABASE_ACCESS_TOKEN. The tool
+# speaks the Postgres wire protocol with one connection string, and that is
+# the only credential this job reads. Nothing is committed back to the repo:
+# the record is the table and this run's summary.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+
+  # The first run after the secret is added, a re-run after a failure, or a
+  # dry run that lists what would apply and writes nothing.
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'List what would apply and write nothing.'
+        required: false
+        type: boolean
+        default: false
+
+# SERIALIZE, AND NEVER CANCEL. A second push waits; it never kills a run that
+# may be mid transaction. The tool also takes an advisory lock in the database.
+concurrency:
+  group: migrate
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Is the database secret set?
+        id: configured
+        env:
+          HAS_URL: ${{ secrets.SUPABASE_MIGRATE_DB_URL != '' }}
+        run: |
+          set -euo pipefail
+          if [ "$HAS_URL" != "true" ]; then
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::SUPABASE_MIGRATE_DB_URL is not set, so nothing was read and nothing was applied. SQL still goes in by hand. See docs/subsystems/database.md."
+            {
+              echo "## Not configured yet"
+              echo
+              echo "The repository secret \`SUPABASE_MIGRATE_DB_URL\` is not set, so nothing was read"
+              echo "and nothing was applied. Green on purpose: this is the expected state until the"
+              echo "secret is added. Until then SQL reaches the database by hand in the Supabase SQL"
+              echo "editor. \`docs/subsystems/database.md\` says how to add it."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.configured.outputs.ok == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.configured.outputs.ok == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.configured.outputs.ok == 'true'
+        run: npm ci
+
+      - name: Apply pending migrations
+        if: steps.configured.outputs.ok == 'true'
+        env:
+          # Through env, never interpolated into the script: the tool hands it
+          # to `pg` and redacts it out of everything it prints.
+          SUPABASE_MIGRATE_DB_URL: ${{ secrets.SUPABASE_MIGRATE_DB_URL }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if [ "${DRY_RUN:-false}" = "true" ]; then
+            node tools/apply-migration.mjs --dry-run
+          else
+            node tools/apply-migration.mjs
+          fi

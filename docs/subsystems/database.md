@@ -13,3 +13,33 @@ Moved verbatim from `CLAUDE.md` (Database, and how SQL actually reaches it) on 2
 - **Ledger 0016 also added 0024 and 0025, each with its `_rls_test.sql`.** `0024_feedback_inbox.sql`: two triggers (a sign-out sent back, a new access request), `_push_one`, the `feedback_replies` table (RLS on, no policy, no client grant) and `feedback_reply`, `feedback_replies_for`, `my_feedback`. `0025_absence_handbook.sql`: four 0015 functions re-defined with the same signatures to match the handbook. Apply order: 0023, 0024, 0025.
 - **Ledger 0017 added 0026, with its `_rls_test.sql`.** `0026_battery_log.sql`: `batteries` and `battery_runs` (RLS on, select only for approved students and staff, no client write grant), `battery_add_set`, `battery_save`, `battery_set_charge`, `battery_log_run`, `battery_edit_run` (SECURITY DEFINER, each checks its caller), `_battery_member_ok`, and `_merge_member_rules` again with the battery columns. Paste 0026 again after any re-paste of 0020, 0022 or 0024.
 - **Ledger 0017 also added 0027, with its `_rls_test.sql`.** `0027_scouting_match_fields.sql`: `scouting_private.validate` re-defined from 0022 with one change (an observation may carry `match`), `scouting_private.validate_match`, and `public.scouting_match_fields()`. Apply order for ledger 0017: 0026, then 0027 (after 0023, 0024, 0025 from ledger 0016).
+
+## How SQL reaches the live database: the Migrate workflow (ledger 0021, 2026-10-23)
+
+**Two states, and which one is live is a fact about the repository's secrets, not about any file.**
+
+- **Before the repository secret `SUPABASE_MIGRATE_DB_URL` exists:** SQL reaches the database by hand in the Supabase SQL editor, exactly as before, and nothing records it. `.github/workflows/migrate.yml` still runs on a push to `main` that touches `supabase/migrations/`, posts a notice that it is not configured, and exits green.
+- **After it exists:** the same push runs `node tools/apply-migration.mjs`, which:
+  1. creates `supabase_migrations.schema_migrations (version text primary key, statements text[], name text)` if missing (the Supabase CLI's own table and shape, which is what idea-app seeded) and inserts the **baseline**, 0001 to 0026, with `on conflict do nothing`. Those were applied by hand before this existed (Mr. Pina, 2026-10-23: 0022 to 0026 confirmed that day). The baseline is written on every run, so no file at or below 0026 can ever be replayed. It is a constant in the tool, and `tests/apply-migration.test.js` holds each entry to a real file name;
+  2. lists `supabase/migrations/NNNN_name.sql`, never an `_rls_test.sql`, never the frozen `supabase/*.sql`, `sql/` or repo-root files, and refuses outright if two files share a number;
+  3. applies every unrecorded one in number order, each as one simple query (what the SQL editor does with a paste) inside `begin ... commit` with its record row inserted in the same transaction. A file with its own top-level `begin;` (0002) is sent unwrapped and recorded right after. A raise rolls that file back, records nothing, and stops the run; nothing after it is attempted;
+  4. sets `lock_timeout` to 15 s, so a migration blocked by live check-in traffic fails and rolls back instead of queueing every later query behind it, and holds a session advisory lock so two appliers cannot overlap. The workflow's concurrency group never cancels a running apply.
+- `node tools/apply-migration.mjs --dry-run` lists what would apply and writes nothing (`--offline` does the same without a database, assuming only the baseline is recorded). `--print-bootstrap` prints the bootstrap SQL for a hand paste, which is never required.
+- The connection string is never printed: the tool redacts it and its password from every line, and the workflow hands it over through `env` only.
+- **Not ported from idea-app, on purpose:** the destructive-DDL scanner, the ledger-permission gate, per-object verification after the apply, and the record file committed back to the repo (a push to `main` redeploys the PWA, so this workflow writes nothing to git; the record is the table plus the run summary).
+- **Proven locally:** `node tools/sql-harness/run.mjs --migrations 0001-0026 --tests none --node tools/sql-harness/migrate-e2e.mjs` pastes 0001 to 0026 by psql (the live state), then drives the real tool: dry run writes nothing; a real run seeds 26 rows and applies 0027 and 0028; a second run applies nothing; a raising file rolls back and stops the run; the record schema is unreachable to `anon` and `authenticated`; the password never appears in output. Evidence about the SQL and the tool, never about the live project.
+
+### Setting it up (once, by Mr. Pina)
+
+1. **Connection string.** Supabase dashboard, the frc-app project, **Connect** (top bar). Choose **Session pooler** (not Transaction pooler, and not Direct connection: the direct host is IPv6 only and GitHub runners are IPv4). Copy the URI; it starts `postgresql://postgres.<project-ref>:[YOUR-PASSWORD]@aws-...pooler.supabase.com:5432/postgres`. Replace `[YOUR-PASSWORD]`, brackets included, with the database password (if lost: **Project Settings**, **Database**, **Reset database password**, which changes it for everything that uses it). idea-app uses the same Session pooler host on port 5432.
+2. **Secret.** <https://github.com/FRC-Team-5669-Techmen/frc-app/settings/secrets/actions>, green **New repository secret**, **Name** `SUPABASE_MIGRATE_DB_URL`, **Secret** the URI, **Add secret**.
+3. Nothing else is required: the next push to `main` that carries a migration applies everything pending. To apply what is already waiting right away, <https://github.com/FRC-Team-5669-Techmen/frc-app/actions/workflows/migrate.yml>, **Run workflow**, **Run workflow**.
+
+**If a file is pasted by hand after the secret exists,** record it so the record stays true (the workflow would otherwise apply it again, which every numbered file is required to survive, but should not have to):
+
+```sql
+insert into supabase_migrations.schema_migrations (version, name)
+values ('NNNN', 'name_after_the_number') on conflict do nothing returning version, name;
+```
+
+**Which migrations are applied** is answered by `select version, name from supabase_migrations.schema_migrations order by version;` once the secret exists, and still by the catalog before that.
