@@ -33,6 +33,7 @@ const CONTEXT_TAGS = [
   ['/activity',    'ACTIVITY'],
   ['/squad',       'SQUAD'],
   ['/display',     'DISPLAY'],
+  ['/batteries',   'BATTERIES'],
   ['/roster',      'ROSTER'],
   ['/access-requests', 'ACCESS'],
   ['/applications', 'APPS'],
@@ -147,6 +148,7 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
           )}
           {/* Event rosters (0016): every member reads a posted roster. */}
           {!isParent && <NavLink to="/scouting" className={itemClass}>Scouting</NavLink>}
+          {!isParent && <NavLink to="/batteries" className={itemClass}>Batteries</NavLink>}
           {!isParent && <NavLink to="/rosters" className={itemClass}>Event rosters</NavLink>}
           {/* 0017: the leaderboard and sub-team status for members; emergency
               information for parents (staff open it from the staff block);

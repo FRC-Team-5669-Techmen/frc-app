@@ -69,6 +69,7 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 - **Event rosters**: roles, eligibility, event-day attendance, conflicts, the family sign-up rule, the carpool lock (0016). [`docs/subsystems/rosters.md`](docs/subsystems/rosters.md)
 - **Families and records**: the family link, emergency information, driver documents, the no-photo list, sub-team status, the leaderboard, the onboarding checklist and shop gate, training, handbook versions, letter progress (0017). [`docs/subsystems/families-and-records.md`](docs/subsystems/families-and-records.md)
 - **Scouting**: event observations, offline queue, shift planning, pit conversations, pick lists and practice. [`docs/subsystems/scouting.md`](docs/subsystems/scouting.md).
+- **Battery log**: `/batteries`, the pit battery board, runs and charge state (0026). [`docs/subsystems/batteries.md`](docs/subsystems/batteries.md)
 - **Connector**: Claude acting as the admin through `/mcp` (0018); every write via `src/writeVia.js` (0019). [`docs/subsystems/connector.md`](docs/subsystems/connector.md)
 
 ### Roadmap (planned modules)
@@ -228,4 +229,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-21. Scouting now returns PT409 domain conflicts to avoid PostgREST 14 retries; real isolated hosted Auth/API evidence and the Vercel access blocker are retained. Vercel CLI access and an isolated scouting preview are now verified; normal human sign-in remains open. Latest record: `docs/history/scouting-vercel-preview.md`.
+Last reviewed: 2026-10-23. Battery log subsystem line added (ledger 0017). Previously 2026-10-21: Scouting now returns PT409 domain conflicts to avoid PostgREST 14 retries; real isolated hosted Auth/API evidence and the Vercel access blocker are retained. Vercel CLI access and an isolated scouting preview are now verified; normal human sign-in remains open. Latest record: `docs/history/scouting-vercel-preview.md`.

@@ -125,4 +125,19 @@ export async function resolveSignout(ctx, q) {
   return { member: { ...m.member, request_id: req.id, note: req.note, cleanup_confirmed: req.cleanup_confirmed, requested_at: req.requested_at } }
 }
 
-export const RESOLVERS = { member: resolveMember, event: resolveEvent, signout: resolveSignout }
+/** A battery from its label ("B07", "b7", "7"), against what his account can read (0026). */
+export async function resolveBattery(ctx, q) {
+  const r = await ctx.backend.select(ctx.session, { table: 'batteries', columns: ['id', 'label', 'status', 'charge_state'], limit: 500 })
+  if (r.error) return { status: r.error.code && ['42P01', 'PGRST205'].includes(r.error.code) ? 'not_set_up' : 'refused', message: r.error.code && ['42P01', 'PGRST205'].includes(r.error.code) ? 'The battery log is not set up yet: its SQL has not been pasted into Supabase. Nothing was changed.' : r.error.message }
+  const key = (s) => String(s ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^([A-Z]*)0+(\d)/, '$1$2')
+  const want = key(q)
+  if (!want) return { status: 'not_found', message: 'Which battery? Ask him for its label, such as B07.' }
+  let hits = r.data.filter((b) => key(b.label) === want)
+  // "7" names B07 when only one battery's number is 7.
+  if (!hits.length && /^\d+$/.test(want)) hits = r.data.filter((b) => key(b.label).replace(/^[A-Z]+/, '') === want)
+  if (hits.length === 1) return { battery: hits[0] }
+  if (!hits.length) return { status: 'not_found', message: `No battery is labeled "${q}". The labels are ${r.data.map((b) => b.label).sort().slice(0, 30).join(', ') || 'none yet'}.` }
+  return { status: 'ambiguous', message: `${hits.length} batteries match "${q}": ${hits.map((b) => b.label).join(', ')}. Ask him which.`, candidates: hits.map((b) => ({ id: b.id, label: b.label })) }
+}
+
+export const RESOLVERS = { member: resolveMember, event: resolveEvent, signout: resolveSignout, battery: resolveBattery }

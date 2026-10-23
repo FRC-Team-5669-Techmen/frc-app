@@ -150,7 +150,9 @@ async function fixtures() {
   const he = await q(`insert into public.hub_events (id, title) values ('0f000000-0000-4000-8000-000000000023', 'Proof trip') returning id`)
   await q(`insert into public.hub_days (event_id, day_date, venue_closes_at) values ($1, current_date + 10, now() + interval '10 days')`, [he.rows[0].id])
   const hi = await q(`insert into public.hub_invites (id, event_id, student_id, emails) values ('0f000000-0000-4000-8000-000000000123', $1, $2, array['riley.family@example.invalid']) returning id`, [he.rows[0].id, ID.riley])
-  return { event: ev.rows[0].id, logged: lh.rows[0].id, attendance: ae.rows[0].id, feedback: fb.rows[0].id, signout: sr.rows[0].id, invite: hi.rows[0].id }
+  // ledger 0017: one battery to log and charge (0026). Fixed id for the same reason.
+  const bt = await q(`insert into public.batteries (id, label, status, charge_state) values ('0f000000-0000-4000-8000-000000000026', 'PF99', 'competition', 'charged') returning id`)
+  return { event: ev.rows[0].id, logged: lh.rows[0].id, attendance: ae.rows[0].id, feedback: fb.rows[0].id, signout: sr.rows[0].id, invite: hi.rows[0].id, battery: bt.rows[0].id }
 }
 
 // Hand samples: the writes the hand entries make, with real arguments.
@@ -174,6 +176,10 @@ const SAMPLES = {
   // ledger 0016
   staff_send_trip_link: (fx) => ({ p_invite: fx.invite }),
   feedback_reply: (fx) => ({ p_feedback: fx.feedback, p_body: 'Proof answer' }),
+  // ledger 0017: the battery log (0026)
+  battery_set_charge: (fx) => ({ p_battery: fx.battery, p_state: 'charging' }),
+  battery_log_run: (fx) => ({ p_battery: fx.battery, p_kind: 'match', p_match: 'qm12', p_voltage_before: 12.9, p_voltage_after: 11.8, p_brownout: 'no' }),
+  battery_add_set: () => ({ p_prefix: 'PF', p_from: 1, p_to: 3 }),
 }
 
 /** Placeholder arguments of the right types, for a function with no sample. */

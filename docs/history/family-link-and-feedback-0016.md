@@ -2,7 +2,7 @@
 title: "Family link recovery (0023) plus the open feedback inbox, ledger 0016"
 date: 2026-10-22
 branches: [main]
-commits: []
+commits: ["53bf889", "bda0cc2"]
 migrations: ["0023_family_link_recovery.sql", "0023_family_link_recovery_rls_test.sql", "0024_feedback_inbox.sql", "0024_feedback_inbox_rls_test.sql", "0025_absence_handbook.sql", "0025_absence_handbook_rls_test.sql"]
 subsystems: ["Event family hub", "Families and records", "Connector", "Check-in", "Roster and access", "Feedback", "Push notifications", "Member standing", "Member handbook", "Branding and theme", "Landing and nav", "Discord"]
 ---
@@ -152,3 +152,6 @@ not applied there until pasted; no push or email was sent; speech input was
 not tried on a real phone; the icons were not installed on a real home
 screen.
 
+## Landing
+
+This session could not push. Its two commits were carried as a format-patch and landed on main on 2026-10-23 by ledger 0017's session (`docs/history/beach-blitz-readiness-0017.md`), applied with `git am` onto 9aa3935 unchanged: 53bf889 and bda0cc2. The gate on that exact tree: build passed; `npm test` 1077/1077; `ds:audit` ok; `discord:calendar:test` 19/19; `history:verify` OK; `test:checkin` 51/51; `test:features` 1881/1881.

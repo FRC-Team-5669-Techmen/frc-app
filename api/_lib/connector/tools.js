@@ -10,6 +10,7 @@ import { write, undoLast, NotRegistered } from './engine.js'
 import { RESOLVERS, roster, resolveMember, displayName } from './resolve.js'
 import { laDateKey, laMidnightMs, addDays, laClock, laDay, laWallToIso } from './dates.js'
 import { isSchemaMissing } from './errors.js'
+import { batteryBoard, chargeLabel, statusLabel, kindLabel, brownoutLabel, CHECK_THRESHOLDS } from '../../../src/batteries.js'
 
 export class UnknownTool extends Error {}
 
@@ -240,6 +241,38 @@ const READS = {
     return { status: 'ok', season: season.name, answered: families.filter((f) => f.answered).length, waiting: families.filter((f) => !f.answered).length, families }
   },
 
+  // The battery board (0026), read with the app's own rules (src/batteries.js).
+  async list_batteries(ctx, a) {
+    const [b, r] = await Promise.all([
+      ctx.backend.select(ctx.session, { table: 'batteries', columns: ['*'], limit: 500 }),
+      ctx.backend.select(ctx.session, { table: 'battery_runs', columns: ['*'], order: [['ran_at', 'desc']], limit: 3000 }),
+    ])
+    if (b.error || r.error) {
+      const e = b.error || r.error
+      return isSchemaMissing(e) ? notSetUp('The battery log') : { status: 'refused', message: e.message }
+    }
+    let board = batteryBoard(b.data, r.data)
+    const show = a.show ?? 'in_service'
+    if (show === 'match_ready') board = board.filter((x) => x.matchReady)
+    else if (show === 'check') board = board.filter((x) => x.check)
+    else if (show === 'in_service') board = board.filter((x) => x.status !== 'retired')
+    if (a.battery) {
+      const want = String(a.battery).toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^([A-Z]*)0+(\d)/, '$1$2')
+      board = board.filter((x) => x.label.toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^([A-Z]*)0+(\d)/, '$1$2') === want)
+    }
+    const runsShown = a.battery ? 10 : 1
+    return {
+      status: 'ok', showing: show, count: board.length,
+      thresholds: { brownout_in_last_runs: CHECK_THRESHOLDS.BROWNOUT_LOOKBACK, min_resting_volts: CHECK_THRESHOLDS.MIN_RESTING_VOLTS, max_resistance_mohm: CHECK_THRESHOLDS.MAX_RESISTANCE_MOHM, note: 'Proposed defaults.' },
+      batteries: board.map((x) => ({
+        label: x.label, status: statusLabel(x.status), charge: chargeLabel(x.charge_state), check: x.check, reasons: x.reasons, match_ready: x.matchReady,
+        resting_volts: x.restingVolts, resistance_mohm: x.resistance, brownouts: x.brownouts, runs: x.runCount, last_used: x.lastUsed ? laClock(x.lastUsed) : null,
+        recent: x.runs.slice(0, runsShown).map((run) => ({ kind: kindLabel(run.kind), match: run.match_label, on: laClock(run.ran_at), volts_before: run.voltage_before, volts_after: run.voltage_after, resistance_mohm: run.resistance_mohm, brownout: brownoutLabel(run.brownout) })),
+      })),
+      note: 'Blank voltage or resistance means not measured, never zero.',
+    }
+  },
+
   async feedback_inbox(ctx, a) {
     const status = a.status ?? 'new'
     const limit = Math.max(1, Math.min(50, Number(a.limit) || 10))
@@ -365,7 +398,7 @@ export async function runTool(ctx, name, a = {}) {
         if (spec.resolve && a[argName] !== undefined) {
           const r = await RESOLVERS[spec.resolve](ctx, a[argName])
           if (r.status) return r
-          resolved[argName] = r.member ?? r.event
+          resolved[argName] = r.member ?? r.event ?? r.battery
         }
       }
       let args

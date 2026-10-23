@@ -40,6 +40,7 @@ export const ROUTES = Object.freeze([
   { path: '/certifications', url: '/certifications', group: 'member', label: 'Certifications' },
   { path: '/handbook', url: '/handbook', group: 'member', label: 'Member handbook' },
   { path: '/trips', url: '/trips', group: 'member', label: 'Trips' },
+  { path: '/batteries', url: '/batteries', group: 'member', label: 'Batteries' },
   { path: '/standing', url: '/standing', group: 'member', label: 'My standing' },
   { path: '/scouting', url: '/scouting', group: 'member', label: 'Scouting events' },
   { path: '/scouting/:eventId', url: '/scouting/16000000-0000-4000-8000-000000000001', group: 'member', label: 'Event scouting' },

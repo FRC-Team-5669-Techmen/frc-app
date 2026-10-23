@@ -144,3 +144,32 @@ admin_merge_member:
 scouting_save:
   describe: Save or correct a scouting claim, observation, assignment, pit message, team record or personal pick list, preserving its history.
   level: confirm
+
+# ledger 0017: the battery log (0026). Charge state is undoable (the reverse
+# sets the state it had, which the function answers); a logged run is
+# confirm, because nothing in the app removes a run (runs are a record, and a
+# wrong one is corrected, not deleted).
+battery_set_charge:
+  describe: Set a battery's charge state (charged, charging, needs charge, in the robot). Undo puts the old state back.
+  level: undo
+  undo:
+    - function: battery_set_charge
+      args:
+        p_battery: $args.p_battery
+        p_state: $result.previous
+
+battery_log_run:
+  describe: Log one use of a battery with its voltages, resistance, minutes and whether it browned out. Always asks first.
+  level: confirm
+
+battery_edit_run:
+  describe: Correct a logged battery run. The author can for 24 hours; staff any time.
+  level: confirm
+
+battery_save:
+  describe: Add a battery or change its label, brand, year, status or notes. Retiring a battery is a status change.
+  level: confirm
+
+battery_add_set:
+  describe: Add a numbered set of batteries in one step, such as B01 through B12. Staff only.
+  level: confirm

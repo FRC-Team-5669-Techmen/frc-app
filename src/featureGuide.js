@@ -69,6 +69,8 @@ export const GUIDE = Object.freeze([
     what: 'Scout robots at events, even offline, and build pick lists.' },
   { path: '/scouting/:eventId', area: 'team', title: 'Scouting an event', for: ['member'], where: 'Scouting, then an event',
     what: 'Your shift, observations, pit notes and the team list for one event.' },
+  { path: '/batteries', area: 'team', title: 'Batteries', for: ['member'], where: 'Account menu',
+    what: 'Every battery worst first: charge state in one tap, resting voltage, brownouts and match-ready. Log a run in seconds.' },
   { path: '/status-reports', area: 'team', title: 'Sub-team status', for: ['member'], where: 'Account menu',
     what: 'Each sub-team this week: on track, at risk or blocked.' },
   { path: '/survey', area: 'team', title: 'Weekly survey', for: ['student'], where: 'Account menu',

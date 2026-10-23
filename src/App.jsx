@@ -75,6 +75,7 @@ const EventJoinPage      = lazy(() => import('./EventJoinPage'))
 const TripsPage          = lazy(() => import('./TripsPage'))
 const TripsAdmin         = lazy(() => import('./TripsAdmin'))
 const ConnectorPage      = lazy(() => import('./ConnectorPage'))
+const BatteriesPage      = lazy(() => import('./BatteriesPage'))
 // Mounted in ProtectedLayout, so it is on every authenticated page. Lazy with
 // its OWN Suspense boundary and a null fallback: sharing the app-level
 // boundary would put the whole shell back on the splash while it loads.
@@ -459,6 +460,8 @@ export default function App() {
           <Route path="/trips"           element={<TripsPage hasRole={hasRole} />} />
           <Route path="/trips/:id"       element={<TripsPage hasRole={hasRole} />} />
           <Route path="/trips/:id/manage" element={<TripsAdmin hasRole={hasRole} />} />
+          {/* The battery log (0026, ledger 0017): students and staff; the page gates parents. */}
+          <Route path="/batteries"       element={<BatteriesPage session={session} hasRole={hasRole} />} />
           {/* Display lives inside the layout so the nav + profile stay visible. */}
           <Route path="/display" element={<PresenceBoard hasRole={hasRole} />} />
         </Route>

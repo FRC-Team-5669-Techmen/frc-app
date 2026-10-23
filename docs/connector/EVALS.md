@@ -35,7 +35,9 @@ A living list. Each line is something he would say to Claude, the tool that shou
 | 29 | "Merge Riley's summer Gmail account into her school account." | `merge_accounts` | A preview first listing the rows per table that will move; on "yes" nothing names the Gmail account any more, it is inactive with a note, the school account has everything, and two trail rows. Two Rileys: Claude asks which. |
 | 30 | "Move the outreach event to Sunday." | `find_tool` then `call_app` (`schedule_update_event`) | A preview first (a generated entry always asks); on "yes" the event moves, as him. |
 | 31 | "Send Joseph Tran's family their Beach Blitz link." | `send_family_link` | A preview first naming the family and its emails; on "yes" one link email queued per email on the family (one row each in the trip mail queue), each carrying a fresh link. Already sent this hour: nothing new is queued and it says so. Two coming trips and none named: Claude asks which. |
-
+| 32 | "Which batteries are ready?" | `list_batteries` (show match_ready) | Runs at once, reads only: competition batteries that are charged and not flagged, worst first, with the resting voltage and brownout count. Before 0026 is pasted: not set up yet. |
+| 33 | "Log B07 for qual 12, 12.9 before, 11.8 after, no brownout." | `log_battery_run` | A preview first; on "yes" one run, logged by him, and a charged B07 becomes needs charge. "Battery 7" with two batteries numbered 7: Claude asks which. |
+| 34 | "B03 is on the charger." | `set_battery_charge` | Runs at once; B03 reads charging; "undo that" puts its old state back. |
 
 ## Scouting (0022)
 

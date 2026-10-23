@@ -1,0 +1,122 @@
+/* /batteries (0026, ledger 0017). Tactical HUD tokens from src/theme.css only.
+   Built for a phone in the pits: big labels, one-tap charge state, 44px floor. */
+.ba-wrap { max-width: 72rem; width: 100%; min-width: 0; margin: 0 auto; padding: 1rem 1rem 4rem; box-sizing: border-box; }
+.ba-back, .ba-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--steel); text-decoration: none; font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.06em; }
+.ba-back:hover, .ba-link:hover { color: var(--gold); }
+.ba-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 0.75rem; margin: 0.25rem 0 0.9rem; }
+.ba-eyebrow { display: block; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--steel); }
+.ba-title { margin: 0.1rem 0 0; font-family: var(--font-ui); font-size: 1.6rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); }
+.ba-sub { margin: 0.2rem 0 0; color: var(--steel); font-size: 0.92rem; }
+.ba-muted { color: var(--muted); font-size: 0.88rem; margin: 0.3rem 0; }
+.ba-error { color: var(--fault); margin: 0.4rem 0; }
+.ba-msg { font-family: var(--font-mono); font-size: 0.85rem; color: var(--gold); margin: 0.5rem 0; }
+.ba-head-actions { display: flex; gap: 0.5rem; }
+
+.ba-primary, .ba-btn, .ba-filter, .ba-link-btn {
+  min-height: 44px; padding: 0.45rem 1rem; font: inherit; font-family: var(--font-ui); font-weight: 600; letter-spacing: 0.04em;
+  border-radius: var(--radius); cursor: pointer; box-sizing: border-box;
+}
+.ba-primary { color: var(--gold); background: var(--bg); border: 1px solid var(--gold); }
+.ba-primary:hover:not(:disabled), .ba-primary:focus-visible { background: var(--gold); color: var(--bg); }
+.ba-btn { color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); }
+.ba-btn:hover:not(:disabled) { border-color: var(--steel); }
+.ba-primary:disabled, .ba-btn:disabled { opacity: 0.45; cursor: default; }
+.ba-link-btn { min-height: 44px; padding: 0 0.5rem; background: none; border: 0; color: var(--gold); font-weight: 600; }
+
+.ba-tally { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; padding: 0.7rem 0.9rem; margin-bottom: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--gold); border-radius: var(--radius); font-family: var(--font-mono); font-size: 0.82rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel); }
+.ba-tally b { font-family: var(--font-ui); font-size: 1.25rem; color: var(--text); margin-right: 0.3rem; }
+.ba-tally-warn b { color: var(--gold); }
+
+.ba-filters { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.25rem; margin-bottom: 0.75rem; scrollbar-width: none; }
+.ba-filter { flex: 0 0 auto; color: var(--steel); background: var(--bg); border: 1px solid var(--border-strong); font-size: 0.9rem; }
+.ba-filter span { margin-left: 0.3rem; font-family: var(--font-mono); color: var(--muted); }
+.ba-filter[aria-pressed="true"] { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+.ba-filter[aria-pressed="true"] span { color: var(--bg); }
+
+.ba-board { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr)); gap: 0.75rem; }
+.ba-card { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; min-width: 0; }
+.ba-card-check { border-color: var(--gold-dim); box-shadow: inset 3px 0 0 var(--gold); }
+.ba-card-ready { border-color: var(--border-strong); }
+.ba-card-retired { opacity: 0.55; }
+.ba-card-open { display: grid; grid-template-columns: 1fr auto; gap: 0.35rem 0.75rem; padding: 0.85rem 0.9rem 0.7rem; text-align: left; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; min-height: 44px; }
+.ba-card-open:hover .ba-label, .ba-card-open:focus-visible .ba-label { color: var(--gold-bright); }
+.ba-label { font-family: var(--font-ui); font-size: 2.1rem; font-weight: 700; line-height: 1; letter-spacing: 0.04em; color: var(--text); }
+.ba-pills { display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: flex-end; align-items: flex-start; }
+.ba-pill { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.45rem; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); color: var(--steel); white-space: nowrap; }
+.ba-pill-competition { color: var(--text); border-color: var(--steel); }
+.ba-pill-check { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+.ba-pill-ready { color: var(--gold); border-color: var(--gold-dim); }
+.ba-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border); }
+.ba-stats > span { display: flex; flex-direction: column; }
+.ba-stats b { font-family: var(--font-ui); font-size: 1.2rem; color: var(--text); font-weight: 600; }
+.ba-stats i { font-style: normal; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.ba-stats .ba-bad b { color: var(--gold); }
+.ba-last { grid-column: 1 / -1; font-size: 0.75rem; }
+.ba-reason { grid-column: 1 / -1; font-size: 0.85rem; color: var(--gold); }
+
+.ba-charge { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); }
+.ba-charge-btn { min-height: 48px; padding: 0.25rem; font: inherit; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.02em; color: var(--steel); background: var(--bg); border: 0; border-right: 1px solid var(--border); cursor: pointer; line-height: 1.15; }
+.ba-charge-btn:last-child { border-right: 0; }
+.ba-charge-btn:hover:not(:disabled) { color: var(--text); }
+.ba-charge-btn[aria-pressed="true"] { color: var(--text); background: var(--surface-2); box-shadow: inset 0 -3px 0 var(--steel); }
+.ba-charge-charged[aria-pressed="true"] { color: var(--gold); box-shadow: inset 0 -3px 0 var(--gold); }
+.ba-charge-needs_charge[aria-pressed="true"] { color: var(--gold-dim); box-shadow: inset 0 -3px 0 var(--gold-dim); }
+
+.ba-empty { padding: 1.75rem 1.25rem; text-align: center; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: var(--radius); }
+.ba-empty h2 { margin: 0 0 0.35rem; font-family: var(--font-ui); font-size: 1.1rem; color: var(--text); }
+.ba-empty p { margin: 0 0 0.75rem; color: var(--steel); }
+
+.ba-rules, .ba-staff { margin-top: 1rem; padding: 0.25rem 0.9rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.ba-rules summary, .ba-staff summary, .ba-more summary { min-height: 44px; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); }
+.ba-rules p { color: var(--steel); font-size: 0.9rem; margin: 0 0 0.75rem; }
+.ba-staff .ba-form { padding-bottom: 0.9rem; }
+
+/* The sheet: a native dialog, full screen on a phone, a panel on a desk. */
+.ba-sheet { width: min(36rem, 100vw); max-width: 100vw; max-height: 100dvh; margin: auto; padding: 0; color: var(--text); background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); box-sizing: border-box; }
+.ba-sheet::backdrop { background: rgba(10, 11, 13, 0.78); }
+.ba-sheet-head { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+.ba-sheet-head h2 { margin: 0; font-family: var(--font-ui); font-size: 1.4rem; letter-spacing: 0.04em; color: var(--gold); }
+.ba-sheet-body { padding: 0.9rem 1rem 1.25rem; }
+@media (max-width: 600px) {
+  .ba-sheet { width: 100vw; height: 100dvh; max-height: 100dvh; border-radius: 0; border: 0; }
+}
+.ba-reasons { margin: 0 0 0.75rem; padding: 0.6rem 0.8rem 0.6rem 1.6rem; color: var(--gold); background: var(--gold-a08); border: 1px solid var(--gold-dim); border-radius: var(--radius); font-size: 0.9rem; }
+.ba-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem 1rem; margin: 0 0 0.75rem; }
+.ba-facts dt { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.ba-facts dd { margin: 0.1rem 0 0; color: var(--text); }
+.ba-note { color: var(--steel); white-space: pre-wrap; }
+.ba-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0; }
+.ba-h3 { margin: 1.1rem 0 0.4rem; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--steel); }
+.ba-history { list-style: none; margin: 0; padding: 0; }
+.ba-history > li { padding: 0.6rem 0; border-bottom: 1px solid var(--border); }
+.ba-history > li.ba-run-bad { box-shadow: inset 3px 0 0 var(--gold); padding-left: 0.6rem; }
+.ba-run-top { display: flex; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+.ba-run-top .hud-mono { font-size: 0.78rem; }
+.ba-run-nums { display: flex; flex-wrap: wrap; gap: 0.25rem 0.9rem; margin-top: 0.25rem; font-size: 0.8rem; }
+.ba-run-note { margin: 0.3rem 0 0; color: var(--steel); font-size: 0.88rem; }
+.ba-run-foot { display: flex; justify-content: space-between; align-items: center; }
+
+/* The run form: big targets, numeric keypads. */
+.ba-form { display: flex; flex-direction: column; gap: 0.75rem; }
+.ba-seg { border: 0; margin: 0; padding: 0; min-width: 0; }
+.ba-seg legend { padding: 0; margin-bottom: 0.35rem; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); }
+.ba-seg-opts { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.ba-seg-opts button { flex: 1 1 auto; min-height: 48px; min-width: 3.25rem; padding: 0.4rem 0.75rem; font: inherit; font-weight: 600; color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; }
+.ba-seg-opts button[aria-pressed="true"] { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+.ba-seg-batteries button { flex: 0 0 auto; min-width: 4.25rem; font-family: var(--font-ui); font-size: 1.05rem; }
+.ba-seg-batteries .ba-opt-check:not([aria-pressed="true"]) { border-color: var(--gold-dim); color: var(--gold); }
+.ba-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+.ba-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; }
+.ba-num, .ba-field { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.ba-num > span:first-child, .ba-field > span { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); }
+.ba-num small { color: var(--muted); font-size: 0.75rem; }
+.ba-num-box { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); }
+.ba-num-box:focus-within { border-color: var(--gold); }
+.ba-num-box input { flex: 1 1 auto; min-width: 0; min-height: 52px; padding: 0 0.75rem; font-family: var(--font-ui); font-size: 1.5rem; font-weight: 600; color: var(--text); background: transparent; border: 0; outline: none; }
+.ba-num-box i { font-style: normal; padding-right: 0.75rem; font-family: var(--font-mono); color: var(--muted); }
+.ba-field input, .ba-field select, .ba-field textarea { min-height: 48px; padding: 0.45rem 0.7rem; font: inherit; font-size: 1rem; color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); box-sizing: border-box; width: 100%; max-width: 100%; }
+.ba-field textarea { min-height: 4.5rem; }
+.ba-more { border-top: 1px solid var(--border); padding-top: 0.25rem; }
+.ba-more[open] > *:not(summary) { margin-bottom: 0.75rem; }
+.ba-save { min-height: 56px; font-size: 1.05rem; position: sticky; bottom: 0.5rem; }
+.ba-editor { margin: 0.5rem 0 0.75rem; padding: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }

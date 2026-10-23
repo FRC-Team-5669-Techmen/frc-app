@@ -267,3 +267,52 @@ preview_scouting_import:
     event: {type: string, describe: "The calendar event name or id", required: true, resolve: event}
     event_key: {type: string, describe: "The provider event key, such as 2026dal", required: true}
     mode: {type: string, describe: "Use pit_map for read-only Nexus geometry; omit for the manager-only team import", enum: [pit_map]}
+
+# ledger 0017: the battery log (0026).
+list_batteries:
+  describe: The team batteries worst first, with charge state, last resting voltage, brownouts and which are match-ready or need a check.
+  say: ["which batteries are ready", "how are the batteries", "what's flagged on the battery board", "show me B07's history"]
+  kind: read
+  args:
+    show: {type: string, describe: "Which ones (in service by default)", enum: [in_service, match_ready, check, all]}
+    battery: {type: string, describe: "One battery's label, such as B07, for its recent runs"}
+
+log_battery_run:
+  describe: Log a battery run, such as B07 in qualification 12 resting at 12.9 volts with no brownout. Always asks first.
+  say: ["log B07 for qual 12, 12.9 before, 11.8 after, no brownout", "B03 browned out in practice match 2", "battery 5 bench test, 13.1 volts and 14 milliohms"]
+  kind: function
+  function: battery_log_run
+  args:
+    battery: {type: string, describe: "The battery label, such as B07", required: true, resolve: battery}
+    kind: {type: string, describe: "What the run was", required: true, enum: [match, practice_match, drive_practice, bench_test]}
+    match: {type: string, describe: "The match, such as qm12"}
+    volts_before: {type: number, describe: "Resting voltage before, if measured"}
+    volts_after: {type: number, describe: "Voltage after, if measured"}
+    resistance: {type: number, describe: "Internal resistance in milliohms from the Battery Beak, if measured"}
+    minutes: {type: integer, describe: "How many minutes it ran, if known"}
+    brownout: {type: string, describe: "Whether the robot browned out (unknown when not said)", enum: ["yes", "no", unknown]}
+    performance: {type: integer, describe: "How it performed, 1 weak to 5 strong, if said"}
+    notes: {type: string, describe: "Anything else he said about it"}
+  map:
+    p_battery: $resolved.battery.id
+    p_kind: $args.kind
+    p_match: $args.match
+    p_voltage_before: $args.volts_before
+    p_voltage_after: $args.volts_after
+    p_resistance: $args.resistance
+    p_minutes: $args.minutes
+    p_brownout: $args.brownout
+    p_performance: $args.performance
+    p_notes: $args.notes
+
+set_battery_charge:
+  describe: Mark a battery charged, charging, needing a charge, or in the robot. Undo puts the old state back.
+  say: ["B07 is charged", "put B03 in the robot", "B11 needs a charge", "battery 4 is on the charger"]
+  kind: function
+  function: battery_set_charge
+  args:
+    battery: {type: string, describe: "The battery label, such as B07", required: true, resolve: battery}
+    state: {type: string, describe: "The charge state", required: true, enum: [charged, charging, needs_charge, in_robot]}
+  map:
+    p_battery: $resolved.battery.id
+    p_state: $args.state
