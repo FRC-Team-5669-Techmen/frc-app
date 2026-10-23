@@ -172,6 +172,8 @@ $fn$;
 -- applying a file. It is the only rewrite it makes.
 
 -- ── the Supabase starter's two tables ────────────────────────────────────────
+-- NOTE: the LIVE profiles table has no created_at (0034 exists because 0032
+-- read it and failed in production). Never read p.created_at in a migration.
 create table if not exists public.profiles (
   id         uuid primary key references auth.users(id) on delete cascade,
   full_name  text,
