@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import { batteryBoard } from './batteries'
 import { normEmail, isHeld } from './ideaCerts'
-import { IconBattery, IconJobs, IconStatus, IconSkills, IconAuto, IconClock } from './navIcons'
+import { IconBattery, IconJobs, IconStatus, IconSkills, IconAuto, IconClock, IconWheel } from './navIcons'
+import { leaderboard } from './driverScore'
+import { resolveCurrentSeason } from './seasons'
 import { routineBoard, AUTO_READY_STREAK } from './autos'
 import HubTile from './HubTile'
 import './Hub.css'
@@ -29,7 +31,10 @@ export default function RobotPage({ session, hasRole = () => false }) {
       supabase.from('auto_routines').select('id, name, active'),
       supabase.from('auto_runs').select('routine_id, result, ran_at').order('ran_at', { ascending: false }).limit(1000),
       supabase.from('sim_matches').select('id, started_at').order('started_at', { ascending: false }).limit(50),
-    ]).then(([b, r, open, mine, st, certs, ar, au, sm]) => {
+      supabase.from('drive_sessions').select('member_id, session_date, minutes, kind, sim_score, voided_at').limit(5000),
+      supabase.rpc('driver_rating_scores'),
+      supabase.from('seasons').select('id, name, start_date, end_date'),
+    ]).then(([b, r, open, mine, st, certs, ar, au, sm, ds, dr, se]) => {
       if (!live) return
       const board = !b.error && !r.error ? batteryBoard(b.data ?? [], r.data ?? []) : null
       setS({
@@ -38,6 +43,7 @@ export default function RobotPage({ session, hasRole = () => false }) {
         status: st.error ? null : { flagged: (st.data ?? []).filter((x) => x.status && x.status !== 'green').length, reported: new Set((st.data ?? []).map((x) => x.subteam)).size },
         autos: ar.error || au.error ? null : (() => { const bd = routineBoard(ar.data ?? [], au.data ?? []).filter((x) => x.active !== false); return { ready: bd.filter((x) => x.ready).length, total: bd.length } })(),
         sims: sm.error ? null : { total: (sm.data ?? []).length, last: sm.data?.[0]?.started_at ?? null },
+        drivers: ds.error || dr.error ? null : (() => { const bd = leaderboard(ds.data ?? [], dr.data ?? [], resolveCurrentSeason(se.data ?? []), () => ''); const meRow = bd.find((x) => x.id === uid); return { total: bd.length, rank: meRow?.rank ?? null, top: bd[0]?.score ?? null } })(),
         certs: certs.error ? null : new Set((certs.data ?? []).filter((h) => isHeld(h, Date.now())).map((h) => h.code)).size,
       })
     })
@@ -50,7 +56,7 @@ export default function RobotPage({ session, hasRole = () => false }) {
       <header className="hub-head">
         <span className="hub-eyebrow">Robot</span>
         <h1 className="hub-title">Robot</h1>
-        <p className="hub-sub">Batteries, autos, the match simulator, jobs, sub-teams and certifications.</p>
+        <p className="hub-sub">Batteries, autos, drivers, the match simulator, jobs, sub-teams and certifications.</p>
       </header>
       <div className="hub-grid hub-grid-robot">
         <HubTile to="/batteries" icon={<IconBattery />} title="Batteries" tone={b?.check ? 'alert' : null} tour="robot-batteries"
@@ -59,6 +65,9 @@ export default function RobotPage({ session, hasRole = () => false }) {
         <HubTile to="/autos" icon={<IconAuto />} title="Autos" tour="robot-autos"
           big={s.autos ? s.autos.ready : null} bigLabel="competition-ready"
           line={s.autos ? (s.autos.total ? `of ${s.autos.total} routines · ready at ${AUTO_READY_STREAK} in a row` : 'No routines added yet') : 'Not set up yet'} />
+        <HubTile to="/drivers" icon={<IconWheel />} title="Drivers" tour="robot-drivers"
+          big={s.drivers ? (s.drivers.rank ?? s.drivers.total) : null} bigLabel={s.drivers?.rank ? 'your rank' : 'drivers ranked'}
+          line={s.drivers ? (s.drivers.total ? `${s.drivers.total} ranked this season · top score ${s.drivers.top}` : 'Log the first drive session') : 'Not set up yet'} />
         <HubTile to="/match-sim" icon={<IconClock />} title="Match simulator" tour="robot-sim"
           big={s.sims ? s.sims.total : null} bigLabel="simulated"
           line={s.sims ? (s.sims.last ? `Last ${new Date(s.sims.last).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })}` : 'Run the first one') : 'Not set up yet'} />

@@ -316,3 +316,11 @@ set_battery_charge:
   map:
     p_battery: $resolved.battery.id
     p_state: $args.state
+
+list_drivers:
+  describe: The driver leaderboard for this season (or all time), highest Driver Score first, with real robot hours, MoSim hours and the coach average. Scored with the app's own rule (src/driverScore.js).
+  say: ["who are our best drivers", "show me the driver leaderboard", "how many hours has Riley driven", "driver rankings for all time"]
+  kind: read
+  args:
+    season: {type: string, describe: "this season (default) or all time", enum: [current, all]}
+    limit: {type: integer, describe: "How many drivers to list (10 by default)"}

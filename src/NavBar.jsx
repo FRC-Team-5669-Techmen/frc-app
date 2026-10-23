@@ -8,7 +8,7 @@ import ThemeSwitch from './ThemeSwitch'
 import './NavBar.css'
 
 import { IconHome, IconSchedule, IconHours, IconScout, IconRobot } from './navIcons'
-const ROBOT_PATHS = ['/robot', '/batteries', '/autos', '/match-sim', '/jobs', '/status-reports', '/certifications']
+const ROBOT_PATHS = ['/robot', '/batteries', '/autos', '/drivers', '/match-sim', '/jobs', '/status-reports', '/certifications']
 
 // Mono unit/context tag shown at the right of the header, derived from route.
 const CONTEXT_TAGS = [
@@ -17,6 +17,7 @@ const CONTEXT_TAGS = [
   ['/robot',       'ROBOT'],
   ['/roles/',      'ROLES'],
   ['/autos',       'AUTOS'],
+  ['/drivers',     'DRIVERS'],
   ['/match-sim',   'MATCH SIM'],
   ['/schedule',    'SCHEDULE'],
   ['/scouting',    'SCOUTING'],

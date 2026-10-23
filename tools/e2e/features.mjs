@@ -76,6 +76,7 @@ const FEATURES = Object.freeze([
   'scouting',
   'batteries',
   'theme-updates',
+  'drivers',
 ]);
 
 

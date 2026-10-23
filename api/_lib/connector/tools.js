@@ -11,6 +11,7 @@ import { RESOLVERS, roster, resolveMember, displayName } from './resolve.js'
 import { laDateKey, laMidnightMs, addDays, laClock, laDay, laWallToIso } from './dates.js'
 import { isSchemaMissing } from './errors.js'
 import { batteryBoard, chargeLabel, statusLabel, kindLabel, brownoutLabel, CHECK_THRESHOLDS } from '../../../src/batteries.js'
+import { leaderboard as driverLeaderboard, SCORE_RULES } from '../../../src/driverScore.js'
 
 export class UnknownTool extends Error {}
 
@@ -270,6 +271,29 @@ const READS = {
         recent: x.runs.slice(0, runsShown).map((run) => ({ kind: kindLabel(run.kind), match: run.match_label, on: laClock(run.ran_at), volts_before: run.voltage_before, volts_after: run.voltage_after, resistance_mohm: run.resistance_mohm, brownout: brownoutLabel(run.brownout) })),
       })),
       note: 'Blank voltage or resistance means not measured, never zero.',
+    }
+  },
+
+  // The driver leaderboard (0029), scored with the app's own rule (src/driverScore.js).
+  async list_drivers(ctx, a) {
+    const [ds, sc, se] = await Promise.all([
+      ctx.backend.select(ctx.session, { table: 'drive_sessions', columns: ['member_id', 'session_date', 'minutes', 'kind', 'sim_score', 'voided_at'], limit: 5000 }),
+      ctx.backend.rpc(ctx.session, 'driver_rating_scores', {}),
+      ctx.backend.select(ctx.session, { table: 'seasons', columns: ['id', 'name', 'start_date', 'end_date'], order: [['start_date', 'desc']], limit: 20 }),
+    ])
+    const e = ds.error || sc.error
+    if (e) return isSchemaMissing(e) ? notSetUp('The driver leaderboard') : { status: 'refused', message: e.message }
+    const today = laDateKey(ctx.now())
+    const season = a.season === 'all' ? null : (se.data ?? []).find((s) => s.start_date <= today && (s.end_date == null || s.end_date >= today)) ?? null
+    const list = await roster(ctx)
+    const names = new Map((list.members ?? []).map((m) => [m.id, m.name]))
+    const rows = driverLeaderboard(ds.data ?? [], sc.data ?? [], season, (id) => names.get(id) ?? '')
+    const limit = Math.max(1, Math.min(50, Number(a.limit) || 10))
+    const h = (x) => Math.round(x * 10) / 10
+    return {
+      status: 'ok', season: season ? season.name : 'All time', ranked: rows.length,
+      drivers: rows.slice(0, limit).map((r) => ({ rank: r.rank, name: r.name, driver_score: r.score, robot_hours: h(r.realHours), mosim_hours: h(r.simHours), coach_average: r.coachAvg == null ? 'unrated' : Math.round(r.coachAvg * 100) / 100, coaches: r.coaches, sessions: r.sessions, best_mosim_score: r.bestSim })),
+      formula: `Practice hours = robot hours + ${SCORE_RULES.SIM_WEIGHT} x MoSim hours; experience = 1 - e^(-hours/${SCORE_RULES.HOURS_SCALE}); Driver Score = 100 x (${SCORE_RULES.EXPERIENCE_WEIGHT} x experience + ${SCORE_RULES.COACH_WEIGHT} x coach), coach = newest rating per coach, 1-5 scaled to 0-1, unrated 0.`,
     }
   },
 
