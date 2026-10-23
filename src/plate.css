@@ -256,7 +256,7 @@
     0 2px 3px 0 var(--tm-drop),
     0 5px 8px -3px var(--tm-drop-far);
 }
-@media (min-width: 640px) {
+@media (min-width: 1024px) {
   /* The strip is the pads' height plus 6px either side: room for the focus
      ring's 4px reach and for the pads' cast shadow. */
   :root.tm-plate .navbar-shell {
@@ -1135,7 +1135,7 @@
 }
 
 /* Ledger 0017: the phone tab row (NavBar.css) keeps the pads, narrower. */
-@media (max-width: 639px) {
+@media (max-width: 1023px) {
   :root.tm-plate .navbar-links :is(.nav-link, .nav-dropdown-trigger) {
     margin: 0;
     min-height: 52px;

@@ -4,6 +4,7 @@ import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import { fmtTime, fmtDay, SHOP_OPEN_KINDS } from './shopStatus'
 import { displayName } from './names'
+import { eventDayKeys, isMultiDay } from './eventDays'
 import {
   rolesFrom, canCreateEvents, canEditEvent, canSetMandatory, editableSeriesEvents,
   silentlyRefused, eventWriteMessage, loadMyCapabilities,
@@ -29,6 +30,10 @@ function toLocalInput(iso) {
   if (!iso) return ''
   const d = new Date(iso)
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+}
+// Short date for a multi-day event's time cell (Oct 30).
+function fmtShort(iso) {
+  return new Date(iso).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric' })
 }
 // LA calendar day key, for grouping.
 function dayKey(iso) {
@@ -310,12 +315,14 @@ export default function SchedulePage({ session, hasRole }) {
   function buildGroups(list) {
     const gs = []
     for (const ev of list) {
-      const key = dayKey(ev.starts_at)
-      let grp = gs.find(g => g.key === key)
-      if (!grp) { grp = { key, label: fmtDay(ev.starts_at), items: [] }; gs.push(grp) }
-      grp.items.push(ev)
+      // A multi-day event (a competition) is listed under every day it covers.
+      for (const key of eventDayKeys(ev)) {
+        let grp = gs.find(g => g.key === key)
+        if (!grp) { grp = { key, label: fmtDay(key + 'T19:00:00Z'), items: [] }; gs.push(grp) }
+        grp.items.push(ev)
+      }
     }
-    return gs
+    return gs.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
   }
 
   // One event row — reused by the agenda and the month day panel
@@ -333,7 +340,9 @@ export default function SchedulePage({ session, hasRole }) {
       <li key={ev.id} className="sch-event">
         <div className="sch-event-row">
           <div className="sch-event-time hud-mono">
-            {fmtTime(ev.starts_at)}<span className="sch-event-dash">–</span>{fmtTime(ev.ends_at)}
+            {isMultiDay(ev)
+              ? <>{fmtShort(ev.starts_at)} {fmtTime(ev.starts_at)}<span className="sch-event-dash">–</span>{fmtShort(ev.ends_at)} {fmtTime(ev.ends_at)}</>
+              : <>{fmtTime(ev.starts_at)}<span className="sch-event-dash">–</span>{fmtTime(ev.ends_at)}</>}
           </div>
           <div className="sch-event-main">
             <div className="sch-event-head">
@@ -427,7 +436,7 @@ export default function SchedulePage({ session, hasRole }) {
 
   // ── Month grid (LA calendar days) ──
   const evByDay = {}
-  for (const ev of events) { if (passMine(ev)) (evByDay[dayKey(ev.starts_at)] ||= []).push(ev) }
+  for (const ev of events) { if (passMine(ev)) for (const k of eventDayKeys(ev)) (evByDay[k] ||= []).push(ev) }
   const [mY, mM] = monthAnchor.split('-').map(Number)
   const firstWeekday = keyToUTC(monthAnchor).getUTCDay()
   const daysInMonth = new Date(Date.UTC(mY, mM, 0)).getUTCDate()

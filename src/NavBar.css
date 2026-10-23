@@ -280,7 +280,7 @@
 }
 
 /* ── Desktop: single row ── */
-@media (min-width: 640px) {
+@media (min-width: 1024px) {
   .navbar-shell {
     flex-wrap: nowrap;
     height: 3.25rem;
@@ -360,10 +360,18 @@
 /* Phone: the five tabs in ONE row, icon over label (ledger 0017, decision 49).
    Three rows of pads (two, two, then Hours alone) pushed the page below the
    fold. Parents' three tabs share the row the same way. */
-@media (max-width: 639px) {
+@media (max-width: 1023px) {
   .navbar-links { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; padding: 6px 0; }
   .navbar-links .nav-link, .navbar-links .nav-dropdown-trigger { flex-direction: column; gap: 3px; padding: 6px 2px; font-size: 0.58rem; letter-spacing: 0.01em; min-width: 0; width: 100%; overflow: hidden; text-overflow: clip; }
   .navbar-links .nav-icon { width: 1.15rem; height: 1.15rem; }
   .navbar-links .nav-dropdown { min-width: 0; }
   .navbar-links .nav-chevron { display: none; }
+}
+
+/* The account button never shrinks or scrolls off the right edge (feedback
+   2026-10-23: the profile picture was cut off at mid widths). The page-name
+   tag is the first thing to go when the bar is tight. */
+.navbar-account { flex-shrink: 0; margin-left: auto; }
+@media (max-width: 1279px) {
+  .navbar-context { display: none; }
 }
