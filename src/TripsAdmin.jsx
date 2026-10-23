@@ -249,7 +249,7 @@ function Readiness({ ov, eventId, reload, openFamily }) {
 
 // Removing a parent or guardian (their link stops working) and taking a
 // family off the trip (0008: hub_staff_remove_guardian, hub_staff_remove_family).
-function Removals({ selected, inviteId, onGone, reload }) {
+function Removals({ selected, inviteId, onGone, reload, sender }) {
   const [arm, setArm] = useState(null)
   const [note, setNote] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -277,6 +277,10 @@ function Removals({ selected, inviteId, onGone, reload }) {
         {(selected.emails ?? []).map((e) => (
           <li key={e} className="eh-person">
             <span className="eh-person-text"><span className="eh-person-name">{e}</span></span>
+            {sender && arm !== e && (
+              <button type="button" className="eh-btn" disabled={sender.busy} data-testid="ehm-send-one"
+                      onClick={() => sender.send(e)}>Send link</button>
+            )}
             {arm !== e
               ? <button type="button" className="eh-btn eh-btn-quiet" disabled={busy} onClick={() => setArm(e)}>Remove</button>
               : (
@@ -290,6 +294,9 @@ function Removals({ selected, inviteId, onGone, reload }) {
         ))}
         {(selected.emails ?? []).length === 0 && <li className="eh-quiet">No email on this family.</li>}
       </ul>
+      {sender?.origin === 'one' && sender.note && (
+        <p className={`eh-note${sender.note.bad ? ' eh-note-bad' : ''}`} role="status" data-testid="ehm-send-one-note">{sender.note.text}</p>
+      )}
       {arm !== 'family'
         ? <button type="button" className="eh-btn eh-btn-danger" disabled={busy} onClick={() => setArm('family')} data-testid="ehm-remove-family">Delete this sign-up</button>
         : (
@@ -300,6 +307,96 @@ function Removals({ selected, inviteId, onGone, reload }) {
           </div>
         )}
       {note && <p className={`eh-note${note.bad ? ' eh-note-bad' : ''}`} role="status">{note.text}</p>}
+    </section>
+  )
+}
+
+// Queued mail goes out when the event-family function drains the queue; the
+// hourly tick sends it anyway. Answers a short line for the button that asked.
+async function sendQueued(eventId) {
+  const { data, error } = await supabase.functions.invoke('event-family', { body: { action: 'drain', event_id: eventId } })
+  if (error) return { text: 'Queued. The mail function did not answer, so it goes out on the next hourly run.', bad: true }
+  if (data?.skipped) return { text: 'Queued. Gmail is not set up on the function yet, so it waits until it is.', bad: true }
+  return null
+}
+
+// Send one family a fresh link (0023, staff_send_trip_link): to everyone on
+// the family, or to one address. Deduped per address per hour in SQL.
+function useLinkSender(inviteId, eventId) {
+  const [note, setNote] = useState(null)
+  const [busy, setBusy] = useState(false)
+  // Which button asked: the note shows under that button's card.
+  const [origin, setOrigin] = useState(null)
+  useEffect(() => { setNote(null) }, [inviteId])
+  const send = useCallback(async (email = null) => {
+    setBusy(true); setNote(null); setOrigin(email ? 'one' : 'all')
+    const r = await staffRpc('staff_send_trip_link', { p_invite: inviteId, p_email: email })
+    if (r.kind !== 'ok') {
+      setBusy(false)
+      setNote({ bad: true, text: r.kind === 'missing' ? 'Send link needs the 0023 update pasted first.' : (r.message || 'Not sent.') })
+      return
+    }
+    const to = (r.data?.to ?? []).join(' and ')
+    const queued = r.data?.queued ?? 0
+    if (queued === 0) {
+      setBusy(false)
+      setNote({ text: `Already sent to ${to} in the last hour. One link per address per hour.` })
+      return
+    }
+    const mail = await sendQueued(eventId)
+    setBusy(false)
+    setNote(mail ?? { text: `Sent a new link to ${to}.` })
+  }, [inviteId, eventId])
+  return { send, busy, note, origin }
+}
+
+// One family's emails and links (0023): fix a mistyped address, turn every
+// old link off, send a fresh one. Each button answers on its own line.
+function FamilyLinks({ selected, inviteId, sender, reload }) {
+  const [emails, setEmails] = useState((selected.emails ?? []).join(', '))
+  const [saveNote, setSaveNote] = useState(null)
+  const [resetNote, setResetNote] = useState(null)
+  const [armReset, setArmReset] = useState(false)
+  useEffect(() => { setEmails((selected.emails ?? []).join(', ')); setSaveNote(null); setResetNote(null); setArmReset(false) }, [inviteId]) // eslint-disable-line react-hooks/exhaustive-deps
+  const has = (selected.emails ?? []).length > 0
+  const Note = ({ n, testid }) => (n ? <p className={`eh-note${n.bad ? ' eh-note-bad' : ''}`} role="status" data-testid={testid}>{n.text}</p> : null)
+  return (
+    <section className="eh-card ehm-links" data-testid="ehm-links">
+      <h3 className="eh-label">Emails and links</h3>
+      <p className="eh-hint">A typo in an email? Fix it here, then Send link. Reset links first if the old ones went to the wrong inbox.</p>
+      <div className="eh-inline">
+        <input className="eh-input" value={emails} onChange={(e) => setEmails(e.target.value)} aria-label="Family emails"
+               placeholder="parent@example.com, second@example.com" data-testid="ehm-emails" />
+        <button type="button" className="eh-btn" data-testid="ehm-save-emails" onClick={async () => {
+          const r = await staffCall('set_emails', { invite_id: inviteId, emails: emails.split(/[,;\s]+/).filter(Boolean) })
+          setSaveNote(r.kind === 'ok' ? { text: 'Emails saved.' } : { text: r.message || 'Not saved.', bad: true })
+          reload()
+        }}>Save emails</button>
+      </div>
+      <Note n={saveNote} testid="ehm-save-note" />
+      <div className="eh-inline ehm-link-actions">
+        <button type="button" className="eh-btn eh-btn-primary" disabled={!has || sender.busy} data-testid="ehm-send-link"
+                onClick={() => sender.send(null)}>{sender.busy ? 'Sending…' : 'Send link'}</button>
+        {!armReset
+          ? <button type="button" className="eh-btn" data-testid="ehm-reset-links" onClick={() => { setArmReset(true); setResetNote(null) }}>Reset links</button>
+          : (
+            <span className="eh-confirm-inline">
+              <span>Turn off every link this family has? They need a new one after.</span>
+              <button type="button" className="eh-btn eh-btn-danger" data-testid="ehm-reset-yes" onClick={async () => {
+                const r = await staffCall('reset_links', { invite_id: inviteId })
+                setArmReset(false)
+                setResetNote(r.kind === 'ok'
+                  ? { text: `${r.data.revoked} old link${r.data.revoked === 1 ? '' : 's'} turned off. Press Send link to email a new one.` }
+                  : { text: r.message || 'Not done.', bad: true })
+              }}>Yes, reset</button>
+              <button type="button" className="eh-btn" onClick={() => setArmReset(false)}>Keep</button>
+            </span>
+          )}
+      </div>
+      {!has && <p className="eh-quiet">No email on this family yet. Add one above first.</p>}
+      <Note n={resetNote} testid="ehm-reset-note" />
+      {sender.origin === 'all' && <Note n={sender.note} testid="ehm-send-note" />}
+      <p className="eh-mono">Invite: {selected.invite_status}</p>
     </section>
   )
 }
@@ -322,32 +419,13 @@ function Families({ ov, inviteId, setInviteId, reload }) {
   const fam = (ov.families ?? []).filter((f) => f.name.toLowerCase().includes(q.trim().toLowerCase()))
   const selected = (ov.families ?? []).find((f) => f.invite_id === inviteId)
   const transport = useMemo(() => (inviteId ? staffTransport(inviteId) : null), [inviteId])
-  const [emails, setEmails] = useState('')
-  const [note, setNote] = useState(null)
-  useEffect(() => { setEmails((selected?.emails ?? []).join(', ')); setNote(null) }, [selected?.invite_id]) // eslint-disable-line react-hooks/exhaustive-deps
-
+  const sender = useLinkSender(inviteId, ov.event?.id)
   if (selected && transport) {
     return (
       <div data-testid="ehm-family">
         <button type="button" className="eh-btn" onClick={() => { setInviteId(null); reload() }}>All families</button>
-        <Removals selected={selected} inviteId={inviteId} onGone={() => { setInviteId(null); reload() }} reload={reload} />
-        <section className="eh-card">
-          <h3 className="eh-label">Invite emails</h3>
-          <div className="eh-inline">
-            <input className="eh-input" value={emails} onChange={(e) => setEmails(e.target.value)} aria-label="Invite emails" />
-            <button type="button" className="eh-btn" onClick={async () => {
-              const r = await staffCall('set_emails', { invite_id: inviteId, emails: emails.split(/[,;\s]+/).filter(Boolean) })
-              setNote(r.kind === 'ok' ? { text: 'Saved.' } : { text: r.message || 'Not saved.', bad: true })
-              reload()
-            }}>Save emails</button>
-            <button type="button" className="eh-btn" onClick={async () => {
-              const r = await staffCall('reset_links', { invite_id: inviteId })
-              setNote(r.kind === 'ok' ? { text: `${r.data.revoked} old link${r.data.revoked === 1 ? '' : 's'} turned off. Send a reminder for a new one.` } : { text: 'Not done.', bad: true })
-            }}>Turn off old links</button>
-          </div>
-          <p className="eh-mono">Invite: {selected.invite_status}</p>
-          {note && <p className={`eh-note${note.bad ? ' eh-note-bad' : ''}`}>{note.text}</p>}
-        </section>
+        <Removals selected={selected} inviteId={inviteId} onGone={() => { setInviteId(null); reload() }} reload={reload} sender={sender} />
+        <FamilyLinks selected={selected} inviteId={inviteId} sender={sender} reload={reload} />
         <h3 className="ehm-edit-head" data-testid="ehm-edit-head">Edit {selected.name}'s answers</h3>
         <FamilyHub key={inviteId} transport={transport} standalone={false} />
       </div>

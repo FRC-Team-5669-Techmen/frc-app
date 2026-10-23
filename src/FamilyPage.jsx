@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { supabase } from './supabase'
 import MedicalForm from './MedicalForm'
 import { STANDING_LABEL, KIND_LABEL, STATUS_LABEL, fmtHours, errText } from './standing'
+import { isSchemaMissing } from './schemaMissing'
 import './Standing.css'
 
 // /family/<token>: the private parent link (handbook Sections 1 and 19). No
@@ -66,6 +67,8 @@ export default function FamilyPage() {
         </section>
       )}
 
+      <TripSignups token={token} />
+
       <section className="st-card" data-card="checklist">
         <h2 className="st-h2">First-two-weeks checklist</h2>
         <ul className="st-list">{items.map((x) => <li key={x.key} data-item={x.key} className={x.done ? '' : 'bad'}>{x.done ? '✓' : '○'} {x.label}</li>)}</ul>
@@ -97,6 +100,77 @@ export default function FamilyPage() {
         <MedicalForm initial={d.medical} busy={busy} onSave={(v) => act(() => call('medical_save', v), 'Saved. Keep it current.')} />
       </section>
     </Shell>
+  )
+}
+
+// Trip sign-ups (0023): the event hub sign-ups of THIS link's student on
+// trips not over, done or not, and a button that emails the sign-up link to
+// the addresses already on it. Every read and the send go through
+// family_hub_trips / family_hub_send_link, scoped in SQL to this token's
+// student; the page never sees a hub token or an address. Before 0023 is
+// pasted the card is simply not there.
+const fmtTripDay = (ymd) => (ymd ? new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : '')
+
+function sendQueuedHubMail() {
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/event-family`
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'resend_link', email: '' }) })
+    .catch(() => { /* the hourly tick sends it */ })
+}
+
+function TripSignups({ token }) {
+  const [trips, setTrips] = useState(null)
+  const [busy, setBusy] = useState(null)
+  const [notes, setNotes] = useState({})
+  useEffect(() => {
+    let live = true
+    supabase.rpc('family_hub_trips', { p_token: token }).then(({ data, error }) => {
+      if (!live) return
+      setTrips(error ? (isSchemaMissing(error) ? [] : null) : (Array.isArray(data) ? data : []))
+    })
+    return () => { live = false }
+  }, [token])
+  if (!trips?.length) return null
+  async function send(t) {
+    setBusy(t.event_id)
+    const { data, error } = await supabase.rpc('family_hub_send_link', { p_token: token, p_event: t.event_id })
+    setBusy(null)
+    let note
+    if (error) note = { bad: true, text: error.details || 'Not sent. Try again in a minute.' }
+    else if ((data?.queued ?? 0) === 0) note = { text: 'Already sent in the last hour. Check your inbox and spam folder.' }
+    else {
+      sendQueuedHubMail()
+      note = { text: `Sent to the ${data.count === 1 ? 'email' : `${data.count} emails`} on this sign-up. Check your inbox.` }
+    }
+    setNotes((n) => ({ ...n, [t.event_id]: note }))
+  }
+  return (
+    <section className="st-card" data-card="trips">
+      <h2 className="st-h2">Trip sign-ups</h2>
+      <ul className="st-list">
+        {trips.map((t) => (
+          <li key={t.event_id} data-trip={t.event_id}>
+            <div className="st-trip-head">
+              <b>{t.title}</b>{t.starts_on && <span className="st-muted"> · {fmtTripDay(t.starts_on)}</span>}
+            </div>
+            <div className="st-trip-state">
+              <span className={`st-chip${t.signup_done ? '' : ' st-chip-bad'}`} data-state={t.signup_done ? 'done' : 'not-done'}>
+                {t.signup_done ? 'Sign-up done' : 'Sign-up not finished'}
+              </span>
+              {t.lockin_open && (
+                <span className={`st-chip${t.lockin_done ? '' : ' st-chip-bad'}`}>{t.lockin_done ? 'Locked in' : 'Lock-in not done'}</span>
+              )}
+            </div>
+            {t.has_email
+              ? <button className="st-btn" disabled={busy === t.event_id} onClick={() => send(t)} data-action="send-trip-link">
+                  {busy === t.event_id ? 'Sending…' : 'Send me the sign-up link'}
+                </button>
+              : <p className="st-muted">No email on this sign-up yet. Ask a mentor to add yours.</p>}
+            {notes[t.event_id] && <p className={notes[t.event_id].bad ? 'st-msg st-msg-bad' : 'st-msg'} role="status">{notes[t.event_id].text}</p>}
+          </li>
+        ))}
+      </ul>
+      <p className="st-muted">The link goes to the emails already on the sign-up, never to anyone else.</p>
+    </section>
   )
 }
 

@@ -61,6 +61,9 @@ export default function EventJoinPage() {
   const [error, setError] = useState(null)
   const [fresh, setFresh] = useState(!!another)
   const [done, setDone] = useState(null)   // { status: 'emailed' | 'ask_mentor', student, to }
+  // The event's team contact (0023, trip_join_contact), for a parent who
+  // cannot reach the family's inbox. Null before 0023 or with none set.
+  const [contact, setContact] = useState(null)
 
   const load = async () => {
     setState({ mode: 'loading' })
@@ -123,6 +126,8 @@ export default function EventJoinPage() {
       return
     }
     setDone(data)
+    const c = await supabase.rpc('trip_join_contact', { p_event: ev.id })
+    setContact(!c.error && typeof c.data === 'string' && c.data.includes('@') ? c.data : null)
   }
 
   if (state.mode === 'loading' || (state.mode === 'ready' && checking)) {
@@ -162,14 +167,19 @@ export default function EventJoinPage() {
               <h2 className="eh-card-title">Your family already started</h2>
               <p>Someone in {done.student}'s family has already started this sign-up, so we emailed the family page link to {(done.to ?? []).join(' and ')}.</p>
               <p className="eh-hint">Whoever has that email can send you the link, or add you on the page under "Add another parent or guardian". Not sure who that is? Ask a mentor.</p>
+              <p className="eh-note" data-testid="eh-join-typo">
+                Not your email, or a typo? A mentor can fix it and resend the link.
+                {contact && <>{' '}<a href={`mailto:${contact}?subject=${encodeURIComponent(`${ev.title}: fix our sign-up email`)}&body=${encodeURIComponent(`Our sign-up for ${done.student} has the wrong email. The right one is: `)}`} data-testid="eh-join-contact">Email a mentor</a></>}
+              </p>
             </>
           ) : (
             <>
               <h2 className="eh-card-title">Ask a mentor</h2>
               <p>{done.student}'s family page was set up by the team, and there is no email on it yet. Ask a mentor to add your email; they will send you the link.</p>
+              {contact && <p className="eh-note"><a href={`mailto:${contact}?subject=${encodeURIComponent(`${ev.title}: please add our email`)}`} data-testid="eh-join-contact">Email a mentor</a></p>}
             </>
           )}
-          <button type="button" className="eh-btn" onClick={() => { setDone(null); setStudent(null) }}>Back</button>
+          <button type="button" className="eh-btn" onClick={() => { setDone(null); setStudent(null); setContact(null) }}>Back</button>
         </section>
       )}
 

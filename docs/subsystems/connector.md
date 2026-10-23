@@ -68,6 +68,10 @@ A hand entry gives an operation its voice: a name, a one-sentence `describe` und
 - **`merge_accounts`** (`admin_merge_member`, 0020): from and into resolved by name or email, a reason; always confirm, and the preview is the merge itself rolled back, so it lists the counts per table before anything is written. The rules are in `docs/subsystems/roster-and-access.md`.
 - **`set_team_role`** taking a role away now carries its undo (give it back), and its preview names the role row it will remove (below).
 
+## Tools added by ledger 0016
+
+- **`send_family_link`** (`staff_send_trip_link`, 0023): a student (resolved by name), optionally part of a trip title and one email; confirm, because it messages people outside the app. The preview names the family and its emails; on "yes" one link email per address is queued and the event-family function sends it. The family-token functions 0023 adds (`family_hub_trips`, `family_hub_send_link`) are excluded: they act as whoever holds a family link.
+
 ## Deleted rows are reported (0021)
 
 0018 read the rows a call wrote by their in-progress xmin, which never sees a deleted row, so a removal previewed and audited as `"rows": []` (found live 2026-10-20 on a role removal). Since 0021 every table in `connector_log_tables` (now every public table but the connector's own) carries an AFTER DELETE row trigger, `connector_capture_delete`, which does nothing unless the delete runs inside `connector_call`; there it copies the deleted row into a transaction-only temporary table, and `_connector_rows_written` answers those rows marked `"deleted": true` (at most 200 per table, then one `more` entry). Cascades are captured the same way. An undo `when` may be a list that must all hold, and reads `"true"`/`"false"` text as booleans.

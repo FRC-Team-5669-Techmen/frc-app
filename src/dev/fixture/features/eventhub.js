@@ -1086,7 +1086,7 @@ export function removeGuardian(db, inv, email, staff, callerEmail, now) {
   return { ok: true, self: callerEmail === e }
 }
 
-export const hubFixture = { T, one, nowMs, txn, Refusal, tokenInvite, isStaff, claim, seatsIn, refuse, setV8, rosterStudent, studentName }
+export const hubFixture = { T, one, nowMs, txn, Refusal, tokenInvite, isStaff, claim, seatsIn, refuse, setV8, rosterStudent, studentName, progress, eventEnd }
 
 const refusalAnswer = (e) => ({ data: null, error: { code: e.state, message: `hub:${e.code}`, details: e.message, hint: null } })
 

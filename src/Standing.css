@@ -98,3 +98,8 @@ textarea.st-input, select.st-input { width: 100%; max-width: 100%; }
 .st-pick-red.on { background: var(--fault); border-color: var(--fault); color: #fff; }
 .st-pick-green.on { background: var(--steel); border-color: var(--steel); }
 .st-board > li { padding: 0.55rem 0.25rem; }
+/* Trip sign-ups on the family link (0023). */
+.st-trip-head { margin-bottom: 0.3rem; overflow-wrap: anywhere; }
+.st-trip-state { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem; }
+.st-chip-bad { color: var(--gold); border-color: var(--gold-dim); }
+.st-msg-bad { color: var(--fault); }

@@ -127,6 +127,10 @@ admin_set_member_name:
         p_member: $args.p_member
         p_full_name: $result.previous_full_name
 
+staff_send_trip_link:
+  describe: Email one family their trip sign-up link again, a fresh link to each email on the family, or to one of them. Always asks first.
+  level: confirm
+
 admin_merge_member:
   describe: Merge a duplicate account into the member real account, moving everything it has. Always asks first and lists what moves.
   level: confirm

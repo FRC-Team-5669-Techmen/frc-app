@@ -125,6 +125,20 @@ trip_boards:
     trip: {type: string, describe: "The trip (a title); the next one when not said"}
     full: {type: boolean, describe: "true for the whole board with phones, pickups and allergy detail; a summary otherwise"}
 
+send_family_link:
+  describe: Email a family their trip sign-up link again, to every email on the family or one of them. Always asks first.
+  say: ["send Joseph Tran's family their Beach Blitz link", "resend the trip link to Riley's mom", "the Tran family needs their sign-up link again", "email Sam's parents the carpool form link"]
+  kind: function
+  function: staff_send_trip_link
+  args:
+    student: {type: string, describe: "The student whose family it is (a name)", required: true, resolve: member}
+    trip: {type: string, describe: "Part of the trip title, when the student is on more than one coming trip"}
+    email: {type: string, describe: "Only this one email on the family; every email when not said"}
+  map:
+    p_student: $resolved.student.id
+    p_trip: $args.trip
+    p_email: $args.email
+
 parent_responses:
   describe: Parent questionnaire answers this season (supervision, meals, driving, employer, donation), one line per family.
   say: ["what did the parents say", "which parents can drive", "who offered to help with meals", "parent form responses"]

@@ -34,6 +34,7 @@ A living list. Each line is something he would say to Claude, the tool that shou
 | 28 | "Riley's real name is Riley Ortega." | `set_member_name` | Runs at once: her full name changes, her nickname does not; one trail row; "undo that" puts the old name back. |
 | 29 | "Merge Riley's summer Gmail account into her school account." | `merge_accounts` | A preview first listing the rows per table that will move; on "yes" nothing names the Gmail account any more, it is inactive with a note, the school account has everything, and two trail rows. Two Rileys: Claude asks which. |
 | 30 | "Move the outreach event to Sunday." | `find_tool` then `call_app` (`schedule_update_event`) | A preview first (a generated entry always asks); on "yes" the event moves, as him. |
+| 31 | "Send Joseph Tran's family their Beach Blitz link." | `send_family_link` | A preview first naming the family and its emails; on "yes" one link email queued per email on the family (one row each in the trip mail queue), each carrying a fresh link. Already sent this hour: nothing new is queued and it says so. Two coming trips and none named: Claude asks which. |
 
 
 ## Scouting (0022)

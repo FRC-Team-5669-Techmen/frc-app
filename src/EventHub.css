@@ -589,7 +589,7 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
 }
 .eh-person-icon { color: var(--hr-competition); }
 .eh-person-text { flex: 1 1 160px; min-width: 0; display: flex; flex-direction: column; }
-.eh-person-name { font-weight: 700; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.eh-person-name { font-weight: 700; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; overflow-wrap: anywhere; word-break: break-word; min-width: 0; }
 .eh-person-email { color: var(--steel); font-size: 0.9rem; overflow-wrap: anywhere; }
 .eh-person .eh-btn { margin: 0; }
 .eh-confirm-inline { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -763,3 +763,7 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .eh-service > svg { flex: none; margin-top: 2px; color: var(--hr-volunteer); }
 .eh-service-tight { margin: 4px 0 8px; font-size: 0.9rem; }
 .eh-service-info p { margin: 0 0 10px; }
+
+/* One family's emails and links on the mentor page (0023). */
+.ehm-links .eh-hint { margin-top: 0; }
+.ehm-link-actions { margin-top: 10px; }

@@ -12,6 +12,8 @@ functions:
   hub_household_open: "acts as whichever family holds the event link token, not as the signed-in account"
   hub_remove_family: "acts as whichever family holds the event link token, not as the signed-in account"
   hub_remove_guardian: "acts as whichever family holds the event link token, not as the signed-in account"
+  family_hub_trips: "acts as whichever family holds the private link token, not as the signed-in account"
+  family_hub_send_link: "acts as whichever family holds the private link token; staff send a link with send_family_link"
   hub_join: "the open sign-up form a family fills in for its own student; nothing staff do"
   claim_profile: "runs once at every sign-in to settle the signed-in account's own approval; not an action"
   get_calendar_token: "reads the calendar feed secret; a secret is never handed to a chat"

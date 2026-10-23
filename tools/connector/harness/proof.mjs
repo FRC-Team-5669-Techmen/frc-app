@@ -144,7 +144,13 @@ async function fixtures() {
   const ae = await q(`insert into public.attendance_events (user_id, type, event_time, location, method, category) values ($1, 'in', now() - interval '2 hours', 'shop', 'nfc', 'build') returning id`, [ID.riley])
   const fb = await q(`insert into public.feedback (member_id, category, message) values ($1, 'bug', 'Proof report') returning id`, [ID.sam])
   const sr = await q(`insert into public.signout_requests (member_id, note, cleanup_confirmed, location) values ($1, 'Wired the drive base', true, 'shop') returning id`, [ID.riley])
-  return { event: ev.rows[0].id, logged: lh.rows[0].id, attendance: ae.rows[0].id, feedback: fb.rows[0].id, signout: sr.rows[0].id }
+  // ledger 0016: one coming trip with Riley's family on it (0023, Send link).
+  // Fixed ids: each sample runs in its own rolled-back transaction, and the
+  // mail dedupe key names the invite, so both runs must share it.
+  const he = await q(`insert into public.hub_events (id, title) values ('0f000000-0000-4000-8000-000000000023', 'Proof trip') returning id`)
+  await q(`insert into public.hub_days (event_id, day_date, venue_closes_at) values ($1, current_date + 10, now() + interval '10 days')`, [he.rows[0].id])
+  const hi = await q(`insert into public.hub_invites (id, event_id, student_id, emails) values ('0f000000-0000-4000-8000-000000000123', $1, $2, array['riley.family@example.invalid']) returning id`, [he.rows[0].id, ID.riley])
+  return { event: ev.rows[0].id, logged: lh.rows[0].id, attendance: ae.rows[0].id, feedback: fb.rows[0].id, signout: sr.rows[0].id, invite: hi.rows[0].id }
 }
 
 // Hand samples: the writes the hand entries make, with real arguments.
@@ -165,6 +171,8 @@ const SAMPLES = {
   admin_merge_member: () => ({ p_from: ID.riley, p_into: ID.sam, p_reason: 'Proof merge' }),
   admin_set_geofence_exempt: () => ({ p_member: ID.riley, p_exempt: true }),
   survey_create: () => ({ p_title: 'Proof survey', p_opens_at: null, p_closes_at: null }),
+  // ledger 0016
+  staff_send_trip_link: (fx) => ({ p_invite: fx.invite }),
 }
 
 /** Placeholder arguments of the right types, for a function with no sample. */

@@ -1,0 +1,11 @@
+# 0016 Family link recovery plus the open feedback inbox
+- Issued: 2026-10-22
+- Model: Opus 5.5, high, solo
+- By: the IDEA & FRC chat (claude.ai), run as a scheduled Claude Code session (started 2026-10-23T01:53Z).
+- Owns: everything under src/, supabase/migrations/ (new files only, next free number at landing, each with its _rls_test.sql), supabase/functions/ (only where an item below needs it), tests/, tools/e2e/features/, tools/browser-verify/routes/, public/ icons and the PWA manifest, docs/subsystems/, docs/decisions/, docs/history/<branch-slug>.md, docs/prompt-ledger/entries/0016-family-link-and-feedback.md, CLAUDE.md (one-line subsystem updates only).
+- Do not touch: anything the scouting review branch owns (codex/scouting-2026-evidence, draft PR #4). Scouting items below are recorded, not built (see PART C).
+- Migration permitted: yes, next free number at landing. Highest in supabase/migrations/ at issue: 0022
+- Claims: ledger 0016; migration 0023 (0023_family_link_recovery.sql and its _rls_test.sql), Part A, re-checked at landing; Part B migration number recorded when it lands
+- Status: pushed (Part A)
+- Branch: main (solo mode, decision 05)
+- Notes: Part A lands first on its own. Outside a strict reading of Owns: tools/connector/** (the send_family_link hand entry, an exclusion, a proof sample), docs/connector/EVALS.md, supabase/migrations/README.md and tools/sql-harness/mutants-0023.mjs, each because the connector or the migration rules require it.
