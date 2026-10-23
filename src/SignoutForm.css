@@ -42,6 +42,8 @@
 }
 .so-mic-on { color: #0A0B0D; background: var(--gold); border-color: var(--gold); }
 .so-listening { margin: 0; font-family: var(--font-mono); font-size: 0.8rem; color: var(--gold); }
+.so-heard { color: var(--steel); font-family: var(--font-ui); }
+.so-mic-error { margin: 0; font-family: var(--font-mono); font-size: 0.8rem; color: var(--steel); }
 .so-check {
   display: flex;
   gap: 0.6rem;
@@ -62,6 +64,8 @@
   background: var(--gold-a08);
   font-size: 0.95rem;
 }
+.so-returned q { color: var(--gold); overflow-wrap: anywhere; }
+.so-returned-next { display: block; margin-top: 0.3rem; color: var(--steel); font-size: 0.88rem; }
 .so-submit {
   min-height: 48px;
   font-family: var(--font-ui);

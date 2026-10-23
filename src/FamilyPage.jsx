@@ -186,7 +186,10 @@ function Shell({ children }) {
 // The handbook text, loaded only when asked for, as plain readable blocks.
 function HandbookText() {
   const [md, setMd] = useState(null)
-  useEffect(() => { import('./handbook/handbook.md?raw').then((m) => setMd(m.default)) }, [])
+  useEffect(() => {
+    Promise.all([import('./handbook/handbook.md?raw'), import('./handbook/content')])
+      .then(([m, c]) => setMd(c.stripDrafts(m.default)))
+  }, [])
   if (!md) return <p className="st-muted">Loading…</p>
   const blocks = md.split('\n').filter((l) => l.trim() && !l.startsWith('{{') && !/^\|\s*-/.test(l))
   const clean = (s) => s.replace(/\*\*/g, '').replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)')

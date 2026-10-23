@@ -235,3 +235,28 @@
   font-size: 0.9rem;
   color: var(--gold);
 }
+
+/* New report / Your reports (0024). */
+.fb-views { display: flex; gap: 0.35rem; }
+.fb-view {
+  flex: 1; min-height: 44px; padding: 0.3rem 0.4rem; font-family: var(--font-ui); font-size: 0.75rem; font-weight: 600;
+  color: var(--steel); background: transparent; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); cursor: pointer;
+}
+.fb-view:hover { border-color: var(--gold-dim); color: var(--text); }
+.fb-view-on, .fb-view-on:hover { color: var(--gold); border-color: var(--gold); background: var(--gold-a08); }
+.fb-mine { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.fb-mine-item { padding: 0.5rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); }
+.fb-mine-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+.fb-mine-status { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel); }
+.fb-mine-in_progress, .fb-mine-done { color: var(--gold); }
+.fb-mine-when { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); }
+.fb-mine-msg { margin: 0.3rem 0 0; font-size: 0.85rem; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
+.fb-mine-answer { margin-top: 0.4rem; padding: 0.35rem 0.5rem; border-left: 2px solid var(--gold-dim); background: var(--gold-a08); }
+.fb-mine-answer p { margin: 0.15rem 0 0; font-size: 0.85rem; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; }
+.fb-label-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.fb-mic {
+  min-height: 44px; min-width: 64px; padding: 0.25rem 0.6rem; font-family: var(--font-ui); font-size: 0.75rem; font-weight: 600;
+  color: var(--steel); background: transparent; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); cursor: pointer;
+}
+.fb-mic:hover { border-color: var(--gold-dim); color: var(--text); }
+.fb-mic-on, .fb-mic-on:hover { color: var(--bg); background: var(--gold); border-color: var(--gold); }

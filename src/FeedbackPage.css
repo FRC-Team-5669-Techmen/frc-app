@@ -618,3 +618,23 @@
   .fbp-when { margin-left: 0; }
   .fbp-input { flex: 1 1 45%; }
 }
+
+/* Answers to the sender (0024). */
+.fbp-answers { display: flex; flex-direction: column; gap: 0.4rem; }
+.fbp-answers-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.fbp-answer { padding: 0.45rem 0.6rem; border-left: 2px solid var(--gold-dim); background: var(--gold-a08); border-radius: var(--radius-sm); }
+.fbp-answer .fbp-mono { font-size: 0.72rem; color: var(--steel); }
+.fbp-answer-box {
+  width: 100%; box-sizing: border-box; min-height: 72px; padding: 0.45rem 0.6rem; resize: vertical;
+  font: inherit; font-size: 0.9rem; color: var(--text); background: var(--bg);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+}
+.fbp-answer-box:focus { outline: none; border-color: var(--gold); }
+.fbp-answer-send {
+  align-self: flex-start; min-height: 44px; padding: 0.35rem 0.8rem; font-family: var(--font-ui); font-size: 0.78rem;
+  color: var(--gold); background: transparent; border: 1px solid var(--gold-dim); border-radius: var(--radius-sm); cursor: pointer;
+}
+.fbp-answer-send:hover:not(:disabled) { border-color: var(--gold); }
+.fbp-answer-send:disabled { opacity: 0.5; cursor: not-allowed; }
+.fbp-answers-note { margin: 0; font-family: var(--font-mono); font-size: 0.78rem; color: var(--steel); }
+.fbp-answers-bad { color: var(--fault); }

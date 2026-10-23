@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import { RoleBadge, topRoleOf } from './roles'
-import { isMissingColumn, isMissingFunction } from './schemaMissing'
+import { isMissingColumn, isMissingFunction, isSchemaMissing } from './schemaMissing'
 import {
   DEFAULT_FILTER, STATUSES, STATUS_LABEL, STATUS_TO_LEGACY, TYPE_LABEL,
   applyMove, applyRestore, describeFilter, exportStamp, facetOptions, filterReports, fmtLA,
@@ -244,6 +244,8 @@ function Detail({ row, role, urls, moves, migrated, onClose, onMove, busy, copyO
             </>
           )}
 
+          {migrated && <Answers row={row} />}
+
           <span className="fbp-section">Move to</span>
           <div className="fbp-actions">
             {moves.map(s => (
@@ -262,6 +264,59 @@ function Detail({ row, role, urls, moves, migrated, onClose, onMove, busy, copyO
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+// Answers to the sender (0024, feedback bd3a4af7: parity with idea-app's
+// console). The thread is read through feedback_replies_for and written
+// through feedback_reply, both admin only in SQL; the sender is told in the
+// app, by email and by push, and reads every answer under the feedback
+// button. Before 0024 is pasted the box says so and sends nothing; before
+// 0002 (which 0024 needs) the section is not shown and nothing is called.
+function Answers({ row }) {
+  const [list, setList] = useState(null)        // null loading, 'missing', or rows
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [note, setNote] = useState(null)
+  const load = useCallback(async () => {
+    const { data, error } = await supabase.rpc('feedback_replies_for', { p_ids: [row.id] })
+    setList(error ? (isSchemaMissing(error) ? 'missing' : []) : (Array.isArray(data) ? data : []))
+  }, [row.id])
+  useEffect(() => { setText(''); setNote(null); load() }, [load])
+  async function send() {
+    setBusy(true); setNote(null)
+    const { error } = await supabase.rpc('feedback_reply', { p_feedback: row.id, p_body: text.trim() })
+    setBusy(false)
+    if (error) { setNote({ bad: true, text: isSchemaMissing(error) ? 'Answers need the 0024 update pasted first.' : (error.message || 'Not sent.') }); return }
+    setText('')
+    setNote({ text: row.member_id ? 'Sent. They get it in the app, by email and on their phone.' : 'Saved. This report has no sender to tell.' })
+    load()
+  }
+  return (
+    <div className="fbp-answers" data-testid="fbp-answers">
+      <span className="fbp-section">Answer the sender</span>
+      {list === 'missing' && <p className="fbp-answers-note">Answers need the 0024 update pasted first.</p>}
+      {Array.isArray(list) && list.length > 0 && (
+        <ul className="fbp-answers-list">
+          {list.map((a) => (
+            <li key={a.id} className="fbp-answer" data-testid="fbp-answer">
+              <span className="fbp-mono">{a.author} · {fmtLA(a.created_at)}</span>
+              <p className="fbp-message">{a.body}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+      {list !== 'missing' && (
+        <>
+          <textarea className="fbp-answer-box" rows={3} maxLength={2000} value={text} onChange={(e) => setText(e.target.value)}
+                    placeholder="Fixed in today's update. Pull down to refresh." aria-label="Answer to the sender" data-testid="fbp-answer-box" />
+          <button type="button" className="fbp-answer-send" disabled={busy || !text.trim()} onClick={send} data-testid="fbp-answer-send">
+            {busy ? 'Sending…' : 'Send answer'}
+          </button>
+        </>
+      )}
+      {note && <p className={`fbp-answers-note${note.bad ? ' fbp-answers-bad' : ''}`} role="status">{note.text}</p>}
     </div>
   )
 }

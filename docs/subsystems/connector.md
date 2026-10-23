@@ -59,7 +59,7 @@ A hand entry gives an operation its voice: a name, a one-sentence `describe` und
 
 ## Gaps
 
-`report_gap` files what the app cannot do to the existing feedback inbox (`connector_report_gap`, SECURITY INVOKER, through the inbox's own insert policy, `route = 'connector'`, type idea), where it shows on `/feedback` with every other report. `feedback_reply` is a listed tool that says plainly it is not available and points at `report_gap`.
+`report_gap` files what the app cannot do to the existing feedback inbox (`connector_report_gap`, SECURITY INVOKER, through the inbox's own insert policy, `route = 'connector'`, type idea), where it shows on `/feedback` with every other report. `feedback_reply` answers a report through `feedback_reply` (0024, ledger 0016) at confirm: the sender is told in the app, by email and by push.
 
 ## Tools added by ledger 0014
 

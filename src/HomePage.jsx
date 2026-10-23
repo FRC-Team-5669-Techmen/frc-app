@@ -16,6 +16,8 @@ import { storageKey, cleanProgress, passedCount } from './handbook/sign'
 import { LESSONS } from './handbook/lessons'
 import './HomePage.css'
 
+const SO_POLL_MS = 20_000
+
 function fmtClock12(iso) {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
 }
@@ -138,6 +140,16 @@ export default function HomePage({ session, hasRole = () => false }) {
   }, [uid])
   useEffect(() => { loadSo() }, [loadSo, allEvents])
 
+  // While a sign-out waits, look again every 20 s so an approval (the tile
+  // flips to Not checked in) or a send-back (feedback 2b674b0c: the student
+  // saw nothing) shows without a reload.
+  const waiting = !!so?.pending
+  useEffect(() => {
+    if (!waiting) return undefined
+    const t = setInterval(() => { fetchEvents(); loadSo() }, SO_POLL_MS)
+    return () => clearInterval(t)
+  }, [waiting, fetchEvents, loadSo])
+
   // A dashboard tab left open is otherwise frozen at the moment it loaded: a
   // tag tap in another tab would not show here. Re-read when it comes back.
   useEffect(() => {
@@ -233,6 +245,9 @@ export default function HomePage({ session, hasRole = () => false }) {
   const todayEvents = allEvents.filter(e => new Date(e.event_time) >= startOfToday)
   const status = currentStatus(allEvents)
   const isIn = status.checkedIn
+  // The last request a mentor sent back during THIS session (none pending).
+  const sentBack = isIn && !so?.pending && so?.returned && status.since
+    && Date.parse(so.returned.decided_at) >= Date.parse(status.since) ? so.returned : null
   // Nothing was ever read: the status AND the hours are unknown, not zero.
   const statusUnknown = readFailed && allEvents.length === 0
   const todayHours = fmtDuration(computeHoursMs(todayEvents))
@@ -279,9 +294,17 @@ export default function HomePage({ session, hasRole = () => false }) {
                 <p className="mb-so-wait hud-mono">Sign-out waiting for approval</p>
                 <button className="mb-checkout mb-retry" onClick={handleWithdraw} disabled={acting}>Withdraw</button>
               </div>
+            ) : isIn && sentBack && !soForm ? (
+              <div className="mb-so-returned" role="alert" data-testid="so-sent-back">
+                <p className="mb-so-back-title hud-mono">Sign-out sent back</p>
+                <p className="mb-so-back-note">{sentBack.reason ? <>Mentor's note: <q>{sentBack.reason}</q></> : 'A mentor asked you to finish up first.'}</p>
+                <p className="mb-so-back-next">Do what the note says, then ask again. Your hours are still counting.</p>
+                <button className="mb-checkout" onClick={() => { setCheckoutErr(null); setSoForm(true) }} disabled={acting}>Ask again</button>
+              </div>
             ) : isIn && soForm ? (
               <SignoutForm
                 compact
+                returnedReason={sentBack ? (sentBack.reason ?? '') : null}
                 onSubmit={(v) => submitSignout(v, isStaff || status.last?.category === 'volunteer')}
                 busy={acting}
                 submitLabel={isStaff || status.last?.category === 'volunteer' ? 'Sign out' : 'Ask to sign out'}

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { noteProblem, NOTE_MAX } from './signout'
+import { startDictation, appendSpoken } from './dictation'
 import './SignoutForm.css'
 
 // The sign-out note (handbook Section 7): what you did, typed or spoken, and the
@@ -24,26 +25,24 @@ export default function SignoutForm({
   const [cleanup, setCleanup] = useState(false)
   const [problem, setProblem] = useState(null)
   const [listening, setListening] = useState(false)
+  const [heard, setHeard] = useState('')
+  const [micError, setMicError] = useState(null)
   const rec = useRef(null)
   const Speech = speechCtor()
 
-  useEffect(() => () => { try { rec.current?.stop() } catch { /* already stopped */ } }, [])
+  useEffect(() => () => rec.current?.stop(), [])
 
+  // One session per tap (src/dictation.js): each new piece of words is added
+  // once, words still being heard show under the box, and a refusal says why.
   function toggleMic() {
     if (!Speech) return
-    if (listening) { try { rec.current?.stop() } catch { /* stopped */ } return }
-    const r = new Speech()
-    r.lang = 'en-US'
-    r.interimResults = false
-    r.continuous = false
-    r.onresult = (e) => {
-      const said = Array.from(e.results).map((x) => x[0]?.transcript ?? '').join(' ').trim()
-      if (said) setNote((n) => (n ? `${n.trim()} ${said}` : said).slice(0, NOTE_MAX))
-    }
-    r.onend = () => setListening(false)
-    r.onerror = () => setListening(false)
-    rec.current = r
-    try { r.start(); setListening(true) } catch { setListening(false) }
+    if (listening) { rec.current?.stop(); return }
+    setMicError(null)
+    rec.current = startDictation(Speech, {
+      onCommit: (words) => setNote((n) => appendSpoken(n, words, NOTE_MAX)),
+      onInterim: setHeard,
+      onState: ({ listening: on, error: err }) => { setListening(on); if (!on) setMicError(err) },
+    })
   }
 
   function submit(e) {
@@ -57,9 +56,11 @@ export default function SignoutForm({
   return (
     <form className={`so-form${compact ? ' so-compact' : ''}`} onSubmit={submit} noValidate>
       {returnedReason !== null && (
-        <p className="so-returned" role="alert">
-          <b>Sent back.</b> {returnedReason || 'A mentor asked you to finish up first.'}
-        </p>
+        <div className="so-returned" role="alert" data-testid="so-returned">
+          <b>Sent back by a mentor.</b>{' '}
+          {returnedReason ? <>Their note: <q>{returnedReason}</q></> : 'They asked you to finish up first.'}
+          <span className="so-returned-next">Do what it says, then send a new note below. Your hours are still counting.</span>
+        </div>
       )}
       <label className="so-label" htmlFor="so-note">What did you work on?</label>
       <div className="so-note-row">
@@ -77,7 +78,8 @@ export default function SignoutForm({
           </button>
         )}
       </div>
-      {listening && <p className="so-listening">Listening. Speak, then pause.</p>}
+      {listening && <p className="so-listening" role="status">Listening. Speak, then pause.{heard ? <span className="so-heard"> {heard}</span> : null}</p>}
+      {!listening && micError && <p className="so-mic-error" role="status" data-testid="so-mic-error">{micError}</p>}
       {requireCleanup && (
         <label className="so-check">
           <input type="checkbox" checked={cleanup} onChange={(e) => setCleanup(e.target.checked)} />

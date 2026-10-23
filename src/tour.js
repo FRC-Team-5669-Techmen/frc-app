@@ -2,95 +2,13 @@ import { driver } from 'driver.js'
 import 'driver.js/dist/driver.css'
 import './tour.css'
 
-// Role-split onboarding tour. Anchored entirely on the dashboard: it spotlights
-// the persistent NavBar items and a few dashboard elements by stable data-tour
-// attributes, so it never has to navigate across routes mid-tour.
-
-function tourSteps(isStaff, isParent) {
-  const welcome = {
-    popover: {
-      title: 'Welcome to Techmen',
-      description: 'A quick tour of the team platform. The top tabs are now icon-labeled for quick scanning. You can replay this anytime from your avatar menu.',
-    },
-  }
-  const checkin = {
-    element: '[data-tour="status-card"]',
-    popover: {
-      title: 'Checking in',
-      description: 'Tap your NFC tag at the door to check in. Your live status and hours show here.',
-    },
-  }
-  const checkout = {
-    element: '[data-tour="checkout"]',
-    popover: {
-      title: 'Checking out',
-      description: 'When you leave, tap your tag again or use this Check Out button.',
-    },
-  }
-  const schedule = {
-    element: '[data-tour="nav-schedule"]',
-    popover: {
-      title: 'Schedule',
-      description: isStaff
-        ? 'The team agenda — build nights, meetings, competitions. RSVP-enabled events show a signup list, and you can add one event across many days at once with "Repeat on multiple days."'
-        : 'See what\'s happening — build nights, meetings, and competitions — and RSVP to events that need it.',
-    },
-  }
-  // Jobs now sits before Hours in the tab bar.
-  const jobs = {
-    element: '[data-tour="nav-jobs"]',
-    popover: {
-      title: 'Jobs',
-      description: isStaff
-        ? 'Post jobs and sign off finished work per claimant. Click a job for its detail — links, images, a progress thread, and time logged per member (admins can undo an approval, and set the IDEA certification a job requires).'
-        : 'Claim team jobs — solo or group. A job that names an IDEA certification can be claimed only by someone who holds it. Post progress updates, tap "I\'m on this job" while checked in to log time, and submit when done for sign-off.',
-    },
-  }
-  const hours = {
-    element: '[data-tour="nav-hours"]',
-    popover: {
-      title: 'Hours',
-      description: isStaff
-        ? 'Your hours, the team board, and logging outside hours. The board toggles By member / By day / Sessions — the per-person, per-day session view shows exact check-in/out times and the entrance/exit used; admins can export the full history (sessions, times and doors included) to CSV.'
-        : 'Your hours, the team board with a per-day breakdown, and logging outside hours like outreach or competition.',
-    },
-  }
-  const skills = {
-    element: '[data-tour="nav-certs"]',
-    popover: {
-      title: 'Certifications',
-      description: 'The official IDEA certifications, a read-only copy. They are earned and awarded only at ideabosco.com/certifications; each holder row links there for proof.',
-    },
-  }
-  // Parent-only: present only on the parent dashboard, so it self-filters for
-  // everyone else.
-  const parentLink = {
-    element: '[data-tour="parent-link"]',
-    popover: {
-      title: 'Link your student',
-      description: 'Search for your student and send a link request. A mentor approves it, then their live status and hours appear here.',
-    },
-  }
-  const profile = {
-    element: '[data-tour="nav-profile"]',
-    popover: {
-      title: isStaff ? 'Profile & staff tools' : 'Profile & menu',
-      description: isStaff
-        ? 'Edit your details and notifications, replay this tour, or sign out. Your staff tools live in this menu — readiness, activity, squad, roster (search, sort, color-coded roles), and Access Requests, which holds two queues (access and parent-link requests), each with approve/deny.'
-        : isParent
-          ? 'Edit your details and notification settings, replay this tour, or sign out — all from here.'
-          : 'Edit your details and notifications, take the weekly survey, replay this tour, or sign out — all from here.',
-    },
-  }
-
-  return [welcome, checkin, checkout, schedule, jobs, hours, skills, parentLink, profile]
-}
+import { tourSteps } from './tourSteps'
 
 // Starts the tour for the given track. Steps whose target is not in the DOM for
 // this user/role are dropped so a missing element never breaks the run.
 // onDone (optional) fires once when the tour finishes or is skipped.
-export function startTour(isStaff, onDone, isParent = false) {
-  const steps = tourSteps(isStaff, isParent).filter(s => !s.element || document.querySelector(s.element))
+export function startTour(isStaff, onDone, isParent = false, isAdmin = false) {
+  const steps = tourSteps(isStaff, isParent, { isAdmin, present: (sel) => !!document.querySelector(sel) })
 
   let finished = false
   const finish = () => {

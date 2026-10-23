@@ -11,7 +11,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import { parseHandbook, sectionText, glossaryOf, agreementsOf, plain } from '../src/handbook/content.js'
+import { parseHandbook, sectionText, glossaryOf, agreementsOf, plain, stripDrafts } from '../src/handbook/content.js'
 import { LESSONS, TERM_MATCHES, HANDBOOK_VERSION } from '../src/handbook/lessons.js'
 import { DIAGRAMS } from '../src/handbook/diagrams.js'
 
@@ -121,3 +121,30 @@ describe('the lessons', () => {
     }
   })
 })
+
+// Feedback fa3751a5 (ledger 0016): a donations section, drafted for Mr.
+// Pina's review. It lives in handbook.md between draft markers and no page
+// renders it until he deletes them (decision 47); the signed version does not
+// move for it.
+describe('the donations draft', () => {
+  const s19 = () => sectionText(hb.sections.find(s => s.num === 19))
+  test('is in the handbook source, marked as a draft for review', () => {
+    expect(md).toMatch(/\{\{draft:start\}\}\n### Donations\n/)
+    expect(md).toMatch(/DRAFT FOR MR\. PINA'S REVIEW/)
+    expect(md).toMatch(/Donations go through Bosco Tech/)
+  })
+  test('is not rendered: section 19 reads without it, and with the markers removed it would', () => {
+    expect(s19()).not.toMatch(/Donations go through Bosco Tech/)
+    expect(s19()).toMatch(/Do not send a sick student/)
+    const approved = parseHandbook(md.replace(/^\{\{draft:(start|end)\}\}\n/gm, ''))
+    expect(sectionText(approved.sections.find(s => s.num === 19))).toMatch(/Donations go through Bosco Tech/)
+  })
+  test('stripDrafts drops only what is between the markers', () => {
+    expect(stripDrafts('a\n{{draft:start}}\nb\n{{draft:end}}\nc')).toBe('a\nc')
+    expect(stripDrafts('a\nb')).toBe('a\nb')
+  })
+  test('does not move the version members sign', () => {
+    expect(HANDBOOK_VERSION).toBe('2026-10-20')
+  })
+})
+

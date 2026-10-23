@@ -72,6 +72,7 @@ const FEATURES = Object.freeze([
   'rosters',
   'families',
   'family-link',
+  'inbox',
   'scouting',
 ]);
 

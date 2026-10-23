@@ -13,9 +13,9 @@
 // screen on the team at once.
 //
 // Usage:
-//   node scripts/gen-icons.js              write into public/
-//   node scripts/gen-icons.js --out tmp/   write elsewhere, to compare first
+//   node scripts/gen-icons.js              verify the mark, then run tools/icons/build-icons.mjs
 //   node scripts/gen-icons.js --check      verify the mark and report, write nothing
+//   node tools/icons/build-icons.mjs --check   compare the built set with public/
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -34,10 +34,6 @@ const OUT = outFlag
 const MARK = path.join(REPO, 'public/assets/logos/Mark-Gold.svg')
 const PROVENANCE = path.join(REPO, 'src/lib/design-system/assets/PROVENANCE.json')
 
-// Jet Black, the published brand ground. It is what the icons already on disk
-// use, and nothing in the system is permitted to go darker than it.
-const BG = '#000000'
-
 /** Refuse to rasterise anything but the verified mark. */
 function verifyMark() {
   const svg = fs.readFileSync(MARK)
@@ -55,58 +51,22 @@ function verifyMark() {
   return { svg: svg.toString('utf8'), sum, source: entry.source }
 }
 
-// `scale` is the fraction of the canvas the <img> box takes. The MARK inside it
-// is narrower, because the SVG carries its own margin, so these values were set
-// by measuring the ink bounding box of the icons already on disk and matching
-// it: 52% of the canvas for the standard icons, 39% for maskable, 50% for the
-// favicon. Changing a number here changes how the mark sits on a home screen,
-// so measure again rather than guessing.
-const SIZES = [
-  { file: 'pwa-192x192.png', size: 192, scale: 0.775 },
-  { file: 'pwa-512x512.png', size: 512, scale: 0.775 },
-  // Maskable art is cropped to a circle by the platform, so the mark sits well
-  // inside the safe zone on the same ground.
-  { file: 'pwa-512x512-maskable.png', size: 512, scale: 0.577 },
-  { file: 'apple-touch-icon.png', size: 180, scale: 0.775 },
-  { file: 'favicon.png', size: 32, scale: 0.734 },
-]
-
+// Since ledger 0016 (feedback c6771432) the icon set is built by ONE
+// generator, tools/icons/build-icons.mjs: the HUD plate and brackets, the SVG
+// favicon and favicon.ico, with the same canonical-mark check as here. This
+// script keeps its name (npm run gen-icons) and its --check, and hands the
+// build over, so there is never a second rasteriser to drift from the first.
 async function main() {
-  const { svg, sum, source } = verifyMark()
+  const { sum, source } = verifyMark()
   console.log(`gen-icons: mark verified ${sum.slice(0, 16)}… (${source})`)
   if (CHECK_ONLY) {
     console.log('gen-icons: --check, nothing written')
     return
   }
-
-  let chromium
-  try {
-    ({ chromium } = await import('playwright-core'))
-  } catch {
-    throw new Error('gen-icons: playwright-core is required to rasterise the mark. npm i -D playwright-core')
-  }
-
-  const dataUri = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`
-  const browser = await chromium.launch({ channel: 'chrome', headless: true })
-  fs.mkdirSync(OUT, { recursive: true })
-
-  for (const { file, size, scale } of SIZES) {
-    const page = await browser.newPage({ viewport: { width: size, height: size }, deviceScaleFactor: 1 })
-    await page.setContent(
-      `<!doctype html><html><body style="margin:0">
-         <div style="width:${size}px;height:${size}px;background:${BG};display:flex;align-items:center;justify-content:center">
-           <img src="${dataUri}" style="width:${Math.round(size * scale)}px;height:${Math.round(size * scale)}px" />
-         </div>
-       </body></html>`,
-      { waitUntil: 'load' },
-    )
-    await page.screenshot({ path: path.join(OUT, file), omitBackground: false })
-    await page.close()
-    console.log(`  ${file}  ${size}x${size}  mark at ${Math.round(scale * 100)}%`)
-  }
-
-  await browser.close()
-  console.log(`gen-icons: written to ${path.relative(REPO, OUT) || '.'}`)
+  if (OUT !== path.join(REPO, 'public')) throw new Error('gen-icons: --out is retired; the builder writes public/ (run it with --check to compare)')
+  const { spawnSync } = await import('node:child_process')
+  const r = spawnSync(process.execPath, [path.join(REPO, 'tools/icons/build-icons.mjs')], { stdio: 'inherit' })
+  if (r.status !== 0) throw new Error('gen-icons: tools/icons/build-icons.mjs failed')
 }
 
 main().catch((err) => {

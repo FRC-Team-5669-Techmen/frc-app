@@ -24,7 +24,7 @@ A living list. Each line is something he would say to Claude, the tool that shou
 | 18 | "Take lead off Jordan." | `set_team_role` (remove) | A preview first that names the role row it will remove; on "yes" the role is removed, the audit row lists the removed row, and "undo that" gives the role back. |
 | 19 | "Any new feedback?" | `feedback_inbox` | The newest reports with who sent them, type and status. |
 | 20 | "Mark that one done." | `feedback_set_status` | Runs at once; the report moves to done; "undo that" puts its old status back. |
-| 21 | "Reply to that feedback." | `feedback_reply` then `report_gap` | Says plainly the inbox has no reply; one feedback report marked connector. |
+| 21 | "Reply to that feedback, tell Riley it's fixed." | `feedback_reply` | A preview first naming the report; on "yes" one answer stored, a New report moves to Seen, and the sender gets a notice, one email and a push. Before 0024 is pasted the function is missing and Claude says so. |
 | 22 | "The app can't do a bus seating chart, log it." | `report_gap` | One feedback report, from him, marked connector, with his words. |
 | 23 | "Void Sam's last session, he forgot to tap out." | `find_tool` then `call_app` (`staff_void_session`) | A preview first (a generated entry always asks); on "yes" the session is voided as him. |
 | 24 | "Log a safety violation for Riley, no glasses." | `find_tool` then `call_app` (`staff_log_safety`) | A preview first; on "yes" one violation row, logged by him. |

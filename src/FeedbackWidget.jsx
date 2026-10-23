@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { supabase } from './supabase'
 import { writeVia } from './writeVia'
-import { REPORT_TYPES, TRIED_MAX, buildReport, submitReport, summarizeUserAgent } from './feedbackModel'
+import { REPORT_TYPES, TRIED_MAX, buildReport, submitReport, summarizeUserAgent, normStatus, fmtLA } from './feedbackModel'
+import { isSchemaMissing } from './schemaMissing'
+import { startDictation, appendSpoken } from './dictation'
 import './FeedbackWidget.css'
 
 // The global feedback button. Mounted ONCE in App.jsx's ProtectedLayout, so it
@@ -44,9 +46,56 @@ function extFor(file) {
   return (sub || 'png').toLowerCase().replace(/[^a-z0-9]/g, '') || 'png'
 }
 
+// What a sender reads about their own report (0024). Spam reads as closed:
+// the sender is told it is closed, never what it was filed as.
+const MEMBER_STATUS = Object.freeze({
+  new: 'Sent', seen: 'Seen', in_progress: 'Being worked on', done: 'Done', wont_do: "Won't do", spam: 'Closed',
+})
+
+// The sender's own reports, each status and every answer (my_feedback, 0024).
+function MyReports() {
+  const [list, setList] = useState(null)   // null loading, 'missing', 'error', or rows
+  useEffect(() => {
+    let live = true
+    supabase.rpc('my_feedback').then(({ data, error }) => {
+      if (!live) return
+      setList(error ? (isSchemaMissing(error) ? 'missing' : 'error') : (Array.isArray(data) ? data : []))
+    })
+    return () => { live = false }
+  }, [])
+  if (list === null) return <p className="fb-context">Loading…</p>
+  if (list === 'missing') return <p className="fb-context" data-testid="fb-mine-missing">Your reports and answers show here once that part of the app is set up.</p>
+  if (list === 'error') return <p className="fb-error">Could not load your reports. Try again later.</p>
+  if (!list.length) return <p className="fb-context" data-testid="fb-mine-empty">Nothing sent yet. What you send, and any answer, shows here.</p>
+  return (
+    <ul className="fb-mine" data-testid="fb-mine">
+      {list.map((r) => {
+        const st = normStatus(r.status)
+        return (
+          <li key={r.id} className="fb-mine-item" data-report={r.id}>
+            <div className="fb-mine-top">
+              <span className={`fb-mine-status fb-mine-${st}`}>{MEMBER_STATUS[st] ?? 'Sent'}</span>
+              <span className="fb-mine-when">{fmtLA(r.created_at)}</span>
+            </div>
+            <p className="fb-mine-msg">{r.message}</p>
+            {(r.replies ?? []).map((a, i) => (
+              <div key={i} className="fb-mine-answer" data-testid="fb-mine-answer">
+                <span className="fb-mine-when">Answer · {fmtLA(a.created_at)}</span>
+                <p>{a.body}</p>
+              </div>
+            ))}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 export default function FeedbackWidget({ session }) {
   const uid = session?.user?.id
   const { pathname } = useLocation()
+  const [params, setParams] = useSearchParams()
+  const [view, setView]         = useState('new')   // new | mine
 
   const [open, setOpen]         = useState(false)
   const [type, setType]         = useState('')
@@ -60,6 +109,23 @@ export default function FeedbackWidget({ session }) {
 
   const fileRef = useRef(null)
   const panelRef = useRef(null)
+  // Speak the report (src/dictation.js, the same driver as the sign-out note;
+  // idea-app's report box has one too). Where the browser has none, no mic.
+  const Speech = typeof window === 'undefined' ? null : (window.SpeechRecognition || window.webkitSpeechRecognition || null)
+  const recRef = useRef(null)
+  const [listening, setListening] = useState(false)
+  const [micNote, setMicNote] = useState(null)
+  useEffect(() => () => recRef.current?.stop(), [])
+  function toggleMic() {
+    if (!Speech) return
+    if (listening) { recRef.current?.stop(); return }
+    setMicNote(null)
+    recRef.current = startDictation(Speech, {
+      onCommit: (w) => setMessage((m) => appendSpoken(m, w)),
+      onInterim: () => {},
+      onState: ({ listening: on, error }) => { setListening(on); if (!on) setMicNote(error) },
+    })
+  }
   // image id -> storage path, for screenshots that already uploaded. A submit
   // retried after the row insert failed reuses them instead of uploading each
   // screenshot again (and orphaning the first copies in the bucket).
@@ -81,7 +147,14 @@ export default function FeedbackWidget({ session }) {
     setType(''); setMessage(''); setTried(''); setError(''); setDone(false); setDragging(false)
   }, [])
 
-  function close() { setOpen(false); reset() }
+  function close() { setOpen(false); setView('new'); reset() }
+
+  // The answer push opens /dashboard?feedback=mine: open on Your reports.
+  useEffect(() => {
+    if (params.get('feedback') !== 'mine') return
+    setOpen(true); setView('mine')
+    const next = new URLSearchParams(params); next.delete('feedback'); setParams(next, { replace: true })
+  }, [params, setParams])
 
   // Escape closes, matching every other dismissable surface in the app.
   useEffect(() => {
@@ -218,11 +291,17 @@ export default function FeedbackWidget({ session }) {
           onDrop={onDrop}
         >
           <div className="fb-head">
-            <span className="fb-title">Send feedback</span>
-            <span className="fb-route">{pathname}</span>
+            <span className="fb-title">{view === 'mine' ? 'Your reports' : 'Send feedback'}</span>
+            <span className="fb-route">{view === 'mine' ? '' : pathname}</span>
+          </div>
+          <div className="fb-views" role="tablist" aria-label="Feedback">
+            <button type="button" role="tab" aria-selected={view === 'new'} className={`fb-view${view === 'new' ? ' fb-view-on' : ''}`}
+                    onClick={() => setView('new')}>New report</button>
+            <button type="button" role="tab" aria-selected={view === 'mine'} className={`fb-view${view === 'mine' ? ' fb-view-on' : ''}`}
+                    onClick={() => setView('mine')} data-testid="fb-view-mine">Your reports</button>
           </div>
 
-          {done ? (
+          {view === 'mine' ? <MyReports /> : done ? (
             <p className="fb-done">Sent. Thank you.</p>
           ) : (
             <>
@@ -242,7 +321,16 @@ export default function FeedbackWidget({ session }) {
                 ))}
               </div>
 
-              <label className="fb-label" htmlFor="fb-message">What happened?</label>
+              <div className="fb-label-row">
+                <label className="fb-label" htmlFor="fb-message">What happened?</label>
+                {Speech && (
+                  <button type="button" className={`fb-mic${listening ? ' fb-mic-on' : ''}`} onClick={toggleMic}
+                          aria-pressed={listening} aria-label={listening ? 'Stop speaking' : 'Speak your report'} data-testid="fb-mic">
+                    {listening ? 'Stop' : 'Speak'}
+                  </button>
+                )}
+              </div>
+              {micNote && <p className="fb-context" role="status">{micNote}</p>}
               <textarea
                 id="fb-message"
                 className="fb-text"

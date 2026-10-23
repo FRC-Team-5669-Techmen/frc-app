@@ -78,8 +78,23 @@ function parseBlocks(lines) {
   return blocks
 }
 
+// A draft waiting for Mr. Pina's review sits in handbook.md between a
+// {{draft:start}} line and a {{draft:end}} line, so the text lives with the
+// handbook but no page shows it until he deletes the two marker lines
+// (decision 47). Every renderer reads the text through this.
+export function stripDrafts(md) {
+  const out = []
+  let inDraft = false
+  for (const line of String(md ?? '').replace(/\r/g, '').split('\n')) {
+    if (/^\{\{draft:start\}\}\s*$/.test(line)) { inDraft = true; continue }
+    if (/^\{\{draft:end\}\}\s*$/.test(line)) { inDraft = false; continue }
+    if (!inDraft) out.push(line)
+  }
+  return out.join('\n')
+}
+
 export function parseHandbook(md) {
-  const lines = md.replace(/\r/g, '').split('\n')
+  const lines = stripDrafts(md).split('\n')
   const title = (lines.find(l => l.startsWith('# ')) || '').slice(2).trim()
   const versionLine = lines.find(l => /^Version /.test(l)) || ''
   const version = versionLine.replace(/^Version /, '').trim()

@@ -7,9 +7,12 @@
 import { isSchemaMissing } from './schemaMissing.js'
 
 export const ABSENCE_REASONS = Object.freeze([
-  { key: 'illness', label: 'Illness', emergency: true },
-  { key: 'family_emergency', label: 'Family emergency', emergency: true },
-  { key: 'medical', label: 'Medical visit', emergency: true },
+  // Handbook Section 6: an emergency is your own illness or injury, or a
+  // death, hospital stay or serious illness in your close family. A medical
+  // visit is excused when asked 24 hours ahead, never as an emergency (0025).
+  { key: 'illness', label: 'Illness or injury', emergency: true },
+  { key: 'family_emergency', label: 'Family emergency (a death, hospital stay or serious illness)', emergency: true },
+  { key: 'medical', label: 'Medical visit' },
   { key: 'school_event', label: 'Required school event' },
   { key: 'religious', label: 'Religious holiday' },
   { key: 'test_or_college', label: 'Test, major assignment or college application deadline' },
@@ -77,7 +80,7 @@ export function absenceProblem(event, { reason, emergency }, now = Date.now()) {
   const starts = Date.parse(event.starts_at)
   const mandatory = event.mandatory || event.kind === 'competition'
   if (emergency) {
-    if (!ABSENCE_REASONS.find((r) => r.key === reason)?.emergency) return 'An emergency is your own illness or injury, or a family emergency.'
+    if (!ABSENCE_REASONS.find((r) => r.key === reason)?.emergency) return 'An emergency is your own illness or injury, or a death, hospital stay or serious illness in your close family.'
     return null
   }
   if (mandatory && !(reason === 'religious' && starts - now >= 14 * 86400000)) {

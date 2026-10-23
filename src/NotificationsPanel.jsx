@@ -17,6 +17,8 @@ const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY
 // re-enabling is just un-commenting the rows below once those features land.
 const CATEGORIES = [
   { key: 'task_signoff',    label: 'Job sign-offs',      hint: 'When a mentor approves or returns your job',   wired: true },
+  { key: 'signout_returned', label: 'Sign-out sent back', hint: 'When a mentor sends your sign-out back, with their note', wired: true },
+  { key: 'feedback_reply',  label: 'Feedback answers',   hint: 'When someone answers feedback you sent',        wired: true },
   { key: 'event_reminder',  label: 'Event reminders',    hint: 'Before an event or meeting you’re going to',    wired: true },
   { key: 'schedule_change', label: 'Schedule changes',   hint: 'When an event is added, edited, or canceled',   wired: true },
   { key: 'shop_status',     label: 'Shop hours',         hint: 'When the shop opens or closes',                 wired: true },
@@ -35,6 +37,7 @@ const DEFAULT_PREFS = {
   task_signoff: true, event_reminder: true, schedule_change: true,
   shop_status: false, job_assignment: true, skill_signoff: true,
   checkin_reminder: false, parent_digest: true, announcements: true,
+  signout_returned: true, feedback_reply: true,
   quiet_hours: { start: '21:00', end: '07:00' },
 }
 

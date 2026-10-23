@@ -177,7 +177,8 @@ export default {
       const mandatory = ev.mandatory || ev.kind === 'competition'
       if (ev.kind !== 'meeting' && !mandatory) return refuse('Only team meetings and mandatory events need an absence request', '22023')
       if (args.p_emergency) {
-        if (!['illness', 'family_emergency', 'medical'].includes(args.p_reason)) return refuse('An emergency is your own illness or injury, or a family emergency', '22023')
+        // 0025: a medical visit is not an emergency (handbook Section 6).
+        if (!['illness', 'family_emergency'].includes(args.p_reason)) return refuse('An emergency is your own illness or injury, or a death, hospital stay or serious illness in your close family', '22023')
       } else {
         if (mandatory && !(args.p_reason === 'religious' && starts - t >= 14 * D)) return refuse('Only an emergency excuses a mandatory event (a religious holiday is asked 14 days ahead)', '22023')
         if (starts - t < 24 * H) return refuse('Ask at least 24 hours ahead, or file it as an emergency', '22023')
@@ -188,8 +189,14 @@ export default {
     },
     withdraw_absence: ({ args, user, engine, now }) => ok(engine.updateRows('absence_requests',
       (a) => a.id === args.p_request && a.member_id === user.id && a.status === 'pending', { status: 'withdrawn', decided_at: iso(ms(now)) }).length),
-    decide_absence: ({ args, user, persona, engine, now }) => {
+    decide_absence: ({ args, db, user, persona, engine, now }) => {
       if (!isStaff(persona)) return refuse('Staff only', '42501')
+      // 0025: a request unanswered when the event started is approved (Section 6).
+      const req = rows(db, 'absence_requests').find((a) => a.id === args.p_request && a.status === 'pending' && a.member_id !== user.id)
+      const evStart = req && Date.parse(rows(db, 'events').find((e) => e.id === req.event_id)?.starts_at ?? '')
+      if (req && !args.p_approve && Date.parse(req.requested_at) <= evStart && ms(now) >= evStart) {
+        return refuse('This request was still unanswered when the event started, so it is approved (handbook Section 6)', '22023')
+      }
       const [row] = engine.updateRows('absence_requests', (a) => a.id === args.p_request && a.status === 'pending' && a.member_id !== user.id,
         { status: args.p_approve ? 'approved' : 'denied', decided_by: user.id, decided_at: iso(ms(now)), decision_note: args.p_note || null })
       if (!row) return refuse('No pending request', 'P0002')

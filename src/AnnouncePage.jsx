@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { eventAnnouncementDraft } from './announceFromEvent'
 import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import { isSchemaMissing } from './schemaMissing'
@@ -353,6 +355,25 @@ export default function AnnouncePage({ hasRole = () => false }) {
   const [result, setResult] = useState(null)
   const [sending, setSending] = useState(false)
 
+  // /schedule's Announce opens /announce?event=<id> (ledger 0016): the
+  // message and an embed are filled from that event once; the roles to ping
+  // stay the admin's pick.
+  const [params] = useSearchParams()
+  const fromEvent = params.get('event')
+  const [filledFrom, setFilledFrom] = useState(null)
+  useEffect(() => {
+    if (!isAdmin || !fromEvent) return undefined
+    let live = true
+    supabase.from('events').select('id, title, kind, starts_at, ends_at, location, notes, mandatory, rsvp_enabled').eq('id', fromEvent).maybeSingle()
+      .then(({ data }) => {
+        if (!live || !data) return
+        const d = eventAnnouncementDraft(data)
+        setContent(d.content); setEmbedTitle(d.embedTitle); setEmbedDesc(d.embedDesc); setEmbedOn(true); setPollOn(false)
+        setFilledFrom(data.title)
+      })
+    return () => { live = false }
+  }, [isAdmin, fromEvent])
+
   const loadRoles = useCallback(async () => {
     const { data, error } = await supabase.from('discord_announce_roles').select(ROLE_SELECT).order('sort_order')
     if (error) {
@@ -519,6 +540,7 @@ export default function AnnouncePage({ hasRole = () => false }) {
         <div className="an-col">
           {step === 'compose' && (
             <section className="an-card" aria-label="Compose">
+              {filledFrom && <p className="an-note" data-testid="an-from-event">Filled from the schedule: {filledFrom}. Pick the roles to ping, then preview.</p>}
               <span className="an-section-label">Channel</span>
               <div className="an-chips">
                 {ANNOUNCE_CHANNELS.map(c => (

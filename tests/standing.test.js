@@ -64,6 +64,12 @@ describe('absenceProblem mirrors request_absence', () => {
     expect(absenceProblem(ev(15 * 24, { mandatory: true }), { reason: 'religious', emergency: false }, now)).toBe(null)
     expect(absenceProblem(ev(48, { kind: 'competition' }), { reason: 'religious', emergency: false }, now)).toMatch(/mandatory/)
   })
+  it('a medical visit is excused ahead, never as an emergency (handbook Section 6, 0025)', () => {
+    expect(absenceProblem(ev(1), { reason: 'medical', emergency: true }, now)).toMatch(/emergency/)
+    expect(absenceProblem(ev(30), { reason: 'medical', emergency: false }, now)).toBe(null)
+    // control: an emergency reason passes the same check
+    expect(absenceProblem(ev(1), { reason: 'family_emergency', emergency: true }, now)).toBe(null)
+  })
   it('an emergency needs an emergency reason', () => {
     expect(absenceProblem(ev(1), { reason: 'school_event', emergency: true }, now)).toMatch(/emergency/)
   })

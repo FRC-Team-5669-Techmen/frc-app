@@ -40,7 +40,7 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 - **Design system**: [`docs/subsystems/design-system.md`](docs/subsystems/design-system.md)
 - **Weekly survey**: [`docs/subsystems/weekly-survey.md`](docs/subsystems/weekly-survey.md)
 - **CI workflows**: [`docs/subsystems/ci-workflows.md`](docs/subsystems/ci-workflows.md)
-- **Feedback**: the in-app widget, the admin inbox, the feedback console. [`docs/subsystems/feedback.md`](docs/subsystems/feedback.md)
+- **Feedback**: the in-app widget, the admin inbox, the feedback console, answers to the sender (0024). [`docs/subsystems/feedback.md`](docs/subsystems/feedback.md)
 - **Push notifications**: [`docs/subsystems/push-notifications.md`](docs/subsystems/push-notifications.md)
 - **Jobs**: [`docs/subsystems/jobs.md`](docs/subsystems/jobs.md)
 - **PWA and login**: install, OTP and Google OAuth, the login screen. [`docs/subsystems/pwa-and-login.md`](docs/subsystems/pwa-and-login.md)

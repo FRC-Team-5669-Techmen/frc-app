@@ -27,12 +27,19 @@
  * failed check and `merge 0020: N/T checks passed`.
  */
 import pg from 'pg'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
-const MIG = readFileSync(path.join(REPO, 'supabase/migrations/0020_member_admin.sql'), 'utf8')
+// 0020 itself, then the LATEST _merge_member_rules() in the migration chain
+// (0022 and 0024 replaced it with their own columns added). Restoring with
+// 0020 alone dropped those rows, and the restored merge then refused every
+// run (found by ledger 0016: the restore check had been red since 0022).
+const MIG_DIR = path.join(REPO, 'supabase/migrations')
+const LATEST_RULES = readdirSync(MIG_DIR).filter((f) => /^\d{4}_.*\.sql$/.test(f) && !f.endsWith('_rls_test.sql')).sort()
+  .flatMap((f) => [...readFileSync(path.join(MIG_DIR, f), 'utf8').matchAll(/create or replace function public\._merge_member_rules\(\)[\s\S]*?\$fn\$;/gi)].map((m) => m[0])).at(-1) ?? ''
+const MIG = `${readFileSync(path.join(MIG_DIR, '0020_member_admin.sql'), 'utf8')}\n${LATEST_RULES}\n`
 const ID = { admin: '00000000-0000-0000-0000-0000000000a1', mentor: '00000000-0000-0000-0000-0000000000b1', student: '00000000-0000-0000-0000-0000000000c1', other: '00000000-0000-0000-0000-0000000000c4' }
 // The other member columns of a seeded row name one of these, a different one per row.
 const OTHERS = ['00000000-0000-0000-0000-0000000000c4', '00000000-0000-0000-0000-0000000000c3', '00000000-0000-0000-0000-0000000000c2', '00000000-0000-0000-0000-0000000000d1']
@@ -372,7 +379,7 @@ await q(MIG.replace("if not public.is_admin() then\n    raise exception 'Permiss
 await reapply()
 
 // MUTANT 2: a rule forgotten. The merge must refuse and change nothing.
-await q(MIG.replace("    ('event_signups', 'member_id', 'move'),\n", ''))
+await q(MIG.replaceAll("    ('event_signups', 'member_id', 'move'),\n", ''))
 await q('begin')
 {
   await seedAll()
@@ -385,7 +392,7 @@ await q('rollback')
 await reapply()
 
 // MUTANT 3: the guard and a rule both gone. Rows left on FROM must be caught.
-await q(MIG.replace("    ('event_signups', 'member_id', 'move'),\n", '').replace('if v_unknown is not null then', 'if false then'))
+await q(MIG.replaceAll("    ('event_signups', 'member_id', 'move'),\n", '').replace('if v_unknown is not null then', 'if false then'))
 {
   const before = passed
   const t0 = total

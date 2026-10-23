@@ -173,6 +173,7 @@ const SAMPLES = {
   survey_create: () => ({ p_title: 'Proof survey', p_opens_at: null, p_closes_at: null }),
   // ledger 0016
   staff_send_trip_link: (fx) => ({ p_invite: fx.invite }),
+  feedback_reply: (fx) => ({ p_feedback: fx.feedback, p_body: 'Proof answer' }),
 }
 
 /** Placeholder arguments of the right types, for a function with no sample. */

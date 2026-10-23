@@ -284,3 +284,11 @@
 .mb-so-pending { display: flex; flex-direction: column; gap: 0.5rem; }
 .mb-so-wait { margin: 0; color: var(--gold); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; }
 .mb-you .so-form { max-width: none; }
+.mb-so-returned {
+  display: flex; flex-direction: column; gap: 0.4rem; padding: 0.6rem 0.75rem;
+  border: 1px solid var(--gold-dim); border-radius: var(--radius); background: var(--gold-a08);
+}
+.mb-so-back-title { margin: 0; color: var(--gold); font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.mb-so-back-note { margin: 0; color: var(--text); overflow-wrap: anywhere; }
+.mb-so-back-note q { color: var(--gold); }
+.mb-so-back-next { margin: 0; color: var(--steel); font-size: 0.88rem; }

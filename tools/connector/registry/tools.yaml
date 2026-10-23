@@ -209,11 +209,16 @@ feedback_set_status:
     p_status: $args.status
 
 feedback_reply:
-  describe: Not available through Claude yet (the inbox has no reply). Says so; report_gap files it.
-  say: ["reply to that feedback", "tell Riley we fixed it", "answer the bug report"]
-  kind: unavailable
-  gap: "The feedback inbox has no reply or comment: no table, no function and no page sends one."
-  args: {}
+  describe: Answer a feedback report; the member who sent it gets it in the app, by email and on their phone. Always asks first.
+  say: ["reply to that feedback", "tell Riley we fixed it", "answer the bug report", "tell them it's fixed in today's update"]
+  kind: function
+  function: feedback_reply
+  args:
+    id: {type: string, describe: "The report id from feedback_inbox", required: true}
+    message: {type: string, describe: "The answer, in his words", required: true}
+  map:
+    p_feedback: $args.id
+    p_body: $args.message
 
 report_gap:
   describe: File what the app cannot do to the feedback inbox, marked from the connector, so it gets built.

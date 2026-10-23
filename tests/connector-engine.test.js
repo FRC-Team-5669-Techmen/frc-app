@@ -247,10 +247,15 @@ describe('the tools', () => {
     expect(out.meals[0]).toMatchObject({ open: 1, items: ['Main dish: Pizza (the Romo family)', 'Dessert: OPEN'] })
     expect(JSON.stringify(out)).not.toMatch(/555/)
   })
-  it('feedback_reply says plainly it is not available and points at report_gap', async () => {
-    const out = await runTool(ctx, 'feedback_reply', { said: 'x' })
-    expect(out.status).toBe('not_available')
-    expect(out.message).toMatch(/report_gap/)
+  it('feedback_reply answers a report through feedback_reply (0024), always asking first (ledger 0016)', async () => {
+    const said = 'tell Riley we fixed it'
+    const p = await runTool(ctx, 'feedback_reply', { said, id: 'fb-1', message: 'Fixed in today\'s update.' })
+    expect(p.status).toBe('preview')
+    expect(p.level).toBe('confirm')
+    expect(backend.state.audit.length).toBe(0)
+    const done = await runTool(ctx, 'feedback_reply', { said, id: 'fb-1', message: 'Fixed in today\'s update.', confirm_token: p.confirm_token })
+    expect(done.status).toBe('done')
+    expect(backend.state.calls.at(-1)).toMatchObject({ fn: 'feedback_reply', args: { p_feedback: 'fb-1', p_body: 'Fixed in today\'s update.' } })
   })
   it('create_event writes at once in Los Angeles time and names its undo, which deletes the event (ledger 0014)', async () => {
     backend.state.settings.allowedMember = 'u-admin'

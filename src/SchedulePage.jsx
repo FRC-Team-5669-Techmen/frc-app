@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import { fmtTime, fmtDay, SHOP_OPEN_KINDS } from './shopStatus'
@@ -61,6 +62,8 @@ function fmtMonth(key) {
 
 export default function SchedulePage({ session, hasRole }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
+  // Announcing on Discord is admin only (decision 35).
+  const isAdmin = hasRole('admin')
   // Calendar permissions (supabase/migrations/0004_member_permissions.sql):
   // staff by role, or a member an admin granted 'events.create' on the roster.
   // The lookup failing -- including 0004 not applied yet -- means no grant,
@@ -351,10 +354,11 @@ export default function SchedulePage({ session, hasRole }) {
               </button>
             )}
           </div>
-          {canEdit(ev) && (
+          {(canEdit(ev) || isAdmin) && (
             <div className="sch-event-actions">
-              <button className="sch-edit" onClick={() => openEdit(ev)}>Edit</button>
-              <button className="sch-del" onClick={() => remove(ev)}>Delete</button>
+              {canEdit(ev) && <button className="sch-edit" onClick={() => openEdit(ev)}>Edit</button>}
+              {canEdit(ev) && <button className="sch-del" onClick={() => remove(ev)}>Delete</button>}
+              {isAdmin && <Link className="sch-edit sch-announce" to={`/announce?event=${ev.id}`} data-testid="sch-announce">Announce</Link>}
             </div>
           )}
         </div>

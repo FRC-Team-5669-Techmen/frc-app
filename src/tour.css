@@ -93,3 +93,10 @@
 .driver-popover.techmen-tour .driver-popover-arrow-side-right  { border-right-color: var(--surface); }
 .driver-popover.techmen-tour .driver-popover-arrow-side-top    { border-top-color: var(--surface); }
 .driver-popover.techmen-tour .driver-popover-arrow-side-bottom { border-bottom-color: var(--surface); }
+
+/* The feature guide cards (ledger 0016): one line per page, where to find it. */
+.driver-popover.techmen-tour .tour-list { margin: 0.35rem 0 0; padding-left: 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.driver-popover.techmen-tour .tour-list li { line-height: 1.35; }
+.driver-popover.techmen-tour .tour-where { display: block; font-family: var(--font-mono); font-size: 0.72rem; color: var(--steel); }
+.driver-popover.techmen-tour { max-width: min(26rem, calc(100vw - 2rem)); }
+.driver-popover.techmen-tour .driver-popover-description { max-height: min(60vh, 26rem); overflow-y: auto; }

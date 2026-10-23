@@ -449,6 +449,20 @@ Families make the team run: they drive, feed, chaperone and keep students on tra
 - **Have a concern?** Let your student raise it with a leader or mentor first. If that does not settle it, contact a mentor yourself, early.
 - **Do not send a sick student** to robotics.
 
+{{draft:start}}
+### Donations
+
+DRAFT FOR MR. PINA'S REVIEW. Not shown in the app until he approves it (decision 47). Bracketed items are facts to confirm.
+
+Families and sponsors make the season possible. Every gift is welcome and none is expected.
+
+- **Donations go through Bosco Tech, never to a mentor or a student.** Give by check or through the school's giving page, marked for Robotics Team 5669. [Confirm: the payee name, the giving page link and the memo wording.]
+- **Every donation gets a receipt from the school.** Keep it for your taxes. [Confirm: who sends receipts and how fast.]
+- **Gifts of parts, tools or services** (machining, printing, food for an event) are welcome too. Ask a mentor first so we can thank you and record it. [Confirm: whether in-kind gifts get a school receipt.]
+- **Company matching and sponsorships:** many employers match gifts or sponsor teams. Ask a mentor for the sponsor packet. [Confirm: the sponsor packet and who to contact.]
+- **Helping never buys a spot.** A donation never helps or hurts a student's selection, standing or role.
+{{draft:end}}
+
 ## 20. Adults on the team: youth protection
 
 Regular mentors are screened before they work with students. Occasional parent helpers and carpool-only drivers are not, and they help only at activities where a screened mentor is present. Every adult follows this section and Sections 8, 14 and 17.

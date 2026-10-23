@@ -84,11 +84,13 @@ export default defineConfig(({ mode }) => ({
       srcDir: 'src',
       filename: 'sw.js',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png', 'apple-touch-icon.png'],
+      // The icon set is built by tools/icons/build-icons.mjs from the team mark.
+      includeAssets: ['favicon.ico', 'favicon.svg', 'favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Techmen · 5669',
         short_name: 'Techmen',
-        description: 'Team shop check-in and check-out',
+        description: 'The Techmen team app: check-in, hours, schedule, trips and more',
+        id: '/',
         theme_color: '#0A0B0D',
         background_color: '#0A0B0D',
         display: 'standalone',

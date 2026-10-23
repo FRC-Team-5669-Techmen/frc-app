@@ -686,3 +686,5 @@
   .sch-edit, .sch-del, .sch-weekday { min-width: 44px; }
   .sch-toggle { min-height: 44px; }
 }
+/* Announce on Discord, admin only (ledger 0016): a link styled as the row's buttons. */
+.sch-announce { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
