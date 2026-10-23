@@ -260,11 +260,11 @@ export default {
       const activity=t.page.getByRole('checkbox',{name:'I completed the partner or mentor activity above.',exact:true})
       await activity.check()
       await t.press(t.page.getByRole('button',{name:'Record mission practice',exact:true}))
-      await t.waitText('1 / 8 missions recorded')
+      await t.waitText('1 / 9 missions recorded')
       t.check('a completed interactive mission is durably recorded',await t.page.getByText('Practice recorded for this mission.',{exact:true}).count()===1)
-      await activity.uncheck();await t.waitText('0 / 8 missions recorded')
+      await activity.uncheck();await t.waitText('0 / 9 missions recorded')
       t.eq('withdrawing the activity acknowledgment withdraws completion',await t.page.getByRole('button',{name:'Record mission practice',exact:true}).isDisabled(),true)
-      await activity.check();await t.press(t.page.getByRole('button',{name:'Record mission practice',exact:true}));await t.waitText('1 / 8 missions recorded')
+      await activity.check();await t.press(t.page.getByRole('button',{name:'Record mission practice',exact:true}));await t.waitText('1 / 9 missions recorded')
       await t.press(t.page.getByText('Real footage workbook (0 entries)',{exact:true}))
       await t.press(t.page.getByRole('button',{name:'Add practice footage',exact:true}))
       const footage=t.page.getByRole('article',{name:'Practice footage 1',exact:true})
@@ -290,12 +290,15 @@ export default {
       t.eq('practice footage never creates competition records',(await t.rows('scouting_records')).filter(r=>r.team_number===9001).length,0)
       const cases=[
         {index:1,decisions:[0,1,2,1],quiz:[1,0]},
-        {index:2,matches:[['Yes','Yes','Yes'],['Did Not See','No','Yes'],['Did Not See','Did Not See','Did Not See'],['Did Not See','Yes','No'],['Not Applicable','Not Applicable','Yes'],['No','Did Not See','Yes']],moments:[3,4,3,3,3,4],quiz:[2,1]},
-        {index:3,decisions:[1,1,1],quiz:[1,1]},
-        {index:4,decisions:[1,0,1,1,0],quiz:[1,1]},
-        {index:5,decisions:[1,1,0,1],quiz:[1,1]},
-        {index:6,decisions:[0,0,1],quiz:[0,1]},
-        {index:7,decisions:[1,1],quiz:[1,1]},
+        {index:2,matches:[['Yes','Yes','Yes'],['Did Not See','No','Yes'],['Did Not See','Did Not See','Did Not See'],['Did Not See','Yes','No'],['Not Applicable','Not Applicable','Yes'],['No','Did Not See','Yes']],moments:[4,5,4,4,4,5],quiz:[2,1],
+          fields:[{'FUEL scored in teleop':6,'TOWER level reached':'Level 2','Got stuck':'No'},{'Got stuck':'Yes','TOWER level reached':'Did not see'},{'FUEL scored in teleop':0,'TOWER level reached':'Did not see','Got stuck':'No'},
+            {'FUEL scored in teleop':3,'Died or browned out':'Yes','Got stuck':'No'},{},{'FUEL scored in teleop':5,'TOWER level reached':'Level 1','Got stuck':'No'}]},
+        {index:3,decisions:[1,1,0,0,1],quiz:[1,1]},
+        {index:4,decisions:[1,1,1],quiz:[1,1]},
+        {index:5,decisions:[1,0,1,1,0],quiz:[1,1]},
+        {index:6,decisions:[1,1,0,1],quiz:[1,1]},
+        {index:7,decisions:[0,0,1],quiz:[0,1]},
+        {index:8,decisions:[1,1],quiz:[1,1]},
       ]
       for(const c of cases){
         await t.press(t.page.getByRole('navigation',{name:'Practice missions',exact:true}).getByRole('button').nth(c.index))
@@ -304,6 +307,11 @@ export default {
             await t.press(t.page.getByRole('navigation',{name:'Practice matches',exact:true}).getByRole('button').nth(i))
             for(let step=0;step<c.moments[i];step++)await t.press(t.page.getByRole('button',{name:'Next moment',exact:true}))
             for(const [j,label] of ['Passes under the TRENCH','Crosses the BUMP','Intakes FUEL from the floor'].entries())await t.press(t.page.getByRole('region',{name:'Practice match lab',exact:true}).getByRole('group',{name:label,exact:true}).getByRole('button',{name:expected[j],exact:true}))
+            const lab=t.page.getByRole('region',{name:'Practice match lab',exact:true})
+            for(const [field,answer] of Object.entries(c.fields[i])){
+              if(typeof answer==='number'){ if(answer===0) await t.press(lab.locator('fieldset.sc-count').filter({hasText:field}).getByRole('button',{name:'Saw zero',exact:true})); else for(let k=0;k<answer;k++) await t.press(lab.getByRole('button',{name:field+' plus 1',exact:true})) }
+              else await t.press(lab.getByRole('group',{name:field,exact:true}).getByRole('button',{name:answer,exact:true}))
+            }
             await t.page.getByLabel('Evidence note for this robot',{exact:true}).fill('Automated synthetic scenario '+(i+1)+'; no real match observation claimed.')
             await t.press(t.page.getByRole('button',{name:'Review this match',exact:true}))
           }
@@ -316,13 +324,13 @@ export default {
         await t.page.getByLabel('One thing I learned, and one question for my mentor',{exact:true}).fill('Automated workflow check for mission '+(c.index+1)+'. Partner activity is simulated, not human proficiency evidence.')
         await t.page.getByRole('checkbox',{name:'I completed the partner or mentor activity above.',exact:true}).check()
         await t.press(t.page.getByRole('button',{name:'Record mission practice',exact:true}))
-        await t.waitText(`${c.index+1} / 8 missions recorded`)
+        await t.waitText(`${c.index+1} / 9 missions recorded`)
       }
-      t.check('all eight interactive mission workflows can be completed', (await t.bodyText()).includes('8 / 8 missions recorded'))
+      t.check('all nine interactive mission workflows can be completed', (await t.bodyText()).includes('9 / 9 missions recorded'))
       const downloadPromise=t.page.waitForEvent('download')
       await t.press(t.page.getByRole('button',{name:'Export practice record',exact:true}))
       const download=await downloadPromise, packet=JSON.parse(readFileSync(await download.path(),'utf8'))
-      t.eq('practice export preserves eight completions without awarding certification',Object.values(packet.progress).filter(v=>v?.completed===true).length,8)
+      t.eq('practice export preserves nine completions without awarding certification',Object.values(packet.progress).filter(v=>v?.completed===true).length,9)
       t.eq('practice export explicitly refuses a certification claim',packet.officialCertificationAwarded,false)
       t.eq('activity plan is distinct from measured time',packet.measuredPracticeTime,null)
       t.eq('export preserves first-pass uncertainty and later correction',[packet.workbook[0].submission.answers.trench,packet.workbook[0].reviews[0].answers.trench],['did_not_see','yes'])
@@ -395,6 +403,96 @@ export default {
       await t.page.waitForFunction(() => window.__fx.rows('scouting_records').filter(r => ['qm80', 'qm81'].includes(r.match_key)).length === 2)
       t.eq('reviewed plan creates exactly two assignments', (await t.rows('scouting_records')).filter(r => ['qm80', 'qm81'].includes(r.match_key)).length, 2)
       await t.noHScroll(); await t.shot('assignment-plan')
+    })
+
+    await t.step('REBUILT match fields: steppers, not recorded is never zero', async () => {
+      t.as('0027 match fields')
+      await t.open(ROUTE, { persona: 'student', mig: 'all', reset: true, ready: '.sc-wrap' })
+      await t.waitText('Fixture Regional')
+      await t.press(t.page.getByRole('button', { name: 'New observation', exact: true }))
+      await t.waitFor('dialog[open]')
+      await t.page.getByLabel('Team number', { exact: true }).fill('1323')
+      await t.page.getByLabel('Match', { exact: true }).fill('qm33')
+      t.eq('every count starts not recorded (no 0 shown)', await t.page.locator('dialog .sc-count-value.sc-unrecorded').count(), 3)
+      await t.press(t.page.getByRole('button', { name: 'FUEL scored in teleop plus 5', exact: true }))
+      await t.press(t.page.getByRole('button', { name: 'FUEL scored in teleop plus 5', exact: true }))
+      await t.press(t.page.getByRole('button', { name: 'FUEL scored in teleop plus 1', exact: true }))
+      await t.press(t.page.getByRole('button', { name: 'FUEL scored in teleop minus 1', exact: true }))
+      await t.press(t.page.locator('dialog fieldset[data-field="auto_fuel"] .sc-clear', { hasText: 'Saw zero' }))
+      await choice(t, 'TOWER level reached', 'Level 2')
+      await choice(t, 'Got stuck', 'Yes')
+      await choice(t, 'Driver skill', '4')
+      await t.tapTargets('dialog .sc-step, dialog .sc-choice-options button', 'steppers and toggles at least 44px')
+      await t.shot('match-fields')
+      await t.press(t.page.getByRole('button', { name: 'Save observation', exact: true }))
+      await t.waitFor('dialog[open]', { state: 'detached' })
+      await t.settle()
+      const saved = own(await t.rows('scouting_records'), 'observation').find(r => r.match_key === 'qm33')
+      t.eq('saved: teleop 10, auto an observed 0, TOWER level 2, stuck yes, driver 4, and nothing else in match',
+        saved?.payload?.match, { teleop_fuel: 10, auto_fuel: 0, tower: 'level2', stuck: 'yes', driver_skill: 4 })
+      t.check('teleop missed was never touched, so it is absent, not 0', saved && !('teleop_missed' in saved.payload.match))
+      await tab(t, 'Teams')
+      await t.press(t.page.locator('.sc-search input'))
+      await t.page.locator('.sc-search input').fill('1538')
+      await t.settle()
+      const cell = async label => t.page.locator('.sc-team-card .sc-match-cell', { hasText: label }).first().locator('.sc-match-value').textContent()
+      // Oracle from the seed: qm5 two scouts (3+14, 5+18 -> median 20), qm9 2+9=11, qm14 4+22=26 -> median 20.
+      t.eq('team 1538 median FUEL from three matches, two scouts on qm5 counted once', await cell('Median FUEL'), '20')
+      t.eq('best TOWER is level 3', await cell('Best TOWER'), 'L3')
+      t.eq('trouble rate: stuck in 1 of 3 decisive matches', await cell('Trouble'), '33%')
+      await t.page.locator('.sc-search input').fill('4414')
+      await t.settle()
+      t.check('a team with no match fields says so instead of showing zeros', (await t.page.locator('.sc-team-card').first().textContent()).includes('No match fields recorded yet'))
+      // Casey has no saved list, so every team is in the picker (Sam's seeded list already holds them all).
+      await t.open(ROUTE, { persona: 'exempt', mig: 'all', ready: '.sc-wrap' })
+      await t.waitText('Fixture Regional')
+      await tab(t, 'Pick lists')
+      const before = await t.texts('.sc-team-picker button b')
+      t.check('positive control: with no filter the picker offers 1538, 4414 and 1323', ['1538', '4414', '1323'].every(n => before.includes(n)), before.join(','))
+      await t.press(t.page.locator('.sc-match-filters summary'))
+      await t.page.getByLabel('Median FUEL at least', { exact: true }).fill('15')
+      await t.settle()
+      const picks = await t.texts('.sc-team-picker button b')
+      t.check('FUEL at least 15 keeps 1538 and drops the teams with nothing recorded', picks.includes('1538') && !picks.includes('4414') && !picks.includes('1323'), picks.join(','))
+      await t.press(t.page.getByRole('button', { name: 'Clear match filters', exact: true }))
+      t.check('clearing brings the other teams back', (await t.texts('.sc-team-picker button b')).length > picks.length)
+      await t.noHScroll()
+    })
+
+    await t.step('Download spreadsheet: readable CSVs beside the JSON backup', async () => {
+      t.as('spreadsheet')
+      await t.open(ROUTE, { persona: 'student', mig: 'all', reset: true, ready: '.sc-wrap' })
+      await t.waitText('Fixture Regional')
+      const files = []
+      t.page.on('download', d => files.push(d))
+      await t.press(t.page.getByRole('button', { name: 'Download spreadsheet', exact: true }))
+      await t.page.waitForFunction(() => true)
+      for (let i = 0; i < 40 && files.length < 2; i += 1) await t.page.waitForTimeout(100)
+      t.eq('two files: observations and teams', files.map(f => f.suggestedFilename().replace(/-\d{4}-\d{2}-\d{2}\.csv$/, '')).sort(), ['techmen-scouting-fixture-regional-observations', 'techmen-scouting-fixture-regional-teams'])
+      const obsCsv = readFileSync(await files.find(f => /observations/.test(f.suggestedFilename())).path(), 'utf8').split('\r\n').filter(Boolean)
+      const teamCsv = readFileSync(await files.find(f => /teams/.test(f.suggestedFilename())).path(), 'utf8').split('\r\n').filter(Boolean)
+      // The oracle is what the page itself lists: "Recent observations (N)".
+      // Not the fixture store: reset clears the fake server, but this browser's
+      // IndexedDB still holds earlier steps' records, as a real phone would.
+      const shown = Number((/Recent observations \((\d+)\)/.exec(await t.bodyText()) ?? [])[1] ?? -1)
+      t.eq('one observation row per observation the page lists (after the note and the header)', obsCsv.length - 2, shown)
+      t.check('every row names its scout', obsCsv.slice(2).every(l => l.split(',')[3] !== ''), obsCsv.slice(2).find(l => l.split(',')[3] === '') ?? 'all named')
+      t.check('a header a person can read', obsCsv[1].includes('Team,Team name,Match,Scout') && obsCsv[1].includes('TOWER level reached'), obsCsv[1].slice(0, 80))
+      t.check('the team sheet has a row for 1538 with its median FUEL 20', teamCsv.some(l => /^1538,The Holy Cows,3,20,/.test(l)), teamCsv.find(l => l.startsWith('1538')) ?? 'no row')
+      t.eq('the JSON backup button is still there', await t.page.getByRole('button', { name: 'Export event data', exact: true }).count(), 1)
+    })
+
+    await t.step('before 0027: capabilities only, nothing breaks', async () => {
+      t.as('pre-0027')
+      const pre27 = Array.from({ length: 26 }, (_, i) => String(i + 1).padStart(4, '0')).join(',')
+      await t.open(ROUTE, { persona: 'student', mig: pre27, reset: true, ready: '.sc-wrap' })
+      await t.waitText('Fixture Regional')
+      await t.press(t.page.getByRole('button', { name: 'New observation', exact: true }))
+      await t.waitFor('dialog[open]')
+      t.eq('no steppers before 0027, against three after', await t.page.locator('dialog .sc-count').count(), 0)
+      t.check('the form says the match fields start with 0027', (await t.page.locator('dialog').textContent()).includes('migration 0027'))
+      t.eq('the three capability questions are still there', await t.page.locator('dialog .sc-choice').count() >= 3, true)
+      await t.press(t.page.getByRole('button', { name: 'Close form', exact: true }))
     })
 
     await t.step('missing migration fallback', async () => {

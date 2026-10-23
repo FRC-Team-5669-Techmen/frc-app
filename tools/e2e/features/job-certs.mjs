@@ -221,9 +221,14 @@ export default {
       }
       await t.open('/dashboard', { persona: who, mig: 'all', ready: '.navbar, nav' });
       const dead = await t.evaluate((paths) => paths.map((p) => document.querySelectorAll(`a[href="${p}"]`).length).reduce((a, b) => a + b, 0), RETIRED);
-      const live = await t.count('a[href="/certifications"]');
-      t.check('0 links to a retired address, against the links to /certifications', dead === 0 && live >= 2,
-        `${dead} retired links, ${live} /certifications links`);
+      let live = await t.count('a[href="/certifications"]');
+      // Certifications left the top bar for the Robot hub (ledger 0017): the
+      // positive control counts the Home tile and the Robot tile.
+      await t.open('/robot', { persona: who, mig: 'all', ready: '.hub-tile' });
+      const deadRobot = await t.evaluate((paths) => paths.map((p) => document.querySelectorAll(`a[href="${p}"]`).length).reduce((a, b) => a + b, 0), RETIRED);
+      live += await t.count('a[href="/certifications"]');
+      t.check('0 links to a retired address on Home and Robot, against the links to /certifications', dead + deadRobot === 0 && live >= 2,
+        `${dead + deadRobot} retired links, ${live} /certifications links`);
     }
 
     // ── Dashboard tile ───────────────────────────────────────────────────────

@@ -1,0 +1,64 @@
+/* Hub pages: /robot and /manage (ledger 0017, decision 49), and Home's
+   "Do this now" card. Tactical HUD tokens from src/theme.css only; gold is
+   the active and waiting signal, never a fill. */
+.hub-wrap { max-width: 64rem; width: 100%; min-width: 0; margin: 0 auto; padding: 1.25rem 1rem 4rem; box-sizing: border-box; }
+.hub-wrap-wide { max-width: 72rem; }
+.hub-head { margin: 0.25rem 0 1.1rem; }
+.hub-head-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 0.9rem; }
+.hub-eyebrow { display: inline-flex; align-items: center; gap: 0.4rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--steel); }
+.hub-eyebrow .nav-icon { width: 0.9rem; height: 0.9rem; }
+.hub-title { margin: 0.15rem 0 0; font-family: var(--font-ui); font-size: 1.6rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); }
+.hub-sub { margin: 0.25rem 0 0; color: var(--steel); font-size: 0.92rem; }
+.hub-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--gold); }
+.hub-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.hub-filter { flex: 1 1 18rem; max-width: 26rem; display: block; }
+.hub-filter input { width: 100%; min-height: 48px; padding: 0 0.9rem; box-sizing: border-box; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); }
+.hub-filter input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+
+.hub-group { margin-top: 1.25rem; }
+.hub-group-title { margin: 0 0 0.55rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 0.78rem; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--steel); }
+.hub-group-waiting .hub-group-title { color: var(--gold); border-bottom-color: var(--gold-dim); }
+
+.hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.5rem), 1fr)); gap: 0.65rem; }
+.hub-grid-robot { grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 0.85rem; }
+
+.hub-tile {
+  position: relative; display: flex; flex-direction: column; gap: 0.35rem; min-height: 4.5rem; padding: 0.85rem 0.9rem;
+  color: var(--text); text-decoration: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  box-sizing: border-box; transition: border-color 0.15s, background 0.15s; min-width: 0;
+}
+.hub-tile:hover, .hub-tile:focus-visible { border-color: var(--steel); background: var(--surface-2); }
+.hub-tile:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.hub-tile-alert { border-color: var(--gold-dim); box-shadow: inset 3px 0 0 var(--gold); }
+.hub-tile-top { display: flex; align-items: center; gap: 0.55rem; min-width: 0; }
+.hub-tile-icon { display: inline-flex; color: var(--steel); }
+.hub-tile-icon .nav-icon { width: 1.15rem; height: 1.15rem; }
+.hub-tile-alert .hub-tile-icon { color: var(--gold); }
+.hub-tile-title { flex: 1 1 auto; min-width: 0; font-family: var(--font-ui); font-size: 1rem; font-weight: 600; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hub-tile-badge { min-width: 1.6rem; padding: 0.1rem 0.45rem; font-family: var(--font-mono); font-size: 0.8rem; text-align: center; color: var(--bg); background: var(--gold); border-radius: var(--radius-sm); }
+.hub-tile-go { color: var(--muted); font-family: var(--font-mono); }
+.hub-tile:hover .hub-tile-go { color: var(--gold); }
+.hub-tile-big { display: flex; align-items: baseline; gap: 0.45rem; font-family: var(--font-ui); font-size: 2.1rem; font-weight: 700; line-height: 1; color: var(--text); margin-top: 0.3rem; }
+.hub-tile-alert .hub-tile-big { color: var(--gold-bright); }
+.hub-tile-big-label { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--steel); }
+.hub-tile-line { font-size: 0.86rem; color: var(--steel); line-height: 1.35; }
+.hub-grid-robot .hub-tile { min-height: 9rem; padding: 1rem 1.05rem; }
+.hub-empty { padding: 1.5rem; text-align: center; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: var(--radius); color: var(--steel); }
+.hub-btn { min-height: 44px; padding: 0 1rem; font: inherit; font-weight: 600; color: var(--text); background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; }
+
+/* Home: "Do this now". Rendered only when something is open. */
+.dtn { grid-column: 1 / -1; padding: 0.9rem 1rem 0.6rem; background: var(--surface); border: 1px solid var(--gold-dim); border-radius: var(--radius); box-shadow: inset 3px 0 0 var(--gold); }
+.dtn-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.35rem; }
+.dtn-title { margin: 0; font-family: var(--font-ui); font-size: 0.95rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+.dtn-count { font-family: var(--font-mono); font-size: 0.78rem; color: var(--steel); }
+.dtn-list { list-style: none; margin: 0; padding: 0; }
+.dtn-item { display: flex; align-items: center; gap: 0.5rem; border-top: 1px solid var(--border); }
+.dtn-item:first-child { border-top: 0; }
+.dtn-link { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; gap: 0.1rem; min-height: 52px; padding: 0.4rem 0; color: var(--text); text-decoration: none; min-width: 0; }
+.dtn-link:hover .dtn-what { color: var(--gold-bright); }
+.dtn-what { font-weight: 600; }
+.dtn-why { font-size: 0.84rem; color: var(--steel); overflow-wrap: anywhere; }
+.dtn-urgent .dtn-what::before { content: ''; display: inline-block; width: 0.45rem; height: 0.45rem; margin-right: 0.45rem; border-radius: 50%; background: var(--gold); vertical-align: middle; }
+.dtn-go { color: var(--muted); font-family: var(--font-mono); }
+.dtn-done { min-height: 44px; padding: 0 0.7rem; font: inherit; font-size: 0.82rem; color: var(--steel); background: none; border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; }

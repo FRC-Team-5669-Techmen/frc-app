@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import ComparisonEvidence from './ComparisonEvidence'
 import { aggregatePickLists, CAPABILITIES, filterTeams, previewComparison, TIERS } from './model'
+import { MATCH_FILTERS, passesMatchFilters, teamMatchSummary, fmtMedian, towerLabel, fmtRate } from './match'
 
 const normalize = rows => TIERS.flatMap(t => rows.filter(x => x.tier === t.value).map((x, i) => ({ ...x, rank: i + 1 })))
 const tierLabel = tier => TIERS.find(x => x.value === tier)?.label ?? `Tier ${tier}`
@@ -20,6 +21,7 @@ export default function PickLists({ records, confirmedRecords = records.filter(r
   const [loadAttempt, setLoadAttempt] = useState(0)
   const [minEpa, setMinEpa] = useState('')
   const [capability, setCapability] = useState('')
+  const [matchFilter, setMatchFilter] = useState({})
   const [selected, setSelected] = useState(['', '', ''])
   const [votes, setVotes] = useState({})
   const [preview, setPreview] = useState(null)
@@ -61,7 +63,12 @@ export default function PickLists({ records, confirmedRecords = records.filter(r
     const swapped = entries.map(e => e.team === team ? other : e.team === other.team ? row : e)
     change(normalize(swapped))
   }
+  const summaries = new Map()
+  const summary = team => { if (!summaries.has(team)) summaries.set(team, teamMatchSummary(confirmedRecords, team)); return summaries.get(team) }
+  const matchFiltering = Object.values(matchFilter).some(v => v !== '' && v !== false && v !== undefined)
+  // Match filters read confirmed observations only; an unrecorded value never passes a minimum.
   const filtered = filterTeams(confirmedRecords, { minEpa: minEpa === '' ? undefined : Number(minEpa), capability: capability || undefined })
+    .filter(r => passesMatchFilters(summary(r.team_number), matchFilter))
   const master = aggregatePickLists(confirmedRecords)
   const selectedNumbers = selected.map(Number)
   const pairs = [[0, 1], [0, 2], [1, 2]]
@@ -76,9 +83,19 @@ export default function PickLists({ records, confirmedRecords = records.filter(r
     </> : <>
       <div className="sc-card sc-stack">
         <h3>Find teams</h3><div className="sc-fields"><label>Minimum EPA<input type="number" step="any" value={minEpa} onChange={e => setMinEpa(e.target.value)} placeholder="Any" /></label><label>Pit capability<select aria-label="Pit capability" value={capability} onChange={e => setCapability(e.target.value)}><option value="">Any capability</option>{CAPABILITIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}</select></label></div>
-        <p className="sc-help">EPA is a statistical estimate. The EPA filter excludes missing estimates and snapshots older than 24 hours. Capability filters use pit claims.</p>
+        <details className="sc-match-filters" open={matchFiltering}><summary>Match evidence filters{matchFiltering ? ' (on)' : ''}</summary>
+          <div className="sc-fields">
+            <label>{MATCH_FILTERS[0].label}<input inputMode="numeric" type="number" min="0" value={matchFilter.min_fuel ?? ''} onChange={e => setMatchFilter({ ...matchFilter, min_fuel: e.target.value })} placeholder="Any" /></label>
+            <label>{MATCH_FILTERS[1].label}<select aria-label={MATCH_FILTERS[1].label} value={matchFilter.min_tower ?? ''} onChange={e => setMatchFilter({ ...matchFilter, min_tower: e.target.value })}><option value="">Any</option><option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option></select></label>
+            <label>{MATCH_FILTERS[2].label}<input inputMode="numeric" type="number" min="0" max="100" value={matchFilter.max_trouble ?? ''} onChange={e => setMatchFilter({ ...matchFilter, max_trouble: e.target.value })} placeholder="Any" /></label>
+            <label>{MATCH_FILTERS[3].label}<select aria-label={MATCH_FILTERS[3].label} value={matchFilter.min_driver ?? ''} onChange={e => setMatchFilter({ ...matchFilter, min_driver: e.target.value })}><option value="">Any</option>{[2, 3, 4, 5].map(n => <option key={n} value={n}>{n}</option>)}</select></label>
+          </div>
+          <label className="sc-checkbox"><input type="checkbox" checked={!!matchFilter.defense} onChange={e => setMatchFilter({ ...matchFilter, defense: e.target.checked })} /><span>{MATCH_FILTERS[4].label}</span></label>
+          {matchFiltering && <button type="button" onClick={() => setMatchFilter({})}>Clear match filters</button>}
+        </details>
+        <p className="sc-help">EPA is a statistical estimate. The EPA filter excludes missing estimates and snapshots older than 24 hours. Capability filters use pit claims. Match filters use confirmed observations; a team with nothing recorded does not pass a minimum.</p>
         <label>Add to<select aria-label="Add to" value={String(addTier)} onChange={e => setAddTier(e.target.value === 'dnp' ? 'dnp' : Number(e.target.value))}>{TIERS.map(t => <option key={t.value} value={String(t.value)}>{t.label}</option>)}</select></label>
-        <div className="sc-team-picker">{filtered.filter(r => !entries.some(e => e.team === r.team_number)).map(r => <button disabled={saving || pending || !ready} key={r.team_number} onClick={() => change(normalize([...entries, { team: r.team_number, tier: addTier, rank: entries.length + 1 }]))}><b>{r.team_number}</b><span>Add {r.payload?.name || 'team'}</span></button>)}</div>
+        <div className="sc-team-picker">{filtered.filter(r => !entries.some(e => e.team === r.team_number)).map(r => <button disabled={saving || pending || !ready} key={r.team_number} onClick={() => change(normalize([...entries, { team: r.team_number, tier: addTier, rank: entries.length + 1 }]))}><b>{r.team_number}</b><span>Add {r.payload?.name || 'team'}</span>{summary(r.team_number).matches > 0 && <small className="sc-pick-stats">FUEL {fmtMedian(summary(r.team_number).totalFuel)} · TOWER {towerLabel(summary(r.team_number).tower.best)} · trouble {fmtRate(summary(r.team_number).troubleRate)}</small>}</button>)}</div>
         {!filtered.length && <p className="sc-help">No teams match. Clear a filter or ask your lead to add the event teams.</p>}
       </div>
       {TIERS.map(t => <div className="sc-card sc-tier" key={t.value}><div className="sc-section-head"><h3>{t.label}</h3><span className="sc-count">{entries.filter(e => e.tier === t.value).length}</span></div>

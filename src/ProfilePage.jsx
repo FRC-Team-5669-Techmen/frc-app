@@ -176,6 +176,16 @@ export default function ProfilePage({ session, hasRole = () => false }) {
             </div>
           </div>
 
+          {/* Moved here from the account menu (ledger 0017, decision 49): the
+              personal records a member opens now and then. Their addresses are
+              unchanged; Home lists any that need doing. */}
+          <nav className="profile-quick" aria-label="Your records">
+            {!(hasRole('parent') && !['mentor', 'lead', 'admin'].some(hasRole)) && <Link to="/survey" className="profile-quick-link"><b>Weekly survey</b><span>A short check-in about your week</span></Link>}
+            <Link to="/driver-docs" className="profile-quick-link"><b>Driver documents</b><span>License and insurance, for drivers</span></Link>
+            {(hasRole('parent') && !['mentor', 'lead', 'admin'].some(hasRole)) && <Link to="/emergency-info" className="profile-quick-link"><b>Emergency information</b><span>Contacts, conditions, allergies</span></Link>}
+            {!(hasRole('parent') && !['mentor', 'lead', 'admin'].some(hasRole)) && <Link to="/standing" className="profile-quick-link"><b>Checklist and standing</b><span>Your first-weeks checklist and record</span></Link>}
+          </nav>
+
           <form onSubmit={handleSave} className="profile-form">
 
             {/* ── Basics ── */}

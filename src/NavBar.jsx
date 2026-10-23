@@ -2,25 +2,17 @@ import { useState, useRef, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { supabase } from './supabase'
 import { RoleBadge, ROLE_ORDER } from './roles'
+import { loadAdminCounts, totalWaiting } from './adminTools'
 import './NavBar.css'
 
-// Self-hosted inline-SVG icon set (no CDN / dependency, themed via currentColor
-// so each icon inherits its nav link's color, including the active gold).
-const Svg = ({ children }) => (
-  <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-       strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {children}
-  </svg>
-)
-const IconDashboard = () => <Svg><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></Svg>
-const IconSchedule  = () => <Svg><rect x="3" y="4" width="18" height="17" rx="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="16" y1="2" x2="16" y2="6" /></Svg>
-const IconJobs      = () => <Svg><rect x="5" y="4" width="14" height="17" rx="2" /><rect x="9" y="2" width="6" height="4" rx="1" /><path d="M8.5 12.5l2.5 2.5 4.5-4.5" /></Svg>
-const IconHours     = () => <Svg><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></Svg>
-const IconSkills    = () => <Svg><circle cx="12" cy="9" r="5.5" /><path d="M8.5 13.5 7 22l5-2.6L17 22l-1.5-8.5" /></Svg>
+import { IconHome, IconSchedule, IconHours, IconScout, IconRobot } from './navIcons'
+const ROBOT_PATHS = ['/robot', '/batteries', '/jobs', '/status-reports', '/certifications']
 
 // Mono unit/context tag shown at the right of the header, derived from route.
 const CONTEXT_TAGS = [
-  ['/dashboard',   'CMD'],
+  ['/dashboard',   'HOME'],
+  ['/manage',      'ADMIN'],
+  ['/robot',       'ROBOT'],
   ['/schedule',    'SCHEDULE'],
   ['/scouting',    'SCOUTING'],
   ['/my-hours',    'HRS//SELF'],
@@ -103,7 +95,7 @@ function Dropdown({ label, paths = [], tourId, align = 'left', badge = 0, childr
   )
 }
 
-function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false, isParent = false, pendingAccess = 0, openFeedback = 0, signouts = null }) {
+function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false, isParent = false, waiting = 0, signouts = null }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -111,11 +103,15 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
 
   async function replayTour() {
     const { startTour } = await import('./tour')
-    startTour(isStaff, undefined, isParent)
+    startTour(isStaff, undefined, isParent, isAdmin)
   }
 
   const itemClass = ({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`
 
+  // At most six items for anyone (decision 49, ledger 0017): every staff tool
+  // lives on /manage behind ONE item carrying the total waiting; driver
+  // documents, emergency information and the weekly survey moved to the
+  // profile, or to Home when they need doing.
   return (
     <div className="nav-avatar-wrap" ref={ref} onKeyDown={e => { if (e.key === 'Escape') setOpen(false) }}>
       {/* The pending dot is aria-hidden, so the count is in the button's name. */}
@@ -124,13 +120,13 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
         data-tour="nav-profile"
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        aria-label={isStaff && pendingAccess > 0 ? `Account menu, ${pendingAccess} pending request${pendingAccess === 1 ? '' : 's'}` : 'Account menu'}
+        aria-label={isStaff && waiting > 0 ? `Account menu, ${waiting} waiting in Team admin` : 'Account menu'}
       >
         {avatarUrl
           ? <img src={avatarUrl} className="navbar-avatar" alt={name} />
           : <div className="navbar-avatar navbar-avatar-init">{initials}</div>
         }
-        {isStaff && pendingAccess > 0 && <span className="nav-avatar-dot" aria-hidden="true" />}
+        {isStaff && waiting > 0 && <span className="nav-avatar-dot" aria-hidden="true" />}
       </button>
       {open && (
         <div className="nav-dropdown-menu nav-avatar-menu" onClick={() => setOpen(false)}>
@@ -138,90 +134,27 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
             <span className="nav-menu-name">{name}</span>
             {role && <RoleBadge role={role} />}
           </div>
-          <div className="nav-dropdown-divider" />
-          <NavLink to="/profile" className={itemClass}>My Profile</NavLink>
-          <NavLink to="/certifications" className={itemClass}>Certifications</NavLink>
-          <NavLink to="/handbook" className={itemClass}>Handbook</NavLink>
-          {/* Member standing (0015): a student's own record; staff open the team view below. */}
-          {!isParent && !isStaff && (
-            <NavLink to="/standing" end className={itemClass}>My standing</NavLink>
+          {isStaff && (
+            <NavLink to="/manage" className={({ isActive }) => `nav-dropdown-item nav-admin-item${isActive ? ' active' : ''}`} data-tour="nav-manage">
+              Team admin
+              {waiting > 0 && <span className="nav-badge">{waiting}</span>}
+            </NavLink>
           )}
-          {/* Event rosters (0016): every member reads a posted roster. */}
-          {!isParent && <NavLink to="/scouting" className={itemClass}>Scouting</NavLink>}
-          {!isParent && <NavLink to="/batteries" className={itemClass}>Batteries</NavLink>}
-          {!isParent && <NavLink to="/rosters" className={itemClass}>Event rosters</NavLink>}
-          {/* 0017: the leaderboard and sub-team status for members; emergency
-              information for parents (staff open it from the staff block);
-              driver documents for anyone who drives. */}
-          {!isParent && <NavLink to="/leaderboard" className={itemClass}>Hours leaderboard</NavLink>}
-          {!isParent && <NavLink to="/status-reports" className={itemClass}>Sub-team status</NavLink>}
-          {isParent && <NavLink to="/emergency-info" className={itemClass}>Emergency information</NavLink>}
-          <NavLink to="/driver-docs" className={itemClass}>Driver documents</NavLink>
-          {/* Sign-out approvals: staff and the students given signout.approve
-              (0014). null until 0014 is pasted or for anyone else. */}
-          {signouts !== null && (
+          {/* A student Mr. Pina named a sign-out approver (signout.approve, 0014)
+              is not staff and has no Team admin: their one tool sits here. */}
+          {!isStaff && signouts !== null && (
             <NavLink to="/signouts" className={itemClass}>
               Sign-outs
               {signouts > 0 && <span className="nav-badge">{signouts}</span>}
             </NavLink>
           )}
-          {/* Weekly survey: a member tool, not staff chrome, and a sixth item
-              in the primary row does not survive a phone. (Study sat beside it
-              until the old training page was retired, decision 27.) */}
-          {!isParent && (
-            <NavLink to="/survey" className={itemClass}>Weekly Survey</NavLink>
-          )}
-          {/* Offsite events: the carpool and food boards. Staff reach the same
-              list from the staff block below, where it also opens the mentor
-              page. A parent-only account plans through its emailed link. */}
-          {!isParent && !isStaff && (
-            <NavLink to="/trips" className={itemClass}>Trips</NavLink>
-          )}
+          <NavLink to="/profile" className={itemClass}>My profile</NavLink>
+          {!isParent && !isStaff && <NavLink to="/standing" end className={itemClass}>My standing</NavLink>}
+          {isParent && <NavLink to="/standing" end className={itemClass}>Standing</NavLink>}
+          <NavLink to="/handbook" className={itemClass}>Handbook</NavLink>
           <button className="nav-dropdown-item" onClick={replayTour}>Replay tour</button>
-
-          {isStaff && (
-            <>
-              <div className="nav-dropdown-divider" />
-              <NavLink to="/readiness" className={itemClass}>Readiness</NavLink>
-              <NavLink to="/standing/team" className={itemClass}>Team standing</NavLink>
-              <NavLink to="/emergency-info" className={itemClass}>Emergency information</NavLink>
-              <NavLink to="/no-photo" className={itemClass}>No-photo list</NavLink>
-              {/* Admin-only, not staff-wide: a report can quote whatever the
-                  member had on screen, and the table's RLS is is_admin(). */}
-              {isAdmin && (
-                <NavLink to="/feedback" className={itemClass}>
-                  Feedback
-                  {openFeedback > 0 && <span className="nav-badge">{openFeedback}</span>}
-                </NavLink>
-              )}
-              {/* Admin-only: a post can ping whole Discord roles. */}
-              {isAdmin && <NavLink to="/announce" className={itemClass}>Announce</NavLink>}
-
-              <NavLink to="/surveys" className={itemClass}>Surveys</NavLink>
-              <NavLink to="/trips" className={itemClass}>Trips</NavLink>
-
-              <span className="nav-dropdown-section">People</span>
-              {isAdmin && <NavLink to="/roster" className={itemClass}>Roster</NavLink>}
-              <NavLink to="/applications" className={itemClass}>Applications</NavLink>
-              <NavLink to="/access-requests" className={itemClass}>
-                Access Requests
-                {pendingAccess > 0 && <span className="nav-badge">{pendingAccess}</span>}
-              </NavLink>
-              <NavLink to="/squad" className={itemClass}>Squad</NavLink>
-
-              <span className="nav-dropdown-section">Live</span>
-              <NavLink to="/activity" className={itemClass}>Activity</NavLink>
-              <NavLink to="/display" className={itemClass}>Display</NavLink>
-            </>
-          )}
-
           <div className="nav-dropdown-divider" />
-          <button
-            className="nav-dropdown-item nav-signout-item"
-            onClick={() => supabase.auth.signOut()}
-          >
-            Sign out
-          </button>
+          <button className="nav-dropdown-item nav-signout-item" onClick={() => supabase.auth.signOut()}>Sign out</button>
         </div>
       )}
     </div>
@@ -239,52 +172,29 @@ export default function NavBar({ hasRole = () => false, session = null }) {
   const myRole    = ROLE_ORDER.find(r => hasRole(r))
   const { pathname } = useLocation()
 
-  // Pending access-request count for the staff menu badge (staff-only; RLS
-  // returns 0 for non-staff). Refreshes when navigating to/from the page.
-  const [pendingAccess, setPendingAccess] = useState(0)
+  // The total waiting across the Team admin tools this person can open
+  // (src/adminTools.js, the same counts /manage shows). Staff only.
+  const [waiting, setWaiting] = useState(0)
   useEffect(() => {
     if (!isStaff) return
     let active = true
-    Promise.all([
-      supabase.from('access_requests')
-        .select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-      supabase.from('parent_link_requests')
-        .select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-    ]).then(([a, b]) => {
-      if (active) setPendingAccess((a.count ?? 0) + (b.count ?? 0))
-    })
+    loadAdminCounts(supabase, { isAdmin }).then((c) => { if (active) setWaiting(totalWaiting(c, { isAdmin })) }).catch(() => {})
     return () => { active = false }
-  }, [isStaff, pathname])
+  }, [isStaff, isAdmin, pathname])
 
-  // Open-feedback count for the admin menu badge. Admin-gated on the client for
-  // the same reason the query is cheap to skip -- the feedback select policy is
-  // is_admin(), so a non-admin would get 0 anyway.
-  const [openFeedback, setOpenFeedback] = useState(0)
-  useEffect(() => {
-    if (!isAdmin) return
-    let active = true
-    supabase.from('feedback')
-      // Both spellings: 0002 maps 'open' to 'new' in place, and this must
-      // count right whether or not that migration has been applied yet.
-      .select('id', { count: 'exact', head: true }).in('status', ['new', 'open'])
-      .then(({ count }) => { if (active) setOpenFeedback(count ?? 0) })
-    return () => { active = false }
-  }, [isAdmin, pathname])
-
-  // Sign-out requests waiting, for approvers only (0014). The RPC answers false
-  // for everyone else and errors before 0014; either way the entry stays hidden.
+  // Sign-outs waiting, for a NON-staff approver only (staff see it on
+  // /manage). The RPC answers false for everyone else and errors before 0014.
   const [signouts, setSignouts] = useState(null)
   useEffect(() => {
-    if (isParent) return
+    if (isParent || isStaff) { setSignouts(null); return }
     let active = true
     supabase.rpc('can_approve_signouts').then(async ({ data, error }) => {
       if (!active || error || data !== true) { if (active) setSignouts(null); return }
-      const { count } = await supabase.from('signout_requests')
-        .select('id', { count: 'exact', head: true }).eq('status', 'pending')
+      const { count } = await supabase.from('signout_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending')
       if (active) setSignouts(count ?? 0)
     })
     return () => { active = false }
-  }, [isParent, pathname])
+  }, [isParent, isStaff, pathname])
 
   return (
     <nav className="navbar">
@@ -297,7 +207,7 @@ export default function NavBar({ hasRole = () => false, session = null }) {
 
         <div className="navbar-links">
           <NavLink to="/dashboard" data-tour="nav-dashboard" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            <IconDashboard />Dashboard
+            <IconHome />Home
           </NavLink>
 
           <NavLink to="/schedule" data-tour="nav-schedule" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
@@ -309,31 +219,27 @@ export default function NavBar({ hasRole = () => false, session = null }) {
               <IconHours />Team Hours
             </NavLink>
           ) : (<>
-          {/* Jobs now sits before Hours (swapped). */}
-          <NavLink to="/jobs" data-tour="nav-jobs" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            <IconJobs />Jobs
+          <NavLink to="/scouting" data-tour="nav-scouting" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+            <IconScout />Scouting
           </NavLink>
 
-          <Dropdown label={<><IconHours />Hours</>} tourId="nav-hours" paths={['/my-hours', '/log-hours', '/hours', '/verify-hours', '/reports']}>
-            <NavLink to="/my-hours"  className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>My Hours</NavLink>
-            <NavLink to="/log-hours" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Log Hours</NavLink>
-            {isStaff && <div className="nav-dropdown-divider" />}
-            <NavLink to="/hours"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Team Hours</NavLink>
-            {isStaff && <NavLink to="/verify-hours" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Verify Hours</NavLink>}
-            {isStaff && <NavLink to="/reports"      className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Reports</NavLink>}
+          {/* Robot (ledger 0017): batteries, jobs, sub-team status and
+              certifications behind one hub; their own addresses still work. */}
+          <NavLink to="/robot" data-tour="nav-robot" className={() => `nav-link${ROBOT_PATHS.some(p => pathname === p || pathname.startsWith(p + '/')) ? ' active' : ''}`}>
+            <IconRobot />Robot
+          </NavLink>
+
+          <Dropdown label={<><IconHours />Hours</>} tourId="nav-hours" align="right" paths={['/my-hours', '/log-hours', '/hours', '/leaderboard']}>
+            <NavLink to="/my-hours"  className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>My hours</NavLink>
+            <NavLink to="/log-hours" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Log hours</NavLink>
+            <NavLink to="/hours"     className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Team hours</NavLink>
+            <NavLink to="/leaderboard" className={({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`}>Leaderboard</NavLink>
           </Dropdown>
-
-          {/* The official IDEA certifications (read-only mirror). The old
-              Skills catalog, Certify and Coverage pages were retired with the
-              old skills system (decision 27); their addresses redirect here. */}
-          <NavLink to="/certifications" data-tour="nav-certs" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-            <IconSkills />Certs
-          </NavLink>
           </>)}
         </div>
 
         <div className="navbar-account">
-          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isAdmin={isAdmin} isParent={isParent} pendingAccess={pendingAccess} openFeedback={openFeedback} signouts={signouts} />
+          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isAdmin={isAdmin} isParent={isParent} waiting={waiting} signouts={signouts} />
         </div>
       </div>
     </nav>

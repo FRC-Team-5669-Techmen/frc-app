@@ -188,22 +188,20 @@ export default {
       const widget2 = await t.count('.fb-launch');
       t.check('no nav bar and no feedback launcher on /e, against both on /trips', nav === 0 && widget === 0 && nav2 === 1 && widget2 >= 1,
         `/e: nav ${nav}, launcher ${widget}; /trips: nav ${nav2}, launcher ${widget2}`);
-      const menuTrips = async () => {
-        await t.press('.nav-avatar-btn');
-        await t.waitFor('.nav-avatar-menu');
-        const n = await t.count('.nav-avatar-menu a[href="/trips"]');
-        const all = await t.count('.nav-avatar-menu a');
-        await t.page.keyboard.press('Escape');
-        return { n, all };
-      };
-      const student = await menuTrips();
-      await t.open('/dashboard', { persona: 'parent', ready: '.nav-avatar-btn' });
-      const parent = await menuTrips();
-      await t.open('/dashboard', { persona: 'mentor', ready: '.nav-avatar-btn' });
-      const mentor = await menuTrips();
-      t.check('the menu offers Trips once to a student and once to staff, and not to a parent-only account (it uses its link)',
-        student.n === 1 && mentor.n === 1 && parent.n === 0 && parent.all > 0,
-        `student ${student.n}, mentor ${mentor.n}, parent ${parent.n} of ${parent.all} menu links`);
+      // Trips left the account menu (ledger 0017): members reach it from the
+      // Schedule, staff from Team admin too; a parent-only account uses its link.
+      const scheduleTrips = async (persona) => {
+        await t.open('/schedule', { persona, ready: '.sch-title' })
+        return { n: await t.count('.sch-jump a[href="/trips"]'), all: await t.count('.sch-wrap a, .sch-wrap button') }
+      }
+      const student = await scheduleTrips('student')
+      const parent = await scheduleTrips('parent')
+      const mentor = await scheduleTrips('mentor')
+      await t.open('/manage', { persona: 'mentor', ready: '.hub-tile' })
+      const mentorAdmin = await t.count('.hub-tile[data-tile="/trips"]')
+      t.check('Trips: on the Schedule for a student and staff, on Team admin for staff, and not for a parent-only account (it uses its link)',
+        student.n === 1 && mentor.n === 1 && mentorAdmin === 1 && parent.n === 0 && parent.all > 0,
+        `student ${student.n}, mentor ${mentor.n} (+${mentorAdmin} admin), parent ${parent.n} of ${parent.all} controls`);
     });
 
     // ════ a fresh family signs up, start to finish ════════════════════════

@@ -14,6 +14,22 @@ const manages = (ctx, event) => eligible(ctx) && (ctx.persona?.isStaff
   || rows(ctx.db, 'event_roles').some(r => r.event_id === event && r.member_id === ctx.user.id && r.role === 'scouting_lead')
   || rows(ctx.db, 'member_permissions').some(r => r.member_id === ctx.user.id && r.capability === 'scouting.manage'))
 
+const YNS = ['yes', 'no', 'did_not_see']
+function matchProblem(m) {
+  if (!m || typeof m !== 'object' || Array.isArray(m)) return 'Match fields must be an object.'
+  for (const [k, v] of Object.entries(m)) {
+    if (v === null) return 'Leave a match field out when it was not recorded; null is not an answer.'
+    if (['auto_fuel', 'teleop_fuel', 'teleop_missed'].includes(k)) { if (!Number.isInteger(v) || v < 0 || v > 500) return 'A FUEL count is a whole number from 0 to 500.' }
+    else if (['auto_climb', 'shuttled', 'died', 'tipped', 'stuck', 'broke'].includes(k)) { if (!YNS.includes(v)) return 'Choose yes, no or did not see.' }
+    else if (k === 'defense') { if (!['none', 'some', 'most'].includes(v)) return 'Defense is none, some or most of the match.' }
+    else if (['defense_rating', 'driver_skill'].includes(k)) { if (![1, 2, 3, 4, 5].includes(v)) return 'A rating is a whole number from 1 to 5.' }
+    else if (k === 'tower') { if (!['none', 'level1', 'level2', 'level3', 'failed', 'did_not_see'].includes(v)) return 'Choose the TOWER level reached.' }
+    else if (k === 'fouls') { if (typeof v !== 'string' || v.length > 500) return 'Fouls and cards are a note of at most 500 characters.' }
+    else return 'Unknown match field.'
+  }
+  return null
+}
+
 function save(ctx) {
   const { args: a, db, user, engine, now, uuid } = ctx
   if (!eligible(ctx)) return fail('Scouting is available to approved students and staff.', '42501')
@@ -38,6 +54,12 @@ function save(ctx) {
     if ('source_event' in p && p.source_scope !== 'external') return fail('A source event needs external scope.')
     if (p.source_scope === 'external' && (!/^\d{4}[a-z0-9]{2,40}$/.test(p.source_event || '') || !a.p_match.startsWith(`${p.source_event}_`) || !/^https:\/\/[^\s]+$/.test(p.video_url || '') || (a.p_kind === 'observation' && p.source !== 'video'))) return fail('Prior-event footage needs its source event, full match key and video URL.')
     if (a.p_kind === 'observation' && p.assignment_id && !rows(db, 'scouting_records').some(r => r.id === p.assignment_id && r.kind === 'assignment' && r.event_id === a.p_event && r.team_number === a.p_team && r.match_key === a.p_match && r.payload.assignee === user.id && r.payload.status !== 'cancelled' && (r.payload.source_scope || 'current') === (p.source_scope || 'current') && (r.payload.source_event || null) === (p.source_event || null))) return fail('This assignment does not match your observation.')
+  }
+  // 0027 (port of scouting_private.validate_match): the REBUILT match fields.
+  if ('match' in p) {
+    if (a.p_kind !== 'observation' || !ctx.engine.applied('0027')) return fail('Unknown scouting field.')
+    const problem = matchProblem(p.match)
+    if (problem) return fail(problem)
   }
   if (a.p_kind === 'pit' && Object.values(p.capabilities ?? {}).some(v => !['yes', 'no', 'unknown'].includes(v))) return fail('Choose a pit claim state.')
   if (a.p_kind === 'message' && (!p.text?.trim() || !['open', 'resolved'].includes(p.status))) return fail('Enter a message and status.')

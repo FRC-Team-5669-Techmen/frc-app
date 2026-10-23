@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CAPABILITIES } from './model'
 import { prepareFootageRecord } from './provenance'
+import MatchFields from './MatchFields'
+import { cleanMatch, recordedCount } from './match'
 
 const TITLES = { observation: 'Match observation', pit: 'Pit report', assignment: 'Assign a scout', message: 'Pit message', team: 'Event team' }
 const ACTIONS = { observation: 'Save observation', pit: 'Save pit report', assignment: 'Save assignment', message: 'Save message', team: 'Save team' }
@@ -26,7 +28,7 @@ export function Choice({ label, value, options, onChange }) {
 // Native dialog provides modal containment and Escape handling. React removal
 // needs explicit focus return; removing an open dialog skips native close().
 // Persist the form before claiming a draft is safe on this device.
-export default function RecordForm({ kind, record, team, assignment, replyTo, members, store, uid, eventId, onSave, onClose }) {
+export default function RecordForm({ kind, record, team, assignment, replyTo, members, store, uid, eventId, onSave, onClose, matchFields = false }) {
   const dialog = useRef(null)
   const [value, setValue] = useState(() => initialValue(kind, record, team, assignment, replyTo))
   const [ready, setReady] = useState(false)
@@ -79,10 +81,18 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
     submitting.current = true; setError(''); setSaving(true)
     try {
       await writeSequence.current
-      let row = { id: value.id, version: value.version, kind, team_number: Number(value.team_number), match_key: ['observation', 'assignment'].includes(kind) ? value.match_key.trim() : null, payload: value.payload }
+      // Match fields (0027) travel only when recorded, and only once the server
+      // accepts them; a field left out is not recorded, never 0.
+      let payload = value.payload
+      if (kind === 'observation') {
+        const { match, ...rest } = payload
+        const clean = matchFields ? cleanMatch(match) : {}
+        payload = Object.keys(clean).length ? { ...rest, match: clean } : rest
+      }
+      let row = { id: value.id, version: value.version, kind, team_number: Number(value.team_number), match_key: ['observation', 'assignment'].includes(kind) ? value.match_key.trim() : null, payload }
       if (!Number.isInteger(row.team_number) || row.team_number < 1 || row.team_number > 99999) throw new Error('Enter a team number from 1 to 99999.')
       if (row.match_key === '') throw new Error('Enter the match label, such as qm1.')
-      if (kind === 'observation' && !Object.keys(value.payload.answers).length && !value.payload.notes.trim()) throw new Error('Record an answer or a note before saving.')
+      if (kind === 'observation' && !Object.keys(value.payload.answers).length && !value.payload.notes.trim() && !(matchFields && recordedCount(value.payload.match))) throw new Error('Record an answer or a note before saving.')
       if (kind === 'observation' && value.payload.source === 'video' && !value.payload.video_url) throw new Error('Add the video link so someone can review this observation.')
       if (value.payload.video_url && !/^https:\/\//i.test(value.payload.video_url)) throw new Error('Use an HTTPS video link.')
       if (kind === 'message' && !value.payload.text.trim()) throw new Error('Write a short note about the robot.')
@@ -108,8 +118,12 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
           {kind === 'observation' && <>
             <label>Source<select aria-label="Source" value={p.source} onChange={e => payload('source', e.target.value)}><option value="live">Live match</option><option value="video">Match video</option></select></label>
             {p.source === 'video' && <label>Video URL<input type="url" placeholder="https://…" value={p.video_url} onChange={e => payload('video_url', e.target.value)} /></label>}
+            {matchFields ? <MatchFields value={p.match ?? {}} onChange={m => payload('match', m)} />
+              : <p className="sc-help sc-not-setup">FUEL counts, TOWER and reliability fields start when migration 0027 is pasted. The capability questions below still work.</p>}
+            <section className="sc-phase" aria-label="Capabilities"><h3 className="sc-phase-title">Capabilities</h3>
             <p className="sc-help">Yes means you saw it work. No means you saw it fail. If the view was blocked, choose Did not see. Leave an answer blank if you have not checked it.</p>
             {CAPABILITIES.map(c => <Choice key={c.key} label={c.label} value={p.answers[c.key]} options={[["yes", "Yes"], ["no", "No"], ["did_not_see", "Did not see"], ["not_applicable", "Not applicable"]]} onChange={v => answer('answers', c.key, v)} />)}
+            </section>
             <label>Notes<textarea aria-label="Notes" maxLength="4000" placeholder="What happened? Which part of the match?" value={p.notes} onChange={e => payload('notes', e.target.value)} /></label>
             <label className="sc-checkbox"><input type="checkbox" checked={p.request_delivery === true} onChange={e => payload('request_delivery', e.target.checked)} /><span>Request Discord delivery after sync</span></label>
           </>}

@@ -31,6 +31,15 @@ const H = 3_600_000;
 const outsOf = async (t, id) => (await t.rows('attendance_events')).filter((e) => e.user_id === id && e.type === 'out');
 const reqsOf = async (t, id) => (await t.rows('signout_requests')).filter((r) => r.member_id === id);
 
+// Staff reach Sign-outs from Team admin (/manage); a student approver from the menu.
+async function manageHas(t, path) {
+  await t.open('/manage', { ready: '.hub-wrap' });
+  await t.settle();
+  return t.count(`.hub-tile[data-tile="${path}"]`);
+}
+async function manageWaiting(t, path) {
+  return (await t.page.locator(`.hub-tile[data-tile="${path}"] .hub-tile-badge`).textContent().catch(() => null)) ?? null;
+}
 async function menuHas(t, label) {
   await t.press('.nav-avatar-btn');
   await t.waitFor('.nav-avatar-menu');
@@ -125,7 +134,10 @@ export default {
     const before = [(await outsOf(t, P.student2.id)).length, (await outsOf(t, P.exempt.id)).length];
     await t.open('/signouts', { persona: 'mentor', mig: 'all', ready: '.sop-row' });
     await t.settle();
-    t.eq('the mentor menu has Sign-outs', await menuHas(t, 'Sign-outs'), 1);
+    t.eq('the mentor menu has no separate Sign-outs (it is in Team admin)', await menuHas(t, 'Sign-outs'), 0);
+    t.eq('Team admin shows Sign-outs with 2 waiting, at the top', [await manageHas(t, '/signouts'), await manageWaiting(t, '/signouts'), await t.count('.hub-group-waiting .hub-tile[data-tile="/signouts"]')], [1, '2', 1]);
+    await t.open('/signouts', { persona: 'mentor', mig: 'all', ready: '.sop-row' });
+    await t.settle();
     t.eq('two waiting, one Approve all', [await t.count('.sop-row'), await t.text('.sop-card-head .sop-btn-primary')], [2, 'Approve all 2']);
     await t.press('.sop-card-head .sop-btn-primary');
     await t.waitFor(() => !document.querySelector('.sop-row'));
@@ -232,7 +244,7 @@ export default {
     t.as('pre-0014');
     await t.open('/signouts', { persona: 'mentor', mig: PRE_0014, reset: true, ready: '.sop-title' });
     t.eq('/signouts: not set up yet, no queue', [((await t.bodyText()).includes('Not set up yet')), await t.count('.sop-row')], [true, 0]);
-    t.eq('no Sign-outs in the mentor menu (1 with 0014)', await menuHas(t, 'Sign-outs'), 0);
+    t.eq('no waiting count on Sign-outs in Team admin before 0014 (2 with it)', await (async () => { await manageHas(t, '/signouts'); return manageWaiting(t, '/signouts') })(), null);
     const pOut = (await outsOf(t, P.student.id)).length;
     await t.open('/checkin?loc=shop-main', { persona: 'student', mig: PRE_0014, ready: '.checkin-checkout' });
     await t.settle();

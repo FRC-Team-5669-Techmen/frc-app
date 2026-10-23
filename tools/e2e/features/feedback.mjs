@@ -320,16 +320,18 @@ export default {
     // ── the nav badge and link ──
     for (const mig of ['all', 'none']) {
       t.as(`nav · mig ${mig}`);
-      await t.open('/dashboard', { persona: 'admin', mig, reset: true, ready: '.nav-avatar-btn' });
+      await t.open('/manage', { persona: 'admin', mig, reset: true, ready: '.hub-tile' });
+      await t.settle();
+      const badge = await t.evaluate(() => document.querySelector('.hub-tile[data-tile="/feedback"] .hub-tile-badge')?.textContent.trim() ?? null);
+      t.eq('Team admin: the Feedback tile counts New (old and new spelling)', badge, String(N));
+      await t.open('/dashboard', { persona: 'admin', mig, ready: '.nav-avatar-btn' });
       await t.press('.nav-avatar-btn');
       await t.waitFor('.nav-avatar-menu');
       await t.settle();
-      const badge = await t.evaluate(() => document.querySelector('.nav-avatar-menu a[href="/feedback"] .nav-badge')?.textContent.trim() ?? null);
-      t.eq('admin avatar menu: Feedback badge counts New (old and new spelling)', badge, String(N));
-      await t.open('/dashboard', { persona: 'mentor', mig, ready: '.nav-avatar-btn' });
-      await t.press('.nav-avatar-btn');
-      await t.waitFor('.nav-avatar-menu');
-      t.eq('mentor avatar menu has no Feedback link (0, against 1 for the admin)', await t.count('.nav-avatar-menu a[href="/feedback"]'), 0);
+      const total = Number(await t.evaluate(() => document.querySelector('.nav-avatar-menu a[href="/manage"] .nav-badge')?.textContent.trim() ?? '0'));
+      t.check('the Team admin item in the menu carries a total that includes the New feedback', total >= N, `menu total ${total}, feedback ${N}`);
+      await t.open('/manage', { persona: 'mentor', mig, ready: '.hub-tile' });
+      t.eq('mentor Team admin has no Feedback tile (0, against 1 for the admin)', await t.count('.hub-tile[data-tile="/feedback"]'), 0);
     }
 
     // ════ the widget ═════════════════════════════════════════════════════

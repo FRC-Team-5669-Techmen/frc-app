@@ -427,3 +427,10 @@
 
 .profile-cert-note { margin: 0.25rem 0 0; color: var(--steel); font-size: 0.9rem; }
 .profile-cert-note a { color: var(--gold); }
+
+/* Your records (ledger 0017): links moved from the account menu. */
+.profile-quick { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: 0.5rem; margin: 0 0 1.25rem; }
+.profile-quick-link { display: flex; flex-direction: column; justify-content: center; gap: 0.15rem; min-height: 56px; padding: 0.55rem 0.8rem; color: var(--text); text-decoration: none; background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); }
+.profile-quick-link:hover { border-color: var(--steel); }
+.profile-quick-link b { font-family: var(--font-ui); font-weight: 600; font-size: 0.95rem; }
+.profile-quick-link span { font-size: 0.8rem; color: var(--steel); }

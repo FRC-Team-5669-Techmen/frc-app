@@ -356,3 +356,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Phone: the five tabs in ONE row, icon over label (ledger 0017, decision 49).
+   Three rows of pads (two, two, then Hours alone) pushed the page below the
+   fold. Parents' three tabs share the row the same way. */
+@media (max-width: 639px) {
+  .navbar-links { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; padding: 6px 0; }
+  .navbar-links .nav-link, .navbar-links .nav-dropdown-trigger { flex-direction: column; gap: 3px; padding: 6px 2px; font-size: 0.58rem; letter-spacing: 0.01em; min-width: 0; width: 100%; overflow: hidden; text-overflow: clip; }
+  .navbar-links .nav-icon { width: 1.15rem; height: 1.15rem; }
+  .navbar-links .nav-dropdown { min-width: 0; }
+  .navbar-links .nav-chevron { display: none; }
+}

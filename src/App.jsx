@@ -76,6 +76,8 @@ const TripsPage          = lazy(() => import('./TripsPage'))
 const TripsAdmin         = lazy(() => import('./TripsAdmin'))
 const ConnectorPage      = lazy(() => import('./ConnectorPage'))
 const BatteriesPage      = lazy(() => import('./BatteriesPage'))
+const RobotPage          = lazy(() => import('./RobotPage'))
+const ManagePage         = lazy(() => import('./ManagePage'))
 // Mounted in ProtectedLayout, so it is on every authenticated page. Lazy with
 // its OWN Suspense boundary and a null fallback: sharing the app-level
 // boundary would put the whole shell back on the splash while it loads.
@@ -462,6 +464,11 @@ export default function App() {
           <Route path="/trips/:id/manage" element={<TripsAdmin hasRole={hasRole} />} />
           {/* The battery log (0026, ledger 0017): students and staff; the page gates parents. */}
           <Route path="/batteries"       element={<BatteriesPage session={session} hasRole={hasRole} />} />
+          {/* The navigation hubs (ledger 0017, decision 49): the Robot top-bar
+              item, and Team admin for staff. Every page they reach keeps its
+              own address. */}
+          <Route path="/robot"           element={parentView ? <Navigate to="/dashboard" replace /> : <RobotPage session={session} hasRole={hasRole} />} />
+          <Route path="/manage"          element={<ManagePage hasRole={hasRole} />} />
           {/* Display lives inside the layout so the nav + profile stay visible. */}
           <Route path="/display" element={<PresenceBoard hasRole={hasRole} />} />
         </Route>

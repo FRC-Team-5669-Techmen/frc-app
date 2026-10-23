@@ -86,14 +86,14 @@ export default function BatteriesPage({ session, hasRole = () => false }) {
 
   if (parentOnly) return <main className="ba-wrap"><h1 className="ba-title">Batteries</h1><p className="ba-muted">The battery log is for students and staff.</p><Link className="ba-link" to="/dashboard">Back to Home</Link></main>
   if (state.loading) return <main className="ba-wrap"><h1 className="ba-title">Batteries</h1><p className="ba-muted" role="status">Loading the battery log…</p></main>
-  if (state.missing) return <main className="ba-wrap"><Link className="ba-back" to="/dashboard">← Home</Link><h1 className="ba-title">Batteries</h1><div className="ba-empty"><h2>Not set up yet</h2><p>The battery log starts when migration 0026 is pasted into Supabase. Everything else in the app works as before.</p></div></main>
+  if (state.missing) return <main className="ba-wrap"><Link className="ba-back" to="/robot">← Robot</Link><h1 className="ba-title">Batteries</h1><div className="ba-empty"><h2>Not set up yet</h2><p>The battery log starts when migration 0026 is pasted into Supabase. Everything else in the app works as before.</p></div></main>
   if (state.error) return <main className="ba-wrap"><h1 className="ba-title">Batteries</h1><p className="ba-error" role="alert">{errText(state.error)}</p><button className="ba-btn" onClick={load}>Try again</button></main>
 
   const opened = open ? board.find((b) => b.id === open) : null
   const last = recall()
   return (
     <main className="ba-wrap" data-page="batteries">
-      <Link className="ba-back" to="/dashboard">← Home</Link>
+      <Link className="ba-back" to="/robot">← Robot</Link>
       <header className="ba-head">
         <div>
           <span className="ba-eyebrow">Pit electrical</span>

@@ -14,7 +14,12 @@ import SignoutForm from './SignoutForm'
 import { normEmail, isHeld, syncSummary } from './ideaCerts'
 import { storageKey, cleanProgress, passedCount } from './handbook/sign'
 import { LESSONS } from './handbook/lessons'
+import { doThisNow } from './doThisNow'
+import { loadAdminCounts, totalWaiting } from './adminTools'
+import { resolveOpenSurvey } from './surveys'
+import { isSchemaMissing } from './schemaMissing'
 import './HomePage.css'
+import './Hub.css'
 
 const SO_POLL_MS = 20_000
 
@@ -27,7 +32,7 @@ function fmtClock12(iso) {
 // existing page (jobs, readiness_summary, the NavBar pending counts, the IDEA
 // certifications mirror); nothing new is introduced here. The old skills tile,
 // coverage tile and study tile went with the old skills system (decision 27).
-function useTileMetrics(uid, isStaff, email) {
+function useTileMetrics(uid, isStaff, email, isAdmin = false) {
   const [m, setM] = useState(null)
 
   useEffect(() => {
@@ -52,6 +57,8 @@ function useTileMetrics(uid, isStaff, email) {
             .order('event_time', { ascending: false }).limit(6),
         ])
         if (!active) return
+        const admin = await loadAdminCounts(supabase, { isAdmin }).catch(() => null)
+        if (!active) return
 
         // IDEA mirror: how many certifications it holds and when it last
         // accepted a sync. A missing mirror (0001 not applied) reads as null.
@@ -59,6 +66,7 @@ function useTileMetrics(uid, isStaff, email) {
 
         setM({
           pending: (access.count ?? 0) + (plinks.count ?? 0),
+          waiting: admin ? totalWaiting(admin, { isAdmin }) : null,
           flags: readiness.data?.action_queue?.total ?? 0,
           certCatalog: catalog.error ? null : (catalog.count ?? 0),
           certLastSync: sync.lastOk?.received_at ?? null,
@@ -93,7 +101,7 @@ function useTileMetrics(uid, isStaff, email) {
     }
     load()
     return () => { active = false }
-  }, [uid, isStaff, email])
+  }, [uid, isStaff, email, isAdmin])
 
   return m
 }
@@ -113,7 +121,8 @@ export default function HomePage({ session, hasRole = () => false }) {
   const [rsvping, setRsvping] = useState(false)
 
   const glance = useGlance()
-  const metrics = useTileMetrics(uid, isStaff, session?.user?.email)
+  const [dtnSrc, reloadDtn] = useDoThisNow(uid, isStaff)
+  const metrics = useTileMetrics(uid, isStaff, session?.user?.email, hasRole('admin'))
 
   // Newest first: past the API's row cap an ascending read drops TODAY's rows,
   // the ones the status depends on. A failed read keeps whatever was shown
@@ -264,8 +273,11 @@ export default function HomePage({ session, hasRole = () => false }) {
       <div className="home-body">
         <div className="mb-grid">
 
+          {dtnSrc && <DoThisNow items={doThisNow({ ...dtnSrc, sentBack: sentBack ?? null })}
+            onDone={async (id) => { await writeVia(supabase, 'mark_notice_read', { p_notice: id }); reloadDtn() }} />}
+
           {/* ── Command strip ── */}
-          <section className="mb-tile mb-you hud-brackets" data-tour="status-card">
+          <section className="mb-tile mb-you hud-brackets" data-tour="status-card" id="status">
             <span className="hud-bracket-b" aria-hidden="true" />
             <div className="mb-you-top">
               <span className="mb-tile-eyebrow">YOU</span>
@@ -375,6 +387,50 @@ export default function HomePage({ session, hasRole = () => false }) {
   )
 }
 
+// ── Do this now (ledger 0017) ──
+// Built only from data the app already reads (src/doThisNow.js). Rendered
+// only when something is open: an empty list renders nothing at all.
+function useDoThisNow(uid, isStaff) {
+  const [src, setSrc] = useState(null)
+  const load = useCallback(async () => {
+    const [extras, notices, surveys] = await Promise.all([
+      isStaff ? Promise.resolve({ data: null }) : supabase.rpc('member_extras', { p_member: uid }),
+      supabase.from('member_notices').select('id, kind, title, created_at, read_at').eq('member_id', uid).eq('kind', 'signup').is('read_at', null).order('created_at', { ascending: false }).limit(10),
+      isStaff ? Promise.resolve({ data: [] }) : supabase.from('surveys').select('id, title, opens_at, closes_at, is_open').eq('is_open', true),
+    ])
+    let survey = null
+    const open = !surveys.error ? resolveOpenSurvey(surveys.data ?? []) : null
+    if (open) {
+      const mine = await supabase.from('survey_responses').select('id').eq('survey_id', open.id).eq('member_id', uid).maybeSingle()
+      if (!mine.error) survey = { title: open.title, answered: !!mine.data }
+    }
+    setSrc({
+      onboarding: !extras.error && extras.data?.onboarding ? extras.data.onboarding : null,
+      notices: notices.error && !isSchemaMissing(notices.error) ? [] : (notices.data ?? []),
+      survey,
+    })
+  }, [uid, isStaff])
+  useEffect(() => { load() }, [load])
+  return [src, load]
+}
+
+function DoThisNow({ items, onDone }) {
+  if (!items.length) return null
+  return (
+    <section className="dtn" aria-label="Do this now" data-testid="do-this-now">
+      <div className="dtn-head"><h2 className="dtn-title">Do this now</h2><span className="dtn-count hud-tnum">{items.length}</span></div>
+      <ul className="dtn-list">
+        {items.map((it) => (
+          <li key={it.key} className={`dtn-item${it.tone === 'urgent' ? ' dtn-urgent' : ''}`}>
+            <Link to={it.to} className="dtn-link"><span className="dtn-what">{it.title}</span><span className="dtn-why">{it.detail}{it.due ? ` · due ${it.due}` : ''}</span></Link>
+            {it.notice ? <button className="dtn-done" onClick={() => onDone(it.notice)}>Done</button> : <span className="dtn-go" aria-hidden="true">→</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
 // ── Student tiles ──
 // Handbook lessons passed on this device (the handbook page keeps them in
 // localStorage; a private window simply reads 0).
@@ -419,10 +475,11 @@ function StaffTiles({ m, present }) {
   const flags = m?.flags ?? 0
   return (
     <>
-      <Link to="/access-requests" className={`mb-tile mb-link-tile${pending > 0 ? ' mb-alert' : ''}`}>
-        <span className="mb-tile-eyebrow">Pending</span>
-        <span className={`mb-tile-big hud-tnum${pending > 0 ? ' mb-fault' : ''}`}>{m ? pending : '—'}</span>
-        <span className="mb-tile-foot hud-mono">{pending > 0 ? 'waiting on you' : 'all clear'}</span>
+      {/* Team admin (ledger 0017): the same total as the account menu badge. */}
+      <Link to="/manage" className={`mb-tile mb-link-tile${(m?.waiting ?? pending) > 0 ? ' mb-alert' : ''}`} data-testid="mb-admin-tile">
+        <span className="mb-tile-eyebrow">Team admin</span>
+        <span className={`mb-tile-big hud-tnum${(m?.waiting ?? pending) > 0 ? ' mb-fault' : ''}`}>{m ? (m.waiting ?? pending) : '—'}</span>
+        <span className="mb-tile-foot hud-mono">{(m?.waiting ?? pending) > 0 ? 'waiting on you →' : 'all clear →'}</span>
       </Link>
 
       <Link to="/readiness" className={`mb-tile mb-link-tile${flags > 0 ? ' mb-alert' : ''}`}>

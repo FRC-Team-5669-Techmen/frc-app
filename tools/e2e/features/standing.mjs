@@ -24,6 +24,11 @@
  */
 import { P, PRE_0015 } from './_util.mjs';
 
+async function manageHas(t, path) {
+  await t.open('/manage', { ready: '.hub-wrap' });
+  await t.settle();
+  return t.count(`.hub-tile[data-tile="${path}"]`);
+}
 async function menuHas(t, label) {
   await t.press('.nav-avatar-btn');
   await t.waitFor('.nav-avatar-menu');
@@ -92,7 +97,9 @@ export default {
     t.as('0015 · mentors');
     await t.open('/standing/team', { persona: 'mentor', mig: 'all', ready: '.st-table' });
     await t.settle();
-    t.eq('the mentor has Team standing, not My standing', [await menuHas(t, 'Team standing'), await menuHas(t, 'My standing')], [1, 0]);
+    t.eq('the mentor has My standing nowhere in the menu, and Team standing on Team admin', [await menuHas(t, 'My standing'), await manageHas(t, '/standing/team')], [0, 1]);
+    await t.open('/standing/team', { persona: 'mentor', mig: 'all', ready: '.st-table' });
+    await t.settle();
     t.check('the overview lists Riley on probation', ((await t.text(`tr[data-member="${P.student2.id}"]`)) || '').includes('Probation'), await t.text(`tr[data-member="${P.student2.id}"]`));
     await t.noHScroll();
     await t.shot('team');

@@ -688,3 +688,9 @@
 }
 /* Announce on Discord, admin only (ledger 0016): a link styled as the row's buttons. */
 .sch-announce { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+
+/* Trips and rosters, reached from the schedule (ledger 0017). */
+.sch-jump { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 1rem; }
+.sch-jump-link { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0 0.9rem; color: var(--text); font-weight: 600; text-decoration: none; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); }
+.sch-jump-link span { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 400; letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel); }
+.sch-jump-link:hover { border-color: var(--steel); }

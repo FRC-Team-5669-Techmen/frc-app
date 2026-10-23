@@ -8,7 +8,8 @@ One lazy route /scouting and /scouting/:eventId, linked to existing events and m
 
 Kinds and payloads:
 - pit: {capabilities: {trench: yes|no|unknown, bump: yes|no|unknown, ground_intake: yes|no|unknown}, notes, pit_location}; team required.
-- observation: {answers: {trench: yes|no|did_not_see|not_applicable, bump: ..., ground_intake: ...}, notes, source: live|video, video_url: optional HTTPS, assignment_id: optional UUID}; team and match required. Absent answers stay absent.
+- observation: {answers: {trench: yes|no|did_not_see|not_applicable, bump: ..., ground_intake: ...}, match: optional REBUILT match fields (0027), notes, source: live|video, video_url: optional HTTPS, assignment_id: optional UUID}; team and match required. Absent answers stay absent.
+- observation.match (0027): {auto_fuel, teleop_fuel, teleop_missed: whole numbers 0-500; auto_climb, shuttled, died, tipped, stuck, broke: yes|no|did_not_see; defense: none|some|most; defense_rating, driver_skill: 1-5; tower: none|level1|level2|level3|failed|did_not_see; fouls: text <= 500}. Every key optional; an absent key is not recorded; JSON null and unknown keys are refused; 0 is an observed zero. Pit reports cannot carry match fields.
 - assignment: {assignee: member UUID, status: assigned|complete|cancelled, instructions, video_url}; team and match required. Manager creates/edits; assignee completion via observation can be derived.
 - message: {text, status: open|resolved, request_delivery: boolean, reply_to: optional original message UUID}; team required. Replies must reference an original message for the same event/team; reply context is immutable. Each reply keeps its own author and revisions. Saved data and notification status are separate.
 - pick_list: {entries: [{team: positive integer, tier: 1|2|3|dnp, rank: positive integer}], reason: optional string}; team/match null. One list per author/event. Updates compare version.
@@ -55,3 +56,7 @@ A successfully loaded online event must first receive `scouting_can_access() = t
 ## Practice first-pass history
 
 A footage workbook submission freezes the team, actual source match/URL, source selector, first-pass answers/notes and time. A subsequent review records its own answers, supporting note/time and self-reported discussion; earlier reviews and the first pass remain. These are local practice records, never competition statistics or certification. Source identity mistakes require a new entry and explanatory review rather than silently changing the frozen source. All eight mission workflows and practice export are scriptable; only a real mentor can assess competence on independently chosen recordings and actual phones.
+
+## Match fields summaries (0027)
+
+Per-team match figures follow the reliability rule's structure: confirmed current-event observations, the newest correction per author per match, then ONE value per match (median of the scouts' counts or ratings; a yes/no where scouts disagree is disputed and excluded). Medians are over matches where the field was recorded, with the count shown. Rates have the decisive matches as their denominator. A team with nothing recorded shows no figure, never 0, and fails every numeric filter. Hand examples: `tests/scouting-match.test.js` and `docs/scouting/acceptance-oracles.md` A6.

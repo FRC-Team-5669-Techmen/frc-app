@@ -78,6 +78,18 @@ Take the user's ordered list `[101, 202, 303, 404, 505]`. Select 202, 404, 505. 
 
 For a cycle, 202 beats 404, 404 beats 505, 505 beats 202: all have one win and the original order stays unchanged. Duplicate teams, unknown teams, contradictory duplicate votes and self-pairs must not produce an accepted ranking. A stale list version refuses apply and retains a reviewable proposal. Preview itself never saves. The process is not labeled Elo.
 
+## A6: REBUILT match fields (added 2026-10-23, ledger 0017)
+
+**Techmen rule.** One value per match, then a median over matches. Synthetic team 101:
+
+| Match | Scout A | Scout B | Match value |
+| --- | --- | --- | --- |
+| qm1 | auto 2, teleop 10, TOWER level 2, stuck no | auto 4, teleop 20, TOWER level 2, stuck yes | teleop 15; total median(12, 24) = 18; stuck disputed |
+| qm2 | teleop 0, TOWER level 3, stuck no | (none) | teleop 0 (observed); total 0 |
+| qm3 | TOWER did not see, stuck did not see | (none) | no TOWER level; stuck not decisive |
+
+Expected: median teleop FUEL `median(15, 0) = 7.5` over 2 matches; median auto FUEL `3` over 1 match (qm2 has no auto recorded, which is not 0); median total FUEL `median(18, 0) = 9`; best TOWER level 3, median TOWER `2.5` over 2 matches (did not see is not level 0); stuck `0/1` with 1 disputed and 1 unseen. A correction from scout A on qm1 to teleop 30 makes qm1 `25` and the median `12.5`. A team with only an empty match object has `matches = 0` and every median null. A filter "median FUEL at least 15" never passes a team with no FUEL recorded.
+
 ## Independent recording corpus and human validation gate
 
 **Not completed.** No original match recordings were successfully accessed and independently annotated in this run. Synthetic fixtures above were specified independently of implementation but cannot prove that scouts accurately judge real matches. Do not relabel them as annotated recordings or real-device results.

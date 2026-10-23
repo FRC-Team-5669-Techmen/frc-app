@@ -1133,3 +1133,12 @@
     display: none;
   }
 }
+
+/* Ledger 0017: the phone tab row (NavBar.css) keeps the pads, narrower. */
+@media (max-width: 639px) {
+  :root.tm-plate .navbar-links :is(.nav-link, .nav-dropdown-trigger) {
+    margin: 0;
+    min-height: 52px;
+    padding-inline: 2px;
+  }
+}

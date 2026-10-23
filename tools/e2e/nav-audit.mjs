@@ -49,8 +49,26 @@ try {
       const shot = path.join(out, `nav-${persona}-${width}.png`)
       await page.screenshot({ path: shot, fullPage: width === 375 })
       const items = menu.filter((m) => m.kind === 'item').length
-      results.push({ persona, width, top, dropdowns, menu, counts: { top: top.length, dropdownItems: dropdowns.length, menuItems: items } })
-      console.log(`${persona} @${width}: top ${top.length} [${top.join(' | ')}]; hours menu ${dropdowns.length}; account menu ${items} items`)
+      // AFTER (ledger 0017): staff tools live on /manage behind one menu item.
+      let manage = null
+      if (await page.locator('.nav-avatar-menu a[href="/manage"]').count()) {
+        await page.click('.nav-avatar-menu a[href="/manage"]')
+        await page.waitForSelector('.hub-tile', { timeout: 20_000 })
+        await page.waitForTimeout(500)
+        manage = await page.$$eval('.hub-tile', (els) => els.map((e) => ({ path: e.getAttribute('data-tile'), waiting: e.querySelector('.hub-tile-badge')?.textContent.trim() ?? null })))
+        await page.screenshot({ path: path.join(out, `manage-${persona}-${width}.png`), fullPage: width === 375 })
+      }
+      // The Robot hub, for members.
+      let robot = null
+      if (await page.locator('.navbar-links a[href="/robot"]').count()) {
+        await page.goto(`${server.origin}/robot`)
+        await page.waitForSelector('.hub-tile', { timeout: 20_000 })
+        await page.waitForTimeout(400)
+        robot = await page.$$eval('.hub-tile', (els) => els.map((e) => e.getAttribute('data-tile')))
+        await page.screenshot({ path: path.join(out, `robot-${persona}-${width}.png`), fullPage: width === 375 })
+      }
+      results.push({ persona, width, top, dropdowns, menu, manage, robot, counts: { top: top.length, dropdownItems: dropdowns.length, menuItems: items, manageTiles: manage?.length ?? 0 } })
+      console.log(`${persona} @${width}: top ${top.length} [${top.join(' | ')}]; hours menu ${dropdowns.length}; account menu ${items} items [${menu.filter((m) => m.kind === 'item').map((m) => m.text).join(' | ')}]${manage ? `; Team admin ${manage.length} tools, ${manage.filter((t) => t.waiting).length} waiting first` : ''}${robot ? `; Robot ${robot.length} tiles` : ''}`)
       await ctx.close()
     }
   }

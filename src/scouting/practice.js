@@ -21,39 +21,51 @@ export const MATCH_DRILLS = [
     '0:12 — You clearly see FUEL enter its intake from the floor.',
     '0:30 — It drives completely over the BUMP.',
     '0:55 — It enters and exits under the TRENCH, continuously in view.',
-  ], expected:{ground_intake:'yes',bump:'yes',trench:'yes'}, reasons:{ground_intake:'The intake action was visible.',bump:'The robot completed the crossing.',trench:'The whole passage was visible.'} },
+  
+    '1:20 — It scores 6 FUEL in teleop, all clearly in view, and climbs to TOWER level 2.',
+  ], expected:{ground_intake:'yes',bump:'yes',trench:'yes'}, reasons:{ground_intake:'The intake action was visible.',bump:'The robot completed the crossing.',trench:'The whole passage was visible.'}, matchExpected:{teleop_fuel:6,tower:'level2',stuck:'no'}, matchReasons:{teleop_fuel:'Six were clearly in view.',tower:'The level 2 climb was visible.',stuck:'It never stopped moving.'} },
   { id:'occluded', title:'The disappearing robot', team:9002, match:'practice2', frames:[
     '0:00 — Team 9002 is assigned to you.',
     '0:15 — A flag blocks your view near the TRENCH.',
     '0:25 — The robot reappears across the field. You never saw its route.',
     '0:45 — It attempts the BUMP, stops against it and backs away without crossing.',
     '1:00 — You clearly see it collect FUEL from the floor.',
-  ], expected:{ground_intake:'yes',bump:'no',trench:'did_not_see'}, reasons:{ground_intake:'The intake action is visible.',bump:'A clearly observed attempt failed.',trench:'The ending position does not prove the route taken.'} },
+  
+    '1:20 — It stalls against the BUMP for twenty seconds before backing off.',
+  ], expected:{ground_intake:'yes',bump:'no',trench:'did_not_see'}, reasons:{ground_intake:'The intake action is visible.',bump:'A clearly observed attempt failed.',trench:'The ending position does not prove the route taken.'}, matchExpected:{teleop_fuel:'unrecorded',stuck:'yes',tower:'did_not_see'}, matchReasons:{teleop_fuel:'You never saw it score, so the count stays not recorded, never 0.',stuck:'Twenty visible seconds against the BUMP is stuck.',tower:'The scenario never shows the end of the match.'} },
   { id:'no_trial', title:'No visible trial', team:9003, match:'practice3', frames:[
     '0:00 — The pit crew previously claimed BUMP and TRENCH capability.',
     '0:20 — The robot stays on one side of the field.',
     '0:50 — It receives FUEL from a human player; it never attempts floor intake.',
     '1:20 — The match ends with no visible attempts at the three capabilities.',
-  ], expected:{ground_intake:'did_not_see',bump:'did_not_see',trench:'did_not_see'}, reasons:{ground_intake:'Receiving from a person does not demonstrate floor intake.',bump:'No visible attempt is not a failed attempt.',trench:'The prior pit claim cannot fill a missing observation.'} },
+  
+    '1:30 — You watched the whole match: it never scored a FUEL.',
+  ], expected:{ground_intake:'did_not_see',bump:'did_not_see',trench:'did_not_see'}, reasons:{ground_intake:'Receiving from a person does not demonstrate floor intake.',bump:'No visible attempt is not a failed attempt.',trench:'The prior pit claim cannot fill a missing observation.'}, matchExpected:{teleop_fuel:0,tower:'did_not_see',stuck:'no'}, matchReasons:{teleop_fuel:'You watched the whole match and saw none: an observed 0.',tower:'The TOWER is never described.',stuck:'It moved freely on its side of the field.'} },
   { id:'mixed', title:'Separate the capabilities', team:9004, match:'practice4', frames:[
     '0:00 — Team 9004 approaches loose FUEL.',
     '0:10 — Its running intake tries to pick up the FUEL, but nothing enters; it backs away.',
     '0:35 — It crosses the BUMP completely.',
     '1:10 — A teammate blocks your view of the TRENCH passage.',
-  ], expected:{ground_intake:'no',bump:'yes',trench:'did_not_see'}, reasons:{ground_intake:'A visible attempted intake failed.',bump:'The BUMP crossing succeeded.',trench:'The blocked view must remain unknown.'} },
+  
+    '1:30 — It scores 3 FUEL, then sits still for the rest of the match with its lights off.',
+  ], expected:{ground_intake:'no',bump:'yes',trench:'did_not_see'}, reasons:{ground_intake:'A visible attempted intake failed.',bump:'The BUMP crossing succeeded.',trench:'The blocked view must remain unknown.'}, matchExpected:{teleop_fuel:3,died:'yes',stuck:'no'}, matchReasons:{teleop_fuel:'Three were in view.',died:'Lights off and no motion is a robot that died.',stuck:'It stopped because it died, not because it was caught on something.'} },
   { id:'practice_lane', title:'Know what the exercise can show', team:9005, match:'practice5', frames:[
     'This is a fictional isolated floor-intake test, not a full match.',
     'There is no BUMP or TRENCH in the test area; those capabilities are explicitly out of scope.',
     '0:15 — Team 9005 visibly collects the FUEL from the floor.',
     'The exercise ends. Record Not Applicable for the capabilities outside this exercise.',
-  ], expected:{ground_intake:'yes',bump:'not_applicable',trench:'not_applicable'}, reasons:{ground_intake:'This was a successful visible intake test.',bump:'This isolated exercise explicitly excluded BUMP testing.',trench:'This isolated exercise explicitly excluded TRENCH testing.'} },
+  
+    'The exercise does not include scoring; count nothing.',
+  ], expected:{ground_intake:'yes',bump:'not_applicable',trench:'not_applicable'}, reasons:{ground_intake:'This was a successful visible intake test.',bump:'This isolated exercise explicitly excluded BUMP testing.',trench:'This isolated exercise explicitly excluded TRENCH testing.'}, matchExpected:{teleop_fuel:'unrecorded',tower:'unrecorded',stuck:'unrecorded'}, matchReasons:{teleop_fuel:'There was no scoring in this exercise: leave it not recorded.',tower:'No TOWER in the test area.',stuck:'Not part of the exercise.'} },
   { id:'scoreboard', title:'Ignore the tempting scoreboard', team:9006, match:'practice6', frames:[
     '0:00 — Your robot is Team 9006, on the red alliance.',
     '0:20 — It visibly collects FUEL from the floor.',
     '0:50 — You clearly see it fail to complete a TRENCH passage and back away.',
     '1:10 — It never approaches the BUMP.',
     'The official scoreboard reports 120 FUEL points for red. It does not identify individual robot contributions.',
-  ], expected:{ground_intake:'yes',bump:'did_not_see',trench:'no'}, reasons:{ground_intake:'Use what you saw, regardless of the alliance total.',bump:'There was no observed BUMP attempt.',trench:'The visible attempted passage failed.'} },
+  
+    '1:20 — You count 5 FUEL from your robot. It ends in TOWER level 1.',
+  ], expected:{ground_intake:'yes',bump:'did_not_see',trench:'no'}, reasons:{ground_intake:'Use what you saw, regardless of the alliance total.',bump:'There was no observed BUMP attempt.',trench:'The visible attempted passage failed.'}, matchExpected:{teleop_fuel:5,tower:'level1',stuck:'no'}, matchReasons:{teleop_fuel:'Count what YOUR robot scored, not the alliance 120.',tower:'Level 1 was in view.',stuck:'It kept moving.'} },
 ]
 export const FILM_STEPS = [
   {id:'identity',prompt:'Your assigned upcoming match is QM18, but the clip is from another event, 2026demo_qm7. What match do you record?',options:['QM18 because that is the assignment','2026demo_qm7, identifying the actual footage','Either; the team is the same'],answer:1,why:'Evidence belongs to the match you actually observed. Ask the lead to make a footage assignment for that source match.'},
@@ -82,15 +94,34 @@ export const ASSESSMENT_STEPS = [
   {id:'honesty',prompt:'You missed a match and your group wants every field filled.',options:['Copy another team’s result as your own','Report the gap and ask for an attributed footage review','Guess from EPA'],answer:1,why:'Coverage gaps are fixable. Invented evidence is not trustworthy.'},
   {id:'handoff',prompt:'What should accompany your mentor assessment?',options:['Only a completion badge','Your source footage, timestamps, corrections, uncertainty and pick-list reasoning','A screenshot of an alliance score'],answer:1,why:'The mentor needs evidence they can independently check, not just a completion count.'},
 ]
-export const DRILLS = { pit:PIT_STEPS, film:FILM_STEPS, recover:RECOVERY_STEPS, rank:RANK_STEPS, communicate:COMMUNICATION_STEPS, assessment:ASSESSMENT_STEPS }
+// REBUILT match fields (0027): counting FUEL and the reliability yes/no, with
+// the module rule that a missing answer is never a zero.
+export const COUNT_STEPS = [
+  {id:'unseen',prompt:'You looked away during auto and did not see how much FUEL your robot scored. What goes in Auto FUEL?',options:['0','Leave it not recorded','Guess from the scoreboard'],answer:1,why:'0 means you watched and saw none. Not recorded means you did not see it. Only one of those is true here.'},
+  {id:'zero',prompt:'You watched all of teleop. Your robot never scored a FUEL. What goes in Teleop FUEL?',options:['Leave it not recorded','0, using Saw zero','1, to be kind'],answer:1,why:'An observed zero is real evidence. Tap Saw zero so it reads 0, not blank.'},
+  {id:'fast',prompt:'Your robot dumps a burst of about five FUEL at once. Fastest honest way to record it?',options:['Tap +5, then fix with -1 or +1 if you counted differently','Wait and type a total later','Skip it'],answer:0,why:'+5 then a small fix keeps your eyes on the field. The steppers are built for one hand in the stands.'},
+  {id:'stuck',prompt:'The robot sat on the BUMP for 20 seconds, then drove off. Got stuck?',options:['Yes, and note the time in Notes','No, it got free','Did not see'],answer:0,why:'It was stuck for a visible stretch. Yes, with the moment in your notes, lets the strategy lead check it.'},
+  {id:'tower',prompt:'A flag blocked your view of the TOWER at the end. The robot ended up high. What TOWER level?',options:['Level 3, it looked high','Did not see','Tried, failed'],answer:1,why:'The ending position does not prove what it reached or how. Did not see protects the team from a guess.'},
+]
+export const DRILLS = { count:COUNT_STEPS, pit:PIT_STEPS, film:FILM_STEPS, recover:RECOVERY_STEPS, rank:RANK_STEPS, communicate:COMMUNICATION_STEPS, assessment:ASSESSMENT_STEPS }
 export function gradeChoices(cards, answers = {}) {
   return cards.map(card => ({ id:card.id, correct:answers[card.id] === card.answer, why:card.why }))
 }
 export function gradeMatch(drill, answers = {}) {
   return Object.entries(drill.expected).map(([key, expected]) => ({ key, expected, correct: answers[key] === expected, why: drill.reasons[key] }))
 }
+// The match fields of a practice match (0027). 'unrecorded' means the right
+// answer is to leave the field blank: a recorded 0 there is wrong.
+export function gradeMatchFields(drill, match = {}) {
+  return Object.entries(drill.matchExpected ?? {}).map(([key, expected]) => {
+    const given = match[key]
+    const correct = expected === 'unrecorded' ? given === undefined : given === expected
+    return { key, expected, correct, why: drill.matchReasons?.[key] }
+  })
+}
 export function drillComplete(missionId, state = {}) {
   if (missionId === 'evidence') return EVIDENCE_CARDS.every(c => state.answers?.[c.id] === c.answer) && state.reviewed === true
-  if (missionId === 'observe') return MATCH_DRILLS.every(d => state.matches?.[d.id]?.reviewed === true && gradeMatch(d, state.matches[d.id].answers).every(r => r.correct))
+  if (missionId === 'observe') return MATCH_DRILLS.every(d => state.matches?.[d.id]?.reviewed === true && gradeMatch(d, state.matches[d.id].answers).every(r => r.correct)
+    && gradeMatchFields(d, state.matches[d.id].match).every(r => r.correct))
   return (DRILLS[missionId] ?? []).every(c => state.answers?.[c.id] === c.answer) && state.reviewed === true
 }

@@ -56,8 +56,9 @@ describe('no link points at a retired address', () => {
     }
   })
   it('positive control: the same matcher finds the links to /certifications', () => {
+    // Certifications left the top bar for the Robot hub (ledger 0017).
     const hits = FILES.filter(f => linkTo('/certifications').test(f.src)).map(f => f.rel).sort()
-    expect(hits).toEqual(expect.arrayContaining(['src/HomePage.jsx', 'src/NavBar.jsx', 'src/ParentHomePage.jsx']))
+    expect(hits).toEqual(expect.arrayContaining(['src/HomePage.jsx', 'src/RobotPage.jsx', 'src/ParentHomePage.jsx']))
   })
 })
 

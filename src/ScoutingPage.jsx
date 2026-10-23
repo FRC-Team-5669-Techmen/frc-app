@@ -14,12 +14,17 @@ import PitMap from './scouting/PitMap'
 import CoveragePanel from './scouting/CoveragePanel'
 import RecoveryPanel from './scouting/RecoveryPanel'
 import { buildEventArchive, downloadArchive } from './scouting/backup'
+import { toCsv } from './csv'
+import { downloadText, laStamp } from './download'
+import { OBSERVATION_COLUMNS, TEAM_COLUMNS, SHEET_NOTE, observationRows, teamRows as teamSheetRows } from './scouting/spreadsheet'
 import { matchOrder } from './scouting/schedule'
 import { footageLabel, hasUnverifiedVideoScope, matchIdentity } from './scouting/provenance'
 import { projectRecords, scoutingAccessDenied } from './scouting/projection'
 import EvidenceRecord, { RevisionList } from './scouting/EvidenceRecord'
 import MatchBrief from './scouting/MatchBrief'
 import ObservationBrowser from './scouting/ObservationBrowser'
+import MatchSummary from './scouting/MatchSummary'
+import { teamMatchSummary } from './scouting/match'
 import './ScoutingPage.css'
 
 const when = value => value ? new Date(value).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' }) : 'Unknown time'
@@ -80,6 +85,10 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
   const [scouts, setScouts] = useState([])
   const [loading, setLoading] = useState(true)
   const [manager, setManager] = useState(staff)
+  // Whether the server accepts the REBUILT match fields (0027). False until
+  // known: before the paste the function is missing and the form keeps the
+  // capability questions only.
+  const [matchFields, setMatchFields] = useState(false)
   const [tab, setTab] = useState('scout')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -123,7 +132,15 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
       const savedScouts = await selectedStore.getDraft(uid, eventId, 'eligible-scouts')
       if (alive.current && savedScouts) { setScouts(savedScouts.scouts ?? []); setManager(savedScouts.manager === true) }
     }
+    if (!navigator.onLine) {
+      const saved = await selectedStore.getDraft(uid, eventId, 'match-fields').catch(() => null)
+      if (alive.current) setMatchFields(saved?.accepted === true)
+    }
     if (navigator.onLine && !snapshot.missing) {
+      const fields = await supabase.rpc('scouting_match_fields')
+      const accepted = !fields.error && !!fields.data
+      if (alive.current) setMatchFields(accepted)
+      if (!fields.error || isSchemaMissing(fields.error)) await selectedStore.saveDraft(uid, eventId, 'match-fields', { accepted }).catch(() => {})
       const result = await supabase.rpc('scouting_can_manage', { p_event: eventId })
       if (alive.current) setManager(!result.error && result.data === true)
       if (!result.error && result.data === true) {
@@ -232,6 +249,14 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
     finally { if (alive.current) setExporting(false) }
   }
 
+  function exportSheets() {
+    const slug = (data.event?.title || 'event').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'event'
+    // Observations include this device's unsynced saves (labeled); team summaries use confirmed records only.
+    downloadText(toCsv(OBSERVATION_COLUMNS, observationRows(records, { memberName, nameFor }), { note: SHEET_NOTE }), `techmen-scouting-${slug}-observations-${laStamp()}.csv`)
+    setTimeout(() => downloadText(toCsv(TEAM_COLUMNS, teamSheetRows(serverRecords, { nameFor }), { note: SHEET_NOTE }), `techmen-scouting-${slug}-teams-${laStamp()}.csv`), 400)
+    setNotice('Two spreadsheets downloaded: one row per observation, and one row per team. Check your Downloads folder.')
+  }
+
   if (loading) return <main className="sc-wrap"><h1>Scouting</h1><p role="status">Opening event and saved work…</p></main>
   if (data.missing) return <main className="sc-wrap"><Link className="sc-link" to="/scouting">← Events</Link><h1>Scouting is not set up yet</h1><p>Your lead needs to finish scouting setup. Your existing team tools are still available.</p><Link className="sc-link" to="/dashboard">Back to dashboard</Link></main>
   if (scoutingAccessDenied(data.error)) return <main className="sc-wrap"><h1>Scouting access unavailable</h1><p>The server could not authorize this account. Locally saved work is preserved. Sign in with the authorized account or ask your lead to restore access.</p><div className="sc-actions"><Link className="sc-link" to="/dashboard">Back to dashboard</Link><button disabled={!online || !store || busy} onClick={() => refresh().catch(e => setError(errorText(e)))}>Retry scouting access</button></div></main>
@@ -262,6 +287,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
         <PitLocation records={records} team={n} />
         <button onClick={() => { setEvidenceTeam(String(n)); setTab('scout') }}>Review match evidence</button>
         {serverRecords.some(r => r.kind === 'observation' && r.team_number === n && hasUnverifiedVideoScope(r)) && <p className="sc-help">Video evidence with unverified event scope is excluded from these rates. Use Review match evidence to check its provenance.</p>}
+        <MatchSummary s={teamMatchSummary(serverRecords, n)} />
         <div className="sc-evidence-grid">{CAPABILITIES.map(c => { const r = reliability(serverRecords, n, c.key); return <div className="sc-evidence" key={c.key}><h4>{c.label}</h4><span className="sc-help">Pit claim: {words(pit?.payload.capabilities?.[c.key])}{pit?.localStatus ? ' · saved locally, awaiting confirmation' : ''}</span><div className="sc-ratio">{r.percent === null ? 'No evidence' : `${Math.round(r.percent)}%`}<span>{r.yes}/{r.denominator} observed matches</span></div><p className="sc-help">{r.sufficient ? '3+ observed matches' : 'Provisional: fewer than 3 observed matches'}{r.disputed ? ` · ${r.disputed} disputed` : ''}</p><details><summary>Count details</summary><p className="sc-help">{r.no} observed failures. Excluded scout responses: {r.didNotSee} did not see, {r.notApplicable} not applicable, {r.missing} unanswered. Disputed matches are excluded.</p></details></div> })}</div>
         {team?.payload.epa != null && <p className="sc-help">Statbotics estimate: {team.payload.epa} EPA · {when(team.payload.epa_fetched_at)}. Not an official robot score.</p>}
         <div className="sc-actions"><button disabled={!!pit && !canEdit(pit)} onClick={() => openForm('pit', pit ? { record: pit } : { team: n })}>Pit report</button><button onClick={() => openForm('observation', { team: n })}>Observe</button><button onClick={() => openForm('message', { team: n })}>Message</button>{manager && team && canEdit(team) && <button onClick={() => openForm('team', { record: team })}>Edit team</button>}</div>
@@ -277,9 +303,12 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
     {tab === 'practice' && store && <div role="tabpanel" id="sc-panel-practice" aria-labelledby="sc-tab-practice"><Training key={`${uid}:${eventId}`} store={store} memberId={uid} eventId={eventId} /></div>}
     {manager && <ManageEvent store={store} uid={uid} records={records} onSaveBatch={saveBatch} eventId={eventId} teamRows={teamRows} members={scouts} onForm={openForm} onSave={save} online={online} />}
     {exportError && <p role="alert" className="sc-error">{exportError}</p>}
-    <footer className="sc-footer"><button disabled={!store || exporting} onClick={exportData}>{exporting ? 'Preparing backup…' : 'Export event data'}</button><span>Includes saved drafts, practice progress and pending saves for this account and event. Wait for “saved on this device” before exporting; keep the file with your team.</span></footer>
+    <footer className="sc-footer">
+      <div className="sc-export"><button className="sc-primary" disabled={!records.some(r => r.kind === 'observation' || r.kind === 'team')} onClick={exportSheets}>Download spreadsheet</button><span>Two CSV files for Sheets or Excel: every observation, one row each, and a summary row per team. Empty cells mean not recorded.</span></div>
+      <div className="sc-export"><button disabled={!store || exporting} onClick={exportData}>{exporting ? 'Preparing backup…' : 'Export event data'}</button><span>The recovery backup (JSON): saved drafts, practice progress and pending saves for this account and event. Wait for “saved on this device” before exporting; keep the file with your team.</span></div>
+    </footer>
     {store && data.event && <RecoveryPanel store={store} uid={uid} eventId={eventId} onRestored={rows => { queueGeneration.current++; setQueue(previous => [...previous, ...rows]) }} />}
-    {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : save} onClose={() => setForm(null)} />}
+    {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} matchFields={matchFields} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : save} onClose={() => setForm(null)} />}
   </main>
 }
 

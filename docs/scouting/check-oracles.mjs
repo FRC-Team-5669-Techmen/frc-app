@@ -47,3 +47,21 @@ assert.deepEqual(compare([
   { winner: 202, loser: 404 }, { winner: 404, loser: 505 }, { winner: 505, loser: 202 },
 ]).entries, entries)
 console.log('Independent scouting hand oracles: 13 assertions passed; synthetic data only.')
+
+// A6: REBUILT match fields (0027). Values from the hand table, not from code.
+const { teamMatchSummary } = await import('../../src/scouting/match.js')
+const m = (member, match, fields) => ({ kind: 'observation', event_id: 'fixture', member_id: member, team_number: 101, match_key: match, version: 1, updated_at: '2026-10-30T18:00:00Z', payload: { answers: {}, match: fields } })
+const a6 = [
+  m('A', 'qm1', { auto_fuel: 2, teleop_fuel: 10, tower: 'level2', stuck: 'no' }), m('B', 'qm1', { auto_fuel: 4, teleop_fuel: 20, tower: 'level2', stuck: 'yes' }),
+  m('A', 'qm2', { teleop_fuel: 0, tower: 'level3', stuck: 'no' }), m('A', 'qm3', { tower: 'did_not_see', stuck: 'did_not_see' }),
+]
+const s6 = teamMatchSummary(a6, 101)
+assert.deepEqual(s6.teleop_fuel, { median: 7.5, n: 2 })
+assert.deepEqual(s6.auto_fuel, { median: 3, n: 1 })
+assert.deepEqual(s6.totalFuel, { median: 9, n: 2 })
+assert.equal(s6.tower.best, 3); assert.equal(s6.tower.median, 2.5)
+assert.equal(s6.stuck.disputed, 1); assert.equal(s6.stuck.unseen, 1); assert.equal(s6.stuck.n, 1)
+const fixed = { ...a6[0], version: 2, updated_at: '2026-10-30T19:00:00Z', payload: { answers: {}, match: { ...a6[0].payload.match, teleop_fuel: 30 } } }
+assert.equal(teamMatchSummary([...a6, fixed], 101).teleop_fuel.median, 12.5)
+assert.equal(teamMatchSummary([m('A', 'qm1', {})], 101).teleop_fuel.median, null)
+console.log('A6 match-field oracles: ok')

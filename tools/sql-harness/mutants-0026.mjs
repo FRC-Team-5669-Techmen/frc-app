@@ -89,7 +89,7 @@ for (const [name, find, replace, want] of MUTANTS) {
   if (!ORIGINAL.includes(find)) { console.log(`MISSING  ${name}: the find text is not in 0026`); continue }
   // A grant mutant needs the revoke to stay first, so the whole file is
   // re-pasted with the one change; anon loses the grant again on restore.
-  paste(ORIGINAL.replace(find, replace))
+  paste(ORIGINAL.replace(find, () => replace)) // a function: a $' in the replacement must stay literal
   const r = runTest()
   const hit = want.every((n) => r.fails.has(n))
   if (hit) caught += 1

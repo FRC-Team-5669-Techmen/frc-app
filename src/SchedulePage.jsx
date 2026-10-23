@@ -475,6 +475,14 @@ export default function SchedulePage({ session, hasRole }) {
             <button className="sch-new-btn" onClick={openNew}>+ New event</button>
           )}
         </header>
+        {/* Trips and rosters for every member (ledger 0017): they left the
+            account menu, and a competition is something on the schedule. */}
+        {!(hasRole('parent') && !['mentor', 'lead', 'admin'].some(hasRole)) && (
+          <nav className="sch-jump" aria-label="Events">
+            <Link to="/trips" className="sch-jump-link">Trips <span>carpool and food</span></Link>
+            <Link to="/rosters" className="sch-jump-link">Event rosters <span>who goes, in what role</span></Link>
+          </nav>
+        )}
 
         {error && <p className="sch-error" onClick={() => setError('')}>{error}</p>}
 

@@ -310,10 +310,8 @@ export default {
     }
     for (const who of ['admin', 'mentor']) {
       t.as(`nav · ${who}`);
-      await t.open('/dashboard', { persona: who, mig: 'all', ready: '.nav-avatar-btn' });
-      await t.press('.nav-avatar-btn');
-      await t.waitFor('.nav-avatar-menu');
-      t.eq(`Announce in the avatar menu: ${who === 'admin' ? 1 : 0}`, await t.count('.nav-avatar-menu a[href="/announce"]'), who === 'admin' ? 1 : 0);
+      await t.open('/manage', { persona: who, mig: 'all', ready: '.hub-tile' });
+      t.eq(`Announce on Team admin: ${who === 'admin' ? 1 : 0}`, await t.count('.hub-tile[data-tile="/announce"]'), who === 'admin' ? 1 : 0);
     }
   },
 };
