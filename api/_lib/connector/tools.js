@@ -12,6 +12,7 @@ import { laDateKey, laMidnightMs, addDays, laClock, laDay, laWallToIso } from '.
 import { isSchemaMissing } from './errors.js'
 import { batteryBoard, chargeLabel, statusLabel, kindLabel, brownoutLabel, CHECK_THRESHOLDS } from '../../../src/batteries.js'
 import { leaderboard as driverLeaderboard, SCORE_RULES } from '../../../src/driverScore.js'
+import { AUTO_READY_STREAK, RATE_WINDOW, resultLabel, routineBoard } from '../../../src/autos.js'
 
 export class UnknownTool extends Error {}
 
@@ -56,6 +57,22 @@ const short = (s, n = 160) => (typeof s === 'string' && s.length > n ? `${s.slic
 const notSetUp = (what) => ({ status: 'not_set_up', message: `${what} is not set up yet: its SQL has not been pasted into Supabase. Nothing was changed.` })
 
 // ── The hand reads ───────────────────────────────────────────────────────────
+
+/** One hub trip by part of its title; the next one not over when none is said. */
+async function pickTrip(ctx, said) {
+  const evs = await ctx.backend.rpc(ctx.session, 'hub_member_events', {})
+  if (evs.error) return isSchemaMissing(evs.error) ? notSetUp('The trip hub') : { status: 'refused', message: evs.error.message }
+  const trips = Array.isArray(evs.data) ? evs.data : []
+  if (!trips.length) return { status: 'not_found', message: 'There are no trips in the hub.' }
+  if (said) {
+    const want = String(said).toLowerCase()
+    const hits = trips.filter((t) => String(t.title).toLowerCase().includes(want))
+    if (!hits.length) return { status: 'not_found', message: `No trip matches "${said}". The trips are: ${trips.map((t) => t.title).join(', ')}.` }
+    if (hits.length > 1) return { status: 'ambiguous', message: `${hits.length} trips match: ${hits.map((t) => t.title).join(', ')}. Ask him which.` }
+    return { trip: hits[0] }
+  }
+  return { trip: trips.find((t) => !t.over) ?? trips[trips.length - 1] }
+}
 
 const READS = {
   async scouting_event(ctx, a) {
@@ -246,25 +263,88 @@ const READS = {
   },
 
   async trip_boards(ctx, a) {
-    const evs = await ctx.backend.rpc(ctx.session, 'hub_member_events', {})
-    if (evs.error) return isSchemaMissing(evs.error) ? notSetUp('The trip hub') : { status: 'refused', message: evs.error.message }
-    const trips = Array.isArray(evs.data) ? evs.data : []
-    if (!trips.length) return { status: 'not_found', message: 'There are no trips in the hub.' }
-    let trip
-    if (a.trip) {
-      const want = String(a.trip).toLowerCase()
-      const hits = trips.filter((t) => String(t.title).toLowerCase().includes(want))
-      if (!hits.length) return { status: 'not_found', message: `No trip matches "${a.trip}". The trips are: ${trips.map((t) => t.title).join(', ')}.` }
-      if (hits.length > 1) return { status: 'ambiguous', message: `${hits.length} trips match: ${hits.map((t) => t.title).join(', ')}. Ask him which.` }
-      trip = hits[0]
-    } else {
-      trip = trips.find((t) => !t.over) ?? trips[trips.length - 1]
-    }
+    const picked = await pickTrip(ctx, a.trip)
+    if (!picked.trip) return picked
+    const trip = picked.trip
     const b = await ctx.backend.rpc(ctx.session, 'hub_member_board', { p_event: trip.id })
     if (b.error) return { status: 'refused', message: b.error.message }
     const board = b.data?.board ?? b.data
     if (a.full === true) return { status: 'ok', trip: { title: trip.title, starts_on: trip.starts_on, over: trip.over }, board, note: 'The whole board as staff see it.' }
     return { status: 'ok', trip: { title: trip.title, starts_on: trip.starts_on, over: trip.over }, ...summarizeBoard(board), note: 'A summary. Pass full: true for every field (pickups, phones, allergy detail).' }
+  },
+
+  // ledger 0024 Part 2: which families on a trip have not answered, and the
+  // FIRST registration and school form ticks they gave (hub_invites and
+  // hub_responses, staff read only by 0005).
+  async trip_signups(ctx, a) {
+    const picked = await pickTrip(ctx, a.trip)
+    if (!picked.trip) return picked
+    const trip = picked.trip
+    const inv = await ctx.backend.select(ctx.session, { table: 'hub_invites', columns: ['id', 'student_id', 'emails'], eq: { event_id: trip.id }, limit: 1000 })
+    if (inv.error) return isSchemaMissing(inv.error) ? notSetUp('The trip hub') : { status: 'refused', message: inv.error.message }
+    const ids = inv.data.map((i) => i.id)
+    const resp = ids.length
+      ? await ctx.backend.select(ctx.session, { table: 'hub_responses', columns: ['invite_id', 'first_reg_done', 'school_form_done', 'parent_name'], in: { invite_id: ids }, limit: 1000 })
+      : { data: [], error: null }
+    if (resp.error) return { status: 'refused', message: resp.error.message }
+    const list = await roster(ctx)
+    const names = new Map((list.members ?? []).map((m) => [m.id, m.name]))
+    const byInvite = new Map(resp.data.map((r) => [r.invite_id, r]))
+    const rows = inv.data.map((i) => {
+      const r = byInvite.get(i.id)
+      return { student: names.get(i.student_id) ?? 'Member', answered: !!r, first_registration: r ? r.first_reg_done ?? null : null, school_form: r ? r.school_form_done ?? null : null, emails_on_file: (i.emails ?? []).length }
+    }).sort((x, y) => Number(x.answered) - Number(y.answered) || x.student.localeCompare(y.student))
+    return {
+      status: 'ok', trip: { title: trip.title, starts_on: trip.starts_on, over: trip.over },
+      invited: rows.length, answered: rows.filter((r) => r.answered).length,
+      not_answered: rows.filter((r) => !r.answered).map((r) => r.student),
+      first_registration_not_done: rows.filter((r) => r.answered && r.first_registration !== true).map((r) => r.student),
+      families: rows,
+      note: 'FIRST registration and the school form are what each family ticked on the trip form, not a check against FIRST. send_family_link resends a link (asks first).',
+    }
+  },
+
+  // ledger 0024 Part 2: auto routine streaks, ranked with the page rule (src/autos.js).
+  async auto_routines(ctx, a) {
+    const [rt, rn] = await Promise.all([
+      ctx.backend.select(ctx.session, { table: 'auto_routines', columns: ['*'], limit: 500 }),
+      ctx.backend.select(ctx.session, { table: 'auto_runs', columns: ['*'], order: [['ran_at', 'desc']], limit: 2000 }),
+    ])
+    const err = rt.error ?? rn.error
+    if (err) return isSchemaMissing(err) ? notSetUp('The auto routine log') : { status: 'refused', message: err.message }
+    let board = routineBoard(rt.data, rn.data)
+    if (a.show !== 'all') board = board.filter((r) => r.active !== false)
+    if (a.show === 'ready') board = board.filter((r) => r.ready)
+    return {
+      status: 'ok', ready_at: AUTO_READY_STREAK, rate_over_last: RATE_WINDOW,
+      routines: board.map((r) => ({
+        name: r.name, ready: r.ready, streak: r.streak, best_streak: r.best, runs: r.runCount,
+        success_rate: r.rate == null ? null : Math.round(r.rate * 100), rate_of_runs: r.rateN, retired: r.active === false,
+        last: r.last ? { result: resultLabel(r.last.result), when: laDay(r.last.ran_at), problem: short(r.last.problem) ?? null } : null,
+      })),
+    }
+  },
+
+  // ledger 0024 Part 2: an announcement checked by the Discord function as a
+  // dry run (action preview). It never sends; sending stays on /announce.
+  async preview_announcement(ctx, a) {
+    if (!ctx.backend.announcePreview) return { status: 'not_available', message: 'Announcement preview is unavailable in this environment.' }
+    const roleNames = Array.isArray(a.roles) ? a.roles : a.roles ? String(a.roles).split(/\s*,\s*/) : []
+    let roleIds = []
+    if (roleNames.length) {
+      const r = await ctx.backend.select(ctx.session, { table: 'discord_announce_roles', columns: ['name', 'role_id', 'active'], limit: 200 })
+      if (r.error) return isSchemaMissing(r.error) ? notSetUp('Discord announcements') : { status: 'refused', message: r.error.message }
+      const missing = []
+      for (const n of roleNames) {
+        const hit = r.data.find((x) => String(x.name).toLowerCase() === String(n).toLowerCase().replace(/^@/, ''))
+        if (hit) roleIds.push(hit.role_id); else missing.push(n)
+      }
+      if (missing.length) return { status: 'not_found', message: `No announcement role named ${missing.join(', ')}. The roles are: ${r.data.filter((x) => x.active !== false).map((x) => x.name).join(', ')}. Nothing was posted.` }
+    }
+    const draft = { channel: a.channel, content: a.message ?? '', roleIds }
+    const out = await ctx.backend.announcePreview(ctx.session, draft)
+    if (out.error) return { status: 'unavailable', message: 'The Discord function did not answer the preview. Nothing was posted.' }
+    return { status: 'ok', preview: out.data, posted: false, note: 'A dry run: nothing was posted. Posting to Discord is done on the Announce page (/announce), where he confirms it himself.' }
   },
 
   async parent_responses(ctx, a) {
@@ -480,6 +560,7 @@ export async function runTool(ctx, name, a = {}) {
     }
     if (name === 'call_app') return await callApp(ctx, a)
     if (tool.kind === 'function') {
+      if (name === 'sign_in_out') a = { category: 'build', reason: 'Signed in or out by staff through Claude', ...a, at: a.at ?? new Date(ctx.now()).toISOString() }
       const resolved = {}
       for (const [argName, spec] of Object.entries(tool.args ?? {})) {
         if (spec.resolve && a[argName] !== undefined) {
@@ -494,6 +575,10 @@ export async function runTool(ctx, name, a = {}) {
       } catch (e) {
         if (e instanceof InvalidArgument) return { status: 'invalid', message: e.message }
         throw e
+      }
+      if (name === 'sign_in_out') {
+        const pre = await signInOutCheck(ctx, resolved.member, a.direction)
+        if (pre) return pre
       }
       if (args.p_starts_at && args.p_ends_at && Date.parse(args.p_ends_at) < Date.parse(args.p_starts_at)) {
         return { status: 'invalid', message: 'The end is before the start. Ask him for the times again. Nothing was changed.' }
@@ -513,6 +598,26 @@ export async function runTool(ctx, name, a = {}) {
     if (e instanceof NotRegistered) return { status: 'refused', message: e.message }
     throw e
   }
+}
+
+/**
+ * Before a staff sign-in or sign-out (ledger 0024): refuse what would make a
+ * double IN (an orphan the hours never count) or an OUT with nothing open,
+ * and send a waiting sign-out request to approve_signout, the way the quick
+ * pulse control does. Answers null when the change may go ahead.
+ */
+async function signInOutCheck(ctx, member, direction) {
+  const last = await ctx.backend.select(ctx.session, { table: 'attendance_events', columns: ['type', 'event_time'], eq: { user_id: member.id }, order: [['event_time', 'desc']], limit: 1 })
+  if (last.error) return { status: 'refused', message: last.error.message }
+  const ev = last.data[0]
+  const open = ev?.type === 'in' && ctx.now() - Date.parse(ev.event_time) < 12 * 3600_000
+  if (direction === 'in' && open) return { status: 'already', message: `${member.name} is already signed in (since ${laClock(ev.event_time)}). Nothing was changed.` }
+  if (direction === 'out' && !open) return { status: 'already', message: `${member.name} is not signed in. Nothing was changed.` }
+  if (direction === 'out') {
+    const pend = await ctx.backend.select(ctx.session, { table: 'signout_requests', columns: ['id'], eq: { member_id: member.id, status: 'pending' }, limit: 1 })
+    if (!pend.error && pend.data.length) return { status: 'use_approve_signout', message: `${member.name} has a sign-out request waiting. Use approve_signout for them instead. Nothing was changed.` }
+  }
+  return null
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i

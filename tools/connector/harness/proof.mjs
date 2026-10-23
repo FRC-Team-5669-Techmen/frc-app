@@ -182,6 +182,7 @@ const SAMPLES = {
   battery_add_set: () => ({ p_prefix: 'PF', p_from: 1, p_to: 3 }),
   // ledger 0024 (0032)
   admin_set_member_status_bulk: () => ({ p_members: [ID.riley, ID.sam], p_status: 'inactive', p_reason: 'Proof never came' }),
+  staff_add_event: () => ({ p_member: ID.sam, p_type: 'in', p_event_time: new Date(Date.now() - 3600e3).toISOString(), p_category: 'build', p_reason: 'Proof sign-in' }),
 }
 
 /** Placeholder arguments of the right types, for a function with no sample. */

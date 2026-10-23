@@ -41,6 +41,10 @@ A living list. Each line is something he would say to Claude, the tool that shou
 | 35 | "Who has not shown up? Give me a list of who to take off the roster." | `team_attendance` | Runs at once, reads only: active members (no parents, no accountless emails) lowest hours first, with check-ins and last check-in; the count never checked in. |
 | 36 | "Who hasn't checked in since September?" | `team_attendance` (no_checkin_since 2026-09-01, role student) | Only students whose last check-in is before September 1, or who never checked in. |
 | 37 | "Mark Jordan, Sam and Casey inactive, they never came." | `set_member_status` | A preview first listing the three names and their status now; on "yes" all three inactive, one admin log row each with the reason. Two Sams: Claude asks which, and nobody is changed. |
+| 38 | "Sign Riley in." | `sign_in_out` | Runs at once: one IN now, build; "undo that" removes it. Already in: says so, nothing written. A sign-out request waiting: points to `approve_signout`. |
+| 39 | "Which families haven't signed up for Beach Blitz?" | `trip_signups` | Runs at once: families not answered first, then who ticked FIRST registration not done. |
+| 40 | "Which autos are ready?" | `auto_routines` (show ready) | Runs at once: routines with five successes in a row. |
+| 41 | "Draft a Discord announcement that build is canceled, ping parents." | `preview_announcement` | The exact post as a dry run; nothing posted; he sends it from /announce. |
 
 ## Scouting (0022)
 

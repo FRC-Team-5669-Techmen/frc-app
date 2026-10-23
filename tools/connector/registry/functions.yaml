@@ -183,3 +183,16 @@ admin_set_member_status_bulk:
 team_attendance_summary:
   describe: Every member with signed-in hours, check-ins, last check-in, logged hours, application and trip sign-ups.
   level: read
+
+# ledger 0024 Part 2: a staff sign-in or sign-out (the quick pulse control).
+# Undo, not confirm: the time defaults to now, so a preview and its confirm
+# would carry different arguments; the reverse removes the one event added.
+staff_add_event:
+  describe: Add one check-in or check-out for a member at a time, with a reason (a forgotten tap, a staff sign-in).
+  level: undo
+  undo:
+    - function: staff_void_event
+      args:
+        p_event: $result
+        p_reason: Undo through Claude
+

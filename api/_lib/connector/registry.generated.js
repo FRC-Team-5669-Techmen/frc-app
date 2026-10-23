@@ -8,12 +8,12 @@ export default {
   "registry_functions": 214,
   "reachable": 202,
   "read": 27,
-  "undo": 5,
-  "confirm": 168,
+  "undo": 6,
+  "confirm": 167,
   "by_argument": 2,
-  "generated": 176,
+  "generated": 175,
   "excluded_functions": 12,
-  "tools": 30,
+  "tools": 34,
   "edge_functions": 8,
   "routes": 1,
   "table_writes": 0,
@@ -951,6 +951,131 @@ export default {
     "limit": {
      "type": "integer",
      "describe": "How many drivers to list (10 by default)"
+    }
+   }
+  },
+  "sign_in_out": {
+   "name": "sign_in_out",
+   "describe": "Sign a member in or out of the shop now (or at a time he says), the way the quick pulse control does. Undo removes the check-in or check-out.",
+   "say": [
+    "sign Riley in",
+    "sign Sam out",
+    "check Jordan in at 3:30",
+    "Casey forgot to sign out at 6"
+   ],
+   "kind": "function",
+   "args": {
+    "member": {
+     "type": "string",
+     "describe": "The member (a name or email)",
+     "required": true,
+     "resolve": "member"
+    },
+    "direction": {
+     "type": "string",
+     "describe": "in or out",
+     "required": true,
+     "enum": [
+      "in",
+      "out"
+     ]
+    },
+    "at": {
+     "type": "string",
+     "describe": "When, YYYY-MM-DD HH:MM Los Angeles time; now when not said"
+    },
+    "category": {
+     "type": "string",
+     "describe": "Which kind of hours (build by default)",
+     "enum": [
+      "build",
+      "outreach",
+      "volunteer",
+      "competition"
+     ]
+    },
+    "reason": {
+     "type": "string",
+     "describe": "Why, if he said; kept on the attendance audit"
+    }
+   },
+   "function": "staff_add_event",
+   "map": {
+    "p_member": "$resolved.member.id",
+    "p_type": "$args.direction",
+    "p_event_time": "$la.at",
+    "p_category": "$args.category",
+    "p_reason": "$args.reason"
+   }
+  },
+  "trip_signups": {
+   "name": "trip_signups",
+   "describe": "Which families on a trip have not answered the trip form yet, and which said FIRST registration or the school form is not done.",
+   "say": [
+    "which families haven't signed up for Beach Blitz",
+    "who still needs to fill out the trip form",
+    "who hasn't done FIRST registration",
+    "trip sign-up status"
+   ],
+   "kind": "read",
+   "args": {
+    "trip": {
+     "type": "string",
+     "describe": "The trip (part of its title); the next one when not said"
+    }
+   }
+  },
+  "auto_routines": {
+   "name": "auto_routines",
+   "describe": "The auto routines with their success streaks, success rate over the last ten runs, and which are competition-ready.",
+   "say": [
+    "which autos are ready",
+    "how is the two-piece auto doing",
+    "auto streaks",
+    "what's our most reliable auto"
+   ],
+   "kind": "read",
+   "args": {
+    "show": {
+     "type": "string",
+     "describe": "active routines (default), only ready ones, or all including retired",
+     "enum": [
+      "active",
+      "ready",
+      "all"
+     ]
+    }
+   }
+  },
+  "preview_announcement": {
+   "name": "preview_announcement",
+   "describe": "Check a Discord announcement as a dry run, with the exact message and pings it would post. Never posts; he sends it from the Announce page.",
+   "say": [
+    "draft a Discord announcement that build is canceled",
+    "preview an announcement pinging the parents",
+    "what would the Discord post look like"
+   ],
+   "kind": "read",
+   "args": {
+    "message": {
+     "type": "string",
+     "describe": "The announcement text",
+     "required": true
+    },
+    "channel": {
+     "type": "string",
+     "describe": "The channel (announcements by default)",
+     "enum": [
+      "announcements",
+      "general",
+      "event-logistics",
+      "parents"
+     ]
+    },
+    "roles": {
+     "type": "array",
+     "items": "string",
+     "describe": "Announcement role names to ping, if any"
     }
    }
   }
@@ -6141,7 +6266,7 @@ export default {
   },
   "staff_add_event": {
    "name": "staff_add_event",
-   "source": "generated",
+   "source": "hand",
    "forms": [
     {
      "args": [
@@ -6189,8 +6314,17 @@ export default {
     "src/QuickPulseControl.jsx",
     "src/VerifyHoursPage.jsx"
    ],
-   "describe": "Add event (a change: asks first).",
-   "level": "confirm"
+   "describe": "Add one check-in or check-out for a member at a time, with a reason (a forgotten tap, a staff sign-in).",
+   "level": "undo",
+   "undo": [
+    {
+     "function": "staff_void_event",
+     "args": {
+      "p_event": "$result",
+      "p_reason": "Undo through Claude"
+     }
+    }
+   ]
   },
   "staff_add_fll_team": {
    "name": "staff_add_fll_team",
