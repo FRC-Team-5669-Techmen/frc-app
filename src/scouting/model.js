@@ -1,4 +1,5 @@
 import { isCurrentEvidence, matchIdentity } from './provenance.js'
+import { isSuperNote } from './superscout.js'
 // Proposed Techmen rules. TideScout does not publish these formulas.
 export const CAPABILITIES = Object.freeze([
   { key: 'trench', label: 'Passes under the TRENCH' },
@@ -29,7 +30,8 @@ function newest(records, key) {
 // Missing answers, did_not_see and not_applicable counts are scout responses,
 // while yes/no/disputed counts are matches. Callers must label them accordingly.
 export function currentObservations(records, team) {
-  const versions = newest(records.filter(r => r.kind === 'observation' && r.team_number === Number(team)),
+  // Super-scout notes (0030) are qualitative and never enter a rate or count.
+  const versions = newest(records.filter(r => r.kind === 'observation' && !isSuperNote(r) && r.team_number === Number(team)),
     r => r.id ?? `${r.event_id}:${r.member_id}:${r.team_number}:${String(r.match_key).trim().toLowerCase()}`)
   return newest(versions, r => `${r.event_id}:${r.member_id}:${r.team_number}:${matchIdentity(r)}`).filter(isCurrentEvidence)
 }

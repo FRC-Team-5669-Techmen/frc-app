@@ -252,3 +252,31 @@
 .sc-match-answers { margin-bottom: 8px; }
 .sc-match-answers span { border-color: var(--border-strong); }
 .sc-match-answers b { color: var(--gold-dim); font-weight: 400; margin-right: 4px; }
+
+/* Match-number shifts, super scouts, practice without an event (ledger 0022). Tokens only. */
+.sc-practice-link { display: grid; gap: 4px; padding: 16px 20px; border: 1px solid var(--gold-dim); border-radius: var(--radius); background: var(--gold-a08); color: var(--text); text-decoration: none; }
+.sc-practice-link strong { font-family: var(--font-ui); font-size: 18px; color: var(--gold); }
+.sc-practice-link span:last-child { color: var(--steel); font-size: 14px; }
+.sc-now { display: grid; gap: 12px; border-color: var(--gold-dim); }
+.sc-now-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.sc-now-match { font: 700 40px/1 var(--font-mono); color: var(--gold); letter-spacing: 0.02em; }
+.sc-now-block { display: grid; gap: 2px; text-align: right; font-family: var(--font-mono); color: var(--text); }
+.sc-now-you { margin: 0; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius); font-family: var(--font-mono); color: var(--text); background: var(--surface-2); }
+.sc-now-soon { border-color: var(--gold); color: var(--gold); }
+.sc-now-shift p { margin: 4px 0; color: var(--steel); font-size: 14px; overflow-wrap: anywhere; }
+.sc-now-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.sc-now-controls button { min-height: 44px; min-width: 44px; }
+.sc-now-set { display: grid; gap: 4px; font-size: 12px; color: var(--steel); }
+.sc-now-set input { width: 80px; min-height: 44px; }
+.sc-now-set select { min-height: 44px; }
+.sc-alliance { display: inline-block; justify-self: start; padding: 4px 10px; border-radius: 3px; font: 12px var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text); }
+.sc-alliance-red { border: 1px solid var(--alliance-red); background: var(--alliance-red-a18); }
+.sc-alliance-blue { border: 1px solid var(--alliance-blue); background: var(--alliance-blue-a20); }
+.sc-super-team { display: grid; gap: 10px; border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 12px; min-width: 0; }
+.sc-super-team legend { padding: 0 6px; font-family: var(--font-mono); color: var(--gold); }
+.sc-super-row { display: grid; gap: 6px; }
+.sc-super-row .sc-choice-options { grid-template-columns: repeat(5, minmax(44px, 1fr)); gap: 6px; }
+.sc-super-row .sc-choice-options button { min-width: 44px; min-height: 48px; padding: 0; font-family: var(--font-mono); }
+.sc-super-summary { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); }
+.sc-super-summary p { margin: 4px 0 0; font: 13px var(--font-mono); color: var(--text); }
+.sc-pair-check { border-color: var(--fault); background: var(--fault-a10); }

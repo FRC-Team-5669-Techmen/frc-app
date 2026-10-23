@@ -60,3 +60,10 @@ A footage workbook submission freezes the team, actual source match/URL, source 
 ## Match fields summaries (0027)
 
 Per-team match figures follow the reliability rule's structure: confirmed current-event observations, the newest correction per author per match, then ONE value per match (median of the scouts' counts or ratings; a yes/no where scouts disagree is disputed and excluded). Medians are over matches where the field was recorded, with the count shown. Rates have the decisive matches as their denominator. A team with nothing recorded shows no figure, never 0, and fails every numeric filter. Hand examples: `tests/scouting-match.test.js` and `docs/scouting/acceptance-oracles.md` A6.
+
+## Pairs, super scouts and the current match (0030)
+
+- observation.role: optional `scout|super`. A `super` observation carries `super: {driver_skill, defense, speed, intake: whole numbers 1-5; failures: text 1-1000}` with at least one key, JSON null refused, and no `match` key and empty `answers`. `super` on any other observation is refused. Super notes never enter reliability, match summaries or coverage.
+- assignment.role: optional `scout|super`. A `super` assignment carries `alliance: red|blue` and `teams`: one to three different team numbers including its own `team_number`. `alliance`/`teams` on any other assignment are refused. Two scouts may hold assignments for one robot and match (redundant pair); one scout twice is still `PT409`.
+- `scouting_now(event_id, match_number 0-999, block_size 1-200, updated_at)`: no client privileges. `scouting_now_get(p_event)` for eligible scouts (null before first set); `scouting_now_set(p_event, p_match, p_delta, p_block)` for event managers: set or bump (not both), clamped to 0-999, block size optional.
+- Pair reconciliation (client, Techmen rule): average of counts and ratings per team per match; flagged beyond 10 FUEL or 1 rating point, or differing decisive yes/no or choice answers.

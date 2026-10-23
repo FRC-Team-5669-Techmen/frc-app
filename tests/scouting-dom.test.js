@@ -361,6 +361,8 @@ describe('assignment batch durability', () => {
     await settle(() => fixture.rows('scouting_records').filter(r => ['qm80', 'qm81'].includes(r.match_key)).length === 2, 'saved plan')
     await unmount(); await mount('admin')
     await settle(() => host.querySelector('.sc-planner textarea')?.value.includes('qm80'), 'schedule restored')
+    // The eligible roster arrives after the page opens (scouting_roster); wait for it as a lead would.
+    await settle(() => host.querySelector('.sc-planner .sc-choice button'), 'roster loaded')
     await click(buttons('Preview assignment plan')[0])
     expect(host.textContent).toContain('0 new assignments')
     expect(host.textContent).toContain('2 already covered')

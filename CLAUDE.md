@@ -68,7 +68,7 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 - **Member standing**: absences, break weeks, the weekly and monthly checks, probation and removal, grades, discipline, safety, incidents, voids, FLL mentors, notices (0015). [`docs/subsystems/standing.md`](docs/subsystems/standing.md)
 - **Event rosters**: roles, eligibility, event-day attendance, conflicts, the family sign-up rule, the carpool lock (0016). [`docs/subsystems/rosters.md`](docs/subsystems/rosters.md)
 - **Families and records**: the family link, emergency information, driver documents, the no-photo list, sub-team status, the leaderboard, the onboarding checklist and shop gate, training, handbook versions, letter progress (0017). [`docs/subsystems/families-and-records.md`](docs/subsystems/families-and-records.md)
-- **Scouting**: event observations with REBUILT match fields (0027), offline queue, shift planning, pit conversations, pick lists, practice and the spreadsheet export. [`docs/subsystems/scouting.md`](docs/subsystems/scouting.md).
+- **Scouting**: event observations with REBUILT match fields (0027), offline queue, shift planning by match number with redundant pairs and super scouts (0030), pit conversations, pick lists, practice (also with no event) and the spreadsheet export. [`docs/subsystems/scouting.md`](docs/subsystems/scouting.md).
 - **Battery log**: `/batteries`, the pit battery board, runs and charge state (0026). [`docs/subsystems/batteries.md`](docs/subsystems/batteries.md)
 - **Driver leaderboard**: `/drivers`, drive time, MoSim, coach ratings, one Driver Score per season in `src/driverScore.js` (0029). [`docs/subsystems/drivers.md`](docs/subsystems/drivers.md)
 - **Connector**: Claude acting as the admin through `/mcp` (0018); every write via `src/writeVia.js` (0019). [`docs/subsystems/connector.md`](docs/subsystems/connector.md)
@@ -230,4 +230,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-23. Driver leaderboard line (ledger 0020); light theme and What's new (ledger 0019); automatic migrations (`migrate.yml`, ledger 0021) in the Database section; battery log, scouting and nav lines (ledger 0017). Latest records: `docs/history/light-mode-whats-new-0019.md`, `docs/history/auto-migrations-0021.md`.
+Last reviewed: 2026-10-23. Scouting pairs, super scouts and match-number shifts (ledger 0022); driver leaderboard line (ledger 0020); light theme and What's new (ledger 0019); automatic migrations (`migrate.yml`, ledger 0021) in the Database section; battery log, scouting and nav lines (ledger 0017). Latest records: `docs/history/light-mode-whats-new-0019.md`, `docs/history/auto-migrations-0021.md`.

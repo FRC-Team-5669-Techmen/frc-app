@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import ComparisonEvidence from './ComparisonEvidence'
 import { aggregatePickLists, CAPABILITIES, filterTeams, previewComparison, TIERS } from './model'
+import { superSummary, fmtMean } from './superscout'
 import { MATCH_FILTERS, passesMatchFilters, teamMatchSummary, fmtMedian, towerLabel, fmtRate } from './match'
 
 const normalize = rows => TIERS.flatMap(t => rows.filter(x => x.tier === t.value).map((x, i) => ({ ...x, rank: i + 1 })))
@@ -64,6 +65,9 @@ export default function PickLists({ records, confirmedRecords = records.filter(r
     change(normalize(swapped))
   }
   const summaries = new Map()
+  // Super-scout ratings (0030) sit beside the counts so qualitative notes feed the list.
+  const supers = new Map()
+  const superOf = team => { if (!supers.has(team)) supers.set(team, superSummary(confirmedRecords, team)); return supers.get(team) }
   const summary = team => { if (!summaries.has(team)) summaries.set(team, teamMatchSummary(confirmedRecords, team)); return summaries.get(team) }
   const matchFiltering = Object.values(matchFilter).some(v => v !== '' && v !== false && v !== undefined)
   // Match filters read confirmed observations only; an unrecorded value never passes a minimum.
@@ -95,7 +99,7 @@ export default function PickLists({ records, confirmedRecords = records.filter(r
         </details>
         <p className="sc-help">EPA is a statistical estimate. The EPA filter excludes missing estimates and snapshots older than 24 hours. Capability filters use pit claims. Match filters use confirmed observations; a team with nothing recorded does not pass a minimum.</p>
         <label>Add to<select aria-label="Add to" value={String(addTier)} onChange={e => setAddTier(e.target.value === 'dnp' ? 'dnp' : Number(e.target.value))}>{TIERS.map(t => <option key={t.value} value={String(t.value)}>{t.label}</option>)}</select></label>
-        <div className="sc-team-picker">{filtered.filter(r => !entries.some(e => e.team === r.team_number)).map(r => <button disabled={saving || pending || !ready} key={r.team_number} onClick={() => change(normalize([...entries, { team: r.team_number, tier: addTier, rank: entries.length + 1 }]))}><b>{r.team_number}</b><span>Add {r.payload?.name || 'team'}</span>{summary(r.team_number).matches > 0 && <small className="sc-pick-stats">FUEL {fmtMedian(summary(r.team_number).totalFuel)} · TOWER {towerLabel(summary(r.team_number).tower.best)} · trouble {fmtRate(summary(r.team_number).troubleRate)}</small>}</button>)}</div>
+        <div className="sc-team-picker">{filtered.filter(r => !entries.some(e => e.team === r.team_number)).map(r => <button disabled={saving || pending || !ready} key={r.team_number} onClick={() => change(normalize([...entries, { team: r.team_number, tier: addTier, rank: entries.length + 1 }]))}><b>{r.team_number}</b><span>Add {r.payload?.name || 'team'}</span>{summary(r.team_number).matches > 0 && <small className="sc-pick-stats">FUEL {fmtMedian(summary(r.team_number).totalFuel)} · TOWER {towerLabel(summary(r.team_number).tower.best)} · trouble {fmtRate(summary(r.team_number).troubleRate)}</small>}{superOf(r.team_number).notes > 0 && <small className="sc-pick-stats">Super: driver {fmtMean(superOf(r.team_number).driver_skill)} · defense {fmtMean(superOf(r.team_number).defense)} · speed {fmtMean(superOf(r.team_number).speed)} · intake {fmtMean(superOf(r.team_number).intake)}{superOf(r.team_number).failures.length ? ` · ${superOf(r.team_number).failures.length} failures` : ''}</small>}</button>)}</div>
         {!filtered.length && <p className="sc-help">No teams match. Clear a filter or ask your lead to add the event teams.</p>}
       </div>
       {TIERS.map(t => <div className="sc-card sc-tier" key={t.value}><div className="sc-section-head"><h3>{t.label}</h3><span className="sc-count">{entries.filter(e => e.tier === t.value).length}</span></div>

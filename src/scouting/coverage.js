@@ -1,4 +1,5 @@
 import { CAPABILITIES, reliability } from './model.js'
+import { isSuperNote } from './superscout.js'
 import { isExternalEvidence, isCurrentEvidence, hasUnverifiedVideoScope, matchIdentity } from './provenance.js'
 
 // Coverage describes collected evidence, not robot strength. Repeated scouts in
@@ -8,15 +9,15 @@ export function eventCoverage(records, confirmedRecords = records.filter(r => !r
   return teams.map(team => {
     const rows = records.filter(r => r.team_number === team)
     const synced = confirmedRecords.filter(r => r.team_number === team)
-    const observations = synced.filter(r => r.kind === 'observation')
+    const observations = synced.filter(r => r.kind === 'observation' && !isSuperNote(r))
     const current = observations.filter(isCurrentEvidence)
     const trials = CAPABILITIES.map(c => ({ ...c, ...reliability(synced, team, c.key) }))
-    const outstanding = rows.filter(r => r.kind === 'assignment' && r.payload.status === 'assigned' && !synced.some(o => o.kind === 'observation' && o.member_id === r.payload.assignee && (o.payload.assignment_id === r.id || matchIdentity(o) === matchIdentity(r))))
+    const outstanding = rows.filter(r => r.kind === 'assignment' && r.payload.role !== 'super' && r.payload.status === 'assigned' && !synced.some(o => o.kind === 'observation' && o.member_id === r.payload.assignee && (o.payload.assignment_id === r.id || matchIdentity(o) === matchIdentity(r))))
     return { team, pit: synced.some(r => r.kind === 'pit'),
       currentMatches: new Set(current.map(r => `${r.event_id}:${matchIdentity(r)}`)).size,
       priorMatches: new Set(observations.filter(isExternalEvidence).map(r => `${r.payload.source_event}:${r.match_key}`)).size,
       unverifiedVideos: observations.filter(hasUnverifiedVideoScope).length,
-      localObservations: rows.filter(r => r.kind === 'observation' && r.localStatus).length,
+      localObservations: rows.filter(r => r.kind === 'observation' && !isSuperNote(r) && r.localStatus).length,
       outstanding: outstanding.length, trials,
       thin: trials.some(r => !r.sufficient), disputed: trials.some(r => r.disputed > 0),
     }

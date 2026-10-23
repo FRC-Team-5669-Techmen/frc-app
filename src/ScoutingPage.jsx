@@ -24,6 +24,10 @@ import EvidenceRecord, { RevisionList } from './scouting/EvidenceRecord'
 import MatchBrief from './scouting/MatchBrief'
 import ObservationBrowser from './scouting/ObservationBrowser'
 import MatchSummary from './scouting/MatchSummary'
+import ShiftNow from './scouting/ShiftNow'
+import SuperScoutForm from './scouting/SuperScoutForm'
+import { isSuperAssignment, superAssignmentDone, superSummary, fmtMean, SUPER_RATINGS } from './scouting/superscout'
+import { PAIR_COLUMNS, pairRows } from './scouting/pairs'
 import { teamMatchSummary } from './scouting/match'
 import './ScoutingPage.css'
 
@@ -37,8 +41,29 @@ export default function ScoutingPage({ session, hasRole = () => false, offlineMe
   const uid = session?.user?.id
   const staff = ['admin', 'mentor', 'lead'].some(hasRole)
   if (!uid || (hasRole('parent') && !staff)) return <main className="sc-wrap"><h1>Scouting</h1><p>Scouting is available to student and staff accounts.</p><Link className="sc-link" to="/dashboard">Back to dashboard</Link></main>
+  if (eventId === 'practice') return <PracticeOnly key={uid} uid={uid} />
   if (eventId && !uuid(eventId)) return <main className="sc-wrap"><h1>Event not found</h1><Link className="sc-link" to="/scouting">Choose an event</Link></main>
   return eventId ? <EventScouting key={`${uid}:${eventId}`} uid={uid} eventId={eventId} staff={staff} offlineMemberId={offlineMemberId} /> : <ScoutingEvents key={uid} uid={uid} />
+}
+
+// Practice works with no event loaded (ledger 0022): the training missions,
+// drills and practice match lab are local to this account and device, keyed
+// to the fixed 'practice' scope, so members can train before any competition
+// exists in Schedule.
+function PracticeOnly({ uid }) {
+  const [store, setStore] = useState(null), [error, setError] = useState('')
+  useEffect(() => {
+    let live = true, opened = null
+    createScoutingStore().then(s => { opened = s; if (live) setStore(s); else s.close() }).catch(e => { if (live) setError(errorText(e)) })
+    return () => { live = false; opened?.close() }
+  }, [uid])
+  return <main className="sc-wrap" data-scout-page="practice">
+    <Link className="sc-back" to="/scouting">← Events</Link>
+    <header className="sc-head"><div><span className="sc-eyebrow">Techmen scouting</span><h1>Practice scouting</h1><p>No event needed. Train now; your progress stays on this device.</p></div><span className="sc-season">REBUILT / 2026</span></header>
+    {error && <p role="alert" className="sc-error">Practice storage could not open. {error}</p>}
+    {!store && !error && <p role="status">Opening practice…</p>}
+    {store && <Training key={uid} store={store} memberId={uid} eventId="practice" />}
+  </main>
 }
 
 function ScoutingEvents({ uid }) {
@@ -71,6 +96,7 @@ function ScoutingEvents({ uid }) {
   return <main className="sc-wrap" data-scout-page="events">
     <header className="sc-head"><div><span className="sc-eyebrow">Techmen field intelligence</span><h1>Scouting</h1><p>One event. Shared evidence. Better decisions.</p></div><span className="sc-season">REBUILT / 2026</span></header>
     <div className="sc-intro"><span className="sc-intro-number">01</span><div><h2>Choose your event</h2><p>Open the event while connected to save its data for the stands. Observations and notes stay on this device until they sync.</p></div></div>
+    <Link className="sc-practice-link" to="/scouting/practice"><span className="sc-eyebrow">No event needed</span><strong>Practice scouting now</strong><span>Missions, drills and the practice match lab. Progress stays on this device.</span></Link>
     <label className="sc-search">Find an event<input type="search" placeholder="Event name or venue" value={query} onChange={e => setQuery(e.target.value)} /></label>
     {cached && <p className="sc-notice">Showing the event list saved on this device.</p>}
     {error && <div className="sc-notice" role="status"><p>Could not refresh events. {error}</p><button onClick={() => setRetry(n => n + 1)}>Try again</button></div>}
@@ -94,6 +120,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const [form, setForm] = useState(null)
+  const [superForm, setSuperForm] = useState(null)
   const [evidenceTeam, setEvidenceTeam] = useState('')
   const [teamQuery, setTeamQuery] = useState('')
   const [teamPage, setTeamPage] = useState(0)
@@ -231,11 +258,13 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
   const canEdit = row => !row.localStatus && (row.member_id === uid || (manager && !['pick_list', 'observation'].includes(row.kind)))
   const observations = records.filter(r => r.kind === 'observation')
   const observationFor = row => observations.find(o => o.member_id === row.payload.assignee && (o.payload.assignment_id === row.id || (o.team_number === row.team_number && matchIdentity(o) === matchIdentity(row))))
-  const isComplete = row => row.payload.status === 'complete' || !!observationFor(row)
+  const isComplete = row => row.payload.status === 'complete' || (isSuperAssignment(row) ? superAssignmentDone(row, records) : !!observationFor(row))
   const assignments = records.filter(r => r.kind === 'assignment' && r.payload?.status !== 'cancelled' && (showAllAssignments || r.payload?.assignee === uid))
     .sort((a, b) => Number(isComplete(a)) - Number(isComplete(b)) || matchOrder({ key: a.match_key }, { key: b.match_key }))
   const pitFor = n => records.filter(r => r.kind === 'pit' && r.team_number === n).sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)))[0]
   const openForm = (kind, extra = {}) => setForm({ kind, ...extra })
+  // A super-scout assignment covers a whole alliance and opens the rating sheet (0030).
+  const superCard = row => <article className={`sc-card sc-assignment sc-super-card${isComplete(row) ? ' sc-complete' : ''}`} key={row.id}><div className="sc-section-head"><span className="sc-match">{row.match_key}</span><span className="sc-chip">{row.localStatus ? 'Saved locally' : isComplete(row) ? 'Rated' : 'Super scout'}</span></div><div className={`sc-alliance sc-alliance-${row.payload.alliance === 'blue' ? 'blue' : 'red'}`}>{row.payload.alliance} alliance</div><h3>{(row.payload.teams?.length ? row.payload.teams : [row.team_number]).join(' · ')}</h3><p>{row.payload.instructions || 'Rate each robot. No counting.'}</p><p className="sc-help">Super scout: {memberName(row.payload.assignee)}</p><div className="sc-actions"><button className="sc-primary" disabled={!!row.localStatus || row.payload.assignee !== uid} onClick={() => setSuperForm(row)}>{isComplete(row) ? 'Review ratings' : 'Rate alliance'}</button>{manager && canEdit(row) && <button onClick={() => openForm('assignment', { record: row })}>Edit assignment</button>}</div></article>
   async function exportData() {
     if (!store || exporting) return
     setExporting(true); setExportError('')
@@ -254,7 +283,9 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
     // Observations include this device's unsynced saves (labeled); team summaries use confirmed records only.
     downloadText(toCsv(OBSERVATION_COLUMNS, observationRows(records, { memberName, nameFor }), { note: SHEET_NOTE }), `techmen-scouting-${slug}-observations-${laStamp()}.csv`)
     setTimeout(() => downloadText(toCsv(TEAM_COLUMNS, teamSheetRows(serverRecords, { nameFor }), { note: SHEET_NOTE }), `techmen-scouting-${slug}-teams-${laStamp()}.csv`), 400)
-    setNotice('Two spreadsheets downloaded: one row per observation, and one row per team. Check your Downloads folder.')
+    const pairs = pairRows(serverRecords)
+    if (pairs.length) setTimeout(() => downloadText(toCsv(PAIR_COLUMNS, pairs, { note: 'Techmen scouting pairs. Two scouts on one robot: counts averaged; Check means they disagree by more than 10 FUEL or 1 rating point, or on a yes/no.' }), `techmen-scouting-${slug}-pairs-${laStamp()}.csv`), 800)
+    setNotice(pairs.length ? `Three spreadsheets downloaded: observations, teams, and ${pairs.length} scout pairs (${pairs.filter(p => p.status === 'Check').length} to check). Check your Downloads folder.` : 'Two spreadsheets downloaded: one row per observation, and one row per team. Check your Downloads folder.')
   }
 
   if (loading) return <main className="sc-wrap"><h1>Scouting</h1><p role="status">Opening event and saved work…</p></main>
@@ -271,8 +302,9 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
     <nav className="sc-tabs" role="tablist" aria-label="Scouting sections" onKeyDown={e => { if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return; const tabs = [...e.currentTarget.querySelectorAll('[role="tab"]')]; const i = tabs.indexOf(document.activeElement); const next = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; e.preventDefault(); tabs[next]?.focus(); tabs[next]?.click() }}>{[['scout', 'Scout this'], ['teams', 'Teams'], ['messages', 'Pit messages'], ['picks', 'Pick lists'], ['practice', 'Practice']].map(([key, label]) => <button key={key} role="tab" id={`sc-tab-${key}`} aria-controls={`sc-panel-${key}`} tabIndex={tab === key ? 0 : -1} aria-label={label} aria-selected={tab === key} aria-current={tab === key ? 'page' : undefined} onClick={() => setTab(key)}>{label}{key === 'scout' && <span>{assignments.filter(r => !isComplete(r)).length}</span>}</button>)}</nav>
     {tab === 'scout' && <section className="sc-stack" role="tabpanel" id="sc-panel-scout" aria-labelledby="sc-tab-scout">
       <div className="sc-section-head"><div><h2>Your next match</h2><p className="sc-help">Observe the assigned robot. Record what you actually see.</p></div><button aria-pressed={showAllAssignments} onClick={() => setShowAllAssignments(x => !x)}>{showAllAssignments ? 'Show my assignments' : 'Show all assignments'}</button></div>
+      {store && <ShiftNow client={supabase} store={store} uid={uid} eventId={eventId} records={records} manager={manager} online={online} memberName={memberName} nameFor={nameFor} />}
       {!assignments.length && <div className="sc-empty"><span className="sc-eyebrow">Ready when you are</span><h3>No assignments yet</h3><p>Ask your scouting lead for a match, or capture an observation now.</p><button onClick={() => openForm('observation')}>Start an observation</button></div>}
-      <div className="sc-assignment-grid">{assignments.map(row => <article className={`sc-card sc-assignment${isComplete(row) ? ' sc-complete' : ''}`} key={row.id}><div className="sc-section-head"><span className="sc-match">{row.match_key}</span><span className="sc-chip">{row.localStatus ? 'Saved locally' : isComplete(row) ? 'Recorded' : 'To scout'}</span></div><div className="sc-team-number">{row.team_number}</div><h3>{nameFor(row.team_number) || 'Assigned robot'}</h3><p>{row.payload.instructions || 'Watch capabilities and record useful match notes.'}</p><p className="sc-help">Scout: {memberName(row.payload.assignee)}{row.payload.video_url ? ` · ${footageLabel(row)}` : ''}</p><div className="sc-actions">{row.payload.video_url && <a className="sc-link" href={row.payload.video_url} target="_blank" rel="noopener noreferrer">Watch video ↗</a>}<button className="sc-primary" disabled={!!row.localStatus || !!observationFor(row)?.localStatus || row.payload.assignee !== uid} onClick={() => openForm('observation', observationFor(row) ? { record: observationFor(row) } : { team: row.team_number, assignment: row })}>{observationFor(row) ? 'Review observation' : 'Scout match'}</button>{manager && canEdit(row) && <button onClick={() => openForm('assignment', { record: row })}>Edit assignment</button>}</div></article>)}</div>
+      <div className="sc-assignment-grid">{assignments.map(row => isSuperAssignment(row) ? superCard(row) : <article className={`sc-card sc-assignment${isComplete(row) ? ' sc-complete' : ''}`} key={row.id}><div className="sc-section-head"><span className="sc-match">{row.match_key}</span><span className="sc-chip">{row.localStatus ? 'Saved locally' : isComplete(row) ? 'Recorded' : 'To scout'}</span></div><div className="sc-team-number">{row.team_number}</div><h3>{nameFor(row.team_number) || 'Assigned robot'}</h3><p>{row.payload.instructions || 'Watch capabilities and record useful match notes.'}</p><p className="sc-help">Scout: {memberName(row.payload.assignee)}{row.payload.video_url ? ` · ${footageLabel(row)}` : ''}</p><div className="sc-actions">{row.payload.video_url && <a className="sc-link" href={row.payload.video_url} target="_blank" rel="noopener noreferrer">Watch video ↗</a>}<button className="sc-primary" disabled={!!row.localStatus || !!observationFor(row)?.localStatus || row.payload.assignee !== uid} onClick={() => openForm('observation', observationFor(row) ? { record: observationFor(row) } : { team: row.team_number, assignment: row })}>{observationFor(row) ? 'Review observation' : 'Scout match'}</button>{manager && canEdit(row) && <button onClick={() => openForm('assignment', { record: row })}>Edit assignment</button>}</div></article>)}</div>
       <ObservationBrowser records={observations} confirmedRecords={serverRecords} team={evidenceTeam} onTeam={setEvidenceTeam} memberName={memberName} nameFor={nameFor} canEdit={canEdit} onEdit={row => openForm('observation', { record: row })} revisions={data.revisions ?? []} />
     </section>}
     {tab === 'teams' && <section className="sc-stack" role="tabpanel" id="sc-panel-teams" aria-labelledby="sc-tab-teams">
@@ -288,6 +320,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
         <button onClick={() => { setEvidenceTeam(String(n)); setTab('scout') }}>Review match evidence</button>
         {serverRecords.some(r => r.kind === 'observation' && r.team_number === n && hasUnverifiedVideoScope(r)) && <p className="sc-help">Video evidence with unverified event scope is excluded from these rates. Use Review match evidence to check its provenance.</p>}
         <MatchSummary s={teamMatchSummary(serverRecords, n)} />
+        {(() => { const sup = superSummary(serverRecords, n); return sup.notes > 0 && <div className="sc-super-summary"><span className="sc-eyebrow">Super scouts · {sup.notes} {sup.notes === 1 ? 'note' : 'notes'}</span><p>{SUPER_RATINGS.map(r => `${r.label} ${fmtMean(sup[r.key])}`).join(' · ')}</p>{sup.failures.length > 0 && <details><summary>Failures seen ({sup.failures.length})</summary><ul>{sup.failures.map((f, i) => <li key={i}>{f.match}: {f.text}</li>)}</ul></details>}</div> })()}
         <div className="sc-evidence-grid">{CAPABILITIES.map(c => { const r = reliability(serverRecords, n, c.key); return <div className="sc-evidence" key={c.key}><h4>{c.label}</h4><span className="sc-help">Pit claim: {words(pit?.payload.capabilities?.[c.key])}{pit?.localStatus ? ' · saved locally, awaiting confirmation' : ''}</span><div className="sc-ratio">{r.percent === null ? 'No evidence' : `${Math.round(r.percent)}%`}<span>{r.yes}/{r.denominator} observed matches</span></div><p className="sc-help">{r.sufficient ? '3+ observed matches' : 'Provisional: fewer than 3 observed matches'}{r.disputed ? ` · ${r.disputed} disputed` : ''}</p><details><summary>Count details</summary><p className="sc-help">{r.no} observed failures. Excluded scout responses: {r.didNotSee} did not see, {r.notApplicable} not applicable, {r.missing} unanswered. Disputed matches are excluded.</p></details></div> })}</div>
         {team?.payload.epa != null && <p className="sc-help">Statbotics estimate: {team.payload.epa} EPA · {when(team.payload.epa_fetched_at)}. Not an official robot score.</p>}
         <div className="sc-actions"><button disabled={!!pit && !canEdit(pit)} onClick={() => openForm('pit', pit ? { record: pit } : { team: n })}>Pit report</button><button onClick={() => openForm('observation', { team: n })}>Observe</button><button onClick={() => openForm('message', { team: n })}>Message</button>{manager && team && canEdit(team) && <button onClick={() => openForm('team', { record: team })}>Edit team</button>}</div>
@@ -308,6 +341,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
       <div className="sc-export"><button disabled={!store || exporting} onClick={exportData}>{exporting ? 'Preparing backup…' : 'Export event data'}</button><span>The recovery backup (JSON): saved drafts, practice progress and pending saves for this account and event. Wait for “saved on this device” before exporting; keep the file with your team.</span></div>
     </footer>
     {store && data.event && <RecoveryPanel store={store} uid={uid} eventId={eventId} onRestored={rows => { queueGeneration.current++; setQueue(previous => [...previous, ...rows]) }} />}
+    {superForm && store && <SuperScoutForm key={superForm.id} assignment={superForm} records={records} uid={uid} nameFor={nameFor} onSaveBatch={saveBatch} onClose={() => setSuperForm(null)} />}
     {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} matchFields={matchFields} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : save} onClose={() => setForm(null)} />}
   </main>
 }

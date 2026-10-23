@@ -1,6 +1,7 @@
 import { matchIdentity } from '../../../scouting/provenance.js'
 import { nexusMap } from '../nexus-map.js'
 import { validMapKey } from '../../../scouting/pit-map-model.js'
+import { superProblem } from './scoutingshifts.js'
 // Fixture-only port of scouting rules. This proves browser workflows; SQL and
 // RLS are independently exercised by 0022_scouting_rls_test.sql.
 const EVENT = '16000000-0000-4000-8000-000000000001'
@@ -59,6 +60,12 @@ function save(ctx) {
   if ('match' in p) {
     if (a.p_kind !== 'observation' || !ctx.engine.applied('0027')) return fail('Unknown scouting field.')
     const problem = matchProblem(p.match)
+    if (problem) return fail(problem)
+  }
+  // 0030 (port of the super-scout rules in scouting_private.validate).
+  if (['role', 'super', 'alliance', 'teams'].some(k => k in p)) {
+    if (!ctx.engine.applied('0030')) return fail('Unknown scouting field.')
+    const problem = superProblem(a, p)
     if (problem) return fail(problem)
   }
   if (a.p_kind === 'pit' && Object.values(p.capabilities ?? {}).some(v => !['yes', 'no', 'unknown'].includes(v))) return fail('Choose a pit claim state.')
