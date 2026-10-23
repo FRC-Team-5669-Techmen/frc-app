@@ -24,9 +24,9 @@
 .fb-launch svg { width: 1.25rem; height: 1.25rem; }
 .fb-launch:hover,
 .fb-launch:focus-visible {
-  background: var(--gold);
+  background: var(--gold-fill);
   border-color: var(--gold);
-  color: var(--bg);
+  color: var(--on-gold);
 }
 .fb-launch-open { border-color: var(--border-strong); color: var(--steel); }
 .fb-launch-open:hover { background: var(--surface-2); border-color: var(--steel); color: var(--text); }
@@ -109,7 +109,7 @@
 .fb-cat:hover { border-color: var(--gold-dim); color: var(--text); }
 /* Small control, so a gold fill IS the active state. */
 .fb-cat-on,
-.fb-cat-on:hover { background: var(--gold); border-color: var(--gold); color: var(--bg); }
+.fb-cat-on:hover { background: var(--gold-fill); border-color: var(--gold); color: var(--on-gold); }
 
 .fb-text {
   width: 100%;
@@ -225,7 +225,7 @@
   cursor: pointer;
 }
 .fb-submit:hover:not(:disabled),
-.fb-submit:focus-visible:not(:disabled) { background: var(--gold); color: var(--bg); }
+.fb-submit:focus-visible:not(:disabled) { background: var(--gold-fill); color: var(--on-gold); }
 .fb-submit:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .fb-done {
@@ -259,4 +259,4 @@
   color: var(--steel); background: transparent; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); cursor: pointer;
 }
 .fb-mic:hover { border-color: var(--gold-dim); color: var(--text); }
-.fb-mic-on, .fb-mic-on:hover { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+.fb-mic-on, .fb-mic-on:hover { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }

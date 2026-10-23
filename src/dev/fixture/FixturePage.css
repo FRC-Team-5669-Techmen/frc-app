@@ -39,7 +39,7 @@
   font: inherit;
   cursor: pointer;
 }
-.fx-btn:hover, .fx-btn:focus-visible { background: var(--gold); color: var(--bg); }
+.fx-btn:hover, .fx-btn:focus-visible { background: var(--gold-fill); color: var(--on-gold); }
 .fx-list { margin: 12px 0 0; padding-left: 18px; color: var(--fault); font-size: 0.85rem; }
 .fx-links { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
 .fx-link {

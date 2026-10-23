@@ -117,8 +117,8 @@
 
 .landing-cta:hover,
 .landing-cta:focus-visible {
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
 }
 
 /* ── Features ── */

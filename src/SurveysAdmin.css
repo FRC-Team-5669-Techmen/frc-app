@@ -182,7 +182,7 @@
    EXPIRED and SCHEDULED stay outlined: the switch is on but nothing is live,
    so a filled pill would say the opposite of what is true. Neither is a fault,
    so neither is --fault red. */
-.sa-pill-open { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+.sa-pill-open { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }
 .sa-pill-expired   { color: var(--steel); border-color: var(--steel); }
 .sa-pill-scheduled { color: var(--gold-dim); border-color: var(--gold-a24); }
 
@@ -222,7 +222,7 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
-.sa-tab-on { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+.sa-tab-on { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }
 
 /* ── Question editor ── */
 .sa-qs { list-style: none; margin: 0 0 0.75rem; padding: 0; }
@@ -348,7 +348,7 @@
 }
 /* Small-area gold IS the active state: a progress bar is a per-row control,
    so it fills rather than outlines. */
-.sa-bar-fill { height: 100%; background: var(--gold); }
+.sa-bar-fill { height: 100%; background: var(--gold-fill); }
 
 .sa-bar-who {
   margin: 0.25rem 0 0;

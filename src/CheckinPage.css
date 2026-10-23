@@ -89,8 +89,8 @@
 
 /* ── Success: check-in floods gold, black text ── */
 .checkin-success {
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
 }
 .checkin-success .checkin-mark,
 .checkin-success .checkin-name,
@@ -102,8 +102,8 @@
   animation: checkin-flash 0.25s ease-out;
 }
 @keyframes checkin-flash {
-  from { background: var(--gold-bright); }
-  to   { background: var(--gold); }
+  from { background: var(--gold-fill-bright); }
+  to   { background: var(--gold-fill); }
 }
 
 /* ── Check-out: dark confirm panel with gold accent ── */

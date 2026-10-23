@@ -74,8 +74,8 @@
 }
 
 .board-tab-active {
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   border-color: var(--gold);
 }
 
@@ -121,7 +121,7 @@
   cursor: pointer;
 }
 .board-viewbtn:not(:last-child) { border-right: 1px solid var(--border-strong); }
-.board-viewbtn.active { background: var(--gold); color: #0A0B0D; }
+.board-viewbtn.active { background: var(--gold-fill); color: var(--on-gold); }
 .board-export {
   font-family: var(--font-ui);
   font-size: 0.78rem;
@@ -391,7 +391,7 @@
   border-radius: var(--radius); padding: 0.5rem 1rem; cursor: pointer; font-family: var(--font-ui);
 }
 .board-adjust-save {
-  background: var(--gold); border: none; color: #0A0B0D; font-weight: 700;
+  background: var(--gold-fill); border: none; color: var(--on-gold); font-weight: 700;
   border-radius: var(--radius); padding: 0.5rem 1.1rem; cursor: pointer; font-family: var(--font-ui);
 }
 .board-adjust-danger { background: var(--fault); color: #fff; }
@@ -411,7 +411,7 @@
   display: block; height: 0.55rem; border-radius: var(--radius);
   background: var(--surface-2); border: 1px solid var(--border); overflow: hidden;
 }
-.board-goal-fill { display: block; height: 100%; background: var(--gold); }
+.board-goal-fill { display: block; height: 100%; background: var(--gold-fill); }
 .board-goal-fill-met { background: var(--hr-volunteer); }
 .board-goal-of { color: var(--muted); }
 .board-goal-ok { color: var(--hr-volunteer); }

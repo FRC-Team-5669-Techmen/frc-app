@@ -247,11 +247,11 @@
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .ar-approve {
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   border: 1px solid var(--gold);
 }
-.ar-approve:hover:not(:disabled) { background: var(--gold-bright); }
+.ar-approve:hover:not(:disabled) { background: var(--gold-fill-bright); }
 
 .ar-deny {
   background: transparent;

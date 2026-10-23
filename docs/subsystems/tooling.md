@@ -34,3 +34,5 @@ It reports standing `claude/**` branches, `main` against `integration` in both d
 - **`opacity` is not inherited.** A child of an `opacity: 0` parent computes opacity 1, so any visibility check that does not walk ancestors reports elements visible while they are painted nowhere.
 
 - **`chromium.executablePath()` points at a build this container does not have.** playwright-core 1.62.1 wants build 1234; the image ships 1194, under a differently-named directory. The resolution chain in `tools/browser-verify/browser.mjs` is load-bearing, and upgrading playwright-core would make it worse, not better — the download it would then want is not reachable.
+
+- **`shoot.mjs --theme light|dark|system`** (ledger 0019) stores that choice under `techmen:theme` before every page load, so the page is painted exactly as for a person who picked it; it refuses a shot whose `<html data-theme>` does not match, and the file name and `shots.json` carry the theme. Use a free `--port` when another checkout's fixture server holds 5401.

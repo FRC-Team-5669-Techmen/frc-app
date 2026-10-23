@@ -36,7 +36,7 @@
 .hub-tile-icon .nav-icon { width: 1.15rem; height: 1.15rem; }
 .hub-tile-alert .hub-tile-icon { color: var(--gold); }
 .hub-tile-title { flex: 1 1 auto; min-width: 0; font-family: var(--font-ui); font-size: 1rem; font-weight: 600; letter-spacing: 0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hub-tile-badge { min-width: 1.6rem; padding: 0.1rem 0.45rem; font-family: var(--font-mono); font-size: 0.8rem; text-align: center; color: var(--bg); background: var(--gold); border-radius: var(--radius-sm); }
+.hub-tile-badge { min-width: 1.6rem; padding: 0.1rem 0.45rem; font-family: var(--font-mono); font-size: 0.8rem; text-align: center; color: var(--on-gold); background: var(--gold-fill); border-radius: var(--radius-sm); }
 .hub-tile-go { color: var(--muted); font-family: var(--font-mono); }
 .hub-tile:hover .hub-tile-go { color: var(--gold); }
 .hub-tile-big { display: flex; align-items: baseline; gap: 0.45rem; font-family: var(--font-ui); font-size: 2.1rem; font-weight: 700; line-height: 1; color: var(--text); margin-top: 0.3rem; }
@@ -59,6 +59,6 @@
 .dtn-link:hover .dtn-what { color: var(--gold-bright); }
 .dtn-what { font-weight: 600; }
 .dtn-why { font-size: 0.84rem; color: var(--steel); overflow-wrap: anywhere; }
-.dtn-urgent .dtn-what::before { content: ''; display: inline-block; width: 0.45rem; height: 0.45rem; margin-right: 0.45rem; border-radius: 50%; background: var(--gold); vertical-align: middle; }
+.dtn-urgent .dtn-what::before { content: ''; display: inline-block; width: 0.45rem; height: 0.45rem; margin-right: 0.45rem; border-radius: 50%; background: var(--gold-fill); vertical-align: middle; }
 .dtn-go { color: var(--muted); font-family: var(--font-mono); }
 .dtn-done { min-height: 44px; padding: 0 0.7rem; font: inherit; font-size: 0.82rem; color: var(--steel); background: none; border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; }

@@ -141,8 +141,8 @@
 }
 
 .pb-present .pb-icon {
-  color: #0A0B0D;
-  background: var(--gold);
+  color: var(--on-gold);
+  background: var(--gold-fill);
   font-weight: 700;
 }
 .pb-absent .pb-icon {
@@ -224,7 +224,7 @@
 }
 .qp-status { display: flex; align-items: center; gap: 0.5rem; flex: 1 1 12rem; }
 .qp-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
-.qp-dot-in { background: var(--gold); }
+.qp-dot-in { background: var(--gold-fill); }
 .qp-text { font-family: var(--font-mono); font-size: 0.9rem; letter-spacing: 0.04em; }
 .qp-note { flex-basis: 100%; margin: 0; font-size: 0.9rem; color: var(--steel); overflow-wrap: anywhere; }
 .qp-btn {
@@ -241,6 +241,6 @@
   border-radius: var(--radius);
   cursor: pointer;
 }
-.qp-armed { color: #0A0B0D; background: var(--gold); }
+.qp-armed { color: var(--on-gold); background: var(--gold-fill); }
 .qp-btn:disabled { opacity: 0.6; cursor: default; }
 .qp-msg { flex-basis: 100%; margin: 0; font-family: var(--font-mono); font-size: 0.8rem; color: var(--gold); }

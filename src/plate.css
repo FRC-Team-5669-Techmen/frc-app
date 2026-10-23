@@ -167,6 +167,39 @@
   --tm-accent: var(--gold);
 }
 
+/* Light theme (src/theme.css [data-theme="light"]): the light comes from the
+   ground now, so every highlight is a mix of --bg (white) and every shade a
+   mix of --text (ink), the opposite of the dark block above. Same tokens,
+   same geometry; only which side is lit changes. The LED's lit state is the
+   gold FILL, the one place gold paints on white. */
+:root.tm-plate[data-theme="light"] {
+  --tm-bezel: color-mix(in srgb, var(--bg) 70%, transparent);
+  --tm-bezel-hi: color-mix(in srgb, var(--bg) 95%, transparent);
+  --tm-face-hi: color-mix(in srgb, var(--bg) 60%, transparent);
+  --tm-face-lo: color-mix(in srgb, var(--bg) 0%, transparent);
+  --tm-foot: color-mix(in srgb, var(--text) 10%, transparent);
+  --tm-rim-out: color-mix(in srgb, var(--text) 9%, transparent);
+  --tm-drop: color-mix(in srgb, var(--text) 14%, transparent);
+  --tm-drop-far: color-mix(in srgb, var(--text) 7%, transparent);
+  --tm-press: color-mix(in srgb, var(--text) 14%, transparent);
+  --tm-panel-hi: color-mix(in srgb, var(--bg) 85%, transparent);
+  --tm-panel-sheen: color-mix(in srgb, var(--bg) 40%, transparent);
+  --tm-frame: color-mix(in srgb, var(--bg) 60%, transparent);
+  --tm-frame-in: color-mix(in srgb, var(--text) 6%, transparent);
+  --tm-well-shade: color-mix(in srgb, var(--text) 12%, transparent);
+  --tm-well-lip: color-mix(in srgb, var(--bg) 80%, transparent);
+  --tm-chip-shade: color-mix(in srgb, var(--text) 10%, transparent);
+  --tm-chip-lip: color-mix(in srgb, var(--bg) 70%, transparent);
+  --tm-strip-top: var(--bg);
+  --tm-strip-bot: var(--surface);
+  --tm-groove-dk: color-mix(in srgb, var(--text) 14%, transparent);
+  --tm-groove-lt: color-mix(in srgb, var(--bg) 80%, transparent);
+  --tm-pad-lip: color-mix(in srgb, var(--bg) 80%, transparent);
+  --tm-lit-top: var(--bg);
+  --tm-led-cup: var(--surface-2);
+  --tm-led-on: var(--gold-fill);
+}
+
 /* --------------------------------------------------------------------------
    3. THE HEADER: a lighter plate strip with a groove under it. The ground of
       every page stays --bg, this app's own near-black: the plate ports
@@ -242,7 +275,7 @@
 }
 :root.tm-plate .navbar-links :is(.nav-link, .nav-dropdown-trigger).active::after {
   background:
-    radial-gradient(circle, var(--gold-bright) 0 0.5px, var(--tm-led-on) 1.5px, var(--tm-led-cup) 2.1px 2.4px, transparent 2.8px),
+    radial-gradient(circle, var(--gold-fill-bright) 0 0.5px, var(--tm-led-on) 1.5px, var(--tm-led-cup) 2.1px 2.4px, transparent 2.8px),
     radial-gradient(circle at 50% 30%, var(--tm-led-cup) 0 2.1px, var(--tm-led-cup) 3.5px);
   box-shadow:
     0 1px 0 0 var(--tm-bezel-hi),
@@ -930,7 +963,7 @@
 :root.tm-plate .checkin-panel-amber {
   border-left-width: 1px;
   background-image:
-    linear-gradient(var(--gold-dim), var(--gold-dim)),
+    linear-gradient(var(--gold-fill-dim), var(--gold-fill-dim)),
     linear-gradient(to bottom, var(--tm-panel-sheen), transparent 4rem);
   background-size: 3px 100%, auto;
   background-position: left top, left top;

@@ -63,7 +63,7 @@
 .cnx-btn:hover:not(:disabled) { background: var(--surface-2); }
 .cnx-btn:disabled { opacity: 0.55; cursor: default; }
 .cnx-btn-primary { color: var(--gold); border-color: var(--gold); }
-.cnx-btn-primary:hover:not(:disabled), .cnx-btn-primary:focus-visible { color: var(--bg); background: var(--gold); }
+.cnx-btn-primary:hover:not(:disabled), .cnx-btn-primary:focus-visible { color: var(--on-gold); background: var(--gold-fill); }
 .cnx-btn-danger { color: var(--fault); border-color: var(--fault); min-height: 2.75rem; }
 .cnx-btn-danger:hover:not(:disabled) { background: var(--fault-a10); }
 .cnx-link { align-self: center; background: none; border: 0; color: var(--steel); font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; min-height: 2.75rem; }

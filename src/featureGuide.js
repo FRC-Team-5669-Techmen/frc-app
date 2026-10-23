@@ -90,6 +90,8 @@ export const GUIDE = Object.freeze([
     what: 'Your details and notifications. Replay this tour from the account menu.' },
   { path: '/standing', area: 'you', title: 'My standing', for: ['student', 'parent'], where: 'Account menu',
     what: 'Good standing or probation, your weeks and months, absence requests, and your checklist.' },
+  { path: '/updates', area: 'you', title: "What's new", for: ['member', 'parent'], where: 'Account menu (a dot means something new)',
+    what: 'Every app update, newest first, with a link to each new page.' },
   { path: '/handbook', area: 'you', title: 'Handbook', for: ['member'], where: 'Account menu',
     what: 'The team rules, with a short check after each part, and where you sign.' },
   { path: '/driver-docs', area: 'you', title: 'Driver documents', for: ['member', 'parent'], where: 'My profile',

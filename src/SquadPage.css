@@ -63,8 +63,8 @@
 
 .squad-add-btn {
   padding: 0.5rem 1rem;
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   border: none;
   border-radius: var(--radius);
   font-family: var(--font-ui);
@@ -75,7 +75,7 @@
   cursor: pointer;
 }
 
-.squad-add-btn:hover { background: var(--gold-bright); }
+.squad-add-btn:hover { background: var(--gold-fill-bright); }
 
 .squad-error {
   margin-bottom: 1rem;
@@ -186,8 +186,8 @@
 
 .squad-save-btn {
   padding: 0.6rem 1.25rem;
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   border: none;
   border-radius: var(--radius);
   font-family: var(--font-ui);
@@ -276,8 +276,8 @@
   gap: 0.3rem;
   padding: 0.15rem 0.35rem 0.15rem 0.6rem;
   border-radius: var(--radius);
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   font-family: var(--font-ui);
   font-size: 0.78rem;
   font-weight: 600;
@@ -325,8 +325,8 @@
   padding: 0.45rem 0.9rem;
   border: none;
   border-radius: var(--radius);
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   font-family: var(--font-ui);
   font-size: 0.85rem;
   font-weight: 700;

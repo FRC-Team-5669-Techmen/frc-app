@@ -12,7 +12,7 @@
 .rb-msg { font-family: var(--font-mono); font-size: 0.85rem; color: var(--gold); }
 .rb-primary, .rb-btn, .rb-day, .rb-more { min-height: 44px; padding: 0 1rem; font: inherit; font-weight: 600; border-radius: var(--radius); cursor: pointer; box-sizing: border-box; }
 .rb-primary { color: var(--gold); background: var(--bg); border: 1px solid var(--gold); }
-.rb-primary:hover:not(:disabled) { background: var(--gold); color: var(--bg); }
+.rb-primary:hover:not(:disabled) { background: var(--gold-fill); color: var(--on-gold); }
 .rb-btn { color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); }
 
 .rb-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; padding: 0.75rem 0.9rem; margin-bottom: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--gold); border-radius: var(--radius); }

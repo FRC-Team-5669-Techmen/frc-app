@@ -12,6 +12,11 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>Techmen · 5669</title>
+    <!-- Theme before first paint (src/themeMode.js resolveTheme, duplicated
+         here on purpose; tests/theme-mode.test.js runs this script and holds
+         it equal). Dark unless the person chose Light, or System on a light
+         device. Imports nothing, so /checkin stays light. -->
+    <script id="theme-boot">(function(){var t='dark';try{var c=localStorage.getItem('techmen:theme');if(c==='light'||(c==='system'&&matchMedia('(prefers-color-scheme: light)').matches))t='light'}catch(e){}document.documentElement.setAttribute('data-theme',t);if(t==='light'){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content','#FFFFFF')}})()</script>
   </head>
   <body>
     <div id="root"></div>

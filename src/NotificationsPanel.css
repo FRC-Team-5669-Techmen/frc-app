@@ -39,14 +39,14 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #0A0B0D;
-  background: var(--gold);
+  color: var(--on-gold);
+  background: var(--gold-fill);
   border: 1px solid var(--gold);
   border-radius: var(--radius);
   padding: 0.5rem 1.1rem;
   cursor: pointer;
 }
-.np-btn:hover:not(:disabled) { background: var(--gold-bright); }
+.np-btn:hover:not(:disabled) { background: var(--gold-fill-bright); }
 .np-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 .np-btn-off {
   background: transparent;

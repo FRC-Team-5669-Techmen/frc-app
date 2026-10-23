@@ -3,6 +3,8 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { supabase } from './supabase'
 import { RoleBadge, ROLE_ORDER } from './roles'
 import { loadAdminCounts, totalWaiting } from './adminTools'
+import { UPDATES, hasUnread, readSeen, UPDATES_SEEN_EVENT } from './updates'
+import ThemeSwitch from './ThemeSwitch'
 import './NavBar.css'
 
 import { IconHome, IconSchedule, IconHours, IconScout, IconRobot } from './navIcons'
@@ -24,6 +26,7 @@ const CONTEXT_TAGS = [
   ['/jobs',        'TASKING'],
   ['/members/',    'PERSONNEL'],
   ['/profile',     'PROFILE'],
+  ['/updates',     'UPDATES'],
   ['/readiness',   'READINESS'],
   ['/activity',    'ACTIVITY'],
   ['/squad',       'SQUAD'],
@@ -98,7 +101,7 @@ function Dropdown({ label, paths = [], tourId, align = 'left', badge = 0, childr
   )
 }
 
-function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false, isParent = false, waiting = 0, signouts = null }) {
+function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false, isParent = false, waiting = 0, signouts = null, unread = false }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -123,13 +126,17 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
         data-tour="nav-profile"
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        aria-label={isStaff && waiting > 0 ? `Account menu, ${waiting} waiting in Team admin` : 'Account menu'}
+        aria-label={[
+          'Account menu',
+          isStaff && waiting > 0 ? `${waiting} waiting in Team admin` : null,
+          unread ? "new in What's new" : null,
+        ].filter(Boolean).join(', ')}
       >
         {avatarUrl
           ? <img src={avatarUrl} className="navbar-avatar" alt={name} />
           : <div className="navbar-avatar navbar-avatar-init">{initials}</div>
         }
-        {isStaff && waiting > 0 && <span className="nav-avatar-dot" aria-hidden="true" />}
+        {((isStaff && waiting > 0) || unread) && <span className="nav-avatar-dot" aria-hidden="true" />}
       </button>
       {open && (
         <div className="nav-dropdown-menu nav-avatar-menu" onClick={() => setOpen(false)}>
@@ -155,7 +162,15 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
           {!isParent && !isStaff && <NavLink to="/standing" end className={itemClass}>My standing</NavLink>}
           {isParent && <NavLink to="/standing" end className={itemClass}>Standing</NavLink>}
           <NavLink to="/handbook" className={itemClass}>Handbook</NavLink>
+          <NavLink to="/updates" className={itemClass} data-tour="nav-updates">
+            What&apos;s new
+            {unread && <span className="nav-new-dot" aria-label="new" />}
+          </NavLink>
           <button className="nav-dropdown-item" onClick={replayTour}>Replay tour</button>
+          <div className="nav-menu-theme">
+            <span className="nav-menu-theme-label">Theme</span>
+            <ThemeSwitch compact />
+          </div>
           <div className="nav-dropdown-divider" />
           <button className="nav-dropdown-item nav-signout-item" onClick={() => supabase.auth.signOut()}>Sign out</button>
         </div>
@@ -198,6 +213,17 @@ export default function NavBar({ hasRole = () => false, session = null }) {
     })
     return () => { active = false }
   }, [isParent, isStaff, pathname])
+
+  // What's new: a dot while the newest release is newer than the last visit
+  // to /updates (src/updates.js). Re-read on every navigation and when the
+  // page marks it seen.
+  const [unread, setUnread] = useState(() => hasUnread(UPDATES, readSeen()))
+  useEffect(() => {
+    const check = () => setUnread(hasUnread(UPDATES, readSeen()))
+    check()
+    window.addEventListener(UPDATES_SEEN_EVENT, check)
+    return () => window.removeEventListener(UPDATES_SEEN_EVENT, check)
+  }, [pathname])
 
   return (
     <nav className="navbar">
@@ -242,7 +268,7 @@ export default function NavBar({ hasRole = () => false, session = null }) {
         </div>
 
         <div className="navbar-account">
-          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isAdmin={isAdmin} isParent={isParent} waiting={waiting} signouts={signouts} />
+          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isAdmin={isAdmin} isParent={isParent} waiting={waiting} signouts={signouts} unread={unread} />
         </div>
       </div>
     </nav>

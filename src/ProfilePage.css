@@ -272,8 +272,8 @@
 .profile-save {
   align-self: flex-start;
   padding: 0.65rem 1.5rem;
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   border: none;
   border-radius: var(--radius);
   font-family: var(--font-ui);
@@ -354,7 +354,7 @@
   cursor: pointer;
 }
 .profile-cal-tab:hover { color: var(--gold); }
-.profile-cal-tab.on { background: var(--gold); color: #0A0B0D; }
+.profile-cal-tab.on { background: var(--gold-fill); color: var(--on-gold); }
 
 .profile-cal-subscribe {
   align-self: flex-start;
@@ -363,14 +363,14 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #0A0B0D;
-  background: var(--gold);
+  color: var(--on-gold);
+  background: var(--gold-fill);
   border: 1px solid var(--gold);
   border-radius: var(--radius);
   padding: 0.55rem 1.1rem;
   text-decoration: none;
 }
-.profile-cal-subscribe:hover { background: var(--gold-bright); }
+.profile-cal-subscribe:hover { background: var(--gold-fill-bright); }
 
 .profile-cal-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
 /* Apple/webcal as the secondary (outlined) option next to the gold Google button */

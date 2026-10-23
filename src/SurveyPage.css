@@ -193,7 +193,7 @@
 }
 .sv-mark-single { border-radius: 50%; }
 .sv-mark-multi  { border-radius: var(--radius-sm); }
-.sv-opt-on .sv-mark { background: var(--gold); border-color: var(--gold); }
+.sv-opt-on .sv-mark { background: var(--gold-fill); border-color: var(--gold); color: var(--on-gold); }
 
 .sv-opt-label { flex: 1 1 auto; }
 
@@ -301,8 +301,8 @@
 }
 .sv-submit:hover:not(:disabled),
 .sv-submit:focus-visible:not(:disabled) {
-  color: var(--bg);
-  background: var(--gold);
+  color: var(--on-gold);
+  background: var(--gold-fill);
 }
 .sv-submit:disabled {
   color: var(--muted);

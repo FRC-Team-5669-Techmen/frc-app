@@ -1,0 +1,15 @@
+/* What's new (/updates). A dated rail down the left, one card per release. */
+.upd-wrap { max-width: 44rem; }
+.upd-timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.25rem; }
+.upd-day { display: grid; gap: 0.5rem; position: relative; padding-left: 1rem; border-left: 2px solid var(--border-strong); }
+.upd-day::before { content: ''; position: absolute; left: -6px; top: 0.3rem; width: 10px; height: 10px; border-radius: 50%; background: var(--gold-fill); border: 1px solid var(--bg); }
+.upd-date { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--steel); }
+.upd-cards { display: grid; gap: 0.6rem; }
+.upd-card { background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 0.85rem 1rem; }
+.upd-card-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.upd-title { margin: 0; font-family: var(--font-ui); font-size: 1.02rem; font-weight: 700; color: var(--text); letter-spacing: 0.02em; }
+.upd-new { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.1rem 0.45rem; border-radius: var(--radius-sm); background: var(--gold-fill); color: var(--on-gold); font-weight: 700; }
+.upd-items { margin: 0.45rem 0 0; padding-left: 1.1rem; display: grid; gap: 0.25rem; color: var(--steel); font-size: 0.92rem; line-height: 1.4; }
+.upd-items li::marker { color: var(--muted); }
+.upd-open { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 44px; margin-top: 0.2rem; color: var(--gold); font-weight: 600; text-decoration: none; }
+.upd-open:hover { text-decoration: underline; text-underline-offset: 3px; }

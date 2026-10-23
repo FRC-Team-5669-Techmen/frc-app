@@ -40,7 +40,7 @@
   border-radius: var(--radius);
   cursor: pointer;
 }
-.so-mic-on { color: #0A0B0D; background: var(--gold); border-color: var(--gold); }
+.so-mic-on { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }
 .so-listening { margin: 0; font-family: var(--font-mono); font-size: 0.8rem; color: var(--gold); }
 .so-heard { color: var(--steel); font-family: var(--font-ui); }
 .so-mic-error { margin: 0; font-family: var(--font-mono); font-size: 0.8rem; color: var(--steel); }
@@ -73,8 +73,8 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #0A0B0D;
-  background: var(--gold);
+  color: var(--on-gold);
+  background: var(--gold-fill);
   border: none;
   border-radius: var(--radius);
   cursor: pointer;

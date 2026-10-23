@@ -55,8 +55,8 @@
   padding: 0.5rem 1rem;
   border: none;
   border-radius: var(--radius);
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   font-family: var(--font-ui);
   font-size: 0.85rem;
   font-weight: 700;
@@ -215,8 +215,8 @@
   padding: 0.5rem 1.1rem;
   border: none;
   border-radius: var(--radius);
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   font-family: var(--font-ui);
   font-size: 0.85rem;
   font-weight: 700;
@@ -501,10 +501,10 @@
   cursor: not-allowed;
 }
 
-.jobs-btn-claim   { background: var(--gold); color: #0A0B0D; }
-.jobs-btn-done    { background: var(--gold); color: #0A0B0D; }
+.jobs-btn-claim   { background: var(--gold-fill); color: var(--on-gold); }
+.jobs-btn-done    { background: var(--gold-fill); color: var(--on-gold); }
 .jobs-btn-release { background: transparent; color: var(--text); border: 1.5px solid var(--border-strong); }
-.jobs-btn-approve { background: var(--gold); color: #0A0B0D; }
+.jobs-btn-approve { background: var(--gold-fill); color: var(--on-gold); }
 .jobs-btn-reject  { background: var(--fault); color: #0A0B0D; }
 
 .jobs-locked {
@@ -690,8 +690,8 @@
   min-width: 6.5rem;
   text-align: center;
 }
-.jobs-st-open      { background: rgba(63,185,80,0.12);  color: #56D364; border-color: rgba(63,185,80,0.45); }
-.jobs-st-progress  { background: rgba(227,179,65,0.13); color: #E3B341; border-color: rgba(227,179,65,0.45); }
+.jobs-st-open      { background: color-mix(in srgb, var(--ok) 12%, transparent);  color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.jobs-st-progress  { background: color-mix(in srgb, var(--warn) 13%, transparent); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, transparent); }
 .jobs-st-review    { background: var(--fault-a10);      color: var(--fault); border-color: var(--fault); }
 .jobs-st-completed { background: var(--surface-2);      color: var(--muted); border-color: var(--border-strong); }
 .jobs-st-closed    { background: var(--surface-2);      color: var(--steel); border-color: var(--border-strong); }
@@ -859,7 +859,7 @@
   font-size: 0.72rem;
   font-weight: 700;
 }
-.jobs-coverage-state.ok  { color: #56D364; }
+.jobs-coverage-state.ok  { color: var(--ok); }
 .jobs-coverage-state.gap { color: var(--fault); }
 .jobs-cov-list { list-style: none; margin: 0; padding: 0; }
 .jobs-cov-row {

@@ -349,6 +349,6 @@
   cursor: pointer;
 }
 .ic-export-btn:hover:not(:disabled),
-.ic-export-btn:focus-visible { background: var(--gold); color: var(--bg); }
+.ic-export-btn:focus-visible { background: var(--gold-fill); color: var(--on-gold); }
 .ic-export-btn:disabled { opacity: 0.6; cursor: default; }
 .ic-export-note { font-size: 0.72rem; color: var(--muted); overflow-wrap: anywhere; }

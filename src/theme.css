@@ -36,6 +36,22 @@
   --gold-dim:      #C7B320;  /* warnings / already-in      */
   --fault:         #E24B4A;  /* faults ONLY                */
 
+  /* Gold as a FILL (chips, tabs, active bars, primary buttons). Same values
+     as the gold ramp in dark; in light --gold itself turns ink (gold is never
+     text or a thin line on white) and these stay Techmen Gold. Every
+     `background` that paints gold uses these, never --gold directly, and any
+     text sitting on one uses --on-gold. */
+  --gold-fill:        #FFE629;
+  --gold-fill-bright: #FFF06B;
+  --gold-fill-dim:    #C7B320;
+  --on-gold:          #0A0B0D;
+
+  /* Status accents for text and icons, one per meaning. */
+  --ok:            #56D364;
+  --info:          #5B9BD5;
+  --warn:          #E3B341;
+  --highlight:     rgba(255, 230, 41, 0.14);
+
   /* Translucent gold for fills/glows (derived from --gold) */
   --gold-a08:      rgba(255, 230, 41, 0.08);
   --gold-a14:      rgba(255, 230, 41, 0.14);
@@ -62,6 +78,7 @@
   --alliance-red-a18: rgba(200, 16, 46, 0.18);
   --alliance-blue:  #0057B8;
   --alliance-blue-a20: rgba(0, 87, 184, 0.20);
+  --on-strong:     #FFFFFF;  /* text on a saturated fill (alliance, fault), both themes */
 
   /* ── Type ── */
   --font-ui:   'Chakra Petch', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -72,6 +89,65 @@
   --radius-sm: 2px;
 
   color-scheme: dark;
+}
+
+/* ── LIGHT ("projector") theme ──
+   Chosen on the profile or the account menu; stored in localStorage
+   ('techmen:theme') and put on <html data-theme> before first paint by the
+   inline script in index.html (src/themeMode.js is the resolver). Dark stays
+   the default. Values from the team design system's projector theme.
+   Gold is a FILL only here: --gold and its ramp turn ink/dark accent, so every
+   rule that uses gold as text, a border or a thin line stays legible on
+   white, and --gold-fill keeps Techmen Gold for chips, tabs, bars and
+   primary buttons (dark text on them, --on-gold). */
+:root[data-theme="light"] {
+  --bg:            #FFFFFF;
+  --surface:       #F3F4F6;
+  --surface-2:     #E8EAEE;
+  --border:        #D9DCE1;
+  --border-strong: #9AA1AB;
+
+  --text:          #0A0B0D;
+  --steel:         #4A5059;
+  --muted:         #6B717A;
+
+  --gold:          #0A0B0D;  /* accent-text: ink, never gold text on white */
+  --gold-bright:   #0A0B0D;
+  --gold-dim:      #4A5059;
+  --fault:         #C62E2D;
+
+  --gold-fill:        #FFE629;
+  --gold-fill-bright: #FFD60A;
+  --gold-fill-dim:    #FFF3A3;
+  --on-gold:          #0A0B0D;
+
+  --ok:            #1F7A49;
+  --info:          #2A64A0;
+  --warn:          #9A5208;
+  --highlight:     #FFF3A3;
+
+  --gold-a08:      rgba(255, 214, 10, 0.16);
+  --gold-a14:      rgba(255, 214, 10, 0.28);
+  --gold-a24:      rgba(255, 214, 10, 0.45);
+  --fault-a10:     rgba(198, 46, 45, 0.10);
+
+  --hr-regular:     #6B5D00;
+  --hr-build:       #6B5D00;
+  --hr-volunteer:   #1F7A49;
+  --hr-outreach:    #2A64A0;
+  --hr-competition: #7A3FB0;
+
+  --role-parent:    #1F7A49;
+  --role-student:   #2A64A0;
+  --role-mentor:    #7A3FB0;
+  --role-lead:      #9A5208;
+  --role-admin:     #B02A55;
+
+  color-scheme: light;
+}
+/* The gold mark disappears on white: the same mark in black. */
+:root[data-theme="light"] img[src="/assets/logos/Mark-Gold.svg"] {
+  content: url(/assets/logos/Mark-Black.svg);
 }
 
 /* ── Reusable HUD primitives ── */

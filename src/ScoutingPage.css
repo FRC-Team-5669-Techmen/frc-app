@@ -37,7 +37,7 @@
 .sc-card { padding: 20px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface); min-width: 0; }
 .sc-status-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border-strong); }
 .sc-status { font: 12px var(--font-mono); color: var(--steel); display: flex; gap: 8px; align-items: center; }
-.sc-status i { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+.sc-status i { width: 7px; height: 7px; border-radius: 50%; background: var(--gold-fill); flex-shrink: 0; }
 .sc-status i.sc-offline-dot { background: var(--steel); }
 .sc-status-row .sc-status:nth-child(2) { margin-left: auto; }
 .sc-status-row button { background: transparent; }

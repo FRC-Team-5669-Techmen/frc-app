@@ -76,8 +76,8 @@
 .ap-filter-toggle input { width: 1rem; height: 1rem; accent-color: var(--gold); }
 
 .ap-export {
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   border: none;
   border-radius: var(--radius);
   padding: 0.55rem 1rem;
@@ -88,7 +88,7 @@
   letter-spacing: 0.08em;
   cursor: pointer;
 }
-.ap-export:hover:not(:disabled) { background: var(--gold-bright); }
+.ap-export:hover:not(:disabled) { background: var(--gold-fill-bright); }
 .ap-export:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .ap-muted {

@@ -65,16 +65,22 @@ describe('the navigation', () => {
     const labels = [...bar.matchAll(/<Icon\w+ \/>([A-Za-z ]+)/g)].map((m) => m[1].trim())
     expect(labels).toEqual(['Home', 'Schedule', 'Team Hours', 'Scouting', 'Robot', 'Hours'])
   })
-  it('the account menu holds at most six entries for anyone, and no staff tool but Team admin', () => {
+  // Six entries for everyone; What's new (ledger 0019, decision 50) makes a
+  // student sign-out approver's menu seven. The theme row is a control, not
+  // an entry, and is not counted.
+  it('the account menu holds at most six entries for anyone but a student approver (seven), and no staff tool but Team admin', () => {
     const menu = NAV.slice(NAV.indexOf('function AvatarMenu('), NAV.indexOf('export default function NavBar('))
     const links = [...menu.matchAll(/<NavLink to="([^"]+)"/g)].map((m) => m[1])
     const buttons = [...menu.matchAll(/<button className="nav-dropdown-item[^"]*"[^\n]*?>([A-Z][a-z ]+)<\/button>/g)].map((m) => m[1].trim())
-    expect(links.sort()).toEqual(['/handbook', '/manage', '/profile', '/signouts', '/standing', '/standing'].sort())
+    expect(links.sort()).toEqual(['/handbook', '/manage', '/profile', '/signouts', '/standing', '/standing', '/updates'].sort())
     expect(buttons).toEqual(['Replay tour', 'Sign out'])
     // student: profile, standing, handbook, tour, sign out = 5; staff: team admin, profile, handbook, tour, sign out = 5;
     // parent: profile, standing, handbook, tour, sign out = 5. Two /standing links never show together (student or parent).
     // A student approver adds Sign-outs: profile, standing, sign-outs, handbook, tour, sign out = 6.
     expect(menu).toMatch(/!isStaff && signouts !== null/)
-    expect(links.length - 2 + buttons.length).toBeLessThanOrEqual(6)
+    // Worst case: profile, standing, sign-outs, handbook, What's new, tour, sign out = 7.
+    expect(links.length - 2 + buttons.length).toBeLessThanOrEqual(7)
+    // Everyone else: drop sign-outs (approver only) and one of the two /standing or /manage = 6.
+    expect(links.length - 3 + buttons.length).toBeLessThanOrEqual(6)
   })
 })

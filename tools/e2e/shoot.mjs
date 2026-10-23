@@ -5,7 +5,7 @@
  *   node tools/e2e/shoot.mjs --persona admin --mig all --widths 375,1440 \
  *     --routes /dashboard,/hours --out artifacts/shots/<name> \
  *     [--url http://127.0.0.1:PORT] [--port 5401] [--root-class NAME] [--no-reset]
- *     [--plate on|off]
+ *     [--plate on|off] [--theme light|dark|system]
  *
  * --routes all (or omitting --routes) shoots every route in
  * src/dev/fixture/routes.js, which tests/fixture-routes.test.js holds equal
@@ -17,6 +17,9 @@
  * broken switch fails here), `off` removes it before each shot. Without the
  * flag the page is photographed as it loads. tools/e2e/plate/ is the full
  * on/off/base harness; this flag is the one-route quick look.
+ * --theme stores that choice under 'techmen:theme' before every page load
+ * (src/themeMode.js), so the index.html script paints it before first paint,
+ * exactly as for a person who picked it; shots and shots.json carry it.
  *
  * Per route it prints, and writes to <out>/shots.json: the final path (a
  * redirect is a finding, not a pass), console errors, the error answers the
@@ -47,6 +50,8 @@ const rootClass = flag(args, 'root-class', null);
 const reset = !flag(args, 'no-reset', false);
 const plate = flag(args, 'plate', null);
 if (plate !== null && plate !== 'on' && plate !== 'off') throw new Error(`--plate takes on or off, not ${plate}`);
+const theme = flag(args, 'theme', null);
+if (theme !== null && !['light', 'dark', 'system'].includes(theme)) throw new Error(`--theme takes light, dark or system, not ${theme}`);
 const out = ensureDir(path.resolve(REPO, String(flag(args, 'out', path.join('artifacts', 'shots', `${persona}-${mig}`)))));
 
 const routes = routesArg === 'all' || routesArg === true
@@ -69,6 +74,9 @@ async function main() {
           add();
           document.addEventListener('DOMContentLoaded', add);
         }, String(rootClass));
+      }
+      if (theme) {
+        await context.addInitScript((t) => { try { localStorage.setItem('techmen:theme', t); } catch { /* no storage */ } }, String(theme));
       }
       const page = await context.newPage();
       // A fullPage screenshot drops Playwright's touch emulation for the rest
@@ -98,6 +106,8 @@ async function main() {
           await page.evaluate((cls) => document.documentElement.classList.remove(cls), APP_PLATE);
           await page.waitForTimeout(100);
         }
+        const painted = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+        if (theme && theme !== 'system' && painted !== theme) throw new Error(`--theme ${theme}: <html data-theme> is "${painted}" on ${url}`);
         const measured = await page.evaluate(() => {
           const root = document.getElementById('root');
           const clone = root ? root.cloneNode(true) : document.body.cloneNode(true);
@@ -113,7 +123,7 @@ async function main() {
             fxErrors,
           };
         });
-        const file = path.join(out, `${persona}-${vp.name}-${slug(url)}${plate ? `-plate-${plate}` : ''}.png`);
+        const file = path.join(out, `${persona}-${vp.name}-${slug(url)}${plate ? `-plate-${plate}` : ''}${theme ? `-${theme}` : ''}.png`);
         // A very tall page (the /_ds specimen is tens of thousands of px) can
         // outrun a full-page capture; fall back to the viewport and say so.
         let shotKind = 'full';
@@ -125,7 +135,7 @@ async function main() {
         }
         if (touchCdp) await touchCdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
         const row = {
-          persona, mig, width: vp.name, route: url, plate: plate ?? 'as loaded',
+          persona, mig, width: vp.name, route: url, plate: plate ?? 'as loaded', theme: painted,
           finalPath: measured.path,
           redirected: measured.path.split('?')[0] !== url.split('?')[0],
           rendered: ready.rendered && measured.mainChars > 0 && !measured.errorBoundary,

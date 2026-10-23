@@ -258,14 +258,14 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #0A0B0D;
-  background: var(--gold);
+  color: var(--on-gold);
+  background: var(--gold-fill);
   border: 1px solid var(--gold);
   border-radius: var(--radius);
   padding: 0.5rem 1rem;
   cursor: pointer;
 }
-.ph-link-btn:hover:not(:disabled) { background: var(--gold-bright); }
+.ph-link-btn:hover:not(:disabled) { background: var(--gold-fill-bright); }
 .ph-link-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .ph-link-msg {
   font-family: var(--font-ui);

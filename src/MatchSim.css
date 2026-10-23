@@ -6,8 +6,8 @@
 @import './Autos.css';
 .ms-setup, .ms-history { margin-top: 0.5rem; }
 .ms-start { width: 100%; min-height: 64px; margin-top: 1rem; font-size: 1.3rem; letter-spacing: 0.08em; text-transform: uppercase; }
-.ba-seg-opts .ms-red[aria-pressed="true"] { background: var(--alliance-red); border-color: var(--alliance-red); color: var(--text); }
-.ba-seg-opts .ms-blue[aria-pressed="true"] { background: var(--alliance-blue); border-color: var(--alliance-blue); color: var(--text); }
+.ba-seg-opts .ms-red[aria-pressed="true"] { background: var(--alliance-red); border-color: var(--alliance-red); color: var(--on-strong); }
+.ba-seg-opts .ms-blue[aria-pressed="true"] { background: var(--alliance-blue); border-color: var(--alliance-blue); color: var(--on-strong); }
 
 .ms-run { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.2vh; padding: 2vh 3vw; background: var(--bg); color: var(--text); box-sizing: border-box; }
 .ms-run-red { box-shadow: inset 0 0 0 6px var(--alliance-red); }
@@ -30,6 +30,6 @@
 .ms-bar { display: flex; gap: 3px; width: min(100%, 90rem); height: 10px; margin-top: 1vh; }
 .ms-bar i { height: 100%; background: var(--surface-2); border-radius: 2px; }
 .ms-bar i.ms-done { background: var(--steel); }
-.ms-bar i.ms-now { background: var(--gold); }
+.ms-bar i.ms-now { background: var(--gold-fill); }
 .ms-controls { position: absolute; bottom: 2vh; display: flex; gap: 0.6rem; }
 .ms-after .ba-num-box input { font-size: 1.7rem; }

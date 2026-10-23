@@ -76,7 +76,7 @@
   cursor: pointer;
 }
 .sop-btn:disabled { opacity: 0.6; cursor: default; }
-.sop-btn-primary { color: #0A0B0D; background: var(--gold); border-color: var(--gold); }
+.sop-btn-primary { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }
 .sop-return { display: flex; gap: 0.4rem; width: 100%; flex-wrap: wrap; }
 .sop-input {
   flex: 1 1 12rem;

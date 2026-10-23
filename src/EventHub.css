@@ -107,7 +107,7 @@
   background: var(--surface-2); color: var(--text); font: 500 0.95rem var(--font-ui); cursor: pointer;
 }
 .eh-chip:hover:not(:disabled) { border-color: var(--steel); }
-.eh-chip-on { background: var(--gold); border-color: var(--gold); color: var(--bg); font-weight: 700; }
+.eh-chip-on { background: var(--gold-fill); border-color: var(--gold); color: var(--on-gold); font-weight: 700; }
 .eh-chip:disabled { opacity: 0.55; cursor: default; }
 
 .eh-field { display: flex; flex-direction: column; margin: 0 0 12px; }
@@ -132,7 +132,7 @@ textarea.eh-input { resize: vertical; }
   border: 2px solid var(--steel); border-radius: var(--eh-r-chip); color: var(--bg); font-weight: 700;
 }
 .eh-tick-on { border-color: var(--gold-dim); }
-.eh-tick-on .eh-tick-box { background: var(--gold); border-color: var(--gold); }
+.eh-tick-on .eh-tick-box { background: var(--gold-fill); border-color: var(--gold); color: var(--on-gold); }
 .eh-tick:disabled { opacity: 0.55; cursor: default; }
 
 .eh-save { display: block; margin-top: 4px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--steel); min-height: 1em; }
@@ -152,7 +152,7 @@ textarea.eh-input { resize: vertical; }
 /* A primary action is a gold label on the dark plate; gold fills on hover
    and focus (the app's rule for large primary actions). */
 .eh-btn-primary { color: var(--gold); border-color: var(--gold); background: var(--surface); }
-.eh-btn-primary:hover:not(:disabled), .eh-btn-primary:focus-visible { background: var(--gold); color: var(--bg); }
+.eh-btn-primary:hover:not(:disabled), .eh-btn-primary:focus-visible { background: var(--gold-fill); color: var(--on-gold); }
 .eh-btn-small { min-height: var(--eh-target); padding: 0 12px; margin: 0; }
 .eh-mini {
   min-height: var(--eh-target); padding: 0 10px; margin-left: auto;
@@ -227,7 +227,7 @@ textarea.eh-input { resize: vertical; }
 .eh-confirm-text { margin: 4px 0; color: var(--gold-dim); }
 .eh-dots { display: inline-flex; gap: 4px; }
 .eh-dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--steel); }
-.eh-dot-on { background: var(--gold); border-color: var(--gold); }
+.eh-dot-on { background: var(--gold-fill); border-color: var(--gold); }
 .eh-riders { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 4px; }
 .eh-riders li { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; min-height: 28px; }
 .eh-rider-detail { color: var(--steel); font-size: 0.85rem; }
@@ -385,7 +385,7 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
   background: linear-gradient(135deg, var(--surface-2), var(--surface) 55%, var(--bg));
   border: 1px solid var(--border-strong); overflow: hidden;
 }
-.eh-hero::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--gold); }
+.eh-hero::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--gold-fill); }
 .eh-hero .eh-mark { width: 52px; height: 52px; }
 .eh-hero-text { flex: 1 1 260px; min-width: 0; }
 .eh-hero .eh-title { font-size: 1.75rem; margin: 2px 0 6px; }
@@ -513,8 +513,8 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
   flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
   border: 2px solid var(--muted); color: var(--bg);
 }
-.eh-option-on { border: 2px solid var(--gold); background: color-mix(in srgb, var(--gold) 7%, var(--surface-2)); padding: 9px 11px; }
-.eh-option-on .eh-option-mark { background: var(--gold); border-color: var(--gold); }
+.eh-option-on { border: 2px solid var(--gold); background: color-mix(in srgb, var(--gold-fill) 7%, var(--surface-2)); padding: 9px 11px; }
+.eh-option-on .eh-option-mark { background: var(--gold-fill); border-color: var(--gold); color: var(--on-gold); }
 .eh-option-on .eh-option-title { color: var(--gold-bright); }
 
 /* The count picker's exact-number row. */
@@ -528,7 +528,7 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .eh-dayq-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 12px; }
 .eh-day-badge {
   display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
-  background: color-mix(in srgb, var(--tone, var(--gold)) 14%, transparent); color: var(--tone, var(--gold));
+  background: color-mix(in srgb, var(--tone, var(--gold-fill)) 14%, transparent); color: var(--tone, var(--gold));
   font-weight: 700; font-size: 1rem;
 }
 .eh-day-title { color: var(--steel); font-size: 0.98rem; }
@@ -572,7 +572,7 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
 }
 .eh-fold-icon {
   flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 9px;
-  color: var(--tone, var(--gold)); background: color-mix(in srgb, var(--tone, var(--gold)) 14%, transparent);
+  color: var(--tone, var(--gold)); background: color-mix(in srgb, var(--tone, var(--gold-fill)) 14%, transparent);
 }
 .eh-fold-title { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .eh-fold-sub { font-weight: 400; font-size: 0.9rem; color: var(--steel); }
@@ -742,7 +742,7 @@ a.eh-btn { display: inline-flex; align-items: center; text-decoration: none; }
 .eh-infobar-chat { --tone: var(--hr-volunteer); }
 
 /* A fold that holds something people need: a coloured card, not a footnote. */
-.eh-fold.eh-fold-feature { border: 2px solid var(--tone, var(--gold-dim)); background: color-mix(in srgb, var(--tone, var(--gold-dim)) 12%, var(--surface)); }
+.eh-fold.eh-fold-feature { border: 2px solid var(--tone, var(--gold-dim)); background: color-mix(in srgb, var(--tone, var(--gold-fill-dim)) 12%, var(--surface)); }
 .eh-fold-feature > .eh-fold-head { min-height: 64px; }
 .eh-fold-feature .eh-fold-title { font-size: 1.1rem; }
 .eh-fold-feature .eh-fold-icon { color: var(--tone); }

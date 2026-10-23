@@ -8,6 +8,7 @@ import { displayName } from './names'
 import { SUBTEAMS } from './subteams'
 import { DISCORD_INVITE } from './discord'
 import './ProfilePage.css'
+import ThemeSwitch from './ThemeSwitch'
 
 // Matches the application form's sizes (XS through 3XL) so a size picked there
 // still renders here instead of showing blank.
@@ -319,6 +320,12 @@ export default function ProfilePage({ session, hasRole = () => false }) {
             </button>
           </form>
 
+        </div>
+
+        <p className="profile-section-heading">Appearance</p>
+        <div className="profile-card profile-theme-card">
+          <p className="profile-cal-intro">Light, Dark, or match this device. Saved on this device only.</p>
+          <ThemeSwitch />
         </div>
 
         <p className="profile-section-heading">Team Discord</p>

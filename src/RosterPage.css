@@ -162,8 +162,8 @@
 }
 
 .role-chip.role-on {
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   border-color: var(--gold);
 }
 
@@ -198,13 +198,13 @@
 }
 .roster-perm-toggle:hover:not(:disabled) { border-color: var(--gold-dim); color: var(--text); }
 .roster-perm-toggle.on {
-  background: var(--gold);
-  color: var(--bg);
+  background: var(--gold-fill);
+  color: var(--on-gold);
   border-color: var(--gold);
 }
 /* The plain hover above out-specifies .on and set --text on the gold fill
    (about 1.02:1); a pressed toggle keeps its dark label under the pointer. */
-.roster-perm-toggle.on:hover:not(:disabled) { color: var(--bg); border-color: var(--gold-bright); }
+.roster-perm-toggle.on:hover:not(:disabled) { color: var(--on-gold); border-color: var(--gold-bright); }
 .roster-perm-toggle:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .roster-perm-note {
@@ -289,8 +289,8 @@
   padding: 0.3rem 0.85rem;
   border: none;
   border-radius: var(--radius);
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   font-family: var(--font-ui);
   font-size: 0.78rem;
   font-weight: 700;
@@ -351,8 +351,8 @@
   padding: 0.45rem 1.1rem;
   border: none;
   border-radius: var(--radius);
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   font-family: var(--font-ui);
   font-size: 0.85rem;
   font-weight: 700;
@@ -507,7 +507,7 @@
   height: 0.6rem;
   border-radius: 50%;
   flex-shrink: 0;
-  background: var(--gold);
+  background: var(--gold-fill);
 }
 
 .status-dot-inactive { background: var(--muted); }
@@ -595,14 +595,14 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #0A0B0D;
-  background: var(--gold);
+  color: var(--on-gold);
+  background: var(--gold-fill);
   border: 1px solid var(--gold);
   border-radius: var(--radius);
   padding: 0.4rem 0.9rem;
   cursor: pointer;
 }
-.roster-guardian-btn:hover:not(:disabled) { background: var(--gold-bright); }
+.roster-guardian-btn:hover:not(:disabled) { background: var(--gold-fill-bright); }
 .roster-guardian-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Search + sort toolbar ─────────────────────────────────────────────── */

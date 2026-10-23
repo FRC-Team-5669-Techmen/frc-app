@@ -18,8 +18,8 @@
 .st-big { margin: 0.1rem 0; font-family: var(--font-ui); font-size: 1.7rem; font-weight: 700; }
 .st-of { font-size: 1rem; color: var(--muted); font-weight: 400; }
 .st-bar { height: 8px; border-radius: 4px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; margin: 0.35rem 0; }
-.st-bar span { display: block; height: 100%; background: var(--gold-dim); }
-.st-bar span.ok { background: var(--gold); }
+.st-bar span { display: block; height: 100%; background: var(--gold-fill-dim); }
+.st-bar span.ok { background: var(--gold-fill); }
 .st-badge {
   display: inline-block; padding: 0.3rem 0.65rem; border-radius: var(--radius);
   font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
@@ -54,7 +54,7 @@ textarea.st-input, select.st-input { width: 100%; max-width: 100%; }
   min-height: 44px; padding: 0.4rem 0.8rem; font: inherit; font-size: 0.92rem; color: var(--text);
   background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer;
 }
-.st-pick.on { color: #0A0B0D; background: var(--gold); border-color: var(--gold); }
+.st-pick.on { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }
 .st-pick:disabled { opacity: 0.5; cursor: default; }
 .st-check { display: flex; gap: 0.5rem; align-items: flex-start; min-height: 44px; font-size: 0.92rem; cursor: pointer; }
 .st-check input { width: 20px; height: 20px; margin-top: 2px; accent-color: var(--gold); flex: 0 0 auto; }
@@ -64,7 +64,7 @@ textarea.st-input, select.st-input { width: 100%; max-width: 100%; }
   border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer;
 }
 .st-btn:disabled { opacity: 0.55; cursor: default; }
-.st-btn-primary { color: #0A0B0D; background: var(--gold); border-color: var(--gold); }
+.st-btn-primary { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }
 .st-btn-wide { width: 100%; margin-bottom: 1rem; }
 .st-link { min-height: 44px; background: none; border: 0; color: var(--gold); font: inherit; font-size: 0.88rem; cursor: pointer; padding: 0 0.25rem; text-decoration: underline; }
 .st-tabs { display: flex; gap: 0.35rem; overflow-x: auto; margin-bottom: 1rem; padding-bottom: 0.25rem; }
@@ -73,7 +73,7 @@ textarea.st-input, select.st-input { width: 100%; max-width: 100%; }
   letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel); background: var(--surface);
   border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;
 }
-.st-tab.on { color: #0A0B0D; background: var(--gold); border-color: var(--gold); }
+.st-tab.on { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }
 .st-table-wrap { overflow-x: auto; width: 100%; max-width: calc(100vw - 2rem); }
 .st-tabs { max-width: calc(100vw - 2rem); }
 .st-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
@@ -93,7 +93,7 @@ textarea.st-input, select.st-input { width: 100%; max-width: 100%; }
 }
 .st-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--border-strong); background: var(--bg); }
 .st-dot-green { background: var(--steel); }
-.st-dot-yellow { background: var(--gold); }
+.st-dot-yellow { background: var(--gold-fill); }
 .st-dot-red { background: var(--fault); }
 .st-pick-red.on { background: var(--fault); border-color: var(--fault); color: #fff; }
 .st-pick-green.on { background: var(--steel); border-color: var(--steel); }

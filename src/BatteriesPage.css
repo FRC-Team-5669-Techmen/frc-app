@@ -17,7 +17,7 @@
   border-radius: var(--radius); cursor: pointer; box-sizing: border-box;
 }
 .ba-primary { color: var(--gold); background: var(--bg); border: 1px solid var(--gold); }
-.ba-primary:hover:not(:disabled), .ba-primary:focus-visible { background: var(--gold); color: var(--bg); }
+.ba-primary:hover:not(:disabled), .ba-primary:focus-visible { background: var(--gold-fill); color: var(--on-gold); }
 .ba-btn { color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); }
 .ba-btn:hover:not(:disabled) { border-color: var(--steel); }
 .ba-primary:disabled, .ba-btn:disabled { opacity: 0.45; cursor: default; }
@@ -30,8 +30,8 @@
 .ba-filters { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.25rem; margin-bottom: 0.75rem; scrollbar-width: none; }
 .ba-filter { flex: 0 0 auto; color: var(--steel); background: var(--bg); border: 1px solid var(--border-strong); font-size: 0.9rem; }
 .ba-filter span { margin-left: 0.3rem; font-family: var(--font-mono); color: var(--muted); }
-.ba-filter[aria-pressed="true"] { color: var(--bg); background: var(--gold); border-color: var(--gold); }
-.ba-filter[aria-pressed="true"] span { color: var(--bg); }
+.ba-filter[aria-pressed="true"] { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }
+.ba-filter[aria-pressed="true"] span { color: var(--on-gold); }
 
 .ba-board { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr)); gap: 0.75rem; }
 .ba-card { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; min-width: 0; }
@@ -44,7 +44,7 @@
 .ba-pills { display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: flex-end; align-items: flex-start; }
 .ba-pill { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.15rem 0.45rem; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); color: var(--steel); white-space: nowrap; }
 .ba-pill-competition { color: var(--text); border-color: var(--steel); }
-.ba-pill-check { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+.ba-pill-check { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }
 .ba-pill-ready { color: var(--gold); border-color: var(--gold-dim); }
 .ba-stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border); }
 .ba-stats > span { display: flex; flex-direction: column; }
@@ -102,7 +102,7 @@
 .ba-seg legend { padding: 0; margin-bottom: 0.35rem; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); }
 .ba-seg-opts { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .ba-seg-opts button { flex: 1 1 auto; min-height: 48px; min-width: 3.25rem; padding: 0.4rem 0.75rem; font: inherit; font-weight: 600; color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; }
-.ba-seg-opts button[aria-pressed="true"] { color: var(--bg); background: var(--gold); border-color: var(--gold); }
+.ba-seg-opts button[aria-pressed="true"] { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }
 .ba-seg-batteries button { flex: 0 0 auto; min-width: 4.25rem; font-family: var(--font-ui); font-size: 1.05rem; }
 .ba-seg-batteries .ba-opt-check:not([aria-pressed="true"]) { border-color: var(--gold-dim); color: var(--gold); }
 .ba-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }

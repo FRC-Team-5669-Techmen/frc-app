@@ -103,7 +103,7 @@
 
 .ma-progress-fill {
   height: 100%;
-  background: var(--gold);
+  background: var(--gold-fill);
   transition: width 0.2s ease-out;
 }
 
@@ -280,7 +280,7 @@
   transition: background 0.15s;
 }
 .ma-submit:hover:not(:disabled),
-.ma-submit:focus-visible { background: var(--gold); color: #0A0B0D; }
+.ma-submit:focus-visible { background: var(--gold-fill); color: var(--on-gold); }
 .ma-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .ma-back {

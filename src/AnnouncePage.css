@@ -212,11 +212,11 @@
 }
 .an-chip:hover:not(:disabled) { border-color: var(--gold-dim); color: var(--text); }
 .an-chip-on {
-  color: var(--bg);
-  background: var(--gold);
+  color: var(--on-gold);
+  background: var(--gold-fill);
   border-color: var(--gold);
 }
-.an-chip-on:hover:not(:disabled) { color: var(--bg); }
+.an-chip-on:hover:not(:disabled) { color: var(--on-gold); }
 
 /* ── Buttons ── */
 .an-btn {
@@ -233,7 +233,7 @@
 }
 .an-btn:disabled { color: var(--muted); cursor: default; }
 .an-btn-go:not(:disabled) { color: var(--gold); border-color: var(--gold); }
-.an-btn-go:hover:not(:disabled), .an-btn-go:focus-visible:not(:disabled) { background: var(--gold); color: var(--bg); }
+.an-btn-go:hover:not(:disabled), .an-btn-go:focus-visible:not(:disabled) { background: var(--gold-fill); color: var(--on-gold); }
 .an-btn-danger:not(:disabled) { color: var(--fault); border-color: var(--fault); }
 .an-btn-danger:hover:not(:disabled) { background: var(--fault-a10); }
 .an-btn-big { padding: 0 1.3rem; font-size: 0.9rem; }

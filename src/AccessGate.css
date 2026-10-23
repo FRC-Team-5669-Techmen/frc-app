@@ -182,7 +182,7 @@
   transition: background 0.15s;
 }
 .gate-submit:hover:not(:disabled),
-.gate-submit:focus-visible { background: var(--gold); color: #0A0B0D; }
+.gate-submit:focus-visible { background: var(--gold-fill); color: var(--on-gold); }
 .gate-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
 /* Loading spinner for the initial status check */

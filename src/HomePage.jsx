@@ -20,6 +20,7 @@ import { resolveOpenSurvey } from './surveys'
 import { isSchemaMissing } from './schemaMissing'
 import './HomePage.css'
 import './Hub.css'
+import { UPDATES, sortUpdates, hasUnread, readSeen } from './updates'
 
 const SO_POLL_MS = 20_000
 
@@ -382,6 +383,7 @@ export default function HomePage({ session, hasRole = () => false }) {
             : <StudentTiles m={metrics} present={present} uid={uid} />}
 
         </div>
+        <WhatsNewStrip />
       </div>
     </div>
   )
@@ -468,6 +470,21 @@ function StudentTiles({ m, present, uid }) {
         <span className="mb-tile-foot hud-mono">present now →</span>
       </Link>
     </>
+  )
+}
+
+// ── What's new (src/updates.js) ──
+// One line under the tiles: the newest release, lit while it is unread.
+function WhatsNewStrip() {
+  const top = sortUpdates(UPDATES)[0]
+  const [unread] = useState(() => hasUnread(UPDATES, readSeen()))
+  if (!top) return null
+  return (
+    <Link to="/updates" className={`mb-news${unread ? ' mb-news-unread' : ''}`} data-testid="home-whats-new">
+      <span className="mb-news-label hud-mono">{unread ? 'New' : "What's new"}</span>
+      <span className="mb-news-title">{top.title}</span>
+      <span className="mb-news-go" aria-hidden="true">→</span>
+    </Link>
   )
 }
 

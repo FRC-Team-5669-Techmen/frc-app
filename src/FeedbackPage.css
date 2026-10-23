@@ -114,7 +114,7 @@
   cursor: pointer;
 }
 .fbp-export-btn:hover:not(:disabled),
-.fbp-export-btn:focus-visible:not(:disabled) { background: var(--gold); color: var(--bg); }
+.fbp-export-btn:focus-visible:not(:disabled) { background: var(--gold-fill); color: var(--on-gold); }
 .fbp-export-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .fbp-names {
@@ -184,7 +184,7 @@
 }
 .fbp-tab:hover { border-color: var(--gold-dim); color: var(--text); }
 .fbp-tab-on,
-.fbp-tab-on:hover { background: var(--gold); border-color: var(--gold); color: var(--bg); }
+.fbp-tab-on:hover { background: var(--gold-fill); border-color: var(--gold); color: var(--on-gold); }
 
 /* ── Filters ── */
 .fbp-controls {
@@ -250,7 +250,7 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
-.fbp-undo:hover:not(:disabled) { background: var(--gold); color: var(--bg); }
+.fbp-undo:hover:not(:disabled) { background: var(--gold-fill); color: var(--on-gold); }
 
 /* ── Selection bar ── */
 .fbp-bulkbar {
@@ -322,7 +322,7 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
-.fbp-bulkcopy:hover:not(:disabled) { background: var(--gold); color: var(--bg); }
+.fbp-bulkcopy:hover:not(:disabled) { background: var(--gold-fill); color: var(--on-gold); }
 
 /* ── List ── */
 .fbp-list {
@@ -368,7 +368,7 @@
   letter-spacing: 0.08em;
   border-radius: var(--radius-sm);
 }
-.fbp-type-bug     { background: var(--fault); color: var(--text); }
+.fbp-type-bug     { background: var(--fault); color: var(--on-strong); }
 .fbp-type-idea    { background: var(--hr-outreach); color: var(--bg); }
 .fbp-type-general { background: var(--surface-2); color: var(--steel); border: 1px solid var(--border-strong); }
 

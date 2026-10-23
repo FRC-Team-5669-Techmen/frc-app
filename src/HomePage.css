@@ -169,11 +169,11 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   cursor: pointer;
-  background: var(--gold-dim);
-  color: #0A0B0D;
+  background: var(--gold-fill-dim);
+  color: var(--on-gold);
   transition: background 0.15s, opacity 0.15s;
 }
-.mb-checkout:hover:not(:disabled) { background: var(--gold-bright); }
+.mb-checkout:hover:not(:disabled) { background: var(--gold-fill-bright); }
 .mb-checkout:disabled { opacity: 0.55; cursor: not-allowed; }
 
 /* Status could not be read: a retry is neither identity nor an active state,
@@ -211,8 +211,8 @@
 
 /* ── Shop dot ── */
 .mb-dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; flex-shrink: 0; }
-.mb-dot-open   { background: var(--gold-bright); box-shadow: 0 0 0 3px var(--gold-a14); }
-.mb-dot-opens  { background: var(--gold-dim); }
+.mb-dot-open   { background: var(--gold-fill-bright); box-shadow: 0 0 0 3px var(--gold-a14); }
+.mb-dot-opens  { background: var(--gold-fill-dim); }
 .mb-dot-closed { background: var(--muted); }
 
 /* ── Next Up + RSVP ── */
@@ -237,7 +237,7 @@
   transition: border-color 0.15s, background 0.15s;
 }
 .mb-rsvp-btn:hover:not(:disabled) { border-color: var(--gold); }
-.mb-rsvp-btn.on { background: var(--gold); border-color: var(--gold); color: #0A0B0D; }
+.mb-rsvp-btn.on { background: var(--gold-fill); border-color: var(--gold); color: var(--on-gold); }
 .mb-rsvp-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
 /* ── Big-number value alignment for metric tiles ── */
@@ -292,3 +292,16 @@
 .mb-so-back-note { margin: 0; color: var(--text); overflow-wrap: anywhere; }
 .mb-so-back-note q { color: var(--gold); }
 .mb-so-back-next { margin: 0; color: var(--steel); font-size: 0.88rem; }
+
+/* What's new strip under the tiles (src/updates.js). */
+.mb-news {
+  display: flex; align-items: center; gap: 0.6rem; min-height: 44px; margin-top: 0.9rem;
+  padding: 0.5rem 0.9rem; box-sizing: border-box;
+  border: 1px solid var(--border-strong); border-radius: var(--radius);
+  background: var(--surface); color: var(--text); text-decoration: none;
+}
+.mb-news:hover { border-color: var(--steel); }
+.mb-news-label { flex: none; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--steel); }
+.mb-news-unread .mb-news-label { padding: 0.1rem 0.45rem; border-radius: var(--radius-sm); background: var(--gold-fill); color: var(--on-gold); font-weight: 700; }
+.mb-news-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.mb-news-go { flex: none; color: var(--gold); }

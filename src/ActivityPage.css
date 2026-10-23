@@ -88,8 +88,8 @@
   cursor: pointer;
 }
 
-.activity-btn-in  { background: var(--gold); }
-.activity-btn-out { background: var(--gold-dim); }
+.activity-btn-in  { background: var(--gold-fill); }
+.activity-btn-out { background: var(--gold-fill-dim); }
 
 .activity-btn:disabled {
   opacity: 0.45;
@@ -178,8 +178,8 @@
   margin-left: 0.5rem;
   padding: 0.1rem 0.45rem;
   border-radius: var(--radius);
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   font-family: var(--font-ui);
   font-size: 0.65rem;
   font-weight: 700;

@@ -75,8 +75,8 @@
   height: 1.4rem;
   padding: 0 0.35rem;
   border-radius: var(--radius-sm);
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   font-family: var(--font-mono);
   font-size: 0.7rem;
   font-weight: 700;
@@ -257,8 +257,8 @@
   padding: 0.3rem 0.75rem;
   border-radius: var(--radius);
   border: none;
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
   font-family: var(--font-ui);
   font-size: 0.75rem;
   font-weight: 600;
@@ -269,7 +269,7 @@
 }
 
 .vh-cutoff-save:hover:not(:disabled) {
-  background: var(--gold-bright);
+  background: var(--gold-fill-bright);
 }
 
 .vh-cutoff-save:disabled {
@@ -348,12 +348,12 @@
 }
 
 .vh-approve {
-  background: var(--gold);
-  color: #0A0B0D;
+  background: var(--gold-fill);
+  color: var(--on-gold);
 }
 
 .vh-approve:hover:not(:disabled) {
-  background: var(--gold-bright);
+  background: var(--gold-fill-bright);
 }
 
 /* ── Correction-request card extras ── */
@@ -437,7 +437,7 @@
 }
 .vh-dur-btn:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
 .vh-dur-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.vh-dur-on { background: var(--gold); border-color: var(--gold); color: #0A0B0D; }
+.vh-dur-on { background: var(--gold-fill); border-color: var(--gold); color: var(--on-gold); }
 .vh-dur-readout { font-family: var(--font-mono); font-size: 0.76rem; color: var(--steel); }
 
 /* The expanded per-card fix block. */

@@ -81,6 +81,7 @@ const ManagePage         = lazy(() => import('./ManagePage'))
 const RoleBoardPage      = lazy(() => import('./RoleBoardPage'))
 const AutosPage          = lazy(() => import('./AutosPage'))
 const MatchSimPage       = lazy(() => import('./MatchSimPage'))
+const UpdatesPage        = lazy(() => import('./UpdatesPage'))
 // Mounted in ProtectedLayout, so it is on every authenticated page. Lazy with
 // its OWN Suspense boundary and a null fallback: sharing the app-level
 // boundary would put the whole shell back on the splash while it loads.
@@ -477,6 +478,7 @@ export default function App() {
           <Route path="/roles/:eventId"  element={<RoleBoardPage session={session} hasRole={hasRole} />} />
           <Route path="/autos"           element={<AutosPage session={session} hasRole={hasRole} />} />
           <Route path="/match-sim"       element={<MatchSimPage session={session} hasRole={hasRole} />} />
+          <Route path="/updates"         element={<UpdatesPage />} />
           {/* Display lives inside the layout so the nav + profile stay visible. */}
           <Route path="/display" element={<PresenceBoard hasRole={hasRole} />} />
         </Route>

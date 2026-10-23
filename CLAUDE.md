@@ -23,7 +23,7 @@ The internal team platform for FRC Team 5669 "Techmen" (Don Bosco Technical Inst
 
 Techmen. "Tactical HUD" theme — near-black base, gold targeting accent, silver/steel chrome. Display/UI face is Chakra Petch; all data/readout lines (timestamps, codes, counts, status) use Share Tech Mono. Both fonts are self-hosted via @fontsource (no Google Fonts CDN). Team logo + "TECHMEN·5669" wordmark in the header, not "5669" or "FRC App". Student-facing name is always Techmen.
 
-Theme tokens, the gold rules and role colors: [`docs/subsystems/branding-and-theme.md`](docs/subsystems/branding-and-theme.md).
+Light theme (0019): gold `background` uses `--gold-fill*`, never `--gold`. Theme tokens, the gold rules and role colors: [`docs/subsystems/branding-and-theme.md`](docs/subsystems/branding-and-theme.md).
 
 ### Tech stack
 
@@ -46,7 +46,7 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 - **PWA and login**: install, OTP and Google OAuth, the login screen. [`docs/subsystems/pwa-and-login.md`](docs/subsystems/pwa-and-login.md)
 - **Check-in**: NFC fast path, geofence, iOS, kiosk (removed), auto-checkout, the one checked-in rule, sign-out requests and meeting check-in (0014, `/signouts`). [`docs/subsystems/checkin.md`](docs/subsystems/checkin.md)
 - **Presence board**: `/display`, its attendance history, and quick pulse (staff sign a member in or out). [`docs/subsystems/presence-board.md`](docs/subsystems/presence-board.md)
-- **Landing page and nav**: the top bar, the account menu, `/robot`, Team admin `/manage`, Home's Do this now (decision 49). [`docs/subsystems/landing-and-nav.md`](docs/subsystems/landing-and-nav.md)
+- **Landing page and nav**: the top bar, the account menu, `/robot`, Team admin `/manage`, Home's Do this now (decision 49), `/updates` (0019). [`docs/subsystems/landing-and-nav.md`](docs/subsystems/landing-and-nav.md)
 - **Hours**: My Hours, Team Hours, categories, seasons, the LA day rule. [`docs/subsystems/hours.md`](docs/subsystems/hours.md)
 - **Session integrity**: [`docs/subsystems/session-integrity.md`](docs/subsystems/session-integrity.md)
 - **Admin hours management**: [`docs/subsystems/admin-hours.md`](docs/subsystems/admin-hours.md)
@@ -229,4 +229,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-23. Automatic migrations (`migrate.yml`, ledger 0021) added to the Database section. Earlier the same day: battery log, scouting and nav lines (ledger 0017). Latest record: `docs/history/auto-migrations-0021.md`.
+Last reviewed: 2026-10-23. Light theme and What's new (ledger 0019); automatic migrations (`migrate.yml`, ledger 0021) in the Database section; battery log, scouting and nav lines (ledger 0017). Latest records: `docs/history/light-mode-whats-new-0019.md`, `docs/history/auto-migrations-0021.md`.

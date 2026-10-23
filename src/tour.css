@@ -73,15 +73,15 @@
 
 /* Higher specificity (button.<class>) so it beats the footer-button base rule above */
 .driver-popover.techmen-tour .driver-popover-footer button.driver-popover-next-btn {
-  background-color: var(--gold);
+  background-color: var(--gold-fill);
   border-color: var(--gold);
-  color: #0A0B0D;
+  color: var(--on-gold);
 }
 .driver-popover.techmen-tour .driver-popover-footer button.driver-popover-next-btn:hover,
 .driver-popover.techmen-tour .driver-popover-footer button.driver-popover-next-btn:focus {
-  background-color: var(--gold-bright);
+  background-color: var(--gold-fill-bright);
   border-color: var(--gold-bright);
-  color: #0A0B0D;
+  color: var(--on-gold);
 }
 
 .driver-popover.techmen-tour .driver-popover-btn-disabled {

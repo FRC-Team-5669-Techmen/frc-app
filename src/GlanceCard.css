@@ -26,8 +26,8 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
-.glance-open   { background: var(--gold); box-shadow: 0 0 0 3px var(--gold-a14); }
-.glance-opens  { background: var(--gold-dim); }
+.glance-open   { background: var(--gold-fill); box-shadow: 0 0 0 3px var(--gold-a14); }
+.glance-opens  { background: var(--gold-fill-dim); }
 .glance-closed { background: var(--muted); }
 
 .glance-shop-head {
