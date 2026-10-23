@@ -12,6 +12,7 @@ import { laDateKey, laMidnightMs, addDays, laClock, laDay, laWallToIso } from '.
 import { isSchemaMissing } from './errors.js'
 import { batteryBoard, chargeLabel, statusLabel, kindLabel, brownoutLabel, CHECK_THRESHOLDS } from '../../../src/batteries.js'
 import { leaderboard as driverLeaderboard, SCORE_RULES } from '../../../src/driverScore.js'
+import { leaderboard as hpLeaderboard, HP_RULES, needsText as hpNeedsText } from '../../../src/humanPlayerScore.js'
 import { AUTO_READY_STREAK, RATE_WINDOW, resultLabel, routineBoard } from '../../../src/autos.js'
 import { boardView, roleLabel } from '../../../src/roleBoard.js'
 import { groupByTeam, tagLabel } from '../../../src/meetTeam.js'
@@ -540,6 +541,28 @@ const READS = {
       status: 'ok', season: season ? season.name : 'All time', ranked: rows.length,
       drivers: rows.slice(0, limit).map((r) => ({ rank: r.rank, name: r.name, driver_score: r.score, robot_hours: h(r.realHours), mosim_hours: h(r.simHours), coach_average: r.coachAvg == null ? 'unrated' : Math.round(r.coachAvg * 100) / 100, coaches: r.coaches, sessions: r.sessions, best_mosim_score: r.bestSim })),
       formula: `Practice hours = robot hours + ${SCORE_RULES.SIM_WEIGHT} x MoSim hours; experience = 1 - e^(-hours/${SCORE_RULES.HOURS_SCALE}); Driver Score = 100 x (${SCORE_RULES.EXPERIENCE_WEIGHT} x experience + ${SCORE_RULES.COACH_WEIGHT} x coach), coach = newest rating per coach, 1-5 scaled to 0-1, unrated 0.`,
+    }
+  },
+
+  // The human player leaderboard (0033), scored with the app's own rule (src/humanPlayerScore.js).
+  async list_human_players(ctx, a) {
+    const [at, se] = await Promise.all([
+      ctx.backend.select(ctx.session, { table: 'hp_attempts', columns: ['member_id', 'attempt_date', 'drill', 'made', 'attempted', 'made_inactive', 'seconds', 'voided_at', 'created_at'], limit: 5000 }),
+      ctx.backend.select(ctx.session, { table: 'seasons', columns: ['id', 'name', 'start_date', 'end_date'], order: [['start_date', 'desc']], limit: 20 }),
+    ])
+    if (at.error) return isSchemaMissing(at.error) ? notSetUp('The human player leaderboard') : { status: 'refused', message: at.error.message }
+    const today = laDateKey(ctx.now())
+    const season = a.season === 'all' ? null : (se.data ?? []).find((s) => s.start_date <= today && (s.end_date == null || s.end_date >= today)) ?? null
+    const list = await roster(ctx)
+    const names = new Map((list.members ?? []).map((m) => [m.id, m.name]))
+    const board = hpLeaderboard(at.data ?? [], season, (id) => names.get(id) ?? '')
+    const limit = Math.max(1, Math.min(50, Number(a.limit) || 10))
+    const r2 = (x) => (x == null ? null : Math.round(x * 100) / 100)
+    return {
+      status: 'ok', season: season ? season.name : 'All time', ranked: board.ranked.length,
+      players: board.ranked.slice(0, limit).map((r) => ({ rank: r.rank, name: r.name, human_player_score: r.score, match_fuel_active: r2(r.drills.match.value), rate_fuel_per_second: r2(r.drills.rate.value), accuracy_percent: r.drills.accuracy.value == null ? null : Math.round(r.drills.accuracy.value * 100) })),
+      not_ranked_yet: board.unranked.map((r) => ({ name: r.name, needs: hpNeedsText(r.needs) })),
+      formula: `Per drill, the mean of the best ${HP_RULES.BEST} of the last ${HP_RULES.RECENT} attempts (accuracy = made/shots, rate = made/second, match run = FUEL made while the HUB was active), divided by the team best; ranked after ${HP_RULES.MIN_ATTEMPTS} attempts of every drill; Human Player Score = 100 x (${HP_RULES.MATCH_WEIGHT} x match + ${HP_RULES.RATE_WEIGHT} x rate + ${HP_RULES.ACCURACY_WEIGHT} x accuracy).`,
     }
   },
 

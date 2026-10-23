@@ -354,6 +354,13 @@ list_drivers:
     season: {type: string, describe: "this season (default) or all time", enum: [current, all]}
     limit: {type: integer, describe: "How many drivers to list (10 by default)"}
 
+list_human_players:
+  describe: The human player leaderboard for this season (or all time), best Human Player Score first, with match run, rate and accuracy, and who still needs attempts to rank.
+  say: ["who is our best human player", "show me the human player leaderboard", "how accurate is Riley as human player", "human player rankings for all time"]
+  kind: read
+  args:
+    season: {type: string, describe: "this season (default) or all time", enum: [current, all]}
+    limit: {type: integer, describe: "How many ranked players to list (10 by default)"}
 # ledger 0024 Part 2: the season and competition audit (docs/decisions/51).
 sign_in_out:
   describe: Sign a member in or out of the shop now (or at a time he says), the way the quick pulse control does. Undo removes the check-in or check-out.

@@ -84,6 +84,7 @@ const MatchSimPage       = lazy(() => import('./MatchSimPage'))
 const UpdatesPage        = lazy(() => import('./UpdatesPage'))
 const DriversPage        = lazy(() => import('./DriversPage'))
 const MeetTeamPage       = lazy(() => import('./MeetTeamPage'))
+const HumanPlayerPage    = lazy(() => import('./HumanPlayerPage'))
 // Mounted in ProtectedLayout, so it is on every authenticated page. Lazy with
 // its OWN Suspense boundary and a null fallback: sharing the app-level
 // boundary would put the whole shell back on the splash while it loads.
@@ -486,6 +487,8 @@ export default function App() {
           <Route path="/meet/:eventId"   element={<MeetTeamPage session={session} hasRole={hasRole} />} />
           {/* The driver leaderboard (0029, ledger 0020): students and staff; the page gates parents. */}
           <Route path="/drivers"         element={<DriversPage session={session} hasRole={hasRole} />} />
+          {/* The human player leaderboard (0033, ledger 0025): students and staff; the page gates parents. */}
+          <Route path="/human-player"    element={<HumanPlayerPage session={session} hasRole={hasRole} />} />
           {/* Display lives inside the layout so the nav + profile stay visible. */}
           <Route path="/display" element={<PresenceBoard hasRole={hasRole} />} />
         </Route>

@@ -52,7 +52,7 @@
 -- public.team_connection_contacts, public.team_connections; remove the
 -- meet_team key from role_slots.needs and the template; put 0031's role
 -- check and _role_valid back (only if no event_roles row says meet_team);
--- paste _merge_member_rules from 0031 again.
+-- paste _merge_member_rules from 0033 again.
 -- ============================================================
 
 do $prereq$
@@ -526,6 +526,10 @@ returns table (tbl text, col text, rule text) language sql immutable set search_
     ('hour_adjustments', 'created_by', 'move'),
     ('hour_goals', 'member_id', 'move'),
     ('hour_goals', 'updated_by', 'move'),
+    ('hp_attempts', 'member_id', 'move'),
+    ('hp_attempts', 'logged_by', 'move'),
+    ('hp_attempts', 'updated_by', 'move'),
+    ('hp_attempts', 'voided_by', 'move'),
     ('hub_cars', 'minor_override_by', 'move'),
     ('hub_days', 'captain_id', 'move'),
     ('hub_events', 'created_by', 'move'),
