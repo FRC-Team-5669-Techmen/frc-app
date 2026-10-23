@@ -325,6 +325,14 @@ list_drivers:
     season: {type: string, describe: "this season (default) or all time", enum: [current, all]}
     limit: {type: integer, describe: "How many drivers to list (10 by default)"}
 
+list_human_players:
+  describe: The human player leaderboard for this season (or all time), best Human Player Score first, with match run, rate and accuracy, and who still needs attempts to rank.
+  say: ["who is our best human player", "show me the human player leaderboard", "how accurate is Riley as human player", "human player rankings for all time"]
+  kind: read
+  args:
+    season: {type: string, describe: "this season (default) or all time", enum: [current, all]}
+    limit: {type: integer, describe: "How many ranked players to list (10 by default)"}
+
 role_board:
   describe: The role board for an event (Beach Blitz by default when named) - per time slot and role, who is assigned, backup and asked, and how many are still needed.
   say: ["show the Beach Blitz role board", "who is scouting Saturday", "which pit slots are still unfilled", "who asked to be drive coach", "who is on lunch pit watch"]

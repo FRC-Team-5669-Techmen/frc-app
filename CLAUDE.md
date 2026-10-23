@@ -71,6 +71,7 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 - **Scouting**: event observations with REBUILT match fields (0027), offline queue, shift planning by match number with redundant pairs and super scouts (0030), pit conversations, pick lists, practice (also with no event) and the spreadsheet export. [`docs/subsystems/scouting.md`](docs/subsystems/scouting.md).
 - **Battery log**: `/batteries`, the pit battery board, runs and charge state (0026). [`docs/subsystems/batteries.md`](docs/subsystems/batteries.md)
 - **Driver leaderboard**: `/drivers`, drive time, MoSim, coach ratings, one Driver Score per season in `src/driverScore.js` (0029). [`docs/subsystems/drivers.md`](docs/subsystems/drivers.md)
+- **Human player leaderboard**: `/human-player`, accuracy, rate and match-run drills counted live, one Human Player Score per season in `src/humanPlayerScore.js` (0033). [`docs/subsystems/human-player.md`](docs/subsystems/human-player.md)
 - **Connector**: Claude acting as the admin through `/mcp` (0018); every write via `src/writeVia.js` (0019). [`docs/subsystems/connector.md`](docs/subsystems/connector.md)
 
 ### Roadmap (planned modules)
@@ -230,4 +231,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-23. Role board v2 in the Event rosters line (ledger 0023). Previously: Scouting pairs, super scouts and match-number shifts (ledger 0022); driver leaderboard line (ledger 0020); light theme and What's new (ledger 0019); automatic migrations (`migrate.yml`, ledger 0021) in the Database section; battery log, scouting and nav lines (ledger 0017). Latest records: `docs/history/light-mode-whats-new-0019.md`, `docs/history/auto-migrations-0021.md`.
+Last reviewed: 2026-10-23. Human player leaderboard line (ledger 0025). Previously: Role board v2 in the Event rosters line (ledger 0023); Scouting pairs, super scouts and match-number shifts (ledger 0022); driver leaderboard line (ledger 0020); light theme and What's new (ledger 0019); automatic migrations (`migrate.yml`, ledger 0021) in the Database section; battery log, scouting and nav lines (ledger 0017). Latest records: `docs/history/light-mode-whats-new-0019.md`, `docs/history/auto-migrations-0021.md`.
