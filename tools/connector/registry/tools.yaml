@@ -420,3 +420,25 @@ event_roster:
   kind: read
   args:
     event: {type: string, describe: "The event (a title, a date, or its id)", required: true, resolve: event}
+
+role_board:
+  describe: The role board for an event (Beach Blitz by default when named) - per time slot and role, who is assigned, backup and asked, and how many are still needed.
+  say: ["show the Beach Blitz role board", "who is scouting Saturday", "which pit slots are still unfilled", "who asked to be drive coach", "who is on lunch pit watch"]
+  kind: read
+  args:
+    event: {type: string, describe: "The event (a title, a date, or its id)", required: true, resolve: event}
+    day: {type: string, describe: "Only this day: a date like 2026-10-31 or a weekday like Saturday"}
+    ids: {type: boolean, describe: "true to include each request id"}
+
+assign_roles:
+  describe: Assign, back up, set to asked or remove members on an event role board in one go - by name, for one slot, or every slot on a day. Overfilling is fine; no eligibility check. Always asks first.
+  say: ["assign Paul scouting lead for all of Saturday", "make Seth a backup scout in Qualifications 3", "put me down as drive coach for every match Sunday", "take Riley off pit crew in Lunch: pit watch A", "assign these six scouts to Quals 2"]
+  kind: function
+  function: staff_set_role_statuses
+  args:
+    event: {type: string, describe: "The event (a title, a date, or its id)", required: true, resolve: event}
+    items: {type: array, items: object, describe: "The changes. Each: member (a name, or me), role (team_captain, driver, operator, human_player, drive_coach, pit_crew, battery_captain, scouting_lead, scout, safety_captain, media, impact_presenter, pit_speaker), status (assigned, backup, asked, removed), and slot (its label, such as Qualifications 3) or day (a date or weekday: every slot that day needing the role).", required: true}
+  map:
+    p_event: $resolved.event.id
+    p_items: $args.items
+

@@ -76,3 +76,38 @@ thead .rb-slot-col { z-index: 3; }
 .rb-needs { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: 0.5rem; }
 .rb-form label, .rb-needs label { display: flex; flex-direction: column; gap: 0.25rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel); }
 .rb-form input { min-height: 44px; padding: 0 0.6rem; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); box-sizing: border-box; width: 100%; }
+
+/* 0031: per slot status, the cell sheet, My shifts. */
+.rb-h2 { margin: 0 0 0.4rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--steel); }
+.rb-shifts { margin-bottom: 0.75rem; padding: 0.7rem 0.9rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.rb-shift-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.rb-shift { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; min-height: 44px; padding: 0.35rem 0.6rem; background: var(--bg); border: 1px solid var(--border-strong); border-left: 3px solid var(--gold); border-radius: var(--radius); }
+.rb-shift-backup { border-left-color: var(--steel); }
+.rb-shift-when { font-size: 0.78rem; color: var(--steel); }
+.rb-shift-what { flex: 1 1 12rem; font-size: 0.95rem; color: var(--text); }
+.rb-chip { display: inline-flex; align-items: center; padding: 1px 7px; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); color: var(--steel); white-space: nowrap; }
+.rb-chip-assigned { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }
+.rb-chip-backup { color: var(--text); border-color: var(--steel); border-style: dashed; }
+.rb-chip-asked { color: var(--steel); }
+.rb-sub-count { font-size: 0.7rem; color: var(--steel); }
+.rb-cell .rb-chip { margin-top: 2px; font-size: 0.6rem; }
+.rb-countline { margin: 0.4rem 0 0.6rem; font-size: 0.85rem; color: var(--text); }
+.rb-big { width: 100%; min-height: 52px; margin-bottom: 0.6rem; font: inherit; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.04em; color: var(--on-gold); background: var(--gold-fill); border: 1px solid var(--gold); border-radius: var(--radius); cursor: pointer; }
+.rb-big-off { color: var(--text); background: var(--bg); border-color: var(--border-strong); }
+.rb-locked { margin: 0 0 0.6rem; padding: 0.6rem 0.75rem; font-size: 0.9rem; color: var(--text); background: var(--gold-a08); border: 1px solid var(--gold-dim); border-radius: var(--radius); }
+.rb-assign-list li { flex-wrap: wrap; gap: 0.35rem 0.6rem; padding: 0.35rem 0; }
+.rb-person { flex: 1 1 8rem; font-size: 0.95rem; color: var(--text); }
+.rb-person-acts { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.rb-act { min-height: 40px; padding: 0 0.7rem; font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--text); background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; }
+.rb-act-assign { color: var(--gold); border-color: var(--gold); }
+.rb-act-remove { color: var(--fault); border-color: var(--border-strong); }
+.rb-act:disabled { opacity: 0.5; cursor: default; }
+.rb-add { margin-top: 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--border); display: grid; gap: 0.5rem; }
+.rb-add label { display: flex; flex-direction: column; gap: 0.25rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel); }
+.rb-add select { min-height: 44px; padding: 0 0.5rem; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); }
+.rb-add-acts { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+/* Room under the last person so the feedback button never covers a chip. */
+.rb-assign { padding-bottom: 5.5rem; }
+@media (min-width: 720px) { .rb-assign { padding-bottom: 1.25rem; } }
+.rb-swipe { margin: 0 0 0.35rem; font-size: 0.75rem; color: var(--steel); }
+@media (min-width: 1100px) { .rb-swipe { display: none; } }

@@ -10,3 +10,17 @@
   - **Carpool lock**: the trigger `carpool_lock_guard` on `hub_seats` (insert, update, delete) and `hub_cars` (insert, delete): inside 72 hours before the day's `meet_at` (or `venue_opens_at`) only staff change it, inside 12 hours nobody does; a cascade (a family or event removed) is not blocked. Marking a car Left or Arrived (an update) is never blocked.
   - `/rosters` (avatar menu, non-parents) lists competitions and mandatory events; `/rosters/:id` shows roles to everyone once posted, and to staff the assign form, Post, Attendance, Conflicts and Family sign-up.
   - Meals and allergies without names are the hub's existing food sign-up.
+
+## Role board (0028, reworked by 0031, ledger 0023)
+
+`/roles/:eventId` (src/RoleBoardPage.jsx, model src/roleBoard.js). Time slots per event day, each with needs per role (`role_slots.needs`), and one `role_requests` row per member, slot and role.
+
+- **Per slot status** (0031): every request is `asked`, `assigned` or `backup` (`status`, `status_by`, `status_at`). The status IS the assignment for that slot; assigning a scout in Quals 1 says nothing about Quals 2. A box is **unfilled while assigned < needed**; asks and backups never fill it. That one rule is what the board, `_role_slot_cells`, `role_board_open_events` (Home's Do this now) and the connector read.
+- **No blocking.** Staff decisions are final: nothing on the board runs `event_role_blocker`. Overfilling is normal. There is no cap on how many boxes a member asks for.
+- **Members**: tap a box, then "I can do this" (`role_request`) or "Take back my request" (`role_withdraw`, only while the row is still `asked`; an assigned or backup row stays until staff change it). My shifts at the top lists their assigned and backup boxes.
+- **Staff**: per person Assign / Backup / Remove (`staff_set_request_status`, `removed` deletes the row), Add someone who did not ask (`staff_add_to_slot`), many changes at once by name, slot label or whole day (`staff_set_role_statuses`, all or nothing; an ambiguous or unknown name writes nothing and names the candidates). `staff_assign_from_request` is kept for older callers and now just sets assigned.
+- **event_roles stays in step** without the blocker (`_role_board_sync`): an assigned slot inserts the event level row if missing; when the member holds no assigned slot in that role any more, a row whose reason names the role board is removed. Rows made on the roster page are never touched.
+- **team_captain** is a role (event_roles check, `_role_valid`, src/roleBoard.js, RostersPage).
+- **Beach Blitz**: the template and the live event `f891929e-d8bb-4a3e-9f12-c5c0aca3e886` carry Lunch: pit watch A (12:00 to 12:30) and B (12:30 to 13:00) on both competition days, each needing pit crew 1 and battery captain 1; Alliance selection needs exactly team captain 1, scouting lead 1, drive coach 1. Live slots are updated in place by label, never recreated.
+- **Connector**: `role_board` (read: per slot and role who is assigned, backup and asked, and how many are short) and `assign_roles` (confirm: `staff_set_role_statuses`). Saving a slot, applying a template and the match clock are reachable through `find_tool` / `call_app` (`staff_save_slot`, `staff_apply_slot_template`, `event_clock_set`).
+- **Proof**: `0031_role_board_v2_rls_test.sql` (23 checks, includes 28 synthetic members filling the board in), `mutants-0031.mjs` (10 permissive mutants), `sim-0031.mjs` (29 real concurrent sessions plus a re-paste over a live-shaped Beach Blitz event), `tools/e2e/features/role-board.mjs` at 375 and 1440.

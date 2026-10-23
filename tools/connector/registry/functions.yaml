@@ -196,3 +196,17 @@ staff_add_event:
         p_event: $result
         p_reason: Undo through Claude
 
+# Role board v2 (0031, ledger 0023). Staff decisions are final: no
+# eligibility check; every change previews first because a removal deletes.
+staff_set_role_statuses:
+  describe: Change many role board boxes at once - assign, back up, set to asked or remove members by name, for a slot or a whole day. Always asks first.
+  level: confirm
+
+staff_set_request_status:
+  describe: Mark one person in a role board box assigned, backup or asked, or remove them from it. Always asks first.
+  level: confirm
+
+staff_add_to_slot:
+  describe: Put a member in a role board box who did not ask, as assigned or backup. Always asks first.
+  level: confirm
+

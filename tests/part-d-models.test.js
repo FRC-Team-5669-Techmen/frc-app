@@ -1,7 +1,7 @@
 // Ledger 0017 part D: the role board cell states, the auto streak and the
 // 2026 match clock, against hand values. Every rule asserted both ways.
 import { describe, it, expect } from 'vitest'
-import { cellState, boardView, ROLE_ORDER } from '../src/roleBoard.js'
+import { cellState, boardView, countLine, statusOf, ROLE_ORDER } from '../src/roleBoard.js'
 import { routineStats, routineBoard, AUTO_READY_STREAK } from '../src/autos.js'
 import { PHASES, MATCH_SECONDS, matchState, inactiveFirstFrom, cueTimes, fmtClock } from '../src/matchSim.js'
 import { readFileSync } from 'node:fs'
@@ -10,25 +10,38 @@ describe('role board', () => {
   it('cell states', () => {
     expect([cellState(0, 2), cellState(2, 2), cellState(3, 2), cellState(1, 0)]).toEqual(['unfilled', 'covered', 'over', 'none'])
   })
-  it('the view lists every unfilled cell per day and marks mine', () => {
+  it('the view counts ASSIGNED against needed (0031): asks and backups never fill a box', () => {
     const board = { slots: [
-      { id: 's1', day: '2026-10-31', label: 'Quals 1', needs: { scout: 2, driver: 1 }, requests: [{ member_id: 'me', role: 'scout' }, { member_id: 'x', role: 'driver' }] },
-      { id: 's2', day: '2026-11-01', label: 'Quals 7', needs: { scout: 1 }, requests: [{ member_id: 'x', role: 'scout' }, { member_id: 'y', role: 'scout' }] },
+      { id: 's1', day: '2026-10-31', label: 'Quals 1', needs: { scout: 2, driver: 1 }, requests: [
+        { member_id: 'me', role: 'scout', status: 'asked' }, { member_id: 'b', role: 'scout', status: 'backup' }, { member_id: 'x', role: 'driver', status: 'assigned' }] },
+      { id: 's2', day: '2026-11-01', label: 'Quals 7', needs: { scout: 1 }, requests: [
+        { member_id: 'x', role: 'scout', status: 'assigned' }, { member_id: 'y', role: 'scout', status: 'assigned' }, { member_id: 'me', role: 'scout', status: 'backup' }] },
     ] }
     const v = boardView(board, 'me')
     expect(v.roles).toEqual(['driver', 'scout'])
-    expect(v.days.map((d) => d.unfilled)).toEqual([[{ slot: 'Quals 1', slotId: 's1', role: 'scout', short: 1 }], []])
-    expect(v.days[1].slots[0].cells.find((c) => c.role === 'scout').state).toBe('over')
-    expect(v.days[0].slots[0].cells.find((c) => c.role === 'scout').mine).toBe(true)
+    // Quals 1 scout: 1 asked + 1 backup, 0 assigned, needs 2: short 2. Driver assigned: filled.
+    expect(v.days.map((d) => d.unfilled)).toEqual([[{ slot: 'Quals 1', slotId: 's1', role: 'scout', short: 2 }], []])
+    const q1 = v.days[0].slots[0].cells.find((c) => c.role === 'scout')
+    expect([q1.assigned, q1.backup, q1.asked, q1.state, q1.myStatus]).toEqual([0, 1, 1, 'unfilled', 'asked'])
+    expect(countLine(q1)).toBe('0 of 2 assigned · 1 backup · 1 asked')
+    const q7 = v.days[1].slots[0].cells.find((c) => c.role === 'scout')
+    expect([q7.assigned, q7.state, q7.requests[2].status]).toEqual([2, 'over', 'backup'])
+    expect(v.myShifts).toEqual([{ slotId: 's2', day: '2026-11-01', label: 'Quals 7', starts_at: undefined, ends_at: undefined, role: 'scout', status: 'backup' }])
     expect(v.unfilledCells).toBe(1)
-    expect(v.mine).toBe(1)
+    expect(v.mine).toBe(2)
   })
-  it('the role list matches 0028 (battery captain included) and the roster page', () => {
-    const sql = readFileSync(new URL('../supabase/migrations/0028_role_interest_board.sql', import.meta.url), 'utf8')
+  it('a 0028 board without status reads assigned from the assigned flag', () => {
+    expect(statusOf({ assigned: true })).toBe('assigned')
+    expect(statusOf({ assigned: false })).toBe('asked')
+    expect(statusOf({ status: 'backup', assigned: false })).toBe('backup')
+  })
+  it('the role list matches 0031 (team captain included) and the roster page', () => {
+    const sql = readFileSync(new URL('../supabase/migrations/0031_role_board_v2.sql', import.meta.url), 'utf8')
     const check = /_role_valid\(p_role text\)[\s\S]*?select p_role in \(([^)]*)\)/.exec(sql)[1]
     expect([...check.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort()).toEqual([...ROLE_ORDER].sort())
     const page = readFileSync(new URL('../src/RostersPage.jsx', import.meta.url), 'utf8')
     expect(page).toMatch(/key: 'battery_captain'/)
+    expect(page).toMatch(/key: 'team_captain'/)
   })
 })
 

@@ -77,6 +77,7 @@ const FEATURES = Object.freeze([
   'batteries',
   'theme-updates',
   'drivers',
+  'role-board',
 ]);
 
 
