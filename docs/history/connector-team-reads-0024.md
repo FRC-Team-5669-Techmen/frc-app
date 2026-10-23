@@ -58,3 +58,22 @@ application column takes the season spanning today (else the latest started),
 which is how `src/seasons.js` reads it; a test that an application in another
 season does not count was not written (the fixture needs a full application
 row), and no mutant covers that clause.
+
+## Part 2: the competition and season audit (no SQL)
+
+The audit is `docs/decisions/51-connector-season-audit.md`: 20 scenarios, 15
+covered by a named tool, two reachable only through `call_app` (logging an
+auto run, posting a roster), two missing (scouting coverage by match, a posted
+event roster read), and Discord sending kept to a dry run pending his answer.
+Added: `sign_in_out` (`staff_add_event`, made a hand entry at undo with
+`staff_void_event` as the reverse; refuses a double IN, an OUT with nothing
+open, and an OUT while a sign-out request waits), `trip_signups`,
+`auto_routines` (the page rule in `src/autos.js`) and `preview_announcement`
+(the Discord function with the action fixed to preview in `backend.js`).
+`tests/connector-season-tools.test.js` (8 tests) drives each through the real
+runner, including the refusals and a source check that `backend.js` holds the
+one preview call. `proof.mjs` with `staff_add_event` as a hand sample:
+1371/1371. Not verified: none of the four against the live project or a real
+Discord preview; `trip_signups` reads `hub_invites` and `hub_responses`
+directly and relies on the 0005 staff read policies, which were not re-tested
+here.

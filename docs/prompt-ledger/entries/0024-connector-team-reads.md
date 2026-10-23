@@ -6,6 +6,6 @@
 - Not owned: the role board (migration 0031, role_board functions), which a parallel session is reworking.
 - Migration permitted: yes. Number assigned by the coordinator: 0032 (0031 is the role board session).
 - Claims: ledger 0024; migration 0032 with its _rls_test.sql and mutants-0032.mjs.
-- Status: in progress
+- Status: committed locally, not pushed (coordinator lands it)
 - Branch: local/conn
 - Notes: Part 1 team_attendance + set_member_status; Part 2 the season and competition audit of the connector, cheap safe tools as separate commits.
