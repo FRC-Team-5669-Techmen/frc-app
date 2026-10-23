@@ -13,7 +13,7 @@ export default {
   "by_argument": 2,
   "generated": 175,
   "excluded_functions": 12,
-  "tools": 34,
+  "tools": 35,
   "edge_functions": 8,
   "routes": 1,
   "table_writes": 0,
@@ -1077,6 +1077,56 @@ export default {
      "items": "string",
      "describe": "Announcement role names to ping, if any"
     }
+   }
+  },
+  "log_auto_run": {
+   "name": "log_auto_run",
+   "describe": "Log one run of an auto routine as success, partial or fail, with what went wrong and the battery. Always asks first.",
+   "say": [
+    "log the two-piece auto as a success",
+    "the taxi auto failed, it hit the wall",
+    "auto run partial on B07",
+    "log a fail for the center auto"
+   ],
+   "kind": "function",
+   "args": {
+    "routine": {
+     "type": "string",
+     "describe": "The auto routine's name",
+     "required": true,
+     "resolve": "routine"
+    },
+    "result": {
+     "type": "string",
+     "describe": "How it went",
+     "required": true,
+     "enum": [
+      "success",
+      "partial",
+      "fail"
+     ]
+    },
+    "problem": {
+     "type": "string",
+     "describe": "What went wrong, if he said"
+    },
+    "battery": {
+     "type": "string",
+     "describe": "The battery label, such as B07, if said",
+     "resolve": "battery"
+    },
+    "location": {
+     "type": "string",
+     "describe": "Where it ran (shop, field, an event), if said"
+    }
+   },
+   "function": "auto_log_run",
+   "map": {
+    "p_routine": "$resolved.routine.id",
+    "p_result": "$args.result",
+    "p_problem": "$args.problem",
+    "p_battery": "$resolved.battery.id",
+    "p_location": "$args.location"
    }
   }
  },

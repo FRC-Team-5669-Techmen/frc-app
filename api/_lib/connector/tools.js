@@ -566,7 +566,7 @@ export async function runTool(ctx, name, a = {}) {
         if (spec.resolve && a[argName] !== undefined) {
           const r = await RESOLVERS[spec.resolve](ctx, a[argName])
           if (r.status) return r
-          resolved[argName] = r.member ?? r.members ?? r.event ?? r.battery
+          resolved[argName] = r.member ?? r.members ?? r.event ?? r.battery ?? r.routine
         }
       }
       let args

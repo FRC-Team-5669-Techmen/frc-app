@@ -85,6 +85,7 @@ The competition and season audit, and the open question about Discord, are `docs
 - **`sign_in_out`** (`staff_add_event`, now a hand entry at undo; the reverse is `staff_void_event` with the new event id): the quick pulse control by voice. The time is now unless he says one (Los Angeles time). Before writing, the tool reads the member's last attendance event and refuses a second IN (it would orphan and never count), an OUT with nothing open, and an OUT while a sign-out request waits (use `approve_signout`). Undo, not confirm: a default time of now would never match between a preview and its confirm.
 - **`trip_signups`** (read): per family on a trip, whether the trip form is answered and what they ticked for FIRST registration and the school form; not-answered families first.
 - **`auto_routines`** (read): streaks, best streak, rate over the last ten runs and ready, ranked by `routineBoard` in `src/autos.js` (the page's own rule).
+- **`log_auto_run`** (`auto_log_run`, generated entry, asks first): a routine resolved by name (`resolveRoutine`, active routines win a tie), success, partial or fail, the problem and an optional battery resolved by label.
 - **`preview_announcement`** (read): the `discord-announce` function's dry run (`action: 'preview'`, fixed in `backend.js` `announcePreview`); role names resolved against the announcement role list. It never posts; `tests/connector-season-tools.test.js` holds `backend.js` to the one preview call.
 
 ## Deleted rows are reported (0021)

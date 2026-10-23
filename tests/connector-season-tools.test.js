@@ -36,6 +36,7 @@ beforeEach(() => {
       runs.push({ id: 'rx', routine_id: 'a1', result: 'fail', ran_at: '2026-10-18T18:00:00Z', problem: 'Hit the wall' })
       return { data: runs, error: null }
     }
+    if (spec.table === 'batteries') return { data: [{ id: 'b-7', label: 'B07', status: 'competition', charge_state: 'charged' }], error: null }
     if (spec.table === 'discord_announce_roles') return { data: [{ name: 'Parents', role_id: '111111111111111111', active: true }, { name: 'Build', role_id: '222222222222222222', active: true }], error: null }
     return { data: [], error: null }
   }
@@ -92,6 +93,27 @@ describe('auto_routines', () => {
     expect(out.routines[1]).toMatchObject({ ready: false, streak: 0, last: { problem: 'Hit the wall' } })
     expect((await runTool(ctx, 'auto_routines', { said: 'x', show: 'ready' })).routines.map((r) => r.name)).toEqual(['Taxi'])
     expect((await runTool(ctx, 'auto_routines', { said: 'x', show: 'all' })).routines).toHaveLength(3)
+  })
+})
+
+describe('log_auto_run', () => {
+  it('asks first, then logs the routine and battery resolved by name', async () => {
+    expect(FUNCTIONS.auto_log_run.level).toBe('confirm')
+    const ask = { said: 'taxi auto failed on B07, hit the wall', routine: 'taxi', result: 'fail', problem: 'Hit the wall', battery: 'b7' }
+    const p = await runTool(ctx, 'log_auto_run', ask)
+    expect(p.status).toBe('preview')
+    expect(backend.state.calls.filter((c) => c.fn === 'auto_log_run')).toHaveLength(0)
+    const done = await runTool(ctx, 'log_auto_run', { ...ask, confirm_token: p.confirm_token })
+    expect(done.status).toBe('done')
+    expect(backend.state.calls.at(-1)).toMatchObject({ fn: 'auto_log_run', args: { p_routine: 'a2', p_result: 'fail', p_problem: 'Hit the wall', p_battery: 'b-7' } })
+  })
+  it('without a battery sends none; a retired routine loses a tie; an unknown one writes nothing', async () => {
+    const p = await runTool(ctx, 'log_auto_run', { said: 'two piece success', routine: 'two piece', result: 'success' })
+    expect(p.status).toBe('preview')
+    const done = await runTool(ctx, 'log_auto_run', { said: 'two piece success', routine: 'two piece', result: 'success', confirm_token: p.confirm_token })
+    expect(done.status).toBe('done')
+    expect(backend.state.calls.at(-1).args).toEqual({ p_routine: 'a1', p_result: 'success' })
+    expect((await runTool(ctx, 'log_auto_run', { said: 'x', routine: 'nope', result: 'success' })).status).toBe('not_found')
   })
 })
 

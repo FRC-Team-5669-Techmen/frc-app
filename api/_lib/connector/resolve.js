@@ -160,4 +160,19 @@ export async function resolveMembers(ctx, q) {
   return { members: { ids: hits.map((m) => m.id), names: hits.map((m) => m.name), list: hits } }
 }
 
-export const RESOLVERS = { member: resolveMember, members: resolveMembers, event: resolveEvent, signout: resolveSignout, battery: resolveBattery }
+/** One auto routine by its name (ledger 0024); active routines win a tie. */
+export async function resolveRoutine(ctx, q) {
+  const r = await ctx.backend.select(ctx.session, { table: 'auto_routines', columns: ['id', 'name', 'active'], limit: 500 })
+  if (r.error) return { status: r.error.code && ['42P01', 'PGRST205'].includes(r.error.code) ? 'not_set_up' : 'refused', message: r.error.code && ['42P01', 'PGRST205'].includes(r.error.code) ? 'The auto routine log is not set up yet. Nothing was changed.' : r.error.message }
+  const want = norm(q)
+  if (!want) return { status: 'not_found', message: 'Which auto routine? Ask him for its name.' }
+  let hits = r.data.filter((x) => norm(x.name) === want)
+  if (!hits.length) hits = r.data.filter((x) => norm(x.name).includes(want))
+  const active = hits.filter((x) => x.active !== false)
+  if (active.length) hits = active
+  if (hits.length === 1) return { routine: hits[0] }
+  if (!hits.length) return { status: 'not_found', message: `No auto routine is named "${q}". The routines are ${r.data.filter((x) => x.active !== false).map((x) => x.name).join(', ') || 'none yet'}.` }
+  return { status: 'ambiguous', message: `${hits.length} routines match "${q}": ${hits.map((x) => x.name).join(', ')}. Ask him which.`, candidates: hits.map((x) => ({ id: x.id, name: x.name })) }
+}
+
+export const RESOLVERS = { routine: resolveRoutine, member: resolveMember, members: resolveMembers, event: resolveEvent, signout: resolveSignout, battery: resolveBattery }

@@ -45,6 +45,7 @@ A living list. Each line is something he would say to Claude, the tool that shou
 | 39 | "Which families haven't signed up for Beach Blitz?" | `trip_signups` | Runs at once: families not answered first, then who ticked FIRST registration not done. |
 | 40 | "Which autos are ready?" | `auto_routines` (show ready) | Runs at once: routines with five successes in a row. |
 | 41 | "Draft a Discord announcement that build is canceled, ping parents." | `preview_announcement` | The exact post as a dry run; nothing posted; he sends it from /announce. |
+| 42 | "The taxi auto failed on B07, it hit the wall." | `log_auto_run` | A preview first; on "yes" one auto run, fail, with the problem and B07; the taxi streak resets to 0. |
 
 ## Scouting (0022)
 

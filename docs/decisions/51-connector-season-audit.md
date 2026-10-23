@@ -17,7 +17,7 @@ What Mr. Pina will want to do by voice or chat at a competition and through the 
 | One member's hours and standing | covered | `member_hours` |
 | Battery status, log a run, charge state | covered | `list_batteries`, `log_battery_run` (asks first), `set_battery_charge` (undo) |
 | Auto routine streaks | covered (new) | `auto_routines` (the page rule, `src/autos.js`) |
-| Log an auto run | call_app | `auto_log_run`; a named `log_auto_run` with the routine resolved by name is the next cheap tool |
+| Log an auto run | covered (new) | `log_auto_run` (auto_log_run, asks first; routine and battery resolved by name) |
 | Scouting records and pick lists | covered | `scouting_event` (records, personal pick lists, delivery) |
 | Scouting coverage (which matches have no scout) | missing | a read over the 0030 shift tables that names unscouted matches; `scouting_now_get` and `scouting_roster` are reachable by call_app but answer one piece each |
 | Event RSVPs | covered | `event_signups` |
