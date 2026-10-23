@@ -95,8 +95,8 @@ begin
   rm := pg_temp.call_as(f.m, format($q$select public.staff_save_slot(null, %L::uuid, current_date + 1, 'Quals 1', now() + interval '1 day', now() + interval '1 day 1 hour', '{"scout":2,"driver":1}'::jsonb)::text$q$, f.ev));
   update t28_fx set slot = (rm::jsonb ->> 'id')::uuid where rm like '{%';
   perform pg_temp.rec(2, 'a mentor adds a slot needing 2 scouts and 1 driver (positive control)', rm like '{%' and (select needs from public.role_slots where id = (rm::jsonb ->> 'id')::uuid) = '{"scout":2,"driver":1}'::jsonb, left(rm, 60));
-  rt := pg_temp.call_as(f.m, format($q$select public.staff_apply_slot_template(%L::uuid, 'beach_blitz_2026')::text$q$, f.ev));
-  rt2 := pg_temp.call_as(f.m, format($q$select public.staff_apply_slot_template(%L::uuid, 'beach_blitz_2026')::text$q$, f.ev));
+  rt := pg_temp.call_as(f.m, format($q$select public.staff_apply_slot_template(%L::uuid, %L::uuid)::text$q$, f.ev, (select id from public.role_slot_templates where name = 'Beach Blitz (3 days, Friday load-in)')));
+  rt2 := pg_temp.call_as(f.m, format($q$select public.staff_apply_slot_template(%L::uuid, %L::uuid)::text$q$, f.ev, (select id from public.role_slot_templates where name = 'Beach Blitz (3 days, Friday load-in)')));
   perform pg_temp.rec(3, 'the Beach Blitz template adds 16 slots once; a second apply adds none',
     rt = '16' and rt2 = '0' and (select count(*) from public.role_slots where event_id = f.ev and created_by = f.m) = 17
     and (select max(needs ->> 'scout') from public.role_slots where event_id = f.ev and label = 'Qualifications 1') = '6'

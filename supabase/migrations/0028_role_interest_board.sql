@@ -30,7 +30,7 @@
 --                    assignment through staff_assign_role, so the
 --                    event_role_blocker eligibility check runs and event_roles
 --                    stays the single record of who does what.
---   staff_apply_slot_template(event, template)   'beach_blitz_2026' builds
+--   staff_apply_slot_template(event, template)   a saved template (Beach Blitz seeded) builds
 --                    the Beach Blitz slots on the event's own dates.
 --   role_board_open_events()   upcoming competition events with unfilled
 --                    cells, for Home's Do this now.
@@ -336,7 +336,7 @@ begin
   select * into tpl from public.role_slot_templates where id = p_template;
   if tpl.id is null then raise exception 'No such template.' using errcode = 'P0002'; end if;
   d0 := (ev.starts_at at time zone 'America/Los_Angeles')::date;
-  for t in select x, ordinality as pos from jsonb_array_elements(tpl.slots) with ordinality as x loop
+  for t in select e.value as x, e.pos from jsonb_array_elements(tpl.slots) with ordinality as e(value, pos) loop
     d := d0 + coalesce((t.x ->> 'day')::integer, 0);
     if not exists (select 1 from public.role_slots s where s.event_id = p_event and s.label = t.x ->> 'label' and s.day = d) then
       if not public._role_needs_ok(coalesce(t.x -> 'needs', '{}'::jsonb)) then raise exception 'The template has a slot with unknown roles.' using errcode = '22023'; end if;
