@@ -103,3 +103,6 @@ textarea.st-input, select.st-input { width: 100%; max-width: 100%; }
 .st-trip-state { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem; }
 .st-chip-bad { color: var(--gold); border-color: var(--gold-dim); }
 .st-msg-bad { color: var(--fault); }
+.rb-entry { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; min-height: 56px; color: var(--text); text-decoration: none; border-color: var(--gold-dim); box-shadow: inset 3px 0 0 var(--gold); }
+.rb-entry b { font-family: var(--font-ui); color: var(--gold); margin-right: 0.5rem; }
+.rb-entry span:last-child { color: var(--gold); font-family: var(--font-mono); }

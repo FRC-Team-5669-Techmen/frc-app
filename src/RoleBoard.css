@@ -1,0 +1,78 @@
+/* The role interest board (ledger 0017, part D1). Tactical HUD tokens only.
+   Gold marks what still needs people; steel is covered; a cell you asked
+   for carries a gold ring. */
+.rb-wrap { max-width: 80rem; width: 100%; min-width: 0; margin: 0 auto; padding: 1rem 1rem 4rem; box-sizing: border-box; }
+.rb-back { display: inline-flex; align-items: center; min-height: 44px; color: var(--steel); text-decoration: none; font-family: var(--font-mono); font-size: 0.85rem; }
+.rb-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 0.75rem; margin: 0.25rem 0 0.9rem; }
+.rb-eyebrow { display: block; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--steel); }
+.rb-title { margin: 0.1rem 0 0; font-family: var(--font-ui); font-size: 1.55rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); }
+.rb-sub { margin: 0.25rem 0 0; color: var(--steel); font-size: 0.92rem; max-width: 42rem; }
+.rb-muted { color: var(--muted); font-size: 0.88rem; }
+.rb-error { color: var(--fault); }
+.rb-msg { font-family: var(--font-mono); font-size: 0.85rem; color: var(--gold); }
+.rb-primary, .rb-btn, .rb-day, .rb-more { min-height: 44px; padding: 0 1rem; font: inherit; font-weight: 600; border-radius: var(--radius); cursor: pointer; box-sizing: border-box; }
+.rb-primary { color: var(--gold); background: var(--bg); border: 1px solid var(--gold); }
+.rb-primary:hover:not(:disabled) { background: var(--gold); color: var(--bg); }
+.rb-btn { color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); }
+
+.rb-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; padding: 0.75rem 0.9rem; margin-bottom: 0.75rem; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--gold); border-radius: var(--radius); }
+.rb-summary-num { display: flex; align-items: baseline; gap: 0.35rem; }
+.rb-summary-num b { font-family: var(--font-ui); font-size: 1.6rem; color: var(--text); }
+.rb-summary-num:first-child b { color: var(--gold-bright); }
+.rb-summary-num span { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--steel); }
+.rb-summary-days { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-left: auto; }
+.rb-day { color: var(--steel); background: var(--bg); border: 1px solid var(--border-strong); font-size: 0.9rem; }
+.rb-day[aria-pressed="true"] { color: var(--text); border-color: var(--gold); box-shadow: inset 0 -3px 0 var(--gold); }
+.rb-day span { margin-left: 0.35rem; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 400; }
+.rb-day-bad { color: var(--gold); }
+.rb-day-ok { color: var(--muted); }
+
+.rb-unfilled { margin-bottom: 0.75rem; padding: 0.2rem 0.9rem 0.6rem; background: var(--gold-a08); border: 1px solid var(--gold-dim); border-radius: var(--radius); }
+.rb-unfilled summary { min-height: 44px; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); }
+.rb-unfilled ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: 0.25rem 1rem; }
+.rb-unfilled li { font-size: 0.88rem; color: var(--text); }
+.rb-unfilled li span { margin-left: 0.35rem; font-family: var(--font-mono); font-size: 0.75rem; color: var(--gold); }
+
+.rb-grid-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.rb-grid { border-collapse: separate; border-spacing: 0; width: 100%; min-width: max-content; }
+.rb-grid th, .rb-grid td { padding: 4px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.rb-grid thead th { position: sticky; top: 0; z-index: 1; padding: 0.55rem 0.4rem; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); background: var(--surface); text-align: left; white-space: nowrap; }
+.rb-slot-col { position: sticky; left: 0; z-index: 2; min-width: 8.5rem; max-width: 10rem; background: var(--surface); text-align: left; border-right: 1px solid var(--border); }
+thead .rb-slot-col { z-index: 3; }
+.rb-slot-label { display: block; font-family: var(--font-ui); font-weight: 600; font-size: 0.92rem; color: var(--text); }
+.rb-slot-time { display: block; font-size: 0.72rem; color: var(--steel); }
+.rb-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 7.25rem; min-height: 56px; padding: 6px 8px; font: inherit; text-align: left; color: var(--text); background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); cursor: pointer; }
+.rb-count { font-family: var(--font-ui); font-size: 1.15rem; font-weight: 700; line-height: 1; }
+.rb-count i { font-style: normal; font-size: 0.8rem; font-weight: 400; color: var(--steel); }
+.rb-names { font-size: 0.72rem; color: var(--steel); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.rb-cell.rb-unfilled { border-color: var(--gold-dim); background: var(--gold-a08); }
+.rb-cell.rb-unfilled .rb-count { color: var(--gold-bright); }
+.rb-cell.rb-covered { border-color: var(--steel); }
+.rb-cell.rb-over { border-style: dashed; border-color: var(--steel); }
+.rb-cell.rb-mine { box-shadow: 0 0 0 2px var(--gold); }
+.rb-cell-none { background: repeating-linear-gradient(135deg, transparent 0 6px, var(--border) 6px 7px); }
+.rb-more { min-height: 32px; margin-top: 3px; padding: 0 0.6rem; font-size: 0.78rem; color: var(--gold); background: none; border: 1px solid var(--gold-dim); }
+.rb-legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin: 0.6rem 0 0; font-size: 0.8rem; color: var(--steel); }
+.rb-key { display: inline-flex; align-items: center; gap: 0.35rem; padding: 2px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); }
+.rb-key.rb-unfilled { border-color: var(--gold-dim); background: var(--gold-a08); color: var(--gold); }
+.rb-key.rb-over { border-style: dashed; }
+.rb-key.rb-mine { box-shadow: 0 0 0 2px var(--gold); }
+
+.rb-assign { position: fixed; inset: auto 0 0 0; z-index: 30; max-height: 70dvh; overflow: auto; padding: 0.9rem 1rem 1.25rem; background: var(--surface); border-top: 2px solid var(--gold); box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6); }
+@media (min-width: 720px) { .rb-assign { inset: auto 1.5rem 1.5rem auto; width: 26rem; border: 1px solid var(--gold-dim); border-radius: var(--radius); } }
+.rb-assign-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+.rb-assign-head h2 { margin: 0; font-family: var(--font-ui); font-size: 1.1rem; color: var(--gold); }
+.rb-assign-list { list-style: none; margin: 0; padding: 0; }
+.rb-assign-list li { display: flex; justify-content: space-between; align-items: center; min-height: 52px; border-top: 1px solid var(--border); }
+.rb-assigned { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); }
+.rb-empty { padding: 1.75rem 1.25rem; text-align: center; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: var(--radius); }
+.rb-empty h2 { margin: 0 0 0.35rem; font-family: var(--font-ui); font-size: 1.1rem; }
+.rb-empty p { color: var(--steel); }
+
+.rb-editor { margin-top: 1rem; padding: 0.25rem 0.9rem 0.9rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.rb-editor summary { min-height: 44px; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); }
+.rb-form { display: flex; flex-direction: column; gap: 0.75rem; }
+.rb-form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: 0.6rem; }
+.rb-needs { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: 0.5rem; }
+.rb-form label, .rb-needs label { display: flex; flex-direction: column; gap: 0.25rem; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--steel); }
+.rb-form input { min-height: 44px; padding: 0 0.6rem; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); box-sizing: border-box; width: 100%; }

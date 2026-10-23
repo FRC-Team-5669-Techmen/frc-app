@@ -1,0 +1,26 @@
+/* Autos (ledger 0017, part D2): builds on BatteriesPage.css and RoleBoard.css. */
+@import './RoleBoard.css';
+.au-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.au-card { display: flex; align-items: stretch; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.au-ready { border-color: var(--gold-dim); box-shadow: inset 3px 0 0 var(--gold); }
+.au-open { flex: 1 1 auto; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "name streak rate" "start streak rate" "pips badge badge"; gap: 0.2rem 1rem; align-items: center; padding: 0.8rem 0.9rem; text-align: left; font: inherit; color: inherit; background: none; border: 0; cursor: pointer; min-width: 0; }
+.au-name { grid-area: name; font-family: var(--font-ui); font-size: 1.15rem; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.au-start { grid-area: start; font-size: 0.82rem; color: var(--steel); }
+.au-streak { grid-area: streak; display: flex; flex-direction: column; align-items: flex-end; }
+.au-rate { grid-area: rate; display: flex; flex-direction: column; align-items: flex-end; }
+.au-streak b, .au-rate b { font-family: var(--font-ui); font-size: 1.6rem; line-height: 1; color: var(--text); }
+.au-ready .au-streak b { color: var(--gold-bright); }
+.au-streak i, .au-rate i { font-style: normal; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.au-pips { grid-area: pips; display: flex; gap: 3px; min-height: 12px; align-items: center; }
+.au-pip { width: 12px; height: 12px; border-radius: 2px; border: 1px solid var(--border-strong); }
+.au-pip.au-success { background: var(--gold); border-color: var(--gold); }
+.au-pip.au-partial { background: var(--gold-a24); border-color: var(--gold-dim); }
+.au-pip.au-fail { background: transparent; border-color: var(--fault); }
+.au-badge { grid-area: badge; justify-self: end; }
+.au-need { grid-area: badge; justify-self: end; font-family: var(--font-mono); font-size: 0.72rem; color: var(--steel); }
+.au-log { border: 0; border-left: 1px solid var(--border); border-radius: 0; min-width: 5.5rem; }
+.au-results .au-res-success[aria-pressed="true"] { background: var(--gold); color: var(--bg); }
+.au-results .au-res-fail[aria-pressed="true"] { background: var(--fault); border-color: var(--fault); color: var(--text); }
+.au-results .au-res-partial[aria-pressed="true"] { background: var(--gold-a24); color: var(--gold-bright); border-color: var(--gold-dim); }
+.au-check { display: flex; align-items: center; gap: 0.5rem; min-height: 44px; color: var(--steel); }
+.au-sheet, .au-history { max-height: 85dvh; }

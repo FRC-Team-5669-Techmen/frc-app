@@ -6,13 +6,16 @@ import { loadAdminCounts, totalWaiting } from './adminTools'
 import './NavBar.css'
 
 import { IconHome, IconSchedule, IconHours, IconScout, IconRobot } from './navIcons'
-const ROBOT_PATHS = ['/robot', '/batteries', '/jobs', '/status-reports', '/certifications']
+const ROBOT_PATHS = ['/robot', '/batteries', '/autos', '/match-sim', '/jobs', '/status-reports', '/certifications']
 
 // Mono unit/context tag shown at the right of the header, derived from route.
 const CONTEXT_TAGS = [
   ['/dashboard',   'HOME'],
   ['/manage',      'ADMIN'],
   ['/robot',       'ROBOT'],
+  ['/roles/',      'ROLES'],
+  ['/autos',       'AUTOS'],
+  ['/match-sim',   'MATCH SIM'],
   ['/schedule',    'SCHEDULE'],
   ['/scouting',    'SCOUTING'],
   ['/my-hours',    'HRS//SELF'],

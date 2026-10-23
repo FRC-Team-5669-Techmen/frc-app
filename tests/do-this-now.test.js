@@ -43,4 +43,11 @@ describe('do this now', () => {
     expect(doThisNow({ onboarding: soon, now: NOW })[0].tone).toBe('urgent')
     expect(doThisNow({ onboarding: onboarding([]), now: NOW })[0].tone).toBe('todo')
   })
+
+  it('an upcoming event with unfilled role slots appears and opens its board; a fully covered one does not', () => {
+    const items = doThisNow({ roleBoards: [{ event_id: 'e1', title: 'Beach Blitz', unfilled: 12, mine: 0 }, { event_id: 'e2', title: 'Covered', unfilled: 0 }], now: NOW })
+    expect(items).toHaveLength(1)
+    expect(items[0]).toMatchObject({ to: '/roles/e1', tone: 'urgent' })
+    expect(doThisNow({ roleBoards: [{ event_id: 'e1', title: 'Beach Blitz', unfilled: 3, mine: 2 }], now: NOW })[0].tone).toBe('todo')
+  })
 })

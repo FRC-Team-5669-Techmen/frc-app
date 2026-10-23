@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import { batteryBoard } from './batteries'
 import { normEmail, isHeld } from './ideaCerts'
-import { IconBattery, IconJobs, IconStatus, IconSkills } from './navIcons'
+import { IconBattery, IconJobs, IconStatus, IconSkills, IconAuto, IconClock } from './navIcons'
+import { routineBoard, AUTO_READY_STREAK } from './autos'
 import HubTile from './HubTile'
 import './Hub.css'
 
@@ -25,13 +26,18 @@ export default function RobotPage({ session, hasRole = () => false }) {
       uid ? supabase.from('task_claims').select('status').eq('member_id', uid).in('status', ['claimed', 'submitted']) : Promise.resolve({ data: [] }),
       supabase.from('subteam_status_reports').select('subteam, status, week_start').gte('week_start', since),
       me ? supabase.from('idea_cert_holders').select('code, status, expires_at').eq('email', me) : Promise.resolve({ data: [] }),
-    ]).then(([b, r, open, mine, st, certs]) => {
+      supabase.from('auto_routines').select('id, name, active'),
+      supabase.from('auto_runs').select('routine_id, result, ran_at').order('ran_at', { ascending: false }).limit(1000),
+      supabase.from('sim_matches').select('id, started_at').order('started_at', { ascending: false }).limit(50),
+    ]).then(([b, r, open, mine, st, certs, ar, au, sm]) => {
       if (!live) return
       const board = !b.error && !r.error ? batteryBoard(b.data ?? [], r.data ?? []) : null
       setS({
         batteries: board ? { ready: board.filter((x) => x.matchReady).length, check: board.filter((x) => x.check).length, total: board.filter((x) => x.status !== 'retired').length } : null,
         jobs: open.error ? null : { open: open.count ?? 0, mine: (mine.data ?? []).length },
         status: st.error ? null : { flagged: (st.data ?? []).filter((x) => x.status && x.status !== 'green').length, reported: new Set((st.data ?? []).map((x) => x.subteam)).size },
+        autos: ar.error || au.error ? null : (() => { const bd = routineBoard(ar.data ?? [], au.data ?? []).filter((x) => x.active !== false); return { ready: bd.filter((x) => x.ready).length, total: bd.length } })(),
+        sims: sm.error ? null : { total: (sm.data ?? []).length, last: sm.data?.[0]?.started_at ?? null },
         certs: certs.error ? null : new Set((certs.data ?? []).filter((h) => isHeld(h, Date.now())).map((h) => h.code)).size,
       })
     })
@@ -44,12 +50,18 @@ export default function RobotPage({ session, hasRole = () => false }) {
       <header className="hub-head">
         <span className="hub-eyebrow">Robot</span>
         <h1 className="hub-title">Robot</h1>
-        <p className="hub-sub">Batteries, jobs, sub-teams and certifications in one place.</p>
+        <p className="hub-sub">Batteries, autos, the match simulator, jobs, sub-teams and certifications.</p>
       </header>
       <div className="hub-grid hub-grid-robot">
         <HubTile to="/batteries" icon={<IconBattery />} title="Batteries" tone={b?.check ? 'alert' : null} tour="robot-batteries"
           big={b ? b.ready : null} bigLabel="match-ready"
           line={b ? (b.total ? `${b.check} to check · ${b.total} in service` : 'No batteries added yet') : 'Not set up yet'} />
+        <HubTile to="/autos" icon={<IconAuto />} title="Autos" tour="robot-autos"
+          big={s.autos ? s.autos.ready : null} bigLabel="competition-ready"
+          line={s.autos ? (s.autos.total ? `of ${s.autos.total} routines · ready at ${AUTO_READY_STREAK} in a row` : 'No routines added yet') : 'Not set up yet'} />
+        <HubTile to="/match-sim" icon={<IconClock />} title="Match simulator" tour="robot-sim"
+          big={s.sims ? s.sims.total : null} bigLabel="simulated"
+          line={s.sims ? (s.sims.last ? `Last ${new Date(s.sims.last).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })}` : 'Run the first one') : 'Not set up yet'} />
         <HubTile to="/jobs" icon={<IconJobs />} title="Jobs" tour="robot-jobs"
           big={s.jobs ? s.jobs.mine : null} bigLabel="yours"
           line={s.jobs ? `${s.jobs.open} open to claim` : ' '} />

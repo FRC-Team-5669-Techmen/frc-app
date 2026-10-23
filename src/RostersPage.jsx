@@ -25,6 +25,7 @@ export const ROLES = Object.freeze([
   { key: 'scout', label: 'Scout' },
   { key: 'media', label: 'Media' },
   { key: 'safety_captain', label: 'Safety captain' },
+  { key: 'battery_captain', label: 'Battery captain' }, // 0028 (ledger 0017)
 ])
 const roleLabel = (k) => ROLES.find((r) => r.key === k)?.label ?? k
 const fmtWhen = (iso) => new Date(iso).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
@@ -141,6 +142,10 @@ function RosterDetail({ id, uid, isStaff }) {
         <span className={`st-badge${posted ? '' : ' st-badge-probation'}`} data-posted={posted ? 'yes' : 'no'}>{posted ? 'Roster posted' : 'Not posted'}</span>
       </div>
       {msg && <p className="st-msg" role="status">{msg}</p>}
+      {/* Ledger 0017 part D1: ask for a role by time slot. */}
+      <Link to={`/roles/${id}`} className="st-card rb-entry" data-card="role-board">
+        <span><b>Role board</b> Ask for a role in any time slot and see what is still unfilled.</span><span aria-hidden="true">→</span>
+      </Link>
 
       <section className="st-card" data-card="roles">
         <h2 className="st-h2">Roles</h2>

@@ -22,3 +22,5 @@ export const IconSkills    = () => <Svg><circle cx="12" cy="9" r="5.5" /><path d
 export const IconBattery = () => <Svg><rect x="3" y="7" width="16" height="11" rx="1.5" /><path d="M19 10.5h2v4h-2" /><path d="M11.5 9 8.5 13h4l-3 4" /></Svg>
 export const IconStatus = () => <Svg><path d="M4 19V9M10 19V5M16 19v-7M22 19H2" /></Svg>
 export const IconAdmin = () => <Svg><path d="M12 3 4.5 6v5.5c0 4.5 3.2 8 7.5 9.5 4.3-1.5 7.5-5 7.5-9.5V6z" /><path d="m9 12 2 2 4-4" /></Svg>
+export const IconAuto = () => <Svg><path d="M4 18 9 9l4 5 3-4 4 8" /><circle cx="9" cy="9" r="1.4" /><circle cx="16" cy="10" r="1.4" /></Svg>
+export const IconClock = () => <Svg><circle cx="12" cy="13" r="7.5" /><path d="M12 9v4l2.5 2" /><path d="M9.5 3h5M12 3v2.5" /></Svg>

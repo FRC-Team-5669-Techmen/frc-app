@@ -11,6 +11,7 @@
 //     read and under three weeks old: a mentor's reminder that the family
 //     sign-up is not finished. The member clears it with Done (it marks the
 //     notice read); the app has no member-readable sign-up status to check;
+//   - an upcoming event with unfilled role-board cells (role_board_open_events, 0028);
 //   - the weekly survey open and not answered (resolveOpenSurvey);
 //   - a sign-out sent back (signout.js loadMySignout().returned) while the
 //     member is still checked in: Home already shows it on the status card,
@@ -30,7 +31,7 @@ const ONBOARDING = {
  * Order: things that block today (sent-back sign-out), then deadlines
  * (family sign-up), then the checklist, then the survey.
  */
-export function doThisNow({ onboarding = null, notices = [], survey = null, sentBack = null, now = Date.now() } = {}) {
+export function doThisNow({ onboarding = null, notices = [], survey = null, sentBack = null, roleBoards = [], now = Date.now() } = {}) {
   const items = []
   if (sentBack) items.push({ key: 'signout', title: 'Your sign-out was sent back', detail: sentBack.reason ? `Mentor: ${sentBack.reason}` : 'Finish up, then ask again', to: '/dashboard#status', tone: 'urgent' })
   const seen = new Set()
@@ -41,6 +42,11 @@ export function doThisNow({ onboarding = null, notices = [], survey = null, sent
     if (Date.parse(n.created_at) < now - 21 * 864e5) continue // an old reminder for a trip long past
     seen.add(trip)
     items.push({ key: `signup:${trip}`, title: `Family sign-up for ${trip}`, detail: 'A parent finishes it from the trip link. Missing it can count as an absence.', to: '/trips', tone: 'urgent', notice: n.id })
+  }
+  // An upcoming event whose role board still has unfilled slots (0028).
+  for (const b of roleBoards ?? []) {
+    if (!b?.event_id || !(b.unfilled > 0)) continue
+    items.push({ key: `roles:${b.event_id}`, title: `Pick your roles for ${b.title}`, detail: `${b.unfilled} time slot role${b.unfilled === 1 ? '' : 's'} still unfilled${b.mine ? ` · you asked for ${b.mine}` : ''}`, to: `/roles/${b.event_id}`, tone: b.mine ? 'todo' : 'urgent' })
   }
   if (onboarding && onboarding.items && onboarding.done !== true) {
     const due = onboarding.due ? Date.parse(`${onboarding.due}T23:59:59-08:00`) : null

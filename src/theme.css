@@ -56,6 +56,13 @@
   --role-lead:      #E8923C;  /* orange */
   --role-admin:     #E0567B;  /* rose   */
 
+  /* FRC alliance colors: the match simulator only, where red and blue are
+     the field's meaning, never app accents (ledger 0017). */
+  --alliance-red:   #C8102E;
+  --alliance-red-a18: rgba(200, 16, 46, 0.18);
+  --alliance-blue:  #0057B8;
+  --alliance-blue-a20: rgba(0, 87, 184, 0.20);
+
   /* ── Type ── */
   --font-ui:   'Chakra Petch', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'Share Tech Mono', ui-monospace, SFMono-Regular, 'Roboto Mono', monospace;
