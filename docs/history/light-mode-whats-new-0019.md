@@ -2,7 +2,7 @@
 title: "Light mode (Light, Dark, System) with gold as a fill only, and What's new at /updates with an unread dot (ledger 0019)"
 date: 2026-10-23
 branches: [local/theme]
-commits: []
+commits: [b3d35d6]
 migrations: []
 subsystems: ["Branding and theme", "Landing page and nav"]
 ---
