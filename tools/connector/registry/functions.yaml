@@ -173,3 +173,13 @@ battery_save:
 battery_add_set:
   describe: Add a numbered set of batteries in one step, such as B01 through B12. Staff only.
   level: confirm
+
+# ledger 0024 (0032). No reverse: the members changed may have had different
+# statuses before, so it is confirm, and the preview lists every name.
+admin_set_member_status_bulk:
+  describe: Mark many members active, inactive or alumni in one change, with the reason.
+  level: confirm
+
+team_attendance_summary:
+  describe: Every member with signed-in hours, check-ins, last check-in, logged hours, application and trip sign-ups.
+  level: read

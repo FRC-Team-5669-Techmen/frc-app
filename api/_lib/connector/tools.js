@@ -95,6 +95,69 @@ const READS = {
     return { status: 'ok', count: rows.length, members: rows.map((m) => ({ name: m.name, email: m.email, roles: m.roles, subteams: m.subteams, status: m.status })) }
   },
 
+  // ledger 0024: every member attendance in one read (team_attendance_summary, 0032).
+  async team_attendance(ctx, a) {
+    const DATE = /^\d{4}-\d{2}-\d{2}$/
+    for (const k of ['since', 'no_checkin_since']) {
+      if (a[k] !== undefined && !DATE.test(String(a[k]))) return { status: 'invalid', message: `${k} must be a date, YYYY-MM-DD. Nothing was read.` }
+    }
+    const since = a.since ?? a.no_checkin_since ?? null
+    const r = await ctx.backend.rpc(ctx.session, 'team_attendance_summary', since ? { p_since: since } : {})
+    if (r.error) return isSchemaMissing(r.error) ? notSetUp('The team attendance read') : { status: 'refused', message: r.error.message }
+    const all = Array.isArray(r.data) ? r.data : []
+    const status = a.status ?? 'active'
+    const include = a.include ?? 'members'
+    const num = (x) => (x == null ? null : Number(x))
+    const rows = all
+      .filter((m) => include === 'all' || (m.has_account && !m.is_parent_only))
+      .filter((m) => status === 'all' || (m.status ?? 'active') === status)
+      .filter((m) => !a.role || (m.roles ?? []).includes(a.role))
+      .filter((m) => a.min_hours == null || num(m.hours_total) >= a.min_hours)
+      .filter((m) => a.max_hours == null || num(m.hours_total) <= a.max_hours)
+      .filter((m) => !a.no_checkin_since || !m.last_check_in || laDateKey(m.last_check_in) < a.no_checkin_since)
+      .map((m) => ({
+        name: m.member_id ? displayName(m) : (m.email ?? 'Approved email'),
+        full_name: m.full_name ?? null,
+        email: m.email ?? null,
+        roles: m.roles ?? [],
+        status: m.status ?? 'active',
+        approved: m.approved,
+        has_account: m.has_account,
+        parent_only: m.is_parent_only,
+        joined: m.created_at ? laDateKey(m.created_at) : null,
+        hours: num(m.hours_total) ?? 0,
+        ...(since ? { hours_since: num(m.hours_since) ?? 0, check_ins_since: m.check_ins_since ?? 0 } : {}),
+        check_ins: m.check_ins ?? 0,
+        first_check_in: m.first_check_in ? laDateKey(m.first_check_in) : null,
+        last_check_in: m.last_check_in ? laDateKey(m.last_check_in) : null,
+        logged_hours_verified: num(m.logged_hours_verified) ?? 0,
+        applied_this_season: m.has_season_application === true,
+        trip_invites: m.trip_invites ?? 0,
+        trip_answers: m.trip_answers ?? 0,
+        last_app_sign_in: m.last_sign_in ? laDateKey(m.last_sign_in) : null,
+        id: m.member_id ?? null,
+      }))
+    const sort = a.sort ?? 'hours'
+    const cmp = {
+      hours: (x, y) => x.hours - y.hours || x.name.localeCompare(y.name),
+      hours_desc: (x, y) => y.hours - x.hours || x.name.localeCompare(y.name),
+      last_check_in: (x, y) => (x.last_check_in ?? '').localeCompare(y.last_check_in ?? '') || x.name.localeCompare(y.name),
+      name: (x, y) => x.name.localeCompare(y.name),
+    }[sort] ?? ((x, y) => x.hours - y.hours)
+    rows.sort(cmp)
+    const limit = Math.max(1, Math.min(Number(a.limit) || 300, 300))
+    return {
+      status: 'ok',
+      count: rows.length,
+      never_checked_in: rows.filter((m) => m.check_ins === 0).length,
+      ...(since ? { since } : {}),
+      filters: { status, include, role: a.role ?? null, min_hours: a.min_hours ?? null, max_hours: a.max_hours ?? null, no_checkin_since: a.no_checkin_since ?? null, sort },
+      note: 'hours are signed-in shop hours (closed sessions, FLL time and voided or under-review sessions left out); logged_hours_verified is separate. Nothing was changed. To mark people inactive, use set_member_status, which asks first.',
+      members: rows.slice(0, limit),
+      truncated: rows.length > limit,
+    }
+  },
+
   async todays_signins(ctx) {
     const today = laDateKey(ctx.now())
     const since = new Date(laMidnightMs(today) - 26 * 3600_000).toISOString()
@@ -422,7 +485,7 @@ export async function runTool(ctx, name, a = {}) {
         if (spec.resolve && a[argName] !== undefined) {
           const r = await RESOLVERS[spec.resolve](ctx, a[argName])
           if (r.status) return r
-          resolved[argName] = r.member ?? r.event ?? r.battery
+          resolved[argName] = r.member ?? r.members ?? r.event ?? r.battery
         }
       }
       let args
@@ -438,6 +501,9 @@ export async function runTool(ctx, name, a = {}) {
       const out = await write(ctx, { tool: name, fn: tool.function, args }, writeOpts(a))
       if (name === 'approve_signout' && resolved.member) {
         out.signout = { member: resolved.member.name, note: resolved.member.note, cleanup_confirmed: resolved.member.cleanup_confirmed, asked_at: laClock(resolved.member.requested_at) }
+      }
+      if (name === 'set_member_status' && resolved.members) {
+        out.members = resolved.members.list.map((m) => ({ name: m.name, email: m.email, status_now: m.status ?? 'active' }))
       }
       if (out.status === 'refused' && isSchemaMissing({ code: out.code })) return notSetUp('That part of the app')
       return out

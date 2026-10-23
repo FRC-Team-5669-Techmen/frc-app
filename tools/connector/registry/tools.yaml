@@ -43,6 +43,35 @@ list_members:
     role: {type: string, describe: "Only members holding this role", enum: [student, mentor, lead, admin, parent]}
     status: {type: string, describe: "Only members with this status (active by default)", enum: [active, inactive, alumni, all]}
 
+team_attendance:
+  describe: Every member's signed-in hours, check-ins and last check-in in one list, lowest first, to see who has not shown up. Filters by role, status, hours or no check-in since a date.
+  say: ["who has not shown up", "list everyone's hours", "who hasn't checked in since September", "which students have under 5 hours", "who should I take off the roster"]
+  kind: read
+  args:
+    role: {type: string, describe: "Only members holding this role", enum: [student, mentor, lead, admin, parent]}
+    status: {type: string, describe: "Only members with this status (active by default)", enum: [active, inactive, alumni, all]}
+    min_hours: {type: number, describe: "Only members with at least this many signed-in hours"}
+    max_hours: {type: number, describe: "Only members with at most this many signed-in hours"}
+    no_checkin_since: {type: string, describe: "Only members with no check-in on or after this date, YYYY-MM-DD (never checked in counts)"}
+    since: {type: string, describe: "Also count hours and check-ins since this date, YYYY-MM-DD"}
+    include: {type: string, describe: "members (default) leaves out parent-only accounts and approved emails with no account; all keeps them, marked", enum: [members, all]}
+    sort: {type: string, describe: "hours (lowest first, default), hours_desc, last_check_in (oldest first) or name", enum: [hours, hours_desc, last_check_in, name]}
+    limit: {type: integer, describe: "How many to list (300 at most, the default)"}
+
+set_member_status:
+  describe: Mark one or many members inactive, alumni or active in one change, with the reason. Always asks first and lists every name.
+  say: ["mark these five inactive, they never came", "take Riley and Sam off the active roster", "make the seniors who left alumni", "put Jordan back to active"]
+  kind: function
+  function: admin_set_member_status_bulk
+  args:
+    members: {type: array, items: string, describe: "The members, by name or email, as a list", required: true, resolve: members}
+    status: {type: string, describe: "The status to set", required: true, enum: [inactive, alumni, active]}
+    reason: {type: string, describe: "Why, in his words; kept on each member's admin log", required: true}
+  map:
+    p_members: $resolved.members.ids
+    p_status: $args.status
+    p_reason: $args.reason
+
 todays_signins:
   describe: Who checked in today, who is still in the shop, and which sign-outs are waiting.
   say: ["who's here today", "who signed in today", "who is still in the shop", "any sign-outs waiting"]

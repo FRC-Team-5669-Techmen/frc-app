@@ -180,6 +180,8 @@ const SAMPLES = {
   battery_set_charge: (fx) => ({ p_battery: fx.battery, p_state: 'charging' }),
   battery_log_run: (fx) => ({ p_battery: fx.battery, p_kind: 'match', p_match: 'qm12', p_voltage_before: 12.9, p_voltage_after: 11.8, p_brownout: 'no' }),
   battery_add_set: () => ({ p_prefix: 'PF', p_from: 1, p_to: 3 }),
+  // ledger 0024 (0032)
+  admin_set_member_status_bulk: () => ({ p_members: [ID.riley, ID.sam], p_status: 'inactive', p_reason: 'Proof never came' }),
 }
 
 /** Placeholder arguments of the right types, for a function with no sample. */

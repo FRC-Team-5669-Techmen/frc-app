@@ -5,15 +5,15 @@ export default {
  "measured": "2026-10-23",
  "counts": {
   "functions_called": 204,
-  "registry_functions": 212,
-  "reachable": 200,
-  "read": 26,
+  "registry_functions": 214,
+  "reachable": 202,
+  "read": 27,
   "undo": 5,
-  "confirm": 167,
+  "confirm": 168,
   "by_argument": 2,
   "generated": 176,
   "excluded_functions": 12,
-  "tools": 28,
+  "tools": 30,
   "edge_functions": 8,
   "routes": 1,
   "table_writes": 0,
@@ -72,6 +72,120 @@ export default {
       "all"
      ]
     }
+   }
+  },
+  "team_attendance": {
+   "name": "team_attendance",
+   "describe": "Every member's signed-in hours, check-ins and last check-in in one list, lowest first, to see who has not shown up. Filters by role, status, hours or no check-in since a date.",
+   "say": [
+    "who has not shown up",
+    "list everyone's hours",
+    "who hasn't checked in since September",
+    "which students have under 5 hours",
+    "who should I take off the roster"
+   ],
+   "kind": "read",
+   "args": {
+    "role": {
+     "type": "string",
+     "describe": "Only members holding this role",
+     "enum": [
+      "student",
+      "mentor",
+      "lead",
+      "admin",
+      "parent"
+     ]
+    },
+    "status": {
+     "type": "string",
+     "describe": "Only members with this status (active by default)",
+     "enum": [
+      "active",
+      "inactive",
+      "alumni",
+      "all"
+     ]
+    },
+    "min_hours": {
+     "type": "number",
+     "describe": "Only members with at least this many signed-in hours"
+    },
+    "max_hours": {
+     "type": "number",
+     "describe": "Only members with at most this many signed-in hours"
+    },
+    "no_checkin_since": {
+     "type": "string",
+     "describe": "Only members with no check-in on or after this date, YYYY-MM-DD (never checked in counts)"
+    },
+    "since": {
+     "type": "string",
+     "describe": "Also count hours and check-ins since this date, YYYY-MM-DD"
+    },
+    "include": {
+     "type": "string",
+     "describe": "members (default) leaves out parent-only accounts and approved emails with no account; all keeps them, marked",
+     "enum": [
+      "members",
+      "all"
+     ]
+    },
+    "sort": {
+     "type": "string",
+     "describe": "hours (lowest first, default), hours_desc, last_check_in (oldest first) or name",
+     "enum": [
+      "hours",
+      "hours_desc",
+      "last_check_in",
+      "name"
+     ]
+    },
+    "limit": {
+     "type": "integer",
+     "describe": "How many to list (300 at most, the default)"
+    }
+   }
+  },
+  "set_member_status": {
+   "name": "set_member_status",
+   "describe": "Mark one or many members inactive, alumni or active in one change, with the reason. Always asks first and lists every name.",
+   "say": [
+    "mark these five inactive, they never came",
+    "take Riley and Sam off the active roster",
+    "make the seniors who left alumni",
+    "put Jordan back to active"
+   ],
+   "kind": "function",
+   "args": {
+    "members": {
+     "type": "array",
+     "items": "string",
+     "describe": "The members, by name or email, as a list",
+     "required": true,
+     "resolve": "members"
+    },
+    "status": {
+     "type": "string",
+     "describe": "The status to set",
+     "required": true,
+     "enum": [
+      "inactive",
+      "alumni",
+      "active"
+     ]
+    },
+    "reason": {
+     "type": "string",
+     "describe": "Why, in his words; kept on each member's admin log",
+     "required": true
+    }
+   },
+   "function": "admin_set_member_status_bulk",
+   "map": {
+    "p_members": "$resolved.members.ids",
+    "p_status": "$args.status",
+    "p_reason": "$args.reason"
    }
   },
   "todays_signins": {
@@ -1451,6 +1565,43 @@ export default {
     "src/RosterPage.jsx"
    ],
    "describe": "Mark a member active, inactive or alumni. (A change: asks first.)",
+   "level": "confirm"
+  },
+  "admin_set_member_status_bulk": {
+   "name": "admin_set_member_status_bulk",
+   "source": "hand",
+   "forms": [
+    {
+     "args": [
+      {
+       "name": "p_members",
+       "spoken": "members",
+       "type": "uuid[]",
+       "optional": false
+      },
+      {
+       "name": "p_status",
+       "spoken": "status",
+       "type": "text",
+       "optional": false
+      },
+      {
+       "name": "p_reason",
+       "spoken": "reason",
+       "type": "text",
+       "optional": false
+      }
+     ],
+     "returns": "jsonb",
+     "retset": false
+    }
+   ],
+   "writes": true,
+   "gates": [
+    "is_admin"
+   ],
+   "called_from": [],
+   "describe": "Mark many members active, inactive or alumni in one change, with the reason.",
    "level": "confirm"
   },
   "admin_set_task_cert": {
@@ -8037,6 +8188,31 @@ export default {
    ],
    "describe": "Switch to fll (a change: asks first).",
    "level": "confirm"
+  },
+  "team_attendance_summary": {
+   "name": "team_attendance_summary",
+   "source": "hand",
+   "forms": [
+    {
+     "args": [
+      {
+       "name": "p_since",
+       "spoken": "since",
+       "type": "date",
+       "optional": true
+      }
+     ],
+     "returns": "table",
+     "retset": true
+    }
+   ],
+   "writes": false,
+   "gates": [
+    "is_staff"
+   ],
+   "called_from": [],
+   "describe": "Every member with signed-in hours, check-ins, last check-in, logged hours, application and trip sign-ups.",
+   "level": "read"
   },
   "trip_join_contact": {
    "name": "trip_join_contact",

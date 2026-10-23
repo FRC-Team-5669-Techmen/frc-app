@@ -140,4 +140,24 @@ export async function resolveBattery(ctx, q) {
   return { status: 'ambiguous', message: `${hits.length} batteries match "${q}": ${hits.map((b) => b.label).join(', ')}. Ask him which.`, candidates: hits.map((b) => ({ id: b.id, label: b.label })) }
 }
 
-export const RESOLVERS = { member: resolveMember, event: resolveEvent, signout: resolveSignout, battery: resolveBattery }
+/**
+ * Several members at once, for a change made to many (set_member_status). A
+ * list, or one string separated by commas or "and". Every name must resolve
+ * to exactly one member; the first that does not answers for the whole call,
+ * so nothing is written until every name is settled.
+ */
+export async function resolveMembers(ctx, q) {
+  const raw = Array.isArray(q) ? q : String(q ?? '').split(/\s*(?:,|;|\n|\band\b)\s*/i)
+  const names = [...new Set(raw.map((x) => String(x ?? '').trim()).filter(Boolean))]
+  if (!names.length) return { status: 'invalid', message: 'Name at least one member. Nothing was changed.' }
+  if (names.length > 200) return { status: 'invalid', message: 'At most 200 members in one change. Nothing was changed.' }
+  const hits = []
+  for (const n of names) {
+    const r = await resolveMember(ctx, n)
+    if (!r.member) return { ...r, message: `${r.message} (for "${n}"; nothing was changed for anyone)`, name: n }
+    if (!hits.some((h) => h.id === r.member.id)) hits.push(r.member)
+  }
+  return { members: { ids: hits.map((m) => m.id), names: hits.map((m) => m.name), list: hits } }
+}
+
+export const RESOLVERS = { member: resolveMember, members: resolveMembers, event: resolveEvent, signout: resolveSignout, battery: resolveBattery }
