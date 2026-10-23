@@ -2,7 +2,7 @@
 title: "Automatic SQL migrations: migrate.yml and tools/apply-migration.mjs, the schema_migrations record seeded through 0026 (ledger 0021)"
 date: 2026-10-23
 branches: [local/migrate]
-commits: []
+commits: ["55382fd"]
 migrations: []
 subsystems: ["Database", "CI workflows"]
 ---
