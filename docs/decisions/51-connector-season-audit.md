@@ -21,7 +21,7 @@ What Mr. Pina will want to do by voice or chat at a competition and through the 
 | Scouting records and pick lists | covered | `scouting_event` (records, personal pick lists, delivery) |
 | Scouting coverage (which matches have no scout) | missing | a read over the 0030 shift tables that names unscouted matches; `scouting_now_get` and `scouting_roster` are reachable by call_app but answer one piece each |
 | Event RSVPs | covered | `event_signups` |
-| Posted event roster (who is going, roles, eligibility) | missing | a named read of `event_rosters` and the roster roles (0016); posting is `staff_post_roster` by call_app (asks first) |
+| Posted event roster (who is going, roles, conflicts) | covered (new) | `event_roster`; posting is `staff_post_roster` by call_app (asks first); eligibility is not in the read |
 | Trip carpool and food boards | covered | `trip_boards` |
 | Families who have not signed up for a trip | covered (new) | `trip_signups` |
 | FIRST registration status | covered as the family's tick | `trip_signups` (first_registration is what the family ticked on the trip form; nothing in the app checks FIRST itself) |

@@ -46,6 +46,7 @@ A living list. Each line is something he would say to Claude, the tool that shou
 | 40 | "Which autos are ready?" | `auto_routines` (show ready) | Runs at once: routines with five successes in a row. |
 | 41 | "Draft a Discord announcement that build is canceled, ping parents." | `preview_announcement` | The exact post as a dry run; nothing posted; he sends it from /announce. |
 | 42 | "The taxi auto failed on B07, it hit the wall." | `log_auto_run` | A preview first; on "yes" one auto run, fail, with the problem and B07; the taxi streak resets to 0. |
+| 43 | "Who's on the Beach Blitz roster?" | `event_roster` | Runs at once: each member with their roles, posted or not, and open conflicts. |
 
 ## Scouting (0022)
 

@@ -347,6 +347,35 @@ const READS = {
     return { status: 'ok', preview: out.data, posted: false, note: 'A dry run: nothing was posted. Posting to Discord is done on the Announce page (/announce), where he confirms it himself.' }
   },
 
+  // ledger 0024 Part 2: an event's roster as staff see it (0016): roles by
+  // member, whether it is posted, and the conflicts members declared.
+  async event_roster(ctx, a) {
+    const resolved = await RESOLVERS.event(ctx, a.event)
+    if (!resolved.event) return resolved
+    const ev = resolved.event
+    const [roles, posted, conflicts, list] = await Promise.all([
+      ctx.backend.select(ctx.session, { table: 'event_roles', columns: ['member_id', 'role', 'reason'], eq: { event_id: ev.id }, limit: 500 }),
+      ctx.backend.select(ctx.session, { table: 'event_rosters', columns: ['posted_at', 'note'], eq: { event_id: ev.id }, limit: 1 }),
+      ctx.backend.select(ctx.session, { table: 'member_conflicts', columns: ['member_id', 'note', 'withdrawn_at'], eq: { event_id: ev.id }, limit: 500 }),
+      roster(ctx),
+    ])
+    if (roles.error) return isSchemaMissing(roles.error) ? notSetUp('Event rosters') : { status: 'refused', message: roles.error.message }
+    const names = new Map((list.members ?? []).map((m) => [m.id, m.name]))
+    const byMember = new Map()
+    for (const r of roles.data) {
+      if (!byMember.has(r.member_id)) byMember.set(r.member_id, [])
+      byMember.get(r.member_id).push(r.role.replace(/_/g, ' '))
+    }
+    const people = [...byMember].map(([id, rs]) => ({ name: names.get(id) ?? 'Member', roles: rs.sort() })).sort((x, y) => x.name.localeCompare(y.name))
+    const post = posted.error ? null : posted.data[0] ?? null
+    return {
+      status: 'ok', event: { title: ev.title, starts: laDay(ev.starts_at) },
+      posted: !!post, posted_on: post ? laDay(post.posted_at) : null, note: post?.note ?? null,
+      on_roster: people.length, people,
+      conflicts: conflicts.error ? [] : conflicts.data.filter((c) => !c.withdrawn_at).map((c) => ({ name: names.get(c.member_id) ?? 'Member', note: short(c.note) })),
+    }
+  },
+
   async parent_responses(ctx, a) {
     let member = null
     if (a.member) {

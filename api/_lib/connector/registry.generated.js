@@ -13,7 +13,7 @@ export default {
   "by_argument": 2,
   "generated": 175,
   "excluded_functions": 12,
-  "tools": 35,
+  "tools": 36,
   "edge_functions": 8,
   "routes": 1,
   "table_writes": 0,
@@ -1127,6 +1127,25 @@ export default {
     "p_problem": "$args.problem",
     "p_battery": "$resolved.battery.id",
     "p_location": "$args.location"
+   }
+  },
+  "event_roster": {
+   "name": "event_roster",
+   "describe": "An event's roster as staff see it - who has which role (driver, pit crew, scout and so on), whether it is posted, and declared conflicts.",
+   "say": [
+    "who's on the Beach Blitz roster",
+    "who is driving at the competition",
+    "is the roster posted",
+    "who said they can't make it"
+   ],
+   "kind": "read",
+   "args": {
+    "event": {
+     "type": "string",
+     "describe": "The event (a title, a date, or its id)",
+     "required": true,
+     "resolve": "event"
+    }
    }
   }
  },

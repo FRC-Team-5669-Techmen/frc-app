@@ -36,6 +36,10 @@ beforeEach(() => {
       runs.push({ id: 'rx', routine_id: 'a1', result: 'fail', ran_at: '2026-10-18T18:00:00Z', problem: 'Hit the wall' })
       return { data: runs, error: null }
     }
+    if (spec.table === 'events') return { data: [{ id: 'e1', title: 'Beach Blitz', kind: 'competition', starts_at: '2026-10-31T15:00:00Z', ends_at: '2026-11-01T23:00:00Z' }], error: null }
+    if (spec.table === 'event_roles') return { data: [{ member_id: 'm-riley', role: 'drive_coach' }, { member_id: 'm-riley', role: 'driver' }, { member_id: 'm-sam', role: 'pit_crew' }], error: null }
+    if (spec.table === 'event_rosters') return { data: tables.posted ?? [], error: null }
+    if (spec.table === 'member_conflicts') return { data: [{ member_id: 'm-jo', note: 'Family wedding', withdrawn_at: null }, { member_id: 'm-sam', note: 'Old', withdrawn_at: '2026-10-10T00:00:00Z' }], error: null }
     if (spec.table === 'batteries') return { data: [{ id: 'b-7', label: 'B07', status: 'competition', charge_state: 'charged' }], error: null }
     if (spec.table === 'discord_announce_roles') return { data: [{ name: 'Parents', role_id: '111111111111111111', active: true }, { name: 'Build', role_id: '222222222222222222', active: true }], error: null }
     return { data: [], error: null }
@@ -93,6 +97,18 @@ describe('auto_routines', () => {
     expect(out.routines[1]).toMatchObject({ ready: false, streak: 0, last: { problem: 'Hit the wall' } })
     expect((await runTool(ctx, 'auto_routines', { said: 'x', show: 'ready' })).routines.map((r) => r.name)).toEqual(['Taxi'])
     expect((await runTool(ctx, 'auto_routines', { said: 'x', show: 'all' })).routines).toHaveLength(3)
+  })
+})
+
+describe('event_roster', () => {
+  it('lists roles by member, open conflicts only, and whether it is posted', async () => {
+    const out = await runTool(ctx, 'event_roster', { said: "who's on the Beach Blitz roster", event: 'Beach Blitz' })
+    expect(out).toMatchObject({ status: 'ok', posted: false, on_roster: 2 })
+    expect(out.people).toEqual([{ name: 'Riley Two', roles: ['drive coach', 'driver'] }, { name: 'Sam One', roles: ['pit crew'] }])
+    expect(out.conflicts).toEqual([{ name: 'Jo Three', note: 'Family wedding' }])
+    tables.posted = [{ posted_at: '2026-10-20T18:00:00Z', note: 'Final' }]
+    expect(await runTool(ctx, 'event_roster', { said: 'is it posted', event: 'Beach Blitz' })).toMatchObject({ posted: true, note: 'Final' })
+    expect(backend.state.audit).toHaveLength(0)
   })
 })
 

@@ -61,10 +61,9 @@ row), and no mutant covers that clause.
 
 ## Part 2: the competition and season audit (no SQL)
 
-The audit is `docs/decisions/51-connector-season-audit.md`: 20 scenarios, 17
+The audit is `docs/decisions/51-connector-season-audit.md`: 20 scenarios, 18
 covered by a named tool after this ledger (FIRST registration only as the
-family's own tick), two missing (scouting coverage by match, a posted event
-roster read; posting a roster is reachable through `call_app`), and Discord
+family's own tick), one missing (scouting coverage by match), and Discord
 sending kept to a dry run pending his answer.
 Added: `sign_in_out` (`staff_add_event`, made a hand entry at undo with
 `staff_void_event` as the reverse; refuses a double IN, an OUT with nothing
@@ -72,8 +71,9 @@ open, and an OUT while a sign-out request waits), `trip_signups`,
 `auto_routines` (the page rule in `src/autos.js`) and `preview_announcement`
 (the Discord function with the action fixed to preview in `backend.js`),
 and then `log_auto_run` (the generated `auto_log_run` entry, asks first,
-routine resolved by name by the new `resolveRoutine`).
-`tests/connector-season-tools.test.js` (10 tests) drives each through the real
+routine resolved by name by the new `resolveRoutine`), and `event_roster`
+(roles, posted, open conflicts).
+`tests/connector-season-tools.test.js` (11 tests) drives each through the real
 runner, including the refusals and a source check that `backend.js` holds the
 one preview call. `proof.mjs` with `staff_add_event` as a hand sample:
 1371/1371. Not verified: none of the four against the live project or a real
