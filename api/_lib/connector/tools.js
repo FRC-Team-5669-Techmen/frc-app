@@ -12,6 +12,7 @@ import { laDateKey, laMidnightMs, addDays, laClock, laDay, laWallToIso } from '.
 import { isSchemaMissing } from './errors.js'
 import { batteryBoard, chargeLabel, statusLabel, kindLabel, brownoutLabel, CHECK_THRESHOLDS } from '../../../src/batteries.js'
 import { leaderboard as driverLeaderboard, SCORE_RULES } from '../../../src/driverScore.js'
+import { boardView, roleLabel } from '../../../src/roleBoard.js'
 
 export class UnknownTool extends Error {}
 
@@ -164,6 +165,37 @@ const READS = {
     return {
       status: 'ok', from, to, count: r.data.length,
       events: r.data.map((e) => ({ id: e.id, title: e.title, kind: e.kind, day: laDay(e.starts_at), starts: laClock(e.starts_at), ends: laClock(e.ends_at), location: e.location, notes: short(e.notes, 120) })),
+    }
+  },
+
+  // The role board (0031) for one event, read with the page's own model
+  // (src/roleBoard.js): per slot and role who is assigned, backup and asked,
+  // and what is still unfilled (assigned below needed).
+  async role_board(ctx, a) {
+    const ev = await RESOLVERS.event(ctx, a.event)
+    if (!ev.event) return ev
+    const r = await ctx.backend.rpc(ctx.session, 'role_board', { p_event: ev.event.id })
+    if (r.error) return isSchemaMissing(r.error) ? notSetUp('The role board') : { status: 'refused', message: r.error.message }
+    const v = boardView(r.data, null)
+    const want = a.day ? String(a.day).toLowerCase() : null
+    const days = v.days.filter((d) => !want || d.day === want || new Date(`${d.day}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }).toLowerCase() === want)
+    const names = (c, st) => c.requests.filter((q) => q.status === st).map((q) => q.name)
+    return {
+      status: 'ok', event: { id: ev.event.id, title: r.data.event.title },
+      unfilled_boxes: days.reduce((n, d) => n + d.unfilled.length, 0),
+      days: days.map((d) => ({
+        day: d.day,
+        weekday: new Date(`${d.day}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }),
+        slots: d.slots.map((s) => ({
+          slot_id: s.id, slot: s.label, starts: laClock(s.starts_at), ends: s.ends_at ? laClock(s.ends_at) : null,
+          roles: s.cells.filter((c) => c.needed > 0).map((c) => ({
+            role: c.role, label: roleLabel(c.role), needed: c.needed, assigned: names(c, 'assigned'), backup: names(c, 'backup'), asked: names(c, 'asked'),
+            ...(a.ids ? { requests: c.requests.map((q) => ({ request_id: q.id, member: q.name, status: q.status })) } : {}),
+            short: Math.max(0, c.needed - c.assigned),
+          })),
+        })),
+      })),
+      how_to_change: 'assign_roles: items of {member, role, status: assigned|backup|asked|removed} with slot (label), or day (date or weekday) for every slot that day needing the role.',
     }
   },
 

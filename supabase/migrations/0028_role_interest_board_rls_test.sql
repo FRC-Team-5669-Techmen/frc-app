@@ -98,7 +98,9 @@ begin
   rt := pg_temp.call_as(f.m, format($q$select public.staff_apply_slot_template(%L::uuid, %L::uuid)::text$q$, f.ev, (select id from public.role_slot_templates where name = 'Beach Blitz (3 days, Friday load-in)')));
   rt2 := pg_temp.call_as(f.m, format($q$select public.staff_apply_slot_template(%L::uuid, %L::uuid)::text$q$, f.ev, (select id from public.role_slot_templates where name = 'Beach Blitz (3 days, Friday load-in)')));
   perform pg_temp.rec(3, 'the Beach Blitz template adds 16 slots once; a second apply adds none',
-    rt = '16' and rt2 = '0' and (select count(*) from public.role_slots where event_id = f.ev and created_by = f.m) = 17
+    -- 0031 adds four lunch pit watches to the template (20 slots).
+    rt = (case when to_regprocedure('public.staff_set_request_status(uuid, text)') is null then '16' else '20' end) and rt2 = '0'
+    and (select count(*) from public.role_slots where event_id = f.ev and created_by = f.m) = rt::int + 1
     and (select max(needs ->> 'scout') from public.role_slots where event_id = f.ev and label = 'Qualifications 1') = '6'
     and (select max(to_char(starts_at at time zone 'America/Los_Angeles', 'HH24:MI')) from public.role_slots where event_id = f.ev and label = 'Qualifications 1') = '09:35', format('%s, %s', rt, rt2));
 end
@@ -159,8 +161,14 @@ begin
   insert into public.standing_records (member_id, kind, status, reason, opened_on) values (f.b, 'hours', 'open', '0028 test', current_date);
   insert into public.role_requests (slot_id, member_id, role) values (f.slot, f.b, 'driver') returning id into r2;
   blocked := pg_temp.call_as(f.m, format($q$select public.staff_assign_from_request(%L::uuid)::text$q$, r2));
-  perform pg_temp.rec(12, 'eligibility still runs: a student on hours probation cannot be assigned driver from a request',
-    blocked like 'err:22023:%probation%' and not exists (select 1 from public.event_roles where event_id = f.ev and member_id = f.b), left(blocked, 70));
+  -- From 0031 staff decisions on the board are final: no eligibility block (0031 test, check 11).
+  if to_regprocedure('public.staff_set_request_status(uuid, text)') is null then
+    perform pg_temp.rec(12, 'eligibility still runs: a student on hours probation cannot be assigned driver from a request',
+      blocked like 'err:22023:%probation%' and not exists (select 1 from public.event_roles where event_id = f.ev and member_id = f.b), left(blocked, 70));
+  else
+    perform pg_temp.rec(12, 'after 0031 the board assigns without the eligibility block: the driver row is written',
+      blocked like '{%' and exists (select 1 from public.event_roles where event_id = f.ev and member_id = f.b and role = 'driver'), left(blocked, 70));
+  end if;
 end
 $c$;
 
