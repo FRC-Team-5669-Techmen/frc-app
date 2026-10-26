@@ -11,7 +11,9 @@
 //   supabase.functions.invoke('invite-member', { body: { email, role } })
 //
 // Uses only auto-injected env (SUPABASE_URL, SUPABASE_ANON_KEY,
-// SUPABASE_SERVICE_ROLE_KEY). APP_URL is optional (where the invite link lands).
+// SUPABASE_SERVICE_ROLE_KEY). NOTE: the invite mail is sent by Supabase Auth, not
+// by this function, so no Reply-To can be set here (EMAIL_REPLY_TO does not apply).
+// APP_URL is optional (where the invite link lands).
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 

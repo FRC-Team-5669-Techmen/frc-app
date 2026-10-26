@@ -30,6 +30,7 @@
 //                                    stays queued ("pending") and nothing is
 //                                    lost; it goes out once they are set.
 //   EMAIL_FROM                       optional display form (address = GMAIL_USER)
+//   EMAIL_REPLY_TO                   optional Reply-To; default apina@boscotech.edu
 //   APP_URL                          optional; where /e/<token> lives
 //   EVENT_HUB_CRON_SECRET            the shared secret pg_cron sends; equal to
 //                                    private.event_hub_config.hook_secret
@@ -104,6 +105,7 @@ async function drain(admin, limit, eventId) {
   if (!rows || rows.length === 0) return { sent: 0, failed: 0 }
 
   const from = Deno.env.get('EMAIL_FROM') ?? `Techmen 5669 <${user}>`
+  const replyTo = Deno.env.get('EMAIL_REPLY_TO') ?? 'apina@boscotech.edu'
   const appUrl = (Deno.env.get('APP_URL') ?? 'https://frc-app-liard.vercel.app').replace(/\/+$/, '')
   const client = new SMTPClient({
     connection: { hostname: 'smtp.gmail.com', port: 465, tls: true, auth: { username: user, password: pass } },
@@ -119,7 +121,7 @@ async function drain(admin, limit, eventId) {
           if (mintErr || typeof token !== 'string') throw new Error('could not mint a link')
           body = body.split('{{link}}').join(`${appUrl}/e/${token}`)
         }
-        await client.send({ from, to: row.to_emails, subject: row.subject, content: body })
+        await client.send({ from, replyTo, to: row.to_emails, subject: row.subject, content: body })
         await admin.rpc('hub_outbox_done', { p_outbox: row.id, p_ok: true, p_error: null })
         sent++
       } catch (e) {

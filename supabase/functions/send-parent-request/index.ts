@@ -29,6 +29,7 @@
 //   GMAIL_USER          - the sending mailbox, e.g. apina@boscotech.edu
 //   GMAIL_APP_PASSWORD  - a Google App Password (NOT the account password)
 //   EMAIL_FROM          - optional display form; address part MUST be GMAIL_USER
+//   EMAIL_REPLY_TO      - optional Reply-To address; defaults to apina@boscotech.edu
 //   APP_URL             - optional; where /parent/<token> lives
 // If the Gmail secrets are unset the send is logged and skipped (HTTP 200) so
 // the student's submit is never affected.
@@ -114,6 +115,7 @@ Deno.serve(async (req) => {
       `If you did not expect this email, reply and let me know.\n\n` +
       `- Mr. Pina\n`
 
+    const replyTo = Deno.env.get('EMAIL_REPLY_TO') ?? 'apina@boscotech.edu'
     const client = new SMTPClient({
       connection: {
         hostname: 'smtp.gmail.com',
@@ -126,6 +128,7 @@ Deno.serve(async (req) => {
     try {
       await client.send({
         from,
+        replyTo,
         to,
         subject: 'Your student signed up for FRC Team 5669',
         content: text,

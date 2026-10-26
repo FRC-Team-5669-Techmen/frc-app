@@ -14,7 +14,8 @@
 // SECRETS: NOTICE_MAIL_SECRET (any long random string; the same value goes in
 // private.notice_mail_config.hook_secret), and the Gmail secrets the other
 // mail functions already use: GMAIL_USER, GMAIL_APP_PASSWORD, optional
-// EMAIL_FROM and APP_URL. With Gmail unset, nothing is sent and every row
+// EMAIL_FROM, EMAIL_REPLY_TO (Reply-To header, default apina@boscotech.edu)
+// and APP_URL. With Gmail unset, nothing is sent and every row
 // stays queued.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -49,6 +50,7 @@ Deno.serve(async (req) => {
   if (!rows?.length) return json({ sent: 0 })
 
   const from = Deno.env.get('EMAIL_FROM') ?? `Techmen 5669 <${GMAIL_USER}>`
+  const replyTo = Deno.env.get('EMAIL_REPLY_TO') ?? 'apina@boscotech.edu'
   const appUrl = Deno.env.get('APP_URL') ?? 'https://frc-app-liard.vercel.app'
   const client = new SMTPClient({
     connection: { hostname: 'smtp.gmail.com', port: 465, tls: true, auth: { username: GMAIL_USER, password: GMAIL_APP_PASSWORD } },
@@ -58,7 +60,7 @@ Deno.serve(async (req) => {
     for (const r of rows) {
       try {
         await client.send({
-          from, to: r.to_email, subject: r.subject,
+          from, replyTo, to: r.to_email, subject: r.subject,
           content: `${r.body}\n\nSee it in the app: ${appUrl}/standing\n\nTechmen, FRC Team 5669`,
         })
         await admin.from('notice_outbox').update({ sent_at: new Date().toISOString() }).eq('id', r.id)

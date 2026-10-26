@@ -16,6 +16,7 @@
 //                         Requires 2-Step Verification on the account.
 //   EMAIL_FROM          – optional display form, e.g. "Techmen 5669 <apina@boscotech.edu>".
 //                         The address part MUST be the same mailbox as GMAIL_USER.
+//   EMAIL_REPLY_TO      – optional Reply-To address. Defaults to apina@boscotech.edu.
 //   APP_URL             – optional sign-in link. Defaults to the live app URL.
 // If GMAIL_USER / GMAIL_APP_PASSWORD are unset, the send is logged and skipped
 // (HTTP 200) so approval still completes.
@@ -87,6 +88,7 @@ Deno.serve(async (req) => {
       `If you're already signed in and still see the request screen, reload the page ` +
       `or sign out and back in — your session won't update on its own.\n\n${appUrl}\n`
 
+    const replyTo = Deno.env.get('EMAIL_REPLY_TO') ?? 'apina@boscotech.edu'
     const client = new SMTPClient({
       connection: {
         hostname: 'smtp.gmail.com',
@@ -99,6 +101,7 @@ Deno.serve(async (req) => {
     try {
       await client.send({
         from,
+        replyTo,
         to,
         subject: "You're approved — Techmen 5669",
         content: text,
