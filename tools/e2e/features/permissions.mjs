@@ -226,8 +226,9 @@ export default {
     t.eq('two tags: Riley approves sign-outs, Sam adds events', (await t.texts('.roster-perm-tag')).sort(), ['Adds events', 'Approves sign-outs']);
     const sam3 = await rosterExpand(t, 'Sam');
     const samToggles = (await permRow(sam3)).locator('.roster-perm-toggle');
-    t.eq('Sam: both toggles, only calendar pressed', [await samToggles.allTextContents(), await samToggles.evaluateAll((bs) => bs.map((b) => b.getAttribute('aria-pressed')))],
-      [['Can add calendar events', 'Can approve sign-outs'], ['true', 'false']]);
+    // One toggle per capability the database has (0038 added Can log robot matches), only calendar pressed.
+    t.eq('Sam: every toggle, only calendar pressed', [await samToggles.allTextContents(), await samToggles.evaluateAll((bs) => bs.map((b) => b.getAttribute('aria-pressed')))],
+      [['Can add calendar events', 'Can approve sign-outs', 'Can log robot matches'], ['true', 'false', 'false']]);
 
     for (const mig of [without0004, 'none']) {
       t.as(`roster · mig ${mig} · admin`);

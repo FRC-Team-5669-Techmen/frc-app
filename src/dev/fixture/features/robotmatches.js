@@ -108,6 +108,8 @@ export default {
   },
   visible: {
     robot_matches: eligible,
+    // The capability row exists only once 0038 is applied, as in the database.
+    capabilities: ({ row, applied }) => row?.key !== 'robot.matches' || applied('0038'),
   },
   rpcs: {
     robot_match_import: (ctx) => {
