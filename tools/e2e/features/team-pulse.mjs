@@ -1,6 +1,6 @@
 /**
  * The team pulse board (/display), its three candidate layouts (feedback
- * a51bdc10): ?layout=shop (default), teams, timeline. Chromium at 375 and
+ * a51bdc10): ?layout=timeline (default), shop, teams; a picked layout is remembered on the device. Chromium at 375 and
  * 1440 on fixture mode. Oracles come from the store.
  *
  *  - every layout lists every team member exactly once (.pb-row), with the
@@ -44,8 +44,15 @@ export default {
       t.as('compare')
       t.eq('teams lists the same names as shop', seen.teams, seen.shop)
       t.eq('timeline lists the same names as shop', seen.timeline, seen.shop)
+      await t.evaluate(() => { try { localStorage.removeItem('techmen:pulse-layout') } catch { /* none */ } })
       await t.open('/display?layout=nonsense', { persona: 'student', mig: 'all', ready: '.pb-row' })
-      t.eq('an unknown layout falls back to In the shop', await t.evaluate(() => document.querySelector('.pb-wrap')?.dataset.layout), 'shop')
+      t.eq('an unknown layout, with nothing picked on this device, is Timeline', await t.evaluate(() => document.querySelector('.pb-wrap')?.dataset.layout), 'timeline')
+      await t.open('/display?layout=teams', { persona: 'student', mig: 'all', ready: '.pb-row' })
+      await t.open('/display', { persona: 'student', mig: 'all', ready: '.pb-row' })
+      t.eq('a picked layout (By sub-team) is remembered on the device', await t.evaluate(() => document.querySelector('.pb-wrap')?.dataset.layout), 'teams')
+      await t.evaluate(() => { try { localStorage.removeItem('techmen:pulse-layout') } catch { /* none */ } })
+      await t.open('/display', { persona: 'student', mig: 'all', ready: '.pb-row' })
+      t.eq('and with it cleared, /display opens on Timeline', await t.evaluate(() => document.querySelector('.pb-wrap')?.dataset.layout), 'timeline')
     })
   },
 }

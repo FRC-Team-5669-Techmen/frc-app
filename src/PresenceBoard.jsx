@@ -23,7 +23,13 @@ const POLL_MS = 15_000
 // Three layouts to choose between (feedback a51bdc10, "ugly and poorly
 // formatted"): ?layout=shop (default), teams or timeline. Once one is picked
 // the others go.
-const LAYOUTS = [['shop', 'In the shop'], ['teams', 'By sub-team'], ['timeline', 'Timeline']]
+const LAYOUTS = [['timeline', 'Timeline'], ['shop', 'In the shop'], ['teams', 'By sub-team']]
+// Timeline is everyone's default (Mr. Pina, 2026-10-28). A layout picked from
+// the footer is remembered on that device; ?layout= always wins.
+const LAYOUT_KEY = 'techmen:pulse-layout'
+const isLayout = (k) => LAYOUTS.some(([x]) => x === k)
+const savedLayout = () => { try { const v = localStorage.getItem(LAYOUT_KEY); return isLayout(v) ? v : null } catch { return null } }
+const saveLayout = (k) => { try { localStorage.setItem(LAYOUT_KEY, k) } catch { /* private window */ } }
 const elapsed = (since, now) => {
   const m = Math.max(0, Math.floor((now - Date.parse(since)) / 60_000))
   return m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`
@@ -39,7 +45,8 @@ export default function PresenceBoard({ hasRole } = {}) {
   const [reloadKey, setReloadKey] = useState(0)    // bumped after a quick sign in/out
   const timer = useRef(null)
   const [params] = useSearchParams()
-  const layout = LAYOUTS.some(([k]) => k === params.get('layout')) ? params.get('layout') : 'shop'
+  const layout = isLayout(params.get('layout')) ? params.get('layout') : savedLayout() ?? 'timeline'
+  useEffect(() => { if (isLayout(params.get('layout'))) saveLayout(params.get('layout')) }, [params])
 
   const load = useCallback(async () => {
     // Active roster + every event the checked-in rule can count, both readable
