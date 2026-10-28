@@ -55,7 +55,7 @@ export default function ScoutingPage({ session, hasRole = () => false, offlineMe
   if (!uid || (hasRole('parent') && !staff)) return <main className="sc-wrap"><h1>Scouting</h1><p>Scouting is available to student and staff accounts.</p><Link className="sc-link" to="/dashboard">Back to dashboard</Link></main>
   if (eventId === 'practice') return <PracticeOnly key={uid} uid={uid} />
   if (eventId && !uuid(eventId)) return <main className="sc-wrap"><h1>Event not found</h1><Link className="sc-link" to="/scouting">Choose an event</Link></main>
-  return eventId ? <EventScouting key={`${uid}:${eventId}`} uid={uid} eventId={eventId} staff={staff} offlineMemberId={offlineMemberId} /> : <ScoutingEvents key={uid} uid={uid} />
+  return eventId ? <EventScouting key={`${uid}:${eventId}`} uid={uid} eventId={eventId} staff={staff} admin={hasRole('admin')} offlineMemberId={offlineMemberId} /> : <ScoutingEvents key={uid} uid={uid} />
 }
 
 // Practice works with no event loaded (ledger 0022): the training missions,
@@ -117,7 +117,7 @@ function ScoutingEvents({ uid }) {
   </main>
 }
 
-function EventScouting({ uid, eventId, staff, offlineMemberId }) {
+function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) {
   const [store, setStore] = useState(null)
   const [data, setData] = useState({ records: [], delivery: [], revisions: [], members: [], event: null })
   const [queue, setQueue] = useState([])
@@ -362,6 +362,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
       <div className="sc-section-head"><div><h2>Your next match</h2><p className="sc-help">Observe the assigned robot. Record what you actually see.</p></div><button aria-pressed={showAllAssignments} onClick={() => setShowAllAssignments(x => !x)}>{showAllAssignments ? 'Show my assignments' : 'Show all assignments'}</button></div>
       {store && <ShiftNow client={supabase} store={store} uid={uid} eventId={eventId} records={records} manager={manager} online={online} memberName={memberName} nameFor={nameFor} />}
       {options && <ObservationOptions data={options} online={online} onRequest={requestOption} onSave={saveOption} onReload={reloadOptions} />}
+      {admin && <p className="sc-help" data-leads-link><Link className="sc-link" to="/roster?perm=scouting.manage">Choose scouting leads →</Link> They run shifts, imports and which observation options scouts answer.</p>}
       {!assignments.length && <div className="sc-empty"><span className="sc-eyebrow">Ready when you are</span><h3>No assignments yet</h3><p>Ask your scouting lead for a match, or capture an observation now.</p><button onClick={() => openForm('observation')}>Start an observation</button></div>}
       <div className="sc-assignment-grid">{assignments.map(row => isSuperAssignment(row) ? superCard(row) : <article className={`sc-card sc-assignment${isComplete(row) ? ' sc-complete' : ''}`} key={row.id}><div className="sc-section-head"><span className="sc-match">{row.match_key}</span><span className="sc-chip">{row.localStatus ? 'Saved locally' : isComplete(row) ? 'Recorded' : 'To scout'}</span></div><div className="sc-team-number">{row.team_number}</div><h3>{nameFor(row.team_number) || 'Assigned robot'}</h3><p>{row.payload.instructions || 'Watch capabilities and record useful match notes.'}</p><p className="sc-help">Scout: {memberName(row.payload.assignee)}{row.payload.video_url ? ` · ${footageLabel(row)}` : ''}</p><div className="sc-actions">{row.payload.video_url && <a className="sc-link" href={row.payload.video_url} target="_blank" rel="noopener noreferrer">Watch video ↗</a>}<button className="sc-primary" disabled={!!row.localStatus || !!observationFor(row)?.localStatus || row.payload.assignee !== uid} onClick={() => openForm('observation', observationFor(row) ? { record: observationFor(row) } : { team: row.team_number, assignment: row })}>{observationFor(row) ? 'Review observation' : 'Scout match'}</button>{manager && canEdit(row) && <button onClick={() => openForm('assignment', { record: row })}>Edit assignment</button>}</div></article>)}</div>
       <ObservationBrowser records={observations} confirmedRecords={serverRecords} team={evidenceTeam} onTeam={setEvidenceTeam} memberName={memberName} nameFor={nameFor} canEdit={canEdit} onEdit={row => openForm('observation', { record: row })} revisions={data.revisions ?? []} />

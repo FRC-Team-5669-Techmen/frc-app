@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { COLUMN_PATHS, KINDS, parseMatchFile, matchLabel, startedAtMs, matchMember, matchBattery, matchRoutine, simCandidate, eventFor, planImport, importLinks,
-  driverTrends, batteryTrends, compareMatches, notReadyReasons, filterMatches, ballsIn, wasted } from '../src/robotMatches.js'
+  driverTrends, batteryTrends, compareMatches, notReadyReasons, filterMatches, shots, counted, wasted, recallMember, nameKey } from '../src/robotMatches.js'
 
 const SAMPLE = readFileSync(new URL('./fixtures/robot-match-sample.json', import.meta.url), 'utf8')
 const SQL = readFileSync(new URL('../supabase/migrations/0038_robot_match_log.sql', import.meta.url), 'utf8')
@@ -81,6 +81,13 @@ describe('matching typed names', () => {
     expect(m.member).toBe(null)
     expect(m.candidates.map((x) => x.id).sort()).toEqual(['m2', 'm3'])
   })
+  it('a name chosen on an earlier import is remembered; an exact match ignores the memory; a gone member is not recalled', () => {
+    const remembered = { [nameKey('Matt')]: 'm3', [nameKey('Zed')]: 'gone' }
+    expect(recallMember('Matt', members, remembered)).toMatchObject({ status: 'remembered', member: { id: 'm3' } })
+    expect(recallMember('Matt', members, {})).toMatchObject({ status: 'confirm', member: null })
+    expect(recallMember('dj', members, { [nameKey('dj')]: 'm1' })).toMatchObject({ status: 'exact', member: { id: 'm4' } })
+    expect(recallMember('Zed', members, remembered)).toMatchObject({ status: 'none', member: null })
+  })
   it('blank and unknown names link nobody (negative control)', () => {
     expect(matchMember('', members)).toMatchObject({ status: 'blank', member: null })
     expect(matchMember('Zed', members)).toMatchObject({ status: 'none', member: null })
@@ -148,15 +155,16 @@ describe('trends and comparison', () => {
     { id: 'b', started_at: '2026-10-28T18:00:00Z', driver_id: 'd1', battery_id: 'b1', auto_balls: 5, open_balls: 14, closed_balls: 0, ready_pct: 80, hang_at_seconds: null, battery_min: 9.8, brownouts: 1, match_label: 'practice 2', scorer_balls_in: 17 },
     { id: 'c', started_at: '2026-10-28T19:00:00Z', driver_id: 'd2', battery_id: 'b2', auto_balls: null, open_balls: null, closed_balls: null, ready_pct: null, battery_min: null, brownouts: null, kind: 'qual' },
   ]
-  it('balls in prefers the scorer count, else auto + open hub; closed-hub balls are wasted; missing is null, never 0', () => {
-    expect([ballsIn(ms[0]), ballsIn(ms[1]), ballsIn(ms[2])]).toEqual([13, 17, null])
+  it('shots are the robot count (auto + open HUB) and never take the counted number; balls in is only what someone counted; missing is null, never 0', () => {
+    expect([shots(ms[0]), shots(ms[1]), shots(ms[2])]).toEqual([13, 19, null])
+    expect([counted(ms[0]), counted(ms[1])]).toEqual([null, 17])
     expect([wasted(ms[0]), wasted(ms[2])]).toEqual([2, null])
   })
   it('per driver: oldest first, averages over recorded values only', () => {
     const [d1, d2] = driverTrends(ms, (id) => id.toUpperCase())
-    expect(d1).toMatchObject({ id: 'd1', name: 'D1', matches: 2, avg: { ballsIn: 15, wasted: 1, ready: 70, hang: 120 } })
+    expect(d1).toMatchObject({ id: 'd1', name: 'D1', matches: 2, avg: { shots: 16, counted: 17, wasted: 1, ready: 70, hang: 120 } })
     expect(d1.points.map((p) => p.id)).toEqual(['a', 'b'])
-    expect(d2.avg).toEqual({ ballsIn: null, wasted: null, ready: null, hang: null })
+    expect(d2.avg).toEqual({ shots: null, counted: null, wasted: null, ready: null, hang: null })
   })
   it('per battery: lowest minimum and total brownouts; a battery with no readings shows null', () => {
     const [b1, b2] = batteryTrends(ms, (id) => id)
@@ -166,7 +174,8 @@ describe('trends and comparison', () => {
   })
   it('compare marks the best value per row; equal or single values mark none', () => {
     const rows = compareMatches([ms[0], ms[1]])
-    expect(rows.find((r) => r.key === 'ballsIn')).toMatchObject({ values: [13, 17], best: 17 })
+    expect(rows.find((r) => r.key === 'shots')).toMatchObject({ values: [13, 19], best: 19 })
+    expect(rows.find((r) => r.key === 'counted')).toMatchObject({ values: [null, 17], best: null })
     expect(rows.find((r) => r.key === 'brownouts')).toMatchObject({ best: 0 })
     expect(rows.find((r) => r.key === 'distance').best).toBe(null)
     expect(compareMatches([ms[0], ms[2]]).find((r) => r.key === 'ready').best).toBe(null)

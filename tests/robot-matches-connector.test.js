@@ -62,7 +62,7 @@ describe('the robot match tools', () => {
   it('list_robot_matches filters by driver and gives trends; balls in is auto + open hub; nothing written', async () => {
     const all = await runTool(ctx, 'list_robot_matches', { said: 'show the robot matches' })
     expect(all.count).toBe(4)
-    expect(all.matches[0]).toMatchObject({ label: 'practice 3', balls_in: 22, closed_hub: 0, driver: 'Riley', battery: 'B02', brownouts: 1 })
+    expect(all.matches[0]).toMatchObject({ label: 'practice 3', shots: 22, shots_at_closed_hub: 0, balls_in_counted: null, driver: 'Riley', battery: 'B02', brownouts: 1 })
     const sam = await runTool(ctx, 'list_robot_matches', { said: 'how did Sam drive', driver: 'Sam Student', trends: true })
     expect(sam.matches.map((m) => m.label)).toEqual(['practice 2'])
     expect(sam.drivers).toEqual([expect.objectContaining({ driver: 'Sam', matches: 1, avg_ready_pct: 60 })])
@@ -88,7 +88,7 @@ describe('the robot match tools', () => {
   it('compare_robot_matches marks the best per row', async () => {
     const out = await runTool(ctx, 'compare_robot_matches', { said: 'compare practice 2 and practice 3', matches: 'practice 2, practice 3' })
     expect(out.status).toBe('ok')
-    expect(out.rows.find((r) => r.metric === 'Balls in')).toMatchObject({ values: [12, 22], best: 22 })
+    expect(out.rows.find((r) => r.metric === 'Shots at an active HUB')).toMatchObject({ values: [12, 22], best: 22 })
     expect(out.rows.find((r) => r.metric === 'Brownouts')).toMatchObject({ values: [0, 1], best: 0 })
     expect((await runTool(ctx, 'compare_robot_matches', { said: 'x', matches: 'practice 2' })).status).toBe('invalid')
   })

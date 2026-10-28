@@ -757,3 +757,20 @@
 .roster-modal-delete:hover:not(:disabled) { filter: brightness(1.1); }
 .roster-modal-delete:disabled,
 .roster-modal-cancel:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Who can do what (PermissionHolders.jsx): one card per permission, people as chips. */
+.roster-holders { margin: 1rem 1rem 0; padding: 1rem 1.25rem; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); }
+.roster-holders .roster-domains-title { margin: 0 0 0.25rem; }
+.roster-holders-sub { margin: 0 0 0.85rem; color: var(--steel); font-size: 0.88rem; }
+.roster-holders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 0.75rem; }
+.roster-holder-card { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.8rem 0.9rem; background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius); min-width: 0; }
+.roster-holder-card.focus { border-color: var(--gold); box-shadow: inset 3px 0 0 var(--gold); scroll-margin-top: 5rem; }
+.roster-holder-card h3 { margin: 0; font-family: var(--font-ui); font-size: 1.05rem; font-weight: 700; letter-spacing: 0.03em; color: var(--text); }
+.roster-holder-card p { margin: 0; color: var(--steel); font-size: 0.82rem; line-height: 1.35; }
+.roster-holder-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; min-height: 2rem; align-items: center; }
+.roster-holder-chip { display: inline-flex; align-items: center; gap: 0.15rem; padding-left: 0.7rem; min-height: 40px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--radius); font-family: var(--font-ui); font-size: 0.9rem; font-weight: 600; color: var(--text); }
+.roster-holder-remove { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 40px; padding: 0; border: 0; background: none; color: var(--steel); font-size: 1.15rem; cursor: pointer; border-radius: var(--radius); }
+.roster-holder-remove:hover:not(:disabled), .roster-holder-remove:focus-visible { color: var(--fault); }
+.roster-holder-remove:disabled { opacity: 0.4; cursor: default; }
+.roster-holder-add select { width: 100%; min-height: 44px; padding: 0 0.7rem; font: inherit; font-size: 0.95rem; color: var(--gold); background: var(--surface); border: 1px dashed var(--gold-dim); border-radius: var(--radius); cursor: pointer; box-sizing: border-box; }
+.roster-holder-add select:hover, .roster-holder-add select:focus-visible { border-style: solid; border-color: var(--gold); }

@@ -4,7 +4,7 @@ import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import { isSchemaMissing } from './schemaMissing'
 import { downloadText } from './download'
-import { KIND_LABELS, REAL_KINDS, ballsIn, wasted, notReadyReasons, fmt } from './robotMatches'
+import { KIND_LABELS, REAL_KINDS, shots, counted, wasted, notReadyReasons, fmt } from './robotMatches'
 import { loadMatchLog, useMatchWriter } from './RobotMatchesPage'
 import './BatteriesPage.css'
 import './RobotMatches.css'
@@ -70,10 +70,11 @@ export default function RobotMatchPage({ hasRole = () => false }) {
   const phases = Array.isArray(raw?.phases) ? raw.phases : []
   const events = Array.isArray(raw?.events) ? raw.events : []
   const reasons = notReadyReasons(raw)
-  const bi = ballsIn(m); const w = wasted(m)
+  const sh = shots(m); const w = wasted(m); const ct = counted(m)
   const score = [
-    ['Balls in', fmt(bi), false, m.scorer_balls_in !== null && m.scorer_balls_in !== undefined ? 'scorer count' : 'robot count'],
-    ['Into a closed hub', fmt(w), w > 0], ['Passes', fmt(m.passes)], ['Auto balls', fmt(m.auto_balls)],
+    ['Shots at an active HUB', fmt(sh), false, 'robot count of balls fired'],
+    ['Shots at a closed HUB', fmt(w), w > 0, 'score nothing'],
+    ['Balls in', fmt(ct), false, ct === null ? 'counted from video, when someone does' : 'counted'], ['Passes', fmt(m.passes)], ['Auto balls', fmt(m.auto_balls)],
     ['Ready while RT held', m.ready_pct === null ? '--' : `${fmt(m.ready_pct)}%`, m.ready_pct !== null && Number(m.ready_pct) < 70],
     ['Hung at', m.hang_at_seconds === null ? '--' : `${fmt(m.hang_at_seconds, 1)} s`], ['TOWER', TOWER.find(([k]) => k === (m.tower ?? ''))?.[1] ?? '--'],
     ['Battery min', m.battery_min === null ? '--' : `${fmt(m.battery_min, 2)} V`, m.battery_min !== null && Number(m.battery_min) < 10.5],
@@ -177,7 +178,7 @@ export default function RobotMatchPage({ hasRole = () => false }) {
               <label className="ba-field"><span>Auto routine</span><select value={form.routine_id} onChange={(e) => setForm((f) => ({ ...f, routine_id: e.target.value }))}><option value="">None</option>{s.routines.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select></label>
               <label className="ba-field"><span>Event</span><select value={form.event_id} onChange={(e) => setForm((f) => ({ ...f, event_id: e.target.value }))}><option value="">None</option>{s.events.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}</select></label>
               {field('match_label', 'Label', { maxLength: 40 })}
-              {field('scorer_balls_in', 'Scorer count of balls in', { inputMode: 'numeric', pattern: '[0-9]*' })}
+              {field('scorer_balls_in', 'Balls in, counted from video', { inputMode: 'numeric', pattern: '[0-9]*' })}
               <label className="ba-field"><span>TOWER</span><select value={form.tower} onChange={(e) => setForm((f) => ({ ...f, tower: e.target.value }))}>{TOWER.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></label>
               {field('match_score', 'Alliance score', { inputMode: 'numeric', pattern: '[0-9]*' })}
               {field('ranking_points', 'Ranking points', { inputMode: 'decimal' })}

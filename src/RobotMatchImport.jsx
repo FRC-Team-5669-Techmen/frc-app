@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { writeVia } from './writeVia'
-import { ROBOT_REPO, KIND_LABELS, parseMatchFile, planImport, importLinks, listRobotFiles } from './robotMatches'
+import { ROBOT_REPO, KIND_LABELS, parseMatchFile, planImport, importLinks, listRobotFiles, nameKey } from './robotMatches'
 
 // The import panel of the match log (0038, ledger 0028): pull every new file
 // from the robot repo, or drop files; a preview before anything is saved. A
@@ -11,8 +12,13 @@ import { ROBOT_REPO, KIND_LABELS, parseMatchFile, planImport, importLinks, listR
 const when = (iso) => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
 const ROLES = [['driver', 'Driver'], ['operator', 'Operator'], ['coach', 'Coach']]
 const PULL_LIMIT = 80
+// Who each typed crew name turned out to be, on this device, so the next file
+// with the same typed name needs no choice (src/robotMatches.js recallMember).
+const NAMES = 'techmen:robot-match:names'
+const recallNames = () => { try { return JSON.parse(localStorage.getItem(NAMES) || '{}') ?? {} } catch { return {} } }
+const keepNames = (v) => { try { localStorage.setItem(NAMES, JSON.stringify(v)) } catch { /* private window */ } }
 
-export default function RobotMatchImport({ members, batteries, routines, events, matches, onDone }) {
+export default function RobotMatchImport({ members, batteries, routines, events, matches, onDone, manageLink = null }) {
   const [plans, setPlans] = useState([])
   const [choice, setChoice] = useState({}) // fileName -> { driver, operator, coach, battery, routine, addRoutine, skip }
   const [msg, setMsg] = useState('')
@@ -24,7 +30,7 @@ export default function RobotMatchImport({ members, batteries, routines, events,
   const nameOf = (id) => members.find((m) => m.id === id)?.name ?? 'Unknown'
 
   function preview(parsedList) {
-    const ctx = { members, batteries, routines, events, simRows, existing }
+    const ctx = { members, batteries, routines, events, simRows, existing, remembered: recallNames() }
     const seen = new Set()
     const next = parsedList.filter((p) => (seen.has(p.fileName) ? false : seen.add(p.fileName))).map((p) => planImport(p, ctx))
       .sort((a, b) => String(a.cols?.started_at ?? '').localeCompare(String(b.cols?.started_at ?? '')))
@@ -75,6 +81,15 @@ export default function RobotMatchImport({ members, batteries, routines, events,
       else out.push({ file: p.fileName, ok: true, text: `${r.data.status === 'merged' ? 'Merged with the Match Sim record' : r.data.status === 'already' ? 'Already imported' : 'Imported'}${(r.data.notes ?? []).length ? `. ${r.data.notes.join(' ')}` : ''}` })
     }
     const okN = out.filter((x) => x.ok).length
+    const names = recallNames()
+    for (const p of ready) {
+      if (!out.some((x) => x.ok && x.file === p.fileName)) continue
+      for (const [role] of ROLES) {
+        const v = choice[p.fileName]?.[role]
+        if (p.cols.crew_typed[role] && v && v !== '__pick' && p.crew[role].status !== 'exact') names[nameKey(p.cols.crew_typed[role])] = v
+      }
+    }
+    keepNames(names)
     setResults(out)
     setMsg(`${okN} of ${out.length} saved${okN < out.length ? '. The rest were not changed.' : '.'}`)
     setPlans((ps) => ps.filter((p) => !out.some((x) => x.ok && x.file === p.fileName)))
@@ -89,17 +104,20 @@ export default function RobotMatchImport({ members, batteries, routines, events,
   }
 
   return (
-    <details className="rm-import" open={!(matches ?? []).length}>
-      <summary>Import robot matches</summary>
-      <p className="ba-muted">Pull every new file from the robot repo ({ROBOT_REPO.repo}/{ROBOT_REPO.dir}), or drop files from the driver station laptop. Nothing is saved until you press Import.</p>
-      <div className="ba-row">
-        <button type="button" className="ba-primary" onClick={pull} disabled={!!busy} data-pull>{busy === 'pull' ? 'Pulling…' : 'Pull from GitHub'}</button>
+    <section className="rm-import" aria-labelledby="rm-import-title">
+      <div className="rm-import-head">
+        <div>
+          <h2 id="rm-import-title">Import robot matches</h2>
+          <p className="ba-muted">After each match: the laptop syncs, then Pull and Import. Two taps. Nothing saves until Import.</p>
+        </div>
+        <button type="button" className="ba-primary" onClick={pull} disabled={!!busy} data-pull>{busy === 'pull' ? 'Pulling…' : 'Pull new matches'}</button>
       </div>
+      {manageLink && <p className="ba-muted"><Link className="ba-link" to={manageLink}>Choose who can import →</Link></p>}
       <label className="rm-drop" data-over={over} onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)}
         onDrop={(e) => { e.preventDefault(); setOver(false); drop(e.dataTransfer?.files) }}>
         <input type="file" accept=".json,application/json" multiple onChange={(e) => { drop(e.target.files); e.target.value = '' }} data-drop />
-        <strong>Drop match files here</strong>
-        <span className="ba-muted">or tap to choose · match-data/matches/*.json</span>
+        <strong>No signal for GitHub? Drop the files here</strong>
+        <span className="ba-muted">or tap to choose · {ROBOT_REPO.dir}/*.json from the laptop</span>
       </label>
       {msg && <p className="ba-msg" role="status">{msg}</p>}
       {!!plans.length && (
@@ -109,7 +127,7 @@ export default function RobotMatchImport({ members, batteries, routines, events,
             if (p.status === 'error') return <li key={p.fileName} className="rm-plan rm-plan-error" data-plan="error"><span className="rm-plan-file">{p.fileName}</span><p>{p.error}</p></li>
             if (p.status === 'already') return <li key={p.fileName} className="rm-plan" data-plan="already"><span className="rm-plan-file">{p.fileName}</span><p className="ba-muted">Already imported. Re-importing changes nothing.</p></li>
             const batteryId = c.battery !== undefined ? c.battery : p.battery.battery?.id ?? ''
-            const driverId = c.driver !== undefined ? c.driver : p.crew.driver.status === 'exact' ? p.crew.driver.member.id : ''
+            const driverId = c.driver !== undefined ? c.driver : ['exact', 'remembered'].includes(p.crew.driver.status) ? p.crew.driver.member.id : ''
             return (
               <li key={p.fileName} className="rm-plan rm-plan-new" data-plan="new" data-file={p.fileName}>
                 <div className="rm-top">
@@ -122,7 +140,7 @@ export default function RobotMatchImport({ members, batteries, routines, events,
                 <div className="rm-plan-links">
                   {ROLES.map(([role, label]) => {
                     const cr = p.crew[role]
-                    const v = c[role] !== undefined ? c[role] : cr.status === 'exact' ? cr.member.id : cr.status === 'confirm' ? '__pick' : ''
+                    const v = c[role] !== undefined ? c[role] : ['exact', 'remembered'].includes(cr.status) ? cr.member.id : cr.status === 'confirm' ? '__pick' : ''
                     return (
                       <label key={role} className="ba-field">
                         <span>{label} {p.cols.crew_typed[role] && <em className="rm-typed">typed “{p.cols.crew_typed[role]}”</em>}</span>
@@ -175,6 +193,6 @@ export default function RobotMatchImport({ members, batteries, routines, events,
         </div>
       )}
       {!!results.length && <ul className="rm-results">{results.map((r) => <li key={r.file}>{r.file}: {r.text}</li>)}</ul>}
-    </details>
+    </section>
   )
 }

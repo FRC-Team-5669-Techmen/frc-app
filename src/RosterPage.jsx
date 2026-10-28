@@ -7,6 +7,7 @@ import { fetchAllRows } from './fetchAllRows'
 import { RoleBadge, roleColor } from './roles'
 import { displayName } from './names'
 import { CAPABILITIES, isStaffRoles, loadAllGrants, setCapability } from './permissions'
+import PermissionHolders from './PermissionHolders'
 import './RosterPage.css'
 
 const ALL_ROLES    = ['student', 'mentor', 'lead', 'admin', 'parent']
@@ -309,6 +310,11 @@ export default function RosterPage() {
       <div className="roster-body">
         {pageError && (
           <p className="roster-page-error" onClick={() => setPageError('')}>{pageError}</p>
+        )}
+
+        {grantState === 'ok' && (
+          <PermissionHolders caps={caps} members={members} grants={grants} saving={saving} onToggle={toggleCapability}
+            focus={new URLSearchParams(window.location.search).get('perm')} />
         )}
 
         <div className="roster-domains">

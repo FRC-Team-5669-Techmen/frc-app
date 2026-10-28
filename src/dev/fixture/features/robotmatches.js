@@ -91,6 +91,8 @@ export default {
     const by = { created_by: ids.mentor, updated_by: ids.mentor }
     const r = (n, f, base) => ({ id: MID(n), source: 'robot_file', ...fromFile(f.name, f.raw, base), ...by, created_at: stamp(1), updated_at: stamp(1) })
     return {
+      // 0038 seeds the capability, so /roster lists Match loggers.
+      capabilities: [{ key: 'robot.matches', label: 'Can log robot matches', description: 'Import robot match files and edit match records: crew, notes, scores. For drive-team leads.', created_at: stamp(24 * 30) }],
       robot_matches: [
         r(1, f1, { driver_id: ids.student2, operator_id: ids.student, battery_id: BID(1), routine_id: AID(1), tower: 'level2', notes_driver: 'Lost the turret lock twice on the far side.', video_url: 'https://www.youtube.com/watch?v=practice1' }),
         r(2, f2, { driver_id: ids.student2, battery_id: BID(2), routine_id: AID(1), scorer_balls_in: 24, notes_pit: 'Brownout at 1:12 on B02. Check the main breaker lead.' }),

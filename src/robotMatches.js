@@ -119,6 +119,21 @@ export function matchMember(typed, members) {
   return { status: candidates.length ? 'confirm' : 'none', member: candidates.length === 1 ? candidates[0] : null, candidates }
 }
 
+/**
+ * matchMember, plus the choices made on earlier imports: once someone picks
+ * who "Sam S" is, the next file typed "Sam S" links to them without asking
+ * (status 'remembered'), so imports between matches stay one tap. remembered:
+ * { [nameKey(typed)]: memberId }; a member who is no longer listed is ignored.
+ */
+export const nameKey = (typed) => norm(typed)
+export function recallMember(typed, members, remembered = {}) {
+  const m = matchMember(typed, members)
+  if (m.status === 'exact' || m.status === 'blank') return m
+  const id = remembered?.[nameKey(typed)]
+  const hit = id ? (members ?? []).find((x) => x.id === id) : null
+  return hit ? { status: 'remembered', member: hit, candidates: [hit] } : m
+}
+
 const batteryKey = (s) => { const m = /^([a-z]*)\s*0*(\d+)$/.exec(norm(s).replace(/ /g, '')); return m ? `${m[1] || 'b'}${m[2]}` : norm(s).replace(/ /g, '') }
 /** B7, b07 and "B 07" are B07. exact or none; never a guess. */
 export function matchBattery(label, batteries) {
@@ -151,11 +166,11 @@ export function eventFor(cols, events) {
  * what needs a confirmation, and the rows it will write. existing: the file
  * names already imported.
  */
-export function planImport(parsed, { members = [], batteries = [], routines = [], events = [], simRows = [], existing = new Set() } = {}) {
+export function planImport(parsed, { members = [], batteries = [], routines = [], events = [], simRows = [], existing = new Set(), remembered = {} } = {}) {
   if (!parsed.ok) return { fileName: parsed.fileName, status: 'error', error: parsed.error }
   if (existing.has(parsed.fileName)) return { fileName: parsed.fileName, status: 'already', cols: parsed.cols }
   const c = parsed.cols
-  const crew = Object.fromEntries(['driver', 'operator', 'coach'].map((role) => [role, matchMember(c.crew_typed[role], members)]))
+  const crew = Object.fromEntries(['driver', 'operator', 'coach'].map((role) => [role, recallMember(c.crew_typed[role], members, remembered)]))
   const battery = matchBattery(c.crew_typed.battery, batteries)
   const routine = matchRoutine(c.auto_name, routines)
   const sim = simCandidate(c, simRows)
@@ -165,13 +180,13 @@ export function planImport(parsed, { members = [], batteries = [], routines = []
     ...(routine.status === 'missing' ? [`auto "${c.auto_name}" is not an auto routine yet`] : [])]
   return {
     fileName: parsed.fileName, status: 'new', cols: c, raw: parsed.raw, crew, battery, routine, sim, event, confirm,
-    writes: { batteryRun: !!battery.battery && !sim?.battery_run_id, driveSession: crew.driver.status === 'exact' || (crew.driver.status === 'confirm' && !!crew.driver.member) },
+    writes: { batteryRun: !!battery.battery && !sim?.battery_run_id, driveSession: ['exact', 'remembered'].includes(crew.driver.status) || (crew.driver.status === 'confirm' && !!crew.driver.member) },
   }
 }
 
 /** The links object 0038's robot_match_import takes, from a plan and the choices made on it. */
 export function importLinks(plan, choice = {}) {
-  const pick = (role) => (choice[role] !== undefined ? choice[role] : plan.crew[role]?.status === 'exact' ? plan.crew[role].member.id : null)
+  const pick = (role) => (choice[role] !== undefined ? choice[role] : ['exact', 'remembered'].includes(plan.crew[role]?.status) ? plan.crew[role].member.id : null)
   const links = { driver: pick('driver'), operator: pick('operator'), coach: pick('coach'), human_player: choice.human_player ?? null,
     battery: choice.battery !== undefined ? choice.battery : plan.battery?.battery?.id ?? null,
     routine: choice.routine !== undefined ? choice.routine : plan.routine?.routine?.id ?? null,
@@ -183,22 +198,28 @@ export function importLinks(plan, choice = {}) {
 
 // ---- trends and comparison ----
 
-/** Balls the robot put in (auto + open hub), or the scorer's count when someone counted. */
-export const ballsIn = (m) => (m.scorer_balls_in ?? (m.auto_balls === null && m.open_balls === null ? null : (m.auto_balls ?? 0) + (m.open_balls ?? 0)))
-/** Shots into a closed hub: they score nothing. */
+/**
+ * Shots the robot fired at an active HUB (auto + open hub), from its own count
+ * of balls leaving the shooter. The robot cannot see whether a ball went in;
+ * nobody counts by hand. null when the robot recorded nothing.
+ */
+export const shots = (m) => ((m.auto_balls ?? null) === null && (m.open_balls ?? null) === null ? null : (m.auto_balls ?? 0) + (m.open_balls ?? 0))
+/** Balls in, only when someone counted them (from video, or on the Match Sim page). Never estimated. */
+export const counted = (m) => m.scorer_balls_in ?? null
+/** Shots fired while our HUB was inactive: they score nothing. */
 export const wasted = (m) => m.closed_balls ?? null
 const mean = (xs) => { const v = xs.filter((x) => x !== null && x !== undefined && Number.isFinite(Number(x))).map(Number); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null }
 const byTime = (a, b) => String(a.started_at).localeCompare(String(b.started_at))
 
-/** Per driver, oldest match first: balls in, wasted shots, ready %, hang time, with averages. A missing number is never 0. */
+/** Per driver, oldest match first: shots at an active HUB, shots at a closed one, ready %, hang time, counted balls in, with averages. A missing number is never 0. */
 export function driverTrends(matches, nameOf = () => '') {
   const out = new Map()
   for (const m of [...(matches ?? [])].sort(byTime)) {
     if (!m.driver_id) continue
     if (!out.has(m.driver_id)) out.set(m.driver_id, { id: m.driver_id, name: nameOf(m.driver_id), points: [] })
-    out.get(m.driver_id).points.push({ id: m.id, at: m.started_at, label: m.match_label, ballsIn: ballsIn(m), wasted: wasted(m), ready: m.ready_pct === null || m.ready_pct === undefined ? null : Number(m.ready_pct), hang: m.hang_at_seconds === null || m.hang_at_seconds === undefined ? null : Number(m.hang_at_seconds) })
+    out.get(m.driver_id).points.push({ id: m.id, at: m.started_at, label: m.match_label, shots: shots(m), counted: counted(m), wasted: wasted(m), ready: m.ready_pct === null || m.ready_pct === undefined ? null : Number(m.ready_pct), hang: m.hang_at_seconds === null || m.hang_at_seconds === undefined ? null : Number(m.hang_at_seconds) })
   }
-  return [...out.values()].map((d) => ({ ...d, matches: d.points.length, avg: { ballsIn: mean(d.points.map((p) => p.ballsIn)), wasted: mean(d.points.map((p) => p.wasted)), ready: mean(d.points.map((p) => p.ready)), hang: mean(d.points.map((p) => p.hang)) } }))
+  return [...out.values()].map((d) => ({ ...d, matches: d.points.length, avg: { shots: mean(d.points.map((p) => p.shots)), counted: mean(d.points.map((p) => p.counted)), wasted: mean(d.points.map((p) => p.wasted)), ready: mean(d.points.map((p) => p.ready)), hang: mean(d.points.map((p) => p.hang)) } }))
     .sort((a, b) => b.matches - a.matches || String(a.name).localeCompare(String(b.name)))
 }
 
@@ -219,7 +240,7 @@ export function batteryTrends(matches, labelOf = () => '') {
 
 /** The rows of a side-by-side comparison: one per metric, one value per match, best marked where higher or lower is better. */
 export const COMPARE_ROWS = Object.freeze([
-  ['ballsIn', 'Balls in', ballsIn, 'high'], ['wasted', 'Into a closed hub', wasted, 'low'], ['passes', 'Passes', (m) => m.passes ?? null, 'high'],
+  ['shots', 'Shots at an active HUB', shots, 'high'], ['wasted', 'Shots at a closed HUB', wasted, 'low'], ['counted', 'Balls in (counted)', counted, 'high'], ['passes', 'Passes', (m) => m.passes ?? null, 'high'],
   ['auto', 'Auto balls', (m) => m.auto_balls ?? null, 'high'], ['ready', 'Ready while RT held %', (m) => (m.ready_pct ?? null) === null ? null : Number(m.ready_pct), 'high'],
   ['hang', 'Hung at (s into teleop)', (m) => (m.hang_at_seconds ?? null) === null ? null : Number(m.hang_at_seconds), 'low'],
   ['bmin', 'Battery minimum V', (m) => (m.battery_min ?? null) === null ? null : Number(m.battery_min), 'high'], ['brownouts', 'Brownouts', (m) => m.brownouts ?? null, 'low'],

@@ -4,7 +4,7 @@ import { supabase } from './supabase'
 import { isSchemaMissing } from './schemaMissing'
 import { displayName } from './names'
 import { CAP_ROBOT_MATCHES } from './permissions'
-import { KINDS, KIND_LABELS, REAL_KINDS, ballsIn, wasted, driverTrends, batteryTrends, compareMatches, filterMatches, fmt } from './robotMatches'
+import { KINDS, KIND_LABELS, REAL_KINDS, shots, counted, wasted, driverTrends, batteryTrends, compareMatches, filterMatches, fmt } from './robotMatches'
 import RobotMatchImport from './RobotMatchImport'
 import './BatteriesPage.css'
 import './RobotMatches.css'
@@ -117,7 +117,7 @@ export default function RobotMatchesPage({ hasRole = () => false }) {
         <span><b>{matches.filter((m) => m.file_name).length}</b>from the robot</span>
         <span>{matches[0] ? `Last ${when(matches[0].started_at)}` : 'None yet'}</span>
       </div>
-      {writer && <RobotMatchImport members={data.members} batteries={data.batteries} routines={data.routines} events={data.events} matches={matches} onDone={load} />}
+      {writer && <RobotMatchImport members={data.members} batteries={data.batteries} routines={data.routines} events={data.events} matches={matches} onDone={load} manageLink={hasRole('admin') ? '/roster?perm=robot.matches' : null} />}
 
       <div className="rm-tabs" role="group" aria-label="View">
         {[['log', 'Log', shown.length], ['trends', 'Trends', null], ['compare', 'Compare', picked.length]].map(([k, l, n]) => (
@@ -154,7 +154,7 @@ export default function RobotMatchesPage({ hasRole = () => false }) {
         <>
           <ul className="rm-list" data-list>
             {shown.map((m) => {
-              const bi = ballsIn(m); const w = wasted(m)
+              const sh = shots(m); const w = wasted(m); const ct = counted(m)
               return (
                 <li key={m.id} className={`rm-item${REAL_KINDS.includes(m.kind) ? ' rm-item-real' : ''}`} data-match={m.match_label}>
                   <label className="rm-pick" title="Compare"><input type="checkbox" checked={picked.includes(m.id)} onChange={() => toggle(m.id)} aria-label={`Compare ${m.match_label}`} /></label>
@@ -167,8 +167,9 @@ export default function RobotMatchesPage({ hasRole = () => false }) {
                     </span>
                     <span className="rm-crew">{[m.driver_id && `Driver ${nameOf(m.driver_id)}`, m.battery_id && `Battery ${labelOf(m.battery_id)}`, m.auto_name].filter(Boolean).join(' · ') || 'No crew linked'}</span>
                     <span className="rm-nums">
-                      <span><b>{fmt(bi)}</b><i>Balls in</i></span>
-                      <span className={w > 0 ? 'rm-bad' : ''}><b>{fmt(w)}</b><i>Closed hub</i></span>
+                      <span><b>{fmt(sh)}</b><i>Shots</i></span>
+                      <span className={w > 0 ? 'rm-bad' : ''}><b>{fmt(w)}</b><i>At closed HUB</i></span>
+                      {ct !== null && <span><b>{fmt(ct)}</b><i>Counted in</i></span>}
                       <span><b>{fmt(m.ready_pct)}</b><i>Ready %</i></span>
                       <span className={m.battery_min !== null && Number(m.battery_min) < 10.5 ? 'rm-bad' : ''}><b>{fmt(m.battery_min, 1)}</b><i>Min V</i></span>
                       <span className={m.brownouts > 0 ? 'rm-bad' : ''}><b>{fmt(m.brownouts)}</b><i>Brownouts</i></span>
@@ -205,7 +206,7 @@ export default function RobotMatchesPage({ hasRole = () => false }) {
               </tbody>
             </table>
           </div>
-          <p className="ba-muted">▲ marks the best value where higher or lower is better. -- means the match has no number for it, never 0.</p>
+          <p className="ba-muted">▲ marks the best value where higher or lower is better. Shots are the robot's own count of balls fired; it cannot see makes. Balls in shows only where someone counted from video. -- means no number, never 0.</p>
         </section>
       ) : <div className="ba-empty"><h2>Pick two or more matches</h2><p>Tick the box beside each match in the Log, then press Compare.</p><button type="button" className="ba-primary" onClick={() => set({ view: '' })}>Go to the log</button></div>)}
 
@@ -216,12 +217,12 @@ export default function RobotMatchesPage({ hasRole = () => false }) {
             <article key={d.id} className="rm-trend" data-driver={d.name}>
               <h3>{d.name}</h3><span className="rm-when">{d.matches} match{d.matches === 1 ? '' : 'es'}</span>
               <div className="rm-nums">
-                <span><b>{fmt(d.avg.ballsIn, 1)}</b><i>Avg balls in</i></span>
-                <span className={d.avg.wasted > 0 ? 'rm-bad' : ''}><b>{fmt(d.avg.wasted, 1)}</b><i>Avg closed hub</i></span>
+                <span><b>{fmt(d.avg.shots, 1)}</b><i>Avg shots</i></span>
+                <span className={d.avg.wasted > 0 ? 'rm-bad' : ''}><b>{fmt(d.avg.wasted, 1)}</b><i>Avg at closed HUB</i></span>
                 <span><b>{fmt(d.avg.ready, 0)}</b><i>Avg ready %</i></span>
                 <span><b>{fmt(d.avg.hang, 1)}</b><i>Avg hung at s</i></span>
               </div>
-              <Spark values={d.points.map((p) => p.ballsIn)} label="Balls in, oldest first" />
+              <Spark values={d.points.map((p) => p.shots)} label="Shots at an active HUB, oldest first" />
               <Spark values={d.points.map((p) => p.ready)} label="Ready %, oldest first" />
             </article>
           ))}</div> : <p className="ba-muted">No match has a driver linked yet.</p>}

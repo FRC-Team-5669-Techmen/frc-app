@@ -49,6 +49,7 @@ export const CAPABILITIES = Object.freeze([
     key: CAP_EVENTS_CREATE,
     label: 'Can add calendar events',
     short: 'Adds events',
+    people: 'Calendar editors',
     hint: 'Add events to the schedule, and edit or delete the ones they added. Cannot mark an event mandatory.',
   }),
   // Seeded by 0014_session_signout.sql (handbook Section 7: students Mr. Pina names).
@@ -56,10 +57,11 @@ export const CAPABILITIES = Object.freeze([
     key: CAP_SIGNOUT_APPROVE,
     label: 'Can approve sign-outs',
     short: 'Approves sign-outs',
+    people: 'Sign-out approvers',
     hint: 'Approve or send back other members\' sign-out requests on /signouts. Never their own.',
   }),
-  Object.freeze({ key: CAP_SCOUTING_MANAGE, label: 'Can manage scouting', short: 'Manages scouting', hint: 'Assign scouts and maintain team data. Parent-only accounts cannot use scouting.' }),
-  Object.freeze({ key: CAP_ROBOT_MATCHES, label: 'Can log robot matches', short: 'Logs robot matches', hint: 'Import robot match files and edit match records: crew, notes, scores. For drive-team leads.' }),
+  Object.freeze({ key: CAP_SCOUTING_MANAGE, label: 'Can manage scouting', short: 'Manages scouting', people: 'Scouting leads', hint: 'Run scouting: assign scouts and shifts, import teams, decide which observation options scouts answer, and maintain team data. Parent-only accounts cannot use scouting.' }),
+  Object.freeze({ key: CAP_ROBOT_MATCHES, label: 'Can log robot matches', short: 'Logs robot matches', people: 'Match loggers', hint: 'Import robot match files and edit match records: crew, notes, scores. For drive-team leads.' }),
 ])
 
 export const STAFF_ROLES = Object.freeze(['mentor', 'lead', 'admin'])

@@ -817,7 +817,7 @@ export default {
   },
   "list_robot_matches": {
    "name": "list_robot_matches",
-   "describe": "The robot match log, newest first, with balls in, shots into a closed hub, ready percent, battery minimum, brownouts and hang time. Filter by kind, event, driver, battery or dates.",
+   "describe": "The robot match log, newest first, with shots at an active and a closed HUB, ready percent, battery minimum, brownouts and hang time. Filter by kind, event, driver, battery or dates.",
    "say": [
     "show the robot matches",
     "how did Riley drive this week",

@@ -68,3 +68,21 @@ readable by Claude, before Beach Blitz (Oct 30 to Nov 1).
 - **Decision 52:** should match performance count toward the Driver Score?
   Default no; trends only.
 - Who gets `robot.matches` (drive-team leads). Staff can import today.
+
+## Follow-up the same day (Mr. Pina's answers)
+
+- **Nobody counts balls.** The robot's numbers are shots fired (it cannot see
+  makes), so every label now says shots: "Shots at an active HUB" and "Shots
+  at a closed HUB". "Balls in" appears only where someone counted from video.
+  Decision 52 reworded to match.
+- **Cycle time between matches.** The import panel is always on top of the
+  log: Pull new matches, then Import. A typed crew name chosen once is
+  remembered on that device, so later files need no choice.
+- **Who can do what** on `/roster`: one card per permission (Scouting leads,
+  Match loggers, Sign-out approvers, Calendar editors) with holders as chips
+  and an Add someone list. Scouting and the Match log link admins straight
+  to their card.
+- Through the connector, at his word: Can log robot matches granted to the
+  drive team (Mathias Garcia, Julian Romo, Matthew Perez), and his five
+  observation ideas filed as requests for the scouting lead (Passes balls,
+  Passes from, Passes land where aimed, Plays defense, Handles HUB shifts).

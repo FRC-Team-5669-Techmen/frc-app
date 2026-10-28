@@ -16,7 +16,7 @@ import { leaderboard as hpLeaderboard, HP_RULES, needsText as hpNeedsText } from
 import { AUTO_READY_STREAK, RATE_WINDOW, resultLabel, routineBoard } from '../../../src/autos.js'
 import { boardView, roleLabel } from '../../../src/roleBoard.js'
 import { roleRuleIssues } from '../../../src/roleRules.js'
-import { KIND_LABELS, REAL_KINDS, ballsIn, wasted, filterMatches, driverTrends, batteryTrends, compareMatches, notReadyReasons, parseMatchFile, planImport, importLinks, listRobotFiles, rawFileUrl } from '../../../src/robotMatches.js'
+import { KIND_LABELS, REAL_KINDS, shots, counted, wasted, filterMatches, driverTrends, batteryTrends, compareMatches, notReadyReasons, parseMatchFile, planImport, importLinks, listRobotFiles, rawFileUrl } from '../../../src/robotMatches.js'
 import { groupByTeam, tagLabel } from '../../../src/meetTeam.js'
 
 export class UnknownTool extends Error {}
@@ -112,7 +112,7 @@ function robotMatchLine(m, c) {
     from: m.source === 'both' ? 'robot file and Match Sim' : m.source === 'sim_page' ? 'Match Sim only' : 'robot file',
     alliance: m.alliance, driver: m.driver_id ? c.nameOf(m.driver_id) : null, operator: m.operator_id ? c.nameOf(m.operator_id) : null, coach: m.coach_id ? c.nameOf(m.coach_id) : null,
     human_player: m.human_player_id ? c.nameOf(m.human_player_id) : null, battery: m.battery_id ? c.labelOf(m.battery_id) : null, auto: (m.routine_id && c.routineOf(m.routine_id)) || m.auto_name || null,
-    balls_in: ballsIn(m), closed_hub: wasted(m), passes: m.passes, auto_balls: m.auto_balls, ready_pct: m.ready_pct, hang_at_s: m.hang_at_seconds,
+    shots: shots(m), shots_at_closed_hub: wasted(m), balls_in_counted: counted(m), passes: m.passes, auto_balls: m.auto_balls, ready_pct: m.ready_pct, hang_at_s: m.hang_at_seconds,
     battery_volts: { start: m.battery_start, min: m.battery_min, end: m.battery_end }, brownouts: m.brownouts, distance_m: m.distance_m, seconds: m.duration_s,
     tower: m.tower, score: m.match_score, rp: m.ranking_points,
   }
@@ -644,10 +644,10 @@ const READS = {
       status: 'ok', count: shown.length, listed: Math.min(limit, shown.length),
       matches: shown.slice(0, limit).map((m) => robotMatchLine(m, ctxm)),
       ...(a.trends ? {
-        drivers: driverTrends(shown, ctxm.nameOf).map((d) => ({ driver: d.name, matches: d.matches, avg_balls_in: round1(d.avg.ballsIn), avg_closed_hub: round1(d.avg.wasted), avg_ready_pct: round1(d.avg.ready), avg_hang_s: round1(d.avg.hang), balls_in_by_match: d.points.map((p) => p.ballsIn) })),
+        drivers: driverTrends(shown, ctxm.nameOf).map((d) => ({ driver: d.name, matches: d.matches, avg_shots: round1(d.avg.shots), avg_shots_at_closed_hub: round1(d.avg.wasted), avg_balls_in_counted: round1(d.avg.counted), avg_ready_pct: round1(d.avg.ready), avg_hang_s: round1(d.avg.hang), shots_by_match: d.points.map((p) => p.shots) })),
         batteries: batteryTrends(shown, ctxm.labelOf).map((b) => ({ battery: b.label, matches: b.runs, lowest_volts: b.lowest, avg_min_volts: round1(b.avgMin), brownouts: b.brownouts, min_volts_by_match: b.points.map((p) => p.min) })),
       } : {}),
-      note: 'Balls in is the scorer count when someone counted, else the robot count (auto plus open hub). A blank number means not recorded, never zero.',
+      note: 'shots is the robot\'s own count of balls fired at an active HUB (auto plus open); it cannot see makes. balls_in_counted is set only where someone counted from video. A blank number means not recorded, never zero.',
     }
   },
 

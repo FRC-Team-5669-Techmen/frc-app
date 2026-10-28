@@ -25,7 +25,7 @@ import { robotFile } from '../../../src/dev/fixture/features/robotmatches.js'
 const PRE_0038 = `${PRE_0014},${Array.from({ length: 24 }, (_, i) => String(14 + i).padStart(4, '0')).join(',')}`
 const laWall = (iso, plusMs = 0) => new Date(Date.parse(iso) + plusMs).toLocaleString('sv-SE', { timeZone: 'America/Los_Angeles' }).replace(' ', 'T')
 const fileName = (wall, kind, n) => `${wall.slice(0, 10).replace(/-/g, '')}-${wall.slice(11, 19).replace(/:/g, '')}_${kind}_${n}.json`
-const ballsIn = (m) => m.scorer_balls_in ?? ((m.auto_balls ?? 0) + (m.open_balls ?? 0))
+const shots = (m) => (m.auto_balls ?? 0) + (m.open_balls ?? 0)
 
 export default {
   async run(t) {
@@ -44,7 +44,9 @@ export default {
     t.check('the fixture seeded robot files and a Match Sim row for the oracle', store.length >= 5 && store.some((m) => m.source === 'sim_page'), `${store.length} rows`)
     t.eq('every match is listed, newest first', await t.texts('.rm-item .rm-label'), newest.map((m) => m.match_label))
     const p2 = store.find((m) => m.match_label === 'practice 2')
-    t.eq('practice 2 shows the scorer count as balls in (24), not the robot count', await t.page.locator('.rm-item[data-match="practice 2"] .rm-nums b').first().textContent(), String(ballsIn(p2)))
+    t.eq('practice 2 shows the robot shot count (auto + open HUB) first, never the counted number', await t.page.locator('.rm-item[data-match="practice 2"] .rm-nums b').first().textContent(), String(shots(p2)))
+    t.eq('and its counted balls in (24) beside it; practice 1, never counted, shows no counted cell (1 against 0)',
+      [await t.count('.rm-item[data-match="practice 2"] .rm-nums i:text-is("Counted in")'), await t.count('.rm-item[data-match="practice 1"] .rm-nums i:text-is("Counted in")')], [1, 0])
     t.eq('a student has no import panel (0, against 1 for a mentor below)', await t.count('.rm-import'), 0)
     await t.noHScroll()
     await t.tapTargets('.rm-wrap .rm-tab, .rm-wrap .rm-pick, .rm-wrap .rm-open', 'log controls at least 44px')
@@ -71,9 +73,9 @@ export default {
       await t.press(t.page.locator('[data-compare]'))
       await t.waitFor('[data-compare-table]')
       const p1 = store.find((m) => m.match_label === 'practice 1')
-      const cells = await t.texts('tr[data-row="ballsIn"] td')
-      t.eq('Balls in row reads practice 1 then practice 2, from the store', cells, [String(ballsIn(p1)), String(ballsIn(p2))])
-      t.eq('the higher one is marked best (1 cell)', await t.texts('tr[data-row="ballsIn"] td.rm-best'), [String(Math.max(ballsIn(p1), ballsIn(p2)))])
+      const cells = await t.texts('tr[data-row="shots"] td')
+      t.eq('Shots row reads practice 1 then practice 2, from the store', cells, [String(shots(p1)), String(shots(p2))])
+      t.eq('the higher one is marked best (1 cell)', await t.texts('tr[data-row="shots"] td.rm-best'), [String(Math.max(shots(p1), shots(p2)))])
       t.eq('Brownouts: the lower is best', await t.texts('tr[data-row="brownouts"] td.rm-best'), [String(Math.min(p1.brownouts, p2.brownouts))])
       await t.noHScroll('the compare table scrolls in its own box, not the page')
       await t.shot('compare')
@@ -129,7 +131,6 @@ export default {
       await t.page.route('https://raw.githubusercontent.com/**', (r) => { const n = decodeURIComponent(r.request().url().split('/').pop()); return files[n] ? r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(files[n]) }) : r.fulfill({ status: 404, body: '' }) })
       await t.open('/robot/matches', { persona: 'mentor', mig: 'all', ready: '.rm-item' })
       t.eq('a mentor has the import panel (1, against 0 for a student)', await t.count('.rm-import'), 1)
-      if (!(await t.page.locator('.rm-import').evaluate((d) => d.open))) await t.press(t.page.locator('.rm-import summary'))
       const before = { rows: (await t.rows('robot_matches')).length, runs: (await t.rows('battery_runs')).length, drive: (await t.rows('drive_sessions')).length }
       await t.press(t.page.locator('[data-pull]'))
       await t.waitFor('[data-plan="new"]')
@@ -164,12 +165,15 @@ export default {
       const wall = laWall(store.find((m) => m.source === 'sim_page').started_at, -9 * 3600e3)
       const name = fileName(wall, 'auto_test', 11)
       const before = (await t.rows('robot_matches')).length
-      await t.page.locator('input[data-drop]').setInputFiles([{ name, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(robotFile({ kind: 'auto_test', startedAt: wall, robotMatch: 11, autoName: 'Two-piece left', duration: 20 }))) }])
+      await t.page.locator('input[data-drop]').setInputFiles([{ name, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(robotFile({ kind: 'auto_test', startedAt: wall, robotMatch: 11, autoName: 'Two-piece left', duration: 20, driver: 'Sam S' }))) }])
       await t.waitFor(`[data-file="${name}"]`)
+      t.eq('"Sam S" was chosen once, so this file links Sam with no choice to make (Import enabled at once)',
+        [await t.page.locator(`[data-file="${name}"] select[data-role="driver"]`).inputValue(), await t.page.locator('[data-import]').isDisabled()], [P.student.id, false])
       await t.press(t.page.locator('[data-import]'))
       await t.waitText('1 of 1 saved')
       await t.settle()
-      t.eq('the dropped auto test is one new row', (await t.rows('robot_matches')).length - before, 1)
+      const rows2 = await t.rows('robot_matches')
+      t.eq('the dropped auto test is one new row, driven by Sam', [rows2.length - before, rows2.find((m) => m.file_name === name)?.driver_id], [1, P.student.id])
     })
 
     await t.step('mentor note', async () => {
@@ -182,6 +186,33 @@ export default {
       await t.press(t.page.locator('[data-save]'))
       await t.waitText('Saved.')
       t.eq('the pit note is in the store', (await t.rows('robot_matches')).find((m) => m.id === p2now.id)?.notes_pit, 'Swap the main breaker lead before qm1.')
+    })
+
+    await t.step('who can import', async () => {
+      t.as('admin assigns')
+      await t.open('/roster?perm=robot.matches', { persona: 'admin', mig: 'all', ready: '[data-perm="robot.matches"]' })
+      const capRows = await t.rows('capabilities')
+      t.eq(`the Match loggers card opens focused, one card per permission in the database (${capRows.length})`, [await t.count('[data-perm="robot.matches"].focus'), await t.count('.roster-holder-card')], [1, capRows.length])
+      t.eq('nobody holds it yet', await t.count('[data-perm="robot.matches"] [data-holder]'), 0)
+      await t.page.locator('[data-perm="robot.matches"] select').selectOption({ label: 'Riley' })
+      await t.waitFor('[data-perm="robot.matches"] [data-holder="Riley"]')
+      await t.settle()
+      const has = async () => (await t.rows('member_permissions')).some((r) => r.member_id === P.student2.id && r.capability === 'robot.matches')
+      t.eq('one pick adds Riley: chip shown and the grant in the store', await has(), true)
+      await t.tapTargets('.roster-holder-card select, .roster-holder-remove', 'permission controls at least 44px or 40px chips', { min: 40 })
+      await t.shot('who-can-import')
+      await t.press(t.page.locator('[data-perm="robot.matches"] [data-holder="Riley"] button'))
+      await t.waitFor('[data-perm="robot.matches"] [data-holder="Riley"]', { state: 'detached' })
+      await t.settle()
+      t.eq('one tap removes her again', await has(), false)
+      await t.open('/robot/matches', { persona: 'admin', mig: 'all', ready: '.rm-import' })
+      t.eq('the match log links an admin straight to it (1)', await t.count('.rm-import a[href="/roster?perm=robot.matches"]'), 1)
+      await t.open('/robot/matches', { persona: 'mentor', mig: 'all', ready: '.rm-import' })
+      t.eq('a mentor who is not an admin gets no such link (0)', await t.count('.rm-import a[href="/roster?perm=robot.matches"]'), 0)
+      await t.open('/scouting/16000000-0000-4000-8000-000000000001', { persona: 'admin', mig: 'all', ready: '[data-leads-link]' })
+      t.eq('Scouting links an admin to choose scouting leads (1)', await t.count('[data-leads-link] a[href="/roster?perm=scouting.manage"]'), 1)
+      await t.open('/scouting/16000000-0000-4000-8000-000000000001', { persona: 'mentor', mig: 'all', ready: '.sc-card' })
+      t.eq('and a mentor who is not an admin gets none (0)', await t.count('[data-leads-link]'), 0)
     })
 
     await t.step('parent', async () => {

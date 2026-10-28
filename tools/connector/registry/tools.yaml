@@ -307,7 +307,7 @@ list_batteries:
     battery: {type: string, describe: "One battery's label, such as B07, for its recent runs"}
 
 list_robot_matches:
-  describe: The robot match log, newest first, with balls in, shots into a closed hub, ready percent, battery minimum, brownouts and hang time. Filter by kind, event, driver, battery or dates.
+  describe: The robot match log, newest first, with shots at an active and a closed HUB, ready percent, battery minimum, brownouts and hang time. Filter by kind, event, driver, battery or dates.
   say: ["show the robot matches", "how did Riley drive this week", "which matches browned out", "list the real matches at Beach Blitz", "matches on battery B07"]
   kind: read
   args:

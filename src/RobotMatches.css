@@ -81,8 +81,11 @@
 
 /* Import */
 .rm-import { margin: 0 0 1rem; padding: 0.25rem 0.9rem 0.9rem; background: var(--surface); border: 1px solid var(--gold-dim); border-radius: var(--radius); }
-.rm-import > summary { min-height: 44px; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
-.rm-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem; min-height: 6.5rem; margin: 0.5rem 0; padding: 0.9rem; text-align: center; color: var(--steel); background: var(--bg); border: 1px dashed var(--border-strong); border-radius: var(--radius); cursor: pointer; }
+.rm-import-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem 1rem; padding-top: 0.65rem; }
+.rm-import-head h2 { margin: 0; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+.rm-import-head p { margin: 0.2rem 0 0; }
+.rm-import-head .ba-primary { flex: 0 0 auto; }
+.rm-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem; min-height: 4.5rem; margin: 0.6rem 0; padding: 0.9rem; text-align: center; color: var(--steel); background: var(--bg); border: 1px dashed var(--border-strong); border-radius: var(--radius); cursor: pointer; }
 .rm-drop[data-over="true"], .rm-drop:focus-within { border-color: var(--gold); color: var(--text); }
 .rm-drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .rm-plans { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.6rem; }
