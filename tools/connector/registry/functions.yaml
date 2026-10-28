@@ -170,6 +170,10 @@ robot_match_fill_official:
   describe: Fill a robot match's alliance score and ranking points from the event's Blue Alliance results. Always asks first.
   level: confirm
 
+battery_import_load_tests:
+  describe: Import the robot's pit battery load tests (battery-history.csv) as bench test runs with the robot-measured resistance, once per battery and time. Always asks first.
+  level: confirm
+
 battery_log_run:
   describe: Log one use of a battery with its voltages, resistance, minutes and whether it browned out. Always asks first.
   level: confirm

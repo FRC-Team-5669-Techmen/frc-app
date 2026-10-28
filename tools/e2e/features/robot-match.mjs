@@ -15,14 +15,20 @@
  *    must be chosen first; Import writes one new row and merges one, logs a
  *    battery run and drive time per file, and a second pull imports nothing;
  *  - a dropped file imports; a mentor's pit note saves;
+ *  - power (0041, ledger 0031): the brownout match shows rested volts, robot
+ *    resistance, the lowest moment and what drew it, the brownout snapshot,
+ *    sticky faults and the verdict; the healthy match shows OK; before 0041
+ *    the section still reads the stored file; an imported file with power
+ *    writes its rested voltage and robot R into the battery run;
  *  - a parent-only account reads nothing.
  * Write-side RLS is proven by 0038_robot_match_log_rls_test.sql and
  * tools/sql-harness/mutants-0038.mjs, not here.
  */
 import { P, PRE_0014 } from './_util.mjs'
-import { robotFile } from '../../../src/dev/fixture/features/robotmatches.js'
+import { robotFile, robotPower } from '../../../src/dev/fixture/features/robotmatches.js'
 
 const PRE_0038 = `${PRE_0014},${Array.from({ length: 24 }, (_, i) => String(14 + i).padStart(4, '0')).join(',')}`
+const PRE_0041 = `${PRE_0038},0038,0040`
 const laWall = (iso, plusMs = 0) => new Date(Date.parse(iso) + plusMs).toLocaleString('sv-SE', { timeZone: 'America/Los_Angeles' }).replace(' ', 'T')
 const fileName = (wall, kind, n) => `${wall.slice(0, 10).replace(/-/g, '')}-${wall.slice(11, 19).replace(/:/g, '')}_${kind}_${n}.json`
 const shots = (m) => (m.auto_balls ?? 0) + (m.open_balls ?? 0)
@@ -113,6 +119,30 @@ export default {
       await t.shot('detail')
     })
 
+    await t.step('power', async () => {
+      t.as('student power')
+      const p2 = store.find((m) => m.match_label === 'practice 2')
+      const pw = p2.raw.power
+      await t.open(`/robot/matches/${p2.id}`, { persona: 'student', mig: 'all', ready: '[data-power]' })
+      t.eq('rested volts and robot mOhm from the file', [await t.text('[data-power-stat="rest"] b'), await t.text('[data-power-stat="robot-r"] b')], [pw.restVoltsBefore.toFixed(2), pw.resistanceMilliOhm.toFixed(1)])
+      t.eq('what drew the current at the lowest moment: one bar per mechanism, largest first',
+        await t.texts('[data-power-draw] .rm-bar > span:first-child'), Object.entries(pw.topDrawAtMin).sort((a, b) => b[1] - a[1]).map(([k]) => k))
+      t.eq('one brownout snapshot per snapshot in the file, and the sticky faults listed', [await t.count('[data-power-snaps] li'), await t.count('[data-power-sticky] li')], [pw.brownoutSnapshots.length, pw.stickyFaults.length])
+      t.check('the verdict reads Robot draw', (await t.text('[data-power-verdict]')).includes('Robot draw'))
+      await t.noHScroll()
+      await t.shot('power-brownout')
+      const p1 = store.find((m) => m.match_label === 'practice 1')
+      await t.open(`/robot/matches/${p1.id}`, { persona: 'student', mig: 'all', ready: '[data-power]' })
+      t.eq('the healthy match: no snapshot list, against one above, and the verdict OK', [await t.count('[data-power-snaps]'), (await t.text('[data-power-verdict]')).includes('OK')], [0, true])
+      const p3 = store.find((m) => m.match_label === 'practice 3')
+      await t.open(`/robot/matches/${p3.id}`, { persona: 'student', mig: 'all', ready: '[data-power]' })
+      t.eq('a file from before the power section says so (no numbers)', [await t.page.locator('[data-power]').getAttribute('data-power'), await t.count('[data-power-stat]')], ['none', 0])
+      t.as('mig without 0041')
+      await t.open(`/robot/matches/${p2.id}`, { persona: 'student', mig: PRE_0041, reset: true, ready: '[data-power]' })
+      t.eq('before 0041 the power section still reads the stored file (same robot mOhm)', await t.text('[data-power-stat="robot-r"] b'), pw.resistanceMilliOhm.toFixed(1))
+      await t.open('/robot/matches', { persona: 'student', mig: 'all', reset: true, ready: '.rm-item' })
+    })
+
     await t.step('mentor pulls from GitHub', async () => {
       t.as('mentor import')
       const sim = store.find((m) => m.source === 'sim_page')
@@ -124,7 +154,7 @@ export default {
       const files = {
         [done.file_name]: done.raw,
         [mergeName]: robotFile({ startedAt: simWall, robotMatch: 7, alliance: 'blue', driver: 'Riley', battery: 'B05', open: 14, auto: 1 }),
-        [pickName]: robotFile({ startedAt: pickWall, robotMatch: 8, driver: 'Sam S', battery: 'B01', autoName: 'Mystery auto', open: 9 }),
+        [pickName]: robotFile({ startedAt: pickWall, robotMatch: 8, driver: 'Sam S', battery: 'B01', autoName: 'Mystery auto', open: 9, start: 13.4, extra: { power: robotPower({ rest: 12.88, r: 17.2, min: 10.4 }) } }),
         'broken_9.json': { hello: 'world' },
       }
       await t.page.route('https://api.github.com/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(Object.keys(files).map((name) => ({ type: 'file', name, download_url: `https://raw.githubusercontent.com/x/y/main/match-data/matches/${name}` }))) }))
@@ -153,6 +183,10 @@ export default {
       const picked = rows.find((m) => m.file_name === pickName)
       t.check('the chosen driver is Sam, and the new routine is linked', picked?.driver_id === P.student.id && (await t.rows('auto_routines')).some((r) => r.id === picked?.routine_id && r.name === 'Mystery auto'), JSON.stringify({ d: picked?.driver_id, r: picked?.routine_id }))
       t.eq('one battery run per file (2)', (await t.rows('battery_runs')).length - before.runs, 2)
+      const pickedRun = (await t.rows('battery_runs')).find((r) => r.id === picked?.battery_run_id)
+      t.check('the file with power: its run takes the rested 12.88 V (not the 13.4 start) and robot 17.2 mOhm, with the Beak column blank',
+        Number(pickedRun?.voltage_before) === 12.88 && Number(pickedRun?.robot_resistance_mohm) === 17.2 && pickedRun?.resistance_mohm === null && Number(picked?.robot_resistance_mohm) === 17.2,
+        JSON.stringify({ vb: pickedRun?.voltage_before, r: pickedRun?.robot_resistance_mohm, beak: pickedRun?.resistance_mohm }))
       t.eq('one drive session per file (2)', (await t.rows('drive_sessions')).length - before.drive, 2)
       await t.press(t.page.locator('[data-pull]'))
       await t.settle()

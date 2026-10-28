@@ -4,7 +4,8 @@ import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import { isSchemaMissing } from './schemaMissing'
 import { downloadText } from './download'
-import { KIND_LABELS, REAL_KINDS, shots, counted, wasted, notReadyReasons, fmt } from './robotMatches'
+import { KIND_LABELS, REAL_KINDS, shots, counted, wasted, notReadyReasons, fmt, readPower } from './robotMatches'
+import { robotLevel, restLevel, verdictItems, verdictText, LEVEL_LABELS, ROBOT_R } from './batteries'
 import { loadMatchLog, useMatchWriter } from './RobotMatchesPage'
 import './BatteriesPage.css'
 import './RobotMatches.css'
@@ -12,6 +13,9 @@ import './RobotMatches.css'
 // One robot match (0038, ledger 0028): the scorecard, the battery by phase,
 // why the shooter was not ready, the timeline, the crew, and the notes and
 // video people add. Writers (staff, robot.matches) edit the people's fields.
+// Power (0041, ledger 0031): read from the row's power column, or from the
+// stored file itself before 0041 is applied (raw is kept whole), so the
+// section never depends on the migration.
 
 const when = (iso) => new Date(iso).toLocaleString('en-US', { weekday: undefined, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
 const TOWER = [['', 'Not recorded'], ['none', 'No climb'], ['level1', 'LEVEL 1'], ['level2', 'LEVEL 2'], ['level3', 'LEVEL 3'], ['failed', 'Tried, failed']]
@@ -33,6 +37,78 @@ function Bars({ items, unit, digits = 1, low }) {
         </li>
       ))}
     </ul>
+  )
+}
+
+const lvl = (k) => (k ? ` ba-lvl-${k}` : '')
+const at = (s) => (s === null ? '--' : `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, '0')}`)
+
+/** What the robot measured about power: was a dip the battery or the robot. */
+function PowerSection({ power: p, hasFile, battery }) {
+  if (!p) {
+    return (
+      <section className="rm-section" data-power="none">
+        <h2>Power</h2>
+        <p className="ba-muted">{hasFile ? 'This file has no power section (robot code from before Oct 28).' : 'Only the robot file records power.'}</p>
+      </section>
+    )
+  }
+  const items = verdictItems(p.verdict)
+  return (
+    <section className="rm-section" data-power>
+      <h2>Power{battery ? ` · ${battery}` : ''}</h2>
+      {items.length > 0 && (
+        <ul className="ba-vlist rm-verdict" data-power-verdict>
+          {items.map((x, i) => <li key={i} className={`ba-vitem-${x.key}`}>{x.label && <b>{x.label}</b>} {verdictText(x)}</li>)}
+        </ul>
+      )}
+      <div className="rm-score rm-power-nums">
+        <div className={lvl(restLevel(p.restVolts))} data-power-stat="rest"><b>{fmt(p.restVolts, 2)}</b><i>Rested before, V</i>{p.restVolts !== null && <span className="ba-muted rm-note">{LEVEL_LABELS[restLevel(p.restVolts)]}</span>}</div>
+        <div className={lvl(robotLevel(p.resistance))} data-power-stat="robot-r"><b>{fmt(p.resistance, 1)}</b><i>Robot mΩ</i><span className="ba-muted rm-note">battery + wiring{p.fits !== null ? ` · ${fmt(p.fits)} fits` : ''}</span></div>
+        <div className={p.minVolts !== null && p.minVolts < 8 ? ' rm-bad' : ''}><b>{fmt(p.minVolts, 2)}</b><i>Lowest V</i>{(p.rioMinVolts !== null) && <span className="ba-muted rm-note">roboRIO {fmt(p.rioMinVolts, 2)}</span>}</div>
+        <div><b>{fmt(p.ampsAtMin)}</b><i>Amps at lowest</i></div>
+        <div><b>{fmt(p.peakAmps)}</b><i>Peak amps</i></div>
+        <div className={p.dipsBelow7V > 0 ? 'rm-bad' : ''}><b>{fmt(p.dipsBelow7V)}</b><i>Dips under 7 V</i></div>
+        <div className={p.brownouts > 0 ? 'rm-bad' : ''}><b>{fmt(p.brownouts)}</b><i>Brownouts</i></div>
+        <div><b>{fmt(p.ampHours, 2)}</b><i>Amp-hours</i></div>
+      </div>
+      <div className="rm-cols">
+        <div data-power-draw>
+          <h3 className="ba-h3">Drawing at the lowest moment</h3>
+          {p.topDraw.length ? <Bars items={p.topDraw.map((x) => ({ label: x.mechanism, value: x.amps }))} unit=" A" digits={0} /> : <p className="ba-muted">Not recorded.</p>}
+        </div>
+        {p.branchDrop.length > 0 && (
+          <div data-power-branch>
+            <h3 className="ba-h3">Branch drop at the lowest moment</h3>
+            <Bars items={p.branchDrop.map((x) => ({ label: x.mechanism, value: x.volts }))} unit=" V" digits={2} />
+            <p className="ba-muted">One mechanism far above the rest: that branch (its breaker, PDH terminal or wire).</p>
+          </div>
+        )}
+      </div>
+      {p.snapshots.length > 0 && (
+        <>
+          <h3 className="ba-h3">Brownouts <span className="hud-tnum">{p.snapshots.length}</span></h3>
+          <ol className="rm-snaps" data-power-snaps>
+            {p.snapshots.map((x, i) => (
+              <li key={i}>
+                <b className="hud-tnum">{x.lowestVolts === null ? '--' : `${fmt(x.lowestVolts, 2)} V`}</b>
+                <span className="hud-mono">{x.matchTime !== null ? `match clock ${at(x.matchTime)}` : `t ${fmt(x.t, 1)} s`}</span>
+                <span>{x.amps === null ? '--' : `${fmt(x.amps)} A`}{x.topDraw.length ? `: ${x.topDraw.map((d) => `${d.mechanism} ${fmt(d.amps)}`).join(', ')}` : ''}</span>
+                {x.resistance !== null && <span className={`hud-mono${lvl(robotLevel(x.resistance))}`}>R {fmt(x.resistance, 1)} mΩ</span>}
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+      {p.stickyFaults.length > 0 && (
+        <>
+          <h3 className="ba-h3">Motor controllers that saw their supply sag</h3>
+          <ul className="rm-sticky" data-power-sticky>{p.stickyFaults.map((x, i) => <li key={i}><b>{x.device}</b> {x.faults.join(', ')}</li>)}</ul>
+          <p className="ba-muted">One or two alone: their own branch. Many at once: the main path or the battery.</p>
+        </>
+      )}
+      <p className="ba-muted">Robot mΩ includes the main wiring, so it reads 5 to 10 above a Battery Beak. Over {ROBOT_R.PULL_OVER}: compare on the battery board.{p.sameBatteryAsLastMatch === true ? ' Same battery as the last match: it did not rest between.' : ''}</p>
+    </section>
   )
 }
 
@@ -141,6 +217,8 @@ export default function RobotMatchPage({ hasRole = () => false }) {
           {raw?.drive && <p className="ba-muted">Defense {fmt(raw.drive.defenseSeconds)} s · top speed {fmt(raw.drive.topSpeedMps, 1)} m/s · peak drive current {fmt(raw.drive.driveSupplyAmpsPeak)} A</p>}
         </section>
       </div>
+
+      <PowerSection power={readPower(m.power ?? raw?.power ?? null)} hasFile={!!raw} battery={bat?.label} />
 
       <section className="rm-section" data-timeline>
         <h2>Timeline</h2>

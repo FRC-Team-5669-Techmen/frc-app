@@ -108,3 +108,21 @@
   .rm-timeline li { grid-template-columns: 2.75rem minmax(0, 1fr); }
   .rm-timeline li > span:nth-child(2) { display: none; }
 }
+
+/* Power (0041, ledger 0031): the verdict list and level colors come from
+   BatteriesPage.css (.ba-vlist, .ba-lvl-*); these lay them out here. */
+.rm-verdict { margin: 0 0 0.75rem; }
+.rm-power-nums { margin-bottom: 0.6rem; }
+.rm-power-nums .ba-lvl-ok { box-shadow: inset 3px 0 0 var(--ok); }
+.rm-power-nums .ba-lvl-ok b { color: var(--ok); }
+.rm-power-nums .ba-lvl-watch { box-shadow: inset 3px 0 0 var(--warn); }
+.rm-power-nums .ba-lvl-watch b { color: var(--warn); }
+.rm-power-nums .ba-lvl-pull { border-color: var(--fault); box-shadow: inset 3px 0 0 var(--fault); }
+.rm-power-nums .ba-lvl-pull b { color: var(--fault); }
+.rm-note { display: block; margin: 0; font-size: 0.72rem; }
+.rm-snaps, .rm-sticky { list-style: none; margin: 0 0 0.5rem; padding: 0; display: grid; gap: 0.35rem; }
+.rm-snaps li { display: flex; flex-wrap: wrap; gap: 0.2rem 0.75rem; align-items: baseline; padding: 0.45rem 0.6rem; background: var(--bg); border: 1px solid var(--border); border-left: 3px solid var(--fault); border-radius: var(--radius-sm); font-size: 0.88rem; overflow-wrap: anywhere; }
+.rm-snaps b { font-family: var(--font-ui); font-size: 1.05rem; color: var(--fault); }
+.rm-snaps .hud-mono { font-size: 0.75rem; color: var(--steel); }
+.rm-sticky li { font-size: 0.88rem; color: var(--steel); }
+.rm-sticky b { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text); margin-right: 0.35rem; }

@@ -292,3 +292,143 @@ export async function listRobotFiles(fetchImpl = globalThis.fetch) {
 }
 
 export const fmt = (v, digits = 0) => (v === null || v === undefined || !Number.isFinite(Number(v)) ? '--' : Number(v).toFixed(digits))
+
+// ---- power (migration 0041, ledger 0031) ----
+//
+// The robot's "power" object (subsystems/PowerMonitor.java matchFinished):
+// rested voltage before the match, resistance of battery PLUS the robot's
+// main wiring fitted from its own load, the lowest moment and what drew the
+// current then, brownout snapshots, and a verdict. The robot code is still
+// growing, so every field is optional and unknown ones are kept. Older files
+// have no "power" at all.
+
+/** column -> field of `power`. 0041's _rm_extract_power reads exactly these (tests hold them equal). */
+export const POWER_COLUMN_PATHS = Object.freeze([
+  ['rest_volts_before', 'restVoltsBefore'], ['robot_resistance_mohm', 'resistanceMilliOhm'], ['min_volts', 'minVolts'],
+  ['amps_at_min', 'ampsAtMin'], ['peak_amps', 'peakAmps'], ['dips_below_7v', 'dipsBelow7V'],
+])
+const inRange = (v, lo, hi) => (v !== null && v >= lo && v <= hi ? v : null)
+const int = (v) => (v !== null && Math.abs(v) < 1e6 ? Math.round(v) : null)
+
+/** The power object of a file (or a stored row's raw), or null. */
+export const powerOf = (raw) => (raw && typeof raw.power === 'object' && raw.power && !Array.isArray(raw.power) ? raw.power : null)
+
+/** The typed power columns, the same rules as 0041's _rm_extract_power: out of range or not a number is null, never 0. */
+export function powerColumns(raw) {
+  const p = powerOf(raw)
+  const g = (k) => num(p?.[k])
+  return {
+    power: p,
+    rest_volts_before: inRange(g('restVoltsBefore'), 0, 16),
+    robot_resistance_mohm: inRange(g('resistanceMilliOhm'), 0, 500),
+    min_volts: inRange(g('minVolts'), 0, 16) ?? inRange(g('pdhMinVolts'), 0, 16),
+    amps_at_min: int(g('ampsAtMin')),
+    peak_amps: int(g('peakAmps')),
+    dips_below_7v: int(g('dipsBelow7V')),
+    verdict: text(p?.verdict, 2000),
+  }
+}
+
+const sortedEntries = (o) => (o && typeof o === 'object' && !Array.isArray(o)
+  ? Object.entries(o).filter(([, v]) => typeof v === 'number' && Number.isFinite(v)).sort((a, b) => b[1] - a[1]) : [])
+
+/**
+ * Everything the match detail and the connector show about power, read
+ * defensively from the object (a missing field is null or empty, never 0).
+ * Answers null when the file has no power section.
+ */
+export function readPower(power) {
+  if (!power || typeof power !== 'object' || Array.isArray(power)) return null
+  const c = powerColumns({ power })
+  const snaps = Array.isArray(power.brownoutSnapshots) ? power.brownoutSnapshots.filter((s) => s && typeof s === 'object') : []
+  const sticky = Array.isArray(power.stickyFaults) ? power.stickyFaults.filter((s) => s && typeof s === 'object') : []
+  return {
+    restVolts: c.rest_volts_before, resistance: c.robot_resistance_mohm, fits: num(power.resistanceFits), openCircuitVolts: num(power.openCircuitVolts),
+    minVolts: c.min_volts, pdhMinVolts: num(power.pdhMinVolts), rioMinVolts: num(power.rioMinVolts),
+    ampsAtMin: c.amps_at_min, topDraw: sortedEntries(power.topDrawAtMin).map(([mechanism, amps]) => ({ mechanism, amps })),
+    branchDrop: sortedEntries(power.branchDropAtMin).map(([mechanism, volts]) => ({ mechanism, volts })),
+    peakAmps: c.peak_amps, ampHours: num(power.ampHours), dipsBelow7V: c.dips_below_7v, brownouts: int(num(power.brownouts)),
+    snapshots: snaps.map((s) => ({ t: num(s.t), matchTime: num(s.matchTime), lowestVolts: num(s.lowestVolts), amps: num(s.ampsThen),
+      topDraw: sortedEntries(s.topDraw).map(([mechanism, amps]) => ({ mechanism, amps })), resistance: num(s.resistanceMilliOhm) })),
+    stickyFaults: sticky.map((s) => ({ device: text(s.device, 80) ?? 'device', faults: Array.isArray(s.faults) ? s.faults.filter((f) => typeof f === 'string') : [] })),
+    sameBatteryAsLastMatch: typeof power.sameBatteryAsLastMatch === 'boolean' ? power.sameBatteryAsLastMatch : null,
+    verdict: c.verdict,
+  }
+}
+
+// ---- the robot's battery history (match-data/battery-history.csv) ----
+
+export const HISTORY_PATH = 'match-data/battery-history.csv'
+export const HISTORY_COLUMNS = Object.freeze(['time', 'kind', 'battery', 'rest_v', 'resistance_mohm', 'min_v', 'amps_at_min', 'brownouts', 'verdict'])
+export const historyFileUrl = () => `https://raw.githubusercontent.com/${ROBOT_REPO.owner}/${ROBOT_REPO.repo}/${ROBOT_REPO.branch}/${HISTORY_PATH}`
+
+/** CSV as the robot writes it: commas, double-quoted fields with "" for a quote. */
+export function parseCsv(textIn) {
+  const out = []
+  let row = [], field = '', q = false
+  const s = String(textIn ?? '')
+  for (let i = 0; i < s.length; i += 1) {
+    const ch = s[i]
+    if (q) {
+      if (ch === '"' && s[i + 1] === '"') { field += '"'; i += 1 } else if (ch === '"') q = false
+      else field += ch
+    } else if (ch === '"') q = true
+    else if (ch === ',') { row.push(field); field = '' }
+    else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && s[i + 1] === '\n') i += 1
+      row.push(field); field = ''
+      if (row.some((x) => x !== '')) out.push(row)
+      row = []
+    } else field += ch
+  }
+  row.push(field)
+  if (row.some((x) => x !== '')) out.push(row)
+  return out
+}
+
+/** The history file's rows as objects, by its header (a column it does not have is ''). */
+export function parseBatteryHistory(textIn) {
+  const rows = parseCsv(textIn)
+  if (!rows.length) return { rows: [] }
+  const head = rows[0].map((h) => h.trim().toLowerCase())
+  if (!head.includes('time') || !head.includes('kind') || !head.includes('battery')) return { rows: [], error: 'This is not the robot battery history (no time, kind and battery columns).' }
+  return { rows: rows.slice(1).map((r) => Object.fromEntries(HISTORY_COLUMNS.map((c) => [c, (r[head.indexOf(c)] ?? '').trim()]))) }
+}
+
+const reading = (s, lo, hi) => { const n = /^[0-9]+(\.[0-9]+)?$/.test(String(s ?? '')) ? Number(s) : null; return n !== null && n >= lo && n <= hi ? n : null }
+
+/**
+ * The pit load tests in the history, each with what 0041's
+ * battery_import_load_tests will do with it: new, already (that battery has a
+ * bench test at that second), or skipped with the reason. Match rows are not
+ * here: those arrive with their match files.
+ */
+export function planLoadTests(rows, { batteries = [], runs = [], now = Date.now() } = {}) {
+  return (rows ?? []).filter((r) => r.kind === 'load_test').map((r) => {
+    const at = startedAtMs(r.time)
+    const resistance = reading(r.resistance_mohm, 0, 500)
+    const base = { time: r.time, at: at === null ? null : new Date(at).toISOString(), typed: r.battery, resistance, restVolts: reading(r.rest_v, 0, 16), minVolts: reading(r.min_v, 0, 16), verdict: r.verdict || null, row: r }
+    if (at === null) return { ...base, status: 'skip', reason: 'no readable time' }
+    if (!norm(r.battery)) return { ...base, status: 'skip', reason: 'no battery typed on the robot' }
+    if (resistance === null) return { ...base, status: 'skip', reason: 'no resistance reading' }
+    const hit = matchBattery(r.battery, batteries)
+    if (!hit.battery) return { ...base, status: 'skip', reason: 'not one battery in the log' }
+    const b = hit.battery
+    if ((runs ?? []).some((x) => x.battery_id === b.id && x.kind === 'bench_test' && Date.parse(x.ran_at) === at)) return { ...base, battery: b, status: 'already' }
+    if (b.status === 'retired') return { ...base, battery: b, status: 'skip', reason: 'retired' }
+    if (at < now - 60 * 864e5 || at > now + 600e3) return { ...base, battery: b, status: 'skip', reason: 'more than 60 days old' }
+    return { ...base, battery: b, status: 'new' }
+  })
+}
+
+/** The rows battery_import_load_tests takes: the new ones, as the robot wrote them. */
+export const loadTestRows = (plans) => (plans ?? []).filter((p) => p.status === 'new').map((p) => ({ ...p.row }))
+
+/** The history file from the public robot repo: { text }, { missing: true } before the robot pushes one, or { error }. */
+export async function fetchBatteryHistory(fetchImpl = globalThis.fetch) {
+  let r
+  try { r = await fetchImpl(historyFileUrl()) } catch { return { error: 'GitHub could not be reached. Check the connection and try again.' } }
+  if (r.status === 404) return { missing: true }
+  if (!r.ok) return { error: `GitHub answered ${r.status}. Nothing was imported.` }
+  return { text: await r.text() }
+}

@@ -7,16 +7,26 @@ import { displayName } from './names'
 import { toCsv } from './csv'
 import { downloadText, laStamp } from './download'
 import {
-  CHECK_THRESHOLDS, CHARGE_STATES, RUN_KINDS, BROWNOUT, STATUSES, FILTERS,
-  batteryBoard, applyFilter, chargeLabel, statusLabel, kindLabel, brownoutLabel,
+  CHECK_THRESHOLDS, CHARGE_STATES, RUN_KINDS, BROWNOUT, STATUSES, FILTERS, ROBOT_R, REST_V, LEVEL_LABELS,
+  batteryBoard, applyFilter, chargeLabel, statusLabel, kindLabel, brownoutLabel, fleetLine, verdictItems, verdictText, robotLevel,
   readNumber, runProblem, runArgs, canEditRun, CSV_COLUMNS, csvRows,
 } from './batteries'
+import { fetchBatteryHistory, parseBatteryHistory, planLoadTests, loadTestRows } from './robotMatches'
+import { useMatchWriter } from './RobotMatchesPage'
 import './BatteriesPage.css'
 
 // The battery log (migration 0026, ledger 0017). Every write is a database
 // function through writeVia with NO direct fallback: before 0026 is pasted the
 // page reads "not set up yet", and a write that finds no function is reported
 // as not set up, never as saved.
+//
+// Robot telemetry (migration 0041, ledger 0031): the robot's own resistance
+// reading (battery + main wiring, its own thresholds, never the Beak column),
+// the fleet line that tells a worn battery from robot wiring, the latest
+// verdict, and the pit load tests imported from the robot repo. Runs are read
+// with select('*'), so before 0041 the new columns are simply absent and every
+// robot reading shows as not measured; the load-test import reports not set
+// up through isSchemaMissing.
 
 const REMEMBER = 'techmen:battery-log:last'
 const recall = () => { try { return JSON.parse(localStorage.getItem(REMEMBER) || 'null') ?? {} } catch { return {} } }
@@ -25,6 +35,36 @@ const remember = (v) => { try { localStorage.setItem(REMEMBER, JSON.stringify(v)
 const when = (iso) => iso ? new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' }) : 'Never'
 const volts = (v) => (v === null || v === undefined ? '--' : Number(v).toFixed(2))
 const errText = (e) => e?.message || 'Something went wrong. Nothing was changed.'
+const mohm = (v) => (v === null || v === undefined ? '--' : Number(v).toFixed(1))
+
+/** The robot R readings, oldest first, as a small line with the 22 and 28 lines behind it. */
+function RTrend({ values, label }) {
+  const pts = values.map((v, i) => [i, v]).filter(([, v]) => v !== null && v !== undefined)
+  if (pts.length < 2) return null
+  const lo = Math.min(...pts.map(([, v]) => v), ROBOT_R.OK_UNDER - 6), hi = Math.max(...pts.map(([, v]) => v), ROBOT_R.PULL_OVER + 4)
+  const y = (v) => 30 - ((v - lo) / (hi - lo)) * 28
+  const n = Math.max(1, values.length - 1)
+  return (
+    <svg className="ba-trend" viewBox="0 0 100 32" preserveAspectRatio="none" role="img" aria-label={`${label}: ${pts.map(([, v]) => mohm(v)).join(', ')} mΩ, oldest first`}>
+      <line className="ba-trend-pull" x1="0" x2="100" y1={y(ROBOT_R.PULL_OVER)} y2={y(ROBOT_R.PULL_OVER)} />
+      <line className="ba-trend-watch" x1="0" x2="100" y1={y(ROBOT_R.OK_UNDER)} y2={y(ROBOT_R.OK_UNDER)} />
+      <polyline points={pts.map(([i, v]) => `${(i / n) * 100},${y(v)}`).join(' ')} />
+    </svg>
+  )
+}
+
+/** The verdict in plain words: the tag in bold, then what the robot said after it. */
+function VerdictList({ verdict }) {
+  const items = verdictItems(verdict)
+  if (!items.length) return null
+  return <ul className="ba-vlist">{items.map((x, i) => <li key={i} className={`ba-vitem-${x.key}`}>{x.label && <b>{x.label}</b>} {verdictText(x)}</li>)}</ul>
+}
+
+function VerdictTags({ verdict }) {
+  const tags = verdictItems(verdict).filter((x) => x.key !== 'detail')
+  if (!tags.length) return null
+  return <span className="ba-verdict">{tags.map((x, i) => <span key={i} className={`ba-vtag ba-vtag-${x.key}`}>{x.label}</span>)}</span>
+}
 
 // Each call site is a literal writeVia so tests/connector-coverage.test.js
 // checks its function and argument names against the SQL.
@@ -38,6 +78,7 @@ export default function BatteriesPage({ session, hasRole = () => false }) {
   const uid = session?.user?.id
   const isStaff = ['mentor', 'lead', 'admin'].some(hasRole)
   const parentOnly = hasRole('parent') && !isStaff
+  const writer = useMatchWriter(isStaff)
   const [state, setState] = useState({ loading: true })
   const [filter, setFilter] = useState('all')
   const [open, setOpen] = useState(null) // battery id whose sheet is open
@@ -64,6 +105,7 @@ export default function BatteriesPage({ session, hasRole = () => false }) {
   useEffect(() => { if (!parentOnly) load() }, [load, parentOnly])
 
   const board = useMemo(() => batteryBoard(state.batteries ?? [], state.runs ?? []), [state.batteries, state.runs])
+  const fleet = useMemo(() => fleetLine(board), [board])
   const shown = applyFilter(board, filter)
   const counts = useMemo(() => Object.fromEntries(FILTERS.map((f) => [f.key, applyFilter(board, f.key).length])), [board])
 
@@ -113,6 +155,8 @@ export default function BatteriesPage({ session, hasRole = () => false }) {
         <span><b className="hud-tnum">{counts.all}</b> in service</span>
       </div>
 
+      {board.length > 0 && <FleetLine fleet={fleet} />}
+
       <nav className="ba-filters" aria-label="Show">
         {FILTERS.map((f) => (
           <button key={f.key} className="ba-filter" aria-pressed={filter === f.key} onClick={() => setFilter(f.key)}>
@@ -141,10 +185,18 @@ export default function BatteriesPage({ session, hasRole = () => false }) {
                   {b.matchReady && <span className="ba-pill ba-pill-ready">Ready</span>}
                 </span>
                 <span className="ba-stats">
-                  <span><b className="hud-tnum">{volts(b.restingVolts ?? b.lastVolts)}</b><i>rest V</i></span>
+                  <span className={b.restLevel ? `ba-lvl-${b.restLevel}` : ''} data-stat="rest"><b className="hud-tnum">{volts(b.restingVolts ?? b.lastVolts)}</b><i>rest V</i></span>
+                  <span className={b.robotLevel ? `ba-lvl-${b.robotLevel}` : ''} data-stat="robot-r"><b className="hud-tnum">{mohm(b.robotR)}</b><i>robot mΩ</i></span>
                   <span className={b.brownouts ? 'ba-bad' : ''}><b className="hud-tnum">{b.brownouts}</b><i>brownouts</i></span>
                   <span><b className="hud-tnum">{b.runCount}</b><i>runs</i></span>
                 </span>
+                {(b.robotTrend.length > 1 || b.verdict || b.standsOut) && (
+                  <span className="ba-telemetry">
+                    <RTrend values={b.robotTrend} label={`${b.label} robot resistance`} />
+                    {b.standsOut && <span className="ba-vtag ba-vtag-standout">Stands out</span>}
+                    <VerdictTags verdict={b.verdict} />
+                  </span>
+                )}
                 <span className="ba-last hud-mono">{b.lastUsed ? `Last used ${when(b.lastUsed)}` : 'Not used yet'}</span>
                 {b.check && <span className="ba-reason">{b.reasons[0]}</span>}
               </button>
@@ -163,9 +215,11 @@ export default function BatteriesPage({ session, hasRole = () => false }) {
 
       <details className="ba-rules">
         <summary>What flags Check</summary>
-        <p>A brownout in the last {CHECK_THRESHOLDS.BROWNOUT_LOOKBACK} runs, a resting voltage before a match under {CHECK_THRESHOLDS.MIN_RESTING_VOLTS} V, or resistance over {CHECK_THRESHOLDS.MAX_RESISTANCE_MOHM} mΩ. These are proposed defaults. A measurement left blank is not recorded, never zero. Logging a match marks a charged battery as needing a charge.</p>
+        <p>A brownout in the last {CHECK_THRESHOLDS.BROWNOUT_LOOKBACK} runs, a resting voltage before a match under {CHECK_THRESHOLDS.MIN_RESTING_VOLTS} V, Battery Beak resistance over {CHECK_THRESHOLDS.MAX_RESISTANCE_MOHM} mΩ, or the robot reading over {ROBOT_R.PULL_OVER} mΩ last time. These are proposed defaults. A measurement left blank is not recorded, never zero. Logging a match marks a charged battery as needing a charge.</p>
       </details>
+      <RobotRHelp />
 
+      {writer && <LoadTests board={board} runs={state.runs} onDone={async (text) => { setMsg(text); await load() }} />}
       {isStaff && <StaffBatteries onDone={async (text) => { setMsg(text); await load() }} />}
 
       {opened && <BatterySheet b={opened} isStaff={isStaff} uid={uid} names={state.names} events={state.events}
@@ -174,6 +228,90 @@ export default function BatteriesPage({ session, hasRole = () => false }) {
       {logFor && <RunForm board={board} events={state.events} start={logFor} onClose={() => setLogFor(null)}
         onSaved={async (text) => { setLogFor(null); setMsg(text); await load() }} />}
     </main>
+  )
+}
+
+function FleetLine({ fleet }) {
+  const tone = fleet.diagnosis === 'wiring' ? 'pull' : fleet.diagnosis === 'battery' ? 'watch' : fleet.diagnosis === 'ok' ? 'ok' : 'none'
+  return (
+    <section className={`ba-fleet ba-fleet-${tone}`} aria-label="Fleet robot resistance" data-fleet={fleet.diagnosis}>
+      <div className="ba-fleet-num">
+        <b className="hud-tnum">{mohm(fleet.median)}</b>
+        <i>fleet median robot mΩ{fleet.readings ? ` · ${fleet.readings} batteries` : ''}</i>
+      </div>
+      <div className="ba-fleet-say">
+        <strong>{fleet.diagnosis === 'wiring' ? 'Robot wiring' : fleet.diagnosis === 'battery' ? 'This battery' : fleet.diagnosis === 'ok' ? 'Fleet normal' : 'Not enough readings'}</strong>
+        <span>{fleet.says}</span>
+      </div>
+    </section>
+  )
+}
+
+function RobotRHelp() {
+  return (
+    <details className="ba-rules" data-help="robot-r">
+      <summary>Robot mΩ vs Beak mΩ</summary>
+      <p>The robot measures resistance from its own load, so it counts the battery <b>plus</b> the main wiring (SB50, 120 A breaker, PDH lugs, leads). It reads 5 to 10 mΩ above a Battery Beak on the battery alone, so the two are kept apart.</p>
+      <ul className="ba-help-list">
+        <li><b className="ba-lvl-ok">OK</b> under {ROBOT_R.OK_UNDER} mΩ · <b className="ba-lvl-watch">Watch</b> {ROBOT_R.OK_UNDER} to {ROBOT_R.PULL_OVER} · <b className="ba-lvl-pull">Pull</b> over {ROBOT_R.PULL_OVER}, or over the fleet median + {ROBOT_R.FLEET_MARGIN}</li>
+        <li>Rested before a match: <b className="ba-lvl-ok">OK</b> {REST_V.OK} V and up · <b className="ba-lvl-watch">Watch</b> {REST_V.PULL_UNDER} to {REST_V.OK} · <b className="ba-lvl-pull">Pull</b> under {REST_V.PULL_UNDER}</li>
+        <li><b>One battery high</b>, the others normal on the same robot: that battery.</li>
+        <li><b>Most batteries high</b> (median over {ROBOT_R.WIRING_MEDIAN}): the robot wiring. Inspect the main breaker, SB50 contacts and PDH terminals.</li>
+      </ul>
+    </details>
+  )
+}
+
+/** Writers: the pit load tests in the robot repo battery-history.csv, checked, then imported in one step. */
+function LoadTests({ board, runs, onDone }) {
+  const [s, setS] = useState({})
+  async function check() {
+    setS({ busy: 'check' })
+    const got = await fetchBatteryHistory()
+    if (got.error) { setS({ error: got.error }); return }
+    if (got.missing) { setS({ plans: [], note: 'The robot has not pushed a battery history yet. It comes with Sync Match Data.' }); return }
+    const parsed = parseBatteryHistory(got.text)
+    if (parsed.error) { setS({ error: parsed.error }); return }
+    setS({ plans: planLoadTests(parsed.rows, { batteries: board, runs }) })
+  }
+  async function run() {
+    const rows = loadTestRows(s.plans)
+    setS((x) => ({ ...x, busy: 'import' }))
+    const r = await writeVia(supabase, 'battery_import_load_tests', { p_rows: rows })
+    if (r.error || r.via !== 'function') {
+      setS((x) => ({ ...x, busy: '', error: r.error && !isSchemaMissing(r.error) ? errText(r.error) : 'Load-test import is not set up yet (migration 0041). Nothing was saved.' }))
+      return
+    }
+    const made = r.data?.imported ?? []
+    setS({})
+    await onDone(`${made.length} load test${made.length === 1 ? '' : 's'} imported${made.length ? `: ${made.map((x) => `${x.battery} ${mohm(x.robot_resistance_mohm)} mΩ`).join(', ')}` : ''}.`)
+  }
+  const fresh = (s.plans ?? []).filter((p) => p.status === 'new')
+  const already = (s.plans ?? []).filter((p) => p.status === 'already').length
+  const skipped = (s.plans ?? []).filter((p) => p.status === 'skip')
+  return (
+    <details className="ba-lt" data-loadtests>
+      <summary>Pit load tests <span className="ba-muted">from the robot</span></summary>
+      <div className="ba-form">
+        <p className="ba-muted">Drive Tests tab, "Test: Battery Load": a 2 s shooter spin-up that measures robot mΩ cleanly. Same robot, every battery: a fair comparison.</p>
+        {!s.plans && <button type="button" className="ba-btn" onClick={check} disabled={s.busy === 'check'}>{s.busy === 'check' ? 'Checking GitHub…' : 'Check GitHub for load tests'}</button>}
+        {s.note && <p className="ba-muted">{s.note}</p>}
+        {s.plans && !s.note && (
+          <>
+            <p className="ba-muted" data-loadtest-summary>{fresh.length} new · {already} already in the log{skipped.length ? ` · ${skipped.length} skipped` : ''}</p>
+            {fresh.length > 0 && <ul className="ba-lt-list">{fresh.map((p) => (
+              <li key={`${p.battery.id}-${p.time}`}><b>{p.battery.label}</b> <span className={`hud-tnum ba-lvl-${robotLevel(p.resistance)}`}>{mohm(p.resistance)} mΩ</span> <span className="hud-mono ba-muted">{when(p.at)}</span></li>
+            ))}</ul>}
+            {skipped.length > 0 && <ul className="ba-lt-list ba-lt-skip">{skipped.map((p, i) => <li key={i}><span className="hud-mono">{p.typed || 'no battery'}</span> {p.reason}</li>)}</ul>}
+            <div className="ba-row">
+              {fresh.length > 0 && <button type="button" className="ba-primary" onClick={run} disabled={s.busy === 'import'}>{s.busy === 'import' ? 'Importing…' : `Import ${fresh.length}`}</button>}
+              <button type="button" className="ba-btn" onClick={() => setS({})}>Done</button>
+            </div>
+          </>
+        )}
+        {s.error && <p className="ba-error" role="alert">{s.error}</p>}
+      </div>
+    </details>
   )
 }
 
@@ -203,9 +341,18 @@ function BatterySheet({ b, isStaff, uid, names, events, onClose, onLog, onSaved 
       <dl className="ba-facts">
         <div><dt>Brand and model</dt><dd>{b.brand_model || 'Not recorded'}</dd></div>
         <div><dt>Year</dt><dd>{b.year_acquired ?? 'Not recorded'}</dd></div>
-        <div><dt>Resting before a match</dt><dd className="hud-tnum">{b.restingVolts === null ? 'Not measured' : `${volts(b.restingVolts)} V`}</dd></div>
-        <div><dt>Resistance</dt><dd className="hud-tnum">{b.resistance === null ? 'Not measured' : `${b.resistance} mΩ`}</dd></div>
+        <div><dt>Resting before a match</dt><dd className={`hud-tnum${b.restLevel ? ` ba-lvl-${b.restLevel}` : ''}`}>{b.restingVolts === null ? 'Not measured' : `${volts(b.restingVolts)} V · ${LEVEL_LABELS[b.restLevel]}`}</dd></div>
+        <div><dt>Robot resistance (battery + wiring)</dt><dd className={`hud-tnum${b.robotLevel ? ` ba-lvl-${b.robotLevel}` : ''}`} data-fact="robot-r">{b.robotR === null ? 'Not measured' : `${mohm(b.robotR)} mΩ · ${LEVEL_LABELS[b.robotLevel]}${b.standsOut ? ' · stands out' : ''}`}</dd></div>
+        <div><dt>Beak resistance (battery only)</dt><dd className="hud-tnum">{b.resistance === null ? 'Not measured' : `${b.resistance} mΩ`}</dd></div>
+        <div><dt>Lowest voltage</dt><dd className="hud-tnum">{b.minVolts === null ? 'Not measured' : `${volts(b.minVolts)} V`}</dd></div>
       </dl>
+      {b.robotTrend.length > 1 && <div className="ba-sheet-trend"><RTrend values={b.robotTrend} label={`${b.label} robot resistance`} /><span className="ba-muted">Robot mΩ, last {b.robotTrend.length} readings, oldest first. Lines at {ROBOT_R.OK_UNDER} and {ROBOT_R.PULL_OVER}.</span></div>}
+      {b.verdict && (
+        <div className="ba-verdict-box" data-verdict>
+          <h3 className="ba-h3">Robot verdict · {when(b.verdictAt)}</h3>
+          <VerdictList verdict={b.verdict} />
+        </div>
+      )}
       {b.notes && <p className="ba-note">{b.notes}</p>}
       <div className="ba-row">
         {b.status !== 'retired' && <button className="ba-primary" onClick={() => onLog(null)}>Log a run</button>}
@@ -223,11 +370,14 @@ function BatterySheet({ b, isStaff, uid, names, events, onClose, onLog, onSaved 
               </div>
               <div className="ba-run-nums hud-mono">
                 <span>{volts(r.voltage_before)} → {volts(r.voltage_after)} V</span>
-                <span>{r.resistance_mohm === null ? '-- mΩ' : `${r.resistance_mohm} mΩ`}</span>
+                <span>{r.resistance_mohm === null ? 'Beak --' : `Beak ${r.resistance_mohm} mΩ`}</span>
+                {r.robot_resistance_mohm !== null && r.robot_resistance_mohm !== undefined && <span className={`ba-lvl-${robotLevel(r.robot_resistance_mohm)}`}>Robot {mohm(r.robot_resistance_mohm)} mΩ</span>}
+                {r.min_volts !== null && r.min_volts !== undefined && <span>Low {volts(r.min_volts)} V</span>}
                 <span>{r.minutes === null ? '-- min' : `${r.minutes} min`}</span>
                 <span>Brownout: {brownoutLabel(r.brownout)}</span>
                 {r.performance && <span>Perf {r.performance}/5</span>}
               </div>
+              {r.verdict && <VerdictTags verdict={r.verdict} />}
               {(r.notes || r.event_id) && <p className="ba-run-note">{r.event_id ? `${events.find((e) => e.id === r.event_id)?.title ?? 'Event'}. ` : ''}{r.notes}</p>}
               <div className="ba-run-foot">
                 <span className="ba-muted">{names.get(r.member_id) ?? 'Member'}</span>

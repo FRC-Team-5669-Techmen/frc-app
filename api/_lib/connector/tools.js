@@ -11,13 +11,14 @@ import { reasonLabel as absenceReasonLabel } from '../../../src/standing.js'
 import { RESOLVERS, roster, resolveMember, resolveEvent, resolveBattery, resolveRobotMatch, displayName } from './resolve.js'
 import { laDateKey, laMidnightMs, addDays, laClock, laDay, laWallToIso } from './dates.js'
 import { isSchemaMissing } from './errors.js'
-import { batteryBoard, chargeLabel, statusLabel, kindLabel, brownoutLabel, CHECK_THRESHOLDS } from '../../../src/batteries.js'
+import { batteryBoard, chargeLabel, statusLabel, kindLabel, brownoutLabel, CHECK_THRESHOLDS, ROBOT_R, REST_V, fleetLine, verdictItems } from '../../../src/batteries.js'
 import { leaderboard as driverLeaderboard, SCORE_RULES } from '../../../src/driverScore.js'
 import { leaderboard as hpLeaderboard, HP_RULES, needsText as hpNeedsText } from '../../../src/humanPlayerScore.js'
 import { AUTO_READY_STREAK, RATE_WINDOW, resultLabel, routineBoard } from '../../../src/autos.js'
 import { boardView, roleLabel } from '../../../src/roleBoard.js'
 import { roleRuleIssues } from '../../../src/roleRules.js'
-import { KIND_LABELS, REAL_KINDS, shots, counted, wasted, filterMatches, driverTrends, batteryTrends, compareMatches, notReadyReasons, parseMatchFile, planImport, importLinks, listRobotFiles, rawFileUrl } from '../../../src/robotMatches.js'
+import { KIND_LABELS, REAL_KINDS, shots, counted, wasted, filterMatches, driverTrends, batteryTrends, compareMatches, notReadyReasons, parseMatchFile, planImport, importLinks, listRobotFiles, rawFileUrl,
+  readPower, fetchBatteryHistory, parseBatteryHistory, planLoadTests, loadTestRows } from '../../../src/robotMatches.js'
 import { groupByTeam, tagLabel } from '../../../src/meetTeam.js'
 
 export class UnknownTool extends Error {}
@@ -299,16 +300,36 @@ async function robotImportPlan(ctx, a, resolved) {
     ...(p.cols ? { label: p.cols.match_label, kind: KIND_LABELS[p.cols.kind], at: laClock(p.cols.started_at), typed: p.cols.crew_typed } : {}),
     ...(p.crew ? { links: { driver: p.crew.driver.member?.name ?? null, operator: p.crew.operator.member?.name ?? null, coach: p.crew.coach.member?.name ?? null, battery: p.battery.battery?.label ?? null, auto: p.routine.routine?.name ?? null, event: p.event?.title ?? null, joins_match_sim: !!p.sim }, check: p.confirm } : {}),
   })
+  // The pit load tests in battery-history.csv (0041): listed with the match
+  // files; imported as one asks-first call with load_tests.
+  const loadTests = async () => {
+    const got = await fetchBatteryHistory(fetchImpl)
+    if (got.error || got.missing) return { plans: [], note: got.error ?? 'The robot has not pushed a battery history yet.' }
+    const parsed = parseBatteryHistory(got.text)
+    if (parsed.error) return { plans: [], note: parsed.error }
+    const runs = await ctx.backend.select(ctx.session, { table: 'battery_runs', columns: ['battery_id', 'kind', 'ran_at'], eq: { kind: 'bench_test' }, limit: 3000 })
+    return { plans: planLoadTests(parsed.rows, { batteries: c.batteries, runs: runs.data ?? [], now: ctx.now() }) }
+  }
+  const describeLoad = (p) => ({ battery: p.battery?.label ?? p.typed ?? null, at: p.at ? laClock(p.at) : p.time, robot_resistance_mohm: p.resistance, status: p.status, ...(p.reason ? { reason: p.reason } : {}) })
+  if (a.load_tests) {
+    const lt = await loadTests()
+    const fresh = lt.plans.filter((p) => p.status === 'new')
+    if (!fresh.length) return { out: { status: 'already', message: `${lt.note ? `${lt.note} ` : ''}No new pit load tests to import. Nothing was changed.`, load_tests: lt.plans.map(describeLoad) } }
+    return { fn: 'battery_import_load_tests', args: { p_rows: loadTestRows(lt.plans) }, summary: { load_tests: fresh.map(describeLoad), skipped: lt.plans.filter((p) => p.status === 'skip').map(describeLoad) } }
+  }
   if (!a.file) {
+    const lt = await loadTests()
+    const ltOut = { load_tests: { new: lt.plans.filter((p) => p.status === 'new').map(describeLoad), already_imported: lt.plans.filter((p) => p.status === 'already').length,
+      skipped: lt.plans.filter((p) => p.status === 'skip').map(describeLoad), ...(lt.note ? { note: lt.note } : {}) } }
     const list = await listRobotFiles(fetchImpl)
     if (list.error) return { out: { status: 'refused', message: list.error } }
-    if (list.empty || !list.files.length) return { out: { status: 'ok', new_files: [], message: 'No match files have been pushed yet. The driver station laptop pushes them with Sync Match Data.' } }
+    if (list.empty || !list.files.length) return { out: { status: 'ok', new_files: [], message: 'No match files have been pushed yet. The driver station laptop pushes them with Sync Match Data.', ...ltOut } }
     const fresh = list.files.filter((f) => !existing.has(f.name))
     const plans = await Promise.all(fresh.slice(0, 20).map(async (f) => {
       try { const r = await fetchImpl(f.url); return planImport(parseMatchFile(r.ok ? await r.text() : '', f.name), planCtx) } catch { return { fileName: f.name, status: 'error', error: 'Could not download this file.' } }
     }))
-    return { out: { status: 'ok', files_on_github: list.files.length, already_imported: list.files.length - fresh.length, new_files: plans.map(describe), more: Math.max(0, fresh.length - 20),
-      next: 'To import one, call again with its file name. Where check lists a name that could be more than one member, ask him who it was and pass driver, operator or coach.' } }
+    return { out: { status: 'ok', files_on_github: list.files.length, already_imported: list.files.length - fresh.length, new_files: plans.map(describe), more: Math.max(0, fresh.length - 20), ...ltOut,
+      next: 'To import one, call again with its file name. Where check lists a name that could be more than one member, ask him who it was and pass driver, operator or coach. To import the new pit load tests, call again with load_tests true (it asks first).' } }
   }
   let parsed
   try { const r = await fetchImpl(rawFileUrl(a.file)); parsed = parseMatchFile(r.ok ? await r.text() : (r.status === 404 ? null : ''), a.file); if (r.status === 404) parsed = { ok: false, fileName: a.file, error: 'There is no match file with that name on GitHub.' } } catch { parsed = { ok: false, fileName: a.file, error: 'GitHub could not be reached. Nothing was changed.' } }
@@ -878,6 +899,7 @@ const READS = {
       return isSchemaMissing(e) ? notSetUp('The battery log') : { status: 'refused', message: e.message }
     }
     let board = batteryBoard(b.data, r.data)
+    const fleet = fleetLine(board)
     const show = a.show ?? 'in_service'
     if (show === 'match_ready') board = board.filter((x) => x.matchReady)
     else if (show === 'check') board = board.filter((x) => x.check)
@@ -889,13 +911,19 @@ const READS = {
     const runsShown = a.battery ? 10 : 1
     return {
       status: 'ok', showing: show, count: board.length,
-      thresholds: { brownout_in_last_runs: CHECK_THRESHOLDS.BROWNOUT_LOOKBACK, min_resting_volts: CHECK_THRESHOLDS.MIN_RESTING_VOLTS, max_resistance_mohm: CHECK_THRESHOLDS.MAX_RESISTANCE_MOHM, note: 'Proposed defaults.' },
+      thresholds: { brownout_in_last_runs: CHECK_THRESHOLDS.BROWNOUT_LOOKBACK, min_resting_volts: CHECK_THRESHOLDS.MIN_RESTING_VOLTS, max_resistance_mohm: CHECK_THRESHOLDS.MAX_RESISTANCE_MOHM,
+        robot_resistance_mohm: { ok_under: ROBOT_R.OK_UNDER, pull_over: ROBOT_R.PULL_OVER, or_over_fleet_median_plus: ROBOT_R.FLEET_MARGIN, stands_out_at_fleet_median_times: ROBOT_R.FLEET_RATIO, robot_wiring_when_fleet_median_over: ROBOT_R.WIRING_MEDIAN },
+        rested_volts: { ok_from: REST_V.OK, pull_under: REST_V.PULL_UNDER }, note: 'Proposed defaults.' },
+      fleet: { median_robot_resistance_mohm: fleet.median, batteries_with_readings: fleet.readings, diagnosis: fleet.diagnosis, stands_out: fleet.standOut.map((x) => ({ battery: x.label, robot_resistance_mohm: x.robotR })), says: fleet.says },
       batteries: board.map((x) => ({
         label: x.label, status: statusLabel(x.status), charge: chargeLabel(x.charge_state), check: x.check, reasons: x.reasons, match_ready: x.matchReady,
-        resting_volts: x.restingVolts, resistance_mohm: x.resistance, brownouts: x.brownouts, runs: x.runCount, last_used: x.lastUsed ? laClock(x.lastUsed) : null,
-        recent: x.runs.slice(0, runsShown).map((run) => ({ kind: kindLabel(run.kind), match: run.match_label, on: laClock(run.ran_at), volts_before: run.voltage_before, volts_after: run.voltage_after, resistance_mohm: run.resistance_mohm, brownout: brownoutLabel(run.brownout) })),
+        resting_volts: x.restingVolts, resting_level: x.restLevel, resistance_mohm: x.resistance, robot_resistance_mohm: x.robotR, robot_resistance_level: x.robotLevel, stands_out: x.standsOut,
+        robot_resistance_trend: x.robotTrend, lowest_volts: x.minVolts, latest_verdict: x.verdict, latest_verdict_items: verdictItems(x.verdict).map((v) => v.label ?? v.text), latest_verdict_on: x.verdictAt ? laClock(x.verdictAt) : null,
+        brownouts: x.brownouts, runs: x.runCount, last_used: x.lastUsed ? laClock(x.lastUsed) : null,
+        recent: x.runs.slice(0, runsShown).map((run) => ({ kind: kindLabel(run.kind), match: run.match_label, on: laClock(run.ran_at), volts_before: run.voltage_before, volts_after: run.voltage_after, resistance_mohm: run.resistance_mohm,
+          robot_resistance_mohm: run.robot_resistance_mohm ?? null, lowest_volts: run.min_volts ?? null, verdict: run.verdict ?? null, brownout: brownoutLabel(run.brownout) })),
       })),
-      note: 'Blank voltage or resistance means not measured, never zero.',
+      note: 'Blank voltage or resistance means not measured, never zero. resistance_mohm is a Battery Beak reading on the battery alone; robot_resistance_mohm is the robot\'s own reading of battery plus main wiring (5 to 10 higher), with its own thresholds. One battery high while the others read normal = that battery; most high = the robot wiring.',
     }
   },
 
@@ -934,6 +962,10 @@ const READS = {
         notes: { driver: m.notes_driver, operator: m.notes_operator, coach: m.notes_coach, human_player: m.notes_human_player, pit: m.notes_pit },
         crew_typed_on_robot: m.crew_typed, battery_run_logged: !!m.battery_run_id, drive_time_logged: !!m.drive_session_id },
       not_ready_seconds: notReadyReasons(m.raw),
+      power: (() => {
+        const p = readPower(m.power ?? m.raw?.power ?? null)
+        return p ? { ...p, verdict_items: verdictItems(p.verdict).map((v) => ({ tag: v.label, text: v.text })), note: 'resistance is battery plus main wiring (robot-measured), not a Battery Beak reading. Times are seconds; matchTime is the match clock.' } : null
+      })(),
       robot_file: m.raw, file_name: m.file_name, schema_version: m.schema_version,
       note: m.raw ? 'robot_file is the whole file the robot wrote, every field kept.' : 'This match was logged on the Match Sim page only; the robot file has not been imported.',
     }
@@ -1155,11 +1187,13 @@ export async function runTool(ctx, name, a = {}) {
         return { ...out, ...g.summary }
       }
       let robotSummary = null
+      let fn = tool.function
       if (name === 'import_robot_matches_from_github') {
         const r = await robotImportPlan(ctx, a, resolved)
         if (r.out) return r.out
         args = r.args
         robotSummary = r.summary
+        if (r.fn) fn = r.fn
       }
       if (name === 'set_robot_match_notes') {
         args = { p_id: resolved.match.id, p_fields: robotNoteFields(a) }
@@ -1168,7 +1202,7 @@ export async function runTool(ctx, name, a = {}) {
       if (args.p_starts_at && args.p_ends_at && Date.parse(args.p_ends_at) < Date.parse(args.p_starts_at)) {
         return { status: 'invalid', message: 'The end is before the start. Ask him for the times again. Nothing was changed.' }
       }
-      const out = await write(ctx, { tool: name, fn: tool.function, args }, writeOpts(a))
+      const out = await write(ctx, { tool: name, fn, args }, writeOpts(a))
       if (robotSummary) out.file = robotSummary
       if (name === 'approve_signout' && resolved.member) {
         out.signout = { member: resolved.member.name, note: resolved.member.note, cleanup_confirmed: resolved.member.cleanup_confirmed, asked_at: laClock(resolved.member.requested_at) }

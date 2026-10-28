@@ -299,8 +299,8 @@ preview_scouting_import:
 
 # ledger 0017: the battery log (0026).
 list_batteries:
-  describe: The team batteries worst first, with charge state, last resting voltage, brownouts and which are match-ready or need a check.
-  say: ["which batteries are ready", "how are the batteries", "what's flagged on the battery board", "show me B07's history"]
+  describe: The batteries worst first, with charge, rested voltage, robot-measured resistance and trend, the latest verdict, brownouts, and whether a worn battery or robot wiring is to blame.
+  say: ["which batteries are ready", "how are the batteries", "what's flagged on the battery board", "show me B07's history", "is it the battery or the robot wiring", "which battery has high resistance"]
   kind: read
   args:
     show: {type: string, describe: "Which ones (in service by default)", enum: [in_service, match_ready, check, all]}
@@ -321,8 +321,8 @@ list_robot_matches:
     limit: {type: integer, describe: "How many matches to list (25 by default, 200 at most)"}
 
 get_robot_match:
-  describe: One robot match in full, with everything the robot recorded (scoring, battery by phase, why it was not ready, the timeline) and the crew, notes and video.
-  say: ["show me qm12", "what happened in practice 3", "why did the robot brown out in qm7", "open the last match"]
+  describe: "One robot match in full: scoring, battery by phase, power (rested volts, resistance, the lowest moment, brownouts, verdict), why it was not ready, the timeline, crew, notes and video."
+  say: ["show me qm12", "what happened in practice 3", "why did the robot brown out in qm7", "open the last match", "was the brownout in qm7 the battery or the robot"]
   kind: read
   args:
     match: {type: string, describe: "The match label, such as qm12 or practice 3, or last for the newest", required: true}
@@ -335,8 +335,8 @@ compare_robot_matches:
     matches: {type: string, describe: "The match labels, separated by commas, or last 3 for the newest three", required: true}
 
 import_robot_matches_from_github:
-  describe: Bring the robot's new match files from GitHub into the match log. Without a file it lists what is new; with one it imports that file, which always asks first.
-  say: ["import the robot matches", "pull the new match files", "what match files are new on GitHub", "import 20261031-101500_qual_12.json"]
+  describe: Bring the robot's new match files and pit battery load tests from GitHub into the app. Without a file it lists what is new; importing a file or the load tests always asks first.
+  say: ["import the robot matches", "pull the new match files", "what match files are new on GitHub", "import 20261031-101500_qual_12.json", "import the battery load tests"]
   kind: function
   function: robot_match_import
   args:
@@ -346,6 +346,7 @@ import_robot_matches_from_github:
     coach: {type: string, describe: "The drive coach, when the typed name did not match one member", resolve: member}
     battery: {type: string, describe: "The battery, such as B07, when the typed label did not match", resolve: battery}
     add_routine: {type: boolean, describe: "Add the file's auto as a new auto routine when it is not one yet"}
+    load_tests: {type: boolean, describe: "Import the new pit load tests from the robot's battery-history.csv instead of a match file"}
   map:
     p_file_name: $args.file
 

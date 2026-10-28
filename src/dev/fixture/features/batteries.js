@@ -35,7 +35,11 @@ export default {
   },
   // Seven batteries in the states the board must tell apart: match-ready,
   // flagged by a brownout, by a low resting voltage and by resistance, one
-  // charging, one practice, one retired.
+  // charging, one practice, one retired. The robot telemetry columns (0041,
+  // features/robotmatchpower.js) ride on the same runs: B01 healthy (robot
+  // 16 to 17 mOhm), B02 browned out with normal R (the robot drew too much),
+  // B03 normal, and B07 high on two pit load tests (31.5) while the rest read
+  // normal: the fleet line names B07, not the robot.
   seed: ({ ids, now }) => {
     const t = (h) => new Date(now - h * 3600_000).toISOString()
     const b = (n, label, status, charge, extra = {}) => ({ id: BID(n), label, brand_model: 'MK ES17-12', year_acquired: 2024, status, charge_state: charge, notes: null, created_by: ids.mentor, updated_by: ids.mentor, created_at: t(900), updated_at: t(2), charge_set_at: t(2), charge_set_by: ids.mentor, ...extra })
@@ -51,14 +55,20 @@ export default {
         b(7, 'B07', 'competition', 'in_robot'),
       ],
       battery_runs: [
-        r(1, 1, 30, 'match', 12.95, 12.1, 11.5, 'no'),
-        r(2, 1, 50, 'bench_test', 13.05, null, 11.2, 'no'),
-        r(3, 2, 26, 'match', 12.8, 11.4, 14.0, 'no'),
-        r(4, 2, 28, 'match', 12.7, 10.9, 15.2, 'yes'),
-        r(5, 3, 27, 'match', 12.31, 11.0, 16.0, 'no'),
+        r(1, 1, 30, 'match', 12.95, 12.1, 11.5, 'no', ids.student2, { robot_resistance_mohm: 16.8, min_volts: 10.9, verdict: 'OK' }),
+        r(2, 1, 50, 'bench_test', 13.05, null, 11.2, 'no', ids.student2, { robot_resistance_mohm: 16.1, min_volts: 11.8, verdict: 'B01 R = 16.1 mOhm (battery + wiring) | 13.05 V idle -> 11.80 V at 118 A | normal' }),
+        r(3, 2, 26, 'match', 12.8, 11.4, 14.0, 'no', ids.student2, { robot_resistance_mohm: 18.2, min_volts: 10.2, verdict: 'OK' }),
+        r(4, 2, 28, 'match', 12.7, 10.9, 15.2, 'yes', ids.student2, { robot_resistance_mohm: 17.6, min_volts: 6.71,
+          verdict: 'ROBOT DRAW: 251 A at the dip with normal resistance: too much current at once (drive pushing, shooter spin-up, a stall)' }),
+        r(5, 3, 27, 'match', 12.31, 11.0, 16.0, 'no', ids.student2, { robot_resistance_mohm: 19.5, min_volts: 10.4,
+          verdict: 'CHARGE: started at 12.31 V (fresh is 12.7+, 12.4 minimum)' }),
         r(6, 4, 40, 'bench_test', 12.9, null, 24.5, 'unknown'),
         r(7, 5, 70, 'drive_practice', null, null, null, 'unknown'),
-        r(8, 7, 1, 'bench_test', 13.0, null, 12.1, 'no', ids.student),
+        r(8, 7, 1, 'bench_test', 13.0, null, 17.9, 'no', ids.student),
+        r(9, 7, 3, 'bench_test', 12.95, null, null, 'no', ids.mentor, { robot_resistance_mohm: 29.8, min_volts: 11.1,
+          verdict: 'B07 R = 29.8 mOhm (battery + wiring) | 12.95 V idle -> 11.10 V at 121 A | HIGH: compare with another battery', notes: 'Pit load test (robot, 2 s shooter spin-up): idle V before, R includes the robot wiring.' }),
+        r(10, 7, 2, 'bench_test', 12.92, null, null, 'no', ids.mentor, { robot_resistance_mohm: 31.5, min_volts: 10.9,
+          verdict: 'B07 R = 31.5 mOhm (battery + wiring) | 12.92 V idle -> 10.90 V at 120 A | HIGH: compare with another battery', notes: 'Pit load test (robot, 2 s shooter spin-up): idle V before, R includes the robot wiring.' }),
       ],
     }
   },

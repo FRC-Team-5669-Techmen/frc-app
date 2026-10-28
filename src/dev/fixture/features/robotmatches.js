@@ -9,7 +9,7 @@
 // sim_save_match is wrapped while 0038 is applied: the SQL's trigger keeps a
 // robot_matches row in step with every Match Sim save, and so does this.
 
-import { parseMatchFile, eventFor, REAL_KINDS, SIM_MERGE_SECONDS } from '../../../robotMatches.js'
+import { parseMatchFile, eventFor, REAL_KINDS, SIM_MERGE_SECONDS, powerColumns } from '../../../robotMatches.js'
 import batteries from './batteries.js'
 import partd from './partd.js'
 
@@ -24,7 +24,7 @@ const laWall = (t) => new Date(t).toLocaleString('sv-SE', { timeZone: 'America/L
 const eligible = ({ user, persona, db }) => !!user?.id && !persona?.isParent
   && rows(db, 'profiles').some((p) => p.id === user.id && p.approved && (p.status ?? 'active') === 'active')
   && (persona?.isStaff || (persona?.roles ?? []).includes('student'))
-const writer = (ctx) => eligible(ctx) && (!!ctx.persona?.isStaff
+export const writer = (ctx) => eligible(ctx) && (!!ctx.persona?.isStaff
   || rows(ctx.db, 'member_permissions').some((r) => r.member_id === ctx.user.id && r.capability === 'robot.matches'))
 const targetOk = (db, id) => rows(db, 'profiles').some((p) => p.id === id && p.approved && (p.status ?? 'active') === 'active')
   && rows(db, 'member_roles').some((r) => r.member_id === id && ['student', 'mentor', 'lead', 'admin'].includes(r.role))
@@ -34,6 +34,22 @@ const COLS = ['kind', 'started_at', 'fms', 'event_code', 'fms_match_type', 'alli
 const EMPTY = { sim_match_id: null, event_id: null, routine_id: null, driver_id: null, operator_id: null, coach_id: null, human_player_id: null, battery_id: null,
   scorer_balls_in: null, tower: null, fouls: null, match_score: null, ranking_points: null, official_source: null, notes_driver: null, notes_operator: null,
   notes_coach: null, notes_human_player: null, notes_pit: null, video_url: null, wpilog_file: null, battery_run_id: null, drive_session_id: null, auto_run_id: null }
+
+/**
+ * The "power" object PowerMonitor.java adds to a match file (0041, ledger
+ * 0031), with the numbers given. brownout: one snapshot at the lowest moment.
+ */
+export function robotPower(o = {}) {
+  const top = o.top ?? { drive: 160, shooter: 58, spindexer: 9, uptake: 6 }
+  return {
+    restVoltsBefore: o.rest ?? 12.86, resistanceMilliOhm: o.r ?? 16.9, resistanceFits: o.fits ?? 24, openCircuitVolts: o.voc ?? 12.9,
+    minVolts: o.min ?? 10.9, pdhMinVolts: o.min ?? 10.9, rioMinVolts: o.rio ?? (o.min ?? 10.9) - 0.2,
+    branchDropAtMin: o.branch ?? { drive: 0.3, shooter: 0.4, spindexer: 0.1 }, stickyFaults: o.sticky ?? [], sameBatteryAsLastMatch: !!o.same,
+    ampsAtMin: o.amps ?? 233, topDrawAtMin: top, peakAmps: o.peak ?? 290, ampHours: o.ah ?? 1.62, dipsBelow7V: o.dips ?? 0, brownouts: o.brownouts ?? 0,
+    brownoutSnapshots: o.brownouts ? [{ t: 88.2, matchTime: 72.0, lowestVolts: o.low ?? 6.71, ampsThen: o.ampsThen ?? 251, topDraw: o.snapTop ?? { drive: 170, shooter: 61, spindexer: 12, uptake: 8 }, resistanceMilliOhm: o.r ?? 17.6 }] : [],
+    verdict: o.verdict ?? 'OK',
+  }
+}
 
 /** A robot file shaped like MatchTelemetry.java schema 1, with the numbers given. */
 export function robotFile(o) {
@@ -63,7 +79,9 @@ export function robotFile(o) {
 function fromFile(fileName, raw, base = {}) {
   const p = parseMatchFile(raw, fileName)
   const cols = Object.fromEntries(COLS.map((c) => [c, p.cols[c] ?? null]))
-  return { ...EMPTY, ...base, ...cols, crew_typed: p.cols.crew_typed ?? {}, file_name: fileName, raw, match_label: p.cols.match_label }
+  // The 0041 power columns ride along (features/robotmatchpower.js lists them,
+  // so they are hidden while 0041 is not applied).
+  return { ...EMPTY, ...base, ...cols, ...powerColumns(raw), crew_typed: p.cols.crew_typed ?? {}, file_name: fileName, raw, match_label: p.cols.match_label }
 }
 
 export default {
@@ -84,8 +102,14 @@ export default {
       const name = `${startedAt.slice(0, 10).replace(/-/g, '')}-${startedAt.slice(11, 19).replace(/:/g, '')}_${o.kind ?? 'practice'}_${n}.json`
       return { name, raw: robotFile({ ...o, startedAt, robotMatch: n }) }
     }
-    const f1 = file(1, 50, { driver: 'Riley', operator: 'Sam Student', battery: 'B01', autoName: 'Two-piece left', auto: 2, open: 18, closed: 3, passes: 4, ready: 78, start: 12.95, min: 10.9, end: 12.0, hang: 12.4, distance: 240, extra: { futureField: { kept: true } } })
-    const f2 = file(2, 26, { driver: 'Riley', battery: 'B02', autoName: 'Two-piece left', auto: 3, open: 22, closed: 1, passes: 6, ready: 84, start: 12.8, min: 10.2, end: 11.4, brownouts: 1, hang: 9.8, distance: 262 })
+    // practice 1: a healthy battery (B01, robot 16.9 mOhm, OK). practice 2: the
+    // brownout match (B02, normal R, 251 A at the dip: the robot drew too much).
+    const f1 = file(1, 50, { driver: 'Riley', operator: 'Sam Student', battery: 'B01', autoName: 'Two-piece left', auto: 2, open: 18, closed: 3, passes: 4, ready: 78, start: 12.95, min: 10.9, end: 12.0, hang: 12.4, distance: 240,
+      extra: { futureField: { kept: true }, power: robotPower({ rest: 12.86, r: 16.9, min: 10.9 }) } })
+    const f2 = file(2, 26, { driver: 'Riley', battery: 'B02', autoName: 'Two-piece left', auto: 3, open: 22, closed: 1, passes: 6, ready: 84, start: 12.8, min: 6.8, end: 11.4, brownouts: 1, hang: 9.8, distance: 262,
+      extra: { power: robotPower({ rest: 12.74, r: 17.6, min: 6.71, amps: 251, peak: 318, dips: 1, brownouts: 1, top: { drive: 170, shooter: 61, spindexer: 12, uptake: 8 },
+        sticky: [{ device: 'shooter 16', faults: ['undervoltage'] }, { device: 'drive 6', faults: ['undervoltage', 'bridge brownout'] }],
+        verdict: 'ROBOT DRAW: 251 A at the dip with normal resistance: too much current at once (drive pushing, shooter spin-up, a stall)' }) } })
     const f3 = file(3, 24, { driver: 'Sam', battery: 'B 1', autoName: 'Center climb', auto: 1, open: 11, closed: 6, passes: 1, ready: 61, start: 12.7, min: 11.1, end: 12.1, distance: 190 })
     const f4 = file(4, 3, { kind: 'auto_test', autoName: 'Two-piece left', auto: 2, duration: 20, start: 12.9, min: 12.4, end: 12.6, distance: 14 })
     const by = { created_by: ids.mentor, updated_by: ids.mentor }
