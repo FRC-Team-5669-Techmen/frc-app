@@ -81,6 +81,8 @@ const ManagePage         = lazy(() => import('./ManagePage'))
 const RoleBoardPage      = lazy(() => import('./RoleBoardPage'))
 const AutosPage          = lazy(() => import('./AutosPage'))
 const MatchSimPage       = lazy(() => import('./MatchSimPage'))
+const RobotMatchesPage   = lazy(() => import('./RobotMatchesPage'))
+const RobotMatchPage     = lazy(() => import('./RobotMatchPage'))
 const UpdatesPage        = lazy(() => import('./UpdatesPage'))
 const DriversPage        = lazy(() => import('./DriversPage'))
 const MeetTeamPage       = lazy(() => import('./MeetTeamPage'))
@@ -511,6 +513,9 @@ export default function App() {
           <Route path="/roles/:eventId"  element={<RoleBoardPage session={session} hasRole={hasRole} />} />
           <Route path="/autos"           element={<AutosPage session={session} hasRole={hasRole} />} />
           <Route path="/match-sim"       element={<MatchSimPage session={session} hasRole={hasRole} />} />
+          {/* The robot match log (0038, ledger 0028): students and staff; the pages gate parents. */}
+          <Route path="/robot/matches"     element={<RobotMatchesPage hasRole={hasRole} />} />
+          <Route path="/robot/matches/:id" element={<RobotMatchPage hasRole={hasRole} />} />
           <Route path="/updates"         element={<UpdatesPage />} />
           {/* Meet a team (0035, ledger 0026): a note per member per competition about another team. */}
           <Route path="/meet"            element={<MeetTeamPage session={session} hasRole={hasRole} />} />

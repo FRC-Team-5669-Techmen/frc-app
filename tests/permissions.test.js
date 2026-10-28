@@ -260,7 +260,7 @@ describe('drift: src/permissions.js against 0004_member_permissions.sql', () => 
   })
 
   it('every capability seeded in SQL is in CAPABILITIES with the same label, and vice versa', () => {
-    const seeded = [...seededCapabilities(MIGRATION), ...seededCapabilities(MIGRATION_0014), ...seededCapabilities(readFileSync(new URL('../supabase/migrations/0022_scouting.sql', import.meta.url), 'utf8'))]
+    const seeded = [...seededCapabilities(MIGRATION), ...seededCapabilities(MIGRATION_0014), ...seededCapabilities(readFileSync(new URL('../supabase/migrations/0022_scouting.sql', import.meta.url), 'utf8')), ...seededCapabilities(readFileSync(new URL('../supabase/migrations/0038_robot_match_log.sql', import.meta.url), 'utf8'))]
     const mirror = CAPABILITIES.map(c => ({ key: c.key, label: c.label }))
     expect(mirror).toEqual(seeded)
   })

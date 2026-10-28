@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from './supabase'
 import { batteryBoard } from './batteries'
 import { normEmail, isHeld } from './ideaCerts'
-import { IconBattery, IconJobs, IconStatus, IconSkills, IconAuto, IconClock, IconWheel, IconThrow } from './navIcons'
+import { IconBattery, IconJobs, IconStatus, IconSkills, IconAuto, IconClock, IconWheel, IconThrow, IconRobot } from './navIcons'
 import { leaderboard } from './driverScore'
 import { leaderboard as hpLeaderboard } from './humanPlayerScore'
 import { resolveCurrentSeason } from './seasons'
@@ -36,7 +36,8 @@ export default function RobotPage({ session, hasRole = () => false }) {
       supabase.rpc('driver_rating_scores'),
       supabase.from('seasons').select('id, name, start_date, end_date'),
       supabase.from('hp_attempts').select('member_id, attempt_date, drill, made, attempted, made_inactive, seconds, voided_at, created_at').limit(5000),
-    ]).then(([b, r, open, mine, st, certs, ar, au, sm, ds, dr, se, hp]) => {
+      supabase.from('robot_matches').select('id, started_at, kind', { count: 'exact' }).order('started_at', { ascending: false }).limit(1),
+    ]).then(([b, r, open, mine, st, certs, ar, au, sm, ds, dr, se, hp, rm]) => {
       if (!live) return
       const board = !b.error && !r.error ? batteryBoard(b.data ?? [], r.data ?? []) : null
       setS({
@@ -47,6 +48,7 @@ export default function RobotPage({ session, hasRole = () => false }) {
         sims: sm.error ? null : { total: (sm.data ?? []).length, last: sm.data?.[0]?.started_at ?? null },
         drivers: ds.error || dr.error ? null : (() => { const bd = leaderboard(ds.data ?? [], dr.data ?? [], resolveCurrentSeason(se.data ?? []), () => ''); const meRow = bd.find((x) => x.id === uid); return { total: bd.length, rank: meRow?.rank ?? null, top: bd[0]?.score ?? null } })(),
         humans: hp.error || se.error ? null : (() => { const bd = hpLeaderboard(hp.data ?? [], resolveCurrentSeason(se.data ?? [])); const meRow = bd.ranked.find((x) => x.id === uid); return { total: bd.ranked.length, rank: meRow?.rank ?? null, top: bd.ranked[0]?.score ?? null, trying: bd.unranked.length } })(),
+        matches: rm.error ? null : { total: rm.count ?? (rm.data ?? []).length, last: rm.data?.[0]?.started_at ?? null },
         certs: certs.error ? null : new Set((certs.data ?? []).filter((h) => isHeld(h, Date.now())).map((h) => h.code)).size,
       })
     })
@@ -59,7 +61,7 @@ export default function RobotPage({ session, hasRole = () => false }) {
       <header className="hub-head">
         <span className="hub-eyebrow">Robot</span>
         <h1 className="hub-title">Robot</h1>
-        <p className="hub-sub">Batteries, autos, drivers, human players, the match simulator, jobs, sub-teams and certifications.</p>
+        <p className="hub-sub">Batteries, autos, drivers, human players, the match simulator, the match log, jobs, sub-teams and certifications.</p>
       </header>
       <div className="hub-grid hub-grid-robot">
         <HubTile to="/batteries" icon={<IconBattery />} title="Batteries" tone={b?.check ? 'alert' : null} tour="robot-batteries"
@@ -77,6 +79,9 @@ export default function RobotPage({ session, hasRole = () => false }) {
         <HubTile to="/match-sim" icon={<IconClock />} title="Match simulator" tour="robot-sim"
           big={s.sims ? s.sims.total : null} bigLabel="simulated"
           line={s.sims ? (s.sims.last ? `Last ${new Date(s.sims.last).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })}` : 'Run the first one') : 'Not set up yet'} />
+        <HubTile to="/robot/matches" icon={<IconRobot />} title="Match log" tour="robot-matches"
+          big={s.matches ? s.matches.total : null} bigLabel="matches logged"
+          line={s.matches ? (s.matches.last ? `Last ${new Date(s.matches.last).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })} · trends and compare` : 'Import the robot’s match files') : 'Not set up yet'} />
         <HubTile to="/jobs" icon={<IconJobs />} title="Jobs" tour="robot-jobs"
           big={s.jobs ? s.jobs.mine : null} bigLabel="yours"
           line={s.jobs ? `${s.jobs.open} open to claim` : ' '} />

@@ -158,6 +158,18 @@ battery_set_charge:
         p_battery: $args.p_battery
         p_state: $result.previous
 
+robot_match_import:
+  describe: Import one robot match file into the match log, linking its crew, battery, auto and event, and logging the battery run and drive time once. Always asks first.
+  level: confirm
+
+robot_match_update:
+  describe: Change a robot match's crew, battery, auto, event, notes, video, score, ranking points, TOWER or fouls. Always asks first.
+  level: confirm
+
+robot_match_fill_official:
+  describe: Fill a robot match's alliance score and ranking points from the event's Blue Alliance results. Always asks first.
+  level: confirm
+
 battery_log_run:
   describe: Log one use of a battery with its voltages, resistance, minutes and whether it browned out. Always asks first.
   level: confirm

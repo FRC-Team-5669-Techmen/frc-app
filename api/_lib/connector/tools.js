@@ -7,7 +7,7 @@
  */
 import { TOOLS, FUNCTIONS, liveFunction, levelFor, fitForm } from './registry.js'
 import { write, undoLast, NotRegistered } from './engine.js'
-import { RESOLVERS, roster, resolveMember, displayName } from './resolve.js'
+import { RESOLVERS, roster, resolveMember, resolveEvent, resolveBattery, resolveRobotMatch, displayName } from './resolve.js'
 import { laDateKey, laMidnightMs, addDays, laClock, laDay, laWallToIso } from './dates.js'
 import { isSchemaMissing } from './errors.js'
 import { batteryBoard, chargeLabel, statusLabel, kindLabel, brownoutLabel, CHECK_THRESHOLDS } from '../../../src/batteries.js'
@@ -16,6 +16,7 @@ import { leaderboard as hpLeaderboard, HP_RULES, needsText as hpNeedsText } from
 import { AUTO_READY_STREAK, RATE_WINDOW, resultLabel, routineBoard } from '../../../src/autos.js'
 import { boardView, roleLabel } from '../../../src/roleBoard.js'
 import { roleRuleIssues } from '../../../src/roleRules.js'
+import { KIND_LABELS, REAL_KINDS, ballsIn, wasted, filterMatches, driverTrends, batteryTrends, compareMatches, notReadyReasons, parseMatchFile, planImport, importLinks, listRobotFiles, rawFileUrl } from '../../../src/robotMatches.js'
 import { groupByTeam, tagLabel } from '../../../src/meetTeam.js'
 
 export class UnknownTool extends Error {}
@@ -76,6 +77,112 @@ async function pickTrip(ctx, said) {
     return { trip: hits[0] }
   }
   return { trip: trips.find((t) => !t.over) ?? trips[trips.length - 1] }
+}
+
+const round1 = (v) => (v === null || v === undefined ? null : Math.round(v * 10) / 10)
+const ROBOT_MATCH_COLUMNS = ['id', 'source', 'file_name', 'kind', 'started_at', 'match_label', 'event_id', 'alliance', 'station', 'auto_name', 'routine_id', 'auto_balls', 'open_balls',
+  'closed_balls', 'passes', 'ready_pct', 'battery_start', 'battery_min', 'battery_end', 'brownouts', 'hang_at_seconds', 'distance_m', 'duration_s', 'driver_id', 'operator_id',
+  'coach_id', 'human_player_id', 'battery_id', 'scorer_balls_in', 'tower', 'match_score', 'ranking_points', 'battery_run_id', 'drive_session_id']
+
+/** The match list plus the names, labels and events it is read with. */
+async function robotMatchContext(ctx) {
+  if (ctx.cache.has('robot_matches')) return ctx.cache.get('robot_matches')
+  const [m, b, r, e] = await Promise.all([
+    ctx.backend.select(ctx.session, { table: 'robot_matches', columns: ROBOT_MATCH_COLUMNS, order: [['started_at', 'desc']], limit: 2000 }),
+    ctx.backend.select(ctx.session, { table: 'batteries', columns: ['id', 'label', 'status'], limit: 500 }),
+    ctx.backend.select(ctx.session, { table: 'auto_routines', columns: ['id', 'name', 'active'], limit: 500 }),
+    ctx.backend.select(ctx.session, { table: 'events', columns: ['id', 'title', 'kind', 'starts_at', 'ends_at'], eq: { kind: 'competition' }, order: [['starts_at', 'desc']], limit: 60 }),
+  ])
+  if (m.error) return isSchemaMissing(m.error) ? notSetUp('The match log') : { status: 'refused', message: m.error.message }
+  const list = await roster(ctx)
+  const members = (list.members ?? []).filter((x) => (x.status ?? 'active') === 'active')
+  const names = new Map((list.members ?? []).map((x) => [x.id, x.name]))
+  const out = {
+    matches: m.data, members, batteries: b.data ?? [], routines: r.data ?? [], events: e.data ?? [],
+    nameOf: (id) => names.get(id) ?? 'Unknown', labelOf: (id) => (b.data ?? []).find((x) => x.id === id)?.label ?? 'Unknown',
+    routineOf: (id) => (r.data ?? []).find((x) => x.id === id)?.name ?? null, eventOf: (id) => (e.data ?? []).find((x) => x.id === id)?.title ?? null,
+  }
+  ctx.cache.set('robot_matches', out)
+  return out
+}
+
+function robotMatchLine(m, c) {
+  return {
+    label: m.match_label, kind: KIND_LABELS[m.kind] ?? m.kind, real_field: REAL_KINDS.includes(m.kind), at: laClock(m.started_at), event: m.event_id ? c.eventOf(m.event_id) : null,
+    from: m.source === 'both' ? 'robot file and Match Sim' : m.source === 'sim_page' ? 'Match Sim only' : 'robot file',
+    alliance: m.alliance, driver: m.driver_id ? c.nameOf(m.driver_id) : null, operator: m.operator_id ? c.nameOf(m.operator_id) : null, coach: m.coach_id ? c.nameOf(m.coach_id) : null,
+    human_player: m.human_player_id ? c.nameOf(m.human_player_id) : null, battery: m.battery_id ? c.labelOf(m.battery_id) : null, auto: (m.routine_id && c.routineOf(m.routine_id)) || m.auto_name || null,
+    balls_in: ballsIn(m), closed_hub: wasted(m), passes: m.passes, auto_balls: m.auto_balls, ready_pct: m.ready_pct, hang_at_s: m.hang_at_seconds,
+    battery_volts: { start: m.battery_start, min: m.battery_min, end: m.battery_end }, brownouts: m.brownouts, distance_m: m.distance_m, seconds: m.duration_s,
+    tower: m.tower, score: m.match_score, rp: m.ranking_points,
+  }
+}
+
+async function pickRobotMatch(ctx, q) {
+  if (/^(last|latest|newest)( match)?$/i.test(String(q ?? '').trim())) {
+    const c = await robotMatchContext(ctx)
+    if (c.status) return c
+    return c.matches[0] ? { match: c.matches[0] } : { status: 'not_found', message: 'No robot matches are logged yet.' }
+  }
+  return resolveRobotMatch(ctx, q)
+}
+
+/**
+ * import_robot_matches_from_github: with no file, list the new files and what
+ * each would link (writes nothing); with one, fetch it from the public robot
+ * repo and send it to robot_match_import, which always asks first. A typed
+ * crew name that is not one member must be named in the call, never guessed.
+ */
+async function robotImportPlan(ctx, a, resolved) {
+  const c = await robotMatchContext(ctx)
+  if (c.status) return { out: c }
+  const fetchImpl = ctx.fetch ?? globalThis.fetch
+  const existing = new Set(c.matches.map((m) => m.file_name).filter(Boolean))
+  const planCtx = { members: c.members, batteries: c.batteries, routines: c.routines, events: c.events, simRows: c.matches.filter((m) => m.source === 'sim_page' && !m.file_name), existing }
+  const describe = (p) => ({
+    file: p.fileName, status: p.status, ...(p.error ? { problem: p.error } : {}),
+    ...(p.cols ? { label: p.cols.match_label, kind: KIND_LABELS[p.cols.kind], at: laClock(p.cols.started_at), typed: p.cols.crew_typed } : {}),
+    ...(p.crew ? { links: { driver: p.crew.driver.member?.name ?? null, operator: p.crew.operator.member?.name ?? null, coach: p.crew.coach.member?.name ?? null, battery: p.battery.battery?.label ?? null, auto: p.routine.routine?.name ?? null, event: p.event?.title ?? null, joins_match_sim: !!p.sim }, check: p.confirm } : {}),
+  })
+  if (!a.file) {
+    const list = await listRobotFiles(fetchImpl)
+    if (list.error) return { out: { status: 'refused', message: list.error } }
+    if (list.empty || !list.files.length) return { out: { status: 'ok', new_files: [], message: 'No match files have been pushed yet. The driver station laptop pushes them with Sync Match Data.' } }
+    const fresh = list.files.filter((f) => !existing.has(f.name))
+    const plans = await Promise.all(fresh.slice(0, 20).map(async (f) => {
+      try { const r = await fetchImpl(f.url); return planImport(parseMatchFile(r.ok ? await r.text() : '', f.name), planCtx) } catch { return { fileName: f.name, status: 'error', error: 'Could not download this file.' } }
+    }))
+    return { out: { status: 'ok', files_on_github: list.files.length, already_imported: list.files.length - fresh.length, new_files: plans.map(describe), more: Math.max(0, fresh.length - 20),
+      next: 'To import one, call again with its file name. Where check lists a name that could be more than one member, ask him who it was and pass driver, operator or coach.' } }
+  }
+  let parsed
+  try { const r = await fetchImpl(rawFileUrl(a.file)); parsed = parseMatchFile(r.ok ? await r.text() : (r.status === 404 ? null : ''), a.file); if (r.status === 404) parsed = { ok: false, fileName: a.file, error: 'There is no match file with that name on GitHub.' } } catch { parsed = { ok: false, fileName: a.file, error: 'GitHub could not be reached. Nothing was changed.' } }
+  const plan = planImport(parsed, planCtx)
+  if (plan.status === 'error') return { out: { status: 'invalid', message: `${plan.error} Nothing was changed.` } }
+  if (plan.status === 'already') return { out: { status: 'already', message: `${a.file} is already in the match log. Nothing was changed.` } }
+  const choice = {}
+  for (const role of ['driver', 'operator', 'coach']) {
+    if (resolved[role]) choice[role] = resolved[role].id
+    else if (plan.crew[role].status === 'confirm') {
+      return { out: { status: 'ambiguous', message: `The robot says the ${role} was "${plan.cols.crew_typed[role]}". That could be ${plan.crew[role].candidates.map((m) => m.name).join(' or ')}. Ask him who, then call again with ${role}. Nothing was changed.` } }
+    }
+  }
+  if (resolved.battery) choice.battery = resolved.battery.id
+  if (a.add_routine) choice.addRoutine = true
+  return { plan, args: { p_file_name: plan.fileName, p_raw: plan.raw, p_links: importLinks(plan, choice) }, summary: describe(plan) }
+}
+
+const NOTE_COLUMN = { driver: 'notes_driver', operator: 'notes_operator', coach: 'notes_coach', human_player: 'notes_human_player', pit: 'notes_pit' }
+function robotNoteFields(a) {
+  const f = {}
+  if (a.notes !== undefined) f[NOTE_COLUMN[a.role ?? 'pit']] = a.notes
+  if (a.video !== undefined) f.video_url = a.video
+  if (a.score !== undefined) f.match_score = a.score
+  if (a.rp !== undefined) f.ranking_points = a.rp
+  if (a.tower !== undefined) f.tower = a.tower
+  if (a.fouls !== undefined) f.fouls = a.fouls
+  if (a.balls_in !== undefined) f.scorer_balls_in = a.balls_in
+  return f
 }
 
 const READS = {
@@ -523,6 +630,69 @@ const READS = {
     }
   },
 
+  // The robot match log (0038), read with the app's own rules (src/robotMatches.js).
+  async list_robot_matches(ctx, a) {
+    const ctxm = await robotMatchContext(ctx)
+    if (ctxm.status) return ctxm
+    const f = { kind: a.kind, from: a.from, to: a.to }
+    if (a.event) { const ev = await resolveEvent(ctx, a.event); if (ev.status) return ev; f.event = ev.event.id }
+    if (a.driver) { const m = await resolveMember(ctx, a.driver); if (m.status) return m; f.driver = m.member.id }
+    if (a.battery) { const b = await resolveBattery(ctx, a.battery); if (b.status) return b; f.battery = b.battery.id }
+    const shown = filterMatches(ctxm.matches, f)
+    const limit = Math.max(1, Math.min(200, Number(a.limit) || 25))
+    return {
+      status: 'ok', count: shown.length, listed: Math.min(limit, shown.length),
+      matches: shown.slice(0, limit).map((m) => robotMatchLine(m, ctxm)),
+      ...(a.trends ? {
+        drivers: driverTrends(shown, ctxm.nameOf).map((d) => ({ driver: d.name, matches: d.matches, avg_balls_in: round1(d.avg.ballsIn), avg_closed_hub: round1(d.avg.wasted), avg_ready_pct: round1(d.avg.ready), avg_hang_s: round1(d.avg.hang), balls_in_by_match: d.points.map((p) => p.ballsIn) })),
+        batteries: batteryTrends(shown, ctxm.labelOf).map((b) => ({ battery: b.label, matches: b.runs, lowest_volts: b.lowest, avg_min_volts: round1(b.avgMin), brownouts: b.brownouts, min_volts_by_match: b.points.map((p) => p.min) })),
+      } : {}),
+      note: 'Balls in is the scorer count when someone counted, else the robot count (auto plus open hub). A blank number means not recorded, never zero.',
+    }
+  },
+
+  async get_robot_match(ctx, a) {
+    const r = await pickRobotMatch(ctx, a.match)
+    if (r.status) return r
+    const one = await ctx.backend.select(ctx.session, { table: 'robot_matches', columns: ['*'], eq: { id: r.match.id }, limit: 1 })
+    if (one.error) return { status: 'refused', message: one.error.message }
+    const m = one.data[0]
+    const ctxm = await robotMatchContext(ctx)
+    if (ctxm.status) return ctxm
+    return {
+      status: 'ok', match: robotMatchLine(m, ctxm),
+      people: { tower: m.tower, fouls: m.fouls, score: m.match_score, rp: m.ranking_points, score_from: m.official_source, video: m.video_url, wpilog: m.wpilog_file,
+        notes: { driver: m.notes_driver, operator: m.notes_operator, coach: m.notes_coach, human_player: m.notes_human_player, pit: m.notes_pit },
+        crew_typed_on_robot: m.crew_typed, battery_run_logged: !!m.battery_run_id, drive_time_logged: !!m.drive_session_id },
+      not_ready_seconds: notReadyReasons(m.raw),
+      robot_file: m.raw, file_name: m.file_name, schema_version: m.schema_version,
+      note: m.raw ? 'robot_file is the whole file the robot wrote, every field kept.' : 'This match was logged on the Match Sim page only; the robot file has not been imported.',
+    }
+  },
+
+  async compare_robot_matches(ctx, a) {
+    const ctxm = await robotMatchContext(ctx)
+    if (ctxm.status) return ctxm
+    const want = String(a.matches ?? '').trim()
+    let picked = []
+    const lastN = /^last\s*(\d+)?$/i.exec(want)
+    if (lastN) picked = ctxm.matches.slice(0, Math.max(2, Math.min(6, Number(lastN[1]) || 2)))
+    else {
+      for (const q of want.split(/\s*(?:,|;|\band\b|\bvs\.?\b)\s*/i).filter(Boolean)) {
+        const r = await resolveRobotMatch(ctx, q)
+        if (r.status) return r
+        picked.push(ctxm.matches.find((m) => m.id === r.match.id))
+      }
+    }
+    picked = picked.filter(Boolean)
+    if (picked.length < 2) return { status: 'invalid', message: 'Name two or more matches to compare, such as qm12, qm18.' }
+    return {
+      status: 'ok', matches: picked.map((m) => ({ label: m.match_label, at: laClock(m.started_at), driver: m.driver_id ? ctxm.nameOf(m.driver_id) : null, battery: m.battery_id ? ctxm.labelOf(m.battery_id) : null })),
+      rows: compareMatches(picked).map((row) => ({ metric: row.label, values: row.values, best: row.best })),
+      note: 'best is marked only where higher or lower is better and the matches differ. null means not recorded.',
+    }
+  },
+
   // The driver leaderboard (0029), scored with the app's own rule (src/driverScore.js).
   async list_drivers(ctx, a) {
     const [ds, sc, se] = await Promise.all([
@@ -694,7 +864,7 @@ export async function runTool(ctx, name, a = {}) {
         if (spec.resolve && a[argName] !== undefined) {
           const r = await RESOLVERS[spec.resolve](ctx, a[argName])
           if (r.status) return r
-          resolved[argName] = r.member ?? r.members ?? r.event ?? r.battery ?? r.routine
+          resolved[argName] = r.member ?? r.members ?? r.event ?? r.battery ?? r.routine ?? r.match
         }
       }
       let args
@@ -708,10 +878,22 @@ export async function runTool(ctx, name, a = {}) {
         const pre = await signInOutCheck(ctx, resolved.member, a.direction)
         if (pre) return pre
       }
+      let robotSummary = null
+      if (name === 'import_robot_matches_from_github') {
+        const r = await robotImportPlan(ctx, a, resolved)
+        if (r.out) return r.out
+        args = r.args
+        robotSummary = r.summary
+      }
+      if (name === 'set_robot_match_notes') {
+        args = { p_id: resolved.match.id, p_fields: robotNoteFields(a) }
+        if (!Object.keys(args.p_fields).length) return { status: 'invalid', message: 'Say what to add: a note, a video link, the score, RP, TOWER, fouls or the ball count. Nothing was changed.' }
+      }
       if (args.p_starts_at && args.p_ends_at && Date.parse(args.p_ends_at) < Date.parse(args.p_starts_at)) {
         return { status: 'invalid', message: 'The end is before the start. Ask him for the times again. Nothing was changed.' }
       }
       const out = await write(ctx, { tool: name, fn: tool.function, args }, writeOpts(a))
+      if (robotSummary) out.file = robotSummary
       if (name === 'approve_signout' && resolved.member) {
         out.signout = { member: resolved.member.name, note: resolved.member.note, cleanup_confirmed: resolved.member.cleanup_confirmed, asked_at: laClock(resolved.member.requested_at) }
       }

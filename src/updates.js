@@ -9,6 +9,12 @@
 // route (tests/updates.test.js checks it against App.jsx).
 
 export const UPDATES = Object.freeze([
+  { date: '2026-10-28', title: 'Match log', route: '/robot/matches', items: [
+    'Every robot match in one place: practice, real matches and auto tests.',
+    'The robot records balls in, wasted shots, battery and why it was not ready to fire.',
+    'Trends for each driver and battery, and any matches side by side.',
+    'Drive-team leads import the robot files from GitHub in one tap.',
+  ] },
   { date: '2026-10-23', title: 'Meet a team', route: '/meet', items: [
     'At every competition, talk to another team and log what they do well.',
     'Chips for how they run and what they offer. One thing we should copy.',

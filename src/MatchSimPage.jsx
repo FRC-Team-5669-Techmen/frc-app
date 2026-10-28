@@ -64,7 +64,7 @@ export default function MatchSimPage({ session, hasRole = () => false }) {
     <main className="ba-wrap" data-page="match-sim">
       <Link className="ba-back" to="/robot">← Robot</Link>
       <header className="ba-head"><div><span className="ba-eyebrow">Drive practice</span><h1 className="ba-title">Match simulator</h1>
-        <p className="ba-sub">A full 2026 REBUILT match on the official clock: AUTO, TRANSITION, four SHIFTS with the HUBS alternating, END GAME. Full screen, with sound.</p></div></header>
+        <p className="ba-sub">A full 2026 REBUILT match on the official clock: AUTO, TRANSITION, four SHIFTS with the HUBS alternating, END GAME. Full screen, with sound.</p></div><div className="ba-head-actions"><Link className="ba-link" to="/robot/matches" data-match-log>Match log →</Link></div></header>
       {msg && <p className="ba-msg" role="status">{msg}</p>}
       <section className="ms-setup">
         <h2 className="ba-h3">Drive team</h2>

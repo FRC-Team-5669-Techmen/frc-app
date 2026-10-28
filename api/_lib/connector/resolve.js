@@ -175,4 +175,23 @@ export async function resolveRoutine(ctx, q) {
   return { status: 'ambiguous', message: `${hits.length} routines match "${q}": ${hits.map((x) => x.name).join(', ')}. Ask him which.`, candidates: hits.map((x) => ({ id: x.id, name: x.name })) }
 }
 
-export const RESOLVERS = { routine: resolveRoutine, member: resolveMember, members: resolveMembers, event: resolveEvent, signout: resolveSignout, battery: resolveBattery }
+/**
+ * A robot match (0038) by its id or its label (qm12, practice 3, playoff 2),
+ * newest first. One label played on two days is ambiguous: the candidates
+ * carry their ids and times so he can say which.
+ */
+export async function resolveRobotMatch(ctx, q) {
+  const s = String(q ?? '').trim()
+  if (!s) return { status: 'not_found', message: 'Which match? Ask him for its label, such as qm12 or practice 3.' }
+  const cols = ['id', 'match_label', 'kind', 'started_at', 'driver_id', 'file_name']
+  const r = UUID.test(s)
+    ? await ctx.backend.select(ctx.session, { table: 'robot_matches', columns: cols, eq: { id: s }, limit: 1 })
+    : await ctx.backend.select(ctx.session, { table: 'robot_matches', columns: cols, order: [['started_at', 'desc']], limit: 2000 })
+  if (r.error) return { status: ['42P01', 'PGRST205'].includes(r.error.code) ? 'not_set_up' : 'refused', message: ['42P01', 'PGRST205'].includes(r.error.code) ? 'The match log is not set up yet: its SQL has not been applied. Nothing was changed.' : r.error.message }
+  const hits = UUID.test(s) ? r.data : r.data.filter((m) => norm(m.match_label) === norm(s) || norm(m.file_name) === norm(s))
+  if (hits.length === 1) return { match: hits[0] }
+  if (!hits.length) return { status: 'not_found', message: `No robot match is labeled "${s}". Recent ones: ${r.data.slice(0, 12).map((m) => m.match_label).join(', ') || 'none yet'}.` }
+  return { status: 'ambiguous', message: `${hits.length} matches are labeled "${s}". Ask him which, by when it was played.`, candidates: hits.slice(0, 8).map((m) => ({ id: m.id, label: m.match_label, at: m.started_at })) }
+}
+
+export const RESOLVERS = { robot_match: resolveRobotMatch, routine: resolveRoutine, member: resolveMember, members: resolveMembers, event: resolveEvent, signout: resolveSignout, battery: resolveBattery }

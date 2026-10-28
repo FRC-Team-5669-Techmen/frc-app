@@ -306,6 +306,67 @@ list_batteries:
     show: {type: string, describe: "Which ones (in service by default)", enum: [in_service, match_ready, check, all]}
     battery: {type: string, describe: "One battery's label, such as B07, for its recent runs"}
 
+list_robot_matches:
+  describe: The robot match log, newest first, with balls in, shots into a closed hub, ready percent, battery minimum, brownouts and hang time. Filter by kind, event, driver, battery or dates.
+  say: ["show the robot matches", "how did Riley drive this week", "which matches browned out", "list the real matches at Beach Blitz", "matches on battery B07"]
+  kind: read
+  args:
+    kind: {type: string, describe: "Only this kind of match; real means on a real field", enum: [real, practice, qual, playoff, practice_fms, auto_test, teleop_session, fms]}
+    event: {type: string, describe: "Only matches at this competition, by title"}
+    driver: {type: string, describe: "Only matches this member drove, by name"}
+    battery: {type: string, describe: "Only matches on this battery, such as B07"}
+    from: {type: string, describe: "From this date, YYYY-MM-DD"}
+    to: {type: string, describe: "To this date, YYYY-MM-DD"}
+    trends: {type: boolean, describe: "Also give per-driver and per-battery trends"}
+    limit: {type: integer, describe: "How many matches to list (25 by default, 200 at most)"}
+
+get_robot_match:
+  describe: One robot match in full, with everything the robot recorded (scoring, battery by phase, why it was not ready, the timeline) and the crew, notes and video.
+  say: ["show me qm12", "what happened in practice 3", "why did the robot brown out in qm7", "open the last match"]
+  kind: read
+  args:
+    match: {type: string, describe: "The match label, such as qm12 or practice 3, or last for the newest", required: true}
+
+compare_robot_matches:
+  describe: Two or more robot matches side by side, with the best value marked for each number.
+  say: ["compare qm12 and qm18", "compare practice 3, 4 and 5", "how did the last two matches compare"]
+  kind: read
+  args:
+    matches: {type: string, describe: "The match labels, separated by commas, or last 3 for the newest three", required: true}
+
+import_robot_matches_from_github:
+  describe: Bring the robot's new match files from GitHub into the match log. Without a file it lists what is new; with one it imports that file, which always asks first.
+  say: ["import the robot matches", "pull the new match files", "what match files are new on GitHub", "import 20261031-101500_qual_12.json"]
+  kind: function
+  function: robot_match_import
+  args:
+    file: {type: string, describe: "One match file name from the list, such as 20261031-101500_qual_12.json; leave out to list the new files"}
+    driver: {type: string, describe: "Who drove, when the typed name did not match one member", resolve: member}
+    operator: {type: string, describe: "Who operated, when the typed name did not match one member", resolve: member}
+    coach: {type: string, describe: "The drive coach, when the typed name did not match one member", resolve: member}
+    battery: {type: string, describe: "The battery, such as B07, when the typed label did not match", resolve: battery}
+    add_routine: {type: boolean, describe: "Add the file's auto as a new auto routine when it is not one yet"}
+  map:
+    p_file_name: $args.file
+
+set_robot_match_notes:
+  describe: Add notes, a video link, the alliance score, ranking points, TOWER, fouls or the scorer's ball count to one robot match. Always asks first.
+  say: ["note on qm12 for the driver: lost the turret lock twice", "the video for qm12 is youtube link", "qm12 scored 87 with 2 RP", "pit note on practice 3: check the breaker"]
+  kind: function
+  function: robot_match_update
+  args:
+    match: {type: string, describe: "The match label, such as qm12 or practice 3", required: true, resolve: robot_match}
+    role: {type: string, describe: "Whose note it is", enum: [driver, operator, coach, human_player, pit]}
+    notes: {type: string, describe: "The note, in his words"}
+    video: {type: string, describe: "A video link starting with https://"}
+    score: {type: integer, describe: "Our alliance's score"}
+    rp: {type: number, describe: "Ranking points we earned"}
+    tower: {type: string, describe: "How the climb went", enum: [none, level1, level2, level3, failed]}
+    fouls: {type: string, describe: "Fouls called on us"}
+    balls_in: {type: integer, describe: "The scorer's count of balls in"}
+  map:
+    p_id: $resolved.match.id
+
 log_battery_run:
   describe: Log a battery run, such as B07 in qualification 12 resting at 12.9 volts with no brownout. Always asks first.
   say: ["log B07 for qual 12, 12.9 before, 11.8 after, no brownout", "B03 browned out in practice match 2", "battery 5 bench test, 13.1 volts and 14 milliohms"]

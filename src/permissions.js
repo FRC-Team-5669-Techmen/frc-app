@@ -39,6 +39,8 @@ import { isSchemaMissing } from './schemaMissing.js'
 export const CAP_EVENTS_CREATE = 'events.create'
 export const CAP_SIGNOUT_APPROVE = 'signout.approve'
 export const CAP_SCOUTING_MANAGE = 'scouting.manage'
+// Seeded by 0038_robot_match_log.sql: drive-team leads import robot match files.
+export const CAP_ROBOT_MATCHES = 'robot.matches'
 
 // Mirrors the rows 0004, 0014, and 0022 seed into public.capabilities (key + label must match;
 // the test enforces it). A new capability is a new row there AND here.
@@ -57,6 +59,7 @@ export const CAPABILITIES = Object.freeze([
     hint: 'Approve or send back other members\' sign-out requests on /signouts. Never their own.',
   }),
   Object.freeze({ key: CAP_SCOUTING_MANAGE, label: 'Can manage scouting', short: 'Manages scouting', hint: 'Assign scouts and maintain team data. Parent-only accounts cannot use scouting.' }),
+  Object.freeze({ key: CAP_ROBOT_MATCHES, label: 'Can log robot matches', short: 'Logs robot matches', hint: 'Import robot match files and edit match records: crew, notes, scores. For drive-team leads.' }),
 ])
 
 export const STAFF_ROLES = Object.freeze(['mentor', 'lead', 'admin'])

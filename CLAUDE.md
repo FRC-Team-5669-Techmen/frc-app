@@ -73,6 +73,7 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 - **Battery log**: `/batteries`, the pit battery board, runs and charge state (0026). [`docs/subsystems/batteries.md`](docs/subsystems/batteries.md)
 - **Driver leaderboard**: `/drivers`, drive time, MoSim, coach ratings, one Driver Score per season in `src/driverScore.js` (0029). [`docs/subsystems/drivers.md`](docs/subsystems/drivers.md)
 - **Human player leaderboard**: `/human-player`, accuracy, rate and match-run drills counted live, one Human Player Score per season in `src/humanPlayerScore.js` (0033). [`docs/subsystems/human-player.md`](docs/subsystems/human-player.md)
+- **Robot match log**: `/robot/matches`, one record per match from the robot's file or the Match Sim page, import from GitHub, trends and compare (0038). [`docs/subsystems/robot-matches.md`](docs/subsystems/robot-matches.md)
 - **Connector**: Claude acting as the admin through `/mcp` (0018); every write via `src/writeVia.js` (0019). [`docs/subsystems/connector.md`](docs/subsystems/connector.md)
 
 ### Roadmap (planned modules)
@@ -232,4 +233,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-10-26. Reply-To apina@boscotech.edu on app email, via `EMAIL_REPLY_TO` (ledger 0027, `docs/history/reply-to-apina-0027.md`). Previously: Meet a team subsystem line (ledger 0026). Previously: human player leaderboard line (ledger 0025); role board v2 in the Event rosters line (ledger 0023); Scouting pairs, super scouts and match-number shifts (ledger 0022); driver leaderboard line (ledger 0020); light theme and What's new (ledger 0019); automatic migrations (`migrate.yml`, ledger 0021) in the Database section; battery log, scouting and nav lines (ledger 0017). Latest records: `docs/history/light-mode-whats-new-0019.md`, `docs/history/auto-migrations-0021.md`.
+Last reviewed: 2026-10-28. Robot match log line (ledger 0028, `docs/history/robot-match-log-0028.md`). Previously: Reply-To apina@boscotech.edu on app email, via `EMAIL_REPLY_TO` (ledger 0027, `docs/history/reply-to-apina-0027.md`). Previously: Meet a team subsystem line (ledger 0026). Previously: human player leaderboard line (ledger 0025); role board v2 in the Event rosters line (ledger 0023); Scouting pairs, super scouts and match-number shifts (ledger 0022); driver leaderboard line (ledger 0020); light theme and What's new (ledger 0019); automatic migrations (`migrate.yml`, ledger 0021) in the Database section; battery log, scouting and nav lines (ledger 0017). Latest records: `docs/history/light-mode-whats-new-0019.md`, `docs/history/auto-migrations-0021.md`.
