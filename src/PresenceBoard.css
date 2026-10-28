@@ -28,219 +28,85 @@
 @media (prefers-reduced-motion: reduce) { .pb-spinner { animation: none; } }
 
 /* ── Header ── */
-.pb-header {
-  display: flex;
-  align-items: center;
-  gap: clamp(1rem, 2vw, 2rem);
-  padding-bottom: clamp(0.75rem, 1.5vw, 1.25rem);
-  border-bottom: 1px solid var(--border-strong);
-  flex-wrap: wrap;
-}
-
-.pb-mark {
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: clamp(1.3rem, 2.6vw, 2.4rem);
-  letter-spacing: 0.05em;
-  color: var(--gold);
-}
+.pb-header { display: flex; align-items: flex-end; gap: 0.75rem clamp(1rem, 2vw, 2rem); flex-wrap: wrap; padding-bottom: clamp(0.75rem, 1.5vw, 1.25rem); border-bottom: 1px solid var(--border-strong); }
+.pb-title { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.pb-mark { font-family: var(--font-ui); font-weight: 700; font-size: clamp(1.3rem, 2.6vw, 2.4rem); letter-spacing: 0.05em; color: var(--gold); }
 .pb-dot { color: var(--steel); margin: 0 0.12em; }
+.pb-tag { font-family: var(--font-mono); font-size: clamp(0.72rem, 1.1vw, 1rem); letter-spacing: 0.16em; color: var(--steel); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 0.2rem 0.6rem; }
+.pb-clock { font-family: var(--font-mono); font-size: clamp(0.85rem, 1.2vw, 1.15rem); color: var(--steel); letter-spacing: 0.04em; }
+.pb-count { margin-left: auto; display: flex; align-items: baseline; gap: 0.35rem; }
+.pb-count-now { font-family: var(--font-ui); font-weight: 700; font-size: clamp(2.6rem, 6vw, 5rem); line-height: 0.9; color: var(--gold); }
+.pb-count-sep { font-family: var(--font-ui); font-size: clamp(1.4rem, 3vw, 2.4rem); color: var(--steel); }
+.pb-count-total { font-family: var(--font-ui); font-size: clamp(1.4rem, 3vw, 2.4rem); color: var(--steel); }
+.pb-count-label { font-family: var(--font-mono); font-size: clamp(0.72rem, 1vw, 0.95rem); letter-spacing: 0.14em; text-transform: uppercase; color: var(--steel); margin-left: 0.35rem; }
 
-.pb-tag {
-  font-family: var(--font-mono);
-  font-size: clamp(0.8rem, 1.2vw, 1.1rem);
-  letter-spacing: 0.18em;
-  color: var(--steel);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  padding: 0.2rem 0.6rem;
-}
+.pb-error { font-family: var(--font-mono); color: var(--fault); font-size: 0.9rem; }
+.pb-empty { margin: 0; padding: clamp(1.25rem, 3vw, 2.5rem); text-align: center; font-size: clamp(1rem, 1.6vw, 1.4rem); color: var(--steel); background: var(--surface); border: 1px dashed var(--border-strong); border-radius: var(--radius); }
+.pb-section-title { margin: 0 0 0.6rem; font-family: var(--font-mono); font-size: clamp(0.78rem, 1vw, 0.95rem); font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--steel); }
+.pb-section-title span { color: var(--text); margin-left: 0.4rem; }
 
-.pb-count {
-  margin-left: auto;
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  font-family: var(--font-ui);
-}
-.pb-count-label {
-  font-size: clamp(0.7rem, 1vw, 1rem);
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  color: var(--gold);
-  text-transform: uppercase;
-  margin-right: 0.25rem;
-}
-.pb-count-now {
-  font-size: clamp(2rem, 5vw, 4.5rem);
-  font-weight: 700;
-  line-height: 1;
-  color: var(--gold-bright);
-}
-.pb-count-sep { font-size: clamp(1.5rem, 3vw, 2.5rem); color: var(--muted); }
-.pb-count-total {
-  font-size: clamp(1.5rem, 3vw, 2.5rem);
-  font-weight: 600;
-  color: var(--steel);
-}
+/* ── A present member: a card ── */
+.pb-cards, .pb-team-here, .pb-bars { list-style: none; margin: 0; padding: 0; }
+.pb-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: clamp(0.5rem, 1vw, 0.9rem); }
+.pb-present { --pb-row-pad-y: 0.6rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.1rem 0.75rem; padding: var(--pb-row-pad-y) 1rem; background: var(--surface); border: 1px solid var(--border-strong); border-left: 3px solid var(--gold); border-radius: var(--radius); min-width: 0; }
+.pb-present .pb-name { grid-column: 1; font-family: var(--font-ui); font-weight: 700; font-size: clamp(1.15rem, 1.9vw, 1.7rem); color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pb-present .pb-elapsed { grid-column: 2; grid-row: 1 / span 2; font-family: var(--font-ui); font-weight: 700; font-size: clamp(1.1rem, 1.8vw, 1.6rem); color: var(--gold); }
+.pb-meta { grid-column: 1; font-family: var(--font-mono); font-size: clamp(0.72rem, 0.95vw, 0.95rem); letter-spacing: 0.03em; color: var(--steel); }
+.pb-team { color: var(--text); }
 
-.pb-error {
-  font-family: var(--font-mono);
-  color: var(--fault);
-  font-size: 0.9rem;
-}
-
-/* ── Groups ── */
-.pb-groups {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
-  gap: clamp(1rem, 2vw, 2rem);
-  align-content: start;
-}
-
-.pb-group-title {
-  font-family: var(--font-ui);
-  font-size: clamp(0.75rem, 1.1vw, 1rem);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--gold);
-  padding-bottom: 0.5rem;
-  margin-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.pb-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.pb-row {
-  --pb-row-pad-y: clamp(0.5rem, 1vw, 0.8rem);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: var(--pb-row-pad-y) clamp(0.6rem, 1vw, 1rem);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.pb-icon {
-  flex-shrink: 0;
-  width: clamp(1.4rem, 1.8vw, 1.8rem);
-  height: clamp(1.4rem, 1.8vw, 1.8rem);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: clamp(0.8rem, 1vw, 1rem);
-}
-
-.pb-present .pb-icon {
-  color: var(--on-gold);
-  background: var(--gold-fill);
-  font-weight: 700;
-}
-.pb-absent .pb-icon {
-  color: var(--muted);
-  border: 1px solid var(--border-strong);
-  background: transparent;
-}
-
-.pb-name {
-  flex: 1;
-  font-family: var(--font-ui);
-  font-size: clamp(1rem, 1.6vw, 1.5rem);
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.pb-present .pb-name { color: var(--text); }
-.pb-absent  .pb-name { color: var(--muted); opacity: 0.55; }
+/* ── Not here: compact chips ── */
+.pb-away { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: 0.4rem 1.25rem; padding-top: clamp(0.75rem, 1.5vw, 1.25rem); border-top: 1px solid var(--border); }
+.pb-away > .pb-section-title { grid-column: 1 / -1; }
+.pb-away-group h3 { margin: 0 0 0.3rem; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.pb-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.pb-absent { --pb-row-pad-y: 0; display: inline-flex; align-items: center; min-height: 32px; padding: 0 0.6rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); }
+.pb-absent .pb-name { font-family: var(--font-ui); font-size: clamp(0.85rem, 1vw, 1rem); color: var(--muted); }
 
 /* Staff only: the name is a button that opens the member's attendance history.
-   It looks like the plain name until hovered or focused, and reaches into the
-   row's vertical padding so the touch target is at least 44px tall without
-   making a wall-sized row any taller than it already is. */
-.pb-name-btn {
-  display: block;
-  align-self: stretch;
-  min-width: 0;
-  min-height: 44px;
-  margin: calc(-1 * var(--pb-row-pad-y)) 0;
-  padding: var(--pb-row-pad-y) 0;
-  background: none;
-  border: 0;
-  border-radius: var(--radius-sm);
-  line-height: inherit;
-  letter-spacing: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.pb-name-btn:hover {
-  text-decoration: underline;
-  text-decoration-color: var(--gold-dim);
-  text-underline-offset: 0.2em;
-}
-/* The global gold focus ring, at full strength even on a dimmed absent row. */
+   It looks like the plain name until hovered or focused, and is at least 44px
+   tall so it is a real touch target. */
+.pb-name-btn { display: block; align-self: stretch; min-width: 0; min-height: 44px; margin: calc(-1 * var(--pb-row-pad-y, 0px)) 0; padding: var(--pb-row-pad-y, 0px) 0; background: none; border: 0; border-radius: var(--radius-sm); line-height: inherit; letter-spacing: inherit; text-align: left; cursor: pointer; }
+.pb-absent .pb-name-btn { min-height: 44px; }
+.pb-name-btn:hover { text-decoration: underline; text-decoration-color: var(--gold-dim); text-underline-offset: 0.2em; }
 .pb-name-btn:focus-visible { opacity: 1; }
 
-.pb-meta {
-  flex-shrink: 0;
-  font-family: var(--font-mono);
-  font-size: clamp(0.75rem, 1vw, 1.05rem);
-  letter-spacing: 0.04em;
-  text-align: right;
-}
-.pb-present .pb-meta { color: var(--gold); }
-.pb-absent  .pb-meta { color: var(--muted); opacity: 0.6; }
+/* ── Sub-team coverage strip ── */
+.pb-coverage { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr)); gap: 0.5rem; }
+.pb-coverage li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem 0.5rem; align-items: baseline; padding: 0.5rem 0.7rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.pb-coverage li > span:first-child { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--steel); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pb-coverage b, .pb-team-tile header b { font-family: var(--font-ui); font-size: clamp(1rem, 1.5vw, 1.35rem); color: var(--muted); }
+.pb-coverage b i, .pb-team-tile header b i { font-style: normal; font-size: 0.75em; color: var(--muted); }
+.pb-coverage .pb-cov-on b, .pb-team-on header b { color: var(--gold); }
+.pb-cov-bar { grid-column: 1 / -1; display: block; height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; }
+.pb-cov-bar > span { display: block; height: 100%; background: var(--gold); }
+
+/* ── Layout: by sub-team ── */
+.pb-teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); gap: clamp(0.6rem, 1.2vw, 1rem); align-items: start; }
+.pb-team-tile { display: flex; flex-direction: column; gap: 0.55rem; padding: 0.8rem 0.9rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); min-width: 0; }
+.pb-team-on { border-color: var(--border-strong); }
+.pb-team-tile header { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+.pb-team-tile h2 { margin: 0; font-family: var(--font-ui); font-size: clamp(1rem, 1.4vw, 1.25rem); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text); }
+.pb-team-here { display: grid; gap: 0.4rem; }
+.pb-team-tile .pb-present { background: var(--bg); }
+
+/* ── Layout: timeline ── */
+.pb-timeline { display: flex; flex-direction: column; gap: 0.4rem; }
+.pb-axis { display: flex; justify-content: space-between; margin-left: auto; width: min(55%, 40rem); font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.pb-bars { display: grid; gap: 0.4rem; }
+.pb-bars .pb-present { grid-template-columns: minmax(0, 1fr) auto min(55%, 40rem); }
+.pb-bars .pb-present .pb-elapsed { grid-row: 1 / span 2; }
+.pb-track { grid-column: 3; grid-row: 1 / span 2; display: block; height: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.pb-fill { display: block; height: 100%; background: var(--gold-fill); }
 
 /* ── Footer ── */
-.pb-footer {
-  font-family: var(--font-mono);
-  font-size: clamp(0.7rem, 0.9vw, 0.9rem);
-  letter-spacing: 0.12em;
-  color: var(--muted);
-  border-top: 1px solid var(--border);
-  padding-top: 0.75rem;
-}
+.pb-footer { margin-top: auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; color: var(--muted); }
+.pb-layouts { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.pb-layouts a { display: inline-flex; align-items: center; min-height: 36px; padding: 0 0.7rem; color: var(--steel); text-decoration: none; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); }
+.pb-layouts a[aria-current="page"] { color: var(--on-gold); background: var(--gold-fill); border-color: var(--gold); }
 
-/* Quick pulse: sign a member in or out from their panel (staff). */
-.qp {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.9rem;
-  margin: 0 0 0.9rem;
-  padding: 0.7rem 0.8rem;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  background: var(--bg);
+@media (max-width: 600px) {
+  .pb-count { margin-left: 0; }
+  .pb-bars .pb-present { grid-template-columns: minmax(0, 1fr) auto; }
+  .pb-track { grid-column: 1 / -1; grid-row: auto; }
+  .pb-axis { width: 100%; }
 }
-.qp-status { display: flex; align-items: center; gap: 0.5rem; flex: 1 1 12rem; }
-.qp-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
-.qp-dot-in { background: var(--gold-fill); }
-.qp-text { font-family: var(--font-mono); font-size: 0.9rem; letter-spacing: 0.04em; }
-.qp-note { flex-basis: 100%; margin: 0; font-size: 0.9rem; color: var(--steel); overflow-wrap: anywhere; }
-.qp-btn {
-  min-height: 48px;
-  padding: 0.5rem 1.1rem;
-  font-family: var(--font-ui);
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--gold);
-  background: var(--surface);
-  border: 1px solid var(--gold);
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-.qp-armed { color: var(--on-gold); background: var(--gold-fill); }
-.qp-btn:disabled { opacity: 0.6; cursor: default; }
-.qp-msg { flex-basis: 100%; margin: 0; font-family: var(--font-mono); font-size: 0.8rem; color: var(--gold); }

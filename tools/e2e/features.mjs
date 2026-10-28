@@ -81,6 +81,7 @@ const FEATURES = Object.freeze([
   'role-board',
   'meet-team',
   'robot-match',
+  'team-pulse',
 ]);
 
 
