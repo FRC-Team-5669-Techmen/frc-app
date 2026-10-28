@@ -112,3 +112,38 @@
   .pb-track { grid-column: 1 / -1; grid-row: auto; }
   .pb-axis { width: 100%; }
 }
+
+/* Quick pulse: sign a member in or out from their panel (staff). */
+.qp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+  margin: 0 0 0.9rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+.qp-status { display: flex; align-items: center; gap: 0.5rem; flex: 1 1 12rem; }
+.qp-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
+.qp-dot-in { background: var(--gold-fill); }
+.qp-text { font-family: var(--font-mono); font-size: 0.9rem; letter-spacing: 0.04em; }
+.qp-note { flex-basis: 100%; margin: 0; font-size: 0.9rem; color: var(--steel); overflow-wrap: anywhere; }
+.qp-btn {
+  min-height: 48px;
+  padding: 0.5rem 1.1rem;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: var(--surface);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.qp-armed { color: var(--on-gold); background: var(--gold-fill); }
+.qp-btn:disabled { opacity: 0.6; cursor: default; }
+.qp-msg { flex-basis: 100%; margin: 0; font-family: var(--font-mono); font-size: 0.8rem; color: var(--gold); }
