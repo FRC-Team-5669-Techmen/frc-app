@@ -51,3 +51,13 @@ h1 {
 p {
   font-size: 1rem;
 }
+
+/* Can't reach the team server (App.jsx ServerUnreachable): weak venue signal on a cold start. */
+.splash-card { gap: 0.75rem; padding: 1.5rem 16px; text-align: center; }
+.splash-card h1 { margin: 0.5rem 0 0; font-size: 1.35rem; }
+.splash-card p { margin: 0; max-width: 28rem; color: var(--muted); }
+.splash-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-top: 0.5rem; }
+.splash-actions button { min-height: 44px; padding: 0 1.1rem; border-radius: var(--radius); font: inherit; font-weight: 600; cursor: pointer; }
+.splash-primary { background: var(--gold-fill, var(--gold)); color: var(--on-gold, #0A0B0D); border: 1px solid var(--gold); }
+.splash-secondary { background: transparent; color: var(--text); border: 1px solid var(--border-strong); }
+.splash-hint { font-size: 0.85rem; }

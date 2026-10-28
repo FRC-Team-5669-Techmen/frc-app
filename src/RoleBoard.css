@@ -111,3 +111,15 @@ thead .rb-slot-col { z-index: 3; }
 @media (min-width: 720px) { .rb-assign { padding-bottom: 1.25rem; } }
 .rb-swipe { margin: 0 0 0.35rem; font-size: 0.75rem; color: var(--steel); }
 @media (min-width: 1100px) { .rb-swipe { display: none; } }
+
+/* Rotation rule check (src/roleRules.js, ledger 0029): staff only, never blocks. */
+.rb-rules { margin-bottom: 0.75rem; padding: 0.2rem 0.9rem 0.6rem; border: 1px solid var(--border); border-radius: var(--radius); }
+.rb-rules-bad { border-color: var(--fault); background: var(--fault-a10); }
+.rb-rules summary { min-height: 44px; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-family: var(--font-mono); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); }
+.rb-rules-bad summary span { color: var(--fault); }
+.rb-rules-ok summary span { color: var(--muted); }
+.rb-rules ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 0.35rem; }
+.rb-rule { font-size: 0.88rem; color: var(--text); padding-left: 0.6rem; border-left: 3px solid var(--gold-dim); }
+.rb-rule b { display: block; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+.rb-rule-conflict { border-left-color: var(--fault); }
+.rb-rule-conflict b { color: var(--fault); }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { prepareFootageRecord, footageLabel } from '../src/scouting/provenance.js'
+import { prepareFootageRecord, footageLabel, canonicalMatchKey, matchIdentity } from '../src/scouting/provenance.js'
 import { reliability } from '../src/scouting/model.js'
 import { scoutingDiscordPayload } from '../supabase/functions/scouting-dispatch/dispatch.js'
 const external = { kind: 'observation', team_number: 5669, member_id: 'a', event_id: 'current', match_key: '2026cabb_qm1', payload: { answers: { trench: 'yes' }, source: 'video', video_url: 'https://example.org/match', source_scope: 'external', source_event: '2026cabb' } }
@@ -44,4 +44,16 @@ it('excludes unknown video provenance while preserving explicit live observation
   const reviewed = {...legacy,version:2,payload:{...legacy.payload,source_scope:'current'}}
   expect(reliability([legacy,live,reviewed],5669,'trench')).toMatchObject({yes:1,no:1,denominator:2,percent:50})
   expect(reliability([reviewed,{...legacy,version:3}],5669,'trench').denominator).toBe(0)
+})
+
+describe('one spelling per qualification match (ledger 0029)', () => {
+  it('typed variants of a qualification match all become qm12', () => {
+    expect(['qm12', 'Q12', 'q12', '12', ' QM 12 ', 'qm012'].map(canonicalMatchKey)).toEqual(Array(6).fill('qm12'))
+  })
+  it('practice, playoff and full event keys are kept as typed (negative control)', () => {
+    expect(['pm1', 'sf1m1', 'f1m2', '2026cabl_qm3', 'qm0', 'qm1000', 'ql4'].map(canonicalMatchKey)).toEqual(['pm1', 'sf1m1', 'f1m2', '2026cabl_qm3', 'qm0', 'qm1000', 'ql4'])
+  })
+  it('a canonical label and the TBA key are one match', () => {
+    expect(matchIdentity({ match_key: canonicalMatchKey('Q7') })).toBe(matchIdentity({ match_key: '2026cabl_qm7' }))
+  })
 })

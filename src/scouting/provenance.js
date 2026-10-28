@@ -27,6 +27,13 @@ export function footageLabel(row) {
   return 'Live match'
 }
 
+/** "Q12", "q12", "qm 12" and "12" become "qm12"; anything else (pm1, sf1m1, 2026cabl_qm3) is kept as typed. */
+export function canonicalMatchKey(key) {
+  const k = String(key ?? '').trim()
+  const m = /^(?:qm|q)?\s*0*([1-9][0-9]{0,2})$/i.exec(k)
+  return m ? `qm${m[1]}` : k
+}
+
 // TBA's full current-event key and a scout's short label name the same match.
 // External-event keys retain their prefix so two different events never collapse.
 export function matchIdentity(row) {

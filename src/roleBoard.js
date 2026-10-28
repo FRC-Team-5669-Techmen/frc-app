@@ -65,3 +65,14 @@ export function boardView(board, me) {
 
 export const DAY_FMT = (d) => new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 export const TIME_FMT = (iso) => (iso ? new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' }) : '')
+
+/** A shift is over at its end, or an hour after it starts when it has no end (the rule staff_meet_team_fill uses). */
+export const shiftEnd = (m) => (m.ends_at ? Date.parse(m.ends_at) : Date.parse(m.starts_at) + 3600e3)
+/** My next shift that has not finished yet, earliest first; with now: true when it is running. Null when none is left. */
+export function nextShift(myShifts, now = Date.now()) {
+  const left = (myShifts ?? []).filter((m) => m.starts_at && shiftEnd(m) > now).sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at))
+  if (!left.length) return null
+  const running = left.filter((m) => Date.parse(m.starts_at) <= now)
+  const pick = running[0] ?? left[0]
+  return { ...pick, now: Date.parse(pick.starts_at) <= now }
+}

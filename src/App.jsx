@@ -107,6 +107,28 @@ const Splash = () => (
   </div>
 )
 
+// The claim could not reach the server and this tab holds no approval yet:
+// a cold start on venue signal that is weak but present (navigator.onLine is
+// true, so the offline boot above never ran). This is NOT "not approved", so
+// it never shows the access request form (decision 40). A member who prepared
+// offline scouting on this device can go straight to it.
+function ServerUnreachable({ session, onOffline }) {
+  const prepared = readOfflineScoutingAccount()
+  const canScout = !!prepared && prepared.memberId === session?.user?.id
+  return (
+    <main className="splash splash-card" role="alert" data-unreachable>
+      <img src="/assets/logos/Mark-Gold.svg" className="splash-mark" alt="" />
+      <h1>Can't reach the team server</h1>
+      <p>The signal here is too weak right now. Nothing on this device was lost.</p>
+      <div className="splash-actions">
+        {canScout && <button className="splash-primary" onClick={onOffline}>Open offline scouting</button>}
+        <button className="splash-secondary" onClick={() => window.location.reload()}>Try again</button>
+      </div>
+      {!canScout && <p className="splash-hint">Tip: open your event in Scouting once while you have good signal, and this device can scout with no signal at all.</p>}
+    </main>
+  )
+}
+
 function ProtectedLayout({ hasRole, session }) {
   // A page that throws is caught HERE, inside the layout, so the nav and the
   // feedback button stay up when a student most needs them. Keyed on the path
@@ -143,6 +165,9 @@ export default function App() {
   const [session, setSession] = useState(undefined)
   const [roles, setRoles]     = useState([])
   const [approved, setApproved] = useState(null)
+  // True only when the claim failed with nothing held: the server was not reached (ServerUnreachable).
+  const [claimUnreachable, setClaimUnreachable] = useState(false)
+  const [openOffline, setOpenOffline] = useState(false)
   // The same value and the member it belongs to, readable inside claimAndLoad,
   // which runs from auth events and so cannot see a later render's state.
   const approvedRef = useRef(null) // { userId, approved } | null
@@ -172,6 +197,7 @@ export default function App() {
       const isApproved = nextApproval(held, claim)
       approvedRef.current = { userId, approved: isApproved }
       setApproved(isApproved)
+      setClaimUnreachable(!!claim.error && held === null)
       // A failed roles read keeps the roles held for this member, read once the
       // answer is back for the same reason as the approval; with nothing held
       // it is UNKNOWN (null), never "no roles" (claimApproval.js nextRoles).
@@ -339,6 +365,10 @@ export default function App() {
   // a gate chunk that fails to load must show the card, not an empty page.
   // Each is keyed so it never reconciles with the routed tree's (same element
   // types at the root): a gate's caught error must not follow the member in.
+  if (openOffline) return <ErrorBoundary key="offline-scouting"><Suspense fallback={<Splash />}><OfflineScouting /></Suspense></ErrorBoundary>
+  if (session && approved === false && claimUnreachable && !onParentPath && !onFamilyPath && !onSpecimenPath && !onFixturePath) {
+    return <ServerUnreachable session={session} onOffline={() => { const a = readOfflineScoutingAccount(); navigate(a?.eventId ? `/scouting/${a.eventId}` : '/scouting', { replace: true }); setOpenOffline(true) }} />
+  }
   if (session && approved === false && !onParentPath && !onFamilyPath && !onSpecimenPath && !onFixturePath) {
     return (
       <ErrorBoundary key="access-gate">

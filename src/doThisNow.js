@@ -12,6 +12,8 @@
 //     sign-up is not finished. The member clears it with Done (it marks the
 //     notice read); the app has no member-readable sign-up status to check;
 //   - an upcoming event with unfilled role-board cells (role_board_open_events, 0028);
+//   - my shift now or next at an event I hold an assigned slot in (role_board, read
+//     on Home with src/roleBoard.js nextShift; 0036 keeps a full board listed);
 //   - a competition running today with Meet a team boxes where the member
 //     has logged no team yet (meet_team_todo, 0035, ledger 0026), with their
 //     Meet a team slot time when they have one;
@@ -20,6 +22,8 @@
 //     member is still checked in: Home already shows it on the status card,
 //     so here it is a one-line pointer to it.
 // Pure: tests/do-this-now.test.js drives it.
+
+import { roleLabel } from './roleBoard'
 
 const ONBOARDING = {
   first_registration: { title: 'Register with FIRST', detail: 'You, plus a parent accepting the Consent and Release', to: '/standing' },
@@ -34,10 +38,18 @@ const ONBOARDING = {
  * Order: things that block today (sent-back sign-out), then deadlines
  * (family sign-up), then the checklist, then the survey.
  */
+const clock = (iso) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
 const slotTime = (iso) => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' })
 
-export function doThisNow({ onboarding = null, notices = [], survey = null, sentBack = null, roleBoards = [], meetTeam = [], now = Date.now() } = {}) {
+export function doThisNow({ onboarding = null, notices = [], survey = null, sentBack = null, roleBoards = [], meetTeam = [], myShifts = [], now = Date.now() } = {}) {
   const items = []
+  // My shift now or next at an event (ledger 0029, src/roleBoard.js nextShift).
+  for (const m of myShifts ?? []) {
+    if (!m?.event_id || !m.role) continue
+    const until = m.ends_at ? ` until ${clock(m.ends_at)}` : ''
+    items.push({ key: `shift:${m.event_id}`, title: `${m.now ? 'Now' : 'Next'}: ${roleLabel(m.role)}`,
+      detail: m.now ? `${m.label}${until}` : `${m.label} · ${slotTime(m.starts_at)}`, to: `/roles/${m.event_id}`, tone: m.now ? 'urgent' : 'todo' })
+  }
   if (sentBack) items.push({ key: 'signout', title: 'Your sign-out was sent back', detail: sentBack.reason ? `Mentor: ${sentBack.reason}` : 'Finish up, then ask again', to: '/dashboard#status', tone: 'urgent' })
   const seen = new Set()
   for (const n of notices) {

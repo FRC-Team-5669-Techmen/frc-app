@@ -11,6 +11,7 @@
 import { CAPABILITIES, reliability, currentObservations } from './model.js'
 import { MATCH_FIELDS, teamMatchSummary } from './match.js'
 import { footageLabel, isCurrentEvidence } from './provenance.js'
+import { readableOptions, answerCell, optionSummary } from './options.js'
 
 const WORD = { yes: 'yes', no: 'no', did_not_see: 'did not see', not_applicable: 'not applicable', none: 'none', some: 'some', most: 'most of the match',
   level1: 'level 1', level2: 'level 2', level3: 'level 3', failed: 'attempted and failed' }
@@ -24,7 +25,8 @@ export const OBSERVATION_COLUMNS = Object.freeze([
 ])
 
 /** One row per observation (latest version of each record), sorted by team then match. */
-export function observationRows(records, { memberName = () => '', nameFor = () => '' } = {}) {
+export function observationRows(records, { memberName = () => '', nameFor = () => '', options = [] } = {}) {
+  const opts = readableOptions(options)
   const latest = new Map()
   for (const r of records.filter(x => x.kind === 'observation')) {
     const old = latest.get(r.id)
@@ -40,6 +42,7 @@ export function observationRows(records, { memberName = () => '', nameFor = () =
       }
       for (const f of MATCH_FIELDS) row[`m_${f.key}`] = word(r.payload?.match?.[f.key])
       for (const c of CAPABILITIES) row[`c_${c.key}`] = word(r.payload?.answers?.[c.key])
+      for (const o of opts) row[`o_${o.key}`] = answerCell(o, r.payload?.custom?.[o.key]) || null
       return row
     })
 }
@@ -59,7 +62,8 @@ export const TEAM_COLUMNS = Object.freeze([
 ])
 
 /** One row per team, from CONFIRMED records only (pass the server records). */
-export function teamRows(confirmed, { nameFor = () => '' } = {}) {
+export function teamRows(confirmed, { nameFor = () => '', options = [] } = {}) {
+  const opts = readableOptions(options)
   const teams = [...new Set(confirmed.filter(r => r.kind === 'observation' || r.kind === 'team' || r.kind === 'pit').map(r => r.team_number).filter(n => Number.isInteger(n) && n > 0))].sort((a, b) => a - b)
   return teams.map(team => {
     const s = teamMatchSummary(confirmed, team)
@@ -73,8 +77,13 @@ export function teamRows(confirmed, { nameFor = () => '' } = {}) {
       observations: currentObservations(confirmed, team).length, fouls: s.fouls.notes.join(' | '),
     }
     for (const c of CAPABILITIES) { const r = reliability(confirmed, team, c.key); row[`c_${c.key}`] = r.percent === null ? null : Math.round(r.percent * 10) / 10; row[`c_${c.key}_n`] = r.denominator }
+    for (const o of opts) { const x = optionSummary(confirmed, team, o); row[`o_${o.key}`] = x.type === 'yesno' ? pct(x.rate) : x.type === 'choice' ? (x.top ? answerCell(o, x.top) : null) : x.type === 'note' ? x.notes.join(' | ') : med(x); row[`o_${o.key}_n`] = x.n }
     return row
   })
 }
 
 export const SHEET_NOTE = 'Techmen scouting. Empty cell = not recorded (never zero). Rates and medians use confirmed, current-event observations, one value per match.'
+
+/** The observation-option columns (0037) for each sheet, after the built-in ones. */
+export const optionObservationColumns = (options) => readableOptions(options).map(o => [`o_${o.key}`, o.label])
+export const optionTeamColumns = (options) => readableOptions(options).flatMap(o => [[`o_${o.key}`, o.type === 'yesno' ? `${o.label} %` : o.type === 'choice' ? `${o.label} (most often)` : o.type === 'note' ? o.label : `Median ${o.label}`], [`o_${o.key}_n`, `${o.label} matches`]])

@@ -1,4 +1,5 @@
 import { MATCH_FIELDS, PHASES, YES_NO, stepCount } from './match'
+import { OPTION_PHASES, choiceAnswers } from './options'
 
 // The REBUILT match fields on an observation (0027). Built for one hand in
 // the stands: counts are big +1, +5 and -1 buttons; every choice is a big
@@ -8,6 +9,7 @@ function Count({ field, value, onChange }) {
   const recorded = value !== undefined
   return <fieldset className="sc-count" data-field={field.key}>
     <legend>{field.label}{field.optional ? <span className="sc-optional"> (optional)</span> : null}</legend>
+    {field.help && <p className="sc-help sc-option-help">{field.help}</p>}
     <div className="sc-count-row">
       <button type="button" className="sc-step sc-step-minus" aria-label={`${field.label} minus 1`} disabled={!recorded || value === 0} onClick={() => onChange(stepCount(value, -1))}>−1</button>
       <output className={`sc-count-value${recorded ? '' : ' sc-unrecorded'}`} aria-live="polite" aria-label={`${field.label}: ${recorded ? value : 'not recorded'}`}>{recorded ? value : '--'}</output>
@@ -22,7 +24,7 @@ function Count({ field, value, onChange }) {
 }
 
 function Toggle({ field, value, options, onChange }) {
-  return <fieldset className="sc-choice" data-field={field.key}><legend>{field.label}</legend><div className="sc-choice-options">
+  return <fieldset className="sc-choice" data-field={field.key}><legend>{field.label}</legend>{field.help && <p className="sc-help sc-option-help">{field.help}</p>}<div className="sc-choice-options">
     {options.map(([v, text]) => <button key={v} type="button" aria-pressed={value === v} onClick={() => onChange(value === v ? undefined : v)}>{text}</button>)}
   </div></fieldset>
 }
@@ -45,5 +47,33 @@ export default function MatchFields({ value = {}, onChange }) {
         return <label key={f.key}>{f.label}<input maxLength="500" value={value[f.key] ?? ''} placeholder="Foul or card, if any" onChange={e => set(f.key, e.target.value === '' ? undefined : e.target.value)} /></label>
       })}
     </section>)}
+  </div>
+}
+
+// Observation options the scouting lead turned on (0037). Same controls as the
+// match fields above, grouped by phase, under their own heading so a scout can
+// tell team-chosen questions from the built-in ones.
+export function OptionFields({ options, value = {}, onChange }) {
+  const set = (key, v) => {
+    const next = { ...value }
+    if (v === undefined) delete next[key]; else next[key] = v
+    onChange(next)
+  }
+  return <div className="sc-match-fields sc-option-fields" data-option-fields>
+    <h3 className="sc-phase-title sc-options-title">More to watch <span className="sc-help">chosen by your scouting lead</span></h3>
+    {OPTION_PHASES.map(([phase, title]) => {
+      const here = options.filter(o => o.phase === phase)
+      if (!here.length) return null
+      return <section key={phase} className="sc-phase" aria-label={`${title}: more to watch`}>
+        <h4 className="sc-phase-sub">{title}</h4>
+        {here.map(o => {
+          if (o.type === 'count') return <Count key={o.key} field={o} value={value[o.key]} onChange={v => set(o.key, v)} />
+          if (o.type === 'yesno') return <Toggle key={o.key} field={o} value={value[o.key]} options={YES_NO} onChange={v => set(o.key, v)} />
+          if (o.type === 'choice') return <Toggle key={o.key} field={o} value={value[o.key]} options={choiceAnswers(o)} onChange={v => set(o.key, v)} />
+          if (o.type === 'rating') return <Toggle key={o.key} field={o} value={value[o.key]} options={[1, 2, 3, 4, 5].map(n => [n, String(n)])} onChange={v => set(o.key, v)} />
+          return <label key={o.key} data-field={o.key}>{o.label}{o.help && <span className="sc-help sc-option-help">{o.help}</span>}<input maxLength="500" value={value[o.key] ?? ''} onChange={e => set(o.key, e.target.value === '' ? undefined : e.target.value)} /></label>
+        })}
+      </section>
+    })}
   </div>
 }

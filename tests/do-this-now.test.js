@@ -2,6 +2,7 @@
 // a place to do it, nothing at all when nothing is open.
 import { describe, it, expect } from 'vitest'
 import { doThisNow } from '../src/doThisNow.js'
+import { nextShift, shiftEnd } from '../src/roleBoard.js'
 
 const NOW = Date.parse('2026-10-24T18:00:00Z')
 const onboarding = (done) => ({ done: false, due: '2026-11-10', items: [
@@ -61,5 +62,31 @@ describe('do this now', () => {
     expect(doThisNow({ meetTeam: [{ event_id: 'e1', title: 'Beach Blitz', slot: { ...later, starts_at: '2026-10-24T17:00:00Z' } }], now: NOW })[0].tone).toBe('urgent')
     expect(doThisNow({ meetTeam: [{ event_id: 'e1', title: 'Beach Blitz', slot: null }], now: NOW })[0]).toMatchObject({ tone: 'urgent', detail: 'Talk to another team at Beach Blitz, then log it.' })
     expect(doThisNow({ meetTeam: [], now: NOW })).toHaveLength(0)
+  })
+})
+
+describe('my shift now or next (ledger 0029)', () => {
+  const at = (h, m = 0) => Date.UTC(2026, 9, 31, h + 7, m)
+  const iso = (ms) => new Date(ms).toISOString()
+  const shifts = [
+    { slotId: 'a', label: 'Qualifications 1', role: 'scout', status: 'assigned', starts_at: iso(at(9, 35)), ends_at: iso(at(10, 45)) },
+    { slotId: 'b', label: 'Qualifications 3', role: 'pit_crew', status: 'assigned', starts_at: iso(at(13)), ends_at: iso(at(14, 15)) },
+    { slotId: 'c', label: 'Alliance selection', role: 'team_captain', status: 'assigned', starts_at: iso(at(16)), ends_at: null },
+  ]
+  it('before the first: Next, the earliest one; during it: Now; between: the next; after all: nothing', () => {
+    expect(nextShift(shifts, at(8))).toMatchObject({ slotId: 'a', now: false })
+    expect(nextShift(shifts, at(10))).toMatchObject({ slotId: 'a', now: true })
+    expect(nextShift(shifts, at(11))).toMatchObject({ slotId: 'b', now: false })
+    expect(nextShift(shifts, at(16, 30))).toMatchObject({ slotId: 'c', now: true })
+    expect(nextShift(shifts, at(17, 1))).toBe(null)
+    expect(shiftEnd(shifts[2])).toBe(at(17))
+  })
+  it('Home shows Now as urgent and Next as a to-do, linking the role board; none without shifts', () => {
+    const now = doThisNow({ myShifts: [{ ...nextShift(shifts, at(10)), event_id: 'ev', title: 'Beach Blitz 2026' }] })
+    expect(now).toEqual([expect.objectContaining({ key: 'shift:ev', title: 'Now: Scout', tone: 'urgent', to: '/roles/ev' })])
+    expect(now[0].detail).toMatch(/^Qualifications 1 until 10:45/)
+    const next = doThisNow({ myShifts: [{ ...nextShift(shifts, at(11)), event_id: 'ev', title: 'Beach Blitz 2026' }] })
+    expect(next).toEqual([expect.objectContaining({ title: 'Next: Pit crew', tone: 'todo' })])
+    expect(doThisNow({ myShifts: [] }).filter((i) => i.key.startsWith('shift:'))).toHaveLength(0)
   })
 })

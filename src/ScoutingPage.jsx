@@ -11,12 +11,13 @@ import Training from './scouting/Training'
 import SchedulePlanner from './scouting/SchedulePlanner'
 import PitLocation from './scouting/PitLocation'
 import PitMap from './scouting/PitMap'
+import { importedMapKey } from './scouting/pit-map-model'
 import CoveragePanel from './scouting/CoveragePanel'
 import RecoveryPanel from './scouting/RecoveryPanel'
 import { buildEventArchive, downloadArchive } from './scouting/backup'
 import { toCsv } from './csv'
 import { downloadText, laStamp } from './download'
-import { OBSERVATION_COLUMNS, TEAM_COLUMNS, SHEET_NOTE, observationRows, teamRows as teamSheetRows } from './scouting/spreadsheet'
+import { OBSERVATION_COLUMNS, TEAM_COLUMNS, SHEET_NOTE, observationRows, teamRows as teamSheetRows, optionObservationColumns, optionTeamColumns } from './scouting/spreadsheet'
 import { matchOrder } from './scouting/schedule'
 import { footageLabel, hasUnverifiedVideoScope, matchIdentity } from './scouting/provenance'
 import { projectRecords, scoutingAccessDenied } from './scouting/projection'
@@ -29,7 +30,18 @@ import SuperScoutForm from './scouting/SuperScoutForm'
 import { isSuperAssignment, superAssignmentDone, superSummary, fmtMean, SUPER_RATINGS } from './scouting/superscout'
 import { PAIR_COLUMNS, pairRows } from './scouting/pairs'
 import { teamMatchSummary } from './scouting/match'
+import ObservationOptions from './scouting/ObservationOptions'
+import { OPTIONS_DRAFT, readableOptions, optionSummary, summaryText } from './scouting/options'
+import { writeVia } from './writeVia'
 import './ScoutingPage.css'
+
+const RETRY_EVERY_MS = 60_000 // see the retry effect in ScoutingPage
+// Observation option writes (0037) go through writeVia like every page write.
+const viaFunction = (r) => {
+  if (r.error) throw r.error
+  if (r.via !== 'function') throw { code: 'PGRST202', message: 'Observation options are not set up yet. Nothing was saved.' }
+  return r.data
+}
 
 const when = value => value ? new Date(value).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' }) : 'Unknown time'
 const words = value => ({ yes: 'Yes', no: 'No', unknown: 'Unknown', did_not_see: 'Did not see', not_applicable: 'Not applicable' })[value] ?? 'Not recorded'
@@ -116,6 +128,9 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
   // known: before the paste the function is missing and the form keeps the
   // capability questions only.
   const [matchFields, setMatchFields] = useState(false)
+  // Observation options (0037): { can_manage, options } once known; null while
+  // the server does not have them (the form then shows the built-in fields only).
+  const [options, setOptions] = useState(null)
   const [tab, setTab] = useState('scout')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -163,6 +178,18 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
     if (!navigator.onLine) {
       const saved = await selectedStore.getDraft(uid, eventId, 'match-fields').catch(() => null)
       if (alive.current) setMatchFields(saved?.accepted === true)
+      const savedOptions = await selectedStore.getDraft(uid, eventId, OPTIONS_DRAFT).catch(() => null)
+      if (alive.current) setOptions(savedOptions?.list ?? null)
+    }
+    if (navigator.onLine && !snapshot.missing) {
+      const list = await supabase.rpc('scouting_options_list')
+      if (!list.error && list.data) {
+        if (alive.current) setOptions(list.data)
+        await selectedStore.saveDraft(uid, eventId, OPTIONS_DRAFT, { list: list.data }).catch(() => {})
+      } else if (isSchemaMissing(list.error)) {
+        if (alive.current) setOptions(null)
+        await selectedStore.saveDraft(uid, eventId, OPTIONS_DRAFT, { list: null }).catch(() => {})
+      }
     }
     if (navigator.onLine && !snapshot.missing) {
       const fields = await supabase.rpc('scouting_match_fields')
@@ -219,6 +246,25 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
     return () => clearTimeout(timer)
   }, [store, online, loading, busy, queue, sync])
 
+  // Venue signal is weak but present, so the browser's online event never
+  // fires. Every minute, anything waiting (fresh local work, or a save that
+  // failed for a retryable reason such as a timeout) is sent again. Each save
+  // keeps its operation id, so a retry the server already has is a no-op;
+  // conflicts and rejected saves still wait for a person.
+  useEffect(() => {
+    if (!store || !online || loading) return
+    const timer = setInterval(async () => {
+      if (!alive.current || syncLock.current) return
+      try {
+        const ops = await store.listQueue(uid, eventId)
+        const stuck = ops.filter(op => op.status === 'failed' && op.retryable && !op.recoveredFrom)
+        for (const op of stuck) await store.retry(uid, eventId, op.id).catch(() => {})
+        if (alive.current && (stuck.length || ops.some(op => op.status === 'local'))) sync()
+      } catch { /* the next tick tries again */ }
+    }, RETRY_EVERY_MS)
+    return () => clearInterval(timer)
+  }, [store, online, loading, uid, eventId, sync])
+
   async function save(record) {
     if (!store) throw new Error('Device storage is unavailable. Nothing was saved.')
     const operation = await saveScoutingRecord({ store, memberId: uid, eventId, record })
@@ -266,6 +312,15 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
   const openForm = (kind, extra = {}) => setForm({ kind, ...extra })
   // A super-scout assignment covers a whole alliance and opens the rating sheet (0030).
   const superCard = row => <article className={`sc-card sc-assignment sc-super-card${isComplete(row) ? ' sc-complete' : ''}`} key={row.id}><div className="sc-section-head"><span className="sc-match">{row.match_key}</span><span className="sc-chip">{row.localStatus ? 'Saved locally' : isComplete(row) ? 'Rated' : 'Super scout'}</span></div><div className={`sc-alliance sc-alliance-${row.payload.alliance === 'blue' ? 'blue' : 'red'}`}>{row.payload.alliance} alliance</div><h3>{(row.payload.teams?.length ? row.payload.teams : [row.team_number]).join(' · ')}</h3><p>{row.payload.instructions || 'Rate each robot. No counting.'}</p><p className="sc-help">Super scout: {memberName(row.payload.assignee)}</p><div className="sc-actions"><button className="sc-primary" disabled={!!row.localStatus || row.payload.assignee !== uid} onClick={() => setSuperForm(row)}>{isComplete(row) ? 'Review ratings' : 'Rate alliance'}</button>{manager && canEdit(row) && <button onClick={() => openForm('assignment', { record: row })}>Edit assignment</button>}</div></article>
+  async function reloadOptions() {
+    const list = await supabase.rpc('scouting_options_list')
+    if (list.error) throw list.error
+    if (alive.current) setOptions(list.data)
+    if (store) await store.saveDraft(uid, eventId, OPTIONS_DRAFT, { list: list.data }).catch(() => {})
+  }
+  const requestOption = async (args) => viaFunction(await writeVia(supabase, 'scouting_option_request', args))
+  const saveOption = async (args) => viaFunction(await writeVia(supabase, 'scouting_option_save', args))
+
   async function exportData() {
     if (!store || exporting) return
     setExporting(true); setExportError('')
@@ -282,8 +337,9 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
   function exportSheets() {
     const slug = (data.event?.title || 'event').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'event'
     // Observations include this device's unsynced saves (labeled); team summaries use confirmed records only.
-    downloadText(toCsv(OBSERVATION_COLUMNS, observationRows(records, { memberName, nameFor }), { note: SHEET_NOTE }), `techmen-scouting-${slug}-observations-${laStamp()}.csv`)
-    setTimeout(() => downloadText(toCsv(TEAM_COLUMNS, teamSheetRows(serverRecords, { nameFor }), { note: SHEET_NOTE }), `techmen-scouting-${slug}-teams-${laStamp()}.csv`), 400)
+    const opts = options?.options ?? []
+    downloadText(toCsv([...OBSERVATION_COLUMNS, ...optionObservationColumns(opts)], observationRows(records, { memberName, nameFor, options: opts }), { note: SHEET_NOTE }), `techmen-scouting-${slug}-observations-${laStamp()}.csv`)
+    setTimeout(() => downloadText(toCsv([...TEAM_COLUMNS, ...optionTeamColumns(opts)], teamSheetRows(serverRecords, { nameFor, options: opts }), { note: SHEET_NOTE }), `techmen-scouting-${slug}-teams-${laStamp()}.csv`), 400)
     const pairs = pairRows(serverRecords)
     if (pairs.length) setTimeout(() => downloadText(toCsv(PAIR_COLUMNS, pairs, { note: 'Techmen scouting pairs. Two scouts on one robot: counts averaged; Check means they disagree by more than 10 FUEL or 1 rating point, or on a yes/no.' }), `techmen-scouting-${slug}-pairs-${laStamp()}.csv`), 800)
     setNotice(pairs.length ? `Three spreadsheets downloaded: observations, teams, and ${pairs.length} scout pairs (${pairs.filter(p => p.status === 'Check').length} to check). Check your Downloads folder.` : 'Two spreadsheets downloaded: one row per observation, and one row per team. Check your Downloads folder.')
@@ -305,6 +361,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
     {tab === 'scout' && <section className="sc-stack" role="tabpanel" id="sc-panel-scout" aria-labelledby="sc-tab-scout">
       <div className="sc-section-head"><div><h2>Your next match</h2><p className="sc-help">Observe the assigned robot. Record what you actually see.</p></div><button aria-pressed={showAllAssignments} onClick={() => setShowAllAssignments(x => !x)}>{showAllAssignments ? 'Show my assignments' : 'Show all assignments'}</button></div>
       {store && <ShiftNow client={supabase} store={store} uid={uid} eventId={eventId} records={records} manager={manager} online={online} memberName={memberName} nameFor={nameFor} />}
+      {options && <ObservationOptions data={options} online={online} onRequest={requestOption} onSave={saveOption} onReload={reloadOptions} />}
       {!assignments.length && <div className="sc-empty"><span className="sc-eyebrow">Ready when you are</span><h3>No assignments yet</h3><p>Ask your scouting lead for a match, or capture an observation now.</p><button onClick={() => openForm('observation')}>Start an observation</button></div>}
       <div className="sc-assignment-grid">{assignments.map(row => isSuperAssignment(row) ? superCard(row) : <article className={`sc-card sc-assignment${isComplete(row) ? ' sc-complete' : ''}`} key={row.id}><div className="sc-section-head"><span className="sc-match">{row.match_key}</span><span className="sc-chip">{row.localStatus ? 'Saved locally' : isComplete(row) ? 'Recorded' : 'To scout'}</span></div><div className="sc-team-number">{row.team_number}</div><h3>{nameFor(row.team_number) || 'Assigned robot'}</h3><p>{row.payload.instructions || 'Watch capabilities and record useful match notes.'}</p><p className="sc-help">Scout: {memberName(row.payload.assignee)}{row.payload.video_url ? ` · ${footageLabel(row)}` : ''}</p><div className="sc-actions">{row.payload.video_url && <a className="sc-link" href={row.payload.video_url} target="_blank" rel="noopener noreferrer">Watch video ↗</a>}<button className="sc-primary" disabled={!!row.localStatus || !!observationFor(row)?.localStatus || row.payload.assignee !== uid} onClick={() => openForm('observation', observationFor(row) ? { record: observationFor(row) } : { team: row.team_number, assignment: row })}>{observationFor(row) ? 'Review observation' : 'Scout match'}</button>{manager && canEdit(row) && <button onClick={() => openForm('assignment', { record: row })}>Edit assignment</button>}</div></article>)}</div>
       <ObservationBrowser records={observations} confirmedRecords={serverRecords} team={evidenceTeam} onTeam={setEvidenceTeam} memberName={memberName} nameFor={nameFor} canEdit={canEdit} onEdit={row => openForm('observation', { record: row })} revisions={data.revisions ?? []} />
@@ -322,6 +379,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
         <button onClick={() => { setEvidenceTeam(String(n)); setTab('scout') }}>Review match evidence</button>
         {serverRecords.some(r => r.kind === 'observation' && r.team_number === n && hasUnverifiedVideoScope(r)) && <p className="sc-help">Video evidence with unverified event scope is excluded from these rates. Use Review match evidence to check its provenance.</p>}
         <MatchSummary s={teamMatchSummary(serverRecords, n)} />
+        {options && readableOptions(options.options).length > 0 && <dl className="sc-option-summary" data-option-summary>{readableOptions(options.options).map(o => <div key={o.key}><dt>{o.label}</dt><dd>{summaryText(o, optionSummary(serverRecords, n, o))}</dd></div>)}</dl>}
         {(() => { const sup = superSummary(serverRecords, n); return sup.notes > 0 && <div className="sc-super-summary"><span className="sc-eyebrow">Super scouts · {sup.notes} {sup.notes === 1 ? 'note' : 'notes'}</span><p>{SUPER_RATINGS.map(r => `${r.label} ${fmtMean(sup[r.key])}`).join(' · ')}</p>{sup.failures.length > 0 && <details><summary>Failures seen ({sup.failures.length})</summary><ul>{sup.failures.map((f, i) => <li key={i}>{f.match}: {f.text}</li>)}</ul></details>}</div> })()}
         <div className="sc-evidence-grid">{CAPABILITIES.map(c => { const r = reliability(serverRecords, n, c.key); return <div className="sc-evidence" key={c.key}><h4>{c.label}</h4><span className="sc-help">Pit claim: {words(pit?.payload.capabilities?.[c.key])}{pit?.localStatus ? ' · saved locally, awaiting confirmation' : ''}</span><div className="sc-ratio">{r.percent === null ? 'No evidence' : `${Math.round(r.percent)}%`}<span>{r.yes}/{r.denominator} observed matches</span></div><p className="sc-help">{r.sufficient ? '3+ observed matches' : 'Provisional: fewer than 3 observed matches'}{r.disputed ? ` · ${r.disputed} disputed` : ''}</p><details><summary>Count details</summary><p className="sc-help">{r.no} observed failures. Excluded scout responses: {r.didNotSee} did not see, {r.notApplicable} not applicable, {r.missing} unanswered. Disputed matches are excluded.</p></details></div> })}</div>
         {team?.payload.epa != null && <p className="sc-help">Statbotics estimate: {team.payload.epa} EPA · {when(team.payload.epa_fetched_at)}. Not an official robot score.</p>}
@@ -344,7 +402,7 @@ function EventScouting({ uid, eventId, staff, offlineMemberId }) {
     </footer>
     {store && data.event && <RecoveryPanel store={store} uid={uid} eventId={eventId} onRestored={rows => { queueGeneration.current++; setQueue(previous => [...previous, ...rows]) }} />}
     {superForm && store && <SuperScoutForm key={superForm.id} assignment={superForm} records={records} uid={uid} nameFor={nameFor} onSaveBatch={saveBatch} onClose={() => setSuperForm(null)} />}
-    {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} matchFields={matchFields} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : save} onClose={() => setForm(null)} />}
+    {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} matchFields={matchFields} options={options?.options ?? null} onSuggest={options && online ? async args => { await requestOption(args); await reloadOptions().catch(() => {}) } : null} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : save} onClose={() => setForm(null)} />}
   </main>
 }
 
@@ -356,7 +414,12 @@ function QueuePanel({ queue, store, uid, eventId, serverRecords, onChange, onSav
 }
 
 function ManageEvent({ store, uid, records, onSaveBatch, eventId, teamRows, members, onForm, onSave, online }) {
-  const [key, setKey] = useState('')
+  // The TBA key fills itself from the teams already imported for this event
+  // (their source_url carries it), so a lead re-running the import for the
+  // match schedule never retypes it. Typing still overrides it.
+  const importedKey = importedMapKey(records ?? [])
+  const [key, setKey] = useState(importedKey)
+  useEffect(() => { if (!key && importedKey) setKey(importedKey) }, [importedKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const [preview, setPreview] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -384,7 +447,7 @@ function ManageEvent({ store, uid, records, onSaveBatch, eventId, teamRows, memb
   }
 
   return <details className="sc-card sc-manage"><summary>Manage event</summary><p className="sc-help">Scouting leads and staff manage teams and assignments. Each import is previewed before it is saved.</p><div className="sc-actions"><button onClick={() => onForm('team')}>Add event team</button><button onClick={() => onForm('assignment')}>Assign a scout</button></div>
-    <div className="sc-import"><label>TBA event key<input placeholder="2026cabb" value={key} onChange={e => setKey(e.target.value)} maxLength="80" /></label><button disabled={!key.trim() || busy || !online} onClick={importPreview}>{busy ? 'Working…' : 'Preview event import'}</button></div>{error && <p role="alert" className="sc-error">{error}</p>}{notice && <p role="status">{notice}</p>}
+    <div className="sc-import"><label>TBA event key<input placeholder="2026cabb" aria-describedby="sc-key-help" value={key} onChange={e => setKey(e.target.value)} maxLength="80" /></label><button disabled={!key.trim() || busy || !online} onClick={importPreview}>{busy ? 'Working…' : 'Preview event import'}</button></div><p className="sc-help" id="sc-key-help">The event's key is the end of its address on thebluealliance.com/event/. Run the import again once the match schedule is posted.</p>{error && <p role="alert" className="sc-error">{error}</p>}{notice && <p role="status">{notice}</p>}
     {preview && <div className="sc-preview"><h3>Import preview</h3><p>{preview.teams.length} teams · {preview.matches?.length ?? 0} scheduled matches</p><ul>{(preview.sources ?? []).map((source, i) => <li key={i}>{source.source}: {source.status}{source.message ? ` · ${source.message}` : ''}</li>)}</ul><p className="sc-help">Imported data keeps its source and retrieval time. Official scores are alliance totals. Statistical estimates remain separate.</p><details><summary>Review teams</summary><ul>{preview.teams.map(t => <li key={t.team_number}>{t.team_number} {t.payload.name} · {t.payload.pit_location || 'Pit unknown'} · EPA {t.payload.epa ?? 'unavailable'}</li>)}</ul></details><div className="sc-actions"><button disabled={busy} onClick={() => setPreview(null)}>Cancel import</button><button className="sc-primary" disabled={busy || !preview.teams.length} onClick={applyImport}>Save imported teams</button></div>{!!preview.matches?.length && <details><summary>Schedule and footage</summary>{preview.matches.map(match => <div className="sc-schedule-match" key={match.key}><h4>{match.key}</h4><div className="sc-actions">{match.teams.map(team => <button key={team} onClick={() => onForm('assignment', { team, assignment: { match_key: match.key, payload: { video_url: match.videos?.[0] ?? '' } } })}>Assign {team}</button>)}</div></div>)}</details>}</div>}
     {store && <SchedulePlanner store={store} uid={uid} eventId={eventId} members={members} records={records} imported={preview} onSaveBatch={onSaveBatch} />}
   </details>

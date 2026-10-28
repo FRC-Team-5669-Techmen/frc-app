@@ -4,6 +4,7 @@ import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import { isSchemaMissing } from './schemaMissing'
 import { boardView, roleLabel, countLine, STATUS_LABELS, DAY_FMT, TIME_FMT, ROLE_ORDER } from './roleBoard'
+import { roleRuleIssues, RULE_TITLES } from './roleRules'
 import './RoleBoard.css'
 
 // The role board (0028, reworked by 0031, ledger 0023). A member taps a box
@@ -42,6 +43,8 @@ export default function RoleBoardPage({ session, hasRole = () => false }) {
   const view = board ? boardView(board, uid) : null
   const staff = !!board?.can_manage
   const curDay = view?.days.find((d) => d.day === day) ?? view?.days[0]
+  const issues = staff && board ? roleRuleIssues(board) : []
+  const dayIssues = issues.filter((i) => i.day === curDay?.day)
 
   async function act(key, fn, text) {
     if (busy) return
@@ -103,6 +106,14 @@ export default function RoleBoardPage({ session, hasRole = () => false }) {
           </button>))}</div>
       </section>
       {msg && <p className="rb-msg" role="status">{msg}</p>}
+      {staff && view.days.length > 0 && (
+        <details className={`rb-rules ${dayIssues.length ? 'rb-rules-bad' : 'rb-rules-ok'}`} data-rules open={dayIssues.some((i) => i.severity === 'conflict')}>
+          <summary>Rotation rules on {curDay ? DAY_FMT(curDay.day) : ''} <span className="hud-tnum">{dayIssues.length ? `${dayIssues.length} to fix` : 'all kept'}</span></summary>
+          <p className="rb-muted">Assigned people only. One place at a time; nobody outside the drive team holds a role more than two slots in a row; everyone outside the drive team scouts at least once.</p>
+          {dayIssues.length > 0 && <ul>{dayIssues.map((i, k) => (
+            <li key={k} className={`rb-rule rb-rule-${i.severity}`} data-rule={i.rule}><b>{RULE_TITLES[i.rule]}</b> {i.text}</li>))}</ul>}
+        </details>
+      )}
 
       {!view.days.length ? (
         <div className="rb-empty"><h2>No time slots yet</h2><p>{staff ? 'Start from the Beach Blitz slots, or add your own below.' : 'A mentor adds the time slots for this event.'}</p></div>

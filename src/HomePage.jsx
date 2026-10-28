@@ -15,6 +15,7 @@ import { normEmail, isHeld, syncSummary } from './ideaCerts'
 import { storageKey, cleanProgress, passedCount } from './handbook/sign'
 import { LESSONS } from './handbook/lessons'
 import { doThisNow } from './doThisNow'
+import { boardView, nextShift } from './roleBoard'
 import { loadAdminCounts, totalWaiting } from './adminTools'
 import { resolveOpenSurvey } from './surveys'
 import { isSchemaMissing } from './schemaMissing'
@@ -403,6 +404,16 @@ function useDoThisNow(uid, isStaff) {
       // Meet a team (0035): students only; missing before the migration, then nothing shows.
       isStaff ? Promise.resolve({ data: [] }) : supabase.rpc('meet_team_todo'),
     ])
+    // My shift now or next (ledger 0029): for an event starting within two
+    // days where I hold an assigned slot, read its board with the page's own
+    // model and pass my next unfinished shift to Do this now.
+    const soon = (boards.error ? [] : (boards.data ?? [])).filter((b) => b.my_assigned > 0 && Date.parse(b.starts_at) < Date.now() + 2 * 864e5)
+    const shifts = (await Promise.all(soon.map(async (b) => {
+      const r = await supabase.rpc('role_board', { p_event: b.event_id })
+      if (r.error || !r.data) return null
+      const next = nextShift(boardView(r.data, uid).myShifts.filter((m) => m.status === 'assigned'), Date.now())
+      return next ? { ...next, event_id: b.event_id, title: b.title } : null
+    }))).filter(Boolean)
     let survey = null
     const open = !surveys.error ? resolveOpenSurvey(surveys.data ?? []) : null
     if (open) {
@@ -415,6 +426,7 @@ function useDoThisNow(uid, isStaff) {
       survey,
       roleBoards: boards.error ? [] : (boards.data ?? []),
       meetTeam: meet.error ? [] : (meet.data ?? []),
+      myShifts: shifts,
     })
   }, [uid, isStaff])
   useEffect(() => { load() }, [load])

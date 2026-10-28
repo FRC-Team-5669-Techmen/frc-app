@@ -15,6 +15,7 @@ import { leaderboard as driverLeaderboard, SCORE_RULES } from '../../../src/driv
 import { leaderboard as hpLeaderboard, HP_RULES, needsText as hpNeedsText } from '../../../src/humanPlayerScore.js'
 import { AUTO_READY_STREAK, RATE_WINDOW, resultLabel, routineBoard } from '../../../src/autos.js'
 import { boardView, roleLabel } from '../../../src/roleBoard.js'
+import { roleRuleIssues } from '../../../src/roleRules.js'
 import { groupByTeam, tagLabel } from '../../../src/meetTeam.js'
 
 export class UnknownTool extends Error {}
@@ -265,6 +266,7 @@ const READS = {
     return {
       status: 'ok', event: { id: ev.event.id, title: r.data.event.title },
       unfilled_boxes: days.reduce((n, d) => n + d.unfilled.length, 0),
+      rule_issues: roleRuleIssues(r.data).filter((i) => days.some((d) => d.day === i.day)).map((i) => ({ day: i.day, rule: i.rule, severity: i.severity, member: i.name, slots: i.slots, roles: i.roles, text: i.text })),
       days: days.map((d) => ({
         day: d.day,
         weekday: new Date(`${d.day}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }),
