@@ -29,7 +29,7 @@ export default function ObservationBrowser({ records, confirmedRecords, team, on
       : isCurrentEvidence(row) && disputes.has(`${row.event_id}:${row.team_number}:${matchIdentity(row)}`))))
     .sort((a, b) => String(b.updated_at ?? '').localeCompare(String(a.updated_at ?? '')) || a.id.localeCompare(b.id))
   const last = Math.max(0, Math.ceil(rows.length / 30) - 1), current = Math.min(page, last)
-  return <details className="sc-card" open={records.length > 0}><summary>Recent observations ({records.length})</summary>
+  return <details className="sc-card" id="sc-observations" open={records.length > 0}><summary>Recent observations ({records.length})</summary>
     <p className="sc-help">Search all downloaded observations. Disputes show all responses to the affected match, including unknowns. Ask each author to review their evidence; disagreement is never resolved by a majority vote. Pending corrections do not change confirmed rates.</p>
     <div className="sc-form-grid">
       <label>Evidence team<input inputMode="numeric" value={team} onChange={e => { onTeam(e.target.value); setPage(0) }} placeholder="All teams" /></label>

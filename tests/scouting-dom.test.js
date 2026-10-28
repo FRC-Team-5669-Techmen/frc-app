@@ -352,6 +352,8 @@ describe('assignment batch durability', () => {
     const text = [...host.querySelectorAll('label')].find(l => l.textContent.startsWith('Match schedule')).querySelector('textarea')
     await settle(() => !text.closest('fieldset').disabled, 'planner ready')
     await input(text, 'qm80, 5669\nqm81, 4414')
+    // The roster arrives after the planner opens (as below); racing it failed 4 of 5 runs on HEAD.
+    await settle(() => host.querySelector('.sc-planner .sc-choice button'), 'roster loaded')
     const scout = host.querySelector('.sc-planner .sc-choice button')
     await click(scout)
     await click(buttons('Preview assignment plan')[0])

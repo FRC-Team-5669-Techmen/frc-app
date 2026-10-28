@@ -59,3 +59,18 @@ describe('Techmen shift planning', () => {
    const prior = records.map(r => ({ ...r, match_key: '2026prior_qm1', payload: { source_scope: 'external' } }))
    expect(planAssignments({ matches, scouts: [{ id: 'a' }, { id: 'b' }], records: prior }).proposals).toHaveLength(2)
  })
+
+describe('pasted schedule labels share the form\'s spelling (feedback 387edf14)', () => {
+  it('practice and plain qualification labels are stored canonically, TBA keys as given', () => {
+    const parsed = parseSchedule('P3, 101, 102\nPM4, 103\n12, 104\n2026cabl_qm9, 105')
+    expect(parsed.map(m => m.key).sort()).toEqual(['2026cabl_qm9', 'pm3', 'pm4', 'qm12'])
+  })
+  it('two spellings of one practice match are still refused as a duplicate (positive control)', () => {
+    expect(() => parseSchedule('P3, 101\npm3, 102')).toThrow('unique')
+    expect(() => parseSchedule('P3, 101\nP4, 102')).not.toThrow()
+  })
+  it('"Practice 3, 254" is refused rather than read as team 3; "P3, 254" is accepted', () => {
+    expect(() => parseSchedule('Practice 3, 254, 1678')).toThrow('one word')
+    expect(parseSchedule('P3, 254, 1678')[0]).toMatchObject({ key: 'pm3', teams: [254, 1678] })
+  })
+})

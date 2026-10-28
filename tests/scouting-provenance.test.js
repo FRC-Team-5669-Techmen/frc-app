@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { prepareFootageRecord, footageLabel, canonicalMatchKey, matchIdentity } from '../src/scouting/provenance.js'
+import { prepareFootageRecord, footageLabel, canonicalMatchKey, matchIdentity, isBarePracticeKey, matchLabel } from '../src/scouting/provenance.js'
 import { reliability } from '../src/scouting/model.js'
 import { scoutingDiscordPayload } from '../supabase/functions/scouting-dispatch/dispatch.js'
 const external = { kind: 'observation', team_number: 5669, member_id: 'a', event_id: 'current', match_key: '2026cabb_qm1', payload: { answers: { trench: 'yes' }, source: 'video', video_url: 'https://example.org/match', source_scope: 'external', source_event: '2026cabb' } }
@@ -55,5 +55,29 @@ describe('one spelling per qualification match (ledger 0029)', () => {
   })
   it('a canonical label and the TBA key are one match', () => {
     expect(matchIdentity({ match_key: canonicalMatchKey('Q7') })).toBe(matchIdentity({ match_key: '2026cabl_qm7' }))
+  })
+})
+
+describe('practice matches have one spelling each and no cap (feedback 387edf14)', () => {
+  it('typed variants of a practice match all become pm3', () => {
+    expect(['pm3', 'PM3', 'pm 3', 'P3', 'p 3', 'Practice 3', 'practice3', 'Practice Match 3', 'practice #3', 'pm-3', 'pm003'].map(canonicalMatchKey)).toEqual(Array(11).fill('pm3'))
+  })
+  it('every practice number stays its own match, well past any event\'s practice schedule', () => {
+    const keys = Array.from({ length: 300 }, (_, i) => canonicalMatchKey(`Practice ${i + 1}`))
+    expect(new Set(keys.map(k => matchIdentity({ match_key: k }))).size).toBe(300)
+    expect(keys[299]).toBe('pm300')
+    expect(canonicalMatchKey('P9999')).toBe('pm9999')
+  })
+  it('a practice label never becomes a qualification key, and a qualification label never becomes practice (positive control)', () => {
+    expect(['P3', 'Practice 3'].map(canonicalMatchKey).every(k => !k.startsWith('qm'))).toBe(true)
+    expect(['Q3', '3', 'qm3'].map(canonicalMatchKey)).toEqual(['qm3', 'qm3', 'qm3'])
+    expect(['sf1m1', 'f1m2', '2026cabl_qm3', 'playoff 2', 'pmx'].map(canonicalMatchKey)).toEqual(['sf1m1', 'f1m2', '2026cabl_qm3', 'playoff 2', 'pmx'])
+  })
+  it('a practice label with no number is caught; one with a number is not', () => {
+    expect(['practice', 'Practice', 'pm', 'P', 'practice match', 'pm 0'].map(isBarePracticeKey)).toEqual(Array(6).fill(true))
+    expect(['practice 1', 'pm1', 'P2', 'qm1', '1', 'sf1m1'].map(isBarePracticeKey)).toEqual(Array(6).fill(false))
+  })
+  it('labels read as words for qualification and practice keys, and as typed otherwise', () => {
+    expect(['pm3', 'qm12', '2026cabl_qm7', 'sf1m1', 'P7'].map(matchLabel)).toEqual(['Practice 3', 'Qualification 12', 'Qualification 7', 'sf1m1', 'P7'])
   })
 })

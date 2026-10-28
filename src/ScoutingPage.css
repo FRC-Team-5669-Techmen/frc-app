@@ -307,3 +307,27 @@
 .sc-option-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px 14px; margin: 0; padding: 10px 12px; border: 1px solid var(--border); border-left: 3px solid var(--gold-dim); border-radius: var(--radius); background: var(--bg); }
 .sc-option-summary dt { font: 11px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .sc-option-summary dd { margin: 2px 0 0; font-size: 14px; }
+
+/* Saved confirmation (feedback 387edf14). Sticky at the bottom of the event
+   page, above the feedback launcher, so it is on screen wherever the form was
+   opened from. It stays until dismissed and follows the save through sync. */
+.sc-saved { position: sticky; bottom: 4.25rem; z-index: 3; margin-top: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; padding: 12px 16px; background: var(--surface-2); border: 1px solid var(--gold-dim); border-left: 3px solid var(--gold-dim); border-radius: var(--radius); box-shadow: 0 8px 24px var(--bg); }
+.sc-saved-text { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.sc-saved-text strong { font-size: 15px; }
+.sc-saved-text > span:not(.sc-help) { font: 13px var(--font-mono); color: var(--text); }
+.sc-wrap .sc-saved-text .sc-help { margin: 0; }
+.sc-saved-synced { border-left-color: var(--ok); }
+.sc-saved-problem { border-color: var(--fault); border-left-color: var(--fault); }
+@media (max-width: 640px) {
+  .sc-saved { padding: 10px 12px; }
+  .sc-saved .sc-actions { width: 100%; }
+  .sc-saved .sc-actions button { flex: 1; padding-left: 8px; padding-right: 8px; }
+}
+
+/* What tells robots apart (feedback 449543dd): a mark on answers that vary,
+   and one quiet line each for answers every observed robot shares. */
+.sc-varies { display: inline-block; margin-left: 8px; padding: 1px 6px; border: 1px solid var(--gold-dim); border-radius: 3px; color: var(--gold); font: 11px var(--font-mono); letter-spacing: .04em; text-transform: none; vertical-align: middle; }
+.sc-shared { padding: 0 12px; border: 1px dashed var(--border-strong); border-radius: var(--radius); }
+.sc-shared-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; }
+.sc-shared-list li { display: grid; gap: 2px; font-size: 14px; overflow-wrap: anywhere; }
+.sc-wrap .sc-shared-list .sc-help { margin: 0; }

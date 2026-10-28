@@ -27,11 +27,31 @@ export function footageLabel(row) {
   return 'Live match'
 }
 
-/** "Q12", "q12", "qm 12" and "12" become "qm12"; anything else (pm1, sf1m1, 2026cabl_qm3) is kept as typed. */
+// Practice matches are not on TBA, so scouts type them: "pm3", "P3",
+// "Practice 3", "practice match 3". All become "pm3" so two scouts never split
+// one practice match, and every practice match stays its own record. No cap:
+// any practice number up to 9999 is accepted (feedback 387edf14).
+const PRACTICE = /^(?:pm|p|practice(?:\s*match)?)\s*[-#]?\s*0*([1-9][0-9]{0,3})$/i
+const BARE_PRACTICE = /^(?:pm|p|practice(?:\s*match)?)\s*[-#]?\s*0*$/i
+
+/** "Q12", "q12", "qm 12" and "12" become "qm12"; "P3", "Practice 3" and "pm 3" become "pm3"; anything else (sf1m1, 2026cabl_qm3) is kept as typed. */
 export function canonicalMatchKey(key) {
   const k = String(key ?? '').trim()
   const m = /^(?:qm|q)?\s*0*([1-9][0-9]{0,2})$/i.exec(k)
-  return m ? `qm${m[1]}` : k
+  if (m) return `qm${m[1]}`
+  const p = PRACTICE.exec(k)
+  return p ? `pm${p[1]}` : k
+}
+
+/** "practice" or "pm" with no number would put every practice match of a team in one record. */
+export const isBarePracticeKey = key => BARE_PRACTICE.test(String(key ?? '').trim())
+
+/** What a scout reads for a stored key: "Practice 3", "Qualification 12", or the key itself. */
+export function matchLabel(key) {
+  const k = String(key ?? '').trim()
+  const m = /^(?:\d{4}[a-z0-9]+_)?(qm|pm)([0-9]+)$/i.exec(k)
+  if (!m) return k
+  return `${m[1].toLowerCase() === 'pm' ? 'Practice' : 'Qualification'} ${Number(m[2])}`
 }
 
 // TBA's full current-event key and a scout's short label name the same match.

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { CAPABILITIES } from './model'
-import { prepareFootageRecord, canonicalMatchKey } from './provenance'
+import { prepareFootageRecord, canonicalMatchKey, isBarePracticeKey, matchLabel } from './provenance'
 import MatchFields, { OptionFields } from './MatchFields'
 import SuggestOption from './SuggestOption'
 import { cleanMatch, recordedCount } from './match'
@@ -21,6 +21,18 @@ function initialValue(kind, record, team, assignment, replyTo) {
   return { ...base, payload: { ...defaults[kind], ...base.payload, ...(record && ['observation', 'message'].includes(kind) ? { request_delivery: false } : {}) } }
 }
 
+// What the typed match label saves as, before the scout taps Save. Practice
+// matches (pm1, pm2, ...) are as many as the event runs, each its own record.
+function MatchKeyHint({ value, linked, external }) {
+  const typed = String(value ?? '').trim()
+  if (linked) return <p className="sc-help" data-match-hint>Match from your assignment.</p>
+  if (!typed) return <p className="sc-help" data-match-hint>Qualification: 12 or qm12. Practice: pm3 or P3.</p>
+  if (external) return <p className="sc-help" data-match-hint>Saves as {typed}.</p>
+  if (isBarePracticeKey(typed)) return <p className="sc-help" data-match-hint>Add the practice match number, such as pm3.</p>
+  const key = canonicalMatchKey(typed), label = matchLabel(key)
+  return <p className="sc-help" data-match-hint>Saves as <strong>{label}</strong>{label !== key ? ` (${key})` : ''}.</p>
+}
+
 export function Choice({ label, value, options, onChange }) {
   return <fieldset className="sc-choice"><legend>{label}</legend><div className="sc-choice-options">
     {options.map(([v, text]) => <button key={v} type="button" aria-pressed={value === v} onClick={() => onChange(value === v ? undefined : v)}>{text}</button>)}
@@ -30,7 +42,7 @@ export function Choice({ label, value, options, onChange }) {
 // Native dialog provides modal containment and Escape handling. React removal
 // needs explicit focus return; removing an open dialog skips native close().
 // Persist the form before claiming a draft is safe on this device.
-export default function RecordForm({ kind, record, team, assignment, replyTo, members, store, uid, eventId, onSave, onClose, matchFields = false, options = null, onSuggest = null }) {
+export default function RecordForm({ kind, record, team, assignment, replyTo, members, store, uid, eventId, onSave, onClose, matchFields = false, options = null, onSuggest = null, ownObservation = null }) {
   const dialog = useRef(null)
   const [value, setValue] = useState(() => initialValue(kind, record, team, assignment, replyTo))
   const [ready, setReady] = useState(false)
@@ -98,9 +110,16 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
       let row = { id: value.id, version: value.version, kind, team_number: Number(value.team_number), match_key: ['observation', 'assignment'].includes(kind) ? value.match_key.trim() : null, payload }
       if (!Number.isInteger(row.team_number) || row.team_number < 1 || row.team_number > 99999) throw new Error('Enter a team number from 1 to 99999.')
       if (row.match_key === '') throw new Error('Enter the match label, such as qm1.')
-      // One spelling per qualification match: "Q12", "q12" and "12" all save as "qm12",
+      if (row.match_key && isBarePracticeKey(row.match_key)) throw new Error('Add the practice match number, such as pm3. Each practice match is saved as its own record.')
+      // One spelling per match: "Q12" and "12" save as "qm12", "P3" and "Practice 3" as "pm3",
       // so two scouts typing differently never split one match (provenance.js matchIdentity).
-      if (row.match_key && row.payload?.source_scope !== 'external') row = { ...row, match_key: canonicalMatchKey(row.match_key) }
+      // An observation linked to an assignment keeps the assignment's key exactly:
+      // the server (0022 validate) requires the two to be equal.
+      if (row.match_key && row.payload?.source_scope !== 'external' && !(kind === 'observation' && row.payload?.assignment_id)) row = { ...row, match_key: canonicalMatchKey(row.match_key) }
+      // The server keeps one observation per scout per team per match. Say so
+      // here, before the form closes, instead of a conflict after sync.
+      const earlier = kind === 'observation' && !record && ownObservation?.(row)
+      if (earlier) throw new Error(`You already saved team ${row.team_number} in ${matchLabel(earlier.match_key)}. Check the match number, or correct the earlier observation from Recent observations.`)
       if (kind === 'observation' && !Object.keys(value.payload.answers).length && !value.payload.notes.trim() && !(matchFields && recordedCount(value.payload.match)) && !Object.keys(options ? cleanCustom(value.payload.custom, options) : {}).length) throw new Error('Record an answer or a note before saving.')
       if (kind === 'observation' && value.payload.source === 'video' && !value.payload.video_url) throw new Error('Add the video link so someone can review this observation.')
       if (value.payload.video_url && !/^https:\/\//i.test(value.payload.video_url)) throw new Error('Use an HTTPS video link.')
@@ -123,7 +142,8 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
         {record && <p className="sc-help">Your correction creates a new version. Earlier versions stay in the history.</p>}
         {!ready ? <p>{error ? 'Draft editing is paused until your saved work can be loaded.' : 'Restoring draft…'}</p> : <fieldset disabled={saving} className="sc-form-fields"><legend className="sc-sr-only">{TITLES[kind]} fields</legend>
           <div className="sc-fields"><label>Team number<input inputMode="numeric" type="number" min="1" max="99999" required readOnly={!!record || !!replyTo} value={value.team_number} onChange={e => change({ ...value, team_number: e.target.value })} /></label>
-          {['observation', 'assignment'].includes(kind) && <label>Match<input required readOnly={!!record} maxLength="100" placeholder="qm1" value={value.match_key} onChange={e => change({ ...value, match_key: e.target.value })} /></label>}</div>
+          {['observation', 'assignment'].includes(kind) && <label>Match<input required readOnly={!!record || (kind === 'observation' && !!p.assignment_id)} maxLength="100" placeholder="qm1" value={value.match_key} onChange={e => change({ ...value, match_key: e.target.value })} /></label>}</div>
+          {['observation', 'assignment'].includes(kind) && !record && <MatchKeyHint value={value.match_key} linked={kind === 'observation' && !!p.assignment_id} external={p.source_scope === 'external'} />}
           {kind === 'observation' && <>
             <label>Source<select aria-label="Source" value={p.source} onChange={e => payload('source', e.target.value)}><option value="live">Live match</option><option value="video">Match video</option></select></label>
             {p.source === 'video' && <label>Video URL<input type="url" placeholder="https://…" value={p.video_url} onChange={e => payload('video_url', e.target.value)} /></label>}

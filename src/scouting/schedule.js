@@ -1,4 +1,4 @@
-import { matchIdentity, isExternalEvidence } from './provenance.js'
+import { matchIdentity, isExternalEvidence, canonicalMatchKey, isBarePracticeKey } from './provenance.js'
 import { alliances } from './superscout.js'
 // Proposed Techmen rotation policy, not a recovered TideScout algorithm.
 const natural = new Intl.Collator('en', { numeric: true, sensitivity: 'base' })
@@ -25,7 +25,11 @@ export function parseSchedule(text) {
   return validateSchedule(lines.map((line, i) => {
     const [key, ...teams] = line.trim().split(/[\s,;]+/)
     if (teams.some(t => !/^\d+$/.test(t))) throw new Error(`Line ${i + 1}: enter a match label followed by team numbers.`)
-    return { key, teams: teams.map(Number) }
+    // "Practice 3, 254" would otherwise read as match "Practice" with team 3.
+    if (isBarePracticeKey(key)) throw new Error(`Line ${i + 1}: write the practice match as one word, such as pm3 or P3.`)
+    // Typed labels get the form's spelling ("P3" and "Practice 3" are pm3,
+    // "12" is qm12), so an assignment and its observation share one key.
+    return { key: canonicalMatchKey(key), teams: teams.map(Number) }
   }))
 }
 export function scheduleText(matches) { return matches.map(m => `${m.key}, ${m.teams.join(', ')}`).join('\n') }

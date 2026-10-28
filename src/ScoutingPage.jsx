@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from './supabase'
 import { isSchemaMissing } from './schemaMissing'
-import { CAPABILITIES, reliability } from './scouting/model'
+import { CAPABILITIES } from './scouting/model'
 import { createScoutingStore } from './scouting/storage'
 import { loadScoutingEvent, saveScoutingRecord, syncScoutingQueue } from './scouting/client'
 import RecordForm from './scouting/RecordForm'
@@ -19,19 +19,21 @@ import { toCsv } from './csv'
 import { downloadText, laStamp } from './download'
 import { OBSERVATION_COLUMNS, TEAM_COLUMNS, SHEET_NOTE, observationRows, teamRows as teamSheetRows, optionObservationColumns, optionTeamColumns } from './scouting/spreadsheet'
 import { matchOrder } from './scouting/schedule'
-import { footageLabel, hasUnverifiedVideoScope, matchIdentity } from './scouting/provenance'
+import { footageLabel, hasUnverifiedVideoScope, matchIdentity, matchLabel } from './scouting/provenance'
+import { observedTeams, capabilitySpread, optionSpread } from './scouting/spread'
 import { projectRecords, scoutingAccessDenied } from './scouting/projection'
 import EvidenceRecord, { RevisionList } from './scouting/EvidenceRecord'
 import MatchBrief from './scouting/MatchBrief'
 import ObservationBrowser from './scouting/ObservationBrowser'
 import MatchSummary from './scouting/MatchSummary'
+import TeamEvidence from './scouting/TeamEvidence'
 import ShiftNow from './scouting/ShiftNow'
 import SuperScoutForm from './scouting/SuperScoutForm'
 import { isSuperAssignment, superAssignmentDone, superSummary, fmtMean, SUPER_RATINGS } from './scouting/superscout'
 import { PAIR_COLUMNS, pairRows } from './scouting/pairs'
 import { teamMatchSummary } from './scouting/match'
 import ObservationOptions from './scouting/ObservationOptions'
-import { OPTIONS_DRAFT, readableOptions, optionSummary, summaryText } from './scouting/options'
+import { OPTIONS_DRAFT, readableOptions } from './scouting/options'
 import { writeVia } from './writeVia'
 import './ScoutingPage.css'
 
@@ -137,6 +139,11 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
   const [busy, setBusy] = useState(false)
   const [form, setForm] = useState(null)
   const [superForm, setSuperForm] = useState(null)
+  // The last record saved from a form (feedback 387edf14: "I put in save
+  // observation and then the tab just disappeared"). The form closes, so this
+  // stays on screen, says what was saved and where it is, and follows the
+  // save through sync. It never times out; the scout dismisses it.
+  const [saved, setSaved] = useState(null)
   const [evidenceTeam, setEvidenceTeam] = useState('')
   const [teamQuery, setTeamQuery] = useState('')
   const [teamPage, setTeamPage] = useState(0)
@@ -265,12 +272,12 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
     return () => clearInterval(timer)
   }, [store, online, loading, uid, eventId, sync])
 
-  async function save(record) {
+  async function save(record, { announce = true } = {}) {
     if (!store) throw new Error('Device storage is unavailable. Nothing was saved.')
     const operation = await saveScoutingRecord({ store, memberId: uid, eventId, record })
     queueGeneration.current++
     if (!alive.current) return operation
-    setQueue(await store.listQueue(uid, eventId)); setNotice('Saved on this device. Waiting to sync.')
+    setQueue(await store.listQueue(uid, eventId)); if (announce) setNotice('Saved on this device. Waiting to sync.')
     if (navigator.onLine) {
       // Enqueue completes first. Network failures cannot erase the local save.
       sync().catch(e => { if (alive.current) setError(errorText(e)) })
@@ -292,6 +299,14 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
   const { visible: records, confirmed: serverRecords } = useMemo(
     () => projectRecords(data.records ?? [], queue, uid, eventId), [data.records, queue, uid, eventId])
   const pending = queue.filter(x => x.status !== 'synced')
+  // Which answers tell robots apart, across every observed robot (spread.js).
+  const spread = useMemo(() => {
+    const teams = observedTeams(serverRecords)
+    return {
+      capabilities: Object.fromEntries(CAPABILITIES.map(c => [c.key, capabilitySpread(serverRecords, c.key, teams)])),
+      options: Object.fromEntries(readableOptions(options?.options).map(o => [o.key, optionSpread(serverRecords, o, teams)])),
+    }
+  }, [serverRecords, options])
   const teamRows = records.filter(r => r.kind === 'team')
   const numbers = [...new Set(records.map(r => r.team_number).filter(Boolean))].sort((a, b) => a - b)
   const nameFor = n => teamRows.find(r => r.team_number === n)?.payload?.name ?? ''
@@ -304,6 +319,23 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
   const memberName = id => (data.members ?? []).find(m => m.id === id)?.nickname || (data.members ?? []).find(m => m.id === id)?.full_name || (id === uid ? 'You' : 'Team member')
   const canEdit = row => !row.localStatus && (row.member_id === uid || (manager && !['pick_list', 'observation'].includes(row.kind)))
   const observations = records.filter(r => r.kind === 'observation')
+  // One observation per scout per team per match (0022's unique index): caught
+  // in the form, before it closes, rather than as a conflict after sync.
+  const ownObservation = row => observations.find(o => o.member_id === uid && o.team_number === row.team_number && matchIdentity(o) === matchIdentity(row)) ?? null
+  async function saveFromForm(row) {
+    const operation = await save(row, { announce: false })
+    if (alive.current && operation) setSaved({ opId: operation.id, recordId: operation.record_id, kind: row.kind, team: row.team_number, match: row.match_key })
+    return operation
+  }
+  function showSaved() {
+    if (!saved) return
+    if (saved.kind === 'observation') { setEvidenceTeam(String(saved.team)); setTab('scout') }
+    else if (saved.kind === 'assignment') { setShowAllAssignments(true); setTab('scout') }
+    else if (saved.kind === 'message') setTab('messages')
+    else { findTeam(String(saved.team)); setTab('teams') }
+    const target = saved.kind === 'observation' ? '#sc-observations' : '.sc-tabs'
+    setTimeout(() => document.querySelector(target)?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50)
+  }
   const observationFor = row => observations.find(o => o.member_id === row.payload.assignee && (o.payload.assignment_id === row.id || (o.team_number === row.team_number && matchIdentity(o) === matchIdentity(row))))
   const isComplete = row => row.payload.status === 'complete' || (isSuperAssignment(row) ? superAssignmentDone(row, records) : !!observationFor(row))
   const assignments = records.filter(r => r.kind === 'assignment' && r.payload?.status !== 'cancelled' && (showAllAssignments || r.payload?.assignee === uid))
@@ -380,9 +412,8 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
         <button onClick={() => { setEvidenceTeam(String(n)); setTab('scout') }}>Review match evidence</button>
         {serverRecords.some(r => r.kind === 'observation' && r.team_number === n && hasUnverifiedVideoScope(r)) && <p className="sc-help">Video evidence with unverified event scope is excluded from these rates. Use Review match evidence to check its provenance.</p>}
         <MatchSummary s={teamMatchSummary(serverRecords, n)} />
-        {options && readableOptions(options.options).length > 0 && <dl className="sc-option-summary" data-option-summary>{readableOptions(options.options).map(o => <div key={o.key}><dt>{o.label}</dt><dd>{summaryText(o, optionSummary(serverRecords, n, o))}</dd></div>)}</dl>}
         {(() => { const sup = superSummary(serverRecords, n); return sup.notes > 0 && <div className="sc-super-summary"><span className="sc-eyebrow">Super scouts · {sup.notes} {sup.notes === 1 ? 'note' : 'notes'}</span><p>{SUPER_RATINGS.map(r => `${r.label} ${fmtMean(sup[r.key])}`).join(' · ')}</p>{sup.failures.length > 0 && <details><summary>Failures seen ({sup.failures.length})</summary><ul>{sup.failures.map((f, i) => <li key={i}>{f.match}: {f.text}</li>)}</ul></details>}</div> })()}
-        <div className="sc-evidence-grid">{CAPABILITIES.map(c => { const r = reliability(serverRecords, n, c.key); return <div className="sc-evidence" key={c.key}><h4>{c.label}</h4><span className="sc-help">Pit claim: {words(pit?.payload.capabilities?.[c.key])}{pit?.localStatus ? ' · saved locally, awaiting confirmation' : ''}</span><div className="sc-ratio">{r.percent === null ? 'No evidence' : `${Math.round(r.percent)}%`}<span>{r.yes}/{r.denominator} observed matches</span></div><p className="sc-help">{r.sufficient ? '3+ observed matches' : 'Provisional: fewer than 3 observed matches'}{r.disputed ? ` · ${r.disputed} disputed` : ''}</p><details><summary>Count details</summary><p className="sc-help">{r.no} observed failures. Excluded scout responses: {r.didNotSee} did not see, {r.notApplicable} not applicable, {r.missing} unanswered. Disputed matches are excluded.</p></details></div> })}</div>
+        <TeamEvidence team={n} records={serverRecords} options={options?.options ?? []} spread={spread} pitClaim={key => `Pit claim: ${words(pit?.payload.capabilities?.[key])}${pit?.localStatus ? ' · saved locally, awaiting confirmation' : ''}`} />
         {team?.payload.epa != null && <p className="sc-help">Statbotics estimate: {team.payload.epa} EPA · {when(team.payload.epa_fetched_at)}. Not an official robot score.</p>}
         <div className="sc-actions"><button disabled={!!pit && !canEdit(pit)} onClick={() => openForm('pit', pit ? { record: pit } : { team: n })}>Pit report</button><button onClick={() => openForm('observation', { team: n })}>Observe</button><button onClick={() => openForm('message', { team: n })}>Message</button>{manager && team && canEdit(team) && <button onClick={() => openForm('team', { record: team })}>Edit team</button>}</div>
         {pit && <details><summary>Pit notes and history</summary><EvidenceRecord row={pit} memberName={memberName} revisions={data.revisions ?? []} /></details>}
@@ -403,8 +434,27 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
     </footer>
     {store && data.event && <RecoveryPanel store={store} uid={uid} eventId={eventId} onRestored={rows => { queueGeneration.current++; setQueue(previous => [...previous, ...rows]) }} />}
     {superForm && store && <SuperScoutForm key={superForm.id} assignment={superForm} records={records} uid={uid} nameFor={nameFor} onSaveBatch={saveBatch} onClose={() => setSuperForm(null)} />}
-    {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} matchFields={matchFields} options={options?.options ?? null} onSuggest={options && online ? async args => { await requestOption(args); await reloadOptions().catch(() => {}) } : null} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : save} onClose={() => setForm(null)} />}
+    {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} matchFields={matchFields} options={options?.options ?? null} onSuggest={options && online ? async args => { await requestOption(args); await reloadOptions().catch(() => {}) } : null} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : saveFromForm} ownObservation={ownObservation} onClose={() => setForm(null)} />}
+    {saved && <SavedBar saved={saved} queue={queue} confirmed={serverRecords} online={online} onShow={showSaved} onAnother={() => openForm('observation')} onDismiss={() => setSaved(null)} />}
   </main>
+}
+
+const SAVED_KIND = { observation: 'Observation', pit: 'Pit report', assignment: 'Assignment', message: 'Pit message', team: 'Event team' }
+// Stays at the bottom of the screen after a form closes, wherever the scout
+// scrolled to, and reads the save's real state from the durable queue: on
+// this device, synced, or not synced with the server's reason.
+function SavedBar({ saved, queue, confirmed, online, onShow, onAnother, onDismiss }) {
+  const op = queue.find(o => o.id === saved.opId)
+  const status = op?.status ?? (confirmed.some(r => r.id === saved.recordId) ? 'synced' : 'local')
+  const state = status === 'synced' ? 'synced' : ['conflict', 'failed'].includes(status) ? 'problem' : 'waiting'
+  const text = state === 'synced' ? 'Synced to the team server.'
+    : state === 'problem' ? `Not synced: ${op?.error?.message || 'the server did not accept it.'} ${op?.retryable ? 'It tries again every minute.' : 'Open Saved work on this device to fix it.'}`
+    : online ? 'Saved on this device. Sending to the team server…' : 'Saved on this device. It sends when you reconnect.'
+  const what = [SAVED_KIND[saved.kind] ?? 'Record', saved.team ? `team ${saved.team}` : '', saved.match ? matchLabel(saved.match) : ''].filter(Boolean).join(' · ')
+  return <div className={`sc-saved sc-saved-${state}`} role="status" aria-live="polite" data-saved-confirmation data-state={state}>
+    <div className="sc-saved-text"><strong>{SAVED_KIND[saved.kind] ?? 'Record'} saved</strong><span>{what}</span><span className="sc-help">{text}</span></div>
+    <div className="sc-actions"><button onClick={onShow}>Show it</button>{saved.kind === 'observation' && <button onClick={onAnother}>Record another</button>}<button aria-label="Dismiss saved confirmation" onClick={onDismiss}>Dismiss</button></div>
+  </div>
 }
 
 function QueuePanel({ queue, store, uid, eventId, serverRecords, onChange, onSave, onSync, onRepair }) {
