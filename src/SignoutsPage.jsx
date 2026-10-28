@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
-import { computePresence, presenceSinceISO } from './presence'
+import { computePresenceDetail, presenceSinceISO } from './presence'
 import { fetchAllRows } from './fetchAllRows'
 import { canApproveSignouts, approveSignout, approveAllSignouts, returnSignout } from './signout'
 import { isSchemaMissing } from './schemaMissing'
@@ -69,7 +69,7 @@ export default function SignoutsPage({ session, hasRole = () => false }) {
     setPending(pend.data ?? [])
     setDecided(dec.data ?? [])
     setNames(new Map((profs.data ?? []).map((p) => [p.id, displayName(p)])))
-    setPresent(computePresence(evs?.data ?? []))
+    setPresent(computePresenceDetail(evs?.data ?? []))
   }, [])
 
   useEffect(() => {
@@ -117,7 +117,7 @@ export default function SignoutsPage({ session, hasRole = () => false }) {
   const others = pending.filter((r) => r.member_id !== uid)
   const pendingIds = new Set(pending.map((r) => r.member_id))
   const signedIn = [...present.entries()]
-    .map(([id, since]) => ({ id, since, name: nameOf(id), waiting: pendingIds.has(id) }))
+    .map(([id, d]) => ({ id, since: d.since, kind: d.kind, name: nameOf(id), waiting: pendingIds.has(id) }))
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
@@ -144,7 +144,7 @@ export default function SignoutsPage({ session, hasRole = () => false }) {
         ) : (
           <ul className="sop-list">
             {others.map((r) => {
-              const since = present.get(r.member_id)
+              const since = present.get(r.member_id)?.since
               return (
                 <li key={r.id} className="sop-row" data-request={r.id}>
                   <div className="sop-row-main">
@@ -192,8 +192,11 @@ export default function SignoutsPage({ session, hasRole = () => false }) {
           {signedIn.length === 0 ? <p className="sop-muted">Nobody is signed in.</p> : (
             <ul className="sop-mini">
               {signedIn.map((m) => (
-                <li key={m.id}>
-                  <span>{m.name}</span>
+                <li key={m.id} data-member={m.id} data-kind={m.kind.key}>
+                  <span className="sop-who">
+                    <span>{m.name}</span>
+                    <span className={`sop-chip sop-kind sop-kind-${m.kind.key}`} style={{ '--sop-kind': m.kind.color }}>{m.kind.label}</span>
+                  </span>
                   <span className="hud-mono sop-meta">{m.waiting ? 'waiting · ' : ''}since {fmtClock(m.since)}</span>
                   {isStaff && m.id !== uid && <VoidIdle member={m} onDone={(t) => { setMsg(t); load() }} />}
                 </li>

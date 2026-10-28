@@ -7,6 +7,7 @@
 // midnight reads present there too. It adds no new tables.
 
 import { currentStatus, statusWindowStartISO } from './attendanceState'
+import { sessionKind } from './categories'
 
 // Local midnight, matching HomePage's startOfToday.
 export function startOfTodayISO() {
@@ -22,9 +23,13 @@ export function presenceSinceISO() {
   return statusWindowStartISO(Date.now())
 }
 
-// events: [{ user_id, type, event_time }] (any order, any window that ends now).
-// Returns Map<user_id, sinceISO> of members with an open check-in.
-export function computePresence(events, now = Date.now()) {
+// events: [{ user_id, type, event_time, category? }] (any order, any window
+// that ends now). Returns Map<user_id, { since, kind }> of members with an open
+// check-in, where kind (categories.js sessionKind) is what the open session is
+// counting: FRC build or FLL volunteer, read off its IN event's category. A
+// query that did not select `category` reads every session as FRC, so callers
+// that show the kind must select it.
+export function computePresenceDetail(events, now = Date.now()) {
   const byUser = new Map() // user_id -> that member's events
   for (const e of events) {
     if (!byUser.has(e.user_id)) byUser.set(e.user_id, [])
@@ -33,9 +38,14 @@ export function computePresence(events, now = Date.now()) {
   const present = new Map()
   for (const [uid, evs] of byUser) {
     const s = currentStatus(evs, now)
-    if (s.checkedIn) present.set(uid, s.since)
+    if (s.checkedIn) present.set(uid, { since: s.since, kind: sessionKind(s.last.category) })
   }
   return present
+}
+
+// The same rule, as Map<user_id, sinceISO>.
+export function computePresence(events, now = Date.now()) {
+  return new Map([...computePresenceDetail(events, now)].map(([uid, d]) => [uid, d.since]))
 }
 
 export function fmtClock(iso) {

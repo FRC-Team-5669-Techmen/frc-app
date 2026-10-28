@@ -459,3 +459,10 @@
 /* A void deletes an attendance row, so it never sits at the same visual weight
    as the Cancel beside it — same rule the per-member panel's danger button uses. */
 .vh-danger { border-color: var(--fault); color: var(--fault); }
+
+/* Approve all on Pending Hours (feedback c4f9a940): 44px targets, and the
+   confirm sits above the list it acts on. */
+.vh-allbtn { min-height: 44px; }
+.vh-allask { margin-bottom: 0.75rem; }
+.vh-hours-note { margin-bottom: 0.75rem; }
+.vh-hours-note-warn { border-color: var(--fault); }

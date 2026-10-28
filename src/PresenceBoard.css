@@ -53,6 +53,8 @@
 .pb-present .pb-elapsed { grid-column: 2; grid-row: 1 / span 2; font-family: var(--font-ui); font-weight: 700; font-size: clamp(1.1rem, 1.8vw, 1.6rem); color: var(--gold); }
 .pb-meta { grid-column: 1; font-family: var(--font-mono); font-size: clamp(0.72rem, 0.95vw, 0.95rem); letter-spacing: 0.03em; color: var(--steel); }
 .pb-team { color: var(--text); }
+/* Which hours an open session counts (feedback 37b5feee), in the category's own color from categories.js. */
+.pb-kind { display: inline-block; margin-right: 0.5em; padding: 0 0.35em; border: 1px solid var(--pb-kind, var(--border-strong)); border-radius: var(--radius-sm); color: var(--pb-kind, var(--steel)); text-transform: uppercase; font-size: 0.85em; }
 
 /* ── Not here: compact chips ── */
 .pb-away { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); gap: 0.4rem 1.25rem; padding-top: clamp(0.75rem, 1.5vw, 1.25rem); border-top: 1px solid var(--border); }

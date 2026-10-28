@@ -29,7 +29,8 @@ import { parseHours } from './_util.mjs';
 
 const NON_STAFF = ['student', 'student2', 'parent'];
 // PresenceBoard's own attendance_events read (src/PresenceBoard.jsx load()).
-const BOARD_COLUMNS = 'user_id, type, event_time';
+// category since ledger 0028c: the board shows FRC or FLL volunteer per session.
+const BOARD_COLUMNS = 'user_id, type, event_time, category';
 
 async function board(t) {
   return t.evaluate(() => ({

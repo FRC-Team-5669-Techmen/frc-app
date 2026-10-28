@@ -28,6 +28,17 @@ export function normAttendanceCategory(cat) {
   return BY_KEY[cat] ? cat : DEFAULT_CATEGORY
 }
 
+// What an OPEN session is, for the "who is signed in" lists (/signouts,
+// /display; feedback 37b5feee). The session's kind is its IN event's
+// category: /checkin writes 'build' (FRC build hours) and /checkin-volunteer
+// and switch_to_fll write 'volunteer' (FLL volunteer hours). The other two only
+// come from a staff-entered IN, and keep their own label.
+const SESSION_KINDS = { build: 'FRC', volunteer: 'FLL volunteer' }
+export function sessionKind(cat) {
+  const key = normAttendanceCategory(cat)
+  return { key, label: SESSION_KINDS[key] ?? categoryLabel(key), color: categoryColor(key) }
+}
+
 // logged_hours.type → category bucket (logged hours don't carry the full set;
 // 'volunteering' is the same bucket as the 'volunteer' attendance category).
 export const LOGGED_TYPE_TO_CATEGORY = { volunteering: 'volunteer', outreach: 'outreach', competition: 'competition' }

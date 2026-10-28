@@ -7,6 +7,7 @@ import { detectAnomalies } from './accountability'
 import { DURATION_PRESETS, STEP_MINUTES, fmtSpanMins, stepMinutes, setPreset, endInstantMs, resolveReadout } from './hoursResolve'
 import MemberHoursAdmin from './MemberHoursAdmin'
 import { fetchAllRows } from './fetchAllRows'
+import { summarizeEntries, approveAllLoggedHours, bulkResultText } from './loggedHoursBulk'
 import './VerifyHoursPage.css'
 
 // ─── formatting helpers ───────────────────────────────────────────────────────
@@ -179,6 +180,19 @@ async function fetchLoggedCorrections() {
   }))
 }
 
+// Pending logged-hours entries, oldest first. Re-read after Approve all so the
+// list shows what the database holds, not what the page asked for. null when
+// the read fails.
+async function fetchPendingHours() {
+  const { data, error } = await supabase
+    .from('logged_hours')
+    .select('*, member:member_id(full_name, nickname)')
+    .eq('status', 'pending')
+    .order('date', { ascending: true })
+    .order('created_at', { ascending: true })
+  return error ? null : (data ?? [])
+}
+
 // Advisory anomaly list across all members (never mutates anything). Pairs the
 // event ledger per member with their exemption status so the geofence check is
 // accurate, then flattens detectAnomalies output with member names attached.
@@ -225,6 +239,10 @@ export default function VerifyHoursPage({ session, hasRole }) {
   // Existing logged-hours pending entries
   const [entries, setEntries] = useState(null)
   const [acting,  setActing]  = useState({})
+  // Approve all: the confirm step is open, the call is running, the result line.
+  const [allAsk,  setAllAsk]  = useState(false)
+  const [allBusy, setAllBusy] = useState(false)
+  const [hoursNote, setHoursNote] = useState(null)   // { ok, text }
 
   // Student correction requests (derived attendance sessions)
   const [corrections, setCorrections] = useState(null)
@@ -277,13 +295,7 @@ export default function VerifyHoursPage({ session, hasRole }) {
     fetchLoggedCorrections().then(rows => setLoggedCorrections(rows))
     fetchAnomalies().then(rows => setAnomalies(rows))
 
-    supabase
-      .from('logged_hours')
-      .select('*, member:member_id(full_name, nickname)')
-      .eq('status', 'pending')
-      .order('date', { ascending: true })
-      .order('created_at', { ascending: true })
-      .then(({ data }) => setEntries(data ?? []))
+    fetchPendingHours().then(rows => setEntries(rows ?? []))
   }, [isStaff]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Anomaly resolve ─────────────────────────────────────────────────────────
@@ -431,7 +443,23 @@ export default function VerifyHoursPage({ session, hasRole }) {
     const { error } = await writeVia(supabase, 'staff_review_logged_hours', { p_entry: id, p_approve: action === 'approve' },
       { table: 'logged_hours', op: 'update', values: patch, eq: { id } })
     setActing(a => { const n = { ...a }; delete n[id]; return n })
-    if (!error) setEntries(prev => prev.filter(e => e.id !== id))
+    // A failed write keeps the card and says so, rather than doing nothing.
+    if (error) { setHoursNote({ ok: false, text: `Not saved: ${error.message}` }); return }
+    setEntries(prev => prev.filter(e => e.id !== id))
+  }
+
+  // Approve all: every entry in the list as shown when the confirm is tapped.
+  // Counts only the rows the database answers as approved (src/loggedHoursBulk.js),
+  // names every entry it did not approve, then re-reads the list.
+  async function approveAll(shown) {
+    setAllBusy(true); setHoursNote(null)
+    const result = await approveAllLoggedHours(supabase, shown.map(e => e.id), session.user.id)
+    setHoursNote(bulkResultText(shown, result, e => displayName(e.member)))
+    setAllAsk(false)
+    // If the re-read fails, drop only what the database answered as approved.
+    const fresh = await fetchPendingHours()
+    setEntries(prev => fresh ?? prev.filter(e => !result.approvedIds.has(e.id)))
+    setAllBusy(false)
   }
 
   // ── Guard ───────────────────────────────────────────────────────────────────
@@ -620,12 +648,46 @@ export default function VerifyHoursPage({ session, hasRole }) {
         <div className="vh-section-divider" />
 
         {/* ── Pending logged hours ── */}
-        <div className="vh-header">
-          <span className="vh-title">Pending Hours</span>
-          {entries.length > 0 && (
-            <span className="vh-badge">{entries.length}</span>
+        <div className="vh-section-header">
+          <div className="vh-header">
+            <span className="vh-title">Pending Hours</span>
+            {entries.length > 0 && (
+              <span className="vh-badge">{entries.length}</span>
+            )}
+          </div>
+          {entries.length > 1 && !allAsk && (
+            <button className="vh-btn vh-approve vh-allbtn" data-act="approve-all"
+              disabled={allBusy || Object.keys(acting).length > 0}
+              onClick={() => { setAllAsk(true); setHoursNote(null) }}>
+              Approve all {entries.length}
+            </button>
           )}
         </div>
+
+        {allAsk && entries.length > 0 && (() => {
+          const sum = summarizeEntries(entries)
+          return (
+            <div className="vh-bulk vh-allask" role="group" aria-label="Approve all">
+              <span className="vh-bulk-count">{sum.question}</span>
+              <div className="vh-bulk-actions">
+                <button className="vh-btn vh-reject vh-allbtn" disabled={allBusy} onClick={() => setAllAsk(false)}>
+                  Cancel
+                </button>
+                <button className="vh-btn vh-approve vh-allbtn" data-act="approve-all-confirm" disabled={allBusy}
+                  onClick={() => approveAll(entries)}>
+                  {allBusy ? 'Approving…' : `Approve ${sum.count}`}
+                </button>
+              </div>
+            </div>
+          )
+        })()}
+
+        {hoursNote && (
+          <p className={`vh-bulk-note vh-bulk-note-done vh-hours-note${hoursNote.ok ? '' : ' vh-hours-note-warn'}`} role="status">
+            {hoursNote.text}
+            <button className="vh-btn vh-reject vh-btn-sm" onClick={() => setHoursNote(null)}>Dismiss</button>
+          </p>
+        )}
 
         {entries.length === 0 ? (
           <div className="vh-empty">
@@ -637,7 +699,7 @@ export default function VerifyHoursPage({ session, hasRole }) {
             {entries.map(entry => {
               const busy = acting[entry.id]
               return (
-                <div key={entry.id} className={`vh-card${busy ? ' vh-card-busy' : ''}`}>
+                <div key={entry.id} data-entry={entry.id} className={`vh-card${busy ? ' vh-card-busy' : ''}`}>
                   <div className="vh-card-top">
                     <span className="vh-member-name">
                       {displayName(entry.member)}
@@ -657,14 +719,14 @@ export default function VerifyHoursPage({ session, hasRole }) {
                   <div className="vh-actions">
                     <button
                       className="vh-btn vh-reject"
-                      disabled={!!busy}
+                      disabled={!!busy || allBusy}
                       onClick={() => act(entry.id, 'reject')}
                     >
                       {busy === 'reject' ? 'Rejecting…' : 'Reject'}
                     </button>
                     <button
                       className="vh-btn vh-approve"
-                      disabled={!!busy}
+                      disabled={!!busy || allBusy}
                       onClick={() => act(entry.id, 'approve')}
                     >
                       {busy === 'approve' ? 'Approving…' : 'Approve'}

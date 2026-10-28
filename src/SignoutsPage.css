@@ -108,3 +108,7 @@
 }
 .sop-link { min-height: 44px; background: none; border: 0; color: var(--gold); font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
 .sop-void { display: flex; flex-wrap: wrap; gap: 0.4rem; width: 100%; }
+/* Which hours an open session counts (feedback 37b5feee): FRC or FLL volunteer,
+   in that category's own color from categories.js. */
+.sop-who { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; min-width: 0; }
+.sop-kind { color: var(--sop-kind, var(--steel)); border-color: var(--sop-kind, var(--border-strong)); }

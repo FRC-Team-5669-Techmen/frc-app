@@ -20,6 +20,11 @@
  *  - the dashboard Check Out opens the note form (0 writes) and the tile then
  *    reads "waiting for approval"; an FLL session signs out directly with the
  *    note (1 OUT, 0 requests);
+ *  - Signed in now on /signouts and the /display board label each open
+ *    session FRC or FLL volunteer from its IN's category (a store oracle for
+ *    every row; Sam FRC, Riley and Casey FLL), with the sign-in time; Casey
+ *    signed out has 0 rows (1 before); absent board rows carry 0 labels
+ *    against one per present row (feedback 37b5feee, ledger 0028c);
  *  - before 0014: /signouts says not set up, no nav entry, and the tag checks
  *    out with one tap (1 OUT).
  * The server guard (no self-OUT on a build session) is not modelled here; it
@@ -239,6 +244,63 @@ export default {
     t.as('quick pulse · a student board has no control');
     await t.open('/display', { persona: 'student', mig: 'all', ready: '.pb-name' });
     t.eq('0 name buttons and 0 quick buttons for a student', [await t.count('.pb-name-btn'), await t.count('.qp-btn')], [0, 0]);
+
+    // ── which hours each signed-in member is on (feedback 37b5feee) ───────
+    t.as('0014 · FRC or FLL on the signed-in lists');
+    await t.open('/signouts', { persona: 'mentor', mig: 'all', reset: true, ready: '.sop-title' });
+    await putIn(t, P.student.id, 40, 'build');
+    await putIn(t, P.student2.id, 25, 'volunteer');
+    await putIn(t, P.exempt.id, 10, 'volunteer');
+    await t.open('/signouts', { persona: 'mentor', mig: 'all', ready: '.sop-mini li[data-member]' });
+    await t.settle();
+    const LABEL = { build: 'FRC', volunteer: 'FLL volunteer', outreach: 'Outreach', competition: 'Competition' };
+    // The oracle: each member's newest IN in the store, its category, its LA clock.
+    const newestIn = async (id) => (await t.rows('attendance_events')).filter((e) => e.user_id === id && e.type === 'in')
+      .sort((a, b) => Date.parse(b.event_time) - Date.parse(a.event_time))[0];
+    const expectKind = async (id) => LABEL[(await newestIn(id))?.category] ?? 'FRC';
+    const laClock = (iso) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' });
+    const listed = () => t.evaluate(() => [...document.querySelectorAll('.sop-mini li[data-member]')].map((li) => ({
+      id: li.dataset.member, kind: li.querySelector('.sop-kind')?.textContent ?? null, chips: li.querySelectorAll('.sop-kind').length,
+      meta: li.querySelector('.sop-meta')?.textContent ?? '' })));
+    const rowsNow = await listed();
+    const want = await Promise.all(rowsNow.map((r) => expectKind(r.id)));
+    t.eq('every signed-in row carries exactly one label, the one its open session was opened with (store oracle)',
+      [rowsNow.length > 0, rowsNow.every((r) => r.chips === 1), rowsNow.map((r) => r.kind)], [true, true, want]);
+    const pick = (id) => rowsNow.find((r) => r.id === id);
+    t.eq('Sam reads FRC, Riley and Casey read FLL volunteer', [pick(P.student.id)?.kind, pick(P.student2.id)?.kind, pick(P.exempt.id)?.kind], ['FRC', 'FLL volunteer', 'FLL volunteer']);
+    t.check('with the sign-in time', (pick(P.student2.id)?.meta || '').includes(`since ${laClock((await newestIn(P.student2.id)).event_time)}`), pick(P.student2.id)?.meta);
+    await t.noHScroll();
+    await t.shot('signed-in-kinds');
+    await t.evaluate((id) => window.__fx.insert('attendance_events', {
+      user_id: id, type: 'out', location: 'fll-room', method: 'nfc', geo_ok: true, event_time: new Date().toISOString(),
+    }), P.exempt.id);
+    await t.open('/signouts', { persona: 'mentor', mig: 'all', ready: '.sop-mini li[data-member]' });
+    await t.settle();
+    const rowsOut = await listed();
+    t.eq('Casey signed out: 0 rows for her (1 before), the others keep theirs', [rowsOut.filter((r) => r.id === P.exempt.id).length, rowsOut.length], [0, rowsNow.length - 1]);
+    t.eq('flipping Riley to a build session flips her label', await (async () => {
+      await putIn(t, P.student2.id, 1, 'build');
+      await t.open('/signouts', { persona: 'mentor', mig: 'all', ready: '.sop-mini li[data-member]' });
+      await t.settle();
+      return (await listed()).find((r) => r.id === P.student2.id)?.kind;
+    })(), 'FRC');
+
+    t.as('0014 · FRC or FLL on /display');
+    await putIn(t, P.student2.id, 0, 'volunteer');
+    await t.open('/display', { persona: 'student', mig: 'all', ready: '.pb-row' });
+    await t.settle();
+    const boardKinds = await t.evaluate(() => ({
+      present: document.querySelectorAll('.pb-row.pb-present').length,
+      presentKinds: document.querySelectorAll('.pb-row.pb-present .pb-kind').length,
+      absent: document.querySelectorAll('.pb-row.pb-absent').length,
+      absentKinds: document.querySelectorAll('.pb-row.pb-absent .pb-kind').length,
+    }));
+    t.eq('a label on every present row and on no absent row', [boardKinds.present > 0, boardKinds.presentKinds, boardKinds.absent > 0, boardKinds.absentKinds],
+      [true, boardKinds.present, true, 0]);
+    const boardKind = (nick) => t.evaluate((n) => [...document.querySelectorAll('.pb-row')].find((r) => r.querySelector('.pb-name')?.textContent.trim() === n)?.querySelector('.pb-kind')?.textContent ?? null, nick);
+    t.eq('the board: Sam FRC, Riley FLL volunteer, Casey none', [await boardKind(P.student.nick), await boardKind(P.student2.nick), await boardKind(P.exempt.nick)], ['FRC', 'FLL volunteer', null]);
+    await t.noHScroll();
+    await t.shot('display-kinds', { full: false });
 
     // ── before 0014 ───────────────────────────────────────────────────────
     t.as('pre-0014');

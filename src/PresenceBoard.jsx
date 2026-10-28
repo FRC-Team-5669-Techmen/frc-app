@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { supabase } from './supabase'
-import { computePresence, presenceSinceISO, fmtClock, groupBySubteam, subteamOf, UNASSIGNED } from './presence'
+import { computePresenceDetail, presenceSinceISO, fmtClock, groupBySubteam, subteamOf, UNASSIGNED } from './presence'
 import { displayName } from './names'
 import { canOpenHistory } from './attendanceHistory'
 import { MemberAttendanceHistory } from './AttendanceHistory'
@@ -33,6 +33,7 @@ export default function PresenceBoard({ hasRole } = {}) {
   const staff = canOpenHistory(hasRole)
   const [members, setMembers] = useState(null)   // active roster
   const [present, setPresent] = useState(new Map()) // user_id -> sinceISO
+  const [kinds, setKinds] = useState(new Map())     // user_id -> { key, label, color }: FRC or FLL volunteer (feedback 37b5feee)
   const [error, setError] = useState('')
   const [history, setHistory] = useState(null)    // { memberId, name } — staff only
   const [reloadKey, setReloadKey] = useState(0)    // bumped after a quick sign in/out
@@ -49,7 +50,8 @@ export default function PresenceBoard({ hasRole } = {}) {
       // Approved members only: a signed-in account never let onto the team is
       // not on the wall display (audit item 2).
       supabase.from('profiles').select('id, full_name, nickname, subteams, status').eq('status', 'active').eq('approved', true),
-      supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', presenceSinceISO()),
+      // category: which hours the open session counts (FRC or FLL volunteer).
+      supabase.from('attendance_events').select('user_id, type, event_time, category').gte('event_time', presenceSinceISO()),
     ])
     if (pErr || eErr) { setError((pErr || eErr).message); return }
     // Parent-only accounts are not team members on the wall. When the roles
@@ -63,7 +65,9 @@ export default function PresenceBoard({ hasRole } = {}) {
     }
     setError('')
     setMembers((profs ?? []).filter(p => !parentOnly.has(p.id)))
-    setPresent(computePresence(events ?? []))
+    const detail = computePresenceDetail(events ?? [])
+    setPresent(new Map([...detail].map(([id, d]) => [id, d.since])))
+    setKinds(new Map([...detail].map(([id, d]) => [id, d.kind])))
   }, [])
 
   useEffect(() => {
@@ -111,7 +115,10 @@ export default function PresenceBoard({ hasRole } = {}) {
     return (
       <li key={m.id} className="pb-row pb-present">
         {nameEl(m)}
-        <span className="pb-meta hud-tnum"><span className="pb-team">{teamLabel(m)}</span> · in {fmtClock(since)}</span>
+        <span className="pb-meta hud-tnum">
+          {kinds.get(m.id) && <span className="pb-kind" data-kind={kinds.get(m.id).key} style={{ '--pb-kind': kinds.get(m.id).color }}>{kinds.get(m.id).label}</span>}
+          <span className="pb-team">{teamLabel(m)}</span> · in {fmtClock(since)}
+        </span>
         <span className="pb-elapsed hud-tnum">{elapsed(since, now)}</span>
         {extra}
       </li>
