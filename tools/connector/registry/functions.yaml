@@ -234,3 +234,9 @@ staff_add_to_slot:
   describe: Put a member in a role board box who did not ask, as assigned or backup. Always asks first.
   level: confirm
 
+# ledger 0028d: decide_absences sends one of these per request, asked as one
+# question (engine writeGroup). No reverse: a decision tells the student.
+decide_absence:
+  describe: Approve or deny one waiting absence request, with a note the student sees. Always asks first.
+  level: confirm
+

@@ -149,8 +149,14 @@ async function fixtures() {
   // Fixed ids: each sample runs in its own rolled-back transaction, and the
   // mail dedupe key names the invite, so both runs must share it.
   const he = await q(`insert into public.hub_events (id, title) values ('0f000000-0000-4000-8000-000000000023', 'Proof trip') returning id`)
-  await q(`insert into public.hub_days (event_id, day_date, venue_closes_at) values ($1, current_date + 10, now() + interval '10 days')`, [he.rows[0].id])
+  await q(`insert into public.hub_days (id, event_id, day_date, venue_closes_at) values ('0f000000-0000-4000-8000-000000000223', $1, current_date + 10, now() + interval '10 days')`, [he.rows[0].id])
   const hi = await q(`insert into public.hub_invites (id, event_id, student_id, emails) values ('0f000000-0000-4000-8000-000000000123', $1, $2, array['riley.family@example.invalid']) returning id`, [he.rows[0].id, ID.riley])
+  // ledger 0028d: Riley coming that day, and a mentor car to seat her in
+  // (place_in_car, hub_staff_call move), with no meet time, so no carpool lock.
+  await q(`insert into public.hub_day_answers (invite_id, day_id, attending) values ($1, '0f000000-0000-4000-8000-000000000223', 'yes')`, [hi.rows[0].id])
+  await q(`insert into public.hub_cars (id, event_id, day_id, run, driver_label, seats, description) values ('0f000000-0000-4000-8000-000000000323', $1, '0f000000-0000-4000-8000-000000000223', 'to', 'Proof mentor', 3, 'Proof van')`, [he.rows[0].id])
+  // ledger 0028d: one absence request waiting (decide_absences), Sam for the proof event.
+  await q(`insert into public.absence_requests (id, member_id, event_id, reason, note) values ('0f000000-0000-4000-8000-000000000015', $1, $2, 'medical', 'Proof visit')`, [ID.sam, ev.rows[0].id])
   // ledger 0017: one battery to log and charge (0026). Fixed id for the same reason.
   const bt = await q(`insert into public.batteries (id, label, status, charge_state) values ('0f000000-0000-4000-8000-000000000026', 'PF99', 'competition', 'charged') returning id`)
   // ledger 0026: a Meet a team box on the proof event (0035), when 0035 is there.
@@ -190,6 +196,10 @@ const SAMPLES = {
   staff_add_event: () => ({ p_member: ID.sam, p_type: 'in', p_event_time: new Date(Date.now() - 3600e3).toISOString(), p_category: 'build', p_reason: 'Proof sign-in' }),
   // ledger 0026 (0035)
   staff_meet_team_fill: (fx) => ({ p_event: fx.event, p_apply: true }),
+  // ledger 0028d: place_in_car (one move, a lone rider so with the staff
+  // override reason) and decide_absences (one decision).
+  hub_staff_call: (fx) => ({ p_action: 'move', p_args: { invite_id: fx.invite, day_id: '0f000000-0000-4000-8000-000000000223', run: 'to', car_id: '0f000000-0000-4000-8000-000000000323', override_reason: 'Proof lone rider' } }),
+  decide_absence: () => ({ p_request: '0f000000-0000-4000-8000-000000000015', p_approve: true, p_note: 'Proof approved' }),
   team_connection_save: (fx) => ({ p_id: null, p_event: fx.event, p_team: 254, p_team_name: 'Proof Poofs', p_contact: { name: 'Jordan', role: 'mentor' }, p_does_well: 'Spares cart',
     p_org_tags: ['subteams'], p_org_note: null, p_resource_tags: ['mentoring'], p_resource_note: null, p_copy: 'Label the spares', p_follow_up: false, p_follow_up_note: null }),
 }

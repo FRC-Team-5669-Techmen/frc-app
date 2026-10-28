@@ -11,9 +11,9 @@ export default {
   "undo": 6,
   "confirm": 182,
   "by_argument": 2,
-  "generated": 185,
+  "generated": 184,
   "excluded_functions": 12,
-  "tools": 47,
+  "tools": 51,
   "edge_functions": 8,
   "routes": 1,
   "table_writes": 0,
@@ -1503,6 +1503,130 @@ export default {
     "p_event": "$resolved.event.id",
     "p_apply": true
    }
+  },
+  "trip_day_roster": {
+   "name": "trip_day_roster",
+   "describe": "Per trip day, every student coming by name, with when they arrive and leave and whether they ride in a car there and home. For planning who does what each day.",
+   "say": [
+    "who is coming each day of Beach Blitz",
+    "who's at the competition Friday",
+    "list who is going Saturday and how they get there",
+    "which students are coming Sunday and when do they leave"
+   ],
+   "kind": "read",
+   "args": {
+    "trip": {
+     "type": "string",
+     "describe": "The trip (part of its title); the next one when not said"
+    },
+    "day": {
+     "type": "string",
+     "describe": "Only this day: a date like 2026-10-31 or a weekday like Saturday; every day when not said"
+    }
+   }
+  },
+  "place_in_car": {
+   "name": "place_in_car",
+   "describe": "Put a student in a car on a trip's carpool, move them to another car, or take them out, for one day or every day, there or home. Works through the 72-hour lock. Always asks first.",
+   "say": [
+    "put Mathias in Mr. Pina's car every day",
+    "move Joaquin to the Garcia car Friday",
+    "seat Riley with the Tran family going home Saturday",
+    "take Sam out of his car Sunday",
+    "Mathias rides with Pina both ways all weekend"
+   ],
+   "kind": "function",
+   "args": {
+    "student": {
+     "type": "string",
+     "describe": "The student (a name)",
+     "required": true,
+     "resolve": "member"
+    },
+    "car": {
+     "type": "string",
+     "describe": "The car, by its driver's name (such as Pina or the Garcia family); none to take the student out of their car",
+     "required": true
+    },
+    "day": {
+     "type": "string",
+     "describe": "A date like 2026-10-30, a weekday like Friday, or all for every day of the trip",
+     "required": true
+    },
+    "run": {
+     "type": "string",
+     "describe": "there (to the venue), home, or both (default)",
+     "enum": [
+      "there",
+      "home",
+      "both"
+     ]
+    },
+    "trip": {
+     "type": "string",
+     "describe": "The trip (part of its title); the next one when not said"
+    },
+    "override_reason": {
+     "type": "string",
+     "describe": "Only when he says to override the one-student rule for this car, and why"
+    }
+   },
+   "function": "hub_staff_call",
+   "map": {}
+  },
+  "absences_waiting": {
+   "name": "absences_waiting",
+   "describe": "The absence requests waiting for a decision, oldest first - who, which event, the reason and note, when it was filed, and the id to approve or deny it.",
+   "say": [
+    "any absences waiting",
+    "who asked to miss a meeting",
+    "show the absence requests",
+    "what absences do I need to approve",
+    "did Riley ask to miss Saturday"
+   ],
+   "kind": "read",
+   "args": {
+    "member": {
+     "type": "string",
+     "describe": "Only this member's requests (a name)",
+     "resolve": "member"
+    },
+    "event": {
+     "type": "string",
+     "describe": "Only requests for this event (part of its title, or its date YYYY-MM-DD)"
+    }
+   }
+  },
+  "decide_absences": {
+   "name": "decide_absences",
+   "describe": "Approve or deny one or many waiting absence requests in one go, with an optional note to each student. Asks once for all of them, then tells each student.",
+   "say": [
+    "approve the absences",
+    "approve all of those",
+    "deny Riley's absence request",
+    "approve the three for Saturday's meeting",
+    "approve them and tell them feel better"
+   ],
+   "kind": "function",
+   "args": {
+    "requests": {
+     "type": "array",
+     "items": "string",
+     "describe": "The request ids from absences_waiting",
+     "required": true
+    },
+    "approve": {
+     "type": "boolean",
+     "describe": "true to approve, false to deny",
+     "required": true
+    },
+    "note": {
+     "type": "string",
+     "describe": "A note each student sees with the decision, if he gave one"
+    }
+   },
+   "function": "decide_absence",
+   "map": {}
   }
  },
  "functions": {
@@ -3232,7 +3356,7 @@ export default {
   },
   "decide_absence": {
    "name": "decide_absence",
-   "source": "generated",
+   "source": "hand",
    "forms": [
     {
      "args": [
@@ -3266,7 +3390,7 @@ export default {
    "called_from": [
     "src/StandingTeamPage.jsx"
    ],
-   "describe": "Decide absence (a change: asks first).",
+   "describe": "Approve or deny one waiting absence request, with a note the student sees. Always asks first.",
    "level": "confirm"
   },
   "declare_conflict": {

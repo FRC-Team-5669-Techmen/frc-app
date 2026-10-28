@@ -50,6 +50,10 @@ A living list. Each line is something he would say to Claude, the tool that shou
 | 44 | "What did we learn from other teams at Beach Blitz?" | `meet_team_notes` | Runs at once, reads only: each team met, grouped by number, with what they do well, how they run, what they offer, what to copy, follow ups, contacts and who logged it. Before 0035: not set up yet. |
 | 45 | "Who hasn't met a team yet?" | `meet_team_progress` | Runs at once: done, slotted but nothing logged (with their slot), and no slot, by name. |
 | 46 | "Give everyone a Meet a team slot." | `give_meet_team_slots` | A preview first listing every name and slot and who could not be placed and why; on "yes" each becomes assigned Meet a team in that box on the role board. A second run places nobody new. |
+| 47 | "Put Mathias in Mr. Pina's car every day." | `place_in_car` (day all) | ONE preview listing each day and way (from which car, to which), and what was skipped (no Pina car that way, not coming that day); on one "yes" each seat moves through the trip page's own Move, as him, inside the 72-hour lock. A full car or the 12-hour freeze: the page's sentence, nothing offered. Two Garcia cars: Claude asks which. |
+| 48 | "Who is coming each day of Beach Blitz, and when do they get there and leave?" | `trip_day_roster` | Runs at once, reads only: per day every student coming by name, how they get there and home (team carpool with the driver, family car, needs a seat, on their own), arrives and leaves, not sure and not answered. |
+| 49 | "Any absences waiting?" | `absences_waiting` | Runs at once: who, which event, the reason and note, when filed, and each request id, oldest first; one unanswered when its event started is marked as counting as approved. |
+| 50 | "Approve all of those." | `decide_absences` (the ids from 49) | ONE preview naming each student and event; on one "yes" each is approved and each student is told. An id that is not waiting: nothing changes for anyone. |
 
 ## Scouting (0022)
 

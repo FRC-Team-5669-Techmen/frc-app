@@ -89,6 +89,20 @@ The competition and season audit, and the open question about Discord, are `docs
 - **`event_roster`** (read): an event's roles by member (0016 `event_roles`), whether the roster is posted, and the conflicts members declared and did not withdraw.
 - **`preview_announcement`** (read): the `discord-announce` function's dry run (`action: 'preview'`, fixed in `backend.js` `announcePreview`); role names resolved against the announcement role list. It never posts; `tests/connector-season-tools.test.js` holds `backend.js` to the one preview call.
 
+## Several changes asked as one question (ledger 0028d, no SQL)
+
+`writeGroup(ctx, tool, plans, opts)` in `engine.js`: for a tool that makes one asks-first call per item. Each plan is still its own `connector_call` (own transaction, own audit row, same preview); what is grouped is the asking. The first call previews every plan and, only if none refuses, answers ONE `confirm_token` (each plan's own stored token, joined with dots); one refusal offers nothing and names the item. The second call takes and checks every token against its own plan BEFORE committing any, so a stale or mismatched token writes nothing for anyone; then each commits in order and a commit the database refuses (a car filled meanwhile) is reported per item (`partial`). It refuses a plan whose level is not confirm. A `hub:<code>` refusal now reads as the trip page's own sentence (the error detail), with the code in `reason`.
+
+## Tools added by ledger 0028d (no SQL)
+
+The three connector gaps filed 2026-10-28; record `docs/history/connector-gaps-0028d.md`.
+
+- **`place_in_car`** (`hub_staff_call` move, the mentor Carpool tab's own Move, confirm, grouped): a student by name, a car by its driver's name (or `none`), a day (date, weekday or `all`), there, home or both. One move per (day, way); skipped ways are listed (no such car that way, not coming, family driving, already there). Staff pass the 72-hour lock; the 12-hour freeze, a full car and the one-minor rule (unless `override_reason`) refuse as on the page.
+- **`trip_day_roster`** (read): per trip day every student coming by name, how they get there and home (team carpool and driver, family car, needs a seat, on their own), `arrives` (the day's target arrival when coming with the team or a family car) and `leaves` (their ride home's leave time, else the ride-home choice), not sure and not answered. The form asks no per-student times; the note says so.
+- **`absences_waiting`** (read): pending absence requests, oldest first, with who, event, reason, note, filed and the request id; one unanswered when its event started is marked `counts_as_approved`.
+- **`decide_absences`** (`decide_absence`, confirm, grouped): approve or deny many request ids with one note, one question.
+- Proof: `tests/connector-trip-absences.test.js`, and hand samples for `hub_staff_call` and `decide_absence` in `proof.mjs`.
+
 ## Deleted rows are reported (0021)
 
 0018 read the rows a call wrote by their in-progress xmin, which never sees a deleted row, so a removal previewed and audited as `"rows": []` (found live 2026-10-20 on a role removal). Since 0021 every table in `connector_log_tables` (now every public table but the connector's own) carries an AFTER DELETE row trigger, `connector_capture_delete`, which does nothing unless the delete runs inside `connector_call`; there it copies the deleted row into a transaction-only temporary table, and `_connector_rows_written` answers those rows marked `"deleted": true` (at most 200 per table, then one `more` entry). Cascades are captured the same way. An undo `when` may be a list that must all hold, and reads `"true"`/`"false"` text as booleans.

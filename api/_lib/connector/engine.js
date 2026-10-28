@@ -173,7 +173,12 @@ export async function readBefore(ctx, spec, args) {
 
 // ── The write ────────────────────────────────────────────────────────────────
 
+// The trip hub refuses with a bare code ("hub:car_full") and puts the
+// sentence a person reads in the error detail (0005 _hub_refuse); the page
+// shows the detail, so the connector does too, and keeps the code.
 function refusal(level, error) {
+  const hub = /^hub:([a-z_]+)$/.exec(error.message ?? '')
+  if (hub && error.details) return { status: 'refused', level, message: error.details, code: error.code, reason: hub[1] }
   return { status: 'refused', level, message: error.message, code: error.code }
 }
 
@@ -239,7 +244,9 @@ export async function write(ctx, planIn, opts = {}) {
     return { status: 'preview', level, ...payload, message: 'Preview only: nothing was written.' }
   }
 
-  if (level === 'confirm') {
+  // opts.confirmed is set only by writeGroup below, after it took and checked
+  // this plan's own token; no tool argument reaches it (writeOpts in tools.js).
+  if (level === 'confirm' && !opts.confirmed) {
     const c = await ctx.backend.takeConfirmation(sha256Hex(opts.confirmToken ?? ''), ctx.now())
     if (!c || c.userId !== ctx.session.user.id || c.tool !== plan.tool || c.argsHash !== argsHash(plan.tool, plan.fn, plan.args)) {
       return {
@@ -287,6 +294,81 @@ export async function write(ctx, planIn, opts = {}) {
     message: data.repeated
       ? 'This exact request was already done, so nothing was written again. Pass again: true only if he wants it done a second time.'
       : 'Done.',
+  }
+}
+
+/**
+ * SEVERAL ASKS-FIRST WRITES, ONE QUESTION (ledger 0028d). Each plan is its
+ * own connector_call: its own transaction, its own audit row, previewed and
+ * committed exactly as `write` does one. What is grouped is the asking:
+ *
+ *   first call   every plan previews (each rolled back); if ANY refuses,
+ *                nothing is offered and the answer names that item. Otherwise
+ *                one confirm_token comes back: each plan's own stored token,
+ *                joined with dots, in plan order.
+ *   second call  every plan's token is taken and checked against its own
+ *                tool and arguments BEFORE any commit; one bad or stale token
+ *                writes nothing for anyone. Then each commits in order. A plan
+ *                the database refuses at commit (a car filled meanwhile) is
+ *                reported as such; the others stand (status partial).
+ *
+ * Only for plans whose level is confirm: an undo-level plan would commit on
+ * the first call, before the question was asked.
+ */
+export const GROUP_TOKEN_SEP = '.'
+
+export async function writeGroup(ctx, tool, plans, opts = {}) {
+  if (!plans.length) return { status: 'invalid', message: 'There is nothing to change. Nothing was written.' }
+  for (const p of plans) {
+    const entry = liveFunction(p.fn)
+    if (!entry) throw new NotRegistered(`The connector does not know "${p.fn}".`)
+    if (levelFor(entry, p.args) !== 'confirm') throw new NotRegistered(`A grouped change asks first; "${p.fn}" does not.`)
+  }
+  const groupKey = `group:${sha256Hex(canonical({ tool, plans: plans.map((p) => ({ fn: p.fn, args: p.args })) })).slice(0, 24)}`
+  const one = (p) => ({ tool, fn: p.fn, args: p.args, groupKey })
+
+  if (!opts.confirmToken || opts.dryRun) {
+    const items = []
+    const tokens = []
+    let expiresAt = null
+    for (const [i, p] of plans.entries()) {
+      const r = await write(ctx, one(p), { dryRun: opts.dryRun, requestId: opts.requestId, again: opts.again })
+      if (r.status !== 'preview') {
+        return { ...r, item: i, message: `${r.message ?? 'Refused.'} (change ${i + 1} of ${plans.length}; nothing was changed for any of them)` }
+      }
+      items.push({ result: r.result, rows: r.rows })
+      if (r.confirm_token) tokens.push(r.confirm_token)
+      expiresAt = expiresAt ?? r.expires_at ?? null
+    }
+    if (opts.dryRun) return { status: 'preview', level: 'confirm', items, message: 'Preview only: nothing was written.' }
+    return {
+      status: 'preview', level: 'confirm', items, confirm_token: tokens.join(GROUP_TOKEN_SEP), expires_at: expiresAt,
+      message: `Nothing has changed yet. These ${plans.length} changes are one question: read them to him and ask once; if he says yes, call again with the same arguments and this confirm_token within ten minutes.`,
+    }
+  }
+
+  const stale = {
+    status: 'needs_confirmation', level: 'confirm',
+    message: 'That confirmation is missing, already used, more than ten minutes old, or was for different changes. Nothing was written for any of them. Preview it again and ask him.',
+  }
+  const tokens = String(opts.confirmToken).split(GROUP_TOKEN_SEP)
+  if (tokens.length !== plans.length) return stale
+  const taken = []
+  for (const t of tokens) taken.push(await ctx.backend.takeConfirmation(sha256Hex(t), ctx.now()))
+  const fits = taken.every((c, i) => c && c.userId === ctx.session.user.id && c.tool === tool && c.argsHash === argsHash(tool, plans[i].fn, plans[i].args))
+  if (!fits) return stale
+
+  const items = []
+  for (const [i, p] of plans.entries()) {
+    items.push(await write(ctx, one(p), { requestId: opts.requestId, again: opts.again, confirmToken: tokens[i], confirmed: true }))
+  }
+  const ok = items.filter((r) => r.status === 'done' || r.status === 'repeated').length
+  const status = ok === plans.length ? (items.every((r) => r.status === 'repeated') ? 'repeated' : 'done') : ok === 0 ? 'refused' : 'partial'
+  return {
+    status, level: 'confirm', done: ok, refused: plans.length - ok, items,
+    message: status === 'done' ? 'Done.' : status === 'repeated'
+      ? 'These exact changes were already done, so nothing was written again.'
+      : `${ok} of ${plans.length} done; the rest were refused (each says why).`,
   }
 }
 

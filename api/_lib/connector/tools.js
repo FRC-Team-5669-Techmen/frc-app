@@ -6,7 +6,8 @@
  * engine.write, which goes through connector_call. Nothing here writes a table.
  */
 import { TOOLS, FUNCTIONS, liveFunction, levelFor, fitForm } from './registry.js'
-import { write, undoLast, NotRegistered } from './engine.js'
+import { write, writeGroup, undoLast, NotRegistered } from './engine.js'
+import { reasonLabel as absenceReasonLabel } from '../../../src/standing.js'
 import { RESOLVERS, roster, resolveMember, resolveEvent, resolveBattery, resolveRobotMatch, displayName } from './resolve.js'
 import { laDateKey, laMidnightMs, addDays, laClock, laDay, laWallToIso } from './dates.js'
 import { isSchemaMissing } from './errors.js'
@@ -78,6 +79,160 @@ async function pickTrip(ctx, said) {
   }
   return { trip: trips.find((t) => !t.over) ?? trips[trips.length - 1] }
 }
+
+// ── The trip carpool by name (ledger 0028d) ─────────────────────────────────
+
+const words = (s) => String(s ?? '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean)
+const weekdayOf = (date) => new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' })
+const ALL_DAYS = /^(all|all days|every ?day|each day|the whole trip|whole trip)$/i
+
+/** The trip's days he named: a date, a weekday (or its first three letters), or every day. */
+function pickTripDays(days, said) {
+  const s = String(said ?? '').trim().toLowerCase()
+  if (!s || ALL_DAYS.test(s)) return { days, all: true }
+  const hits = days.filter((d) => d.date === s || (s.length >= 3 && weekdayOf(d.date).toLowerCase().startsWith(s.replace(/s$/, ''))))
+  if (!hits.length) return { status: 'not_found', message: `The trip has no day "${said}". Its days are ${days.map((d) => `${weekdayOf(d.date)} ${d.date}`).join(', ')}. Nothing was changed.` }
+  return { days: hits, all: false }
+}
+
+/** The staff board of one trip (hub_member_board answers staff the staff board, invite ids included). */
+async function staffBoard(ctx, trip) {
+  const b = await ctx.backend.rpc(ctx.session, 'hub_member_board', { p_event: trip.id })
+  if (b.error) return isSchemaMissing(b.error) ? notSetUp('The trip hub') : { status: 'refused', message: b.error.details || b.error.message }
+  const board = b.data?.board ?? b.data
+  if (board?.viewer && board.viewer !== 'staff') return { status: 'refused', message: 'Only staff see who rides in which car. Nothing was read.' }
+  return { board }
+}
+
+// A car he names by its driver ("Pina", "the Garcia family", "Mr. Pina's car")
+// or its description: every word he said, honorifics and filler dropped,
+// starts a word of the driver or the description.
+const CAR_FILLER = new Set(['the', 'car', 'cars', 'family', 's', 'mr', 'mrs', 'ms', 'coach', 'in', 'with', 'van', 'suv'])
+function carFits(car, q) {
+  const want = words(q).filter((w) => !CAR_FILLER.has(w))
+  if (!want.length) return false
+  const have = words(`${car.driver ?? ''} ${car.description ?? ''}`)
+  return want.every((w) => have.some((h) => h.startsWith(w)))
+}
+const OUT_OF_CAR = /^(none|no car|nobody|no one|out|remove|unseat|take (him|her|them) out|out of (the|their|his|her) car)$/i
+const RUN_WORD = { to: 'there', home: 'home' }
+
+/**
+ * place_in_car: one student, by name, into a car (by its driver), out of
+ * their car, or from one car to another, on one day or every day, there,
+ * home or both. Each (day, way) is one hub_staff_call move, the mentor
+ * page's own Move control, so every carpool rule (seats, the one-minor rule,
+ * a car that left, the 72-hour lock that only staff pass, the 12-hour
+ * freeze nobody passes) decides as it does on the page. Answers {plans,
+ * summary} or {out} when nothing should be asked.
+ */
+async function placeInCarPlan(ctx, a, resolved) {
+  const picked = await pickTrip(ctx, a.trip)
+  if (!picked.trip) return { out: picked }
+  const trip = picked.trip
+  const student = resolved.student
+  const inv = await ctx.backend.select(ctx.session, { table: 'hub_invites', columns: ['id', 'student_id'], eq: { event_id: trip.id, student_id: student.id }, limit: 1 })
+  if (inv.error) return { out: isSchemaMissing(inv.error) ? notSetUp('The trip hub') : { status: 'refused', message: inv.error.message } }
+  if (!inv.data.length) return { out: { status: 'not_found', message: `${student.name} is not signed up for ${trip.title}. Nothing was changed.` } }
+  const invite = inv.data[0].id
+  const sb = await staffBoard(ctx, trip)
+  if (!sb.board) return { out: sb }
+  const days = (sb.board.days ?? []).map((d) => ({ ...d, date: String(d.date).slice(0, 10) }))
+  const pickedDays = pickTripDays(days, a.day)
+  if (!pickedDays.days) return { out: pickedDays }
+  const runs = a.run === 'there' ? ['to'] : a.run === 'home' ? ['home'] : ['to', 'home']
+  const ans = await ctx.backend.select(ctx.session, { table: 'hub_day_answers', columns: ['day_id', 'attending', 'to_mode', 'home_mode'], eq: { invite_id: invite }, limit: 50 })
+  if (ans.error) return { out: { status: 'refused', message: ans.error.message } }
+  const answerOf = (dayId) => ans.data.find((x) => x.day_id === dayId) ?? {}
+  const removing = OUT_OF_CAR.test(String(a.car ?? '').trim())
+  const single = !pickedDays.all && pickedDays.days.length === 1 && runs.length === 1
+  const plans = []
+  const summary = []
+  const skipped = []
+  const seen = new Set()
+  let looked = 0
+  for (const d of pickedDays.days) {
+    const day = `${weekdayOf(d.date)} ${d.date}`
+    const answer = answerOf(d.id)
+    for (const run of runs) {
+      const r = (d.runs ?? []).find((x) => x.run === run) ?? { cars: [] }
+      const cars = r.cars ?? []
+      const now = cars.find((c) => (c.riders ?? []).some((x) => x.invite_id === invite))
+      const way = RUN_WORD[run]
+      if (removing) {
+        if (now) {
+          plans.push({ fn: 'hub_staff_call', args: { p_action: 'move', p_args: { invite_id: invite, day_id: d.id, run, car_id: null } } })
+          summary.push({ day, way, from: now.driver, to: 'no car (needs a seat again)' })
+        } else skipped.push({ day, way, why: 'not in a car' })
+        continue
+      }
+      if (answer.attending !== 'yes') {
+        if (single) return { out: { status: 'refused', message: `${student.name} is not marked coming on ${day}. The family, or a mentor on the trip page, marks the day first. Nothing was changed.` } }
+        skipped.push({ day, way, why: 'not marked coming that day' }); continue
+      }
+      if ((run === 'to' ? answer.to_mode : answer.home_mode) === 'driving') {
+        if (single) return { out: { status: 'refused', message: `${student.name}'s family is driving ${way} on ${day}, so the student rides in the family car. Nothing was changed.` } }
+        skipped.push({ day, way, why: 'the family is driving' }); continue
+      }
+      looked += 1
+      const fits = cars.filter((c) => carFits(c, a.car))
+      for (const c of fits) seen.add(c.driver)
+      if (fits.length > 1) {
+        return { out: { status: 'ambiguous', message: `${fits.length} cars on ${day} (${way}) match "${a.car}": ${fits.map((c) => `${c.driver} (${c.description ?? 'car'})`).join(', ')}. Ask him which. Nothing was changed.` } }
+      }
+      if (!fits.length) {
+        if (single) return { out: { status: 'not_found', message: `No car on ${day} (${way}) matches "${a.car}". The cars are: ${cars.map((c) => c.driver).join(', ') || 'none yet'}. Nothing was changed.` } }
+        skipped.push({ day, way, why: `no car from ${a.car} that way` }); continue
+      }
+      const car = fits[0]
+      if (now && now.id === car.id) { skipped.push({ day, way, why: `already in ${car.driver}'s car` }); continue }
+      const args = { invite_id: invite, day_id: d.id, run, car_id: car.id }
+      if (a.override_reason && String(a.override_reason).trim()) args.override_reason = String(a.override_reason).trim()
+      plans.push({ fn: 'hub_staff_call', args: { p_action: 'move', p_args: args } })
+      summary.push({ day, way, from: now ? now.driver : 'no car', to: car.driver, seats_taken: `${car.riders_count ?? (car.riders ?? []).length} of ${car.seats}` })
+    }
+  }
+  if (!removing && looked && !seen.size) {
+    const drivers = [...new Set(pickedDays.days.flatMap((d) => (d.runs ?? []).filter((r) => runs.includes(r.run)).flatMap((r) => (r.cars ?? []).map((c) => c.driver))))]
+    return { out: { status: 'not_found', message: `No car on those days matches "${a.car}". The drivers are: ${drivers.join(', ') || 'none yet'}. Nothing was changed.` } }
+  }
+  if (!plans.length) {
+    return { out: { status: 'already', message: `Nothing to change for ${student.name}.`, skipped } }
+  }
+  return { plans, summary: { trip: trip.title, student: student.name, changes: summary, skipped } }
+}
+
+/** decide_absences: every request id must be one waiting for a decision, read as him; one that is not writes nothing. */
+async function decideAbsencesPlan(ctx, a) {
+  const ids = [...new Set((Array.isArray(a.requests) ? a.requests : String(a.requests ?? '').split(/[\s,;]+/)).map((x) => String(x).trim()).filter(Boolean))]
+  if (!ids.length) return { out: { status: 'invalid', message: 'Name at least one request (absences_waiting lists their ids). Nothing was changed.' } }
+  if (ids.length > 100) return { out: { status: 'invalid', message: 'At most 100 absence requests in one change. Nothing was changed.' } }
+  const bad = ids.filter((x) => !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x))
+  if (bad.length) return { out: { status: 'not_found', message: `${bad.join(', ')} is not a request id. Use the ids absences_waiting lists. Nothing was changed.` } }
+  const r = await ctx.backend.select(ctx.session, { table: 'absence_requests', columns: ['id', 'member_id', 'event_id', 'reason', 'status'], in: { id: ids }, limit: 200 })
+  if (r.error) return { out: isSchemaMissing(r.error) ? notSetUp('Absence requests') : { status: 'refused', message: r.error.message } }
+  const byId = new Map(r.data.map((x) => [x.id, x]))
+  const missing = ids.filter((x) => !byId.has(x))
+  if (missing.length) return { out: { status: 'not_found', message: `No absence request has the id ${missing.join(', ')}. Nothing was changed for anyone.` } }
+  const decided = ids.filter((x) => byId.get(x).status !== 'pending')
+  if (decided.length) return { out: { status: 'already', message: `${decided.length} of these were already decided or withdrawn (${decided.map((x) => `${x}: ${byId.get(x).status}`).join(', ')}). Nothing was changed for anyone; send only waiting ones.` } }
+  const [list, evs] = await Promise.all([
+    roster(ctx),
+    ctx.backend.select(ctx.session, { table: 'events', columns: ['id', 'title', 'starts_at'], in: { id: [...new Set(r.data.map((x) => x.event_id))] }, limit: 200 }),
+  ])
+  const names = new Map((list.members ?? []).map((m) => [m.id, m.name]))
+  const events = new Map((evs.data ?? []).map((e) => [e.id, e]))
+  const note = a.note && String(a.note).trim() ? String(a.note).trim() : undefined
+  const plans = ids.map((id) => ({ fn: 'decide_absence', args: { p_request: id, p_approve: a.approve === true, ...(note ? { p_note: note } : {}) } }))
+  const lines = ids.map((id) => {
+    const x = byId.get(id)
+    const ev = events.get(x.event_id)
+    return { request_id: id, who: names.get(x.member_id) ?? 'Member', event: ev?.title ?? 'Event', day: ev ? laDay(ev.starts_at) : null, reason: absenceReasonLabel(x.reason) }
+  })
+  return { plans, summary: { decision: a.approve === true ? 'approve' : 'deny', decision_note: note ?? null, requests: lines } }
+}
+
+const GROUPED = { place_in_car: placeInCarPlan, decide_absences: decideAbsencesPlan }
 
 const round1 = (v) => (v === null || v === undefined ? null : Math.round(v * 10) / 10)
 const ROBOT_MATCH_COLUMNS = ['id', 'source', 'file_name', 'kind', 'started_at', 'match_label', 'event_id', 'alliance', 'station', 'auto_name', 'routine_id', 'auto_balls', 'open_balls',
@@ -488,6 +643,120 @@ const READS = {
     }
   },
 
+  // ledger 0028d: per trip day, every student coming by name, how each gets
+  // there and home, and the times the trip has for them. The car comes from
+  // the staff board (a seat, or needs a seat); the family car from the cars
+  // the family listed; nothing re-derives the board's default-ride rule.
+  async trip_day_roster(ctx, a) {
+    const picked = await pickTrip(ctx, a.trip)
+    if (!picked.trip) return picked
+    const trip = picked.trip
+    const sb = await staffBoard(ctx, trip)
+    if (!sb.board) return sb
+    const days = (sb.board.days ?? []).map((d) => ({ ...d, date: String(d.date).slice(0, 10) }))
+    const want = a.day ? pickTripDays(days, a.day) : { days }
+    if (!want.days) return { ...want, message: want.message.replace(' Nothing was changed.', '') }
+    const [inv, cars, list] = await Promise.all([
+      ctx.backend.select(ctx.session, { table: 'hub_invites', columns: ['id', 'student_id'], eq: { event_id: trip.id }, limit: 1000 }),
+      ctx.backend.select(ctx.session, { table: 'hub_cars', columns: ['id', 'day_id', 'run', 'driver_invite_id', 'leave_by'], eq: { event_id: trip.id }, limit: 1000 }),
+      roster(ctx),
+    ])
+    const err = inv.error ?? cars.error
+    if (err) return isSchemaMissing(err) ? notSetUp('The trip hub') : { status: 'refused', message: err.message }
+    const ids = inv.data.map((i) => i.id)
+    const ans = ids.length
+      ? await ctx.backend.select(ctx.session, { table: 'hub_day_answers', columns: ['invite_id', 'day_id', 'attending', 'to_mode', 'home_mode', 'home_option', 'pit_setup'], in: { invite_id: ids }, limit: 5000 })
+      : { data: [], error: null }
+    if (ans.error) return { status: 'refused', message: ans.error.message }
+    const names = new Map((list.members ?? []).map((m) => [m.id, m.name]))
+    const studentOf = new Map(inv.data.map((i) => [i.id, i.student_id]))
+    const boardName = new Map()
+    for (const d of days) for (const r of d.runs ?? []) {
+      for (const c of r.cars ?? []) for (const x of c.riders ?? []) if (x.invite_id) boardName.set(x.invite_id, x.name)
+      for (const x of r.unplaced ?? []) if (x?.invite_id) boardName.set(x.invite_id, x.name)
+    }
+    const nameOf = (invite) => names.get(studentOf.get(invite)) ?? boardName.get(invite) ?? 'Student'
+    const ride = (d, run, answer) => {
+      const r = (d.runs ?? []).find((x) => x.run === run) ?? {}
+      const seat = (r.cars ?? []).find((c) => (c.riders ?? []).some((x) => x.invite_id === answer.invite_id))
+      if (seat) return { how: 'team carpool', in_car: true, car: seat.driver, car_leaves: laClock(seat.leave_by) }
+      const own = cars.data.find((c) => c.day_id === d.id && c.run === run && c.driver_invite_id === answer.invite_id)
+      if (own) return { how: 'family car', in_car: true, car: (r.cars ?? []).find((c) => c.id === own.id)?.driver ?? 'their family', car_leaves: laClock(own.leave_by) }
+      if ((r.unplaced ?? []).some((x) => x?.invite_id === answer.invite_id)) return { how: 'needs a seat', in_car: false, car: null, car_leaves: null }
+      const mode = run === 'to' ? answer.to_mode : answer.home_mode
+      return { how: mode === 'driving' ? 'family driving (car not listed yet)' : 'on their own', in_car: false, car: null, car_leaves: null }
+    }
+    const out = want.days.map((d) => {
+      const today = ans.data.filter((x) => x.day_id === d.id)
+      const choice = (key) => (Array.isArray(d.home_options) ? d.home_options.find((o) => o.key === key)?.label : null) ?? null
+      const students = today.filter((x) => x.attending === 'yes').map((x) => {
+        const there = ride(d, 'to', x)
+        const home = ride(d, 'home', x)
+        const homeChoice = choice(x.home_option)
+        return {
+          name: nameOf(x.invite_id),
+          arrives: there.how === 'on their own' ? null : laClock(d.target_arrival_at),
+          leaves: home.car_leaves ?? homeChoice ?? null,
+          in_car_there: there.in_car, in_car_home: home.in_car,
+          there, home,
+          ...(homeChoice ? { home_choice: homeChoice } : {}),
+          ...(d.ask_pit_setup ? { pit_setup: x.pit_setup === true } : {}),
+        }
+      }).sort((x, y) => x.name.localeCompare(y.name))
+      return {
+        day: `${weekdayOf(d.date)} ${d.date}`, title: d.title ?? null,
+        times: { meet: laClock(d.meet_at), meet_place: d.meet_place ?? null, target_arrival: laClock(d.target_arrival_at), venue_opens: laClock(d.venue_opens_at), pits_close: laClock(d.pits_close_at), venue_closes: laClock(d.venue_closes_at) },
+        coming: students.length,
+        students,
+        not_sure: today.filter((x) => x.attending === 'unsure').map((x) => nameOf(x.invite_id)).sort(),
+        not_answered: inv.data.filter((i) => !today.some((x) => x.invite_id === i.id && x.attending)).length,
+      }
+    })
+    return {
+      status: 'ok', trip: { title: trip.title, starts_on: trip.starts_on, over: trip.over }, days: out,
+      note: 'The trip form asks no arrival or leave time per student. arrives is the day\'s target arrival for anyone coming with the team or a family car (null on their own); leaves is their ride home\'s leave time, else the ride-home choice they picked. place_in_car seats someone (asks first).',
+    }
+  },
+
+  // ledger 0028d: the absence requests waiting for a decision, oldest first,
+  // read as him (staff see every member's), with the ids decide_absences takes.
+  async absences_waiting(ctx, a) {
+    let member = null
+    if (a.member) {
+      const m = await resolveMember(ctx, a.member)
+      if (!m.member) return m
+      member = m.member
+    }
+    const r = await ctx.backend.select(ctx.session, {
+      table: 'absence_requests', columns: ['id', 'member_id', 'event_id', 'reason', 'emergency', 'note', 'requested_at'],
+      eq: { status: 'pending', ...(member ? { member_id: member.id } : {}) }, order: [['requested_at', 'asc']], limit: 500,
+    })
+    if (r.error) return isSchemaMissing(r.error) ? notSetUp('Absence requests') : { status: 'refused', message: r.error.message }
+    const evIds = [...new Set(r.data.map((x) => x.event_id))]
+    const [evs, list] = await Promise.all([
+      evIds.length ? ctx.backend.select(ctx.session, { table: 'events', columns: ['id', 'title', 'kind', 'starts_at'], in: { id: evIds }, limit: 500 }) : { data: [], error: null },
+      roster(ctx),
+    ])
+    const events = new Map((evs.data ?? []).map((e) => [e.id, e]))
+    const names = new Map((list.members ?? []).map((m) => [m.id, m.name]))
+    const wantEvent = a.event ? words(a.event).join(' ') : null
+    const rows = r.data.map((x) => {
+      const ev = events.get(x.event_id)
+      const started = ev && Date.parse(ev.starts_at) <= ctx.now()
+      return {
+        request_id: x.id, who: names.get(x.member_id) ?? 'Member',
+        event: ev?.title ?? 'Event', event_day: ev ? laDateKey(ev.starts_at) : null, event_starts: ev ? `${laDay(ev.starts_at)} ${laClock(ev.starts_at)}` : null,
+        reason: absenceReasonLabel(x.reason), emergency: x.emergency === true, note: x.note ?? null,
+        filed: `${laDay(x.requested_at)} ${laClock(x.requested_at)}`,
+        ...(started && Date.parse(x.requested_at) <= Date.parse(ev.starts_at) ? { counts_as_approved: true } : {}),
+      }
+    }).filter((x) => !wantEvent || words(x.event).join(' ').includes(wantEvent) || x.event_day === String(a.event).trim())
+    return {
+      status: 'ok', waiting: rows.length, requests: rows,
+      note: 'counts_as_approved: still unanswered when its event started, so the handbook already counts it approved; it can be approved, not denied. decide_absences approves or denies several at once (asks first, once).',
+    }
+  },
+
   // ledger 0024 Part 2: auto routine streaks, ranked with the page rule (src/autos.js).
   async auto_routines(ctx, a) {
     const [rt, rn] = await Promise.all([
@@ -877,6 +1146,13 @@ export async function runTool(ctx, name, a = {}) {
       if (name === 'sign_in_out') {
         const pre = await signInOutCheck(ctx, resolved.member, a.direction)
         if (pre) return pre
+      }
+      // Several asks-first changes asked as one question (engine writeGroup).
+      if (GROUPED[name]) {
+        const g = await GROUPED[name](ctx, a, resolved)
+        if (g.out) return g.out
+        const out = await writeGroup(ctx, name, g.plans, writeOpts(a))
+        return { ...out, ...g.summary }
       }
       let robotSummary = null
       if (name === 'import_robot_matches_from_github') {
