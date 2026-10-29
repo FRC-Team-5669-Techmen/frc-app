@@ -53,16 +53,19 @@ try{
    console.log(`Loaded ${width}; rendering teams`)
    const loadMs=Date.now()-started,tabStarted=Date.now()
    await page.getByRole('tab',{name:'Teams',exact:true}).click()
-   await page.waitForFunction(()=>document.querySelectorAll('.sc-team-card').length===30)
+   // The Teams tab is one table row per team (no paging); a card opens under its row.
+   await page.waitForFunction(()=>document.querySelectorAll('.sc-team-table tr.sc-team-row').length===120)
    const teamsMs=Date.now()-tabStarted
-   assert.match(await page.getByRole('navigation',{name:'Team results pages'}).innerText(),/Showing 1–30 of 120 teams/)
-   for(let i=0;i<3;i++)await page.getByRole('button',{name:'Next teams',exact:true}).click()
-   assert.match(await page.locator('.sc-team-card').last().innerText(),/Synthetic 8119/)
-   assert.equal(await page.getByRole('button',{name:'Next teams',exact:true}).isDisabled(),true)
+   assert.equal(await page.locator('.sc-team-card').count(),0)
+   assert.match(await page.locator('.sc-team-table tr.sc-team-row').last().innerText(),/Synthetic 8119/)
+   assert.equal(await page.locator('.sc-team-table tr.sc-team-row[data-team="8119"] [data-col="cap_trench"]').innerText(),'4/6')
    const searchStarted=Date.now()
    await page.getByLabel('Find a team',{exact:true}).fill('8119')
+   await page.waitForFunction(()=>document.querySelectorAll('.sc-team-table tr.sc-team-row').length===1)
+   const searchMs=Date.now()-searchStarted
+   await page.locator('.sc-team-table tr.sc-team-row[data-team="8119"] th button').click()
    await page.waitForFunction(()=>document.querySelectorAll('.sc-team-card').length===1)
-   const searchMs=Date.now()-searchStarted,card=page.locator('.sc-team-card')
+   const card=page.locator('.sc-team-card')
    assert.match(await card.innerText(),/Synthetic 8119/)
    const evidence=card.locator('.sc-evidence')
    assert.match(await evidence.nth(0).innerText(),/67%\s*4\/6 observed matches/)
@@ -93,7 +96,7 @@ try{
    assert.equal(archive.records.length,1682);assert.equal(archive.revisions.length,1682)
    await page.screenshot({path:resolve(out,`${width}-evidence.png`),fullPage:false})
    assert.deepEqual(errors,[]);assert.equal(blocked.length,0)
-   results.push({width,ok:true,records:1682,revisions:1682,observations:1440,teams:120,loadMs,teamsMs,searchMs,checks:'Complete cache and export beyond 1,000 rows; last team visible; four pages and last-team search; independent 4/6 denominator and excluded states; 120 tied median ranks and support counts; zero script errors or remote requests'})
+   results.push({width,ok:true,records:1682,revisions:1682,observations:1440,teams:120,loadMs,teamsMs,searchMs,checks:'Complete cache and export beyond 1,000 rows; all 120 teams as table rows with the last one visible, last-team search and its card opened from its row; independent 4/6 denominator and excluded states; 120 tied median ranks and support counts; zero script errors or remote requests'})
    console.log(`PASS ${width}: 1,682 records/revisions, 1,440 observations, 120 teams; load ${loadMs} ms, team tab ${teamsMs} ms, search ${searchMs} ms (synthetic local fixture)`)
   }finally{await context.close()}
  }

@@ -2,9 +2,9 @@ import { isCurrentEvidence, matchIdentity } from './provenance.js'
 import { isSuperNote } from './superscout.js'
 // Proposed Techmen rules. TideScout does not publish these formulas.
 export const CAPABILITIES = Object.freeze([
-  { key: 'trench', label: 'Passes under the TRENCH' },
-  { key: 'bump', label: 'Crosses the BUMP' },
-  { key: 'ground_intake', label: 'Intakes FUEL from the floor' },
+  { key: 'trench', label: 'Passes under the TRENCH', short: 'TRENCH' },
+  { key: 'bump', label: 'Crosses the BUMP', short: 'BUMP' },
+  { key: 'ground_intake', label: 'Intakes FUEL from the floor', short: 'Floor' },
 ])
 export const TIERS = Object.freeze([
   { value: 1, label: 'Tier 1' }, { value: 2, label: 'Tier 2' },

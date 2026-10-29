@@ -27,6 +27,7 @@ import MatchBrief from './scouting/MatchBrief'
 import ObservationBrowser from './scouting/ObservationBrowser'
 import MatchSummary from './scouting/MatchSummary'
 import TeamEvidence from './scouting/TeamEvidence'
+import TeamTable from './scouting/TeamTable'
 import ShiftNow from './scouting/ShiftNow'
 import SuperScoutForm from './scouting/SuperScoutForm'
 import { isSuperAssignment, superAssignmentDone, superSummary, fmtMean, SUPER_RATINGS } from './scouting/superscout'
@@ -146,8 +147,12 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
   const [saved, setSaved] = useState(null)
   const [evidenceTeam, setEvidenceTeam] = useState('')
   const [teamQuery, setTeamQuery] = useState('')
-  const [teamPage, setTeamPage] = useState(0)
-  const findTeam = query => { setTeamQuery(query); setTeamPage(0) }
+  // Teams whose evidence card is open under their table row.
+  const [openTeams, setOpenTeams] = useState(() => new Set())
+  const findTeam = query => setTeamQuery(query)
+  const toggleTeam = team => setOpenTeams(old => { const next = new Set(old); if (next.has(team)) next.delete(team); else next.add(team); return next })
+  // From the coverage panel or a saved confirmation: find the team and open its card.
+  const openTeam = team => { setTeamQuery(String(team)); setOpenTeams(old => new Set(old).add(Number(team))) }
   const [showAllAssignments, setShowAllAssignments] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState('')
@@ -310,12 +315,9 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
   const teamRows = records.filter(r => r.kind === 'team')
   const numbers = [...new Set(records.map(r => r.team_number).filter(Boolean))].sort((a, b) => a - b)
   const nameFor = n => teamRows.find(r => r.team_number === n)?.payload?.name ?? ''
-  // Limit expensive evidence cards, while searching and deriving from the full
-  // downloaded data set. A page never changes denominators or ranking inputs.
+  // The search narrows the table's rows; every figure in it still derives
+  // from the full downloaded data set, so a search never changes a rate.
   const filteredNumbers = numbers.filter(n => `${n} ${nameFor(n)}`.toLowerCase().includes(teamQuery.toLowerCase()))
-  const lastTeamPage = Math.max(0, Math.ceil(filteredNumbers.length / 30) - 1)
-  const currentTeamPage = Math.min(teamPage, lastTeamPage)
-  const visibleNumbers = filteredNumbers.slice(currentTeamPage * 30, (currentTeamPage + 1) * 30)
   const memberName = id => (data.members ?? []).find(m => m.id === id)?.nickname || (data.members ?? []).find(m => m.id === id)?.full_name || (id === uid ? 'You' : 'Team member')
   const canEdit = row => !row.localStatus && (row.member_id === uid || (manager && !['pick_list', 'observation'].includes(row.kind)))
   const observations = records.filter(r => r.kind === 'observation')
@@ -332,7 +334,7 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
     if (saved.kind === 'observation') { setEvidenceTeam(String(saved.team)); setTab('scout') }
     else if (saved.kind === 'assignment') { setShowAllAssignments(true); setTab('scout') }
     else if (saved.kind === 'message') setTab('messages')
-    else { findTeam(String(saved.team)); setTab('teams') }
+    else { openTeam(saved.team); setTab('teams') }
     const target = saved.kind === 'observation' ? '#sc-observations' : '.sc-tabs'
     setTimeout(() => document.querySelector(target)?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50)
   }
@@ -400,14 +402,15 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
       <ObservationBrowser records={observations} confirmedRecords={serverRecords} team={evidenceTeam} onTeam={setEvidenceTeam} memberName={memberName} nameFor={nameFor} canEdit={canEdit} onEdit={row => openForm('observation', { record: row })} revisions={data.revisions ?? []} />
     </section>}
     {tab === 'teams' && <section className="sc-stack" role="tabpanel" id="sc-panel-teams" aria-labelledby="sc-tab-teams">
+      <div className="sc-teams-tools">
       {store && <PitMap store={store} uid={uid} eventId={eventId} records={records} online={online} client={supabase} />}
       {store && <MatchBrief store={store} uid={uid} eventId={eventId} eventTitle={data.event?.title} records={serverRecords} cachedAt={data.cachedAt} pending={pending.length} reviewer={memberName(uid)} />}
-      <CoveragePanel records={records} confirmedRecords={serverRecords} nameFor={nameFor} onTeam={team => findTeam(String(team))} />
+      <CoveragePanel records={records} confirmedRecords={serverRecords} nameFor={nameFor} onTeam={openTeam} />
+      </div>
       <div className="sc-section-head"><div><h2>Robots and evidence</h2><p className="sc-help">Pit claims are separate from match verification.</p></div><label className="sc-search">Find a team<input type="search" value={teamQuery} onChange={e => findTeam(e.target.value)} placeholder="Number or name" /></label></div>
       {!numbers.length && <div className="sc-empty"><h3>No teams yet</h3><p>Your lead can import the event roster or add a team below. You can also record a pit report by team number.</p><button onClick={() => openForm('pit')}>New pit report</button></div>}
       {!!numbers.length && !filteredNumbers.length && <p role="status">No teams match this search.</p>}
-      {filteredNumbers.length > 30 && <nav className="sc-actions" aria-label="Team results pages"><button disabled={currentTeamPage === 0} onClick={() => setTeamPage(currentTeamPage - 1)}>Previous teams</button><span role="status">Showing {currentTeamPage * 30 + 1}–{Math.min((currentTeamPage + 1) * 30, filteredNumbers.length)} of {filteredNumbers.length} teams</span><button disabled={currentTeamPage === lastTeamPage} onClick={() => setTeamPage(currentTeamPage + 1)}>Next teams</button></nav>}
-      <div className="sc-team-grid">{visibleNumbers.map(n => { const team = teamRows.find(r => r.team_number === n), pit = pitFor(n); return <article className="sc-card sc-team-card" key={n}><div className="sc-section-head"><div><span className="sc-team-number">{n}</span><h3>{nameFor(n) || 'Team'}</h3></div><span className="sc-chip">{pit?.payload.pit_location || team?.payload.pit_location || 'Pit unknown'}</span></div>
+      {!!filteredNumbers.length && <TeamTable numbers={filteredNumbers} records={records} confirmed={serverRecords} nameFor={nameFor} open={openTeams} onToggle={toggleTeam} renderCard={n => { const team = teamRows.find(r => r.team_number === n), pit = pitFor(n); return <article className="sc-card sc-team-card" key={n}><div className="sc-section-head"><div><span className="sc-team-number">{n}</span><h3>{nameFor(n) || 'Team'}</h3></div><span className="sc-chip">{pit?.payload.pit_location || team?.payload.pit_location || 'Pit unknown'}</span></div>
         <PitLocation records={records} team={n} />
         <button onClick={() => { setEvidenceTeam(String(n)); setTab('scout') }}>Review match evidence</button>
         {serverRecords.some(r => r.kind === 'observation' && r.team_number === n && hasUnverifiedVideoScope(r)) && <p className="sc-help">Video evidence with unverified event scope is excluded from these rates. Use Review match evidence to check its provenance.</p>}
@@ -418,7 +421,7 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
         <div className="sc-actions"><button disabled={!!pit && !canEdit(pit)} onClick={() => openForm('pit', pit ? { record: pit } : { team: n })}>Pit report</button><button onClick={() => openForm('observation', { team: n })}>Observe</button><button onClick={() => openForm('message', { team: n })}>Message</button>{manager && team && canEdit(team) && <button onClick={() => openForm('team', { record: team })}>Edit team</button>}</div>
         {pit && <details><summary>Pit notes and history</summary><EvidenceRecord row={pit} memberName={memberName} revisions={data.revisions ?? []} /></details>}
         {!!team?.payload.official_results?.length && <details><summary>Official alliance results</summary><p className="sc-help">Alliance totals do not establish this robot's individual contribution.</p><pre className="sc-json">{JSON.stringify(team.payload.official_results, null, 2)}</pre></details>}
-      </article> })}</div>
+      </article> }} />}
     </section>}
     {tab === 'messages' && <section className="sc-stack" role="tabpanel" id="sc-panel-messages" aria-labelledby="sc-tab-messages"><div className="sc-section-head"><div><h2>Stands to pits</h2><p className="sc-help">Ask a focused question. Keep the answer with the robot's history.</p></div><button className="sc-primary" onClick={() => openForm('message')}>New pit message</button></div>
       {!records.some(r => r.kind === 'message') && <div className="sc-empty"><h3>No pit messages</h3><p>Flag a robot issue or a question for someone in the pits.</p></div>}

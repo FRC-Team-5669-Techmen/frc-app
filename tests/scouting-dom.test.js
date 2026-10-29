@@ -24,6 +24,10 @@ async function settle(check, message = 'condition') {
   throw new Error(`Timed out waiting for ${message}: ${host.textContent}`)
 }
 const buttons = text => [...host.querySelectorAll('button')].filter(b => b.textContent.trim() === text)
+// The Teams tab is a table; a team's evidence card opens under its row.
+const teamRow = team => host.querySelector(`.sc-team-table tr.sc-team-row[data-team="${team}"]`)
+const teamRows = () => [...host.querySelectorAll('.sc-team-table tr.sc-team-row')]
+async function expandTeam(team) { await click(teamRow(team)?.querySelector('th button')) }
 async function click(button) {
   expect(button).toBeTruthy(); expect(button.disabled).toBe(false)
   await act(async () => { button.dispatchEvent(new MouseEvent('click', { bubbles: true })); await pause(1) })
@@ -143,30 +147,38 @@ describe('rendered scouting with IndexedDB emulation', () => {
     expect(host.querySelector('.sc-master').textContent).toContain('Median tier 1, rank 1')
     await click(buttons('Teams')[0])
     expect(host.querySelector('.sc-coverage summary').textContent).toContain('1/1 pit reports')
+    expect(teamRow(5669).querySelector('[data-col="cap_trench"]').textContent).toBe('1/1')
+    expect(host.querySelector('.sc-team-card')).toBeNull()
+    await expandTeam(5669)
     expect(host.querySelector('.sc-team-card .sc-ratio').textContent).toContain('1/1 observed matches')
     store.close()
   })
 
-  it('pages large team lists without hiding search matches or fabricating empty evidence', async () => {
+  it('lists every team as one table row, searches them, and opens a card without fabricating empty evidence', async () => {
     const template = fixture.rows('scouting_records').find(row => row.kind === 'team')
     fixture.db.scouting_records = Array.from({ length: 67 }, (_, i) => ({ ...template, id: `33000000-0000-4000-8000-${String(i).padStart(12, '0')}`, team_number: 8000 + i, payload: { name: `Synthetic ${8000 + i}`, source: 'manual' } }))
     fixture.db.scouting_revisions = []; fixture.db.scouting_delivery = []
     await mount(); await click(buttons('Teams')[0])
     const cards = () => [...host.querySelectorAll('.sc-team-card')]
-    expect(cards()).toHaveLength(30)
-    expect(host.textContent).toContain('Showing 1–30 of 67 teams')
-    expect(buttons('Previous teams')[0].disabled).toBe(true)
-    await click(buttons('Next teams')[0]); expect(cards()).toHaveLength(30)
-    await click(buttons('Next teams')[0]); expect(cards()).toHaveLength(7)
-    expect(buttons('Next teams')[0].disabled).toBe(true)
-    expect(cards().at(-1).textContent).toContain('Synthetic 8066')
+    // All 67 as rows (the 30-card paging is gone), no card until a row is opened.
+    expect(teamRows()).toHaveLength(67)
+    expect(teamRows().map(r => Number(r.dataset.team))).toEqual(Array.from({ length: 67 }, (_, i) => 8000 + i))
+    expect(buttons('Next teams')).toHaveLength(0)
+    expect(cards()).toHaveLength(0)
+    expect(teamRows().at(-1).textContent).toContain('Synthetic 8066')
+    // Nothing observed: every figure reads --, never 0.
+    expect([...teamRow(8066).querySelectorAll('td:not([data-col="name"])')].map(td => td.textContent)).toEqual(Array(9).fill('--'))
     await input(host.querySelector('input[type="search"]'), '8001')
+    expect(teamRows()).toHaveLength(1); expect(teamRows()[0].textContent).toContain('Synthetic 8001')
+    await expandTeam(8001)
     expect(cards()).toHaveLength(1); expect(cards()[0].textContent).toContain('Synthetic 8001')
     expect(cards()[0].textContent).toContain('No evidence')
+    await expandTeam(8001)
+    expect(cards()).toHaveLength(0)
     await input(host.querySelector('input[type="search"]'), 'absent team')
-    expect(cards()).toHaveLength(0); expect(host.textContent).toContain('No teams match this search.')
+    expect(teamRows()).toHaveLength(0); expect(host.textContent).toContain('No teams match this search.')
     await input(host.querySelector('input[type="search"]'), '')
-    expect(cards()).toHaveLength(30); expect(host.textContent).toContain('Showing 1–30 of 67 teams')
+    expect(teamRows()).toHaveLength(67)
   })
 
   it('restores a draft, retains an offline observation across remount, then syncs exactly once', async () => {
