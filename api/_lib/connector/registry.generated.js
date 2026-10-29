@@ -13,7 +13,7 @@ export default {
   "by_argument": 2,
   "generated": 186,
   "excluded_functions": 12,
-  "tools": 51,
+  "tools": 52,
   "edge_functions": 8,
   "routes": 1,
   "table_writes": 0,
@@ -755,6 +755,36 @@ export default {
      "describe": "The calendar event name or id",
      "required": true,
      "resolve": "event"
+    }
+   }
+  },
+  "pick_board": {
+   "name": "pick_board",
+   "describe": "The pick board: teams ranked automatically for our picks, the Must pick and Avoid marks, and in alliance selection who picks now and the best team for us.",
+   "say": [
+    "who should we pick",
+    "best available team",
+    "show the pick board for Beach Blitz",
+    "who is on the clock",
+    "what are our top picks",
+    "where is 254 on our list",
+    "why is 3476 ranked first"
+   ],
+   "kind": "read",
+   "args": {
+    "event": {
+     "type": "string",
+     "describe": "The calendar event name or id",
+     "required": true,
+     "resolve": "event"
+    },
+    "team": {
+     "type": "integer",
+     "describe": "One team to explain in full"
+    },
+    "limit": {
+     "type": "integer",
+     "describe": "How many teams to list (15 by default, 60 at most)"
     }
    }
   },

@@ -20,6 +20,9 @@ import { roleRuleIssues } from '../../../src/roleRules.js'
 import { KIND_LABELS, REAL_KINDS, shots, counted, wasted, filterMatches, driverTrends, batteryTrends, compareMatches, notReadyReasons, parseMatchFile, planImport, importLinks, listRobotFiles, rawFileUrl,
   readPower, fetchBatteryHistory, parseBatteryHistory, planLoadTests, loadTestRows } from '../../../src/robotMatches.js'
 import { groupByTeam, tagLabel } from '../../../src/meetTeam.js'
+import { boardView } from '../../../src/scouting/board.js'
+import { PRIORS } from '../../../src/scouting/priors/index.js'
+import { importedMapKey } from '../../../src/scouting/pit-map-model.js'
 
 export class UnknownTool extends Error {}
 
@@ -372,6 +375,43 @@ const READS = {
     return { status: 'ok', event: resolved.event, records: records.data, delivery: delivery.error ? [] : delivery.data,
       truncated: records.data.length === 1000, delivery_error: delivery.error ? 'Delivery status unavailable.' : null,
       note: 'Claims, observations, official alliance results and statistical estimates are distinct evidence. Missing observations are not failures.' }
+  },
+  // The same computation as the page (src/scouting/board.js), read as the admin.
+  async pick_board(ctx, a) {
+    const resolved = await RESOLVERS.event(ctx, a.event)
+    if (!resolved.event) return resolved
+    const records = await ctx.backend.select(ctx.session, { table: 'scouting_records', columns: ['*'], eq: { event_id: resolved.event.id }, limit: 5000 })
+    if (records.error) return isSchemaMissing(records.error) ? notSetUp('Scouting') : { status: 'refused', message: records.error.message }
+    const b = await ctx.backend.rpc(ctx.session, 'scouting_pick_board_get', { p_event: resolved.event.id })
+    const shared = !b.error
+    if (b.error && !isSchemaMissing(b.error)) return { status: 'refused', message: b.error.message }
+    const state = b.data?.state ?? {}
+    const key = state.settings?.event_key || importedMapKey(records.data ?? []) || null
+    const v = boardView({ state, records: records.data ?? [], prior: key ? PRIORS[key] ?? null : null })
+    const fmt = (n) => (typeof n === 'number' && Number.isFinite(n) ? Math.round(n * 10) / 10 : null)
+    const line = (r, i) => ({ rank: i + 1, team: r.id, name: r.name || null, value: fmt(r.value), auto_rank: v.autoRank.get(r.id),
+      mark: v.overrides[r.id]?.flag ?? null, bump: v.overrides[r.id]?.bump ?? null, note: v.overrides[r.id]?.note ?? null,
+      still_there_at_our_pick: v.odds ? fmt(v.odds.get(r.id)) : null, why: r.reasons })
+    const open = v.ordered.filter((r) => r.id !== v.ourTeam && v.available(r.id))
+    const limit = Math.max(1, Math.min(60, Number(a.limit) || 15))
+    const out = {
+      status: 'ok', event: resolved.event, event_key: key, shared_board: shared ? 'ok' : 'not_set_up',
+      data: { tba_matches_played: v.played, results_pulled_at: state.matches?.fetched_at ?? null, season_prior: key && PRIORS[key] ? PRIORS[key].source : null },
+      selection: v.draft ? { on_the_clock: v.clock ? `Alliance ${v.clock.number} (captain ${v.clock.captain}), round ${v.clock.round}` : 'complete',
+        our_next_pick_in: v.until, alliances: v.draft.alliances.map((t, i) => ({ alliance: i + 1, teams: t })), declined: v.draft.declined } : null,
+      best_for_us: open.find((r) => v.overrides[r.id]?.flag !== 'avoid')?.id ?? null,
+      list: open.slice(0, limit).map(line),
+      avoid: v.ordered.filter((r) => v.overrides[r.id]?.flag === 'avoid').map((r) => r.id),
+      note: 'Value is points a robot adds per match: TBA HUB points split by least squares toward the 2026 season, exact TOWER points per robot, lowered by breakdowns our scouts saw. Marks are people\'s; auto_rank is the data alone.',
+    }
+    if (a.team !== undefined) {
+      const i = v.ordered.findIndex((r) => r.id === Number(a.team))
+      if (i === -1) return { ...out, status: 'not_found', message: `Team ${a.team} is not on this board.` }
+      const r = v.ordered[i]
+      out.team = { ...line(r, i), points: fmt(r.points), fuel: fmt(r.fuel), climb: fmt(r.tower), season_2026: fmt(r.data?.priorTotal), matches: r.data?.matches ?? 0,
+        breakdowns_scouted: r.signals.troubleN ? `${r.signals.troubleBad} of ${r.signals.troubleN}` : null, available: v.available(r.id) }
+    }
+    return out
   },
   async preview_scouting_import(ctx, a) {
     const resolved = await RESOLVERS.event(ctx, a.event)

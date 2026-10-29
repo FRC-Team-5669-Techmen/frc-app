@@ -7,7 +7,7 @@
 // season prior), 60 deterministic qualification matches with 2026 score
 // breakdowns (HUB points, per-robot TOWER levels, RP). features/scouting.js
 // answers a roster import for 2026cabl with it.
-import prior from '../../../scouting/priors/2026cabl.json'
+import prior from '../../../scouting/priors/2026cabl.js'
 
 const rows = (db, name) => db[name] ?? []
 const ok = (data) => ({ data, error: null })

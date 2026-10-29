@@ -15,18 +15,16 @@ import { writeVia } from '../writeVia'
 import { createScoutingStore } from './storage'
 import { loadScoutingEvent } from './client'
 import { projectRecords } from './projection'
-import { aggregatePickLists, reliability, CAPABILITIES, currentObservations } from './model'
-import { teamMatchSummary } from './match'
-import { superSummary } from './superscout'
+import { reliability, CAPABILITIES, currentObservations } from './model'
 import { importedMapKey } from './pit-map-model'
-import { boardOrder, compactMatches, dataRatings, rankingFromMatches, roleScore, scoutSignals, teamValue } from './pickRank'
-import { allianceOf, availability, onClock, picksUntilOurs, pickable, replay } from './draft'
+import { boardOrder, compactMatches, rankingFromMatches } from './pickRank'
+import { onClock, picksUntilOurs, pickable, replay } from './draft'
+import { boardInputs, boardOdds, draftFrom, rankRows, OUR_TEAM } from './board'
 import './PickBoard.css'
 
-const PRIORS = import.meta.glob('./priors/*.json')
+const PRIORS = import.meta.glob('./priors/*.js')
 const POLL_MS = 5000
 const AUTO_PULL_MS = 3 * 60 * 1000
-const OUR_TEAM = 5669
 const errorText = e => e?.message || String(e || 'Something went wrong.')
 const fmt = v => (typeof v === 'number' && Number.isFinite(v) ? (Math.abs(v) >= 100 ? Math.round(v) : Math.round(v * 10) / 10) : '--')
 const pct = v => (typeof v === 'number' && Number.isFinite(v) ? `${Math.round(v * 100)}%` : '--')
@@ -121,63 +119,24 @@ function Board({ uid, eventId }) {
 
   // The season prior shipped with the app for this event (tools/scouting/season-prior.mjs).
   useEffect(() => {
-    const load = PRIORS[`./priors/${eventKey}.json`]
+    const load = PRIORS[`./priors/${eventKey}.js`]
     if (!load) { setPrior(null); return }
     load().then(m => { if (alive.current) setPrior(m.default ?? m) }).catch(() => setPrior(null))
   }, [eventKey])
 
-  const matches = useMemo(() => state.matches?.matches ?? [], [state.matches])
-  const names = useMemo(() => {
-    const out = new Map()
-    for (const t of state.matches?.teams ?? []) out.set(Number(t.n), t.name)
-    for (const r of confirmed) if (r.kind === 'team' && r.payload?.name) out.set(r.team_number, r.payload.name)
-    return out
-  }, [state.matches, confirmed])
-  const teams = useMemo(() => {
-    const s = new Set()
-    for (const r of confirmed) if (r.kind === 'team' && r.team_number) s.add(r.team_number)
-    for (const t of state.matches?.teams ?? []) s.add(Number(t.n))
-    for (const m of matches) for (const t of [...(m.red?.teams ?? []), ...(m.blue?.teams ?? [])]) s.add(Number(t))
-    if (prior?.teams && !s.size) for (const k of Object.keys(prior.teams)) s.add(Number(k))
-    return [...s].filter(n => Number.isInteger(n) && n > 0).sort((a, b) => a - b)
-  }, [confirmed, state.matches, matches, prior])
-
-  const priorMap = useMemo(() => {
-    const m = new Map()
-    for (const [k, v] of Object.entries(prior?.teams ?? {})) if (typeof v?.total === 'number') m.set(Number(k), { total: v.total, source: 'season' })
-    // Statbotics EPA, when the import got one, is a better season number.
-    for (const t of state.matches?.teams ?? []) if (typeof t.epa === 'number') m.set(Number(t.n), { total: t.epa, source: 'statbotics' })
-    return m
-  }, [prior, state.matches])
+  const { teams, names, priorMap, matches } = useMemo(() => boardInputs({ state, records: confirmed, prior }), [state.matches, confirmed, prior]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const overrides = state.overrides ?? {}
   const selectionSaved = state.selection ?? null
   const selection = pending ?? selectionSaved
   const ranking = useMemo(() => rankingFromMatches(matches), [matches])
-  const draftSetup = useMemo(() => selection?.seeds?.length ? { seeds: selection.seeds.map(Number), rounds: Number(selection.rounds) || 3, alliances: Number(selection.alliances) || 8 } : null, [selection])
-  const draft = useMemo(() => (draftSetup ? replay(draftSetup, (selection?.log ?? []).map(a => ({ ...a, team: Number(a.team) }))) : null), [draftSetup, selection])
+  const { setup: draftSetup, draft } = useMemo(() => draftFrom(selection), [selection])
   const clock = draft ? onClock(draft) : null
   const live = !!draft
 
-  const rows = useMemo(() => {
-    const data = dataRatings(teams, matches, priorMap)
-    const votes = new Map(aggregatePickLists(confirmed).map(v => [v.team, v]))
-    const base = teams.map(t => {
-      const s = scoutSignals({ match: teamMatchSummary(confirmed, t), superS: superSummary(confirmed, t), vote: votes.get(t) })
-      const v = teamValue(data.get(t), s)
-      return { id: t, name: names.get(t) ?? '', data: data.get(t), signals: s, ...v }
-    })
-    const valueOf = new Map(base.map(r => [r.id, r.value]))
-    const ours = draft ? draft.alliances[allianceOf(draft, ourTeam)] ?? [ourTeam] : [ourTeam]
-    const members = ours.map(t => valueOf.get(t)).filter(v => typeof v === 'number')
-    return base.map(r => ({ ...r, score: roleScore(r.value, members, { defense: r.signals.defense, wantDefense: !!settings.want_defense }) }))
-  }, [teams, matches, priorMap, confirmed, names, draft, ourTeam, settings.want_defense])
-
-  const odds = useMemo(() => {
-    if (!draft) return null
-    const values = new Map(rows.filter(r => r.id !== ourTeam).map(r => [r.id, r.value]))
-    return availability(draft, values, ourTeam, { runs: 300 })
-  }, [draft, rows, ourTeam])
+  const rows = useMemo(() => rankRows({ teams, matches, priorMap, records: confirmed, names, draft, ourTeam, wantDefense: !!settings.want_defense }),
+    [teams, matches, priorMap, confirmed, names, draft, ourTeam, settings.want_defense])
+  const odds = useMemo(() => boardOdds(draft, rows, ourTeam), [draft, rows, ourTeam])
 
   const autoRank = useMemo(() => new Map(boardOrder(rows, {}).map((r, i) => [r.id, i + 1])), [rows])
   const ordered = useMemo(() => boardOrder(rows, overrides), [rows, overrides])

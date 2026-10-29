@@ -3,7 +3,9 @@
 // nothing or ignored its input would fail.
 import { describe, expect, it } from 'vitest'
 import { boardOrder, compactMatches, dataRatings, rankingFromMatches, roleScore, scoutSignals, solveRidge, teamValue } from '../src/scouting/pickRank.js'
-import prior from '../src/scouting/priors/2026cabl.json'
+import prior from '../src/scouting/priors/2026cabl.js'
+import { PRIORS } from '../src/scouting/priors/index.js'
+import { readdirSync } from 'node:fs'
 
 // Six teams with known strengths; every alliance score is the exact sum.
 const TRUE = { 1: 60, 2: 45, 3: 30, 4: 20, 5: 10, 6: 5 }
@@ -128,5 +130,10 @@ describe('the shipped Beach Blitz prior', () => {
     expect(Object.values(prior.teams).filter(t => typeof t.total === 'number').length).toBeGreaterThanOrEqual(40)
     expect(prior.teams['5669']).toBeTruthy()
     expect(prior.source).toMatch(/Blue Alliance/)
+  })
+  it('every prior file is listed for the connector, and every listed key has its file', () => {
+    const files = readdirSync(new URL('../src/scouting/priors/', import.meta.url)).filter(f => /^20\d\d[a-z0-9]+\.js$/.test(f)).map(f => f.replace(/\.js$/, ''))
+    expect(Object.keys(PRIORS).sort()).toEqual(files.sort())
+    expect(files.length).toBeGreaterThanOrEqual(1)
   })
 })
