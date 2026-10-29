@@ -15,6 +15,13 @@ async function tab(t, name) {
   await t.press(t.page.locator('.sc-tabs').getByRole('tab', { name, exact: true }))
   await t.settle()
 }
+// The Teams tab is a table (scouting-teams.mjs); a team's evidence card opens
+// under its row. Opens it if it is not open already.
+async function expandTeam(t, team) {
+  const button = t.page.locator(`.sc-team-table tr.sc-team-row[data-team="${team}"] th button`)
+  if ((await button.getAttribute('aria-expanded')) !== 'true') await t.press(button)
+  await t.waitFor(`#sc-team-detail-${team} .sc-team-card`)
+}
 async function choice(t, group, name) {
   await t.press(t.page.getByRole('group', { name: group, exact: true }).getByRole('button', { name, exact: true }))
 }
@@ -435,6 +442,7 @@ export default {
       await t.press(t.page.locator('.sc-search input'))
       await t.page.locator('.sc-search input').fill('1538')
       await t.settle()
+      await expandTeam(t, 1538)
       const cell = async label => t.page.locator('.sc-team-card .sc-match-cell', { hasText: label }).first().locator('.sc-match-value').textContent()
       // Oracle from the seed: qm5 two scouts (3+14, 5+18 -> median 20), qm9 2+9=11, qm14 4+22=26 -> median 20.
       t.eq('team 1538 median FUEL from three matches, two scouts on qm5 counted once', await cell('Median FUEL'), '20')
@@ -442,7 +450,8 @@ export default {
       t.eq('trouble rate: stuck in 1 of 3 decisive matches', await cell('Trouble'), '33%')
       await t.page.locator('.sc-search input').fill('4414')
       await t.settle()
-      t.check('a team with no match fields says so instead of showing zeros', (await t.page.locator('.sc-team-card').first().textContent()).includes('No match fields recorded yet'))
+      await expandTeam(t, 4414)
+      t.check('a team with no match fields says so instead of showing zeros', (await t.page.locator('#sc-team-detail-4414 .sc-team-card').textContent()).includes('No match fields recorded yet'))
       // Casey has no saved list, so every team is in the picker (Sam's seeded list already holds them all).
       await t.open(ROUTE, { persona: 'exempt', mig: 'all', ready: '.sc-wrap' })
       await t.waitText('Fixture Regional')
@@ -552,6 +561,7 @@ export default {
       await t.open(ROUTE, { persona: 'student', mig: 'all', reset: true, ready: '.sc-wrap' })
       await t.waitText('Fixture Regional')
       await tab(t, 'Teams')
+      await expandTeam(t, 1538)
       const card1538 = t.page.locator('.sc-team-card').filter({ has: t.page.locator('.sc-team-number', { hasText: /^1538$/ }) })
       await t.press(card1538.getByRole('button', { name: 'Observe', exact: true }))
       await t.waitFor('dialog[open]')
@@ -589,6 +599,8 @@ export default {
       await t.waitFor('dialog[open]', { state: 'detached' })
       t.as('what tells robots apart')
       await tab(t, 'Teams')
+      await expandTeam(t, 1538)
+      await expandTeam(t, 1323)
       // Oracle from the store, not from spread.js: for each capability, the decisive answers per robot.
       const rows = (await t.rows('scouting_records')).filter(r => r.kind === 'observation' && r.payload?.role !== 'super' && r.payload?.source_scope !== 'external')
       const answersBy = key => { const m = new Map(); for (const r of rows) { const a = r.payload?.answers?.[key]; if (a === 'yes' || a === 'no') m.set(r.team_number, new Set([...(m.get(r.team_number) ?? []), a])) } return [...m.values()] }

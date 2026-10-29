@@ -74,6 +74,7 @@ const FEATURES = Object.freeze([
   'family-link',
   'inbox',
   'scouting',
+  'scouting-teams',
   'batteries',
   'theme-updates',
   'drivers',

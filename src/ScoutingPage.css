@@ -76,6 +76,36 @@
 .sc-complete .sc-match { color: var(--steel); }
 .sc-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .sc-team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 20px; }
+/* The Teams tab's three folded tools sit side by side on a wide screen; the
+   one opened takes the full row. Stacked on a phone. */
+.sc-teams-tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; align-items: start; }
+.sc-teams-tools > details[open] { grid-column: 1 / -1; }
+.sc-teams-tools > details:not([open]) { padding-top: 10px; padding-bottom: 10px; }
+/* Teams table (the Teams tab's default view). The table scrolls sideways
+   inside its own wrapper, never the page; a row opens its card beneath it. */
+.sc-team-table-wrap { overflow-x: auto; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface); }
+.sc-team-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.sc-team-table thead th { background: var(--bg); border-bottom: 1px solid var(--border-strong); padding: 0; text-align: right; white-space: nowrap; }
+.sc-team-table thead th[data-col="team"], .sc-team-table thead th[data-col="name"] { text-align: left; }
+.sc-wrap .sc-team-table thead button { width: 100%; justify-content: inherit; gap: 4px; padding: 0 10px; border: 0; border-radius: 0; background: transparent; color: var(--steel); font: 12px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
+.sc-team-table thead th[data-col="team"] button, .sc-team-table thead th[data-col="name"] button { justify-content: flex-start; }
+.sc-team-table thead th:not([data-col="team"]):not([data-col="name"]) button { justify-content: flex-end; }
+.sc-wrap .sc-team-table thead button:hover { color: var(--text); }
+.sc-team-table thead th[aria-sort] button { color: var(--gold); }
+.sc-sort-mark { font-size: 9px; }
+.sc-sort-mark:empty { display: none; }
+.sc-team-row { cursor: pointer; border-top: 1px solid var(--border); }
+.sc-team-row:hover { background: var(--surface-2); }
+.sc-team-row > th, .sc-team-row > td { height: 44px; padding: 0 10px; vertical-align: middle; text-align: right; font: 14px var(--font-mono); color: var(--text); white-space: nowrap; }
+.sc-team-row > th { padding: 0; text-align: left; font-weight: 400; }
+.sc-wrap .sc-team-row > th button { width: 100%; justify-content: flex-start; padding: 0 10px; border: 0; border-radius: 0; background: transparent; font: 17px var(--font-mono); color: var(--text); letter-spacing: -.02em; }
+.sc-team-row > td[data-col="name"] { text-align: left; font: 500 14px var(--font-ui); max-width: 260px; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.sc-team-row > td.sc-cell-empty { color: var(--muted); }
+.sc-team-row-open { background: var(--gold-a08); box-shadow: inset 3px 0 0 var(--gold-fill); }
+.sc-team-row-open:hover { background: var(--gold-a08); }
+.sc-wrap .sc-team-row-open > th button { color: var(--gold); }
+.sc-team-detail > td { padding: 12px; background: var(--bg); border-top: 1px solid var(--border); white-space: normal; text-align: left; }
+.sc-team-detail .sc-team-card { max-width: 960px; }
 .sc-team-card { display: grid; gap: 16px; }
 .sc-team-card .sc-chip { max-width: 160px; overflow-wrap: anywhere; }
 .sc-evidence-grid { display: grid; gap: 12px; }
@@ -164,6 +194,12 @@
   .sc-section-head { flex-wrap: wrap; align-items: flex-start; gap: 12px; }
   .sc-section-head .sc-search { width: 100%; max-width: none; }
   .sc-team-number { font-size: 40px; }
+  .sc-team-table .sc-col-wide { display: none; }
+  .sc-wrap .sc-team-table thead button { padding: 0 5px; font-size: 10px; letter-spacing: .02em; gap: 2px; min-width: 0; }
+  .sc-team-row > td { padding: 0 5px; font-size: 13px; }
+  .sc-wrap .sc-team-row > th button { padding: 0 5px; font-size: 15px; min-width: 0; }
+  .sc-team-row > td[data-col="name"] { max-width: 84px; font-size: 13px; }
+  .sc-team-detail > td { padding: 8px 0; }
   .sc-event-foot { align-items: flex-start; flex-direction: column; }
   .sc-team-card > .sc-actions button { flex: 1; padding-left: 8px; padding-right: 8px; }
   .sc-dialog { width: 100%; max-width: none; max-height: 100dvh; margin: auto 0 0; border-radius: var(--radius) var(--radius) 0 0; }
@@ -249,6 +285,9 @@
 .sc-footer { flex-wrap: wrap; align-items: stretch; }
 .sc-export { flex: 1 1 320px; display: flex; align-items: center; gap: 14px; min-width: 0; }
 .sc-export span { line-height: 1.45; }
+/* On a phone the footer is a column, so a 320px flex-basis was a 320px HEIGHT
+   per export block (about 600px of empty page under every tab). */
+@media (max-width: 640px) { .sc-export { flex: 0 0 auto; width: 100%; } }
 .sc-match-answers { margin-bottom: 8px; }
 .sc-match-answers span { border-color: var(--border-strong); }
 .sc-match-answers b { color: var(--gold-dim); font-weight: 400; margin-right: 4px; }

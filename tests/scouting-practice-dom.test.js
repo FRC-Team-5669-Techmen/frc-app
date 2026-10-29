@@ -50,6 +50,10 @@ async function mount(persona = 'student') {
 const dialog = () => host.querySelector('dialog')
 const hint = () => dialog()?.querySelector('[data-match-hint]')?.textContent ?? ''
 const savedBar = () => host.querySelector('[data-saved-confirmation]')
+// The Teams tab is a table; a team's evidence card opens under its row.
+async function expandTeams(...teams) {
+  for (const team of teams) await click(host.querySelector(`.sc-team-table tr.sc-team-row[data-team="${team}"] th button`))
+}
 const mine = () => fixture.rows('scouting_records').filter(r => r.kind === 'observation' && r.member_id === IDS.student)
 async function openObservation(team, match, note = `Fixture note ${match}`) {
   await click(buttons('New observation')[0]); await settle(() => dialog()?.querySelector('textarea'), 'form ready')
@@ -146,6 +150,7 @@ describe('the saved confirmation stays on screen (feedback 387edf14)', () => {
     await mount()
     expect(savedBar()).toBeNull()
     await click(buttons('Teams')[0])
+    await expandTeams(1538)
     const card = [...host.querySelectorAll('.sc-team-card')].find(c => c.textContent.includes('1538'))
     await click([...card.querySelectorAll('button')].find(b => b.textContent === 'Observe'))
     await settle(() => dialog()?.querySelector('textarea'), 'form ready')
@@ -195,6 +200,8 @@ describe('the team card leads with what tells robots apart (feedback 449543dd)',
   it('moves answers every observed robot shares into one folded line each, and leads with the ones that vary', async () => {
     seed()
     await mount(); await click(buttons('Teams')[0])
+    expect(card(1538)).toBeUndefined()
+    await expandTeams(1538, 1323, 5669)
     await settle(() => card(1538)?.querySelector('[data-shared-evidence]'), 'shared evidence')
     const c = card(1538)
     // TRENCH: 4414 passed in qm3 and failed in qm4, so it varies; BUMP and floor intake: every observed robot yes.
@@ -221,6 +228,7 @@ describe('the team card leads with what tells robots apart (feedback 449543dd)',
   it('a single observed failure moves the answer back up for every robot (positive control on the same fixture)', async () => {
     seed({ bumpFailure: true })
     await mount(); await click(buttons('Teams')[0])
+    await expandTeams(1538, 4414, 1323)
     await settle(() => card(1538)?.querySelector('[data-shared-evidence]'), 'shared evidence')
     for (const team of [1538, 4414, 1323]) {
       expect(keysIn(card(team), '.sc-evidence')).toEqual(['trench', 'bump'])
