@@ -1,0 +1,1456 @@
+{
+ "event": "2026cabl",
+ "generated_at": "2026-10-29T06:16:11.521Z",
+ "source": "The Blue Alliance public event pages",
+ "method": "OPR per event from qualification scores (ridge 0.5), averaged with the latest event weighted most (0.7 per older event, times matches played).",
+ "events": {
+  "2026bcvi": {
+   "title": "Canadian Pacific Regional (2026)",
+   "start": "2026-03-07",
+   "quals": 74
+  },
+  "2026capoh": {
+   "title": "CA District Hueneme Port Event (2026)",
+   "start": "2026-03-08",
+   "quals": 77
+  },
+  "2026cosp": {
+   "title": "Pikes Peak Regional (2026)",
+   "start": "2026-03-08",
+   "quals": 66
+  },
+  "2026azfg": {
+   "title": "Arizona North Regional (2026)",
+   "start": "2026-03-14",
+   "quals": 83
+  },
+  "2026caven": {
+   "title": "CA District Ventura County Event (2026)",
+   "start": "2026-03-15",
+   "quals": 72
+  },
+  "2026calas": {
+   "title": "CA District Los Angeles Event (2026)",
+   "start": "2026-03-22",
+   "quals": 77
+  },
+  "2026hiho": {
+   "title": "Hawaii Regional (2026)",
+   "start": "2026-03-22",
+   "quals": 60
+  },
+  "2026casnd": {
+   "title": "CA District San Diego Event presented by Qualcomm (2026)",
+   "start": "2026-03-22",
+   "quals": 80
+  },
+  "2026idbo": {
+   "title": "Idaho Regional (2026)",
+   "start": "2026-03-28",
+   "quals": 70
+  },
+  "2026casgv": {
+   "title": "CA District San Gabriel Valley Event (2026)",
+   "start": "2026-03-29",
+   "quals": 58
+  },
+  "2026cagle": {
+   "title": "CA District Glendale Event (2026)",
+   "start": "2026-03-29",
+   "quals": 74
+  },
+  "2026caasv": {
+   "title": "CA District Aerospace Valley Event (2026)",
+   "start": "2026-04-04",
+   "quals": 68
+  },
+  "2026oktu": {
+   "title": "Green Country Regional (2026)",
+   "start": "2026-04-04",
+   "quals": 77
+  },
+  "2026caoec": {
+   "title": "CA District Orange County Event (2026)",
+   "start": "2026-04-04",
+   "quals": 74
+  },
+  "2026cascmp": {
+   "title": "FIRST California Southern State Championship presented by Qualcomm (2026)",
+   "start": "2026-04-12",
+   "quals": 120
+  },
+  "2026utwv": {
+   "title": "Utah Regional (2026)",
+   "start": "2026-04-18",
+   "quals": 70
+  },
+  "2026cur": {
+   "title": "Curie Division (2026)",
+   "start": "2026-05-02",
+   "quals": 124
+  },
+  "2026mil": {
+   "title": "Milstein Division (2026)",
+   "start": "2026-05-02",
+   "quals": 124
+  },
+  "2026cmptx": {
+   "title": "Einstein Field (2026)",
+   "start": "2026-05-02",
+   "quals": 0
+  },
+  "2026joh": {
+   "title": "Johnson Division (2026)",
+   "start": "2026-05-02",
+   "quals": 125
+  },
+  "2026new": {
+   "title": "Newton Division (2026)",
+   "start": "2026-05-02",
+   "quals": 125
+  },
+  "2026hop": {
+   "title": "Hopper Division (2026)",
+   "start": "2026-05-02",
+   "quals": 124
+  },
+  "2026arc": {
+   "title": "Archimedes Division (2026)",
+   "start": "2026-05-02",
+   "quals": 125
+  },
+  "2026gal": {
+   "title": "Galileo Division (2026)",
+   "start": "2026-05-02",
+   "quals": 125
+  },
+  "2026azrl1": {
+   "title": "Arizona Robotics League Qualifier 1 (2026)",
+   "start": "2026-05-30",
+   "quals": 27
+  },
+  "2026azrl2": {
+   "title": "Arizona Robotics League Qualifier 2 (2026)",
+   "start": "2026-06-27",
+   "quals": 24
+  },
+  "2026iri": {
+   "title": "Indiana Robotics Invitational  (2026)",
+   "start": "2026-07-18",
+   "quals": 75
+  },
+  "2026azrl3": {
+   "title": "Arizona Robotics League Qualifier 3 (2026)",
+   "start": "2026-07-18",
+   "quals": 27
+  },
+  "2026azscor": {
+   "title": "Summer Scorcher  (2026)",
+   "start": "2026-08-30",
+   "quals": 62
+  },
+  "2026cc": {
+   "title": "Chezy Champs (2026)",
+   "start": "2026-09-20",
+   "quals": 70
+  },
+  "2026cass": {
+   "title": "SoCal Showdown (2026)",
+   "start": "2026-10-11",
+   "quals": 70
+  },
+  "2026wabe": {
+   "title": "Bordie Through Time (2026)",
+   "start": "2026-10-11",
+   "quals": 60
+  },
+  "2026catt": {
+   "title": "Tidal Tumble (2026)",
+   "start": "2026-10-18",
+   "quals": 65
+  },
+  "2026azrl": {
+   "title": "Arizona Robotics League Championship (2026)",
+   "start": "2026-10-24",
+   "quals": 0
+  },
+  "2026casan1": {
+   "title": "Stay Classy Classic (2026)",
+   "start": "2026-10-25",
+   "quals": 51
+  }
+ },
+ "teams": {
+  "294": {
+   "total": 145.1,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 74,
+     "n": 11
+    },
+    {
+     "key": "2026caasv",
+     "start": "2026-04-04",
+     "opr": 176.4,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 167.4,
+     "n": 12
+    },
+    {
+     "key": "2026cur",
+     "start": "2026-05-02",
+     "opr": 136.3,
+     "n": 10
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 144.1,
+     "n": 10
+    }
+   ]
+  },
+  "359": {
+   "total": 180.7,
+   "events": [
+    {
+     "key": "2026bcvi",
+     "start": "2026-03-07",
+     "opr": 198.3,
+     "n": 10
+    },
+    {
+     "key": "2026hiho",
+     "start": "2026-03-22",
+     "opr": 182.6,
+     "n": 12
+    },
+    {
+     "key": "2026idbo",
+     "start": "2026-03-28",
+     "opr": 222.5,
+     "n": 12
+    },
+    {
+     "key": "2026utwv",
+     "start": "2026-04-18",
+     "opr": 236.3,
+     "n": 10
+    },
+    {
+     "key": "2026mil",
+     "start": "2026-05-02",
+     "opr": 210.6,
+     "n": 10
+    },
+    {
+     "key": "2026iri",
+     "start": "2026-07-18",
+     "opr": 301.3,
+     "n": 9
+    },
+    {
+     "key": "2026cc",
+     "start": "2026-09-20",
+     "opr": 126.7,
+     "n": 10
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 131.6,
+     "n": 10
+    }
+   ]
+  },
+  "399": {
+   "total": 39.1,
+   "events": [
+    {
+     "key": "2026capoh",
+     "start": "2026-03-08",
+     "opr": 15.5,
+     "n": 11
+    },
+    {
+     "key": "2026caasv",
+     "start": "2026-04-04",
+     "opr": 51.7,
+     "n": 12
+    },
+    {
+     "key": "2026catt",
+     "start": "2026-10-18",
+     "opr": 41.3,
+     "n": 10
+    }
+   ]
+  },
+  "498": {
+   "total": 258.8,
+   "events": [
+    {
+     "key": "2026cosp",
+     "start": "2026-03-08",
+     "opr": 238.3,
+     "n": 12
+    },
+    {
+     "key": "2026oktu",
+     "start": "2026-04-04",
+     "opr": 280.8,
+     "n": 10
+    },
+    {
+     "key": "2026joh",
+     "start": "2026-05-02",
+     "opr": 221,
+     "n": 10
+    },
+    {
+     "key": "2026azrl1",
+     "start": "2026-05-30",
+     "opr": 235.7,
+     "n": 9
+    },
+    {
+     "key": "2026azrl2",
+     "start": "2026-06-27",
+     "opr": 270.5,
+     "n": 8
+    },
+    {
+     "key": "2026azrl3",
+     "start": "2026-07-18",
+     "opr": 126,
+     "n": 6
+    },
+    {
+     "key": "2026azscor",
+     "start": "2026-08-30",
+     "opr": 300.5,
+     "n": 16
+    }
+   ]
+  },
+  "599": {
+   "total": 127.9,
+   "events": [
+    {
+     "key": "2026caven",
+     "start": "2026-03-15",
+     "opr": 125.2,
+     "n": 12
+    },
+    {
+     "key": "2026casgv",
+     "start": "2026-03-29",
+     "opr": 183.4,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 177.1,
+     "n": 12
+    },
+    {
+     "key": "2026new",
+     "start": "2026-05-02",
+     "opr": 174.1,
+     "n": 10
+    },
+    {
+     "key": "2026catt",
+     "start": "2026-10-18",
+     "opr": 44.6,
+     "n": 10
+    }
+   ]
+  },
+  "687": {
+   "total": 172.1,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 130.7,
+     "n": 11
+    },
+    {
+     "key": "2026caasv",
+     "start": "2026-04-04",
+     "opr": 161.5,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 113,
+     "n": 12
+    },
+    {
+     "key": "2026new",
+     "start": "2026-05-02",
+     "opr": 169.9,
+     "n": 10
+    },
+    {
+     "key": "2026cc",
+     "start": "2026-09-20",
+     "opr": 183.1,
+     "n": 10
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 200.6,
+     "n": 10
+    }
+   ]
+  },
+  "696": {
+   "total": 108.6,
+   "events": [
+    {
+     "key": "2026cagle",
+     "start": "2026-03-29",
+     "opr": 101.8,
+     "n": 12
+    },
+    {
+     "key": "2026caasv",
+     "start": "2026-04-04",
+     "opr": 76.7,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 128.7,
+     "n": 12
+    },
+    {
+     "key": "2026catt",
+     "start": "2026-10-18",
+     "opr": 115.2,
+     "n": 7
+    }
+   ]
+  },
+  "1148": {
+   "total": 84.6,
+   "events": [
+    {
+     "key": "2026capoh",
+     "start": "2026-03-08",
+     "opr": 47.5,
+     "n": 11
+    },
+    {
+     "key": "2026cagle",
+     "start": "2026-03-29",
+     "opr": 38.4,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 97.3,
+     "n": 12
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 56.4,
+     "n": 10
+    },
+    {
+     "key": "2026catt",
+     "start": "2026-10-18",
+     "opr": 125.7,
+     "n": 10
+    }
+   ]
+  },
+  "1197": {
+   "total": 39.7,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 34.5,
+     "n": 11
+    },
+    {
+     "key": "2026casgv",
+     "start": "2026-03-29",
+     "opr": 26.7,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 76,
+     "n": 12
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 55.3,
+     "n": 10
+    },
+    {
+     "key": "2026catt",
+     "start": "2026-10-18",
+     "opr": 14.3,
+     "n": 10
+    }
+   ]
+  },
+  "2102": {
+   "total": 105.8,
+   "events": [
+    {
+     "key": "2026casnd",
+     "start": "2026-03-22",
+     "opr": 118.7,
+     "n": 12
+    },
+    {
+     "key": "2026casgv",
+     "start": "2026-03-29",
+     "opr": 169.5,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 191.1,
+     "n": 12
+    },
+    {
+     "key": "2026hop",
+     "start": "2026-05-02",
+     "opr": 86.9,
+     "n": 10
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 38.8,
+     "n": 10
+    }
+   ]
+  },
+  "2122": {
+   "total": 202.2,
+   "events": [
+    {
+     "key": "2026azfg",
+     "start": "2026-03-14",
+     "opr": 190.5,
+     "n": 9
+    },
+    {
+     "key": "2026idbo",
+     "start": "2026-03-28",
+     "opr": 227.2,
+     "n": 12
+    },
+    {
+     "key": "2026utwv",
+     "start": "2026-04-18",
+     "opr": 187.1,
+     "n": 10
+    },
+    {
+     "key": "2026mil",
+     "start": "2026-05-02",
+     "opr": 237,
+     "n": 10
+    },
+    {
+     "key": "2026wabe",
+     "start": "2026-10-11",
+     "opr": 177.4,
+     "n": 10
+    }
+   ]
+  },
+  "2658": {
+   "total": 11.9,
+   "events": [
+    {
+     "key": "2026casnd",
+     "start": "2026-03-22",
+     "opr": 11.9,
+     "n": 12
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 30.6,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 13.3,
+     "n": 12
+    },
+    {
+     "key": "2026casan1",
+     "start": "2026-10-25",
+     "opr": -1.6,
+     "n": 9
+    }
+   ]
+  },
+  "2659": {
+   "total": 129.3,
+   "events": [
+    {
+     "key": "2026cagle",
+     "start": "2026-03-29",
+     "opr": 119.9,
+     "n": 12
+    },
+    {
+     "key": "2026caasv",
+     "start": "2026-04-04",
+     "opr": 130.8,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 170.4,
+     "n": 12
+    },
+    {
+     "key": "2026hop",
+     "start": "2026-05-02",
+     "opr": 166.7,
+     "n": 10
+    },
+    {
+     "key": "2026catt",
+     "start": "2026-10-18",
+     "opr": 81,
+     "n": 10
+    }
+   ]
+  },
+  "2710": {
+   "total": 100.9,
+   "events": [
+    {
+     "key": "2026capoh",
+     "start": "2026-03-08",
+     "opr": 53.6,
+     "n": 11
+    },
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 65.1,
+     "n": 11
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 100.7,
+     "n": 12
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 138.3,
+     "n": 10
+    }
+   ]
+  },
+  "2984": {
+   "total": 65.6,
+   "events": [
+    {
+     "key": "2026capoh",
+     "start": "2026-03-08",
+     "opr": 25.2,
+     "n": 11
+    },
+    {
+     "key": "2026casnd",
+     "start": "2026-03-22",
+     "opr": 55.4,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 50.5,
+     "n": 12
+    },
+    {
+     "key": "2026casan1",
+     "start": "2026-10-25",
+     "opr": 103.3,
+     "n": 9
+    }
+   ]
+  },
+  "3128": {
+   "total": 134.6,
+   "events": [
+    {
+     "key": "2026capoh",
+     "start": "2026-03-08",
+     "opr": 151.5,
+     "n": 11
+    },
+    {
+     "key": "2026casnd",
+     "start": "2026-03-22",
+     "opr": 272.7,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 117.3,
+     "n": 12
+    },
+    {
+     "key": "2026cur",
+     "start": "2026-05-02",
+     "opr": 178.8,
+     "n": 10
+    },
+    {
+     "key": "2026casan1",
+     "start": "2026-10-25",
+     "opr": 43.4,
+     "n": 9
+    }
+   ]
+  },
+  "3255": {
+   "total": 189.2,
+   "events": [
+    {
+     "key": "2026capoh",
+     "start": "2026-03-08",
+     "opr": 119.9,
+     "n": 11
+    },
+    {
+     "key": "2026cagle",
+     "start": "2026-03-29",
+     "opr": 109.9,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 195,
+     "n": 12
+    },
+    {
+     "key": "2026joh",
+     "start": "2026-05-02",
+     "opr": 242.5,
+     "n": 10
+    },
+    {
+     "key": "2026casan1",
+     "start": "2026-10-25",
+     "opr": 200.5,
+     "n": 9
+    }
+   ]
+  },
+  "3309": {
+   "total": 27.5,
+   "events": [
+    {
+     "key": "2026caven",
+     "start": "2026-03-15",
+     "opr": 18.3,
+     "n": 12
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 33.5,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 27.9,
+     "n": 12
+    }
+   ]
+  },
+  "3476": {
+   "total": 232.3,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 257.2,
+     "n": 11
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 244.6,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 227.7,
+     "n": 12
+    },
+    {
+     "key": "2026arc",
+     "start": "2026-05-02",
+     "opr": 188.1,
+     "n": 10
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 254.3,
+     "n": 10
+    }
+   ]
+  },
+  "3647": {
+   "total": 113.1,
+   "events": [
+    {
+     "key": "2026capoh",
+     "start": "2026-03-08",
+     "opr": 28,
+     "n": 11
+    },
+    {
+     "key": "2026casnd",
+     "start": "2026-03-22",
+     "opr": 104.4,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 103.4,
+     "n": 12
+    },
+    {
+     "key": "2026catt",
+     "start": "2026-10-18",
+     "opr": 123,
+     "n": 9
+    },
+    {
+     "key": "2026casan1",
+     "start": "2026-10-25",
+     "opr": 141.6,
+     "n": 9
+    }
+   ]
+  },
+  "4079": {
+   "total": 21.2,
+   "events": [
+    {
+     "key": "2026capoh",
+     "start": "2026-03-08",
+     "opr": 10.2,
+     "n": 11
+    },
+    {
+     "key": "2026casgv",
+     "start": "2026-03-29",
+     "opr": 39.6,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 20.4,
+     "n": 12
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 15.1,
+     "n": 10
+    }
+   ]
+  },
+  "4141": {
+   "total": 43.8,
+   "events": [
+    {
+     "key": "2026casgv",
+     "start": "2026-03-29",
+     "opr": 40.7,
+     "n": 12
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 38.5,
+     "n": 12
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 50,
+     "n": 10
+    }
+   ]
+  },
+  "4201": {
+   "total": 94.3,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 99,
+     "n": 11
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 168.2,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 138,
+     "n": 12
+    },
+    {
+     "key": "2026hop",
+     "start": "2026-05-02",
+     "opr": 112.3,
+     "n": 10
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 24.2,
+     "n": 10
+    }
+   ]
+  },
+  "4322": {
+   "total": 180.7,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 77.2,
+     "n": 11
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 152.7,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 150.6,
+     "n": 12
+    },
+    {
+     "key": "2026gal",
+     "start": "2026-05-02",
+     "opr": 219.2,
+     "n": 10
+    },
+    {
+     "key": "2026catt",
+     "start": "2026-10-18",
+     "opr": 210.3,
+     "n": 10
+    }
+   ]
+  },
+  "4419": {
+   "total": 58.5,
+   "events": [
+    {
+     "key": "2026casnd",
+     "start": "2026-03-22",
+     "opr": 50.9,
+     "n": 12
+    },
+    {
+     "key": "2026caasv",
+     "start": "2026-04-04",
+     "opr": 53.1,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 68.3,
+     "n": 12
+    },
+    {
+     "key": "2026catt",
+     "start": "2026-10-18",
+     "opr": 44.8,
+     "n": 10
+    },
+    {
+     "key": "2026casan1",
+     "start": "2026-10-25",
+     "opr": 67.5,
+     "n": 9
+    }
+   ]
+  },
+  "4619": {
+   "total": 19.2,
+   "events": [
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 19.2,
+     "n": 12
+    }
+   ]
+  },
+  "4999": {
+   "total": 26.9,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 23,
+     "n": 10
+    },
+    {
+     "key": "2026casgv",
+     "start": "2026-03-29",
+     "opr": 36.1,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 48.3,
+     "n": 12
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 2.3,
+     "n": 9
+    }
+   ]
+  },
+  "5137": {
+   "total": 76.4,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 70.1,
+     "n": 11
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 77.4,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 92,
+     "n": 12
+    },
+    {
+     "key": "2026casan1",
+     "start": "2026-10-25",
+     "opr": 63.7,
+     "n": 9
+    }
+   ]
+  },
+  "5199": {
+   "total": 207.8,
+   "events": [
+    {
+     "key": "2026caven",
+     "start": "2026-03-15",
+     "opr": 93.5,
+     "n": 12
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 106.4,
+     "n": 11
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 117.6,
+     "n": 12
+    },
+    {
+     "key": "2026cur",
+     "start": "2026-05-02",
+     "opr": 205.4,
+     "n": 10
+    },
+    {
+     "key": "2026cc",
+     "start": "2026-09-20",
+     "opr": 213.9,
+     "n": 10
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 203.8,
+     "n": 10
+    },
+    {
+     "key": "2026casan1",
+     "start": "2026-10-25",
+     "opr": 276.1,
+     "n": 9
+    }
+   ]
+  },
+  "5474": {
+   "total": 85.9,
+   "events": [
+    {
+     "key": "2026casnd",
+     "start": "2026-03-22",
+     "opr": 66.3,
+     "n": 12
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 70.1,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 152.9,
+     "n": 12
+    },
+    {
+     "key": "2026casan1",
+     "start": "2026-10-25",
+     "opr": 42.7,
+     "n": 9
+    }
+   ]
+  },
+  "5669": {
+   "total": 44.7,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 7.6,
+     "n": 11
+    },
+    {
+     "key": "2026casgv",
+     "start": "2026-03-29",
+     "opr": 68.5,
+     "n": 12
+    }
+   ]
+  },
+  "5805": {
+   "total": 46.9,
+   "events": [
+    {
+     "key": "2026capoh",
+     "start": "2026-03-08",
+     "opr": 10.7,
+     "n": 11
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 53.6,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 52.6,
+     "n": 12
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 51.7,
+     "n": 10
+    }
+   ]
+  },
+  "5857": {
+   "total": 25.5,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 4,
+     "n": 11
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 39.3,
+     "n": 12
+    }
+   ]
+  },
+  "6220": {
+   "total": 46.2,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 30.3,
+     "n": 11
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 49.8,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 66.1,
+     "n": 12
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 33.4,
+     "n": 10
+    }
+   ]
+  },
+  "6560": {
+   "total": 34.9,
+   "events": [
+    {
+     "key": "2026caven",
+     "start": "2026-03-15",
+     "opr": 53.5,
+     "n": 12
+    },
+    {
+     "key": "2026cagle",
+     "start": "2026-03-29",
+     "opr": 52.6,
+     "n": 12
+    },
+    {
+     "key": "2026catt",
+     "start": "2026-10-18",
+     "opr": 9.1,
+     "n": 10
+    }
+   ]
+  },
+  "6995": {
+   "total": 223.9,
+   "events": [
+    {
+     "key": "2026casnd",
+     "start": "2026-03-22",
+     "opr": 130,
+     "n": 12
+    },
+    {
+     "key": "2026cagle",
+     "start": "2026-03-29",
+     "opr": 171.8,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 142.6,
+     "n": 12
+    },
+    {
+     "key": "2026casan1",
+     "start": "2026-10-25",
+     "opr": 376.8,
+     "n": 9
+    }
+   ]
+  },
+  "7042": {
+   "total": 53.5,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 26,
+     "n": 11
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 26,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 69.3,
+     "n": 12
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 66.7,
+     "n": 10
+    }
+   ]
+  },
+  "7157": {
+   "total": 34.6,
+   "events": [
+    {
+     "key": "2026capoh",
+     "start": "2026-03-08",
+     "opr": 40.2,
+     "n": 11
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 40,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 28.3,
+     "n": 12
+    }
+   ]
+  },
+  "7447": {
+   "total": 24.2,
+   "events": [
+    {
+     "key": "2026casgv",
+     "start": "2026-03-29",
+     "opr": 18.4,
+     "n": 12
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 28.3,
+     "n": 12
+    }
+   ]
+  },
+  "9271": {
+   "total": 42.9,
+   "events": [
+    {
+     "key": "2026caven",
+     "start": "2026-03-15",
+     "opr": 29,
+     "n": 12
+    },
+    {
+     "key": "2026caoec",
+     "start": "2026-04-04",
+     "opr": 52.2,
+     "n": 12
+    },
+    {
+     "key": "2026casan1",
+     "start": "2026-10-25",
+     "opr": 43.4,
+     "n": 9
+    }
+   ]
+  },
+  "9408": {
+   "total": 225.7,
+   "events": [
+    {
+     "key": "2026calas",
+     "start": "2026-03-22",
+     "opr": 183.8,
+     "n": 11
+    },
+    {
+     "key": "2026casgv",
+     "start": "2026-03-29",
+     "opr": 209.9,
+     "n": 12
+    },
+    {
+     "key": "2026cascmp",
+     "start": "2026-04-12",
+     "opr": 138.8,
+     "n": 12
+    },
+    {
+     "key": "2026new",
+     "start": "2026-05-02",
+     "opr": 204.7,
+     "n": 10
+    },
+    {
+     "key": "2026cc",
+     "start": "2026-09-20",
+     "opr": 279,
+     "n": 10
+    },
+    {
+     "key": "2026cass",
+     "start": "2026-10-11",
+     "opr": 246.7,
+     "n": 10
+    }
+   ]
+  },
+  "11722": {
+   "total": null,
+   "events": []
+  }
+ }
+}

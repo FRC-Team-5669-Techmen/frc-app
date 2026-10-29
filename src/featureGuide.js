@@ -69,6 +69,8 @@ export const GUIDE = Object.freeze([
     what: 'Scout robots at events, even offline, and build pick lists.' },
   { path: '/scouting/:eventId', area: 'team', title: 'Scouting an event', for: ['member'], where: 'Scouting, then an event',
     what: 'Your shift, observations, pit notes and the team list for one event.' },
+  { path: '/scouting/:eventId/board', area: 'team', title: 'Pick board', for: ['member'], where: 'Scouting, then an event, then Pick board',
+    what: 'Teams ranked automatically for our picks, Must pick and Avoid marks, and live alliance selection that re-ranks after every pick.' },
   { path: '/robot', area: 'team', title: 'Robot', for: ['member'], anchor: '[data-tour="nav-robot"]', where: 'Robot tab',
     what: 'Batteries, autos, drivers, human players, the match simulator, jobs, sub-team status and certifications, each with its live state.' },
   { path: '/batteries', area: 'team', title: 'Batteries', for: ['member'], where: 'Robot, then Batteries',

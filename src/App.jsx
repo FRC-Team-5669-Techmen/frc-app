@@ -65,6 +65,7 @@ const StandingPage       = lazy(() => import('./StandingPage'))
 const StandingTeamPage   = lazy(() => import('./StandingTeamPage'))
 const RostersPage        = lazy(() => import('./RostersPage'))
 const ScoutingPage       = lazy(() => import('./ScoutingPage'))
+const PickBoard          = lazy(() => import('./scouting/PickBoard'))
 const OfflineScouting    = lazy(() => import('./scouting/OfflineScouting'))
 const SurveyPage         = lazy(() => import('./SurveyPage'))
 const SurveysAdmin       = lazy(() => import('./SurveysAdmin'))
@@ -485,6 +486,7 @@ export default function App() {
           <Route path="/standing/team"   element={<StandingTeamPage hasRole={hasRole} />} />
           <Route path="/scouting"        element={<ScoutingPage session={session} hasRole={hasRole} />} />
           <Route path="/scouting/:eventId" element={<ScoutingPage session={session} hasRole={hasRole} />} />
+          <Route path="/scouting/:eventId/board" element={<PickBoard session={session} hasRole={hasRole} />} />
           <Route path="/rosters"         element={<RostersPage session={session} hasRole={hasRole} />} />
           <Route path="/rosters/:id"     element={<RostersPage session={session} hasRole={hasRole} />} />
           <Route path="/emergency-info"  element={<EmergencyInfoPage session={session} hasRole={hasRole} />} />

@@ -83,6 +83,7 @@ const FEATURES = Object.freeze([
   'robot-match',
   'team-pulse',
   'verify-hours',
+  'pick-board',
 ]);
 
 

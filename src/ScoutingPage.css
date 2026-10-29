@@ -331,3 +331,15 @@
 .sc-shared-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 10px; }
 .sc-shared-list li { display: grid; gap: 2px; font-size: 14px; overflow-wrap: anywhere; }
 .sc-wrap .sc-shared-list .sc-help { margin: 0; }
+/* Pick board link and one-tap rating (ledger 0032). */
+.sc-board-link { display: grid; gap: 4px; margin: 12px 0; padding: 16px 18px; border: 1px solid var(--gold-dim); border-left: 4px solid var(--gold); border-radius: var(--radius); background: var(--surface); color: var(--text) !important; text-decoration: none; }
+.sc-board-link strong { font-size: 18px; color: var(--gold); }
+.sc-board-link span:last-child { color: var(--steel); font-size: 14px; }
+.sc-board-link:hover { background: var(--gold-a08); }
+.sc-rate-team { display: flex; align-items: baseline; gap: 12px; margin-top: 10px; }
+.sc-rate-team b { font: 40px var(--font-mono); color: var(--gold); }
+.sc-rate-team span { font-size: 18px; color: var(--steel); }
+.sc-rate-buttons { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+.sc-wrap .sc-rate-buttons button { min-height: 64px; font-size: 16px; }
+.sc-wrap .sc-rate-buttons .sc-rate-dnp { color: var(--fault); }
+@media (max-width: 560px) { .sc-rate-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

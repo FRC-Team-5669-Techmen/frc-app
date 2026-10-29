@@ -447,6 +447,8 @@ export default {
       await t.open(ROUTE, { persona: 'exempt', mig: 'all', ready: '.sc-wrap' })
       await t.waitText('Fixture Regional')
       await tab(t, 'Pick lists')
+      // A scout with unrated teams opens on Rate teams (ledger 0032); the picker is under My list.
+      if (await t.count('[data-rate]')) await t.press(t.page.getByRole('button', { name: 'My list', exact: true }))
       const before = await t.texts('.sc-team-picker button b')
       t.check('positive control: with no filter the picker offers 1538, 4414 and 1323', ['1538', '4414', '1323'].every(n => before.includes(n)), before.join(','))
       await t.press(t.page.locator('.sc-match-filters summary'))
