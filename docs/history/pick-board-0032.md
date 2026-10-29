@@ -44,3 +44,17 @@ reports picks one at a time.
 - Not verified here: the live database, the live `scouting-import` answering
   2026cabl with breakdowns (it answered teams and an empty match list on
   2026-10-28, before the event), real phones, and the arena's network.
+
+## Follow-up the same night
+
+- `src/scouting/board.js`: the board's whole computation in one module, read
+  by the page and by a new connector read tool, `pick_board` ("who should we
+  pick", "who is on the clock", "why is 3476 first"), so the two can never
+  disagree. `tests/pick-board-connector.test.js` holds the tool's order equal
+  to the page's on the fixture's 60 matches, with marks, a live selection, one
+  team explained, and the before-0042 answer.
+- The season prior is a JS module (`src/scouting/priors/2026cabl.js`, listed
+  in `priors/index.js`), so the browser, the fixture, the tests and the
+  connector on Vercel import it the same way.
+- The Teams tab's sortable team table (`docs/history/teams-table.md`) landed
+  in the same push.
