@@ -123,3 +123,6 @@ thead .rb-slot-col { z-index: 3; }
 .rb-rule b { display: block; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
 .rb-rule-conflict { border-left-color: var(--fault); }
 .rb-rule-conflict b { color: var(--fault); }
+/* Link to My schedule (ledger 0033). */
+.rb-myday { display: inline-flex; align-items: center; min-height: 44px; margin: 0 0 0.6rem; color: var(--gold); font-weight: 600; text-decoration: none; }
+.rb-myday:hover { text-decoration: underline; }

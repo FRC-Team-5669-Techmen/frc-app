@@ -1,0 +1,51 @@
+/* My schedule (ledger 0033). Phone first: one column; a laptop gets more air. */
+.ms-wrap { max-width: 760px; margin: 0 auto; padding: 18px 16px 48px; color: var(--text); font-family: var(--font-ui); box-sizing: border-box; }
+.ms-wrap * { box-sizing: border-box; }
+.ms-wrap h1 { margin: 0; font-size: clamp(22px, 4vw, 30px); font-weight: 600; letter-spacing: -.02em; }
+.ms-eyebrow { display: block; color: var(--gold-dim); font: 11px var(--font-mono); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 4px; }
+.ms-help { color: var(--steel); font-size: 14px; margin: 6px 0; }
+.ms-help a, .ms-remind a { color: var(--gold); }
+.ms-error { border: 1px solid var(--fault); background: var(--fault-a10); padding: 8px 12px; border-radius: var(--radius); }
+.ms-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.ms-head select { min-height: 44px; background: var(--bg); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 6px 10px; font: 15px var(--font-ui); }
+
+.ms-now { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.ms-now-card { display: grid; gap: 3px; padding: 14px 16px; border: 1px solid var(--border-strong); border-left: 4px solid var(--steel); border-radius: var(--radius); background: var(--surface); }
+.ms-now-card strong { font-size: 20px; }
+.ms-now-card span:last-child { color: var(--steel); font-size: 14px; }
+.ms-now-on { border-left-color: var(--gold); background: var(--gold-a08); }
+
+.ms-remind { display: flex; gap: 12px; align-items: center; justify-content: space-between; margin-top: 12px; padding: 12px 14px; border: 1px dashed var(--gold-dim); border-radius: var(--radius); }
+.ms-remind div { display: grid; gap: 2px; }
+.ms-remind span { color: var(--steel); font-size: 13px; }
+.ms-btn { min-height: 44px; padding: 8px 16px; border: 1px solid var(--gold-dim); border-radius: var(--radius); background: var(--surface); color: var(--gold); font: 600 14px var(--font-ui); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; white-space: nowrap; }
+.ms-on { margin-top: 10px; }
+
+.ms-days { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; margin: 16px 0 10px; }
+.ms-days button { min-height: 48px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface-2); color: var(--text); font: 600 14px var(--font-ui); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.ms-days button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.ms-days small { font: 12px var(--font-mono); color: var(--gold-dim); }
+
+.ms-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ms-item { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); min-height: 52px; }
+.ms-time { font: 15px var(--font-mono); display: grid; align-content: start; }
+.ms-time small { font-size: 12px; color: var(--muted); }
+.ms-body { display: grid; gap: 2px; min-width: 0; }
+.ms-body strong { font-size: 16px; }
+.ms-tag { font: 10px var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--steel); }
+.ms-detail { color: var(--steel); font-size: 14px; overflow-wrap: anywhere; }
+.ms-note { color: var(--gold-dim); font-size: 13px; }
+.ms-station, .ms-ride { border-left: 4px solid var(--gold); }
+.ms-station .ms-tag, .ms-ride .ms-tag { color: var(--gold); }
+.ms-backup { border-left-color: var(--gold-dim); border-style: dashed; border-left-style: solid; }
+.ms-team { background: transparent; }
+.ms-team strong { font-weight: 500; }
+.ms-past { opacity: .5; }
+.ms-on-now { box-shadow: 0 0 0 1px var(--gold); background: var(--gold-a08); }
+.ms-empty { color: var(--steel); padding: 12px; }
+.ms-foot { margin-top: 16px; }
+@media (max-width: 520px) {
+  .ms-item { grid-template-columns: 62px minmax(0, 1fr); gap: 10px; }
+  .ms-remind { flex-direction: column; align-items: stretch; }
+  .ms-days button { font-size: 13px; }
+}

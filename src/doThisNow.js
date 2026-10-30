@@ -48,7 +48,7 @@ export function doThisNow({ onboarding = null, notices = [], survey = null, sent
     if (!m?.event_id || !m.role) continue
     const until = m.ends_at ? ` until ${clock(m.ends_at)}` : ''
     items.push({ key: `shift:${m.event_id}`, title: `${m.now ? 'Now' : 'Next'}: ${roleLabel(m.role)}`,
-      detail: m.now ? `${m.label}${until}` : `${m.label} · ${slotTime(m.starts_at)}`, to: `/roles/${m.event_id}`, tone: m.now ? 'urgent' : 'todo' })
+      detail: m.now ? `${m.label}${until}` : `${m.label} · ${slotTime(m.starts_at)}`, to: `/my-schedule?event=${m.event_id}`, tone: m.now ? 'urgent' : 'todo' })
   }
   if (sentBack) items.push({ key: 'signout', title: 'Your sign-out was sent back', detail: sentBack.reason ? `Mentor: ${sentBack.reason}` : 'Finish up, then ask again', to: '/dashboard#status', tone: 'urgent' })
   const seen = new Set()

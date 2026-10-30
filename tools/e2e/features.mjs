@@ -85,6 +85,7 @@ const FEATURES = Object.freeze([
   'team-pulse',
   'verify-hours',
   'pick-board',
+  'my-schedule',
 ]);
 
 

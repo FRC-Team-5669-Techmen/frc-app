@@ -77,6 +77,8 @@ export const GUIDE = Object.freeze([
     what: 'Every battery worst first: charge state in one tap, resting voltage, brownouts and match-ready. Log a run in seconds.' },
   { path: '/roles/:eventId', area: 'team', title: 'Role board', for: ['member'], where: 'Event rosters, an event, then Role board; or Home when slots are unfilled',
     what: 'Ask for a role in any time slot of an event, see who else asked, and what is still unfilled. Staff assign from a request.' },
+  { path: '/my-schedule', area: 'team', title: 'My schedule', for: ['member'], where: 'Home (Now or Next), or My shifts on the role board',
+    what: 'Your own day at a competition: each station and where to be, your ride, the team blocks, and reminders on your phone before each one.' },
   { path: '/meet', area: 'team', title: 'Meet a team', for: ['member'], where: 'Scouting, then Meet a team; or Home during a competition',
     what: 'At every competition, talk to another team and log what they do well, how they run and what they offer.' },
   { path: '/meet/:eventId', area: 'team', title: 'Meet a team at an event', for: ['member'], where: 'Meet a team, then an event; the role board; or Do this now',

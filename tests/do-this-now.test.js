@@ -81,9 +81,9 @@ describe('my shift now or next (ledger 0029)', () => {
     expect(nextShift(shifts, at(17, 1))).toBe(null)
     expect(shiftEnd(shifts[2])).toBe(at(17))
   })
-  it('Home shows Now as urgent and Next as a to-do, linking the role board; none without shifts', () => {
+  it('Home shows Now as urgent and Next as a to-do, linking My schedule (ledger 0033); none without shifts', () => {
     const now = doThisNow({ myShifts: [{ ...nextShift(shifts, at(10)), event_id: 'ev', title: 'Beach Blitz 2026' }] })
-    expect(now).toEqual([expect.objectContaining({ key: 'shift:ev', title: 'Now: Scout', tone: 'urgent', to: '/roles/ev' })])
+    expect(now).toEqual([expect.objectContaining({ key: 'shift:ev', title: 'Now: Scout', tone: 'urgent', to: '/my-schedule?event=ev' })])
     expect(now[0].detail).toMatch(/^Qualifications 1 until 10:45/)
     const next = doThisNow({ myShifts: [{ ...nextShift(shifts, at(11)), event_id: 'ev', title: 'Beach Blitz 2026' }] })
     expect(next).toEqual([expect.objectContaining({ title: 'Next: Pit crew', tone: 'todo' })])

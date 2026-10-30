@@ -2,13 +2,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import './NotificationsPanel.css'
+import { isIos, isStandalone, pushSupported, subscribePush } from './pushSubscribe'
 
 // Notification settings. Enables/disables web push (permission + pushManager
 // subscribe/unsubscribe + storage), and edits per-category opt-outs + quiet
 // hours bound to profiles.notification_prefs. Feature-detected; iOS shows
 // install guidance instead of a dead button.
-
-const VAPID_PUBLIC = import.meta.env.VITE_VAPID_PUBLIC_KEY
 
 // `wired` = a backend trigger already sends this. Toggles with wired:false save
 // the preference but won't fire until their trigger is built (see report).
@@ -19,6 +18,7 @@ const CATEGORIES = [
   { key: 'task_signoff',    label: 'Job sign-offs',      hint: 'When a mentor approves or returns your job',   wired: true },
   { key: 'signout_returned', label: 'Sign-out sent back', hint: 'When a mentor sends your sign-out back, with their note', wired: true },
   { key: 'feedback_reply',  label: 'Feedback answers',   hint: 'When someone answers feedback you sent',        wired: true },
+  { key: 'role_reminder',   label: 'Station and ride reminders', hint: '10 minutes before each competition station you are assigned, 15 before your car leaves', wired: true },
   { key: 'event_reminder',  label: 'Event reminders',    hint: 'Before an event or meeting you’re going to',    wired: true },
   { key: 'schedule_change', label: 'Schedule changes',   hint: 'When an event is added, edited, or canceled',   wired: true },
   { key: 'shop_status',     label: 'Shop hours',         hint: 'When the shop opens or closes',                 wired: true },
@@ -37,25 +37,13 @@ const DEFAULT_PREFS = {
   task_signoff: true, event_reminder: true, schedule_change: true,
   shop_status: false, job_assignment: true, skill_signoff: true,
   checkin_reminder: false, parent_digest: true, announcements: true,
-  signout_returned: true, feedback_reply: true,
+  signout_returned: true, feedback_reply: true, role_reminder: true,
   quiet_hours: { start: '21:00', end: '07:00' },
 }
 
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const raw = atob(base64)
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)))
-}
-
-const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent)
-const isStandalone = () =>
-  window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true
-
 export default function NotificationsPanel({ session }) {
   const uid = session.user.id
-  const supported = typeof window !== 'undefined' &&
-    'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
+  const supported = pushSupported()
   const iosNeedsInstall = isIos() && !isStandalone()
 
   const [prefs, setPrefs]       = useState(null)
@@ -88,26 +76,8 @@ export default function NotificationsPanel({ session }) {
   async function enable() {
     setBusy(true); setMsg('')
     try {
-      if (!VAPID_PUBLIC) { setMsg('Push is not configured on the server yet.'); return }
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') { setMsg('Notifications permission was not granted.'); return }
-      const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC),
-      })
-      const json = sub.toJSON()
-      const subRow = {
-        endpoint: json.endpoint,
-        member_id: uid,
-        p256dh: json.keys.p256dh,
-        auth: json.keys.auth,
-        user_agent: navigator.userAgent,
-      }
-      const { error } = await writeVia(supabase, 'push_subscribe',
-        { p_endpoint: subRow.endpoint, p_p256dh: subRow.p256dh, p_auth: subRow.auth, p_user_agent: subRow.user_agent },
-        { table: 'push_subscriptions', op: 'upsert', values: subRow, options: { onConflict: 'endpoint' } })
-      if (error) { setMsg(error.message); return }
+      const r = await subscribePush(uid)
+      if (!r.ok) { setMsg(r.message); return }
       setSubscribed(true)
       setMsg('Notifications on for this device.')
     } catch (err) {

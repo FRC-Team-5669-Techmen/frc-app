@@ -80,6 +80,7 @@ const BatteriesPage      = lazy(() => import('./BatteriesPage'))
 const RobotPage          = lazy(() => import('./RobotPage'))
 const ManagePage         = lazy(() => import('./ManagePage'))
 const RoleBoardPage      = lazy(() => import('./RoleBoardPage'))
+const MySchedulePage     = lazy(() => import('./MySchedulePage'))
 const AutosPage          = lazy(() => import('./AutosPage'))
 const MatchSimPage       = lazy(() => import('./MatchSimPage'))
 const RobotMatchesPage   = lazy(() => import('./RobotMatchesPage'))
@@ -513,6 +514,7 @@ export default function App() {
           {/* Ledger 0017 part D: the role interest board per event, the auto
               log, the match simulator (migration 0028). */}
           <Route path="/roles/:eventId"  element={<RoleBoardPage session={session} hasRole={hasRole} />} />
+          <Route path="/my-schedule"     element={<MySchedulePage session={session} hasRole={hasRole} />} />
           <Route path="/autos"           element={<AutosPage session={session} hasRole={hasRole} />} />
           <Route path="/match-sim"       element={<MatchSimPage session={session} hasRole={hasRole} />} />
           {/* The robot match log (0038, ledger 0028): students and staff; the pages gate parents. */}

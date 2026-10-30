@@ -87,6 +87,7 @@ export default function RoleBoardPage({ session, hasRole = () => false }) {
 
       <section className="rb-shifts" aria-label="My shifts" data-myshifts>
         <h2 className="rb-h2">My shifts</h2>
+        <Link className="rb-myday" to={`/my-schedule?event=${eventId}`} data-my-schedule-link>My schedule: every day, my ride, where to be →</Link>
         {view.myShifts.length ? (
           <ul className="rb-shift-list">{view.myShifts.map((m) => (
             <li key={`${m.slotId}:${m.role}`} className={`rb-shift rb-shift-${m.status}`}>
