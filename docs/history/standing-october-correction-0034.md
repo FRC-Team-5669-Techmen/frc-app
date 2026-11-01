@@ -3,7 +3,7 @@ title: "Standing: the October probation correction"
 date: 2026-11-01
 branches: [main]
 commits: []
-migrations: ["0044_standing_october_correction.sql"]
+migrations: ["0044_standing_october_correction.sql", "0045_standing_october_correction_mail.sql"]
 subsystems: ["Member standing"]
 ---
 
@@ -49,5 +49,8 @@ that they would talk to their son or daughter.
 - The live rows. The cloud container cannot reach the production database;
   the Migrate run applying 0044 and the live `/standing/team` page are the
   check.
-- The correction mail to the 54 addresses is a separate step, sent only
-  after Mr. Pina approved its text.
+- The correction mail (0045): one per address that got the probation mail,
+  queued in `notice_outbox` and sent by `notice-mail` from the same address.
+  Mr. Pina approved the text on 2026-11-01 ("Nothing changes for him" became
+  "Nothing changes", since some students are girls). Whether it was sent is
+  read from his mailbox, not from this file.
