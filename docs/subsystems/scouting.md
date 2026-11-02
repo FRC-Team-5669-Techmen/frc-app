@@ -132,3 +132,13 @@ The head coach reads Teams on a laptop, and one full evidence card per team, 30 
 - **Phone**: team, name, matches, FUEL, TOWER and trouble (the rest hidden by CSS under 641 px), rows at least 44 px, all six columns fit 375 px; the table scrolls sideways inside its own wrapper, never the page.
 - **Around it**: the three folded tools (pit map, match brief, coverage) sit side by side on a wide screen and an opened one takes the full row. A phone footer bug is fixed: the column-direction footer turned each export block's 320 px flex-basis into a 320 px height (about 600 px of empty page under every tab).
 - **Measured** (fixture mode, `tools/e2e/features/scouting-teams.mjs`): core seed (4 teams) 1,675 px at 375 (2.06 screens) and 1,217 px at 1440 (1.35); with 40 more teams (44) 3,475 px (4.28) and 3,017 px (3.35). Proof: `tests/scouting-team-table.test.js` (cells equal the helpers, sort and storage rules, a permissive empty-as-zero mutant reddens two tests) and the spec above (rows equal the store's teams both ways, FUEL order equals a store-derived median, expand and collapse, persistence across reload, 44 px rows, no sideways scroll, light theme bar).
+
+## Zero-setup event link and the schedule match picker (ledger 0035)
+
+- `api/tba.js` reads The Blue Alliance's public pages (no key, no secret, CDN-cached one minute): `?team=5669&year=YYYY` lists our events, `?event=KEY[&detail=1]` returns scouting-import's shape with each played match's breakdown. One parser: `src/scouting/tbaPages.js` (the tools re-export it).
+- `src/scouting/eventLink.js` links a calendar competition to its TBA event by date overlap (title as tiebreak, no guess on a tie). A key saved on the pick board or by an import wins. The feed is kept on the device for offline use.
+- The observation form opens on the schedule: the first unplayed qualification and its six robots, already-scouted robots marked. "Not on the schedule" is the typed path (practice, video, a robot not listed); a typed team not on the event list is flagged.
+- The pick board works from the feed with no import; the Teams tab and Rate teams use the feed's team list while no team records are imported (an import wins). The manager's Pull results still saves the shared copy.
+- Station cards on My schedule open the role's tool (`toolFor` in `src/roleRules.js`).
+- Fixture mode answers `/api/tba` from the 2026cabl stand-in (40 of 60 played); `tools/e2e/features/event-link.mjs` covers it.
+

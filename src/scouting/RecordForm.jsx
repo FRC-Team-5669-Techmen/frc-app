@@ -5,6 +5,7 @@ import MatchFields, { OptionFields } from './MatchFields'
 import SuggestOption from './SuggestOption'
 import { cleanMatch, recordedCount } from './match'
 import { activeOptions, cleanCustom } from './options'
+import { covered, currentMatch } from './eventLink'
 
 const TITLES = { observation: 'Match observation', pit: 'Pit report', assignment: 'Assign a scout', message: 'Pit message', team: 'Event team' }
 const ACTIONS = { observation: 'Save observation', pit: 'Save pit report', assignment: 'Save assignment', message: 'Save message', team: 'Save team' }
@@ -33,6 +34,41 @@ function MatchKeyHint({ value, linked, external }) {
   return <p className="sc-help" data-match-hint>Saves as <strong>{label}</strong>{label !== key ? ` (${key})` : ''}.</p>
 }
 
+// The schedule picks the match and robot (ledger 0035). At Beach Blitz scouts
+// typed "Qm1 r1", "Test" and teams that were not there; here they tap. The
+// match starts on the next one not yet played (or the next one with the team
+// they opened), and robots someone already scouted say so, so a scout picks
+// an uncovered one. "Not on the schedule" keeps the typed fields for practice
+// matches and video.
+function MatchPicker({ schedule, records, value, onPick, onManual }) {
+  const start = () => {
+    const typed = canonicalMatchKey(value.match_key)
+    const byKey = schedule.find(m => m.key === typed)
+    if (byKey) return byKey.n
+    const team = Number(value.team_number)
+    const cur = currentMatch(schedule)
+    if (team) { const next = schedule.find(m => m.n >= (cur?.n ?? 0) && [...m.red, ...m.blue].includes(team)); if (next) return next.n }
+    return cur?.n ?? schedule[0].n
+  }
+  const [n, setN] = useState(start)
+  const i = Math.max(0, schedule.findIndex(m => m.n === n))
+  const match = schedule[i]
+  const have = covered(match, records)
+  const go = d => setN(schedule[Math.min(schedule.length - 1, Math.max(0, i + d))].n)
+  const picked = canonicalMatchKey(value.match_key) === match.key ? Number(value.team_number) : null
+  const robot = (team, color, pos) => <button key={`${color}${pos}`} type="button" className={`sc-robot sc-robot-${color}`} aria-pressed={picked === team} data-robot={team} data-covered={have.has(team) ? 'yes' : 'no'} onClick={() => onPick(match.key, team)}>
+    <span className="sc-robot-pos">{color === 'red' ? 'Red' : 'Blue'} {pos}</span><strong>{team}</strong><span className="sc-robot-cov">{have.has(team) ? 'has a scout' : 'open'}</span></button>
+  return <section className="sc-picker" aria-label="Match and robot" data-match-picker>
+    <div className="sc-picker-head">
+      <button type="button" aria-label="Previous match" disabled={i === 0} onClick={() => go(-1)}>‹</button>
+      <label><span className="sc-sr-only">Match</span><select value={match.n} onChange={e => setN(Number(e.target.value))}>{schedule.map(m => <option key={m.n} value={m.n}>{matchLabel(m.key)}{m.played ? ' · played' : ''}</option>)}</select></label>
+      <button type="button" aria-label="Next match" disabled={i === schedule.length - 1} onClick={() => go(1)}>›</button>
+    </div>
+    <div className="sc-robots">{match.red.map((t, k) => robot(t, 'red', k + 1))}{match.blue.map((t, k) => robot(t, 'blue', k + 1))}</div>
+    <p className="sc-help">{picked ? <>Scouting <strong>{picked}</strong> in {matchLabel(match.key)}.</> : 'Tap the robot you are watching.'} {6 - have.size} of 6 robots have no scout yet. <button type="button" className="sc-linkbtn" onClick={onManual}>Not on the schedule</button></p>
+  </section>
+}
+
 export function Choice({ label, value, options, onChange }) {
   return <fieldset className="sc-choice"><legend>{label}</legend><div className="sc-choice-options">
     {options.map(([v, text]) => <button key={v} type="button" aria-pressed={value === v} onClick={() => onChange(value === v ? undefined : v)}>{text}</button>)}
@@ -42,7 +78,7 @@ export function Choice({ label, value, options, onChange }) {
 // Native dialog provides modal containment and Escape handling. React removal
 // needs explicit focus return; removing an open dialog skips native close().
 // Persist the form before claiming a draft is safe on this device.
-export default function RecordForm({ kind, record, team, assignment, replyTo, members, store, uid, eventId, onSave, onClose, matchFields = false, options = null, onSuggest = null, ownObservation = null }) {
+export default function RecordForm({ kind, record, team, assignment, replyTo, members, store, uid, eventId, onSave, onClose, matchFields = false, options = null, onSuggest = null, ownObservation = null, schedule = null, scheduleRecords = null, eventTeams = null }) {
   const dialog = useRef(null)
   const [value, setValue] = useState(() => initialValue(kind, record, team, assignment, replyTo))
   const [ready, setReady] = useState(false)
@@ -50,6 +86,7 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
   const [error, setError] = useState('')
   const [draftStatus, setDraftStatus] = useState('Opening draft…')
   const [loadAttempt, setLoadAttempt] = useState(0)
+  const [manual, setManual] = useState(false)
   const draftKey = `form:${kind}:${record?.id ?? replyTo?.id ?? assignment?.id ?? team ?? 'new'}`
   const mounted = useRef(true)
   const writeSequence = useRef(Promise.resolve())
@@ -68,7 +105,11 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
     mounted.current = true
     store.getDraft(uid, eventId, draftKey).then(saved => {
       if (!mounted.current) return
-      if (saved) setValue(saved)
+      if (saved) {
+        setValue(saved)
+        // A draft typed by hand (a robot not in that scheduled match) reopens in the typed fields.
+        if (saved.team_number && saved.match_key && schedule?.length && !schedule.some(m => m.key === canonicalMatchKey(saved.match_key) && [...m.red, ...m.blue].includes(Number(saved.team_number)))) setManual(true)
+      }
       setReady(true); setDraftStatus(saved ? 'Draft restored on this device' : 'Draft saves on this device')
     }).catch(e => { if (mounted.current) { setReady(false); setDraftStatus('Draft could not be loaded'); setError(`Your existing draft could not be read. Retry before editing. ${e.message || ''}`) } })
     return () => { mounted.current = false }
@@ -108,6 +149,7 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
         if (Object.keys(answered).length && payload.role !== 'super') payload = { ...payload, custom: answered }
       }
       let row = { id: value.id, version: value.version, kind, team_number: Number(value.team_number), match_key: ['observation', 'assignment'].includes(kind) ? value.match_key.trim() : null, payload }
+      if (kind === 'observation' && !record && !value.payload.assignment_id && !manual && schedule?.length > 0 && !(value.match_key && Number(value.team_number))) throw new Error('Tap the robot you are watching.')
       if (!Number.isInteger(row.team_number) || row.team_number < 1 || row.team_number > 99999) throw new Error('Enter a team number from 1 to 99999.')
       if (row.match_key === '') throw new Error('Enter the match label, such as qm1.')
       if (row.match_key && isBarePracticeKey(row.match_key)) throw new Error('Add the practice match number, such as pm3. Each practice match is saved as its own record.')
@@ -135,15 +177,20 @@ export default function RecordForm({ kind, record, team, assignment, replyTo, me
     finally { submitting.current = false; if (mounted.current) setSaving(false) }
   }
   const p = value.payload
+  const usePicker = kind === 'observation' && !record && !p.assignment_id && !manual && schedule?.length > 0
+  const offList = ['observation', 'pit'].includes(kind) && !record && eventTeams?.size > 0 && Number(value.team_number) > 0 && String(value.team_number).length >= 2 && !eventTeams.has(Number(value.team_number))
   return <dialog ref={dialog} className="sc-dialog" onCancel={e => { e.preventDefault(); if (!saving) onClose() }} aria-labelledby="sc-form-title">
     <form onSubmit={submit}>
       <div className="sc-dialog-head"><div><span className="sc-eyebrow">{record ? `Correct version ${record.version}` : 'Capture evidence'}</span><h2 id="sc-form-title">{TITLES[kind]}</h2></div><button type="button" onClick={onClose} disabled={saving} aria-label="Close form">Close</button></div>
       <div className="sc-dialog-body">
         {record && <p className="sc-help">Your correction creates a new version. Earlier versions stay in the history.</p>}
         {!ready ? <p>{error ? 'Draft editing is paused until your saved work can be loaded.' : 'Restoring draft…'}</p> : <fieldset disabled={saving} className="sc-form-fields"><legend className="sc-sr-only">{TITLES[kind]} fields</legend>
-          <div className="sc-fields"><label>Team number<input inputMode="numeric" type="number" min="1" max="99999" required readOnly={!!record || !!replyTo} value={value.team_number} onChange={e => change({ ...value, team_number: e.target.value })} /></label>
+          {usePicker && <MatchPicker schedule={schedule} records={scheduleRecords} value={value} onPick={(match_key, team) => change({ ...value, match_key, team_number: String(team) })} onManual={() => setManual(true)} />}
+          {!usePicker && <><div className="sc-fields"><label>Team number<input inputMode="numeric" type="number" min="1" max="99999" required readOnly={!!record || !!replyTo} value={value.team_number} onChange={e => change({ ...value, team_number: e.target.value })} /></label>
           {['observation', 'assignment'].includes(kind) && <label>Match<input required readOnly={!!record || (kind === 'observation' && !!p.assignment_id)} maxLength="100" placeholder="qm1" value={value.match_key} onChange={e => change({ ...value, match_key: e.target.value })} /></label>}</div>
           {['observation', 'assignment'].includes(kind) && !record && <MatchKeyHint value={value.match_key} linked={kind === 'observation' && !!p.assignment_id} external={p.source_scope === 'external'} />}
+          {offList && <p className="sc-help sc-warn" data-off-list>Team {value.team_number} is not on this event's team list. Check the number.</p>}
+          {kind === 'observation' && schedule?.length > 0 && manual && !record && <button type="button" className="sc-linkbtn" onClick={() => setManual(false)}>Pick from the schedule</button>}</>}
           {kind === 'observation' && <>
             <label>Source<select aria-label="Source" value={p.source} onChange={e => payload('source', e.target.value)}><option value="live">Live match</option><option value="video">Match video</option></select></label>
             {p.source === 'video' && <label>Video URL<input type="url" placeholder="https://…" value={p.video_url} onChange={e => payload('video_url', e.target.value)} /></label>}

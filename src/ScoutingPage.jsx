@@ -12,6 +12,7 @@ import SchedulePlanner from './scouting/SchedulePlanner'
 import PitLocation from './scouting/PitLocation'
 import PitMap from './scouting/PitMap'
 import { importedMapKey } from './scouting/pit-map-model'
+import { covered, currentMatch, eventTeams as feedTeamSet, scheduleFrom, useEventFeed } from './scouting/eventLink'
 import CoveragePanel from './scouting/CoveragePanel'
 import RecoveryPanel from './scouting/RecoveryPanel'
 import { buildEventArchive, downloadArchive } from './scouting/backup'
@@ -312,9 +313,16 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
       options: Object.fromEntries(readableOptions(options?.options).map(o => [o.key, optionSpread(serverRecords, o, teams)])),
     }
   }, [serverRecords, options])
+  // The Blue Alliance event this competition is, found by its dates (ledger 0035):
+  // the schedule, the team list and results with no import and no typed key.
+  const linked = useEventFeed(data.event, importedMapKey(serverRecords) || '')
+  const schedule = useMemo(() => scheduleFrom(linked.feed), [linked.feed])
+  const feedTeams = useMemo(() => [...feedTeamSet(linked.feed)].sort((a, b) => a - b), [linked.feed])
+  const feedNames = useMemo(() => new Map((linked.feed?.teams ?? []).map(t => [Number(t.team_number), t.payload?.name ?? ''])), [linked.feed])
   const teamRows = records.filter(r => r.kind === 'team')
-  const numbers = [...new Set(records.map(r => r.team_number).filter(Boolean))].sort((a, b) => a - b)
-  const nameFor = n => teamRows.find(r => r.team_number === n)?.payload?.name ?? ''
+  // With no imported team records the event's own list fills the Teams tab, as Rate teams does.
+  const numbers = [...new Set([...records.map(r => r.team_number), ...(teamRows.length ? [] : feedTeams)].filter(Boolean))].sort((a, b) => a - b)
+  const nameFor = n => teamRows.find(r => r.team_number === n)?.payload?.name || feedNames.get(n) || ''
   // The search narrows the table's rows; every figure in it still derives
   // from the full downloaded data set, so a search never changes a rate.
   const filteredNumbers = numbers.filter(n => `${n} ${nameFor(n)}`.toLowerCase().includes(teamQuery.toLowerCase()))
@@ -387,6 +395,7 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
     <header className="sc-head"><div><span className="sc-eyebrow">Techmen scouting</span><h1>{data.event?.title || 'Event scouting'}</h1><p>{data.event?.location || 'Observe. Compare. Decide.'}</p></div><button className="sc-primary" disabled={!store || !data.event} onClick={() => openForm('observation')}>New observation</button></header>
     <Link className="sc-link" to={`/meet/${eventId}`} data-meet-link>Meet a team at this event →</Link>
     <div className="sc-status-row"><span className="sc-status"><i className={online ? '' : 'sc-offline-dot'} />{online && !data.offline ? 'Connected' : 'Offline copy'}{data.cachedAt ? ` · updated ${when(data.cachedAt)}` : ''}</span><span className="sc-status">{pending.length ? `${pending.length} waiting to sync` : 'All saved work synced'}</span><button disabled={busy || !online || !store} onClick={sync}>Sync now</button><button disabled={busy || !online || !store} onClick={() => refresh().catch(e => setError(errorText(e)))}>Refresh</button></div>
+    <EventLinkStrip linked={linked} schedule={schedule} records={records} eventId={eventId} />
     {error && <p role="alert" className="sc-error">{error}</p>}
     {notice && <div className="sc-notice" role="status"><span>{notice}</span><button aria-label="Dismiss save notice" onClick={() => setNotice('')}>Dismiss</button></div>}
     {data.offline && <p className="sc-help">Using the last successful download. New data stays on this device until you reconnect. Keep this browser's data until everything has synced.</p>}
@@ -427,7 +436,7 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
       {!records.some(r => r.kind === 'message') && <div className="sc-empty"><h3>No pit messages</h3><p>Flag a robot issue or a question for someone in the pits.</p></div>}
       {records.filter(r => r.kind === 'message').sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at))).map(row => { const delivery = (data.delivery ?? []).filter(d => d.record_id === row.id && d.record_version === row.version).at(-1); return <article className="sc-card" key={row.id}><div className="sc-section-head"><h3>{row.team_number} {nameFor(row.team_number)}</h3><span className="sc-chip">{row.payload.status}</span></div>{row.payload.reply_to && <p className="sc-help">Reply to: {records.find(r => r.id === row.payload.reply_to)?.payload.text || 'Original message not loaded'}</p>}<p className="sc-note">{row.payload.text}</p><PitLocation records={records} team={row.team_number} /><p className="sc-help">{memberName(row.member_id)} · {row.localStatus ? 'Saved on this device' : `Synced · ${when(row.updated_at)}`}</p><p className="sc-delivery">Discord: {row.localStatus ? 'Waiting for sync' : delivery?.status?.replaceAll('_', ' ') || (row.payload.request_delivery ? 'Delivery requested; status unavailable' : 'Not requested')}</p>{['uncertain', 'sending'].includes(delivery?.status) && <p className="sc-help">Receipt is unconfirmed. Check Discord before any further action; an automatic resend could duplicate the message.</p>}<div className="sc-actions">{!row.localStatus && <button onClick={() => openForm('message', { team: row.team_number, replyTo: row.payload.reply_to ? records.find(r => r.id === row.payload.reply_to) : row })}>Reply to pit conversation</button>}{canEdit(row) && <button onClick={() => openForm('message', { record: row })}>Edit or resolve</button>}{row.payload.request_delivery && (row.member_id === uid || manager) && ['failed', 'not_configured', 'queued'].includes(delivery?.status) && <button disabled={!online || busy} onClick={async () => { setBusy(true); try { const r = await supabase.functions.invoke('scouting-dispatch', { body: { record_id: row.id, version: row.version } }); if (r.error) throw r.error; setNotice(`Discord: ${r.data?.status || 'status pending'}`); await refresh() } catch (e) { setError(`Message remains saved. ${errorText(e)}`) } finally { setBusy(false) } }}>Retry Discord delivery</button>}</div><details><summary>Correction history</summary><RevisionList row={row} revisions={data.revisions ?? []} memberName={memberName} /></details></article> })}
     </section>}
-    {tab === 'picks' && store && <div role="tabpanel" id="sc-panel-picks" aria-labelledby="sc-tab-picks"><PickLists records={records} confirmedRecords={serverRecords} uid={uid} eventId={eventId} store={store} onSave={save} nameFor={nameFor} /></div>}
+    {tab === 'picks' && store && <div role="tabpanel" id="sc-panel-picks" aria-labelledby="sc-tab-picks"><PickLists records={records} confirmedRecords={serverRecords} uid={uid} eventId={eventId} store={store} onSave={save} nameFor={nameFor} feedTeams={feedTeams} /></div>}
     {tab === 'practice' && store && <div role="tabpanel" id="sc-panel-practice" aria-labelledby="sc-tab-practice"><Training key={`${uid}:${eventId}`} store={store} memberId={uid} eventId={eventId} /></div>}
     {manager && <ManageEvent store={store} uid={uid} records={records} onSaveBatch={saveBatch} eventId={eventId} teamRows={teamRows} members={scouts} onForm={openForm} onSave={save} online={online} />}
     {exportError && <p role="alert" className="sc-error">{exportError}</p>}
@@ -437,7 +446,7 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
     </footer>
     {store && data.event && <RecoveryPanel store={store} uid={uid} eventId={eventId} onRestored={rows => { queueGeneration.current++; setQueue(previous => [...previous, ...rows]) }} />}
     {superForm && store && <SuperScoutForm key={superForm.id} assignment={superForm} records={records} uid={uid} nameFor={nameFor} onSaveBatch={saveBatch} onClose={() => setSuperForm(null)} />}
-    {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} matchFields={matchFields} options={options?.options ?? null} onSuggest={options && online ? async args => { await requestOption(args); await reloadOptions().catch(() => {}) } : null} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : saveFromForm} ownObservation={ownObservation} onClose={() => setForm(null)} />}
+    {form && store && <RecordForm key={`${form.kind}:${form.record?.id ?? form.replyTo?.id ?? form.assignment?.id ?? form.team ?? 'new'}`} {...form} matchFields={matchFields} options={options?.options ?? null} onSuggest={options && online ? async args => { await requestOption(args); await reloadOptions().catch(() => {}) } : null} members={scouts} store={store} uid={uid} eventId={eventId} onSave={form.rejectedOperation ? async row => { await store.replaceConflict(uid, eventId, form.rejectedOperation, row); queueGeneration.current++; setQueue(await store.listQueue(uid, eventId)); setNotice('Updated proposal saved on this device.'); if (navigator.onLine) sync() } : saveFromForm} ownObservation={ownObservation} schedule={schedule} scheduleRecords={observations} eventTeams={feedTeams.length ? new Set(feedTeams) : null} onClose={() => setForm(null)} />}
     {saved && <SavedBar saved={saved} queue={queue} confirmed={serverRecords} online={online} onShow={showSaved} onAnother={() => openForm('observation')} onDismiss={() => setSaved(null)} />}
   </main>
 }
@@ -505,4 +514,20 @@ function ManageEvent({ store, uid, records, onSaveBatch, eventId, teamRows, memb
     {preview && <div className="sc-preview"><h3>Import preview</h3><p>{preview.teams.length} teams · {preview.matches?.length ?? 0} scheduled matches</p><ul>{(preview.sources ?? []).map((source, i) => <li key={i}>{source.source}: {source.status}{source.message ? ` · ${source.message}` : ''}</li>)}</ul><p className="sc-help">Imported data keeps its source and retrieval time. Official scores are alliance totals. Statistical estimates remain separate.</p><details><summary>Review teams</summary><ul>{preview.teams.map(t => <li key={t.team_number}>{t.team_number} {t.payload.name} · {t.payload.pit_location || 'Pit unknown'} · EPA {t.payload.epa ?? 'unavailable'}</li>)}</ul></details><div className="sc-actions"><button disabled={busy} onClick={() => setPreview(null)}>Cancel import</button><button className="sc-primary" disabled={busy || !preview.teams.length} onClick={applyImport}>Save imported teams</button></div>{!!preview.matches?.length && <details><summary>Schedule and footage</summary>{preview.matches.map(match => <div className="sc-schedule-match" key={match.key}><h4>{match.key}</h4><div className="sc-actions">{match.teams.map(team => <button key={team} onClick={() => onForm('assignment', { team, assignment: { match_key: match.key, payload: { video_url: match.videos?.[0] ?? '' } } })}>Assign {team}</button>)}</div></div>)}</details>}</div>}
     {store && <SchedulePlanner store={store} uid={uid} eventId={eventId} members={members} records={records} imported={preview} onSaveBatch={onSaveBatch} />}
   </details>
+}
+
+// What The Blue Alliance link gives this page (ledger 0035), in one line:
+// which event, how far quals are, and how many robots in the next match
+// still have no scout.
+function EventLinkStrip({ linked, schedule, records, eventId }) {
+  if (!linked.key) return linked.error ? <p className="sc-help sc-link-strip" data-event-link="none">Schedule not linked: {linked.error}</p> : null
+  const next = currentMatch(schedule)
+  const open = next ? 6 - covered(next, records).size : null
+  const played = schedule.filter(m => m.played).length
+  return <p className="sc-help sc-link-strip" data-event-link={linked.key}>
+    <span>The Blue Alliance: <strong>{linked.feed?.title?.replace(/\s*\(\d{4}\)$/, '') || linked.key}</strong>{linked.auto ? ' (found by date)' : ''}</span>
+    {schedule.length ? <span>{played} of {schedule.length} quals played</span> : <span>{linked.feed ? 'Schedule not posted yet' : 'Loading schedule…'}</span>}
+    {next && !next.played && <span data-next-coverage>Next: {matchLabel(next.key)}, {open} of 6 robots need a scout</span>}
+    <Link className="sc-linkbtn" to={`/scouting/${eventId}/board`}>Pick board →</Link>
+  </p>
 }

@@ -8,7 +8,7 @@
 // 15 before a car leaves; REMIND_* say so on the page.
 import { eventDayKeys, laDayKey } from './eventDays.js'
 import { roleLabel } from './roleBoard.js'
-import { ROLE_PLACE } from './roleRules.js'
+import { ROLE_PLACE, toolFor } from './roleRules.js'
 
 export const REMIND_STATION_MIN = 10
 export const REMIND_RIDE_MIN = 15
@@ -44,7 +44,9 @@ export function buildDays({ competition, events = [], shifts = [], rides = [] })
     if (!byDay.has(key)) continue
     const mine = st.roles.filter((r) => r.status === 'assigned')
     const shown = (mine.length ? mine : st.roles).map((r) => roleLabel(r.role))
-    byDay.get(key).push({ ...st, places: undefined, where: [...st.places].join(' and '), title: shown.join(' + '),
+    // The tools for the roles shown, once each (ledger 0035).
+    const tools = [...new Map((mine.length ? mine : st.roles).map((r) => toolFor(r.role, competition.id)).filter(Boolean).map((t) => [t.to, t])).values()]
+    byDay.get(key).push({ ...st, places: undefined, tools, where: [...st.places].join(' and '), title: shown.join(' + '),
       note: st.status === 'backup' ? 'Backup: be ready if a mentor calls you in' : null })
   }
   for (const r of rides) {

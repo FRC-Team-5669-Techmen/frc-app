@@ -32,6 +32,7 @@ edge:
 
 routes:
   api/discord-week-ahead.js: "the Sunday Discord schedule post, run by the Vercel cron with its own secret; not a person's action"
+  api/tba.js: "a read-only public feed of The Blue Alliance's event pages (ledger 0035); writes nothing and reads no team data, so it is not an action"
 
 # table_writes: none, and none may be added. Since ledger 0014 every page
 # write goes through a database function (src/writeVia.js);

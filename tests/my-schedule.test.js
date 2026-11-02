@@ -74,3 +74,14 @@ describe('the page and the push say the same place', () => {
     }
   })
 })
+
+describe('each station opens its tool (ledger 0035)', () => {
+  const days = buildDays({ competition: COMP, events, shifts, rides })
+  it('Scout + Pit crew opens scouting for this competition; a role with no tool adds none', () => {
+    const st = days[1].items.filter((i) => i.kind === 'station')
+    expect(st[0].tools).toEqual([{ to: '/scouting/c', label: 'Open scouting' }])
+    expect(st[1].tools).toEqual([{ to: '/robot/matches', label: 'Match log' }])
+    const crewOnly = buildDays({ competition: COMP, shifts: [{ slotId: 'p', label: 'Pit', starts_at: at('10-31', 9), role: 'pit_crew', status: 'assigned' }] })
+    expect(crewOnly[1].items[0].tools).toEqual([])
+  })
+})

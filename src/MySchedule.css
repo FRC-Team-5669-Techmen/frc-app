@@ -9,7 +9,7 @@
 .ms-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
 .ms-head select { min-height: 44px; background: var(--bg); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 6px 10px; font: 15px var(--font-ui); }
 
-.ms-now { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.ms-wrap > .ms-now { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 .ms-now-card { display: grid; gap: 3px; padding: 14px 16px; border: 1px solid var(--border-strong); border-left: 4px solid var(--steel); border-radius: var(--radius); background: var(--surface); }
 .ms-now-card strong { font-size: 20px; }
 .ms-now-card span:last-child { color: var(--steel); font-size: 14px; }
@@ -49,3 +49,6 @@
   .ms-remind { flex-direction: column; align-items: stretch; }
   .ms-days button { font-size: 13px; }
 }
+.ms-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.ms-tool { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border: 1px solid var(--gold); border-radius: var(--radius); color: var(--gold); font: 600 14px var(--font-ui); text-decoration: none; }
+.ms-tool:hover { background: var(--gold-a08); }

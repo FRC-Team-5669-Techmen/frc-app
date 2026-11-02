@@ -3,7 +3,9 @@
  * Chromium at 375 and 1440 on fixture mode; oracles come from the store and
  * from the fixture's TBA stand-in, never from the board's own arithmetic.
  *
- *  - a lead saves the event key and pulls results: 60 played qualification
+ *  - with no key typed, the board finds 2026cabl by date and ranks 42 teams
+ *    from the live feed's 40 results (nothing saved); a lead then pulls
+ *    results: 60 played qualification
  *    matches land in the shared board, and the board's #1 is among the five
  *    teams with the best average alliance score (a naive measure computed
  *    here, independent of pickRank.js);
@@ -30,17 +32,19 @@ export default {
     await t.step('lead pulls results', async () => {
       t.as('results')
       await t.open(URL, { persona: 'mentor', mig: 'all', reset: true, ready: '[data-pick-board]' })
-      const keyBox = t.page.locator('.pk-keybar input')
-      t.eq('a lead with no event key sees the key box', await keyBox.count(), 1)
-      await keyBox.fill('2026cabl')
-      await t.press(t.page.getByRole('button', { name: 'Save key' }))
-      await t.settle()
+      // Ledger 0035: the competition finds 2026cabl by its dates, and the board
+      // ranks from the live feed (40 played) before anyone pulls or types a key.
+      await t.waitText('TBA results: 40 matches')
+      t.eq('no key box: the event was found by date', await t.count('.pk-keybar'), 0)
+      t.check('the data line says the 40 live results, and the event was found by date', /TBA results: 40 matches/.test(await t.text('[data-data-line]')) && (await t.evaluate(() => document.querySelector('[data-data-line]')?.dataset.found)) === 'date', await t.text('[data-data-line]'))
+      t.check('42 teams are ranked before any pull', (await t.count('.pk-row')) >= 42, `${await t.count('.pk-row')} rows`)
+      t.eq('and nothing was written to the shared board yet', (await t.rows('scouting_pick_board')).length, 0)
       await t.press(t.page.getByRole('button', { name: 'Pull results' }))
       await t.waitText('Results pulled')
       await t.settle()
       const board = (await t.rows('scouting_pick_board'))[0]
       const played = (board?.state?.matches?.matches ?? []).filter(m => m.level === 'qm' && m.red.score !== null)
-      t.eq('60 played qualification matches are in the shared board, saved by the lead', [played.length, board?.state?.settings?.event_key], [60, '2026cabl'])
+      t.eq('60 played qualification matches are in the shared board, saved by the lead', [played.length, board?.state?.matches?.event_key], [60, '2026cabl'])
       t.check('every played alliance carries HUB points and three TOWER values', played.every(m => typeof m.red.fuel === 'number' && m.red.tower?.length === 3 && typeof m.blue.fuel === 'number'), '')
       // Independent oracle: average alliance score per team.
       const sums = new Map()

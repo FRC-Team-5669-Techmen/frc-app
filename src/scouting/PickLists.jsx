@@ -14,7 +14,7 @@ function BoardLink({ to }) {
   return useInRouterContext() ? <Link className="sc-board-link" to={to} data-board-link>{inner}</Link> : <a className="sc-board-link" href={to} data-board-link>{inner}</a>
 }
 
-export default function PickLists({ records, confirmedRecords = records.filter(r => !r.localStatus), uid, eventId, store, onSave, nameFor }) {
+export default function PickLists({ records, confirmedRecords = records.filter(r => !r.localStatus), uid, eventId, store, onSave, nameFor, feedTeams = [] }) {
   const mine = records.find(r => r.kind === 'pick_list' && r.member_id === uid)
   const [entries, setEntries] = useState(mine?.payload?.entries ?? [])
   const [dirty, setDirty] = useState(false)
@@ -36,9 +36,13 @@ export default function PickLists({ records, confirmedRecords = records.filter(r
   // A scout with teams still unrated starts on Rate teams; a finished list opens on My list.
   const [mode, setMode] = useState(() => {
     const listed = new Set((mine?.payload?.entries ?? []).map(e => e.team))
-    return confirmedRecords.some(r => r.kind === 'team' && !listed.has(r.team_number)) ? 'rate' : 'mine'
+    // With no imported team records, The Blue Alliance's team list (ledger 0035) is the list to rate.
+    const roster = confirmedRecords.some(r => r.kind === 'team') ? confirmedRecords.filter(r => r.kind === 'team').map(r => r.team_number) : feedTeams
+    return roster.some(n => !listed.has(n)) ? 'rate' : 'mine'
   })
   const [addTier, setAddTier] = useState(1)
+  // The team list usually arrives a moment after the page opens; a scout with no list yet starts rating then.
+  useEffect(() => { if (feedTeams.length && !mine && !confirmedRecords.some(r => r.kind === 'team')) setMode(m => (m === 'mine' ? 'rate' : m)) }, [feedTeams.length]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     let live = true
     store.getDraft(uid, eventId, 'pick-list').then(draft => {
@@ -87,7 +91,8 @@ export default function PickLists({ records, confirmedRecords = records.filter(r
   const master = aggregatePickLists(confirmedRecords)
   // Rating order: teams other scouts placed higher first, then by number.
   const masterPos = new Map(master.map((r, i) => [r.team, i]))
-  const rateOrder = confirmedRecords.filter(r => r.kind === 'team').map(r => r.team_number)
+  const imported = confirmedRecords.filter(r => r.kind === 'team').map(r => r.team_number)
+  const rateOrder = (imported.length ? imported : feedTeams)
     .filter((n, i, a) => a.indexOf(n) === i).sort((a, b) => (masterPos.get(a) ?? 1e6) - (masterPos.get(b) ?? 1e6) || a - b)
   const selectedNumbers = selected.map(Number)
   const pairs = [[0, 1], [0, 2], [1, 2]]

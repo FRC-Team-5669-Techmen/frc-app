@@ -141,6 +141,20 @@ export default {
     scouting_save: save,
   },
   functions: {
+    // api/tba.js (ledger 0035): the public Blue Alliance feed. Fixture Regional
+    // links to 2026cabl by its dates; 40 of its 60 qualification matches are played.
+    'api-tba': ({ body, db, now }) => {
+      const comp = rows(db, 'events').find(e => e.id === EVENT)
+      const day = iso => new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
+      if (body?.team) return ok({ team: Number(body.team), year: Number(body.year), events: [
+        { key: '2026casgv', title: 'CA District San Gabriel Valley Event (2026)', start: '2026-03-27', end: '2026-03-29' },
+        ...(comp ? [{ key: '2026cabl', title: 'Beach Blitz presented by the Gene Haas Foundation (2026)', start: day(comp.starts_at), end: day(new Date(Date.parse(comp.ends_at ?? comp.starts_at) - 1).toISOString()) }] : []),
+      ] })
+      if (body?.event !== '2026cabl') return fail(`The Blue Alliance has no event ${body?.event}.`, '404')
+      const r = fixtureResults({ played: 40, now })
+      return ok({ event_key: '2026cabl', title: 'Beach Blitz presented by the Gene Haas Foundation (2026)', start: null, end: null,
+        teams: r.teams.map(t => ({ team_number: t.team_number, payload: { name: t.payload.name, source: 'tba' } })), matches: r.matches, alliances: [], fetched_at: r.fetched_at, source: 'tba-pages' })
+    },
     'scouting-import': ({ body, persona, now }) => {
       if (!persona || persona.isParent) return fail('Not permitted.', '42501')
       // A roster import answers only for 2026cabl, with the pick board's TBA

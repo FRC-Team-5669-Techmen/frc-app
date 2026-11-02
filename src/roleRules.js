@@ -26,6 +26,22 @@ export const ROLE_PLACE = Object.freeze({
   pit_crew: 'pit', battery_captain: 'pit', safety_captain: 'pit', pit_speaker: 'pit', impact_presenter: 'pit',
   meet_team: 'roaming', media: 'roaming',
 })
+// The tool each role works in during its slot (ledger 0035). My schedule's
+// station card opens it, so a scout goes straight to scouting and a battery
+// captain to the battery board instead of hunting through the nav. A role
+// with no app tool has none (null).
+export function toolFor(role, eventId) {
+  switch (role) {
+    case 'scout': case 'scouting_lead': return { to: `/scouting/${eventId}`, label: 'Open scouting' }
+    case 'team_captain': return { to: `/scouting/${eventId}/board`, label: 'Open the pick board' }
+    case 'meet_team': return { to: `/meet/${eventId}`, label: 'Meet a team' }
+    case 'battery_captain': return { to: '/batteries', label: 'Battery board' }
+    case 'driver': case 'operator': case 'drive_coach': return { to: '/robot/matches', label: 'Match log' }
+    case 'human_player': return { to: '/human-player', label: 'Human player' }
+    default: return null
+  }
+}
+
 // Places where one person can hold several roles at once.
 const SHARED_PLACES = new Set(['pit', 'roaming'])
 

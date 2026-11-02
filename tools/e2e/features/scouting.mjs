@@ -22,6 +22,13 @@ async function expandTeam(t, team) {
   if ((await button.getAttribute('aria-expanded')) !== 'true') await t.press(button)
   await t.waitFor(`#sc-team-detail-${team} .sc-team-card`)
 }
+// Ledger 0035: with a schedule, the form opens on the match picker. These
+// steps type a team and match by hand, as for a robot not on the schedule.
+async function typed(t) {
+  await t.waitFor('[data-match-picker], .sc-dialog input[type="number"]', { timeout: 8000 }).catch(() => {})
+  const off = t.page.getByRole('button', { name: 'Not on the schedule' })
+  if (await off.count()) await t.press(off)
+}
 async function choice(t, group, name) {
   await t.press(t.page.getByRole('group', { name: group, exact: true }).getByRole('button', { name, exact: true }))
 }
@@ -51,6 +58,7 @@ export default {
       t.as('capture observation')
       await t.press(t.page.getByRole('button', { name: 'New observation', exact: true }))
       await t.waitFor('dialog[open]')
+      await typed(t)
       await t.page.getByLabel('Team number', { exact: true }).fill('5669')
       await t.page.getByLabel('Match', { exact: true }).fill('qm7')
       t.eq('new observation starts with no selected answers', await t.count('dialog button[aria-pressed="true"]'), 0)
@@ -74,6 +82,7 @@ export default {
     await t.step('draft survives interruption', async () => {
       t.as('draft recovery')
       await t.press(t.page.getByRole('button', { name: 'New observation', exact: true }))
+      await typed(t)
       await t.page.getByLabel('Team number', { exact: true }).fill('1538')
       await t.page.getByLabel('Match', { exact: true }).fill('qm8')
       await t.page.getByLabel('Notes', { exact: true }).fill('Unsubmitted draft survives closing and reload.')
@@ -351,6 +360,7 @@ export default {
       await t.waitText('Fixture Regional')
       await connectivity(t, false)
       await t.press(t.page.getByRole('button', { name: 'New observation', exact: true }))
+      await typed(t)
       await t.page.getByLabel('Team number', { exact: true }).fill('5669')
       await t.page.getByLabel('Match', { exact: true }).fill('qm302')
       await choice(t, 'Passes under the TRENCH', 'Did not see')
@@ -418,6 +428,7 @@ export default {
       await t.waitText('Fixture Regional')
       await t.press(t.page.getByRole('button', { name: 'New observation', exact: true }))
       await t.waitFor('dialog[open]')
+      await typed(t)
       await t.page.getByLabel('Team number', { exact: true }).fill('1323')
       await t.page.getByLabel('Match', { exact: true }).fill('qm33')
       t.eq('every count starts not recorded (no 0 shown)', await t.page.locator('dialog .sc-count-value.sc-unrecorded').count(), 3)
@@ -565,6 +576,7 @@ export default {
       const card1538 = t.page.locator('.sc-team-card').filter({ has: t.page.locator('.sc-team-number', { hasText: /^1538$/ }) })
       await t.press(card1538.getByRole('button', { name: 'Observe', exact: true }))
       await t.waitFor('dialog[open]')
+      await typed(t)
       await t.page.getByLabel('Match', { exact: true }).fill('P2')
       t.check('the form says what a typed practice label saves as', (await t.page.locator('dialog [data-match-hint]').textContent()).includes('Saves as Practice 2 (pm2)'))
       await choice(t, 'Passes under the TRENCH', 'Yes')
@@ -579,6 +591,7 @@ export default {
       await t.shot('saved-confirmation')
       await t.press(t.page.getByRole('button', { name: 'Record another', exact: true }))
       await t.waitFor('dialog[open]')
+      await typed(t)
       await t.page.getByLabel('Team number', { exact: true }).fill('1538')
       await t.page.getByLabel('Match', { exact: true }).fill('Practice 3')
       await t.page.getByLabel('Notes', { exact: true }).fill('Second practice match for the same robot.')
@@ -589,6 +602,7 @@ export default {
       t.eq('two practice matches of one robot are two records', practice, ['pm2', 'pm3'])
       await t.press(t.page.getByRole('button', { name: 'New observation', exact: true }))
       await t.waitFor('dialog[open]')
+      await typed(t)
       await t.page.getByLabel('Team number', { exact: true }).fill('1538')
       await t.page.getByLabel('Match', { exact: true }).fill('practice')
       await t.page.getByLabel('Notes', { exact: true }).fill('No number.')

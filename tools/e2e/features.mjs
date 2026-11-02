@@ -86,6 +86,7 @@ const FEATURES = Object.freeze([
   'verify-hours',
   'pick-board',
   'my-schedule',
+  'event-link',
 ]);
 
 

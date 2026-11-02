@@ -1,4 +1,4 @@
-.sc-wrap { max-width: 1240px; margin: 0 auto; padding: 28px 24px 72px; color: var(--text); font-family: var(--font-ui); }
+.sc-wrap { max-width: 1480px; margin: 0 auto; padding: 28px 24px 72px; color: var(--text); font-family: var(--font-ui); }
 .sc-wrap *, .sc-dialog * { box-sizing: border-box; }
 .sc-wrap h1, .sc-wrap h2, .sc-wrap h3, .sc-wrap h4, .sc-dialog h2 { margin: 0; font-weight: 600; line-height: 1.2; }
 .sc-wrap h1 { font-size: clamp(26px, 4vw, 42px); letter-spacing: -.035em; }
@@ -382,3 +382,21 @@
 .sc-wrap .sc-rate-buttons button { min-height: 64px; font-size: 16px; }
 .sc-wrap .sc-rate-buttons .sc-rate-dnp { color: var(--fault); }
 @media (max-width: 560px) { .sc-rate-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Schedule match picker (ledger 0035): tap the match and the robot. */
+.sc-picker { display: grid; gap: 10px; }
+.sc-picker-head { display: grid; grid-template-columns: 48px 1fr 48px; gap: 8px; align-items: center; }
+.sc-picker-head select { font: 600 16px var(--font-ui); }
+.sc-robots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sc-dialog .sc-robot { display: grid; justify-items: center; gap: 2px; min-height: 64px; padding: 8px 4px; }
+.sc-robot strong { font: 700 20px var(--font-mono); letter-spacing: .02em; }
+.sc-robot-pos, .sc-robot-cov { font: 11px var(--font-mono); color: var(--steel); text-transform: uppercase; letter-spacing: .06em; }
+.sc-dialog .sc-robot-red { border-color: var(--alliance-red); background: var(--alliance-red-a18); }
+.sc-dialog .sc-robot-blue { border-color: var(--alliance-blue); background: var(--alliance-blue-a20); }
+.sc-robot[data-covered="yes"] { opacity: .62; }
+.sc-robot[data-covered="no"] .sc-robot-cov { color: var(--text); }
+.sc-dialog .sc-robot[aria-pressed="true"] { outline: 3px solid var(--gold); outline-offset: 1px; opacity: 1; }
+.sc-dialog .sc-linkbtn, .sc-wrap .sc-linkbtn { min-height: 44px; border: 0; background: none; color: var(--gold); padding: 0 4px; text-decoration: underline; }
+.sc-warn { color: var(--gold); }
+.sc-link-strip { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; padding: 8px 12px; border: 1px solid var(--border-strong); border-left: 3px solid var(--gold); border-radius: var(--radius); background: var(--surface); font-family: var(--font-mono); font-size: 13px; }
+.sc-link-strip strong { font-family: var(--font-ui); }

@@ -20,6 +20,7 @@ import { importedMapKey } from './pit-map-model'
 import { boardOrder, compactMatches, rankingFromMatches } from './pickRank'
 import { onClock, picksUntilOurs, pickable, replay } from './draft'
 import { boardInputs, boardOdds, draftFrom, rankRows, OUR_TEAM } from './board'
+import { useEventFeed } from './eventLink'
 import './PickBoard.css'
 
 const PRIORS = import.meta.glob('./priors/*.js')
@@ -113,7 +114,16 @@ function Board({ uid, eventId }) {
   const state = board?.state ?? {}
   const settings = state.settings ?? {}
   const confirmed = useMemo(() => projectRecords(data?.records ?? [], [], uid, eventId).confirmed, [data, uid, eventId])
-  const eventKey = settings.event_key || importedMapKey(confirmed) || ''
+  // A saved key wins; otherwise the competition finds its own Blue Alliance
+  // event by date, and every device reads results straight from /api/tba
+  // (ledger 0035). At Beach Blitz the board sat empty waiting for a typed key.
+  const linked = useEventFeed(data?.event, settings.event_key || importedMapKey(confirmed) || '', { detail: true })
+  const eventKey = linked.key
+  const liveMatches = useMemo(() => linked.feed ? { event_key: linked.key, fetched_at: linked.feed.fetched_at, source: linked.feed.source,
+    teams: (linked.feed.teams ?? []).map(t => ({ n: t.team_number, name: t.payload?.name ?? '' })), matches: compactMatches(linked.feed.matches ?? []) } : null, [linked.feed, linked.key])
+  const playedIn = m => (m?.matches ?? []).filter(x => x.level === 'qm' && x.red?.score != null).length
+  // The saved pull is used while it is at least as far along as the live feed.
+  const results = liveMatches && (!state.matches || playedIn(liveMatches) > playedIn(state.matches) || (!state.matches.teams?.length && liveMatches.teams.length)) ? liveMatches : state.matches
   const ourTeam = Number(settings.our_team) || OUR_TEAM
   useEffect(() => { if (!keyDraft && eventKey) setKeyDraft(eventKey) }, [eventKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -124,7 +134,7 @@ function Board({ uid, eventId }) {
     load().then(m => { if (alive.current) setPrior(m.default ?? m) }).catch(() => setPrior(null))
   }, [eventKey])
 
-  const { teams, names, priorMap, matches } = useMemo(() => boardInputs({ state, records: confirmed, prior }), [state.matches, confirmed, prior]) // eslint-disable-line react-hooks/exhaustive-deps
+  const { teams, names, priorMap, matches } = useMemo(() => boardInputs({ state: { ...state, matches: results }, records: confirmed, prior }), [results, confirmed, prior]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const overrides = state.overrides ?? {}
   const selectionSaved = state.selection ?? null
@@ -243,14 +253,14 @@ function Board({ uid, eventId }) {
   if (!data && !board) return <main className="pk-wrap"><p role="status">Opening the pick board…</p></main>
   const played = matches.filter(m => m.level === 'qm' && m.red?.score != null).length
   const title = data?.event?.title || 'Event'
-  const dataLine = played ? `TBA results: ${played} matches · ${ago(state.matches?.fetched_at)}` : prior ? `2026 season numbers · no matches yet` : 'No results yet'
+  const dataLine = played ? `TBA results: ${played} matches · ${ago(results?.fetched_at)}` : prior ? `2026 season numbers · no matches yet` : linked.error ? `No results: ${linked.error}` : 'No results yet'
 
   return <main className="pk-wrap" data-pick-board data-live={live ? 'yes' : 'no'}>
     <header className="pk-top">
       <Link className="pk-back" to={`/scouting/${eventId}`}>← Scouting</Link>
       <div className="pk-title"><span className="pk-eyebrow">Pick board</span><h1>{title}</h1></div>
       <div className="pk-chips">
-        <span className="pk-chip" data-data-line>{dataLine}</span>
+        <span className="pk-chip" data-data-line data-found={linked.auto ? 'date' : linked.key ? 'saved' : 'none'} title={linked.key ? `The Blue Alliance event ${linked.key}${linked.auto ? ', found by its dates' : ''}` : undefined}>{dataLine}</span>
         <span className="pk-chip">{online ? 'Live' : 'Offline copy'}{pending ? ' · 1 change not sent' : ''}</span>
         {manager && <button className="pk-btn" disabled={!eventKey || busy === 'pull' || !online} onClick={() => pullResults(false)}>{busy === 'pull' ? 'Pulling…' : 'Pull results'}</button>}
         {manager && <button className="pk-btn" aria-expanded={setupOpen} onClick={() => setSetupOpen(v => !v)}>{live ? 'Selection setup' : 'Start alliance selection'}</button>}

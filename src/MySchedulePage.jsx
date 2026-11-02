@@ -109,6 +109,7 @@ export default function MySchedulePage({ session }) {
             <strong>{it.title}</strong>
             {(it.detail || it.where) && <span className="ms-detail">{[it.detail, it.where].filter(Boolean).join(' · ')}</span>}
             {it.note && <span className="ms-note">{it.note}</span>}
+            {it.tools?.length > 0 && <span className="ms-tools">{it.tools.map((t) => <Link key={t.to} className="ms-tool" to={t.to} data-tool={t.to}>{t.label} →</Link>)}</span>}
           </div>
         </li>
       })}

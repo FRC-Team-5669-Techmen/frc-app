@@ -319,6 +319,13 @@ const functions = {
   const real = globalThis.fetch.bind(globalThis)
   globalThis.fetch = async (input, init = {}) => {
     const url = typeof input === 'string' ? input : input?.url
+    // The Blue Alliance feed (api/tba.js) answers from the fixture's TBA stand-in.
+    if (url && /^\/api\/tba(\?|$)/.test(url)) {
+      calls.push({ at: new Date().toISOString(), kind: 'function', name: 'api-tba', via: 'fetch' })
+      const out = await runFunction('api-tba', Object.fromEntries(new URLSearchParams(url.split('?')[1] ?? '')))
+      const payload = out.error ? { error: out.error.message } : out.data
+      return new Response(JSON.stringify(payload ?? null), { status: out.error ? (Number(out.error.code) || 502) : 200, headers: { 'Content-Type': 'application/json' } })
+    }
     if (!url || !url.startsWith(prefix)) return real(input, init)
     const name = url.slice(prefix.length).split(/[?#/]/)[0]
     let body = init.body
