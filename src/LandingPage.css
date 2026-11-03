@@ -189,3 +189,14 @@
   letter-spacing: 0.08em;
   color: var(--muted);
 }
+
+@media (min-width: 1024px) {
+  .landing-wrap { max-width: var(--page-width); margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-rows: auto 1fr auto; }
+  .landing-nav, .landing-footer { grid-column: 1 / -1; }
+  .landing-hero { padding: 4.5rem 0; }
+  .landing-hero .landing-inner { padding-inline: var(--page-gap); }
+  .landing-heading { font-size: clamp(2.5rem, 4vw, 3.75rem); }
+  .landing-features { padding: 3rem 0; border-top: 0; border-left: 1px solid var(--border); }
+  .landing-cards { grid-template-columns: minmax(0, 1fr); }
+  .landing-card-desc { max-width: 60ch; }
+}

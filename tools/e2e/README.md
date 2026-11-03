@@ -1,5 +1,38 @@
 # `tools/e2e` -- end-to-end tools on fixture mode
 
+## Computer and phone layout gate
+
+`features.mjs` now defaults to **375x812, 1152x900 and 1440x900**. Its
+`desktop-layout` spec visits every non-development route in the fixture catalog,
+including redirect aliases, plus student/parent dashboards, personal hours,
+application/access gates, handbook reading, scouting practice and open Jobs and
+Feedback records. Each runs in both light and dark. Real content, document
+overflow, escaped content, a 1280px frame cap, detail bounds and intended columns
+are measured together. Empty-page and 2000px-wide mutants must fail the oracle.
+The `/_fixture` controls and `/_ds` presentation specimen are development tools,
+outside this app-layout gate. Existing feature specs still exercise migration
+states, actions and role gates; geometry does not replace those checks.
+
+```bash
+node tools/e2e/nav-audit.mjs --out artifacts/desktop-nav
+node tools/e2e/features.mjs --only desktop-layout
+node tools/e2e/layout-audit.mjs --out artifacts/desktop-after
+node tools/e2e/layout-audit.mjs --baseline --out artifacts/desktop-before
+```
+
+`nav-audit` checks all four personas at all three widths and both themes,
+including open Hours/account menus and the hubs. `layout-audit` writes full-page
+PNGs and `layout.json` with per-page geometry; a normal run fails on a failed
+check. `--baseline` explicitly records failures without using them as a release
+gate. Use it on the original checkout before editing. `--widths`, `--themes`
+and `--only` narrow captures; `features.mjs --widths 375,1440` can replay the old
+two-width suite. Table scrolling stays local; the document never hides overflow.
+
+Features run sequentially. The three widths of each feature use independent
+browser contexts, stores, clocks and screenshot names and run concurrently;
+`--serial` retains the sequential viewport runner for diagnosis. No assertions,
+timers or interaction checks change between those modes.
+
 Both tools run the REAL app in a real Chromium against fixture mode
 (`src/dev/fixture/`, `vite --mode fixture`): every route, every component,
 an in-memory Supabase seeded with fictional people. No credential, no network,

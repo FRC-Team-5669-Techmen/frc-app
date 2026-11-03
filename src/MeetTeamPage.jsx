@@ -102,12 +102,16 @@ function MeetTeamEvent({ eventId, session }) {
         </section>
       )}
 
+      <div className="mt-record">
       {data.can_write && <ConnectionForm key={`form:${data.connections.length}`} data={data} uid={uid} eventId={eventId} onSaved={async (text) => { await load(); setMsg(text) }} />}
       {msg && <p className="mt-msg" role="status">{msg}</p>}
+      </div>
 
+      <div className="mt-community">
       {data.can_manage && <StaffPanel eventId={eventId} onChanged={load} />}
 
       <SharedList data={data} eventId={eventId} uid={uid} onChanged={async (text) => { await load(); setMsg(text) }} />
+      </div>
     </Shell>
   )
 }

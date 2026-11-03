@@ -604,6 +604,7 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
       {error && <p className="sa-error">{error}</p>}
       {note && <p className="sa-note-line" data-test="note">{note}</p>}
 
+      <aside className="sa-sidebar" aria-label="Surveys">
       <form className="sa-new" onSubmit={createSurvey}>
         <input className="sa-input" placeholder="New survey title, e.g. Week of Sep 7"
                value={newTitle} onChange={e => setNewTitle(e.target.value)} />
@@ -665,6 +666,7 @@ export default function SurveysAdmin({ session, hasRole = () => false }) {
         })}
         {!loading && !surveys.length && <p className="sa-muted">No surveys yet.</p>}
       </ul>
+      </aside>
 
       {survey && (
         <section className="sa-detail">

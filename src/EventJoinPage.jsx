@@ -226,6 +226,7 @@ export default function EventJoinPage() {
             )}
           </fieldset>
 
+          <div className="eh-join-contact">
           <label className="eh-field"><span className="eh-q-label">Your name</span>
             <input className="eh-input" required autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} /></label>
           <label className="eh-field"><span className="eh-q-label">Your email</span>
@@ -243,6 +244,7 @@ export default function EventJoinPage() {
 
           {error && <p className="eh-note eh-note-bad" role="alert" data-testid="eh-join-error">{error}</p>}
           <button type="submit" className="eh-btn eh-btn-primary eh-join-go" disabled={busy}>{busy ? 'Starting…' : 'Start'}</button>
+          </div>
         </form>
       )}
 

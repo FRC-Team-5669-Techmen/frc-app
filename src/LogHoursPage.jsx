@@ -124,6 +124,7 @@ export default function LogHoursPage({ session }) {
         )}
 
         {/* ── Submission form ── */}
+        <section className="lh-compose" aria-label="Log hours">
         <p className="lh-section-heading">Log hours</p>
         <div className="lh-form-card">
           <form onSubmit={handleSubmit} className="lh-form">
@@ -194,6 +195,9 @@ export default function LogHoursPage({ session }) {
           </form>
         </div>
 
+        </section>
+
+        <section className="lh-history" aria-label="My entries">
         {/* ── Entry list ── */}
         {entries === null && (
           <div className="lh-loading"><div className="lh-spinner" /></div>
@@ -249,6 +253,7 @@ export default function LogHoursPage({ session }) {
         {entries !== null && entries.length === 0 && (
           <p className="lh-empty">No entries yet. Log your first hours above.</p>
         )}
+        </section>
 
       </div>
 

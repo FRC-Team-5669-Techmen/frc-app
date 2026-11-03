@@ -20,8 +20,8 @@
  * HOW IT RUNS. Boots `vite --mode fixture` through tools/e2e/lib.mjs (or
  * reuses a fixture server already serving THIS checkout on the port), launches
  * the container's Chromium, and for every spec module in tools/e2e/features/
- * runs it twice: at 375x812 (touch, `isMobile`, an Android Chrome user agent)
- * and at 1440x900, each in a fresh browser context in America/Los_Angeles
+ * runs it at 375x812 (touch, `isMobile`, an Android Chrome user agent),
+ * 1152x900 and 1440x900, each in a fresh browser context in America/Los_Angeles
  * whose clock is Playwright's, installed at a fixed Thursday afternoon (the
  * same instant tools/e2e/checkin.mjs uses, the shop open). A spec drives both
  * migration states where its feature has a migration (`mig:all` and the
@@ -29,8 +29,8 @@
  *
  * WHAT IT PRINTS. One line per assertion, PASS or FAIL with its measurement
  * (FAIL lines always; PASS lines with --verbose), one summary line per
- * feature, `<feature>: N/N passed (375 and 1440)`, and a final line,
- * `features e2e: N/N passed (375 and 1440)`. Exits non-zero on any failure.
+ * feature, `<feature>: N/N passed (375, 1152, 1440)`, and a final line,
+ * `features e2e: N/N passed (375, 1152, 1440)`. Exits non-zero on any failure.
  * Screenshots of every state go to artifacts/e2e/features/<feature>-<width>-
  * <state>.png and every result to artifacts/e2e/features/results.json
  * (artifacts/ is gitignored).
@@ -47,12 +47,15 @@
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { REPO, VIEWPORTS, flag, startFixtureServer, launchBrowser, newContext, watchConsole, ensureDir, waitForFixture } from './lib.mjs';
+import { REPO, viewportFor, flag, startFixtureServer, launchBrowser, newContext, watchConsole, ensureDir, waitForFixture } from './lib.mjs';
+import { LAYOUT_WIDTHS } from './layout.mjs';
 import { CLOCK_START } from './features/_util.mjs';
 
 const args = process.argv.slice(2);
 const PORT = Number(flag(args, 'port', process.env.FIXTURE_PORT || 5401));
 const VERBOSE = !!flag(args, 'verbose', false);
+const WIDTHS = String(flag(args, 'widths', LAYOUT_WIDTHS.join(','))).split(',').map(viewportFor);
+const WIDTH_LABEL = WIDTHS.map(v => v.name).join(', ');
 const OUT = ensureDir(path.join(REPO, 'artifacts', 'e2e', 'features'));
 
 // The specs, in run order. Each is tools/e2e/features/<name>.mjs.
@@ -87,6 +90,7 @@ const FEATURES = Object.freeze([
   'pick-board',
   'my-schedule',
   'event-link',
+  'desktop-layout',
 ]);
 
 
@@ -441,7 +445,9 @@ async function main() {
   const browser = await launchBrowser();
   try {
     for (const spec of specs) {
-      for (const vp of [VIEWPORTS[375], VIEWPORTS[1440]]) {
+      // Each width owns a fresh context, clock, store and screenshot names.
+      // Keep features sequential; independent viewport runs can overlap.
+      const runWidth = async vp => {
         const t = new Harness({ browser, origin: server.origin, vp, feature: spec.name });
         await t.init();
         try {
@@ -452,10 +458,15 @@ async function main() {
         }
         t.consoleCheck();
         await t.close();
+      };
+      if (flag(args, 'serial', false)) {
+        for (const vp of WIDTHS) await runWidth(vp);
+      } else {
+        await Promise.all(WIDTHS.map(runWidth));
       }
       const mine = results.filter((r) => r.feature === spec.name);
       const ok = mine.filter((r) => r.ok).length;
-      console.log(`${spec.name}: ${ok}/${mine.length} passed (375 and 1440)`);
+      console.log(`${spec.name}: ${ok}/${mine.length} passed (${WIDTH_LABEL})`);
     }
   } finally {
     await browser.close();
@@ -464,12 +475,12 @@ async function main() {
 
   writeFileSync(path.join(OUT, 'results.json'), JSON.stringify({ clockStart: CLOCK_START.toISOString(), clockMode: 'fixed-date-real-timers', features: wanted, results }, null, 2));
   const passed = results.filter((r) => r.ok).length;
-  console.log(`features e2e: ${passed}/${results.length} passed (375 and 1440)`);
+  console.log(`features e2e: ${passed}/${results.length} passed (${WIDTH_LABEL})`);
   process.exit(passed === results.length && results.length > 0 ? 0 : 1);
 }
 
 main().catch((e) => {
   console.error(e);
-  console.log(`features e2e: ${results.filter((r) => r.ok).length}/${results.length || 1} passed (375 and 1440)`);
+  console.log(`features e2e: ${results.filter((r) => r.ok).length}/${results.length || 1} passed (${WIDTH_LABEL})`);
   process.exit(1);
 });

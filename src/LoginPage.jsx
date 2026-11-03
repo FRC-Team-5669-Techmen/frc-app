@@ -84,11 +84,12 @@ export default function LoginPage() {
 
   return (
     <div className="login-wrap">
-      <div className="login-card">
+      <div className="login-card login-card-options">
         <img src="/assets/logos/Mark-Gold.svg" className="login-mark" alt="Techmen" />
         <h1>Techmen</h1>
         <p className="subtitle">FRC Team 5669</p>
 
+        <section className="login-school" aria-label="School account">
         <button type="button" className="google-btn" onClick={handleGoogleSignIn} disabled={loading}>
           <svg className="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -99,7 +100,9 @@ export default function LoginPage() {
           Continue with school account
         </button>
         <p className="login-cap">Students &amp; mentors — your <strong>@boscotech.edu</strong> Google account</p>
+        </section>
 
+        <section className="login-guests" aria-label="Parents and guests">
         <div className="login-divider"><span>parents &amp; guests</span></div>
 
         <form onSubmit={handleSendCode}>
@@ -119,6 +122,7 @@ export default function LoginPage() {
           Using a personal email? Sign in here — you can request access on the next screen.
         </p>
         {error && <p className="error">{error}</p>}
+        </section>
       </div>
     </div>
   )

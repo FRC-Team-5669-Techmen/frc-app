@@ -683,6 +683,7 @@ export default function SchedulePage({ session, hasRole }) {
 
         {view === 'month' && (
           <div className="sch-month">
+            <div className="sch-calendar">
             <div className="sch-cal-nav">
               <button className="sch-nav-btn" onClick={() => setMonthAnchor(a => addMonths(a, -1))} aria-label="Previous month">‹</button>
               <span className="sch-cal-label">{fmtMonth(monthAnchor)}</span>
@@ -716,6 +717,8 @@ export default function SchedulePage({ session, hasRole }) {
                 </button>
               ))}
             </div>
+            </div>
+            <div className="sch-day-detail">
             {selectedDay && (() => {
               const dayEvents = evByDay[selectedDay] ?? []
               const dayJobs   = jobDueByDay[selectedDay] ?? []
@@ -740,6 +743,7 @@ export default function SchedulePage({ session, hasRole }) {
                 </>
               )
             })()}
+            </div>
           </div>
         )}
       </div>

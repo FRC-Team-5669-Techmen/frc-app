@@ -215,6 +215,7 @@ export default function AccessRequestsPage({ hasRole }) {
           )}
         </section>
 
+        <section className="ar-access" aria-label="Access requests">
         {requests.length === 0 ? (
           <p className="ar-empty">No pending requests.</p>
         ) : (
@@ -253,6 +254,7 @@ export default function AccessRequestsPage({ hasRole }) {
             ))}
           </ul>
         )}
+        </section>
       </div>
     </div>
   )

@@ -524,6 +524,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
 
   return (
     <div className="jobs-wrap">
+      <div className="jobs-workspace">
       <div className="jobs-body">
 
         <div className="jobs-header">
@@ -1059,6 +1060,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
           </div>
         )
       })()}
+      </div>
     </div>
   )
 }

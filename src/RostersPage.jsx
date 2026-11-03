@@ -70,7 +70,7 @@ function RosterList() {
     <div className="st-wrap">
       <div className="st-head"><div><h1 className="st-title">Event rosters</h1><p className="st-sub">Competitions and mandatory events. Rosters are posted at least 10 days ahead.</p></div></div>
       {events.length === 0 ? <p className="st-muted">No competitions or mandatory events coming up.</p> : (
-        <ul className="st-list">{events.map((e) => (
+        <ul className="st-list st-roster-index">{events.map((e) => (
           <li key={e.id} className="st-row-between" data-event={e.id}>
             <span><Link to={`/rosters/${e.id}`}><b>{e.title}</b></Link> <span className="st-muted">{fmtWhen(e.starts_at)}</span></span>
             <span className={`st-chip${e.posted ? '' : ' st-chip-pending'}`}>{e.posted ? 'Posted' : 'Not posted'}</span>

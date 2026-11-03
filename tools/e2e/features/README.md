@@ -8,19 +8,19 @@ harness and then deleted it; each spec here is one of those checks, made
 permanent.
 
 ```bash
-npm run test:features                                   # every feature, 375 and 1440
+npm run test:features                                   # every feature, 375, 1152 and 1440
 node tools/e2e/features.mjs --only feedback,announce    # some features
 node tools/e2e/features.mjs --port 5412 --verbose       # another port; every PASS line too
 ```
 
 The runner (`tools/e2e/features.mjs`, documented at its top) boots or reuses a
 fixture server for THIS checkout through `tools/e2e/lib.mjs`, and runs each
-spec twice -- 375x812 (touch, `isMobile`, an Android Chrome user agent) and
+spec at 375x812 (touch, `isMobile`, an Android Chrome user agent), 1152x900 and
 1440x900 -- each time in a fresh browser context in America/Los_Angeles with
 Playwright's clock installed at Thursday 2026-10-01 4:00 PM PDT. Every
 assertion prints `PASS` or `FAIL` with its measurement (FAIL always, PASS with
-`--verbose`), each feature prints `<feature>: N/N passed (375 and 1440)`, and
-the run ends `features e2e: N/N passed (375 and 1440)`, exiting non-zero on any
+`--verbose`), each feature prints `<feature>: N/N passed (375, 1152, 1440)`, and
+the run ends `features e2e: N/N passed (375, 1152, 1440)`, exiting non-zero on any
 failure. Screenshots of every state land in `artifacts/e2e/features/` and every
 result in `artifacts/e2e/features/results.json`. A full run takes about five
 minutes on this container.

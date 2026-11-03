@@ -322,6 +322,7 @@ export default function ProfilePage({ session, hasRole = () => false }) {
 
         </div>
 
+        <div className="profile-preferences">
         <p className="profile-section-heading">Appearance</p>
         <div className="profile-card profile-theme-card">
           <p className="profile-cal-intro">Light, Dark, or match this device. Saved on this device only.</p>
@@ -394,6 +395,7 @@ export default function ProfilePage({ session, hasRole = () => false }) {
           <a href="https://ideabosco.com/certifications" target="_blank" rel="noopener noreferrer">ideabosco.com/certifications</a>.
           See yours on <Link to="/certifications">Certifications</Link>.
         </p>
+        </div>
 
       </div>
     </div>
