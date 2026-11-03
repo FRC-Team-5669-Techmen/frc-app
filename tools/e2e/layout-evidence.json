@@ -408,7 +408,7 @@
       "label": "Robot hub",
       "group": "member",
       "persona": "admin",
-      "notes": ["Compact tool-card grid.", "Tool cards use a three-column desktop grid."],
+      "notes": ["Compact tool-card grid.", "Tool cards use the shared frame: four columns at 1152 and three at 1440."],
       "views": [
         {"width":375,"theme":"dark","before":{"content":"hub-wrap","width":375,"height":1630.7,"left":0,"right":375,"overflow":0,"chars":578,"png":"screenshots/before/admin-robot-robot-hub-375-dark.png","checks":{"rendered":true,"overflow":true,"bounds":true}},"after":{"content":"hub-wrap","width":375,"height":1630.7,"left":0,"right":375,"overflow":0,"chars":578,"png":"screenshots/after/admin-robot-robot-hub-375-dark.png","checks":{"rendered":true,"overflow":true,"bounds":true,"panels":true}}},
         {"width":375,"theme":"light","before":{"content":"hub-wrap","width":375,"height":1630.7,"left":0,"right":375,"overflow":0,"chars":578,"png":"screenshots/before/admin-robot-robot-hub-375-light.png","checks":{"rendered":true,"overflow":true,"bounds":true}},"after":{"content":"hub-wrap","width":375,"height":1630.7,"left":0,"right":375,"overflow":0,"chars":578,"png":"screenshots/after/admin-robot-robot-hub-375-light.png","checks":{"rendered":true,"overflow":true,"bounds":true,"panels":true}}},
@@ -904,7 +904,7 @@
       "label": "Sign-out approvals",
       "group": "staff",
       "persona": "admin",
-      "notes": ["Compact waiting, present and decision panels.", "Waiting and present panels share the width; decisions span the frame."],
+      "notes": ["Compact waiting, present and decision panels.", "Waiting sits beside the signed-in and decision panels."],
       "views": [
         {"width":375,"theme":"dark","before":{"content":"sop-wrap","width":375,"height":686.8,"left":0,"right":375,"overflow":0,"chars":298,"png":"screenshots/before/admin-signouts-sign-out-approvals-375-dark.png","checks":{"rendered":true,"overflow":true,"bounds":true}},"after":{"content":"sop-wrap","width":375,"height":686.8,"left":0,"right":375,"overflow":0,"chars":298,"png":"screenshots/after/admin-signouts-sign-out-approvals-375-dark.png","checks":{"rendered":true,"overflow":true,"bounds":true,"panels":true}}},
         {"width":375,"theme":"light","before":{"content":"sop-wrap","width":375,"height":686.8,"left":0,"right":375,"overflow":0,"chars":298,"png":"screenshots/before/admin-signouts-sign-out-approvals-375-light.png","checks":{"rendered":true,"overflow":true,"bounds":true}},"after":{"content":"sop-wrap","width":375,"height":686.8,"left":0,"right":375,"overflow":0,"chars":298,"png":"screenshots/after/admin-signouts-sign-out-approvals-375-light.png","checks":{"rendered":true,"overflow":true,"bounds":true,"panels":true}}},

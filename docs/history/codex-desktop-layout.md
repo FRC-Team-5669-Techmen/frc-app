@@ -2,7 +2,7 @@
 title: "Computer layouts across the Techmen application, with repeatable three-width evidence"
 date: 2026-11-03
 branches: [main]
-commits: []
+commits: [783ab88]
 migrations: []
 subsystems: ["Landing and navigation", "Hours", "Profile", "Fixture mode"]
 ---
@@ -15,7 +15,11 @@ src/layout.css supplies a shared 80rem frame, desktop grids and short prose line
 
 The geometry oracle is tools/e2e/layout.mjs, shared by nav-audit.mjs, layout-audit.mjs and the standing desktop-layout feature spec. It checks real nonempty content, document overflow, escaping descendants, viewport/frame bounds and detail panes. The feature spec also checks intended columns and deliberately breaks the width and empties the page to prove the oracle rejects both. Every existing feature now runs at 375, 1152 and 1440. Features remain sequential; their widths use independent contexts, stores, clocks and screenshot names concurrently, with --serial available for diagnosis. No assertion or timeout is relaxed. The report packager refuses a missing, duplicate or failing after view and produces every original full-page screenshot, a width/theme/page viewer, raw measurements and an 83-row PR description with before/after notes.
 
-The reproducible capture/report commands are documented in tools/e2e/README.md. To recreate the baseline, make a detached checkout of 4b4516a, copy only the tools/e2e/layout*.mjs harnesses there, install its dependencies and run layout-audit.mjs --baseline on a free port. Run the same capture on the completed tree and pass both capture directories to layout-report.mjs. Browser evidence uses fictional in-memory data; it does not establish real-device Safari/NFC, school sign-in, live RLS or deployed production behavior. Final gate summaries and the published commit are recorded in the session's PR-description deliverable.
+The reproducible capture/report commands are documented in tools/e2e/README.md. To recreate the baseline, make a detached checkout of 4b4516a, copy only the tools/e2e/layout*.mjs harnesses there, install its dependencies and run layout-audit.mjs --baseline on a free port. Run the same capture on the completed tree and pass both capture directories to layout-report.mjs. Browser evidence uses fictional in-memory data; it does not establish real-device Safari/NFC, school sign-in, live RLS or deployed production behavior.
+
+The exact code tree 1b8cf2282decaf08103c0f0ce3a14275dd2baef6 passed all seven solo checks before commit 783ab88 was pushed to main: build (192 precache entries, 2579.35 KiB); npm test (113 files / 1550 tests); ds:audit (36 aliases × 3 grounds, 79 components, 315 files); Discord calendar (19/19); lossless history (50 original entries, 44 post-split); check-in (51/51 at 375 and 1440); features (6935/6935 at 375, 1152 and 1440), including desktop-layout (2732/2732). Navigation passed 24/24 persona/theme/width configurations and 96 measured states. The paired screenshot audit passed all 498 after views, with zero horizontal document overflow and no escaping descendants. tools/e2e/layout-evidence.json retains the paired numbers and source fingerprint 1dcb789e356077087809d245a84b47822c71ae108e2733ee584f74a98a86140c. Every 1440px dark before/after page was visually reviewed, with additional individual laptop, phone and light-theme checks.
+
+A fresh fetch and git ls-remote confirmed main at 783ab88c2afcb0a2e76d3cb8b5d182e114e753fc. Reading its layout.css returned `:root { --page-width: 80rem; --page-gap: clamp(1rem, 2vw, 1.75rem); }`, and its features.mjs contains desktop-layout and LAYOUT_WIDTHS. The ledger's deployed status means this verified code artifact is on main; no production browser check is implied. This final record update is gated again before its own main push.
 
 
 Content widths in pixels at 375 · 1152 · 1440, in dark/light where different. Every after view has 0px horizontal document overflow and 0 escaping descendants. These notes describe the before and after screenshots for each page/state. Full screenshots are reproducible with the retained capture harness.
@@ -47,7 +51,7 @@ Content widths in pixels at 375 · 1152 · 1440, in dark/light where different. 
 | /handbook — Member handbook (admin) | 375 · 1120 · 1120 | 375 · 1152 · 1280 | Reference grid; reading view has an index. → Wider reference grid and reading/index layout; prose capped at 72ch. |
 | /trips — Trips (admin) | 375 · 1100 · 1100 | 375 · 1152 · 1280 | Trip rows stacked above Create. → Trip cards share two columns above Create. |
 | /batteries — Batteries (admin) | 375 · 1152 · 1152 | 375 · 1152 · 1280 | Responsive fleet card grid. → Fleet grid uses the shared frame and gains room for cards. |
-| /robot — Robot hub (admin) | 375 · 1024 · 1024 | 375 · 1152 · 1280 | Compact tool-card grid. → Tool cards use a three-column desktop grid. |
+| /robot — Robot hub (admin) | 375 · 1024 · 1024 | 375 · 1152 · 1280 | Compact tool-card grid. → Tool cards use the shared frame: four columns at 1152 and three at 1440. |
 | /manage — Team admin (admin) | 375 · 1152 · 1152 | 375 · 1152 · 1280 | Waiting and admin tool grids. → Four-column tool grids retain waiting tools first. |
 | /roles/:eventId — Role board (Fixture Regional) (admin) | 375 · 1152 · 1280 | 375 · 1152 · 1280 | Wide role-assignment table. → Bounded role table retains its local scroller and assignment controls. |
 | /my-schedule — My schedule (admin) | 375 · 545.1 · 545.1 | 375 · 1152 · 1280 | Compact station and day list. → Current work spans the frame; schedule entries share two columns. |
@@ -78,7 +82,7 @@ Content widths in pixels at 375 · 1152 · 1440, in dark/light where different. 
 | /reports — Reports (admin) | 375 · 1100 · 1100 | 375 · 1152 · 1280 | Report tabs, filters and export table. → Filters and tables use the shared frame with local table scrolling. |
 | /activity — Activity (admin) | 375 · 900 · 900 | 375 · 1152 · 1280 | Compact member/status/time table. → Activity table and manual controls use the shared frame. |
 | /readiness — Readiness (admin) | 375 · 1100 · 1100 | 375 · 1152 · 1280 | Action counts and coverage panels already use a grid. → Existing readiness grid uses the shared frame. |
-| /signouts — Sign-out approvals (admin) | 375 · 648.8 · 648.8 | 375 · 1152 · 1280 | Compact waiting, present and decision panels. → Waiting and present panels share the width; decisions span the frame. |
+| /signouts — Sign-out approvals (admin) | 375 · 648.8 · 648.8 | 375 · 1152 · 1280 | Compact waiting, present and decision panels. → Waiting sits beside the signed-in and decision panels. |
 | /standing/team — Team standing (admin) | 375 · 1152 · 1152 | 375 · 1152 · 1280 | Standing tabs, roster table and action panels. → Standing workspace and existing panel grids use the shared frame. |
 | /squad — Squad (admin) | 375 · 980 · 980 | 375 · 1152 · 1280 | Position cards in a compact grid. → Position cards use the wider grid. |
 | /access-requests — Access Requests (admin) | 375 · 720 · 720 | 375 · 1152 · 1280 | Invite, parent links and access requests stacked. → Invite spans the frame; parent links and access requests sit beside each other. |

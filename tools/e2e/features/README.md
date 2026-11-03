@@ -22,8 +22,9 @@ assertion prints `PASS` or `FAIL` with its measurement (FAIL always, PASS with
 `--verbose`), each feature prints `<feature>: N/N passed (375, 1152, 1440)`, and
 the run ends `features e2e: N/N passed (375, 1152, 1440)`, exiting non-zero on any
 failure. Screenshots of every state land in `artifacts/e2e/features/` and every
-result in `artifacts/e2e/features/results.json`. A full run takes about five
-minutes on this container.
+result in `artifacts/e2e/features/results.json`. Features run sequentially;
+each feature's three widths use independent browser contexts concurrently.
+Use `--serial` to run the widths sequentially for diagnosis.
 
 ## What each spec holds
 
