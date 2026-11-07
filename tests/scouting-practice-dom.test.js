@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-// Feedback 387edf14 (Paul, via Isaac Lin): "I put in save observation and then
+// Feedback 387edf14: "I put in save observation and then
 // the tab just disappeared. We should make it so that practice matches are
-// unlimited." and 449543dd (Azad): "every robot does these areas."
+// unlimited." and 449543dd: "every robot does these areas."
 // DOM + IndexedDB emulation against the fixture port of scouting_save. No
 // claim about native dialogs, layout, phones or real SQL is made here.
 import React, { act } from 'react'
@@ -55,8 +55,14 @@ async function expandTeams(...teams) {
   for (const team of teams) await click(host.querySelector(`.sc-team-table tr.sc-team-row[data-team="${team}"] th button`))
 }
 const mine = () => fixture.rows('scouting_records').filter(r => r.kind === 'observation' && r.member_id === IDS.student)
+async function typedObservationFields() {
+  await settle(() => dialog()?.querySelector('textarea'), 'form ready')
+  const manual = buttons('Not on the schedule')[0]
+  if (manual) await click(manual)
+  await settle(() => dialog()?.querySelector('input[placeholder="qm1"]'), 'typed observation fields')
+}
 async function openObservation(team, match, note = `Fixture note ${match}`) {
-  await click(buttons('New observation')[0]); await settle(() => dialog()?.querySelector('textarea'), 'form ready')
+  await click(buttons('New observation')[0]); await typedObservationFields()
   await input(dialog().querySelector('input[type="number"]'), String(team))
   await input(dialog().querySelector('input[placeholder="qm1"]'), match)
   await input(dialog().querySelector('textarea[aria-label="Notes"]'), note)
@@ -153,7 +159,7 @@ describe('the saved confirmation stays on screen (feedback 387edf14)', () => {
     await expandTeams(1538)
     const card = [...host.querySelectorAll('.sc-team-card')].find(c => c.textContent.includes('1538'))
     await click([...card.querySelectorAll('button')].find(b => b.textContent === 'Observe'))
-    await settle(() => dialog()?.querySelector('textarea'), 'form ready')
+    await typedObservationFields()
     await input(dialog().querySelector('input[placeholder="qm1"]'), 'P2')
     await input(dialog().querySelector('textarea[aria-label="Notes"]'), 'Saved from the Teams tab')
     await submit(); await settle(() => !dialog(), 'form closes')

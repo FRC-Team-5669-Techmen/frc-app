@@ -35,6 +35,13 @@ async function input(element, value) {
     element.dispatchEvent(new Event('input', { bubbles: true })); await pause(1)
   })
 }
+async function openTypedObservation() {
+  await click(buttons('New observation')[0])
+  await settle(() => host.querySelector('dialog textarea'), 'observation form ready')
+  const manual = buttons('Not on the schedule')[0]
+  if (manual) await click(manual)
+  await settle(() => host.querySelector('dialog input[placeholder="qm1"]'), 'typed observation fields')
+}
 async function mount(persona = 'student', roles, route = `/scouting/${EVENT}`) {
   fixture.setPersona(persona)
   const { data } = await supabase.auth.getSession()
@@ -82,7 +89,7 @@ describe('observation options on the scouting page', () => {
     expect(card().textContent).toContain('Passes FUEL from')
     expect(card().textContent).not.toContain('Ready for each phase shift')
     expect(card().textContent).not.toContain('to review')
-    await click(buttons('New observation')[0])
+    await openTypedObservation()
     await settle(() => host.querySelector('[data-option-fields]'), 'option fields in the form')
     const fields = host.querySelector('[data-option-fields]')
     expect(fields.textContent).toContain('Passes FUEL from')
@@ -101,7 +108,7 @@ describe('observation options on the scouting page', () => {
 
   it('an observation with no option answered carries no custom key (skipped is never zero)', async () => {
     await mount('student')
-    await click(buttons('New observation')[0])
+    await openTypedObservation()
     await settle(() => host.querySelector('[data-option-fields]'))
     await input(host.querySelector('dialog input[type="number"]'), '1323')
     await input(host.querySelector('dialog input[placeholder="qm1"]'), 'qm10')
@@ -113,7 +120,7 @@ describe('observation options on the scouting page', () => {
 
   it('a scout suggests an option from inside an observation; it waits for the lead and appears on no form', async () => {
     await mount('student')
-    await click(buttons('New observation')[0])
+    await openTypedObservation()
     await settle(() => host.querySelector('dialog [data-suggest-open]'))
     await input(host.querySelector('dialog input[type="number"]'), '1538')
     await input(host.querySelector('dialog input[placeholder="qm1"]'), 'qm4')

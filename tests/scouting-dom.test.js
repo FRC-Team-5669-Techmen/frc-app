@@ -39,6 +39,13 @@ async function input(element, value) {
     element.dispatchEvent(new Event('input', { bubbles: true })); await pause(1)
   })
 }
+async function openTypedObservation() {
+  await click(buttons('New observation')[0])
+  await settle(() => host.querySelector('dialog textarea'), 'observation form ready')
+  const manual = buttons('Not on the schedule')[0]
+  if (manual) await click(manual)
+  await settle(() => host.querySelector('dialog input[placeholder="qm1"]'), 'typed observation fields')
+}
 async function mount(persona = 'student', roles, route = `/scouting/${EVENT}`) {
   fixture.setPersona(persona)
   const { data } = await supabase.auth.getSession()
@@ -531,8 +538,7 @@ describe('event recovery and footage provenance', () => {
   })
   it('records prior-event footage with explicit provenance and excludes it from current reliability', async () => {
     await mount()
-    await click(buttons('New observation')[0])
-    await settle(() => host.querySelector('dialog input[type="number"]'), 'observation form')
+    await openTypedObservation()
     await input(host.querySelector('dialog input[type="number"]'), '5669')
     await input(host.querySelector('dialog input[placeholder="qm1"]'), '2026cabb_qm90')
     const select = async (label, value) => {
@@ -628,7 +634,7 @@ it('keeps new work visible while an earlier queue snapshot finishes and drains i
     return new Promise(resolve => releases.push(async () => resolve(await original(name, args))))
   })
   async function capture(match) {
-    await click(buttons('New observation')[0]);await settle(() => host.querySelector('dialog textarea'))
+    await openTypedObservation()
     await input(host.querySelector('dialog input[type="number"]'), '5669')
     await input(host.querySelector('dialog input[placeholder="qm1"]'), match)
     await input(host.querySelector('dialog textarea'), 'Concurrent local save '+match)
