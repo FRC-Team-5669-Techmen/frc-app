@@ -1,0 +1,11 @@
+# codex-frc-nav Calm navigation and search
+- Issued: 2026-11-06
+- By: Codex session, requested directly by Mr. Pina
+- Owns: the nav, header and profile menu components, a new palette component, tests, docs/subsystems/landing-and-nav.md.
+- Migration permitted: no. No SQL or database work.
+- Status: issued
+- Branch: main (solo mode, decision 05)
+- Base: origin/main 5aede08, fetched and rebased before changes. Rebased again onto origin/main 0fcb1c7 after its sign-out boundary job landed; its code, migration and added E2E are preserved. Rebased again onto 8cedc44 (mail-only backend changes), preserving that job too; frontend and fixture hashes are unchanged. The full gate is rerun.
+- Confirmed: pending local gate and main push.
+- Verification: navigation regressions 43/43, navigation flow 882/882, final role evidence 54/54 configurations and 210 states with zero document overflow. Full solo gate pending. The first full run caught an inactive palette dialog collision; closed search now leaves no dialog. The scouting retest also exposed a pre-existing pairs CSV catalog mismatch, fixed by a one-line adapter at its export call with a red/green callback regression; no scouting data or permission rule changed. Required seven-command solo gate, role audit, red/green regressions, and screenshots at 375, 1152 and 1440 in dark and light.
+- Notes: Read CLAUDE.md, OVERHAUL_AUDIT.md, landing-and-nav, shape-language, design-system, branding-and-theme, fixture-mode, tooling and roster-and-access. Existing five/three-entry primary navigation and Robot/Team admin hubs are already built. Account menu has six actions, seven for a student sign-out approver, with additional theme controls. No palette exists. Scout lead and driver are capabilities/event assignments, not new application roles. This task explicitly authorizes NavBar changes and supersedes decision 50's seven-entry default. No sub-agents. No migrations.

@@ -383,7 +383,7 @@ function EventScouting({ uid, eventId, staff, admin = false, offlineMemberId }) 
     downloadText(toCsv([...OBSERVATION_COLUMNS, ...optionObservationColumns(opts)], observationRows(records, { memberName, nameFor, options: opts }), { note: SHEET_NOTE }), `techmen-scouting-${slug}-observations-${laStamp()}.csv`)
     setTimeout(() => downloadText(toCsv([...TEAM_COLUMNS, ...optionTeamColumns(opts)], teamSheetRows(serverRecords, { nameFor, options: opts }), { note: SHEET_NOTE }), `techmen-scouting-${slug}-teams-${laStamp()}.csv`), 400)
     const pairs = pairRows(serverRecords)
-    if (pairs.length) setTimeout(() => downloadText(toCsv(PAIR_COLUMNS, pairs, { note: 'Techmen scouting pairs. Two scouts on one robot: counts averaged; Check means they disagree by more than 10 FUEL or 1 rating point, or on a yes/no.' }), `techmen-scouting-${slug}-pairs-${laStamp()}.csv`), 800)
+    if (pairs.length) setTimeout(() => downloadText(toCsv(PAIR_COLUMNS.map(({ key, label }) => [key, label]), pairs, { note: 'Techmen scouting pairs. Two scouts on one robot: counts averaged; Check means they disagree by more than 10 FUEL or 1 rating point, or on a yes/no.' }), `techmen-scouting-${slug}-pairs-${laStamp()}.csv`), 800)
     setNotice(pairs.length ? `Three spreadsheets downloaded: observations, teams, and ${pairs.length} scout pairs (${pairs.filter(p => p.status === 'Check').length} to check). Check your Downloads folder.` : 'Two spreadsheets downloaded: one row per observation, and one row per team. Check your Downloads folder.')
   }
 

@@ -403,3 +403,21 @@
   text-transform: uppercase;
   color: var(--muted);
 }
+
+/* Grouped account disclosures retain native keyboard behavior. Only links
+   and actions dismiss the account housing; summaries and theme radios stay. */
+.nav-dropdown-menu.nav-avatar-menu { width: 18rem; }
+.nav-menu-group > summary { list-style: none; justify-content: space-between; }
+.nav-menu-group > summary::-webkit-details-marker { display: none; }
+.nav-menu-group > summary::after { content: '+'; font-family: var(--font-mono); margin-left: auto; }
+.nav-menu-group[open] > summary::after { content: '−'; }
+.nav-menu-group-items { margin: 0.25rem 0.25rem 0.5rem 0.75rem; border-left: 1px solid var(--border-strong); }
+.nav-menu-group-items .nav-dropdown-item { white-space: normal; }
+.nav-menu-theme { flex-wrap: wrap; }
+.nav-avatar-menu .theme-switch-opt { min-height: 44px; min-width: 44px; }
+.navbar-account { gap: 1rem; }
+.nav-search-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-width: 44px; min-height: 44px; padding: 0.5rem; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--steel); cursor: pointer; font: 0.8rem var(--font-ui); }
+.nav-search-btn kbd { font: 0.65rem var(--font-mono); color: var(--steel); }
+:root.tm-plate .nav-search-btn { border-radius: var(--tm-r-control); border-color: var(--tm-hair); box-shadow: inset 0 1px 0 var(--tm-face-hi), 0 2px 0 var(--tm-foot); }
+@media (max-width: 1279px) { .nav-search-btn kbd { display: none; } .navbar-brand { margin-right: 0.75rem; } .navbar-links .nav-link { padding-inline: 0.65rem; } }
+@media (max-width: 600px) { .nav-search-btn span { display: none; } .navbar-account { gap: 0.75rem; } }

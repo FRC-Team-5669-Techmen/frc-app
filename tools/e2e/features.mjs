@@ -92,6 +92,7 @@ const FEATURES = Object.freeze([
   'my-schedule',
   'event-link',
   'desktop-layout',
+  'navigation',
 ]);
 
 

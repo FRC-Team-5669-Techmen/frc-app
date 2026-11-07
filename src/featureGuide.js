@@ -55,7 +55,7 @@ export const GUIDE = Object.freeze([
     what: 'Meetings, build days and competitions. Say if you are going. Ask for an absence from your standing page.' },
   { path: '/jobs', area: 'team', title: 'Jobs', for: ['member'], where: 'Robot, then Jobs',
     what: 'Claim a team job, post progress, log time on it, and submit it for sign-off.' },
-  { path: '/certifications', area: 'team', title: 'Certifications', for: ['member'], where: 'Robot, then Certifications',
+  { path: '/certifications', area: 'team', title: 'Certifications', for: ['member', 'parent'], where: 'Account menu, My record; or Robot, then Certifications',
     what: 'Your IDEA certifications, a read-only copy. Earned only at ideabosco.com.' },
   { path: '/trips', area: 'team', title: 'Trips', for: ['member'], where: 'Schedule, then Trips',
     what: 'Competition trips: the carpool and food boards.' },
@@ -77,7 +77,7 @@ export const GUIDE = Object.freeze([
     what: 'Every battery worst first: charge state in one tap, resting voltage, brownouts and match-ready. Log a run in seconds.' },
   { path: '/roles/:eventId', area: 'team', title: 'Role board', for: ['member'], where: 'Event rosters, an event, then Role board; or Home when slots are unfilled',
     what: 'Ask for a role in any time slot of an event, see who else asked, and what is still unfilled. Staff assign from a request.' },
-  { path: '/my-schedule', area: 'team', title: 'My schedule', for: ['member'], where: 'Home (Now or Next), or My shifts on the role board',
+  { path: '/my-schedule', area: 'team', title: 'My schedule', for: ['member'], where: 'Account menu, My record; Home (Now or Next); or My shifts on the role board',
     what: 'Your own day at a competition: each station and where to be, your ride, the team blocks, and reminders on your phone before each one.' },
   { path: '/meet', area: 'team', title: 'Meet a team', for: ['member'], where: 'Scouting, then Meet a team; or Home during a competition',
     what: 'At every competition, talk to another team and log what they do well, how they run and what they offer.' },
@@ -97,18 +97,18 @@ export const GUIDE = Object.freeze([
     what: 'One match: the scorecard, battery by phase, not-ready reasons, the timeline, the crew, notes and video, and the robot file kept whole.' },
   { path: '/status-reports', area: 'team', title: 'Sub-team status', for: ['member'], where: 'Robot, then Sub-team status',
     what: 'Each sub-team this week: on track, at risk or blocked.' },
-  { path: '/survey', area: 'team', title: 'Weekly survey', for: ['student'], where: 'My profile, or Home when it is open',
+  { path: '/survey', area: 'team', title: 'Weekly survey', for: ['student'], where: 'Account menu, My record; My profile; or Home when it is open',
     what: 'A short check-in about your week.' },
   { path: '/members/:id', area: 'team', title: 'Member page', for: ['member'], where: 'Tap a name on Team Hours or the board',
     what: 'One member, their sub-teams and hours.' },
   // ── you and your record ──────────────────────────────────────────────────
   { path: '/profile', area: 'you', title: 'My Profile', for: ['member', 'parent'], anchor: '[data-tour="nav-profile"]', where: 'Account menu',
-    what: 'Your details and notifications. Replay this tour from the account menu.' },
-  { path: '/standing', area: 'you', title: 'My standing', for: ['student', 'parent'], where: 'Account menu',
+    what: 'Your details and notifications. Replay this tour from Preferences in the account menu. Use Search or Ctrl+K to find any page.' },
+  { path: '/standing', area: 'you', title: 'My standing', for: ['student', 'parent'], where: 'Account menu, My record',
     what: 'Good standing or probation, your weeks and months, absence requests, and your checklist.' },
   { path: '/updates', area: 'you', title: "What's new", for: ['member', 'parent'], where: 'Account menu (a dot means something new)',
     what: 'Every app update, newest first, with a link to each new page.' },
-  { path: '/handbook', area: 'you', title: 'Handbook', for: ['member'], where: 'Account menu',
+  { path: '/handbook', area: 'you', title: 'Handbook', for: ['member', 'parent'], where: 'Account menu, My record',
     what: 'The team rules, with a short check after each part, and where you sign.' },
   { path: '/driver-docs', area: 'you', title: 'Driver documents', for: ['member', 'parent'], where: 'My profile',
     what: 'A driver uploads a license and insurance photo once. Only staff mentors can open it.' },
@@ -180,7 +180,7 @@ export function guideFor({ isStaff = false, isAdmin = false, isParent = false } 
     if (g.for.includes('member')) return true
     if (g.for.includes('student') && !isStaff) return true
     if (g.for.includes('staff') && isStaff) return true
-    if (g.for.includes('admin') && (isAdmin || isStaff)) return true
+    if (g.for.includes('admin') && isAdmin) return true
     return false
   })
 }

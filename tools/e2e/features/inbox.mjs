@@ -143,6 +143,7 @@ export default {
       await t.open('/dashboard', { persona: 'student', mig: 'all', reset: true, ready: '[data-tour="nav-profile"]' });
       if (await t.count('.driver-popover')) { await t.page.keyboard.press('Escape'); await t.settle({ quietMs: 300 }); }
       await t.press('[data-tour="nav-profile"]');
+      await t.press(t.page.locator('.nav-menu-group > summary', { hasText: 'Preferences' }));
       await t.press(t.page.locator('.nav-dropdown-item', { hasText: 'Replay tour' }));
       await t.waitFor('.driver-popover');
       const progress = (await t.text('.driver-popover-progress-text')) ?? '';

@@ -241,3 +241,23 @@ claim was measured and how anyone can re-measure it:
 3. Serve `dist/` (`npx vite preview --port 5401 --strictPort`), open
    `/_fixture`, and the page must be the same `404 — not found` element as
    `/_ds`.
+
+### Calm navigation audit (codex-frc-nav)
+
+`node tools/e2e/features.mjs --only navigation` exercises search, grouped menus,
+role/capability visibility, native dialog focus and keyboard/touch navigation at
+375, 1152 and 1440. It is also included in `npm run test:features`.
+
+For the complete role/theme screenshot matrix:
+
+```bash
+node tools/e2e/nav-evidence.mjs --out work/frc-nav/after --port 5443
+node tools/e2e/nav-report.mjs --before work/frc-nav/before --after work/frc-nav/after --out artifacts/nav-report
+```
+
+Recreate the before views in a detached checkout of `5aede08`: copy only
+`tools/e2e/nav-evidence.mjs` into that checkout, install its dependencies, and run
+it with `--baseline --out work/frc-nav/before` on a free port. The report refuses
+missing, duplicate or failing after configurations. It retains every screenshot,
+raw JSON, per-role searchable route inventories and an interactive comparison
+viewer. Data is fictional; these measurements do not prove live auth or RLS.

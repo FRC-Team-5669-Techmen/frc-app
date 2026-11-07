@@ -76,3 +76,15 @@ describe('the tour is built from the guide', () => {
     expect(pathsIn(steps).has('/schedule')).toBe(true)
   })
 })
+
+// Regression: mentor tours advertised admin-only tools because staff implied admin.
+it('mentor guide omits admin-only tools while admin guide includes all four', () => {
+  const admin = GUIDE.filter(g => g.for.includes('admin')).map(g => g.path)
+  expect(admin.length).toBe(4)
+  expect(guideFor({ isStaff: true }).filter(g => admin.includes(g.path))).toEqual([])
+  expect(guideFor({ isStaff: true, isAdmin: true }).filter(g => admin.includes(g.path)).map(g => g.path)).toEqual(admin)
+})
+
+it('the automatic tour receives the actual admin flag, as Replay tour does', () => {
+  expect(APP).toContain("}, isParentTrack, roles.includes('admin'))")
+})

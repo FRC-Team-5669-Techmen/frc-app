@@ -2,8 +2,10 @@
 // CSVs beside the JSON archive. Not recorded is an empty cell, never 0;
 // one row per observation; team rows from confirmed records only.
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { PAIR_COLUMNS, pairRows } from '../src/scouting/pairs.js'
 import { toCsv } from '../src/csv.js'
-import { OBSERVATION_COLUMNS, TEAM_COLUMNS, observationRows, teamRows } from '../src/scouting/spreadsheet.js'
+import { OBSERVATION_COLUMNS, TEAM_COLUMNS, SHEET_NOTE, observationRows, teamRows, optionObservationColumns, optionTeamColumns } from '../src/scouting/spreadsheet.js'
 
 const obs = (id, member, team, match, m, answers = {}, extra = {}) => ({ id, kind: 'observation', event_id: 'ev', member_id: member, team_number: team, match_key: match, version: 1, updated_at: '2026-10-30T18:00:00Z', payload: { answers, source: 'live', notes: '', match: m }, ...extra })
 const recs = [
@@ -55,4 +57,30 @@ describe('teams sheet', () => {
     expect(teamRows(recs, names)[0].teleop_fuel).toBe(7)
     expect(observationRows([...recs, local], names).find(r => r.match === 'qm20').status).toMatch(/not synced/)
   })
+})
+
+// Exercise the page's real export callback with deterministic timers and the
+// actual serializers. This catches catalog/caller mismatches outside the
+// pure projection tests, without mounting the entire scouting workspace.
+it('the production export callback writes the optional pairs CSV with the averaged evidence', () => {
+  const source = readFileSync(new URL('../src/ScoutingPage.jsx', import.meta.url), 'utf8')
+  const body = source.match(/  function exportSheets\(\) \{([\s\S]*?)\n  \}/)?.[1]
+  expect(body).toBeTruthy()
+  const paired = [obs('pair-a', 'a', 1538, 'qm5', { teleop_fuel: 10 }), obs('pair-b', 'b', 1538, 'qm5', { teleop_fuel: 14 })]
+  const files = []
+  const deps = {
+    data: { event: { title: 'Invented event' } }, options: { options: [] }, records: paired, serverRecords: paired,
+    memberName: id => id, nameFor: () => 'Invented team', OBSERVATION_COLUMNS, TEAM_COLUMNS, SHEET_NOTE,
+    optionObservationColumns, optionTeamColumns, observationRows, teamSheetRows: teamRows, PAIR_COLUMNS, pairRows, toCsv,
+    setTimeout: fn => fn(), downloadText: (csv, filename) => files.push({ csv, filename }), laStamp: () => '2026-11-06', setNotice: () => {},
+  }
+  new Function(...Object.keys(deps), `return function exportSheets() {${body}}`)(...Object.values(deps))()
+  expect(files).toHaveLength(3)
+  expect(files.map(f => f.filename)).toContain('techmen-scouting-invented-event-pairs-2026-11-06.csv')
+  const csv = files.find(f => f.filename.includes('-pairs-')).csv.split('\r\n')
+  expect(csv[1]).toMatch(/^Team,Match,Scouts,/)
+  const headers = csv[1].split(','), values = csv[2].split(',')
+  expect(values.slice(0, 3)).toEqual(['1538', 'qm5', '2'])
+  expect(values[headers.indexOf(PAIR_COLUMNS.find(c => c.key === 'teleop_fuel').label)]).toBe('12')
+  expect(values[headers.indexOf('Status')]).toBe('Agree')
 })

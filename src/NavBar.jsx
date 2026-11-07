@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useId } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { supabase } from './supabase'
 import { RoleBadge, ROLE_ORDER } from './roles'
 import { loadAdminCounts, totalWaiting } from './adminTools'
 import { UPDATES, hasUnread, readSeen, UPDATES_SEEN_EVENT } from './updates'
 import ThemeSwitch from './ThemeSwitch'
+import CommandPalette from './CommandPalette'
 import './NavBar.css'
 
 import { IconHome, IconSchedule, IconHours, IconScout, IconRobot } from './navIcons'
@@ -66,24 +67,28 @@ function useOutsideClick(ref, onClose) {
     function handler(e) {
       if (ref.current && !ref.current.contains(e.target)) onClose()
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('pointerdown', handler)
+    document.addEventListener('focusin', handler)
+    return () => { document.removeEventListener('pointerdown', handler); document.removeEventListener('focusin', handler) }
   }, [ref, onClose])
 }
 
 function Dropdown({ label, paths = [], tourId, align = 'left', badge = 0, children }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef(null)
+  const ref = useRef(null), trigger = useRef(null), id = useId()
   const { pathname } = useLocation()
+  useEffect(() => setOpen(false), [pathname])
   const active = paths.some(p => pathname === p || pathname.startsWith(p + '/'))
 
   useOutsideClick(ref, () => setOpen(false))
 
   return (
-    <div className="nav-dropdown" ref={ref} onKeyDown={e => { if (e.key === 'Escape') setOpen(false) }}>
+    <div className="nav-dropdown" ref={ref} onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); trigger.current?.focus() } }}>
       <button
         className={`nav-link nav-dropdown-trigger${active ? ' active' : ''}`}
         data-tour={tourId}
+        ref={trigger}
+        aria-controls={open ? id : undefined}
         aria-expanded={open}
         onClick={() => setOpen(o => !o)}
       >
@@ -93,6 +98,7 @@ function Dropdown({ label, paths = [], tourId, align = 'left', badge = 0, childr
       </button>
       {open && (
         <div
+          id={id}
           className={`nav-dropdown-menu${align === 'right' ? ' nav-dropdown-menu-right' : ''}`}
           onClick={() => setOpen(false)}
         >
@@ -103,9 +109,10 @@ function Dropdown({ label, paths = [], tourId, align = 'left', badge = 0, childr
   )
 }
 
-function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false, isParent = false, waiting = 0, signouts = null, unread = false }) {
+function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false, isParent = false, waiting = 0, signouts = null, unread = false, dismissKey }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef(null)
+  const ref = useRef(null), trigger = useRef(null), id = useId()
+  useEffect(() => setOpen(false), [dismissKey])
 
   useOutsideClick(ref, () => setOpen(false))
 
@@ -116,16 +123,16 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
 
   const itemClass = ({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`
 
-  // At most six items for anyone (decision 49, ledger 0017): every staff tool
-  // lives on /manage behind ONE item carrying the total waiting; driver
-  // documents, emergency information and the weekly survey moved to the
-  // profile, or to Home when they need doing.
+  // Every interactive top-level branch counts, including Preferences. At
+  // most six even for a non-staff sign-out approver (codex-frc-nav).
   return (
-    <div className="nav-avatar-wrap" ref={ref} onKeyDown={e => { if (e.key === 'Escape') setOpen(false) }}>
+    <div className="nav-avatar-wrap" ref={ref} onKeyDown={e => { if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); trigger.current?.focus() } }}>
       {/* The pending dot is aria-hidden, so the count is in the button's name. */}
       <button
         className="nav-avatar-btn"
         data-tour="nav-profile"
+        ref={trigger}
+        aria-controls={open ? id : undefined}
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
         aria-label={[
@@ -141,7 +148,7 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
         {((isStaff && waiting > 0) || unread) && <span className="nav-avatar-dot" aria-hidden="true" />}
       </button>
       {open && (
-        <div className="nav-dropdown-menu nav-avatar-menu" onClick={() => setOpen(false)}>
+        <div id={id} className="nav-dropdown-menu nav-avatar-menu" onClick={e => { if (e.target.closest('a, button')) setOpen(false) }}>
           <div className="nav-menu-head">
             <span className="nav-menu-name">{name}</span>
             {role && <RoleBadge role={role} />}
@@ -161,18 +168,32 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
             </NavLink>
           )}
           <NavLink to="/profile" className={itemClass}>My profile</NavLink>
-          {!isParent && !isStaff && <NavLink to="/standing" end className={itemClass}>My standing</NavLink>}
-          {isParent && <NavLink to="/standing" end className={itemClass}>Standing</NavLink>}
-          <NavLink to="/handbook" className={itemClass}>Handbook</NavLink>
+          <details className="nav-menu-group">
+            <summary className="nav-dropdown-item">My record</summary>
+            <div className="nav-menu-group-items">
+              {!isStaff && <NavLink to="/standing" end className={itemClass}>{isParent ? 'Standing' : 'My standing'}</NavLink>}
+              <NavLink to="/handbook" className={itemClass}>Handbook</NavLink>
+              <NavLink to="/certifications" className={itemClass}>Certifications</NavLink>
+              {!isParent && <NavLink to="/my-schedule" className={itemClass}>My schedule</NavLink>}
+              {!isParent && !isStaff && <NavLink to="/survey" className={itemClass}>Weekly survey</NavLink>}
+              <NavLink to="/driver-docs" className={itemClass}>Driver documents</NavLink>
+              {isParent && <NavLink to="/emergency-info" className={itemClass}>Emergency information</NavLink>}
+            </div>
+          </details>
           <NavLink to="/updates" className={itemClass} data-tour="nav-updates">
             What&apos;s new
             {unread && <span className="nav-new-dot" aria-label="new" />}
           </NavLink>
-          <button className="nav-dropdown-item" onClick={replayTour}>Replay tour</button>
-          <div className="nav-menu-theme">
-            <span className="nav-menu-theme-label">Theme</span>
-            <ThemeSwitch compact />
-          </div>
+          <details className="nav-menu-group">
+            <summary className="nav-dropdown-item">Preferences</summary>
+            <div className="nav-menu-group-items">
+              <div className="nav-menu-theme">
+                <span className="nav-menu-theme-label">Theme</span>
+                <ThemeSwitch compact />
+              </div>
+              <button className="nav-dropdown-item" onClick={replayTour}>Replay tour</button>
+            </div>
+          </details>
           <div className="nav-dropdown-divider" />
           <button className="nav-dropdown-item nav-signout-item" onClick={() => supabase.auth.signOut()}>Sign out</button>
         </div>
@@ -191,6 +212,18 @@ export default function NavBar({ hasRole = () => false, session = null }) {
   const initials  = (name[0] || '?').toUpperCase()
   const myRole    = ROLE_ORDER.find(r => hasRole(r))
   const { pathname } = useLocation()
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchTrigger = useRef(null)
+  useEffect(() => setSearchOpen(false), [pathname])
+  useEffect(() => {
+    const shortcut = e => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !e.altKey && !e.isComposing) {
+        e.preventDefault(); setSearchOpen(v => !v)
+      }
+    }
+    document.addEventListener('keydown', shortcut)
+    return () => document.removeEventListener('keydown', shortcut)
+  }, [])
 
   // The total waiting across the Team admin tools this person can open
   // (src/adminTools.js, the same counts /manage shows). Staff only.
@@ -204,17 +237,20 @@ export default function NavBar({ hasRole = () => false, session = null }) {
 
   // Sign-outs waiting, for a NON-staff approver only (staff see it on
   // /manage). The RPC answers false for everyone else and errors before 0014.
-  const [signouts, setSignouts] = useState(null)
+  const memberId = session?.user?.id
+  const [signoutAccess, setSignoutAccess] = useState(null)
+  // Never carry a previous account's capability across an identity switch.
+  const signouts = signoutAccess && signoutAccess.memberId === memberId ? signoutAccess.count : null
   useEffect(() => {
-    if (isParent || isStaff) { setSignouts(null); return }
+    if (isParent || isStaff) { setSignoutAccess(null); return }
     let active = true
     supabase.rpc('can_approve_signouts').then(async ({ data, error }) => {
-      if (!active || error || data !== true) { if (active) setSignouts(null); return }
+      if (!active || error || data !== true) { if (active) setSignoutAccess(null); return }
       const { count } = await supabase.from('signout_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending')
-      if (active) setSignouts(count ?? 0)
+      if (active) setSignoutAccess({ memberId, count: count ?? 0 })
     })
     return () => { active = false }
-  }, [isParent, isStaff, pathname])
+  }, [isParent, isStaff, pathname, memberId])
 
   // What's new: a dot while the newest release is newer than the last visit
   // to /updates (src/updates.js). Re-read on every navigation and when the
@@ -228,7 +264,7 @@ export default function NavBar({ hasRole = () => false, session = null }) {
   }, [pathname])
 
   return (
-    <nav className="navbar">
+    <nav className="navbar" aria-label="Primary">
       <div className="navbar-shell">
         <div className="navbar-brand">
           <img src="/assets/logos/Mark-Gold.svg" className="navbar-mark" alt="Techmen" />
@@ -270,9 +306,15 @@ export default function NavBar({ hasRole = () => false, session = null }) {
         </div>
 
         <div className="navbar-account">
-          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isAdmin={isAdmin} isParent={isParent} waiting={waiting} signouts={signouts} unread={unread} />
+          <button ref={searchTrigger} className="nav-search-btn" type="button" aria-label="Search anything" aria-keyshortcuts="Control+k Meta+k" onClick={() => setSearchOpen(true)}>
+            <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
+            <span>Search</span><kbd>Ctrl K</kbd>
+          </button>
+          <AvatarMenu avatarUrl={avatarUrl} initials={initials} name={name} role={myRole} isStaff={isStaff} isAdmin={isAdmin} isParent={isParent} waiting={waiting} signouts={signouts} unread={unread} dismissKey={`${memberId}:${pathname}:${searchOpen}`} />
         </div>
       </div>
+      <CommandPalette open={searchOpen} onClose={() => setSearchOpen(false)} returnFocusRef={searchTrigger}
+        viewer={{ isStaff, isAdmin, isParent, canApproveSignouts: signouts !== null, memberId: session?.user?.id, pathname }} />
     </nav>
   )
 }

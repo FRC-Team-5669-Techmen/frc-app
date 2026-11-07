@@ -41,6 +41,7 @@ export default {
       await t.press(t.page.locator('.nav-avatar-btn'))
       await t.waitFor('.nav-avatar-menu')
       t.eq("What's new in the menu carries the dot", await t.count('.nav-avatar-menu a[href="/updates"] .nav-new-dot'), 1)
+      await t.press(t.page.locator('.nav-menu-group > summary', { hasText: 'Preferences' }))
       t.eq('three theme choices', await t.count('.nav-avatar-menu [role="radio"]'), 3)
       t.eq('Dark is the checked one', await t.page.locator('.nav-avatar-menu [role="radio"][aria-checked="true"]').getAttribute('aria-label'), 'Dark theme')
       await t.shot('menu-dark', { full: false })

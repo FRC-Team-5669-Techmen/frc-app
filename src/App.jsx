@@ -318,7 +318,7 @@ export default function App() {
         await writeVia(supabase, 'member_finish_tour', {},
           { table: 'profiles', op: 'update', values: { onboarded_at: now }, eq: { id: session.user.id } })
         setOnboardedAt(now)
-      }, isParentTrack)
+      }, isParentTrack, roles.includes('admin'))
     }
     run()
     return () => clearTimeout(timer)
