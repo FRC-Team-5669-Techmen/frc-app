@@ -83,7 +83,8 @@ beforeAll(async () => {
   const file = join(dir, 'index.mjs')
   writeFileSync(file, source
     .replace(SUPABASE_IMPORT, 'const { createClient } = globalThis.__eventFamilyTest')
-    .replace(SMTP_IMPORT, 'const { SMTPClient } = globalThis.__eventFamilyTest'))
+    .replace(SMTP_IMPORT, 'const { SMTPClient } = globalThis.__eventFamilyTest')
+    .replace("'../_shared/mail.js'", JSON.stringify(new URL('../supabase/functions/_shared/mail.js', import.meta.url).href)))
   globalThis.__eventFamilyTest = { createClient: makeClient, SMTPClient: FakeSMTP }
   globalThis.Deno = { env: { get: (k) => env[k] }, serve: (h) => { handler = h } }
   await import(pathToFileURL(file).href)

@@ -22,19 +22,15 @@
 //
 // This is a CAPABILITY URL, like parent-response and calendar-feed, so it
 // MUST be deployed with JWT verification OFF ("Enforce JWT" off in the
-// Dashboard editor; supabase/config.toml pins verify_jwt = false). Single
-// file, so it deploys from the Dashboard editor.
+// Dashboard; supabase/config.toml pins verify_jwt = false). Deploy the
+// entrypoint WITH ../_shared/mail.js; see docs/subsystems/mail.md.
 //
-// SECRETS
-//   GMAIL_USER, GMAIL_APP_PASSWORD   the existing Gmail SMTP pair. Unset: mail
-//                                    stays queued ("pending") and nothing is
-//                                    lost; it goes out once they are set.
-//   EMAIL_FROM                       optional display form (address = GMAIL_USER)
-//   EMAIL_REPLY_TO                   optional Reply-To; default apina@boscotech.edu
-//   APP_URL                          optional; where /e/<token> lives
-//   EVENT_HUB_CRON_SECRET            the shared secret pg_cron sends; equal to
-//                                    private.event_hub_config.hook_secret
-//   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_ANON_KEY  injected
+// Mail settings: docs/subsystems/mail.md. One shared credential reader uses
+// Workspace Gmail API when complete, or the existing SMTP pair during setup.
+// No mail credential: leave the outbox pending. EMAIL_FROM supplies Workspace
+// From, Reply-To and delegated user. APP_URL optionally overrides family links.
+// EVENT_HUB_CRON_SECRET must equal private.event_hub_config.hook_secret.
+// Supabase URL, service role and anon key are injected by the runtime.
 //
 // No secret and no token is ever logged or returned.
 //
@@ -44,6 +40,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
+import { createMailer } from '../_shared/mail.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -93,9 +90,8 @@ function refusal(err) {
 // minted by hub_outbox_mint_link at this moment; the raw token exists only in
 // memory here and in the email itself.
 async function drain(admin, limit, eventId) {
-  const user = Deno.env.get('GMAIL_USER')
-  const pass = Deno.env.get('GMAIL_APP_PASSWORD')
-  if (!user || !pass) return { sent: 0, failed: 0, skipped: 'gmail_not_configured' }
+  const client = createMailer({ SMTPClient })
+  if (!client) return { sent: 0, failed: 0, skipped: 'gmail_not_configured' }
 
   const { data: rows, error } = await admin.rpc('hub_outbox_take', { p_limit: limit, p_event: eventId })
   if (error) {
@@ -104,12 +100,7 @@ async function drain(admin, limit, eventId) {
   }
   if (!rows || rows.length === 0) return { sent: 0, failed: 0 }
 
-  const from = Deno.env.get('EMAIL_FROM') ?? `Techmen 5669 <${user}>`
-  const replyTo = Deno.env.get('EMAIL_REPLY_TO') ?? 'apina@boscotech.edu'
   const appUrl = (Deno.env.get('APP_URL') ?? 'https://frc-app-liard.vercel.app').replace(/\/+$/, '')
-  const client = new SMTPClient({
-    connection: { hostname: 'smtp.gmail.com', port: 465, tls: true, auth: { username: user, password: pass } },
-  })
   let sent = 0
   let failed = 0
   try {
@@ -121,7 +112,7 @@ async function drain(admin, limit, eventId) {
           if (mintErr || typeof token !== 'string') throw new Error('could not mint a link')
           body = body.split('{{link}}').join(`${appUrl}/e/${token}`)
         }
-        await client.send({ from, replyTo, to: row.to_emails, subject: row.subject, content: body })
+        await client.send({ to: row.to_emails, subject: row.subject, content: body })
         await admin.rpc('hub_outbox_done', { p_outbox: row.id, p_ok: true, p_error: null })
         sent++
       } catch (e) {

@@ -1,0 +1,13 @@
+# codex-frc-mail-from School sender for every app notification email
+- Issued: 2026-11-06
+- By: Codex session, requested directly by Mr. Pina (instruction dated 2026-10-28)
+- Owns: mail modules, mail send routes, mail tests, mail subsystem docs, this ledger and history.
+- Migration permitted: no. No SQL, grants, policies or database boundaries changed.
+- Status: implemented; production mail activation requires administrator setup and separate Edge Function deployment
+- Branch: main (solo mode, decision 05; local checkout started on work)
+- Base: origin/main 5aede08, fetched and rebased before changes.
+- Rebased onto: origin/main 4379cb7 after the final pre-push fetch found the approved session sign-out bundle. Preserve its migration and UI changes; rerun the complete gate on the combined tree.
+- Rebased again: origin/main 0fcb1c7, the direction bundle's documentation-only closing record, detected during the gate. Repeat the gate on this final base.
+- Confirmed: all four app mail entrypoints import the shared mailer. Remote push confirmation is reported at delivery after the frozen tree passes its local gate.
+- Verification: sender regression red on all four old functions (4 failed, 13 passed), then focused mail suites 56/56; three identity mutants rejected and approval-copy red/green control passed. Landing requires build, npm test, ds:audit, calendar, history, check-in and full features on this exact tree, plus focused geometry at 375, 1152, 1440 in both themes. Final command summaries are reported at delivery.
+- Notes: Read CLAUDE.md, docs/OVERHAUL_AUDIT.md and relevant subsystem guidance. Existing ledger 0027 already adds Reply-To to four SMTP functions. The tree has no Vercel API mail sender or shared credential reader; invitations/OTP use Supabase Auth SMTP. Announcements are Discord-only and sign-out returns are app/push only. Keep legacy SMTP delivery until Workspace configuration is complete. Never request, read or configure real mail credentials. No migration number reserved.

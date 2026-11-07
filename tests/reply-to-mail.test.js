@@ -1,5 +1,5 @@
-// Every Edge Function that sends mail over denomailer must put Reply-To on the
-// message: apina@boscotech.edu by default, EMAIL_REPLY_TO when set. Each function
+// Every mail function uses shared delivery. Legacy SMTP retains ledger 0027's
+// Reply-To, while Workspace uses EMAIL_FROM for all sender identities. Each function
 // is loaded from its real file under Node with its two remote imports swapped for
 // fakes (the same technique as tests/event-family-function.test.js), driven down
 // its send path, and the message the stubbed SMTP client received is inspected.
@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { transformWithEsbuild } from 'vite'
-import { beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const SUPABASE_IMPORT = "import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'"
 const SMTP_IMPORT = "import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'"
@@ -57,6 +57,7 @@ async function load(fn, tables) {
   const swapped = source
     .replace(SUPABASE_IMPORT, 'const { createClient } = globalThis.__replyToTest')
     .replace(SMTP_IMPORT, 'const { SMTPClient } = globalThis.__replyToTest')
+    .replace("'../_shared/mail.js'", JSON.stringify(new URL('../supabase/functions/_shared/mail.js', import.meta.url).href))
   const { code: js } = await transformWithEsbuild(swapped, 'index.ts', { loader: 'ts' })   // strip the types
   const dir = mkdtempSync(join(tmpdir(), 'reply-to-'))
   const file = join(dir, 'index.mjs')
@@ -96,6 +97,14 @@ const SENDERS = {
 }
 
 beforeEach(() => { env = {}; sends = []; handler = null })
+afterEach(() => vi.unstubAllGlobals())
+
+// Generated disposable key, never a real service account credential.
+let privateKey
+beforeAll(async () => {
+  const pair = await crypto.subtle.generateKey({ name: 'RSASSA-PKCS1-v1_5', modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]), hash: 'SHA-256' }, true, ['sign', 'verify'])
+  privateKey = `-----BEGIN PRIVATE KEY-----\n${Buffer.from(await crypto.subtle.exportKey('pkcs8', pair.privateKey)).toString('base64')}\n-----END PRIVATE KEY-----`
+})
 
 describe.each(Object.keys(SENDERS))('%s', (fn) => {
   const s = SENDERS[fn]
@@ -103,7 +112,7 @@ describe.each(Object.keys(SENDERS))('%s', (fn) => {
     env = { SUPABASE_URL: 'https://p.example', SUPABASE_SERVICE_ROLE_KEY: 'srv', SUPABASE_ANON_KEY: 'anon', ...s.env, ...extraEnv }
     const tables = { ...s.tables }
     const h = await load(fn, tables)
-    await s.drive(h)
+    return s.drive(h)
   }
 
   test('Reply-To defaults to apina@boscotech.edu, From unchanged', async () => {
@@ -111,6 +120,9 @@ describe.each(Object.keys(SENDERS))('%s', (fn) => {
     expect(sends).toHaveLength(1)
     expect(sends[0].replyTo).toBe(DEFAULT)
     expect(sends[0].from).toBe(`Techmen 5669 <${GMAIL.GMAIL_USER}>`)
+    if (fn === 'send-approval-email') {
+      for (const key of ['subject', 'content', 'html']) expect(sends[0][key]).not.toContain('\u2014')
+    }
   })
 
   test('EMAIL_REPLY_TO overrides it', async () => {
@@ -122,6 +134,44 @@ describe.each(Object.keys(SENDERS))('%s', (fn) => {
   test('nothing is sent (and so nothing to set) while Gmail is unset', async () => {
     await run({})
     expect(sends).toHaveLength(0)
+  })
+
+  test.each([true, false])('Workspace sends only from the configured school mailbox (legacy credentials present: %s)', async (oldPresent) => {
+    const messages = []
+    vi.stubGlobal('fetch', vi.fn(async (url, init) => {
+      if (url === 'https://oauth2.googleapis.com/token') return Response.json({ access_token: 'stand-in-token', expires_in: 3600 })
+      expect(url).toBe('https://gmail.googleapis.com/gmail/v1/users/me/messages/send')
+      messages.push(Buffer.from(JSON.parse(init.body).raw, 'base64url').toString('utf8'))
+      return Response.json({ id: 'message-1' })
+    }))
+    await run({
+      ...(oldPresent ? { ...GMAIL, GMAIL_USER: 'retired.sender@gmail.com' } : {}), EMAIL_REPLY_TO: 'retired.sender@gmail.com',
+      EMAIL_FROM: 'Techmen 5669 <coach@school.example>',
+      GOOGLE_SERVICE_ACCOUNT_EMAIL: 'mailer@project.example.iam.gserviceaccount.com',
+      GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: privateKey,
+    })
+    expect(messages).toHaveLength(1) // positive control: a message actually left
+    const headers = messages[0].split('\r\n\r\n')[0]
+    expect(headers).toContain('From: Techmen 5669 <coach@school.example>\r\n')
+    expect(headers).toContain('Reply-To: coach@school.example\r\n')
+    expect(headers).not.toContain('retired.sender@gmail.com')
+    expect(sends).toHaveLength(0) // cannot silently send through the old account
+  })
+
+  test('Workspace auth failure stays visible without sending through the old Gmail account', async () => {
+    const provider = vi.fn(async () => Response.json({ error: 'private provider details' }, { status: 403 }))
+    vi.stubGlobal('fetch', provider)
+    const response = await run({
+      ...GMAIL, EMAIL_FROM: 'Techmen 5669 <coach@school.example>',
+      GOOGLE_SERVICE_ACCOUNT_EMAIL: 'mailer@project.example.iam.gserviceaccount.com',
+      GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: privateKey,
+    })
+    const body = await response.json()
+    expect(body.sent).toBe(fn === 'send-approval-email' || fn === 'send-parent-request' ? false : 0)
+    if (fn === 'event-family') expect(body.failed).toBe(1)
+    expect(provider).toHaveBeenCalledOnce()
+    expect(sends).toHaveLength(0)
+    expect(JSON.stringify(body)).not.toContain('private provider details')
   })
 })
 

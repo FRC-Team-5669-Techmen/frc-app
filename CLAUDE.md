@@ -40,6 +40,7 @@ One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there
 - **Design system**: [`docs/subsystems/design-system.md`](docs/subsystems/design-system.md)
 - **Weekly survey**: [`docs/subsystems/weekly-survey.md`](docs/subsystems/weekly-survey.md)
 - **CI workflows**: [`docs/subsystems/ci-workflows.md`](docs/subsystems/ci-workflows.md)
+- **App mail**: shared sender and credential reader, Workspace Gmail API, staged SMTP fallback, Auth SMTP and exact admin setup. [`docs/subsystems/mail.md`](docs/subsystems/mail.md)
 - **Feedback**: the in-app widget, the admin inbox, the feedback console, answers to the sender (0024). [`docs/subsystems/feedback.md`](docs/subsystems/feedback.md)
 - **Push notifications**: [`docs/subsystems/push-notifications.md`](docs/subsystems/push-notifications.md)
 - **Jobs**: [`docs/subsystems/jobs.md`](docs/subsystems/jobs.md)
@@ -233,4 +234,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-11-06. Approved session completion and the five-request source audit, migration 0046; see `docs/history/codex-frc-direction.md`.
+Last reviewed: 2026-11-06. App mail: shared sender and Workspace setup (`docs/history/codex-frc-mail-from.md`). Approved session completion and the five-request source audit, migration 0046 (`docs/history/codex-frc-direction.md`).

@@ -25,18 +25,15 @@
 // who could read it would answer their own parent's questionnaire. See
 // supabase/parent_responses.sql section 2.
 //
-// SECRETS (same Gmail SMTP path as send-approval-email):
-//   GMAIL_USER          - the sending mailbox, e.g. apina@boscotech.edu
-//   GMAIL_APP_PASSWORD  - a Google App Password (NOT the account password)
-//   EMAIL_FROM          - optional display form; address part MUST be GMAIL_USER
-//   EMAIL_REPLY_TO      - optional Reply-To address; defaults to apina@boscotech.edu
-//   APP_URL             - optional; where /parent/<token> lives
-// If the Gmail secrets are unset the send is logged and skipped (HTTP 200) so
-// the student's submit is never affected.
-// SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY are injected.
+// Mail configuration and deployment: docs/subsystems/mail.md. The shared
+// reader selects Workspace Gmail API or the existing SMTP setup. EMAIL_FROM
+// is the Workspace sender, Reply-To and delegated user. APP_URL optionally
+// overrides the parent link. Missing mail setup skips without blocking submit.
+// Supabase URL, anon key and service role are injected by the runtime.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts'
+import { createMailer } from '../_shared/mail.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -92,15 +89,9 @@ Deno.serve(async (req) => {
       return json({ sent: false, error: 'The application has no usable parent email' }, 400)
     }
 
-    const GMAIL_USER = Deno.env.get('GMAIL_USER')
-    const GMAIL_APP_PASSWORD = Deno.env.get('GMAIL_APP_PASSWORD')
-    if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-      // Not configured yet. The application is already saved; skip quietly.
-      console.log(`[send-parent-request] Gmail SMTP not configured; skipping send to ${to}`)
-      return json({ skipped: true, reason: 'GMAIL_USER/GMAIL_APP_PASSWORD not set' })
-    }
+    const client = createMailer({ SMTPClient })
+    if (!client) return json({ skipped: true, reason: 'mail_not_configured' })
 
-    const from = Deno.env.get('EMAIL_FROM') ?? `Techmen 5669 <${GMAIL_USER}>`
     const appUrl = (Deno.env.get('APP_URL') ?? 'https://frc-app-liard.vercel.app').replace(/\/+$/, '')
     const link = `${appUrl}/parent/${app.parent_token}`
     const student = `${app.legal_first_name ?? ''} ${app.legal_last_name ?? ''}`.trim() || 'Your student'
@@ -115,20 +106,8 @@ Deno.serve(async (req) => {
       `If you did not expect this email, reply and let me know.\n\n` +
       `- Mr. Pina\n`
 
-    const replyTo = Deno.env.get('EMAIL_REPLY_TO') ?? 'apina@boscotech.edu'
-    const client = new SMTPClient({
-      connection: {
-        hostname: 'smtp.gmail.com',
-        port: 465,
-        tls: true,
-        auth: { username: GMAIL_USER, password: GMAIL_APP_PASSWORD },
-      },
-    })
-
     try {
       await client.send({
-        from,
-        replyTo,
         to,
         subject: 'Your student signed up for FRC Team 5669',
         content: text,
@@ -136,7 +115,7 @@ Deno.serve(async (req) => {
       await client.close()
     } catch (sendErr) {
       try { await client.close() } catch { /* ignore */ }
-      console.error('[send-parent-request] SMTP send failed', sendErr)
+      console.error('[send-parent-request] Mail send failed', sendErr)
       return json({ sent: false, error: String(sendErr) }, 502)
     }
 
