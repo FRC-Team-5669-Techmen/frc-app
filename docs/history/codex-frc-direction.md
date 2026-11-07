@@ -2,7 +2,7 @@
 title: "Mr. Pina request audit and completion of approved sign-out"
 date: 2026-11-06
 branches: [main]
-commits: []
+commits: [4379cb7]
 migrations: [0046_signout_session_boundary.sql]
 subsystems: ["Check-in", "Session integrity", "Roster, access and capabilities", "Event rosters", "Scouting", "Robot match log", "Connector", "Fixture mode"]
 ---
@@ -33,7 +33,11 @@ The browser regression is tools/e2e/features/signout-boundary.mjs, registered in
 
 The targeted browser suite passes 85/85 at 375, 1152 and 1440 in both themes, covering 24 measured views (build-open explanation, pending approval, waiting-name queue and FLL receipt). Every view has real content, 0px document overflow, no escaping descendants and content bounded to the viewport and 1280px frame. Both the build sign-out link and waiting name meet the 44px floor. Phone dark build-open and desktop light queue screenshots were visually inspected; the retained harness reproduces every view. Existing tokens, fonts and raised-key shapes are unchanged.
 
-The full seven-command solo gate is run before the main push. Final counts and remote confirmation belong in this entry's landing record once observed; targeted results alone do not authorize skipping the full gate.
+The implementation passed the full solo gate before main push: build (192 precache entries, 2580.31 KiB), npm test (114 files, 1554/1554), ds:audit (36 aliases x 3 grounds, 79 components, 315 files), Discord calendar 19/19, lossless history (50 originals, 45 post-split), check-in 51/51 at 375 and 1440, and features 7020/7020 at 375, 1152 and 1440, including desktop-layout 2732/2732 and signout-boundary 85/85. The regenerated connector registry check and offline migration-plan check also passed. A concurrent unit run exceeded the unchanged 30-second timeout in the exhaustive reporting day-rule comparison. The full suite passed with one worker and no assertion or timeout changed.
+
+A fresh fetch/rebase found main unchanged at 5aede08 and 0045 still the highest landed migration. Code commit 4379cb717ae8a2d95af2c8d5ba67e25fd69b14c5, authored with the requested identity, was pushed fast-forward to main. A fresh fetch and git ls-remote agree. The main artifact contains the waiting-name approval button (`sop-btn sop-btn-primary sop-name`) and 0046's named internal-editor client revoke. The ledger's deployed status refers to that code artifact.
+
+[Migrate run 42327529185](https://github.com/FRC-Team-5669-Techmen/frc-app/actions/runs/42327529185) completed successfully, including Apply pending migrations. Its downloaded apply log reports only `0046`: `applied supabase/migrations/0046_signout_session_boundary.sql and recorded 0046 (229 ms)` and `done: 1 applied.` GitHub's Vercel status for this code commit is success, description Deployment has completed. These are workflow/deployment reports, not direct live catalog or signed-in application checks. This final update changes only this history and the ledger; app, SQL, connector and test code remain identical to the verified main artifact. Record validation reruns the local commands and the touched sign-out/browser layout suites before the record-only push.
 
 ## Limits and remaining work
 

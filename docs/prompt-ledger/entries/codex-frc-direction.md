@@ -3,10 +3,10 @@
 - By: Codex session, requested directly by Mr. Pina
 - Owns: the modules these touch, migrations, connector tool definitions, tests, docs/subsystems.
 - Migration permitted: yes. Highest at issue and fetched main: 0045. Reserved next number: 0046, recheck at landing.
-- Status: issued
+- Status: deployed
 - Authorization: Solo mode (decision 05), fetch and rebase, local gate, commit with the requested pina-hash author identity, push main without force. Migrations applied by migrate.yml on push.
 - Branch: main (solo mode, decision 05)
 - Base: origin/main 5aede08, fetched and rebased before changes.
-- Confirmed: pending local verification and main push.
-- Verification: PostgreSQL 24/24, permissive mutations 17/17, concurrent-session proof 11/11. Targeted browser 85/85 at 375, 1152 and 1440 in both themes (24 measured views); no overflow or escaping descendants. Full seven-command solo gate pending completion. All seven solo checks, targeted real PostgreSQL boundary/mutation checks, and browser measurements at 375, 1152 and 1440 in both themes required.
+- Confirmed: code commit 4379cb717ae8a2d95af2c8d5ba67e25fd69b14c5 pushed to main without force. A fresh fetch and git ls-remote agree. Read back SignoutsPage.jsx on origin/main: `sop-btn sop-btn-primary sop-name`, and read back the named anon/authenticated revoke in 0046. Deployed here means the code artifact is on main, not a signed-in production acceptance test. Migrate run 42327529185 reports 0046 applied and recorded; its apply step succeeded. Vercel reports Deployment has completed. No direct live catalog query was available.
+- Verification: build (192 precache entries), npm test (114 files / 1554 tests, one worker), ds:audit (36 aliases x 3 grounds, 79 components, 315 files), calendar 19/19, lossless history (50 originals, 45 post-split), check-in 51/51, full features 7020/7020 at 375, 1152 and 1440. Targeted browser 85/85 in both themes (24 measured views), no horizontal overflow or escaping descendants and 44px controls. PostgreSQL 24/24, permissive mutations 17/17, concurrency 11/11. A concurrent unit run exceeded an unchanged 30-second calculation-test timeout; the full one-worker rerun passed without assertion or timeout changes.
 - Notes: Read CLAUDE.md, the complete OVERHAUL_AUDIT.md and applicable subsystem documents before implementation. AGENTS.md is absent from the workspace tree. Fresh origin/main contains the earlier ledger entries and their shipped source; older status labels do not prove unbuilt work. Audit all five requested items against source. Finish item 1 before expanding into item 2; a complete first item takes priority over partial implementation of all five. No live identities in fixtures or reports. Existing tokens, fonts and shape language only.
