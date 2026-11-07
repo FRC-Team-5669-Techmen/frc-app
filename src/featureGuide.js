@@ -1,5 +1,5 @@
 // THE FEATURE GUIDE: every page of the app, in one list, with who it is for,
-// where to find it and what it does. The onboarding tour (src/tour.js) is
+// where to find it and what it does. The guided training (src/tour/catalog.js) is
 // built from it, so the tour covers every feature and changes when this list
 // does (feedback aa4e3c4d, ledger 0016: "it must cover every single feature
 // of the app as well as auto update when new features or changes are added").
@@ -101,6 +101,7 @@ export const GUIDE = Object.freeze([
     what: 'A short check-in about your week.' },
   { path: '/members/:id', area: 'team', title: 'Member page', for: ['member'], where: 'Tap a name on Team Hours or the board',
     what: 'One member, their sub-teams and hours.' },
+  { path: '/training', area: 'you', title: 'Training', for: ['member', 'parent'], where: 'Account menu, Preferences, then Training / Replay tour', what: 'Hands-on core training, a walkthrough for your role, and every feature you can use. Mentors see who has finished core.' },
   // ── you and your record ──────────────────────────────────────────────────
   { path: '/profile', area: 'you', title: 'My Profile', for: ['member', 'parent'], anchor: '[data-tour="nav-profile"]', where: 'Account menu',
     what: 'Your details and notifications. Replay this tour from Preferences in the account menu. Use Search or Ctrl+K to find any page.' },

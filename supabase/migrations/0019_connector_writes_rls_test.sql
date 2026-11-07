@@ -361,8 +361,8 @@ insert into t0019_cases (n, fn, setup, direct, call, fp, pos, neg, needs_change,
  'S', 'anon', true, null),
 
 (15, 'attendance_record (the Check Out button)', null,
- array[$s$insert into public.attendance_events (user_id, type, location, method) values ({me}, 'out', 't0019 button', null)$s$],
- $s$select public.attendance_record('out', 't0019 button', null)$s$,
+ array[$s$insert into public.attendance_events (user_id, type, location, method, note, cleanup_confirmed) values ({me}, 'out', 't0019 button', null, 'Finished the test build', true)$s$],
+ $s$select public.attendance_record('out', 't0019 button', null, null, null, 'Finished the test build', true)$s$,
  $s$select pg_temp.rows_fp('select * from public.attendance_events where location = ''t0019 button''', array['id'])$s$,
  'M', 'anon', true, null),
 

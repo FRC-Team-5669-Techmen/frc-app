@@ -103,10 +103,12 @@ export async function runDirect(client, fallback) {
 }
 
 export async function writeVia(client, fn, args, fallback) {
-  if (!missing.has(fn)) {
+  // New operations have no old direct write. Preserve their setup error,
+  // and ask again on retry so setup completed in this tab is recognized.
+  if (!fallback || !missing.has(fn)) {
     const res = await client.rpc(fn, args ?? {})
     const error = res?.error ?? null
-    if (!error || !isMissingFunction(error)) return { data: res?.data ?? null, error, via: 'function' }
+    if (!error || !isMissingFunction(error) || !fallback) return { data: res?.data ?? null, error, via: 'function' }
     missing.add(fn)
   }
   return runDirect(client, fallback)

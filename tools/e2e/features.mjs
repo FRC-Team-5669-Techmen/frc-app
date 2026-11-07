@@ -93,6 +93,7 @@ const FEATURES = Object.freeze([
   'event-link',
   'desktop-layout',
   'navigation',
+  'tour',
 ]);
 
 

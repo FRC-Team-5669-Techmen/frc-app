@@ -53,6 +53,7 @@ export const ROUTES = Object.freeze([
   { path: '/match-sim', url: '/match-sim', group: 'member', label: 'Match simulator' },
   { path: '/robot/matches', url: '/robot/matches', group: 'member', label: 'Match log' },
   { path: '/robot/matches/:id', url: '/robot/matches/38000000-0000-4000-8000-000000000001', group: 'member', label: 'Match log (practice 1)' },
+  { path: '/training', url: '/training', group: 'member', label: 'Training' },
   { path: '/updates', url: '/updates', group: 'member', label: "What's new" },
   { path: '/standing', url: '/standing', group: 'member', label: 'My standing' },
   { path: '/scouting', url: '/scouting', group: 'member', label: 'Scouting events' },

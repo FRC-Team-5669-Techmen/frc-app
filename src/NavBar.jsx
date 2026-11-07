@@ -116,10 +116,6 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
 
   useOutsideClick(ref, () => setOpen(false))
 
-  async function replayTour() {
-    const { startTour } = await import('./tour')
-    startTour(isStaff, undefined, isParent, isAdmin)
-  }
 
   const itemClass = ({ isActive }) => `nav-dropdown-item${isActive ? ' active' : ''}`
 
@@ -191,7 +187,7 @@ function AvatarMenu({ avatarUrl, initials, name, role, isStaff, isAdmin = false,
                 <span className="nav-menu-theme-label">Theme</span>
                 <ThemeSwitch compact />
               </div>
-              <button className="nav-dropdown-item" onClick={replayTour}>Replay tour</button>
+              <NavLink to="/training" className={itemClass} data-tour="nav-training">Training / Replay tour</NavLink>
             </div>
           </details>
           <div className="nav-dropdown-divider" />
@@ -306,7 +302,7 @@ export default function NavBar({ hasRole = () => false, session = null }) {
         </div>
 
         <div className="navbar-account">
-          <button ref={searchTrigger} className="nav-search-btn" type="button" aria-label="Search anything" aria-keyshortcuts="Control+k Meta+k" onClick={() => setSearchOpen(true)}>
+          <button ref={searchTrigger} className="nav-search-btn" data-tour="nav-search" type="button" aria-label="Search anything" aria-keyshortcuts="Control+k Meta+k" onClick={() => setSearchOpen(true)}>
             <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
             <span>Search</span><kbd>Ctrl K</kbd>
           </button>

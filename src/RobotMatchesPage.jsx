@@ -119,7 +119,7 @@ export default function RobotMatchesPage({ hasRole = () => false }) {
       </div>
       {writer && <RobotMatchImport members={data.members} batteries={data.batteries} routines={data.routines} events={data.events} matches={matches} onDone={load} manageLink={hasRole('admin') ? '/roster?perm=robot.matches' : null} />}
 
-      <div className="rm-tabs" role="group" aria-label="View">
+      <div className="rm-tabs" data-tour="match-views" role="group" aria-label="View">
         {[['log', 'Log', shown.length], ['trends', 'Trends', null], ['compare', 'Compare', picked.length]].map(([k, l, n]) => (
           <button key={k} type="button" className="rm-tab" aria-pressed={tab === k} onClick={() => set({ view: k === 'log' ? '' : k })}>{l}{n !== null && <span>{n}</span>}</button>
         ))}

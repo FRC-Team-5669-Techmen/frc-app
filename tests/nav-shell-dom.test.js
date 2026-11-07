@@ -24,6 +24,9 @@ it('a student approver has at most six top-level branches, counting preferences 
   expect(branches.length).toBeGreaterThan(3)
   expect(branches.length).toBeLessThanOrEqual(6)
   expect(menu.querySelector('a[href="/signouts"]')).not.toBeNull()
+  const training = menu.querySelector('a[href="/training"]')
+  expect(training?.textContent).toBe('Training / Replay tour')
+  expect(training?.closest('details')?.querySelector('summary')?.textContent).toBe('Preferences')
 })
 it('Escape closes an open account menu and returns focus to its trigger', async () => {
   const button = await mount()

@@ -85,6 +85,7 @@ it('mentor guide omits admin-only tools while admin guide includes all four', ()
   expect(guideFor({ isStaff: true, isAdmin: true }).filter(g => admin.includes(g.path)).map(g => g.path)).toEqual(admin)
 })
 
-it('the automatic tour receives the actual admin flag, as Replay tour does', () => {
-  expect(APP).toContain("}, isParentTrack, roles.includes('admin'))")
+it('the training provider receives the actual admin flag', () => {
+  const provider = readFileSync(new URL('../src/tour/context.jsx', import.meta.url), 'utf8')
+  expect(provider).toContain("isAdmin: hasRole('admin')")
 })

@@ -73,7 +73,7 @@ function PracticeOnly({ uid }) {
     createScoutingStore().then(s => { opened = s; if (live) setStore(s); else s.close() }).catch(e => { if (live) setError(errorText(e)) })
     return () => { live = false; opened?.close() }
   }, [uid])
-  return <main className="sc-wrap" data-scout-page="practice">
+  return <main className="sc-wrap" data-scout-page="practice" data-tour="scout-practice">
     <Link className="sc-back" to="/scouting">← Events</Link>
     <header className="sc-head"><div><span className="sc-eyebrow">Techmen scouting</span><h1>Practice scouting</h1><p>No event needed. Train now; your progress stays on this device.</p></div><span className="sc-season">REBUILT / 2026</span></header>
     {error && <p role="alert" className="sc-error">Practice storage could not open. {error}</p>}

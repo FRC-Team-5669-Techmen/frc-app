@@ -201,7 +201,7 @@ function AbsenceList({ absences, onWithdraw }) {
   )
 }
 
-function AbsenceForm({ events, absences, onDone }) {
+export function AbsenceForm({ events, absences, onDone, practice = false }) {
   const [eventId, setEventId] = useState('')
   const [reason, setReason] = useState('')
   const [emergency, setEmergency] = useState(false)
@@ -217,6 +217,11 @@ function AbsenceForm({ events, absences, onDone }) {
     if (p) return
     setBusy(true)
     try {
+      if (practice) {
+        onDone('Practice request received. No real absence was sent.')
+        setBusy(false)
+        return
+      }
       await requestAbsence(supabase, { eventId, reason, note, emergency })
       setEventId(''); setReason(''); setNote(''); setEmergency(false)
       onDone('Absence request sent. A mentor approves or denies it; one still unanswered when the meeting starts counts as approved.')
@@ -228,8 +233,8 @@ function AbsenceForm({ events, absences, onDone }) {
   }
 
   return (
-    <section className="st-card" data-card="absence">
-      <h2 className="st-h2">Absences</h2>
+    <section className="st-card" data-card="absence" data-tour="absence-form">
+      <h2 className="st-h2">{practice ? 'Practice absence request' : 'Absences'}</h2>
       <form className="st-form" onSubmit={send} noValidate>
         <label className="st-label" htmlFor="st-ev">Which meeting or event</label>
         <select id="st-ev" className="st-input" value={eventId} onChange={(e) => setEventId(e.target.value)}>
@@ -237,7 +242,7 @@ function AbsenceForm({ events, absences, onDone }) {
           {events.map((x) => <option key={x.id} value={x.id}>{fmtWhen(x.starts_at)} · {x.title}{x.mandatory || x.kind === 'competition' ? ' (mandatory)' : ''}</option>)}
         </select>
         <span className="st-label">Reason</span>
-        <div className="st-chips" role="radiogroup">
+        <div className="st-chips" role="radiogroup" aria-label="Reason">
           {ABSENCE_REASONS.map((r) => (
             <button type="button" key={r.key} role="radio" aria-checked={reason === r.key}
               className={`st-pick${reason === r.key ? ' on' : ''}`} onClick={() => setReason(r.key)}>{r.label}</button>
@@ -245,9 +250,9 @@ function AbsenceForm({ events, absences, onDone }) {
         </div>
         <label className="st-check"><input type="checkbox" checked={emergency} onChange={(e) => setEmergency(e.target.checked)} />
           <span>Emergency: my own illness or injury, or a death, hospital stay or serious illness in my close family. Filed by 11:59 PM the next school day.</span></label>
-        <input className="st-input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note for the mentor (optional)" maxLength={500} />
+        <input aria-label="Note for the mentor" className="st-input" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note for the mentor (optional)" maxLength={500} />
         {problem && <p className="st-error" role="alert">{problem}</p>}
-        <button className="st-btn st-btn-primary" disabled={busy}>{busy ? 'Sending…' : 'Ask for the absence'}</button>
+        <button className="st-btn st-btn-primary" disabled={busy}>{busy ? 'Sending…' : practice ? 'Practice absence request' : 'Ask for the absence'}</button>
         <p className="st-muted">Ask at least 24 hours ahead. {NEVER_EXCUSED}</p>
       </form>
       <AbsenceList absences={absences} onWithdraw={withdraw} />

@@ -44,6 +44,15 @@ describe('writeVia', () => {
     expect(c.calls).toEqual([{ kind: 'rpc', name: 'do_it', args: { p_a: 1 } }])
   })
 
+  it('a new write with no legacy fallback reports missing setup and can retry after setup', async () => {
+    const c = fakeClient()
+    const missing = await writeVia(c, 'tour_complete_core', {})
+    expect(missing.error?.code).toBe('PGRST202')
+    expect(c.calls.filter(x=>x.kind==='table')).toHaveLength(0)
+    c.rpc = async () => ({data:{member_id:'invented'},error:null})
+    expect((await writeVia(c, 'tour_complete_core', {})).data).toEqual({member_id:'invented'})
+  })
+
   it('with the function missing, the direct write runs exactly as the page wrote it', async () => {
     const c = fakeClient({ tables: { events: { data: [{ id: 'e1' }], error: null } } })
     const r = await writeVia(c, 'schedule_delete_event', { p_event: 'e1' },

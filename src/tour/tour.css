@@ -1,0 +1,257 @@
+.tour-page {
+  width: min(100%, var(--page-width));
+  margin: 0 auto;
+  padding: var(--page-gap);
+  font-family: var(--font-ui);
+}
+.tour-page h1 {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+.tour-page p,
+.tour-runner p {
+  line-height: 1.5;
+}
+.tour-eyebrow,
+.tour-top,
+.tour-hint {
+  font-family: var(--font-mono);
+  color: var(--steel);
+}
+.tour-card {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-block: 1.25rem;
+}
+.tour-field {
+  display: grid;
+  gap: 0.5rem;
+  margin-block: 1rem;
+}
+.tour-field input,
+.tour-field select,
+.tour-field textarea {
+  width: 100%;
+  min-height: 44px;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--tm-hair, var(--border-strong));
+  border-radius: var(--radius);
+  padding: 0.6rem;
+}
+.tour-check {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  line-height: 1.4;
+}
+.tour-check input {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  accent-color: var(--gold-fill);
+}
+.tour-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-block: 0.75rem;
+}
+:is(.tour-page, .tour-runner) button {
+  min-height: 44px;
+  padding: 0.6rem 0.8rem;
+  font: inherit;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+:is(.tour-page, .tour-runner) button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+:is(.tour-page, .tour-runner) a {
+  color: var(--gold);
+  display: inline-block;
+  min-height: 44px;
+  padding-block: 0.6rem;
+}
+.tour-page summary {
+  min-height: 44px;
+  cursor: pointer;
+  padding-block: 0.7rem;
+}
+.tour-lessons {
+  padding-inline-start: 1.5rem;
+}
+.tour-lessons li {
+  margin-block: 0.5rem;
+}
+.tour-roster {
+  list-style: none;
+  padding: 0;
+}
+.tour-roster li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  padding-block: 0.8rem;
+}
+.tour-roster span {
+  font-family: var(--font-mono);
+  color: var(--steel);
+}
+.tour-runner {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 90;
+  width: min(440px, calc(100vw - 2rem));
+  max-height: 55dvh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 1rem;
+  border: 2px solid var(--gold);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+.tour-runner h2 {
+  font-size: 1.2rem;
+  margin: 0.5rem 0;
+}
+.tour-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+.tour-runner .tour-hint {
+  font-size: 0.8rem;
+}
+.tour-quiz {
+  margin: 0.8rem 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 0.7rem;
+}
+.tour-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+[data-tour-active] {
+  outline: 2px solid var(--gold);
+  outline-offset: 5px;
+  scroll-margin-block: 100px var(--tour-space, 400px);
+}
+:root.tour-active {
+  scroll-padding-bottom: var(--tour-space, 400px);
+}
+:root.tour-active .app-layout {
+  padding-bottom: var(--tour-space, 400px);
+}
+@media (min-width: 900px) {
+  :root.tour-active .app-layout {
+    padding-right: 480px;
+  }
+  .tour-runner {
+    top: 100px;
+    bottom: auto;
+    max-height: calc(100dvh - 120px);
+  }
+}
+@media (max-width: 899px) {
+  .tour-runner {
+    bottom: 0.5rem;
+    right: 0.5rem;
+    width: calc(100vw - 1rem);
+    max-height: 48dvh;
+  }
+}
+/* Training uses the plate housing and key geometry, with existing tokens. */
+:root.tm-plate .tour-card {
+  border-radius: var(--tm-r-panel);
+  border-color: var(--tm-panel-edge);
+  background-image: linear-gradient(
+    to bottom,
+    var(--tm-panel-sheen),
+    transparent 4rem
+  );
+  box-shadow:
+    inset 0 1px 0 var(--tm-panel-hi),
+    0 8px 14px -6px var(--tm-drop);
+}
+:root.tm-plate .tour-runner {
+  border-radius: var(--tm-r-panel);
+  border-color: var(--tm-hair);
+  background-image: linear-gradient(
+    to bottom,
+    var(--tm-panel-sheen),
+    transparent 6rem
+  );
+  box-shadow:
+    inset 0 1px 0 var(--tm-panel-hi),
+    inset 0 0 0 3px var(--tm-frame),
+    inset 0 0 3px 4px var(--tm-frame-in),
+    0 0 0 1px var(--tm-rim-out),
+    0 10px 24px -4px var(--tm-drop),
+    0 22px 40px -18px var(--tm-drop-far);
+}
+:root.tm-plate :is(.tour-page, .tour-runner) button {
+  border-radius: var(--tm-r-control);
+  border-color: var(--tm-hair);
+  background-image: linear-gradient(
+    to bottom,
+    var(--tm-face-hi),
+    var(--tm-face-lo)
+  );
+  box-shadow:
+    inset 0 1px 0 var(--tm-face-hi),
+    0 2px 3px -1px var(--tm-drop);
+}
+:root.tm-plate :is(.tour-page, .tour-runner) button:active {
+  box-shadow: inset 0 2px 3px -1px var(--tm-drop);
+}
+:root.tm-plate :is(.tour-page, .tour-runner) button:disabled {
+  box-shadow: none;
+}
+@media (max-width: 899px) {
+  :root.tour-active .fb-launch {
+    bottom: calc(var(--tour-space) + 0.5rem);
+  }
+  :root.tour-active .fb-panel {
+    bottom: calc(var(--tour-space) + 4rem);
+    max-height: calc(100dvh - var(--tour-space) - 5rem);
+    overflow: auto;
+  }
+}
+@media (min-width: 900px) {
+  :root.tour-active :is(.fb-launch, .fb-panel) {
+    right: 480px;
+  }
+}
+
+.tour-invite {
+  display: block;
+  margin: 0.75rem var(--page-gap);
+  padding: 0.75rem 1rem;
+  min-height: 44px;
+  color: var(--gold);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--tm-r-panel, var(--radius));
+  background: var(--surface);
+  font-family: var(--font-ui);
+}

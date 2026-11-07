@@ -143,7 +143,7 @@ begin
   perform pg_temp.rec(3, 'student cannot insert a request row directly, loud', r = 'err:42501', r);
 
   -- 4 A cannot just write their own OUT on a build session
-  r := pg_temp.run_as(f.a, format('insert into public.attendance_events (user_id, type, location, method) values (%L, %L, %L, %L)', f.a, 'out', 'shop', 'nfc'));
+  r := pg_temp.run_as(f.a, format('insert into public.attendance_events (user_id, type, location, method, note) values (%L, %L, %L, %L, %L)', f.a, 'out', 'shop', 'nfc', 'Finished wiring the drive base'));
   perform pg_temp.rec(4, 'student cannot write their own OUT on a build session, loud', r = 'err:42501', r);
 
   -- 5 POSITIVE: C closes an FLL session directly, with a note
@@ -187,7 +187,7 @@ begin
   perform pg_temp.rec(12, 'staff sends a request back with a reason (positive control)', v = 'returned:Clean the bench', v);
 
   -- 13 POSITIVE: staff close their own session directly
-  r := pg_temp.run_as(f.s, format('insert into public.attendance_events (user_id, type, location, method) values (%L, %L, %L, %L)', f.s, 'out', 'shop', 'nfc'));
+  r := pg_temp.run_as(f.s, format('insert into public.attendance_events (user_id, type, location, method, note) values (%L, %L, %L, %L, %L)', f.s, 'out', 'shop', 'nfc', 'Finished supervising the build'));
   perform pg_temp.rec(13, 'staff close their own build session directly (positive control)', r = 'ok:1', r);
 
   -- 14 a request with no open session is refused
@@ -218,18 +218,22 @@ begin
   v := pg_temp.run_as(f.b, format('select public.approve_signout(id) from public.signout_requests where member_id = %L and status = %L', f.b, 'pending'));
   perform pg_temp.rec(20, 'an approver cannot approve their own sign-out, loud', r = 'ok:1' and v = 'err:42501', r || ' / ' || v);
 
-  -- 21 POSITIVE: switch to FLL closes the build session and opens a volunteer one
-  r := pg_temp.run_as(f.d, $q$select public.switch_to_fll('fll-room', true, null)$q$);
+  -- 21 POSITIVE: 0046 makes this transition staff only, with a note.
+  -- Move the earlier staff OUT back, then seed a distinct later build session.
+  update public.attendance_events set event_time=now()-interval '30 minutes' where user_id=f.s and type='out';
+  insert into public.attendance_events(user_id,type,event_time,location,method,category)
+  values(f.s,'in',now()-interval '10 minutes','test','nfc','build');
+  r := pg_temp.run_as(f.s, $q$select public.switch_to_fll('fll-room', true, 'Finished supervising the build')$q$);
   select type || ':' || coalesce(category, '') into v from public.attendance_events
-   where user_id = f.d order by event_time desc limit 1;
-  perform pg_temp.rec(21, 'switch to FLL writes the build OUT and a volunteer IN (positive control)', r = 'ok:1' and v = 'in:volunteer', r || ' / ' || v);
+   where user_id = f.s order by event_time desc limit 1;
+  perform pg_temp.rec(21, 'staff switch to FLL writes the build OUT and a volunteer IN (positive control)', r = 'ok:1' and v = 'in:volunteer', r || ' / ' || v);
 
   -- 22 switching with no build session open is refused
-  r := pg_temp.run_as(f.d, $q$select public.switch_to_fll('fll-room', true, null)$q$);
+  r := pg_temp.run_as(f.s, $q$select public.switch_to_fll('fll-room', true, 'Finished supervising the build')$q$);
   perform pg_temp.rec(22, 'switch to FLL refused with no build session open', r = 'err:P0002', r);
 
   -- 23 the switch leaves no way round the guard behind it
-  r := pg_temp.run_as(f.b, format('insert into public.attendance_events (user_id, type, location, method) values (%L, %L, %L, %L)', f.b, 'out', 'shop', 'nfc'));
+  r := pg_temp.run_as(f.b, format('insert into public.attendance_events (user_id, type, location, method, note) values (%L, %L, %L, %L, %L)', f.b, 'out', 'shop', 'nfc', 'Finished cutting gussets'));
   perform pg_temp.rec(23, 'after a switch, a build session still cannot be closed directly, loud', r = 'err:42501', r);
 
   -- 19 anon

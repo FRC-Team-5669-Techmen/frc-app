@@ -148,7 +148,7 @@ export default function ParentHomePage({ session }) {
     .sort((a, b) => displayName(a).localeCompare(displayName(b)))
 
   return (
-    <div className="ph-wrap">
+    <div className="ph-wrap" data-tour="parent-home">
       <div className="ph-body">
         <header className="ph-head">
           <span className="ph-eyebrow">FAMILY VIEW</span>

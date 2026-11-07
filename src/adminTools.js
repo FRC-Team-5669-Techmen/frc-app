@@ -16,6 +16,7 @@ export const GROUPS = Object.freeze([
 // count: the key in the counts object (loadAdminCounts) that is "waiting".
 // admin: true when only admins may open it (the page refuses anyone else).
 export const TOOLS = Object.freeze([
+  { path: '/training', group: 'people', title: 'Training progress', what: 'Who has completed the core walkthrough', words: 'training tour learn onboarding completion' },
   { path: '/signouts', group: 'now', title: 'Sign-outs', what: 'Approve or send back a sign-out', count: 'signouts', words: 'sign out leave approve checkout' },
   { path: '/access-requests', group: 'now', title: 'Access requests', what: 'People asking to join the app', count: 'access', words: 'join approve invite parent' },
   { path: '/feedback', group: 'now', title: 'Feedback', what: 'Reports from the feedback button', count: 'feedback', admin: true, words: 'bug report inbox idea' },

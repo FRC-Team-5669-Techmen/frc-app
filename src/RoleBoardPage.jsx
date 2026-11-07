@@ -73,7 +73,7 @@ export default function RoleBoardPage({ session, hasRole = () => false }) {
   const openSlot = open ? curDay?.slots.find((s) => s.id === open.slotId) : null
   const openCell = openSlot?.cells.find((c) => c.role === open.role) ?? null
   return (
-    <main className="rb-wrap" data-page="role-board">
+    <main className="rb-wrap" data-page="role-board" data-tour="role-board">
       <Link className="rb-back" to={`/rosters/${eventId}`}>← Event roster</Link>
       {view.roles.includes('meet_team') && <Link className="rb-back rb-meet" to={`/meet/${eventId}`}>Meet a team →</Link>}
       <header className="rb-head">

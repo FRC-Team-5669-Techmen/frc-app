@@ -157,7 +157,7 @@ export default function BatteriesPage({ session, hasRole = () => false }) {
 
       {board.length > 0 && <FleetLine fleet={fleet} />}
 
-      <nav className="ba-filters" aria-label="Show">
+      <nav className="ba-filters" data-tour="battery-filters" aria-label="Show">
         {FILTERS.map((f) => (
           <button key={f.key} className="ba-filter" aria-pressed={filter === f.key} onClick={() => setFilter(f.key)}>
             {f.label} <span className="hud-tnum">{counts[f.key]}</span>

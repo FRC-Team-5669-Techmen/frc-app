@@ -104,9 +104,16 @@ $fn$;
 -- refused; exec_as runs the plain insert and the owner counts the rows.)
 -- Two pending sign-out requests, A and B.
 update t24_fx set sr1 = gen_random_uuid(), sr2 = gen_random_uuid();
-insert into public.signout_requests (id, member_id, note, cleanup_confirmed, location)
-select sr1, a, 'Wired the intake', true, 'shop' from t24_fx
-union all select sr2, b, 'Programmed auto', true, 'shop' from t24_fx;
+-- 0046 approval binds each request to its actual latest IN.
+with sessions as (
+  insert into public.attendance_events(user_id,type,event_time,location,method,category)
+  select a,'in',clock_timestamp(),'test','nfc','build' from t24_fx
+  union all select b,'in',clock_timestamp(),'test','nfc','build' from t24_fx
+  returning id,user_id
+)
+insert into public.signout_requests (id, member_id, note, cleanup_confirmed, location, in_event_id)
+select f.sr1,f.a,'Wired the intake',true,'shop',s.id from t24_fx f join sessions s on s.user_id=f.a
+union all select f.sr2,f.b,'Programmed auto',true,'shop',s.id from t24_fx f join sessions s on s.user_id=f.b;
 
 -- 1-3. A send-back tells the student (a notice and a push, with the note);
 -- an approval does not.

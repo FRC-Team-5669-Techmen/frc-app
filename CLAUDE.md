@@ -37,6 +37,7 @@ Light theme (0019): gold `background` uses `--gold-fill*`, never `--gold`. Theme
 
 One file per subsystem under [`docs/subsystems/`](docs/subsystems/), moved there verbatim on 2026-10-19. **Read a subsystem's file before changing that subsystem.** Many carry rules, not just descriptions.
 
+- **Guided app training**: six role walkthroughs, per-device resume, safe practice and mentor core completion progress. [`docs/subsystems/tour.md`](docs/subsystems/tour.md)
 - **Design system**: [`docs/subsystems/design-system.md`](docs/subsystems/design-system.md)
 - **Weekly survey**: [`docs/subsystems/weekly-survey.md`](docs/subsystems/weekly-survey.md)
 - **CI workflows**: [`docs/subsystems/ci-workflows.md`](docs/subsystems/ci-workflows.md)
@@ -234,4 +235,4 @@ Keep this file accurate. When you discover during a task that any of the followi
 
 When you update this file, bump the Last reviewed date below and note what changed in the commit message.
 
-Last reviewed: 2026-11-06. App mail: shared sender and Workspace setup (`docs/history/codex-frc-mail-from.md`). Approved session completion and the five-request source audit, migration 0046 (`docs/history/codex-frc-direction.md`).
+Last reviewed: 2026-11-07. App mail: shared sender and Workspace setup (`docs/history/codex-frc-mail-from.md`). Approved session completion and source audit (0046, `docs/history/codex-frc-direction.md`); guided app training and mentor core completion (0047, `docs/subsystems/tour.md`, `docs/history/codex-frc-tour.md`).

@@ -141,17 +141,21 @@ export default {
     await t.step('the tour', async () => {
       t.as('tour · built from the feature guide');
       await t.open('/dashboard', { persona: 'student', mig: 'all', reset: true, ready: '[data-tour="nav-profile"]' });
-      if (await t.count('.driver-popover')) { await t.page.keyboard.press('Escape'); await t.settle({ quietMs: 300 }); }
       await t.press('[data-tour="nav-profile"]');
       await t.press(t.page.locator('.nav-menu-group > summary', { hasText: 'Preferences' }));
       await t.press(t.page.locator('.nav-dropdown-item', { hasText: 'Replay tour' }));
-      await t.waitFor('.driver-popover');
-      const progress = (await t.text('.driver-popover-progress-text')) ?? '';
+      await t.waitFor('[data-tour="training-hub"]');
+      const openedTraining = new URL(t.page.url()).pathname === '/training';
+      await t.press(t.page.getByRole('button', { name: 'Start Member tour', exact: true }));
+      await t.waitFor('[data-tour="status-card"][data-tour-active]');
+      const progress = (await t.text('[data-tour-runner] .tour-top')) ?? '';
       const total = Number((/of (\d+)/.exec(progress) ?? [])[1] ?? 0);
-      const title = await t.text('.driver-popover-title');
-      t.check('Replay tour opens the guide-built tour: a welcome naming the page count, and more than ten steps',
-        /Welcome to Techmen/.test(title ?? '') && total > 10 && /\d+ pages/.test((await t.text('.driver-popover-description')) ?? ''), `${title}; ${progress}`);
+      const title = await t.text('#tour-heading');
+      t.check('Replay tour opens Training and starts the guide-built walkthrough on a live feature, with more than ten steps',
+        openedTraining && title === 'Check in at the door' && total > 10 && (await t.count('[data-tour="status-card"][data-tour-active]')) === 1, `${title}; ${progress}`);
       await t.page.keyboard.press('Escape');
+      await t.page.waitForSelector('[data-tour-runner]', { state: 'detached' });
+      t.eq('pausing from Replay tour grants no core completion', (await t.rows('tour_completions')).filter(r => r.member_id === P.student.id).length, 0);
     });
 
     await t.step('answers', async () => {

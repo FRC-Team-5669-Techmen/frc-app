@@ -266,7 +266,7 @@ export default function FeedbackWidget({ session }) {
     <>
       <button
         type="button"
-        className={`fb-launch${open ? ' fb-launch-open' : ''}`}
+        data-tour="feedback-launcher" className={`fb-launch${open ? ' fb-launch-open' : ''}`}
         aria-label={open ? 'Close feedback' : 'Send feedback'}
         aria-expanded={open}
         onClick={() => (open ? close() : setOpen(true))}

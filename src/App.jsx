@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './supabase'
-import { writeVia } from './writeVia'
 import { resolveCurrentSeason } from './seasons'
 import { nextApproval, nextRoles, nextOnboardedAt } from './claimApproval'
 import { clearOfflineScoutingAccountUnless, readOfflineScoutingAccount } from './scouting/offlineIdentity'
@@ -85,6 +84,11 @@ const AutosPage          = lazy(() => import('./AutosPage'))
 const MatchSimPage       = lazy(() => import('./MatchSimPage'))
 const RobotMatchesPage   = lazy(() => import('./RobotMatchesPage'))
 const RobotMatchPage     = lazy(() => import('./RobotMatchPage'))
+// Training stays outside the NFC entry bundle. These mount only in the protected shell.
+const TourProvider = lazy(() => import('./tour/context.jsx').then(m => ({ default: m.TourProvider })))
+const TourInvitation = lazy(() => import('./tour/context.jsx').then(m => ({ default: m.TourInvitation })))
+const TrainingPage = lazy(() => import('./tour/TrainingPage'))
+const TourRunner = lazy(() => import('./tour/Runner'))
 const UpdatesPage        = lazy(() => import('./UpdatesPage'))
 const DriversPage        = lazy(() => import('./DriversPage'))
 const MeetTeamPage       = lazy(() => import('./MeetTeamPage'))
@@ -139,13 +143,15 @@ function ProtectedLayout({ hasRole, session }) {
   // so navigating away (or Back) clears the error instead of keeping the card.
   const { pathname } = useLocation()
   return (
-    <div className="app-layout">
+    <TourProvider key={session.user.id} session={session} hasRole={hasRole}><div className="app-layout">
       <NavBar hasRole={hasRole} session={session} />
-      <ErrorBoundary key={pathname}><Outlet /></ErrorBoundary>
+      <TourInvitation />
+      <section data-tour="feature-page"><ErrorBoundary key={pathname}><Outlet /></ErrorBoundary></section>
       <Suspense fallback={null}>
         <FeedbackWidget session={session} />
+        <TourRunner />
       </Suspense>
-    </div>
+    </div></TourProvider>
   )
 }
 
@@ -183,7 +189,6 @@ export default function App() {
   const [appSeason, setAppSeason] = useState(undefined)
   const navigate = useNavigate()
   const location = useLocation()
-  const tourStarted = useRef(false)
 
   useEffect(() => {
     // Domain gate: claim_profile() approves allowed-domain members and grants
@@ -284,45 +289,10 @@ export default function App() {
         setApproved(null)
         setOnboardedAt(undefined)
         setAppSeason(undefined)
-        tourStarted.current = false
       }
     })
     return () => subscription.unsubscribe()
   }, [networkOnline]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Auto-run the onboarding tour once, on the dashboard, after roles load so the
-  // right track is chosen. Marks onboarded_at on finish/skip so it never repeats.
-  useEffect(() => {
-    if (tourStarted.current) return
-    if (!session || approved !== true) return
-    if (onboardedAt === undefined || onboardedAt) return  // not loaded, or already done
-    if (appSeason !== null) return   // application gate is up (or unresolved): no dashboard to tour
-    if (location.pathname !== '/dashboard') return
-    if (roles.length === 0) return                         // wait for roles to resolve
-    tourStarted.current = true
-
-    const isStaff = roles.some(r => ['mentor', 'lead', 'admin'].includes(r))
-    const isParentTrack = roles.includes('parent') && !isStaff
-    let tries = 0
-    let timer
-    const run = async () => {
-      // Wait for the lazy dashboard to mount before spotlighting its elements
-      if (!document.querySelector('[data-tour="status-card"]') && tries < 20) {
-        tries++
-        timer = setTimeout(run, 150)
-        return
-      }
-      const { startTour } = await import('./tour')
-      startTour(isStaff, async () => {
-        const now = new Date().toISOString()
-        await writeVia(supabase, 'member_finish_tour', {},
-          { table: 'profiles', op: 'update', values: { onboarded_at: now }, eq: { id: session.user.id } })
-        setOnboardedAt(now)
-      }, isParentTrack, roles.includes('admin'))
-    }
-    run()
-    return () => clearTimeout(timer)
-  }, [session, approved, onboardedAt, roles, appSeason, location.pathname])
 
   // A cold offline start cannot refresh an expired Auth token or claim approval.
   // Only the prepared scouting cache is opened; all online gates remain intact.
@@ -520,6 +490,7 @@ export default function App() {
           {/* The robot match log (0038, ledger 0028): students and staff; the pages gate parents. */}
           <Route path="/robot/matches"     element={<RobotMatchesPage hasRole={hasRole} />} />
           <Route path="/robot/matches/:id" element={<RobotMatchPage hasRole={hasRole} />} />
+          <Route path="/training" element={<TrainingPage />} />
           <Route path="/updates"         element={<UpdatesPage />} />
           {/* Meet a team (0035, ledger 0026): a note per member per competition about another team. */}
           <Route path="/meet"            element={<MeetTeamPage session={session} hasRole={hasRole} />} />

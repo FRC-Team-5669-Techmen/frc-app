@@ -474,7 +474,7 @@ export default function SchedulePage({ session, hasRole }) {
       <div className="sch-body">
         <header className="sch-head">
           <h1 className="sch-title">Schedule</h1>
-          <div className="sch-viewtabs" role="tablist">
+          <div className="sch-viewtabs" role="tablist" data-tour="schedule-view">
             {VIEWS.map(([v, label]) => (
               <button key={v} type="button" role="tab" aria-selected={view === v}
                 className={`sch-viewtab${view === v ? ' on' : ''}`} onClick={() => setView(v)}>{label}</button>
