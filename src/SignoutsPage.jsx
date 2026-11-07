@@ -1,3 +1,4 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
@@ -59,9 +60,9 @@ export default function SignoutsPage({ session, hasRole = () => false }) {
         .in('status', ['approved', 'returned']).gte('decided_at', today)
         .order('decided_at', { ascending: false }),
       supabase.from('profiles').select('id, full_name, nickname'),
-      fetchAllRows(() => supabase.from('attendance_events')
-        .select('id, user_id, type, event_time, category')
-        .gte('event_time', presenceSinceISO()).order('event_time', { ascending: true }).order('id')),
+      withSessionPauses((pauseFields) => fetchAllRows(() => supabase.from('attendance_events')
+        .select("id, user_id, type, event_time, category" + pauseFields)
+        .gte('event_time', presenceSinceISO()).order('event_time', { ascending: true }).order('id'))),
     ])
     const err = pend.error || dec.error
     if (err) { setLoadErr(isSchemaMissing(err) ? 'missing' : (err.code || err.message)); return }
@@ -117,7 +118,7 @@ export default function SignoutsPage({ session, hasRole = () => false }) {
   const others = pending.filter((r) => r.member_id !== uid)
   const pendingIds = new Set(pending.map((r) => r.member_id))
   const signedIn = [...present.entries()]
-    .map(([id, d]) => ({ id, since: d.since, kind: d.kind, name: nameOf(id), waiting: pendingIds.has(id) }))
+    .map(([id, d]) => ({ id, since: d.since, kind: d.kind, paused: d.paused, name: nameOf(id), waiting: pendingIds.has(id) }))
     .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
@@ -195,7 +196,7 @@ export default function SignoutsPage({ session, hasRole = () => false }) {
                 <li key={m.id} data-member={m.id} data-kind={m.kind.key}>
                   <span className="sop-who">
                     <span>{m.name}</span>
-                    <span className={`sop-chip sop-kind sop-kind-${m.kind.key}`} style={{ '--sop-kind': m.kind.color }}>{m.kind.label}</span>
+                    <span className={`sop-chip sop-kind sop-kind-${m.kind.key}`} style={{ '--sop-kind': m.kind.color }}>{m.kind.label}</span>{m.paused && <span className="sop-chip">Hours paused</span>}
                   </span>
                   <span className="hud-mono sop-meta">{m.waiting ? 'waiting · ' : ''}since {fmtClock(m.since)}</span>
                   {isStaff && m.id !== uid && <VoidIdle member={m} onDone={(t) => { setMsg(t); load() }} />}

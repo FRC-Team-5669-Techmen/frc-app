@@ -98,17 +98,18 @@ export default function PickLists({ records, confirmedRecords = records.filter(r
   const pairs = [[0, 1], [0, 2], [1, 2]]
   const pending = !!mine?.localStatus
   return <section aria-label="Pick lists" className="sc-stack">
-    <div className="sc-section-head"><div><h2>Pick lists</h2><p className="sc-help">Build your view, then bring the evidence to the meeting.</p></div><div className="sc-toggle"><button aria-pressed={mode === 'rate'} onClick={() => setMode('rate')}>Rate teams</button><button aria-pressed={mode === 'mine'} onClick={() => setMode('mine')}>My list</button><button aria-pressed={mode === 'master'} onClick={() => setMode('master')}>Master list</button></div></div>
+    <div className="sc-section-head"><div><h2>Pick lists</h2><p className="sc-help">Build your view, then bring the evidence to the meeting.</p></div><div className="sc-toggle"><button className="sc-manual-list" aria-pressed={mode === 'rate'} onClick={() => setMode('rate')}>Rate teams</button><button className="sc-manual-list" aria-pressed={mode === 'mine'} onClick={() => setMode('mine')}>My list</button><button aria-pressed={mode === 'master'} onClick={() => setMode('master')}>Master list</button></div></div>
     <BoardLink to={`/scouting/${eventId}/board`} />
     {error && <p role="alert" className="sc-error">{error}</p>}
     {!ready && error && <button onClick={() => { setError(''); setLoadAttempt(value => value + 1) }}>Retry loading pick-list draft</button>}
+    <p className="sc-phone-ranking">Use the automatic pick board to choose partners. Rankings update from results and confirmed evidence.</p>
     {mode === 'rate' ? <RateTeams teams={rateOrder} entries={entries} nameFor={nameFor} summary={summary} superOf={superOf} disabled={saving || pending || !ready} dirty={dirty} saving={saving} status={pending ? 'Saved locally. Sync before editing again.' : dirty ? draftStatus : mine ? `Saved list · version ${mine.version}` : 'No saved list yet'}
       onRate={(team, tier) => change(normalize([...entries.filter(e => e.team !== team), { team, tier, rank: entries.length + 1 }]))}
       onUndo={team => change(normalize(entries.filter(e => e.team !== team)))} onSave={() => save()} />
     : mode === 'master' ? <>
       <p className="sc-help">Techmen rule: median tier and rank, with every submitted list counted. Unranked teams contribute no vote. Do-not-pick votes are shown separately, never a hidden veto. Local changes appear after sync.</p>
       {master.length ? <ol className="sc-master">{master.map((r, i) => <li key={r.team}><span className="sc-position">{i + 1}</span><div><strong>{r.team}</strong> <span>{nameFor(r.team)}</span><p className="sc-help">{r.tier === 'dnp' ? 'No ranked votes' : `Median tier ${r.tier}, rank ${r.rank}`} · {r.support} list{r.support === 1 ? '' : 's'} · {r.dnpVotes} do not pick</p></div></li>)}</ol> : <div className="sc-empty">No submitted lists yet. Start with your own observations.</div>}
-    </> : <>
+    </> : <div className="sc-manual-list">
       <div className="sc-card sc-stack">
         <h3>Find teams</h3><div className="sc-fields"><label>Minimum EPA<input type="number" step="any" value={minEpa} onChange={e => setMinEpa(e.target.value)} placeholder="Any" /></label><label>Pit capability<select aria-label="Pit capability" value={capability} onChange={e => setCapability(e.target.value)}><option value="">Any capability</option>{CAPABILITIES.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}</select></label></div>
         <details className="sc-match-filters" open={matchFiltering}><summary>Match evidence filters{matchFiltering ? ' (on)' : ''}</summary>
@@ -144,7 +145,7 @@ export default function PickLists({ records, confirmedRecords = records.filter(r
           {preview && <div className="sc-preview" aria-live="polite"><h3>Proposed list</h3><ol>{preview.entries.map(e => <li key={e.team}>{e.team} · {tierLabel(e.tier)} · position {e.rank}</li>)}</ol><p className="sc-help">{preview.changed ? 'Apply only if this reflects your evidence.' : 'The order stays the same.'} The server checks that version {preview.baseVersion} is still current.</p><div className="sc-actions"><button onClick={() => setPreview(null)}>Cancel preview</button><button className="sc-primary" disabled={saving || !preview.changed} onClick={() => save(preview.entries, `Three-team comparison: ${selectedNumbers.join(', ')}`)}>Apply proposed order</button></div></div>}
         </>}
       </details>
-    </>}
+    </div>}
   </section>
 }
 
@@ -161,14 +162,14 @@ function RateTeams({ teams, entries, nameFor, summary, superOf, disabled, dirty,
   const s = team ? summary(team) : null
   const sup = team ? superOf(team) : null
   const rate = tier => { onRate(team, tier); setHistory(h => [...h, team]) }
-  return <div className="sc-card sc-rate" data-rate>
+  return <div className="sc-card sc-rate sc-manual-list" data-rate>
     <div className="sc-section-head"><h3>Rate teams</h3><span className="sc-count" data-rate-progress>{teams.filter(t => rated.has(t)).length} of {teams.length} rated</span></div>
     {team ? <>
       <div className="sc-rate-team"><b>{team}</b><span>{nameFor(team) || 'Team'}</span></div>
       <p className="sc-help">{s?.matches ? `FUEL ${fmtMedian(s.totalFuel)} · TOWER ${towerLabel(s.tower.best)} · trouble ${fmtRate(s.troubleRate)} · ${s.matches} matches scouted` : 'No matches scouted yet. Rate from what you saw or skip.'}{sup?.notes ? ` · Super: driver ${fmtMean(sup.driver_skill)}, defense ${fmtMean(sup.defense)}` : ''}</p>
       <div className="sc-rate-buttons">{TIERS.map(t => <button key={t.value} className={t.value === 'dnp' ? 'sc-rate-dnp' : ''} disabled={disabled} onClick={() => rate(t.value)}>{t.label}</button>)}</div>
       <div className="sc-actions"><button disabled={disabled} onClick={() => setSkipped(x => [...x, team])}>Skip</button>{history.length > 0 && <button disabled={disabled} onClick={() => { const last = history.at(-1); onUndo(last); setHistory(h => h.slice(0, -1)); setSkipped(x => x.filter(t => t !== last)) }}>Back</button>}</div>
-    </> : <p className="sc-help">{teams.length ? 'Every team is rated or skipped. Save, then open My list to fine-tune.' : 'No event teams yet. Your lead adds them.'}{skipped.length > 0 && <> <button onClick={() => setSkipped([])}>Show {skipped.length} skipped</button></>}</p>}
+    </> : <p className="sc-help">{teams.length ? <><span className="sc-manual-list">Every team is rated or skipped. Save, then open My list to fine-tune.</span><span className="sc-phone-ranking">Every team is rated or skipped. Save, then use the automatic pick board.</span></> : 'No event teams yet. Your lead adds them.'}{skipped.length > 0 && <> <button onClick={() => setSkipped([])}>Show {skipped.length} skipped</button></>}</p>}
     <div className="sc-save-bar"><span role="status" className="sc-help">{status}</span><button className="sc-primary" disabled={disabled || !dirty || saving} onClick={onSave}>{saving ? 'Saving…' : 'Save my ratings'}</button></div>
   </div>
 }

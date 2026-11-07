@@ -1,8 +1,11 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
 import { writeVia } from './writeVia'
-import { computeHoursMs, fmtDuration } from './hoursUtils'
+import { fmtDuration, sessionsFromEvents, breakdownFromSessions, laDateKey, isSessionCounted } from './hoursUtils'
+import { fetchAllRows } from './fetchAllRows'
+import { weeklyHours } from './weeklyHours'
 import { useGlance } from './useGlance'
 import { fmtTime, fmtDay } from './shopStatus'
 import { startOfTodayISO, fmtClock } from './presence'
@@ -55,7 +58,7 @@ function useTileMetrics(uid, isStaff, email, isAdmin = false) {
           supabase.from('idea_cert_sync_log').select('received_at, ok')
             .order('received_at', { ascending: false }).limit(10),
           supabase.from('attendance_events')
-            .select('id, user_id, type, event_time, profiles!attendance_events_user_fkey(full_name, nickname, subteams)')
+            .select("id, user_id, type, event_time, profiles!attendance_events_user_fkey(full_name, nickname, subteams)")
             .order('event_time', { ascending: false }).limit(6),
         ])
         if (!active) return
@@ -113,6 +116,8 @@ export default function HomePage({ session, hasRole = () => false }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
 
   const [allEvents, setAllEvents] = useState(null)
+  const [hoursRows, setHoursRows] = useState({ logged: [], reviews: [], seasons: [], adjustments: [] })
+  const [pauseBusy, setPauseBusy] = useState(false)
   const [readFailed, setReadFailed] = useState(false) // last status read errored
   const [acting, setActing] = useState(false)
   const [checkoutErr, setCheckoutErr] = useState(null)
@@ -130,21 +135,24 @@ export default function HomePage({ session, hasRole = () => false }) {
   // the ones the status depends on. A failed read keeps whatever was shown
   // before and says so, rather than reading as "not checked in".
   const fetchEvents = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('attendance_events')
-      .select('id, type, event_time, location, category')
-      .eq('user_id', uid)
-      .order('event_time', { ascending: false })
-    if (error) {
+    const [attendance, logged, reviews, seasons, adjustments] = await Promise.all([
+      withSessionPauses((pauseFields) => fetchAllRows(() => supabase.from('attendance_events').select("id, type, event_time, location, category" + pauseFields).eq('user_id', uid).order('event_time', { ascending: false }).order('id'))),
+      fetchAllRows(() => supabase.from('logged_hours').select('id, date, hours, type, status').eq('member_id', uid).eq('status', 'verified').order('id')),
+      fetchAllRows(() => supabase.from('session_reviews').select('checkout_id, status').eq('user_id', uid).order('id')),
+      supabase.from('seasons').select('id, name, start_date, end_date').order('start_date'),
+      fetchAllRows(() => supabase.from('hour_adjustments').select('id, category, hours, created_at').eq('member_id', uid).order('id')),
+    ])
+    if ([attendance, logged, reviews, seasons, adjustments].some(r => r.error)) {
       setReadFailed(true)
       setAllEvents(prev => prev ?? [])
       return
     }
     setReadFailed(false)
-    setAllEvents(data ?? [])
+    setAllEvents(attendance.data ?? [])
+    setHoursRows({ logged: logged.data ?? [], reviews: reviews.data ?? [], seasons: seasons.data ?? [], adjustments: adjustments.data ?? [] })
   }, [uid])
 
-  useEffect(() => { fetchEvents() }, [fetchEvents])
+  useEffect(() => { fetchEvents(); const timer = setInterval(fetchEvents, 30000); return () => clearInterval(timer) }, [fetchEvents])
 
   const loadSo = useCallback(async () => {
     try { setSo(await loadMySignout(supabase, uid)) } catch { setSo(null) }
@@ -251,18 +259,36 @@ export default function HomePage({ session, hasRole = () => false }) {
   }
 
   // ── YOU: the shared rule (attendanceState), the same one the tag reads ──
-  const startOfToday = new Date()
-  startOfToday.setHours(0, 0, 0, 0)
-  const todayEvents = allEvents.filter(e => new Date(e.event_time) >= startOfToday)
+  const startOfToday = new Date(startOfTodayISO())
   const status = currentStatus(allEvents)
   const isIn = status.checkedIn
-  // The last request a mentor sent back during THIS session (none pending).
   const sentBack = isIn && !so?.pending && so?.returned && status.since
     && Date.parse(so.returned.decided_at) >= Date.parse(status.since) ? so.returned : null
-  // Nothing was ever read: the status AND the hours are unknown, not zero.
   const statusUnknown = readFailed && allEvents.length === 0
-  const todayHours = fmtDuration(computeHoursMs(todayEvents))
-  const seasonHours = fmtDuration(computeHoursMs(allEvents))
+  const today = laDateKey(Date.now())
+  const excluded = new Set(hoursRows.reviews.filter(r => ['pending', 'voided'].includes(r.status)).map(r => r.checkout_id))
+  const sessions = sessionsFromEvents(allEvents)
+  const counted = sessions.filter(s => isSessionCounted(s, excluded))
+  const todayHours = fmtDuration(counted.filter(s => laDateKey(s.inTime) === today).reduce((n, s) => n + s.ms, 0)
+    + hoursRows.logged.filter(l => l.date === today).reduce((n, l) => n + Number(l.hours) * 3600000, 0))
+  const activeSeason = hoursRows.seasons.find(s => s.start_date <= today && (!s.end_date || s.end_date >= today))
+  const breakdown = breakdownFromSessions(hoursRows.seasons, sessions, hoursRows.logged, excluded, hoursRows.adjustments)
+  const seasonHours = fmtDuration((breakdown[activeSeason?.id]?.total ?? 0) * 3600000)
+  const thisWeek = weeklyHours({ sessions, ...hoursRows })
+  const live = sessions.find(s => s.inId === status.last?.id)
+  const paused = !!live?.paused
+  async function togglePause() {
+    if (pauseBusy || !status.last?.id) return
+    setPauseBusy(true); setCheckoutErr(null)
+    try {
+      const r = await writeVia(supabase, 'set_session_paused', { p_in: status.last.id, p_paused: !paused })
+      if (r.error) throw r.error
+    } catch (e) {
+      setCheckoutErr(isSchemaMissing(e) ? 'Pausing hours is not set up yet. Your session is unchanged.' : 'Could not change the pause. Refresh and try again.')
+    }
+    await fetchEvents()
+    setPauseBusy(false)
+  }
 
   const shop = glance?.shop
   const next = glance?.next
@@ -300,7 +326,17 @@ export default function HomePage({ session, hasRole = () => false }) {
                 <span className="mb-stat-value hud-tnum">{statusUnknown ? '—' : seasonHours || '0m'}</span>
                 <span className="mb-stat-label">Season</span>
               </div>
+              <div className="mb-stat-divider" />
+              <div className="mb-stat" data-weekly-hours>
+                <span className="mb-stat-value hud-tnum">{statusUnknown ? '?' : fmtDuration(thisWeek.hours * 3600000)}</span>
+                <span className="mb-stat-label">This week</span>
+              </div>
             </div>
+            <p className="mb-you-note">This week runs Monday to Sunday in Los Angeles. Verified logged hours count on the date worked.</p>
+            {isIn && <div className="mb-pause" data-session-paused={paused}>
+              <button type="button" className="mb-checkout" onClick={togglePause} disabled={pauseBusy || readFailed}>{pauseBusy ? 'Saving…' : paused ? 'Resume hours' : 'Pause hours'}</button>
+              <p role="status">{paused ? 'Hours paused. You are still checked in.' : 'Pause for non-FRC work. Your session stays open until you sign out.'}{live?.pausedMs > 0 ? ` Paused time excluded: ${fmtDuration(live.pausedMs)}.` : ''}</p>
+            </div>}
             {statusUnknown ? (
               <button className="mb-checkout mb-retry" onClick={fetchEvents}>Retry</button>
             ) : isIn && so?.pending ? (
@@ -312,7 +348,7 @@ export default function HomePage({ session, hasRole = () => false }) {
               <div className="mb-so-returned" role="alert" data-testid="so-sent-back">
                 <p className="mb-so-back-title hud-mono">Sign-out sent back</p>
                 <p className="mb-so-back-note">{sentBack.reason ? <>Mentor's note: <q>{sentBack.reason}</q></> : 'A mentor asked you to finish up first.'}</p>
-                <p className="mb-so-back-next">Do what the note says, then ask again. Your hours are still counting.</p>
+                <p className="mb-so-back-next">Do what the note says, then ask again. Your session is still checked in.</p>
                 <button className="mb-checkout" onClick={() => { setCheckoutErr(null); setSoForm(true) }} disabled={acting}>Ask again</button>
               </div>
             ) : isIn && soForm ? (
@@ -322,7 +358,7 @@ export default function HomePage({ session, hasRole = () => false }) {
                 onSubmit={(v) => submitSignout(v, isStaff || status.last?.category === 'volunteer')}
                 busy={acting}
                 submitLabel={isStaff || status.last?.category === 'volunteer' ? 'Sign out' : 'Ask to sign out'}
-                hint={isStaff || status.last?.category === 'volunteer' ? null : 'Your hours stop when a mentor approves.'}
+                hint={isStaff || status.last?.category === 'volunteer' ? null : paused ? 'Hours are paused. A mentor still approves leaving.' : 'Your hours stop when a mentor approves.'}
                 onCancel={() => setSoForm(false)}
               />
             ) : isIn ? (

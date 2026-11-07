@@ -1,3 +1,4 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from './supabase'
 import { writeVia } from './writeVia'
@@ -196,7 +197,7 @@ export default function JobsPage({ session, hasRole = () => false }) {
       // the API's 1000-row cap cuts them short with no error, and the time on
       // this job would read low.
       memberIds.length
-        ? fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time, job_id').in('user_id', memberIds).order('event_time').order('id'))
+        ? withSessionPauses((pauseFields) => fetchAllRows(() => supabase.from('attendance_events').select("id, user_id, type, event_time, job_id" + pauseFields).in('user_id', memberIds).order('event_time').order('id')))
         : Promise.resolve({ data: [] }),
     ])
     setUpdates(upRes.data ?? [])

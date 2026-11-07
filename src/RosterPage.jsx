@@ -1,3 +1,4 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
@@ -147,7 +148,7 @@ export default function RosterPage() {
   // oldest-first that drops this week's sessions from every member's total.
   async function loadHours() {
     const [{ data: ae }, { data: lh }] = await Promise.all([
-      fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time').order('event_time').order('id')),
+      withSessionPauses((pauseFields) => fetchAllRows(() => supabase.from('attendance_events').select("id, user_id, type, event_time" + pauseFields).order('event_time').order('id'))),
       fetchAllRows(() => supabase.from('logged_hours').select('id, member_id, hours').eq('status', 'verified').order('id')),
     ])
     const byId = {}

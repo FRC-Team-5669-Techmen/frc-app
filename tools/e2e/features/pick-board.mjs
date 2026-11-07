@@ -168,10 +168,15 @@ export default {
       await t.shot('layout')
     })
 
-    await t.step('rate teams on a phone', async () => {
+    await t.step('automatic phone ranking and desktop ratings', async () => {
       t.as('rate')
       await t.open(`/scouting/${EVENT}`, { persona: 'exempt', mig: 'all', ready: '.sc-wrap' })
       await t.press(t.page.getByRole('tab', { name: 'Pick lists' }))
+      if (t.isPhone) {
+        t.eq('phone has no hand tiering buttons', await t.visibleCount('.sc-rate-buttons button'), 0)
+        t.check('phone opens the automatic board instead', await t.page.locator('[data-board-link]').isVisible())
+        return
+      }
       await t.waitFor('[data-rate]')
       t.check('a scout with unrated teams opens on Rate teams, with a link to the pick board', (await t.count('[data-board-link]')) === 1, '')
       const first = Number(await t.text('.sc-rate-team b'))

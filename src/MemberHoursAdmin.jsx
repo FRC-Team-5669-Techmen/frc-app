@@ -1,3 +1,4 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
@@ -84,7 +85,7 @@ export default function MemberHoursAdmin({ initialMemberId = null, focusEventIds
       supabase.from('logged_hours').select('id, date, hours, type, description, status').eq('member_id', id).order('date', { ascending: false }),
       // Every page (src/fetchAllRows.js): the pairing below needs the whole
       // ledger, and an unranged read stops at the API's row cap.
-      fetchAllRows(() => supabase.from('attendance_events').select('id, type, event_time, category, location, method, manual_entry').eq('user_id', id).order('event_time', { ascending: false }).order('id')),
+      withSessionPauses((pauseFields) => fetchAllRows(() => supabase.from('attendance_events').select("id, type, event_time, category, location, method, manual_entry" + pauseFields).eq('user_id', id).order('event_time', { ascending: false }).order('id'))),
       supabase.from('hour_adjustments').select('id, category, hours, reason, created_at').eq('member_id', id).order('created_at', { ascending: false }),
     ])
     setLogged(lh ?? []); setEvents(ae ?? []); setAdjustments(adj ?? [])

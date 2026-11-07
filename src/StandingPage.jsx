@@ -5,6 +5,7 @@ import {
   ABSENCE_REASONS, NEVER_EXCUSED, STANDING_LABEL, KIND_LABEL, STATUS_LABEL, DISCIPLINE_LABEL, INCIDENT_KINDS,
   reasonLabel, meetingShare, fmtHours, loadStanding, loadAbsenceEvents, absenceProblem, requestAbsence, rpc, errText,
 } from './standing'
+import StandingEvidence from './StandingEvidence'
 import './Standing.css'
 
 // /standing: a member's own record (handbook Sections 6, 11, 12, 14, 15).
@@ -88,7 +89,7 @@ export default function StandingPage({ session, hasRole = () => false }) {
           <h2 className="st-h2">This week</h2>
           <p className="st-big hud-tnum">{fmtHours(d.week.hours)} <span className="st-of">of {fmtHours(d.week.required)}</span></p>
           <div className="st-bar" aria-hidden="true"><span style={{ width: `${Math.min(100, (Number(d.week.hours) / Math.max(1, Number(d.week.required))) * 100)}%` }} className={weekOk ? 'ok' : ''} /></div>
-          <p className="st-muted">Signed-in hours, Monday to Sunday. FLL counts separately.</p>
+          <p className="st-muted">FRC hours, Monday to Sunday. Verified logged work counts. FLL counts separately.</p>
         </section>
         <section className="st-card" data-card="month">
           <h2 className="st-h2">Meetings this month</h2>
@@ -108,7 +109,7 @@ export default function StandingPage({ session, hasRole = () => false }) {
           <ul className="st-list">
             {open.map((r) => (
               <li key={r.id}><b>{KIND_LABEL[r.kind]}</b> <span className="st-chip">{STATUS_LABEL[r.status]}</span>
-                <div className="st-muted">{r.reason}{r.kind !== 'removal' && r.kind !== 'grades' ? ` · ${r.clean_weeks} of 4 clean weeks` : ''}</div></li>
+                <div className="st-muted">{r.reason}{r.kind !== 'removal' && r.kind !== 'grades' ? ` · ${r.clean_weeks} of 4 clean weeks` : ''}</div>{isStaff && <StandingEvidence record={r} />}</li>
             ))}
           </ul>
         </section>
@@ -181,7 +182,7 @@ export default function StandingPage({ session, hasRole = () => false }) {
 
       {past.length > 0 && (
         <section className="st-card"><h2 className="st-h2">Past records</h2>
-          <ul className="st-list">{past.map((r) => <li key={r.id}>{KIND_LABEL[r.kind]} · {STATUS_LABEL[r.status]} · {fmtDate(r.opened_on)}{r.closed_on ? ` to ${fmtDate(r.closed_on)}` : ''}</li>)}</ul>
+          <ul className="st-list">{past.map((r) => <li key={r.id}>{KIND_LABEL[r.kind]} · {STATUS_LABEL[r.status]} · {fmtDate(r.opened_on)}{r.closed_on ? ` to ${fmtDate(r.closed_on)}` : ''}{isStaff && <StandingEvidence record={r} />}</li>)}</ul>
         </section>
       )}
       <p className="st-muted">The rules: <Link to="/handbook">handbook</Link>, Sections 6, 7 and 11.</p>

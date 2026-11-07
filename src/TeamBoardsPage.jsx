@@ -1,3 +1,4 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
@@ -37,8 +38,8 @@ function Leaderboard({ uid }) {
       const adults = new Set((roleRows ?? []).filter((r) => ADULT_ROLES.includes(r.role)).map((r) => r.member_id))
       const season = resolveCurrentSeason(seasons ?? [])
       const from = season ? new Date(`${season.start_date}T00:00:00-07:00`).toISOString() : new Date(Date.now() - 365 * 864e5).toISOString()
-      const { data: ev } = await fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time, category')
-        .gte('event_time', from).order('event_time').order('id'))
+      const { data: ev } = await withSessionPauses((pauseFields) => fetchAllRows(() => supabase.from('attendance_events').select("id, user_id, type, event_time, category" + pauseFields)
+        .gte('event_time', from).order('event_time').order('id')))
       const byUser = new Map()
       for (const e of ev ?? []) byUser.set(e.user_id, [...(byUser.get(e.user_id) ?? []), e])
       const active = (profs ?? []).filter((p) => p.approved && (p.status ?? 'active') === 'active')

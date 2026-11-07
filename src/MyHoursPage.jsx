@@ -1,3 +1,4 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { fmtHours, CATEGORIES, categoryLabel, categoryColor, DEFAULT_CATEGORY } from './hoursUtils'
@@ -36,7 +37,7 @@ export default function MyHoursPage({ session }) {
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
       // Paged: an unranged select stops silently at the API's max rows, which
       // would drop the newest check-ins from the list and every total at once.
-      fetchAllRows(() => supabase.from('attendance_events').select('id, type, event_time, category, manual_entry').eq('user_id', uid).order('event_time').order('id')),
+      withSessionPauses((pauseFields) => fetchAllRows(() => supabase.from('attendance_events').select("id, type, event_time, category, manual_entry" + pauseFields).eq('user_id', uid).order('event_time').order('id'))),
       supabase.from('logged_hours').select('type, hours, date').eq('member_id', uid).eq('status', 'verified'),
       supabase.from('session_reviews').select('checkout_id, status').eq('user_id', uid).in('status', ['pending', 'voided']),
       supabase.from('hour_goals').select('member_id, season_id, target_hours, categories'),
@@ -229,6 +230,7 @@ export default function MyHoursPage({ session }) {
                         <span className="mh-session-flag" style={{ color: categoryColor(s.category) }}>{categoryLabel(s.category)}</span>
                       )}
                       {s.manual && <span className="mh-session-flag" style={{ color: 'var(--steel)' }}>manual</span>}
+                      {s.pausedMs > 0 && <span className="mh-session-flag">{fmtHours(s.pausedMs / 3600000)} paused, excluded</span>}
                       {s.wasCapped && <span className="mh-session-flag" style={{ color: 'var(--gold-dim)' }} title="Capped — exceeded the max session length (likely a missed check-out)">capped</span>}
                       {s.pending && <span className="mh-session-flag">review</span>}
                       {s.voided && <span className="mh-session-flag" title="Voided by a mentor — not counted in your totals">not counted</span>}

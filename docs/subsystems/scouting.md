@@ -142,3 +142,6 @@ The head coach reads Teams on a laptop, and one full evidence card per team, 30 
 - Station cards on My schedule open the role's tool (`toolFor` in `src/roleRules.js`).
 - Fixture mode answers `/api/tba` from the 2026cabl stand-in (40 of 60 played); `tools/e2e/features/event-link.mjs` covers it.
 
+## Feedback layout completion (codex-frc-feedback)
+
+The Teams table already sorted every column before this job. The November desktop layout also already widened the route to 80rem. This job removes that cap for scouting/pick-board computer views, compacts event context above Teams, adds a bounded vertical scroller with sticky header cells, and reduces staff desktop rows to 29px. Student and phone controls retain the 44px floor. Filters for minimum confirmed matches, FUEL and TOWER and maximum trouble percentage use the same table values; unknowns never pass a numeric filter. Search and all existing evidence expansion/sort persistence remain. Phones use automatic pick-board ranking and read-only submitted lists; hand tier ratings and ordering are desktop-only. This job does not change ranking arithmetic or evidence provenance. `tools/e2e/features/frc-feedback.mjs` retains six theme/width combinations, 44-team measurements, every visible column sorted both ways, numeric-filter controls and negative geometry controls.

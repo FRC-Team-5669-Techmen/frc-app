@@ -1,3 +1,4 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
 import { displayName } from './names'
@@ -72,7 +73,7 @@ export default function ReportsPage({ session, hasRole = () => false }) {
     // sessions, logged hours and calendar events from every report at once.
     Promise.all([
       supabase.from('profiles').select('id, full_name, nickname'),
-      fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time, location, category, manual_entry').order('event_time').order('id')),
+      withSessionPauses((pauseFields) => fetchAllRows(() => supabase.from('attendance_events').select("id, user_id, type, event_time, location, category, manual_entry" + pauseFields).order('event_time').order('id'))),
       fetchAllRows(() => supabase.from('logged_hours').select('id, member_id, date, hours, type, description').eq('status', 'verified').order('date').order('id')),
       fetchAllRows(() => supabase.from('events').select('id, title, kind, starts_at, ends_at, location').order('starts_at', { ascending: true }).order('id')),
       fetchAllRows(() => supabase.from('session_reviews').select('id, user_id, checkout_id').in('status', ['pending', 'voided']).order('id')),

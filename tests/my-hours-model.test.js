@@ -120,7 +120,8 @@ describe('THE REPORT: the by-category totals agree with the recent-sessions list
     // Before the fix the page showed This Week 10h 20m beside All Time 3h 35m:
     // the trend was summed from the session list, All Time from the dropped one.
     const m = model()
-    expect(m.trend.thisWeek).toBeCloseTo(1 / 3 + 3 + 4.5 + 2.5, 6)
+    // This Week now means the LA calendar week; the earlier sessions are in prior weeks.
+    expect(m.trend.thisWeek).toBeCloseTo(2.5, 6)
     expect(m.trend.thisWeek).toBeLessThanOrEqual(m.grandTotal + 1e-9)
     expect(m.grandTotal).toBeCloseTo(m.allTime.total, 6)
   })

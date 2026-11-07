@@ -1,3 +1,4 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from './supabase'
 import { computePresence, presenceSinceISO, startOfTodayISO } from './presence'
@@ -34,7 +35,7 @@ export function useGlance() {
         .gte('ends_at', todayISO).order('starts_at', { ascending: true }).limit(50),
       // Presence reads from presenceSinceISO(), not today: a session open across
       // LA midnight still counts, as it does on the member's own tile.
-      supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', presenceSinceISO()),
+      withSessionPauses((pauseFields) => supabase.from('attendance_events').select("user_id, type, event_time" + pauseFields).gte('event_time', presenceSinceISO())),
     ])
 
     const all = events ?? []

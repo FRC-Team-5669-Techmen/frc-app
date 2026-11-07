@@ -1,3 +1,4 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect, useMemo, useRef, useId } from 'react'
 import { supabase } from './supabase'
 import { fmtHours, fmtLocation, CATEGORIES, categoryLabel, categoryColor } from './hoursUtils'
@@ -119,7 +120,7 @@ export default function AttendanceHistory({
                           {!s.open && s.outLoc && s.outLoc !== s.inLoc ? ` → ${fmtLocation(s.outLoc)}` : ''}
                         </td>
                         <td className="ah-num ah-dur">
-                          {fmtHours(s.ms / 3600000)}
+                          {fmtHours(s.ms / 3600000)}{s.pausedMs > 0 && <small className="ah-paused">{fmtHours(s.pausedMs / 3600000)} paused, excluded</small>}
                           <span className="ah-tag" style={{ color: categoryColor(s.category) }} title={`${categoryLabel(s.category)} hours`}> · {categoryLabel(s.category)}</span>
                           {s.manual && <span className="ah-tag" style={{ color: 'var(--steel)' }} title="Manual entry"> · MANUAL</span>}
                           {s.wasCapped && <span className="ah-tag" style={{ color: 'var(--gold-dim)' }} title="Capped at the max session length (likely a missed check-out)"> · CAPPED</span>}
@@ -157,11 +158,11 @@ export function MemberAttendanceHistory({ memberId, name, onClose, banner = null
     setState({ loading: true, error: '', groups: null, season: null })
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
-      fetchAllRows(() => supabase.from('attendance_events')
-        .select('id, user_id, type, event_time, location, category, manual_entry')
+      withSessionPauses((pauseFields) => fetchAllRows(() => supabase.from('attendance_events')
+        .select("id, user_id, type, event_time, location, category, manual_entry" + pauseFields)
         .eq('user_id', memberId)
         .order('event_time', { ascending: false })
-        .order('id')),
+        .order('id'))),
       supabase.from('session_reviews').select('checkout_id').eq('user_id', memberId).in('status', ['pending', 'voided']),
     ]).then(([{ data: seas }, { data: events, error: eErr }, { data: reviews }]) => {
       if (!live) return

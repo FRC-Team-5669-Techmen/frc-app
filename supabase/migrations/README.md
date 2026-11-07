@@ -191,3 +191,7 @@ comments made it cut `0008_event_hub_families_rls_test.sql` mid `$pre$` block
 splitter read the regex end anchor in `'...[0-9]{2,4}$'` as the start of a
 dollar tag and cut `0010_event_hub_roster_names.sql` mid `$fn$` body (same
 error, 2026-10-06). In a Postgres regex write `\Z` for end of string instead.
+
+### 0048: member feedback corrections
+
+`0048_frc_feedback.sql` follows 0047: withdrawn probation and meeting attendance corrections, immutable staff evidence, and protected session pauses across shared hours calculations. `0048_frc_feedback_rls_test.sql` is rollback-only; `tools/sql-harness/mutants-0048.mjs` must catch every listed permissive mutation. On the current chain the 0025 test recognizes the deliberate ordinary-NFC attendance change; when 0025 is tested alone its original negative control remains. The migration is additive and applied only by Migrate on push. Named service_role revokes remove inherited Supabase defaults; `tools/sql-harness/default-acl-0048.mjs` replays those grants in rollback transactions and requires the omitted-revoke mutation to fail. Do not re-paste earlier standing functions over it.

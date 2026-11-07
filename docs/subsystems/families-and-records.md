@@ -17,3 +17,5 @@
 - **Trip sign-ups on the family link** (0023, ledger 0016): `family_hub_trips` and `family_hub_send_link`, scoped in SQL to the family token's own student, show each coming event hub sign-up (done or not) and email its link to the addresses already on it. Details in `docs/subsystems/event-family-hub.md`.
 
 - **Shared school sender** (2026-11-06): Both general family links (`notice-mail`) and trip links (`event-family`) now use the shared mail credential reader and Workspace sender. [App mail](mail.md) records the audit, transitional SMTP fallback and administrator setup (job `codex-frc-mail-from`).
+
+**Withdrawn standing (codex-frc-feedback, 0048).** The season-clean letter criterion excludes `standing_records.status = dismissed`; completed genuine probations still disqualify that criterion. Historical withdrawn records remain visible. Volunteer letter hours subtract recorded session pauses through `_pause_seconds`.

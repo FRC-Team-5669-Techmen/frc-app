@@ -1,0 +1,14 @@
+# codex-frc-feedback Seven member feedback reports
+- Issued: 2026-11-06
+- By: Codex session, requested directly by Mr. Pina
+- Owns: standing, hours, check-in pause integration, batteries, scouting, their tests and migrations; own ledger and history.
+- Migration permitted: yes. Initially reserved 0046; direction used 0046, so moved to 0047. The landing fetch found 0047_core_tour at 3c9b00e; this task now reserves 0048, next free at that fetch, and rechecks at landing.
+- Status: implemented; final solo gate and landing pending
+- Authorization: explicit solo mode, fetch/rebase, local gate and fast-forward push to main; feedback Done through existing admin path only after code is on main.
+- Branch: main (solo mode, decision 05)
+- Base: initially origin/main 5aede080e64b9d4587d76db9afa377f763cf6950. Subsequent sign-out, mail, navigation and training commits are retained. Integration target is origin/main 3c9b00e3d1648525feb99264ed8c755fd5b169c9, with only unpublished commits rebased and the whole gate repeated.
+- Confirmed: pending
+- Verification: red/green pure regressions (7 red, then green); 1011/1011 native SQL checks across 45 files on rebased main, 27/27 feedback permissive mutants plus 17/17 sign-out mutants and 11/11 sign-out race checks; new browser flow 297/297 at 375/1152/1440 in both themes. The original 0014-only chain also passes 23/23 and 12/12 mutants. Full solo gate to follow on the combined frozen tree. Measurements and limits are in docs/history/codex-frc-feedback.md.
+- Notes: Read CLAUDE.md, docs/OVERHAUL_AUDIT.md and touched subsystem files. Existing 0044 handles sessions open at meeting start and unrecorded meetings; letter progress still counts dismissed records. Dashboard has attendance-only totals; standing weekly hours excludes logged hours; My Hours already folds verified logs into a rolling seven-day trend. Scouting already has sortable Teams columns and responsive wrappers from desktop-layout, but lacks sticky bounded table scrolling and performance filters. Pause decision 53 was open with no-build default; this explicit request authorizes a pause that preserves presence and mentor-approved sign-out. No real report authors or emails will be recorded.
+
+- Live evidence: the seven inbox rows and matching source-data patterns were read privately. Both October probations are already dismissed. Five installed function bodies match the tree; the initial live migration record reached 0045; after the main recheck it reaches 0046 and the new session guard is installed. Database access has no authenticated app actor, so closing feedback through the admin path remains for Mr. Pina.

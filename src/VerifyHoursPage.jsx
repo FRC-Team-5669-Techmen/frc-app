@@ -1,3 +1,4 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 import { writeVia } from './writeVia'
@@ -101,7 +102,7 @@ async function fetchMissedCheckouts() {
   const userIds  = [...new Set(raw.map(r => r.user_id))]
 
   const [{ data: evts }, { data: profs }] = await Promise.all([
-    supabase.from('attendance_events').select('id, event_time').in('id', eventIds),
+    withSessionPauses((pauseFields) => supabase.from('attendance_events').select("id, event_time" + pauseFields).in('id', eventIds)),
     // email lives on auth.users, not profiles — selecting it here errors the
     // whole query and blanks every member name. Use full_name/nickname.
     supabase.from('profiles').select('id, full_name, nickname').in('id', userIds),
@@ -134,7 +135,7 @@ async function fetchCorrections() {
 
   const [{ data: evts }, { data: profs }] = await Promise.all([
     eventIds.length
-      ? supabase.from('attendance_events').select('id, event_time, category').in('id', eventIds)
+      ? withSessionPauses((pauseFields) => supabase.from('attendance_events').select("id, event_time, category" + pauseFields).in('id', eventIds))
       : Promise.resolve({ data: [] }),
     supabase.from('profiles').select('id, full_name, nickname').in('id', userIds),
   ])
@@ -203,7 +204,7 @@ async function fetchAnomalies() {
     // Every page of the team's ledger (src/fetchAllRows.js): an unranged read
     // stops at the API's 1000-row cap, and oldest-first that drops the NEWEST
     // events, which is exactly where a missed check-out from this week lives.
-    fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time, geo_ok, category').order('event_time').order('id')),
+    withSessionPauses((pauseFields) => fetchAllRows(() => supabase.from('attendance_events').select("id, user_id, type, event_time, geo_ok, category" + pauseFields).order('event_time').order('id'))),
     supabase.from('profiles').select('id, full_name, nickname, geofence_exempt'),
   ])
   const byMember = {}

@@ -172,6 +172,11 @@ export default {
     await t.step('pick lists and comparison', async () => {
       t.as('pick list')
       await tab(t, 'Pick lists')
+      if (t.isPhone) {
+        t.eq('phone has no manual tier editor', await t.visibleCount('.sc-manual-list'), 0)
+        t.check('phone keeps automatic ranking and submitted lists', await t.page.locator('[data-board-link]').isVisible() && await t.page.getByRole('button', { name: 'Master list', exact: true }).isVisible())
+        return
+      }
       const listText = await t.bodyText()
       t.check('individual list shows four fixture teams', [4414, 1538, 5669, 1323].every(n => listText.includes(String(n))), listText.slice(-500))
       const before = own(await t.rows('scouting_records'), 'pick_list')[0]
@@ -467,6 +472,17 @@ export default {
       await t.open(ROUTE, { persona: 'exempt', mig: 'all', ready: '.sc-wrap' })
       await t.waitText('Fixture Regional')
       await tab(t, 'Pick lists')
+      if (t.isPhone) {
+        await tab(t, 'Teams')
+        const all = await t.count('.sc-team-row')
+        t.check('phone starts with known and unknown teams', all >= 4)
+        await t.page.getByLabel('Minimum FUEL', { exact: true }).fill('15')
+        const shown = await t.page.locator('.sc-team-row').evaluateAll(rows => rows.map(r => r.dataset.team))
+        t.check('phone numeric evidence filter keeps measured 1538 and excludes unknown teams', shown.includes('1538') && !shown.includes('4414') && !shown.includes('1323'), shown.join(','))
+        await t.press(t.page.getByRole('button', { name: 'Clear filters', exact: true }))
+        t.eq('phone filter clears without hand tiering', await t.count('.sc-team-row'), all)
+        return
+      }
       // A scout with unrated teams opens on Rate teams (ledger 0032); the picker is under My list.
       if (await t.count('[data-rate]')) await t.press(t.page.getByRole('button', { name: 'My list', exact: true }))
       const before = await t.texts('.sc-team-picker button b')

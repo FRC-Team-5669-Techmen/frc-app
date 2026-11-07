@@ -1,5 +1,5 @@
 // The battery log's rules (migration 0026, ledger 0017): which battery needs
-// a look, which ones are match-ready, worst first, and the CSV. Pure: no
+// a look, which ones are match-ready, Good first, and the CSV. Pure: no
 // React, no Supabase, so tests/batteries.test.js drives it and the connector's
 // list_batteries reads the SAME rules (api/_lib/connector/tools.js imports
 // this file), so the app and Claude never disagree about a battery.
@@ -12,6 +12,7 @@
 //     to 13.2 V);
 //   - the newest internal resistance reading is over MAX_RESISTANCE_MOHM
 //     (Battery Beak; a healthy competition battery reads well under 20).
+export const GOOD_RULE = 'Good: at least 3 recent driving runs rated, an average performance of 4/5 or better, no brownout or rating below 3 in the last 3 driving runs, and no Check, Watch or Pull readings. Charge state is separate.'
 export const CHECK_THRESHOLDS = Object.freeze({
   BROWNOUT_LOOKBACK: 3,
   MIN_RESTING_VOLTS: 12.5,
@@ -184,9 +185,9 @@ export function fleetLine(rows) {
 }
 
 /**
- * The board, worst first: flagged batteries (most reasons, then most
- * brownouts, then lowest resting voltage), then the rest by label, retired
- * last. A battery with no measurement is never treated as measuring 0.
+ * The board: Good first by performance, then flagged batteries (most reasons,
+ * then most brownouts, then lowest resting voltage), then the rest by label,
+ * retired last. A battery with no measurement is never treated as measuring 0.
  */
 export function batteryBoard(batteries, runs, t = CHECK_THRESHOLDS) {
   const rows = (batteries ?? []).map((b) => summarize(b, runs ?? [], t))
@@ -196,10 +197,19 @@ export function batteryBoard(batteries, runs, t = CHECK_THRESHOLDS) {
   const med = fleet.diagnosis === 'ok' || fleet.diagnosis === 'battery' ? fleet.median : null
   const out = new Set(fleet.standOut.map((s) => s.id))
   for (const r of rows) { r.robotLevel = robotLevel(r.robotR, med); r.standsOut = out.has(r.id) }
-  const rank = (r) => (r.status === 'retired' ? 2 : r.check ? 0 : 1)
+  for (const r of rows) {
+    const recent = r.runs.filter(x => ['match', 'practice_match', 'drive_practice'].includes(x.kind)).slice(0, 3)
+    const rated = recent.filter(x => num(x.performance) !== null)
+    r.performanceMean = rated.length ? rated.reduce((n, x) => n + Number(x.performance), 0) / rated.length : null
+    r.good = r.status !== 'retired' && !r.check && recent.length === 3 && rated.length === 3
+      && recent.every(x => x.brownout === 'no' && Number(x.performance) >= 3) && r.performanceMean >= 4
+      && !['watch', 'pull'].includes(r.robotLevel) && !['watch', 'pull'].includes(r.restLevel) && !r.standsOut
+  }
+  const rank = (r) => (r.status === 'retired' ? 3 : r.good ? 0 : r.check ? 1 : 2)
   return rows.sort((a, b) => rank(a) - rank(b)
     || (a.check && b.check ? (b.reasons.length - a.reasons.length) || (b.brownouts - a.brownouts)
       || ((a.restingVolts ?? Infinity) - (b.restingVolts ?? Infinity)) : 0)
+    || (a.good && b.good ? b.performanceMean - a.performanceMean : 0)
     || byLabel(a, b))
 }
 

@@ -164,3 +164,5 @@
 .ah-open { color: var(--gold-dim); font-family: var(--font-mono); font-size: 0.78rem; }
 .ah-tag { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.02em; }
 .ah-flag { color: var(--gold-dim); }
+
+.ah-paused { display: block; white-space: normal; font: 12px var(--font-mono); color: var(--steel); }

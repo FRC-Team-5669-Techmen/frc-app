@@ -158,8 +158,16 @@ begin
     format('A attended %s lates %s misses %s; B attended %s lates %s misses %s', ma.attended, ma.lates, ma.misses, mb.attended, mb.lates, mb.misses));
   perform pg_temp.rec(10, 'a member with no scan and no mentor check-in is absent',
     mc.misses >= 1, format('C misses %s of %s', mc.misses, mc.total));
-  perform pg_temp.rec(11, 'an ordinary tag IN with no meeting scan does not count as attending (only a mentor check-in does)',
-    md.misses >= 1 and md.attended = 0, format('D attended %s misses %s', md.attended, md.misses));
+  -- 0048 deliberately admits ordinary persisted check-ins during a meeting.
+  -- Inspect the active function so this test also proves 0025 in isolation
+  -- and still catches its permissive any-IN mutant.
+  if position('_standing_meeting_details' in pg_get_functiondef('public._member_meetings(uuid,date,date)'::regprocedure)) > 0 then
+    perform pg_temp.rec(11, '0048: an ordinary tag IN during the meeting counts',
+      md.attended >= 1 and md.misses = 0, format('D attended %s misses %s',md.attended,md.misses));
+  else
+    perform pg_temp.rec(11, '0025: only a mentor IN or meeting scan counts',
+      md.misses >= 1 and md.attended = 0, format('D attended %s misses %s',md.attended,md.misses));
+  end if;
 end
 $c$;
 

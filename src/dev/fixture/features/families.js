@@ -178,7 +178,7 @@ export default {
       const tr = training(db, m, now)
       const sy = (() => { const t = new Date(ms(now)); return `${t.getMonth() >= 7 ? t.getFullYear() : t.getFullYear() - 1}-08-01` })()
       const letter = [
-        { key: 'standing', label: 'A full season with no meetings or hours probation', met: !rows(db, 'standing_records').some((r) => r.member_id === m && ['meetings', 'hours', 'removal'].includes(r.kind)) },
+        { key: 'standing', label: 'A full season with no meetings or hours probation', met: !rows(db, 'standing_records').some((r) => r.member_id === m && r.status !== 'dismissed' && r.opened_on >= sy && ['meetings', 'hours', 'removal'].includes(r.kind)) },
         { key: 'build_hours', label: '10 signed-in hours every build-season week', met: true, detail: '0 short weeks' },
         { key: 'competitions', label: 'Every competition, every day', met: !rows(db, 'event_attendance').some((a) => a.member_id === m && a.status === 'absent'), detail: '' },
         { key: 'role', label: 'An assigned role at a competition or hosted event', met: rows(db, 'event_roles').some((r) => r.member_id === m) },

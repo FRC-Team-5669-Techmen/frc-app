@@ -4,6 +4,7 @@ import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import { displayName } from './names'
 import { STANDING_LABEL, KIND_LABEL, STATUS_LABEL, reasonLabel, fmtHours, loadOverview, rpc, errText, INCIDENT_KINDS } from './standing'
+import StandingEvidence from './StandingEvidence'
 import './Standing.css'
 
 // /standing/team: the mentors' side of member standing (migration 0015).
@@ -174,6 +175,7 @@ function Confirm({ nameOf, act, isAdmin, tick }) {
         <li key={r.id} data-record={r.kind}>
           <div><b>{nameOf(r.member_id)}</b> · {KIND_LABEL[r.kind]} <span className="st-chip">{STATUS_LABEL[r.status]}</span></div>
           <div className="st-muted">{r.reason} · {fmtDate(r.opened_on)}</div>
+          <StandingEvidence record={r} />
           {isAdmin && (
             <div className="st-row">
               <button className="st-btn st-btn-primary" onClick={() => act(() => rpc(supabase, 'admin_confirm_standing', { p_record: r.id, p_confirm: true, p_note: null }), r.kind === 'removal' ? 'Removed.' : 'Confirmed.')}>

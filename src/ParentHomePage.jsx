@@ -1,3 +1,4 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from './supabase'
@@ -75,7 +76,7 @@ export default function ParentHomePage({ session }) {
     // student's own tile; todayISO still bounds each student's today hours.
     const todayISO = startOfTodayISO()
     const [{ data: recentEvents }, { data: active }] = await Promise.all([
-      supabase.from('attendance_events').select('user_id, type, event_time').gte('event_time', presenceSinceISO()),
+      withSessionPauses((pauseFields) => supabase.from('attendance_events').select("user_id, type, event_time" + pauseFields).gte('event_time', presenceSinceISO())),
       supabase.from('profiles').select('id, full_name, nickname').eq('status', 'active').eq('approved', true),
     ])
     const present = computePresence(recentEvents ?? [])
@@ -97,7 +98,7 @@ export default function ParentHomePage({ session }) {
       // Every page (src/fetchAllRows.js): a student's whole ledger passes the
       // API's 1000-row cap in a couple of years, two students sooner, and an
       // unranged read would drop rows from the season total without a word.
-      fetchAllRows(() => supabase.from('attendance_events').select('id, user_id, type, event_time').in('user_id', studentIds).order('event_time').order('id')),
+      withSessionPauses((pauseFields) => fetchAllRows(() => supabase.from('attendance_events').select("id, user_id, type, event_time" + pauseFields).in('user_id', studentIds).order('event_time').order('id'))),
       supabase.from('logged_hours').select('member_id, hours, type').eq('status', 'verified').in('member_id', studentIds),
     ])
 

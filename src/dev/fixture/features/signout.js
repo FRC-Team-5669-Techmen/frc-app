@@ -39,6 +39,8 @@ function approveOne(db, engine, user, id, now) {
   if (req.status !== 'pending') return { data: req, error: null }
   let outId = null
   if (newest(db, req.member_id)?.type === 'in') {
+    const entry = newest(db, req.member_id)
+    if (entry.pauses?.some(p => !p.end)) engine.updateRows('attendance_events', r => r.id === entry.id, { pauses: entry.pauses.map(p => p.end ? p : { ...p, end: iso(now) }) })
     outId = engine.insertRow('attendance_events', {
       user_id: req.member_id, type: 'out', location: req.location ?? 'approved', method: 'manual',
       note: req.note, cleanup_confirmed: req.cleanup_confirmed, event_time: iso(now),

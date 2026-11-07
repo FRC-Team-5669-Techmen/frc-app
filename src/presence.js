@@ -7,13 +7,12 @@
 // midnight reads present there too. It adds no new tables.
 
 import { currentStatus, statusWindowStartISO } from './attendanceState'
+import { laDateKey, laMidnightMs } from './hoursUtils'
 import { sessionKind } from './categories'
 
 // Local midnight, matching HomePage's startOfToday.
 export function startOfTodayISO() {
-  const d = new Date()
-  d.setHours(0, 0, 0, 0)
-  return d.toISOString()
+  return new Date(laMidnightMs(laDateKey(Date.now()))).toISOString()
 }
 
 // Where a presence query should start to see every open session the rule
@@ -38,7 +37,10 @@ export function computePresenceDetail(events, now = Date.now()) {
   const present = new Map()
   for (const [uid, evs] of byUser) {
     const s = currentStatus(evs, now)
-    if (s.checkedIn) present.set(uid, { since: s.since, kind: sessionKind(s.last.category) })
+    if (s.checkedIn) {
+      const pause = s.last.pauses?.some(p => !p.end) ? { paused: true } : {}
+      present.set(uid, { since: s.since, kind: sessionKind(s.last.category), ...pause })
+    }
   }
   return present
 }

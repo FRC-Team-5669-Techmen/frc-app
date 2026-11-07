@@ -14,7 +14,7 @@ export async function run(t) {
         t.check('real content rendered', checks.rendered, `${m.chars} chars; ${m.content}; ${m.sample}`)
         t.eq('requested theme painted', m.theme, theme)
         t.check('0 horizontal overflow and escaping content', checks.overflow, `${m.overflow}px; ${JSON.stringify(m.escapes)}`)
-        t.check('content within viewport and 1280px maximum', checks.bounds, `${m.width}px at ${m.left}..${m.right}`)
+        t.check('content within its intended width and viewport', checks.bounds, `${m.width}px at ${m.left}..${m.right}`)
         t.check('detail panels within viewport', checks.panels, JSON.stringify(m.panels))
         if (p.action === 'job' || p.action === 'feedback') {
           const positions = await t.page.evaluate(action => {

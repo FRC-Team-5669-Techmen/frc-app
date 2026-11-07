@@ -12,10 +12,8 @@
 // private pairing in buildBreakdown that split sessions at 00:00 UTC and lost
 // every one that crossed it; see tests/my-hours-model.test.js.
 import { breakdownFromSessions, isSessionCounted, laDateKey, laMidnightMs, sumBreakdown, sessionsFromEvents } from './hoursUtils'
+import { weeklyHours, weekRange } from './weeklyHours'
 import { effectiveGoal, goalCategoryKeys, hoursTowardGoal, daysPresent } from './accountability'
-
-const DAY_MS = 86_400_000
-const H_MS = 3_600_000
 
 // The instant a Los Angeles calendar date begins. Logged hours carry a date,
 // not a time; the trend places them at the start of that shop-local day, which
@@ -98,28 +96,12 @@ export function myHoursModel({ seasons, events, logged, reviews, goals = [], adj
   // Newest first, for the Recent sessions card.
   const recent = [...sessions].reverse().slice(0, 8)
 
-  // Trailing-7-day hours and a 6-week trend: counted sessions by check-in
-  // instant + verified logged hours by date. Staff adjustments are corrections
-  // to a season, not work done in a week, so they are in the totals and not here.
-  const rangeHours = (start, end) => {
-    let ms = 0
-    for (const s of counted) {
-      const t = s.inTime.getTime()
-      if (t >= start && t < end) ms += s.ms
-    }
-    let h = ms / H_MS
-    for (const l of logged) {
-      const t = laMidnightMs(l.date)
-      if (t >= start && t < end) h += parseFloat(l.hours) || 0
-    }
-    return h
-  }
-  const weeks = []
-  for (let i = 5; i >= 0; i--) {
-    const end = now - i * 7 * DAY_MS
-    weeks.push({ hours: rangeHours(end - 7 * DAY_MS, end), end })
-  }
-  const trend = { thisWeek: weeks[weeks.length - 1].hours, weeks }
+  const weeks = Array.from({ length: 6 }, (_, i) => {
+    const offset = i - 5
+    return { hours: weeklyHours({ sessions, logged, reviews, now, offset }).hours,
+      end: laMidnightMs(weekRange(now, offset).to) }
+  })
+  const trend = { thisWeek: weeks.at(-1).hours, weeks }
 
   const cards = []
   for (const s of [...seasons].sort((a, b) => b.start_date.localeCompare(a.start_date))) {

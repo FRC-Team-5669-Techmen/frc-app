@@ -94,6 +94,8 @@ const FEATURES = Object.freeze([
   'desktop-layout',
   'navigation',
   'tour',
+
+  'frc-feedback',
 ]);
 
 

@@ -29,12 +29,7 @@ const TABLE = 'attendance_events'
 // Reads outside the hours lane that are not paged yet, with why. Each value is
 // the most such reads the file may hold; the fix lowers the count to zero and
 // never trips this test, so the entry can be deleted once it is applied.
-const PENDING = {
-  // Lane b2 owns HomePage.jsx. Its dashboard read (one member, all time,
-  // oldest-first) drives isCheckedIn and the Today/Season figures; the paging
-  // edit is handed to the orchestrator in the hd lane's output.
-  'HomePage.jsx': 1,
-}
+const PENDING = {}
 
 // Skip a quoted string starting at i (quote char at s[i]); return the index
 // just past its closing quote.

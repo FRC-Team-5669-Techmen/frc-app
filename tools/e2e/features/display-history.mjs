@@ -31,6 +31,7 @@ const NON_STAFF = ['student', 'student2', 'parent'];
 // PresenceBoard's own attendance_events read (src/PresenceBoard.jsx load()).
 // category since ledger 0028c: the board shows FRC or FLL volunteer per session.
 const BOARD_COLUMNS = 'user_id, type, event_time, category';
+const PAUSED_BOARD_COLUMNS = `${BOARD_COLUMNS},pauses`;
 
 async function board(t) {
   return t.evaluate(() => ({
@@ -213,7 +214,8 @@ export default {
         const all = await t.calls();
         const ae = all.filter((c) => c.table === 'attendance_events' && c.kind === 'select');
         t.check('no session_reviews read, and every attendance_events read is the board\'s own (today, all members), never a history',
-          all.filter((c) => c.table === 'session_reviews').length === 0 && ae.length > 0 && ae.every((c) => c.columns === BOARD_COLUMNS),
+          all.filter((c) => c.table === 'session_reviews').length === 0 && ae.length > 0 && ae.every((c) => c.columns === PAUSED_BOARD_COLUMNS || (mig === 'none' && c.columns === BOARD_COLUMNS))
+            && (mig !== 'none' || ae.some((c) => c.columns === BOARD_COLUMNS)),
           `${all.filter((c) => c.table === 'session_reviews').length} session_reviews; attendance_events columns: ${[...new Set(ae.map((c) => c.columns))].join(' | ')}`);
         if (who === 'student' && mig === 'all') await t.shot('display-student');
       }

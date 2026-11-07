@@ -1,3 +1,4 @@
+import { withSessionPauses } from './attendanceRead'
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { supabase } from './supabase'
 import { fmtHours, buildBreakdown, sumBreakdown, sessionsFromEvents, fmtLocation, laDateKey, CATEGORIES, DEFAULT_CATEGORY, categoryLabel, loggedTypeToCategory, emptyBreakdown } from './hoursUtils'
@@ -61,8 +62,8 @@ const csvTime = d => d.toLocaleString(undefined, { timeZone: 'America/Los_Angele
 // members pass the API's 1000-row cap inside a season, and an unranged read
 // ordered oldest-first loses the NEWEST rows, so this week would go missing. A
 // failed page fails the whole read rather than handing back a short one.
-const readEvents = () => fetchAllRows(() => supabase.from('attendance_events')
-  .select('id, user_id, type, event_time, location, category, manual_entry').order('event_time').order('id'))
+const readEvents = () => withSessionPauses((pauseFields) => fetchAllRows(() => supabase.from('attendance_events')
+  .select("id, user_id, type, event_time, location, category, manual_entry" + pauseFields).order('event_time').order('id')))
 const readReviews = () => fetchAllRows(() => supabase.from('session_reviews')
   .select('id, user_id, checkout_id').in('status', ['pending', 'voided']).order('id'))
 

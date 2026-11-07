@@ -106,3 +106,14 @@ export function readSort(storage) {
 export function writeSort(storage, sort) {
   try { storage?.setItem(SORT_STORAGE_KEY, JSON.stringify({ key: sort.key, dir: sort.dir })) } catch { /* private mode: the sort still applies this visit */ }
 }
+
+export function filterTeamRows(rows, filters = {}) {
+  return rows.filter(r => [
+    ['minMatches', 'matches', false], ['minFuel', 'fuel', false],
+    ['minTower', 'tower', false], ['maxTrouble', 'trouble', true],
+  ].every(([key, col, max]) => {
+    if (filters[key] === '' || filters[key] === undefined) return true
+    const v = r.values[col], limit = Number(filters[key])
+    return v !== null && v !== undefined && (max ? v <= limit / 100 : v >= limit)
+  }))
+}

@@ -83,7 +83,7 @@ export default {
 
       t.as('0014 · a send-back from before this session');
       await checkedInWithRequest(t, { status: 'returned', reason: 'Old note', decidedAgoMin: 120, sinceAgoMin: 30 });
-      await t.open('/dashboard', { persona: 'student', mig: 'all', ready: '.mb-checkout' });
+      await t.open('/dashboard', { persona: 'student', mig: 'all', ready: 'button[data-tour=checkout]' });
       t.eq('a send-back older than the open session is not shown (0 against the 1 above)', await t.count('[data-testid="so-sent-back"]'), 0);
 
       t.as('0014 · sent back while the dashboard is open');
@@ -99,8 +99,8 @@ export default {
     await t.step('voice', async () => {
       t.as('0014 · speaking the note');
       await checkedInWithRequest(t, { status: 'withdrawn', reason: null, decidedAgoMin: 200, sinceAgoMin: 60 });
-      await t.open('/dashboard', { persona: 'student', mig: 'all', ready: '.mb-checkout' });
-      await t.press('.mb-checkout');
+      await t.open('/dashboard', { persona: 'student', mig: 'all', ready: 'button[data-tour=checkout]' });
+      await t.press(t.page.getByRole('button', { name: 'Check Out', exact: true }));
       await t.waitFor('.so-mic');
       await t.evaluate(() => { window.__speech = 'android'; });
       await t.press('.so-mic');

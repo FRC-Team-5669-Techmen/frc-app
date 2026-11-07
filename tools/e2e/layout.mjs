@@ -131,10 +131,11 @@ export async function measureLayout(page) {
 }
 
 export function layoutChecks(m) {
+  const maximum = ['sc-wrap', 'pk-wrap'].includes(m.content) ? m.viewport : 1280
   return {
     rendered: m.chars > 30 && m.width > 250 && !m.errorBoundary,
     overflow: m.overflow === 0 && m.escapes.length === 0,
-    bounds: m.left >= -1 && m.right <= m.viewport + 1 && m.width <= 1280,
+    bounds: m.left >= -1 && m.right <= m.viewport + 1 && m.width <= maximum,
     panels: m.panels.every(p => p.left >= -1 && p.right <= m.viewport + 1 && p.width >= 250 && p.width <= 1280),
   }
 }

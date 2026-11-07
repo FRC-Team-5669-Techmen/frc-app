@@ -40,6 +40,22 @@ export function cappedSession(inTime, outTime, { maxMs = MAX_SESSION_MS, eventEn
   return { ms: Math.max(0, rawEnd - start), wasCapped: false, effectiveEnd: outTime ?? null }
 }
 
+// Pauses belong to the original IN. They never create an OUT or change presence.
+export function pauseDuration(pauses, start, end) {
+  const ranges = (Array.isArray(pauses) ? pauses : []).map(p => [
+    Math.max(start, Date.parse(p.start)), Math.min(end, p.end ? Date.parse(p.end) : end),
+  ]).filter(([a, b]) => Number.isFinite(a) && Number.isFinite(b) && b > a).sort((a, b) => a[0] - b[0])
+  let total = 0, until = start
+  for (const [a, b] of ranges) { total += Math.max(0, b - Math.max(a, until)); until = Math.max(until, b) }
+  return total
+}
+function pauseAdjusted(cap, entry) {
+  const start = Date.parse(entry.event_time)
+  const pausedMs = pauseDuration(entry.pauses, start, start + cap.ms)
+  return { ...cap, ms: cap.ms - pausedMs, pausedMs,
+    paused: Array.isArray(entry.pauses) && entry.pauses.some(p => !p.end) }
+}
+
 // Pair a member's raw in/out events into discrete sessions, newest concerns
 // handled by the caller. Returns
 // [{ inTime, outTime|null, ms, open, inId, outId, inLoc, outLoc, category,
@@ -58,11 +74,11 @@ export function sessionsFromEvents(events) {
     if (e.type === 'in') {
       openIn = e
     } else if (e.type === 'out' && openIn) {
-      const cap = cappedSession(new Date(openIn.event_time), new Date(e.event_time))
+      const cap = pauseAdjusted(cappedSession(new Date(openIn.event_time), new Date(e.event_time)), openIn)
       sessions.push({
         inTime:  new Date(openIn.event_time),
         outTime: new Date(e.event_time),
-        ms:      cap.ms,
+        ms:      cap.ms, pausedMs: cap.pausedMs, paused: false,
         open:    false,
         inId:    openIn.id,
         outId:   e.id,
@@ -77,10 +93,10 @@ export function sessionsFromEvents(events) {
     }
   }
   if (openIn) {
-    const cap = cappedSession(new Date(openIn.event_time), null)
+    const cap = pauseAdjusted(cappedSession(new Date(openIn.event_time), null), openIn)
     sessions.push({
       inTime: new Date(openIn.event_time), outTime: null,
-      ms: cap.ms, open: true, inId: openIn.id, outId: null,
+      ms: cap.ms, pausedMs: cap.pausedMs, paused: cap.paused, open: true, inId: openIn.id, outId: null,
       inLoc: openIn.location ?? null, outLoc: null,
       category: normAttendanceCategory(openIn.category),
       manual: !!openIn.manual_entry,

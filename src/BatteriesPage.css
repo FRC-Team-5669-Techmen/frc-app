@@ -167,3 +167,12 @@
 .ba-lt-list li { display: flex; flex-wrap: wrap; gap: 0.25rem 0.6rem; align-items: baseline; }
 .ba-lt-list b { font-family: var(--font-ui); font-size: 1.05rem; }
 .ba-lt-skip { color: var(--muted); font-size: 0.82rem; }
+
+.ba-pill-good { color: var(--ok); border-color: var(--ok); }
+.ba-good-rule { margin-block: 12px; color: var(--steel); }
+.ba-good-rule summary { min-height: 44px; cursor: pointer; padding-block: 12px; }
+
+.ba-good { padding: 8px 12px 0; }
+.ba-good summary { min-height: 44px; cursor: pointer; display: inline-flex; align-items: center; }
+.ba-good p { font-size: 13px; line-height: 1.5; }
+.ba-good summary { min-width: 44px; }

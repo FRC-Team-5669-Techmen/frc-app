@@ -400,3 +400,51 @@
 .sc-warn { color: var(--gold); }
 .sc-link-strip { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; padding: 8px 12px; border: 1px solid var(--border-strong); border-left: 3px solid var(--gold); border-radius: var(--radius); background: var(--surface); font-family: var(--font-mono); font-size: 13px; }
 .sc-link-strip strong { font-family: var(--font-ui); }
+
+/* Event analysis uses the whole desk; phone controls retain the 44px floor. */
+.sc-team-filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-block: 12px; }
+.sc-team-filters label { flex: 1 1 130px; }
+.sc-team-filters [role="status"] { font: 13px var(--font-mono); color: var(--steel); align-self: center; }
+.sc-team-table thead th { position: sticky; top: 0; z-index: 2; box-shadow: 0 1px var(--border-strong); }
+.sc-team-table-wrap { max-height: 65dvh; overflow: auto; }
+.sc-phone-ranking { display: none; }
+@media (min-width: 1024px) {
+  :root :is(.sc-wrap, .pk-wrap) { max-width: none; }
+  .sc-team-table-wrap { max-height: 70dvh; }
+  :root.tm-plate .sc-team-table-wrap[data-dense="true"] :is(button, th, td) { min-height: 28px; height: 28px; }
+  :root.tm-plate .sc-team-table-wrap[data-dense="true"] button { padding-block: 0; }
+  .sc-team-row > td[data-col="name"] { max-width: 200px; }
+}
+@media (max-width: 640px) {
+  .sc-manual-list { display: none !important; }
+  .sc-phone-ranking { display: block; }
+  .sc-team-filters label { flex-basis: 125px; }
+}
+
+@media (min-width: 1024px) {
+  /* Put event context beside its actions so analysis starts above the fold. */
+  :root .sc-wrap[data-scout-page="event"]:has(#sc-panel-teams) { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; padding-top: 16px; }
+  .sc-wrap[data-scout-page="event"]:has(#sc-panel-teams) > * { grid-column: 1 / -1; min-width: 0; }
+  .sc-wrap[data-scout-page="event"]:has(#sc-panel-teams) > .sc-head { grid-column: 1; grid-row: 1; margin: 0; }
+  .sc-wrap[data-scout-page="event"]:has(#sc-panel-teams) > .sc-back { grid-column: 2; grid-row: 1; justify-self: end; align-self: start; margin: 0; }
+  .sc-wrap[data-scout-page="event"]:has(#sc-panel-teams) .sc-head h1 { font-size: 28px; }
+  .sc-wrap[data-scout-page="event"]:has(#sc-panel-teams) .sc-head p { margin-block: 4px; }
+  .sc-wrap[data-scout-page="event"]:has(#sc-panel-teams) > [data-meet-link] { grid-column: 2; grid-row: 2; justify-self: end; }
+  .sc-wrap[data-scout-page="event"]:has(#sc-panel-teams) > .sc-status-row { grid-column: 1; grid-row: 2; margin: 0; padding-block: 0; border: 0; }
+  .sc-wrap[data-scout-page="event"]:has(#sc-panel-teams) > .sc-tabs { margin-block: 0; }
+  #sc-panel-teams { gap: 8px; }
+  #sc-panel-teams .sc-teams-tools > details:not([open]) { padding-block: 4px; }
+  #sc-panel-teams .sc-team-filters { margin-block: 0; }
+  #sc-panel-teams .sc-team-table-wrap { max-height: max(280px, calc(100dvh - 31rem)); }
+}
+
+@media (min-width: 1024px) {
+  :root .sc-wrap[data-scout-page="event"]:has(#sc-panel-teams) { row-gap: 4px; }
+  .sc-wrap[data-scout-page="event"]:has(#sc-panel-teams) .sc-head .sc-eyebrow { margin-bottom: 4px; }
+  #sc-panel-teams > .sc-section-head .sc-search { display: flex; align-items: center; white-space: nowrap; }
+  #sc-panel-teams > .sc-section-head .sc-search input { max-width: 220px; }
+  #sc-panel-teams > .sc-section-head .sc-help { margin-block: 4px; font-size: 12px; }
+  #sc-panel-teams .sc-teams-tools > details:not([open]) > summary { padding-block: 2px; font-size: 12px; }
+  .sc-wrap[data-scout-staff="true"]:has(#sc-panel-teams) .sc-link-strip .sc-linkbtn { min-height: 28px; }
+  .sc-wrap[data-scout-page="event"]:has(#sc-panel-teams) .sc-tabs button { min-height: 44px; }
+}

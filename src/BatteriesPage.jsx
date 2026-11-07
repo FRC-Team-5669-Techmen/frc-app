@@ -7,7 +7,7 @@ import { displayName } from './names'
 import { toCsv } from './csv'
 import { downloadText, laStamp } from './download'
 import {
-  CHECK_THRESHOLDS, CHARGE_STATES, RUN_KINDS, BROWNOUT, STATUSES, FILTERS, ROBOT_R, REST_V, LEVEL_LABELS,
+  GOOD_RULE, CHECK_THRESHOLDS, CHARGE_STATES, RUN_KINDS, BROWNOUT, STATUSES, FILTERS, ROBOT_R, REST_V, LEVEL_LABELS,
   batteryBoard, applyFilter, chargeLabel, statusLabel, kindLabel, brownoutLabel, fleetLine, verdictItems, verdictText, robotLevel,
   readNumber, runProblem, runArgs, canEditRun, CSV_COLUMNS, csvRows,
 } from './batteries'
@@ -140,7 +140,7 @@ export default function BatteriesPage({ session, hasRole = () => false }) {
         <div>
           <span className="ba-eyebrow">Pit electrical</span>
           <h1 className="ba-title">Batteries</h1>
-          <p className="ba-sub">Worst first. Tap a battery for its history.</p>
+          <p className="ba-sub">Good first, then batteries to check. Tap a battery for its history.</p>
         </div>
         <div className="ba-head-actions">
           <button className="ba-primary" disabled={!board.some((b) => b.status !== 'retired')}
@@ -157,6 +157,7 @@ export default function BatteriesPage({ session, hasRole = () => false }) {
 
       {board.length > 0 && <FleetLine fleet={fleet} />}
 
+      <details className="ba-good-rule"><summary title={GOOD_RULE}>How Good is earned</summary><p>{GOOD_RULE}</p></details>
       <nav className="ba-filters" data-tour="battery-filters" aria-label="Show">
         {FILTERS.map((f) => (
           <button key={f.key} className="ba-filter" aria-pressed={filter === f.key} onClick={() => setFilter(f.key)}>
@@ -177,11 +178,13 @@ export default function BatteriesPage({ session, hasRole = () => false }) {
         <ul className="ba-board">
           {shown.map((b) => (
             <li key={b.id} className={`ba-card${b.check ? ' ba-card-check' : ''}${b.status === 'retired' ? ' ba-card-retired' : ''}${b.matchReady ? ' ba-card-ready' : ''}`} data-battery={b.label}>
+              {b.good && <details className="ba-good"><summary className="ba-pill ba-pill-good" title={GOOD_RULE}>Good</summary><p>{GOOD_RULE}</p></details>}
               <button className="ba-card-open" onClick={() => setOpen(b.id)} aria-label={`${b.label}: open history`}>
                 <span className="ba-label">{b.label}</span>
                 <span className="ba-pills">
                   <span className={`ba-pill ba-pill-${b.status}`}>{statusLabel(b.status)}</span>
                   {b.check && <span className="ba-pill ba-pill-check">Check</span>}
+
                   {b.matchReady && <span className="ba-pill ba-pill-ready">Ready</span>}
                 </span>
                 <span className="ba-stats">
@@ -214,7 +217,8 @@ export default function BatteriesPage({ session, hasRole = () => false }) {
       )}
 
       <details className="ba-rules">
-        <summary>What flags Check</summary>
+        <summary>What flags Check and Good</summary>
+        <p>{GOOD_RULE}</p>
         <p>A brownout in the last {CHECK_THRESHOLDS.BROWNOUT_LOOKBACK} runs, a resting voltage before a match under {CHECK_THRESHOLDS.MIN_RESTING_VOLTS} V, Battery Beak resistance over {CHECK_THRESHOLDS.MAX_RESISTANCE_MOHM} mΩ, or the robot reading over {ROBOT_R.PULL_OVER} mΩ last time. These are proposed defaults. A measurement left blank is not recorded, never zero. Logging a match marks a charged battery as needing a charge.</p>
       </details>
       <RobotRHelp />

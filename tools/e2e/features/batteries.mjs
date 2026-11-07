@@ -4,7 +4,7 @@
  * from the seeded rows (the oracle), not read from src/batteries.js.
  *
  *  - before 0026: the page says not set up, and makes no write;
- *  - a student sees seven cards worst first: three flagged (brownout, low
+ *  - with no Good battery, a student sees seven cards worst first: three flagged (brownout, low
  *    resting voltage, resistance) before the healthy ones, the retired last;
  *  - Match-ready shows exactly B01; one tap sets a charge state;
  *  - Log a run: battery and kind remembered, numeric keypad, one run row,
@@ -41,6 +41,7 @@ export default {
 
     t.as('student board')
     await t.open('/batteries', { persona: 'student', mig: 'all', reset: true, ready: '.ba-card' })
+    t.check('board description explains Good first', (await t.text('.ba-sub')).includes('Good first'))
     const seeded = await t.rows('battery_runs')
     t.check('the fixture seeded runs for the oracle', seeded.length >= 8, `${seeded.length} runs`)
     const labels = await t.texts('.ba-card .ba-label')

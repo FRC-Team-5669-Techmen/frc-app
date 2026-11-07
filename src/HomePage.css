@@ -305,3 +305,11 @@
 .mb-news-unread .mb-news-label { padding: 0.1rem 0.45rem; border-radius: var(--radius-sm); background: var(--gold-fill); color: var(--on-gold); font-weight: 700; }
 .mb-news-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .mb-news-go { flex: none; color: var(--gold); }
+
+.mb-pause { margin-block: 12px; }
+.mb-pause p { font: 13px var(--font-ui); color: var(--steel); line-height: 1.5; }
+.mb-pause[data-session-paused="true"] { border-inline-start: 3px solid var(--warn); padding-inline-start: 12px; }
+
+.mb-you-stats { gap: .75rem; }
+.mb-you-stats .mb-stat { min-width: 0; }
+.mb-you-stats .mb-stat-value { white-space: nowrap; font-size: clamp(1.1rem, 1.8vw, 1.6rem); }

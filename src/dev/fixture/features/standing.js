@@ -12,6 +12,8 @@
 // pending absence request for the meeting tomorrow, one safety violation and
 // one notice; one FLL team with no mentors; the settings row.
 
+import { pauseDuration } from '../../../hoursUtils.js'
+
 const H = 3_600_000
 const D = 24 * H
 const ms = (now) => (now instanceof Date ? now.getTime() : typeof now === 'number' ? now : Date.now())
@@ -46,9 +48,11 @@ function hoursBetween(db, member, from, to) {
     const t = Date.parse(a.event_time)
     if (a.type !== 'in' || b.type !== 'out' || t < from || t >= to || (a.category ?? 'build') === 'volunteer') continue
     if (rows(db, 'session_reviews').some((r) => r.checkout_id === b.id && ['pending', 'voided'].includes(r.status))) continue
-    total += Math.min(Date.parse(b.event_time) - t, 12 * H)
+    const end = Math.min(Date.parse(b.event_time), t + 12 * H)
+    total += end - t - pauseDuration(a.pauses, t, end)
   }
-  return Math.round((total / H) * 100) / 100
+  const verified = rows(db, 'logged_hours').filter(l => l.member_id === member && l.status === 'verified' && !['volunteer', 'volunteering'].includes(l.type) && l.date >= laDate(from) && l.date < laDate(to)).reduce((n, l) => n + Number(l.hours), 0)
+  return Math.round((total / H) * 100) / 100 + verified
 }
 
 function monthMeetings(db, member, now) {
