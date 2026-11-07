@@ -71,6 +71,7 @@ const FEATURES = Object.freeze([
   'job-certs',
   'handbook',
   'signout',
+  'signout-boundary',
   'standing',
   'rosters',
   'families',

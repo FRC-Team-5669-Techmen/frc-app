@@ -64,7 +64,7 @@ feedback_restore_status:
   level: confirm
 
 approve_signout:
-  describe: Approve a pending sign-out; the member's hours stop at the approval. There is no un-approve.
+  describe: Approve a pending sign-out for its requested session with the work note; an obsolete request cannot close newer hours. There is no un-approve.
   level: confirm
 
 connector_report_gap:

@@ -120,3 +120,7 @@ None of these touch the live project. Whether 0018 is applied is answered only b
 ## Environment (Vercel project settings)
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (already set for `api/discord-week-ahead.js`), and `SUPABASE_ANON_KEY` (the project's public anon key; the connector falls back to `VITE_SUPABASE_ANON_KEY` when it is visible to functions). Without them every connector endpoint answers 503 "not set up yet" and the rest of the app is unaffected.
+
+## Sign-out session integrity (0046, codex-frc-direction)
+
+The existing approve_signout tool still previews and confirms through the same RPC. Its description now states that approval applies to the requested session; an obsolete request is withdrawn without closing newer hours. The generated switch_to_fll entry is staff-only with a work note; students finish the normal build sign-out approval, then scan for FLL. There is no new tool or authorization model.

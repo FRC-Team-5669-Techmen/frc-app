@@ -1,0 +1,12 @@
+# codex-frc-direction Mr. Pina request audit and approved sign-out completion
+- Issued: 2026-11-06
+- By: Codex session, requested directly by Mr. Pina
+- Owns: the modules these touch, migrations, connector tool definitions, tests, docs/subsystems.
+- Migration permitted: yes. Highest at issue and fetched main: 0045. Reserved next number: 0046, recheck at landing.
+- Status: issued
+- Authorization: Solo mode (decision 05), fetch and rebase, local gate, commit with the requested pina-hash author identity, push main without force. Migrations applied by migrate.yml on push.
+- Branch: main (solo mode, decision 05)
+- Base: origin/main 5aede08, fetched and rebased before changes.
+- Confirmed: pending local verification and main push.
+- Verification: PostgreSQL 24/24, permissive mutations 17/17, concurrent-session proof 11/11. Targeted browser 85/85 at 375, 1152 and 1440 in both themes (24 measured views); no overflow or escaping descendants. Full seven-command solo gate pending completion. All seven solo checks, targeted real PostgreSQL boundary/mutation checks, and browser measurements at 375, 1152 and 1440 in both themes required.
+- Notes: Read CLAUDE.md, the complete OVERHAUL_AUDIT.md and applicable subsystem documents before implementation. AGENTS.md is absent from the workspace tree. Fresh origin/main contains the earlier ledger entries and their shipped source; older status labels do not prove unbuilt work. Audit all five requested items against source. Finish item 1 before expanding into item 2; a complete first item takes priority over partial implementation of all five. No live identities in fixtures or reports. Existing tokens, fonts and shape language only.

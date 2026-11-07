@@ -16,14 +16,14 @@ import './CheckinPage.css'
 // Volunteer check-in fast path for summer FLL-room volunteering. Structured like
 // CheckinPage (minimal layout, no NavBar) but every session it opens is tagged
 // category = 'volunteer' so those hours filter separately on the boards. Tapping
-// while a NORMAL session is open closes that session and switches to volunteer.
+// while build hours are open sends the member to the normal sign-out approval flow.
 
 const CATEGORY = 'volunteer'
 
 // Same resting screens and refresh-on-return as CheckinPage: a tab brought back
 // after a minute away re-reads, never writing; a receipt stays up while the
 // status still agrees with it, anything else shows the current status.
-const RESTING = new Set(['success', 'duplicate', 'confirm', 'confirm-out', 'unknown', 'signout'])
+const RESTING = new Set(['success', 'duplicate', 'confirm', 'confirm-out', 'unknown', 'signout', 'build-open'])
 
 function deviceStore() {
   try { return window.localStorage } catch { return null }
@@ -295,10 +295,12 @@ export default function VolunteerCheckinPage({ session }) {
         // This page was shown again: show the open session, let the member choose.
         await openFllSession(next, false)
       } else if (next.action === 'switch') {
-        // A NORMAL session is open: auto-switch to volunteer. Both the close and
-        // the new check-in are geofenced + tapped, so defer to confirmCheckin.
-        setSwitched(true)
-        setStatus('confirm')
+        // Once approvals exist, finish that session with its note and approval
+        // before starting FLL. Keep the pre-0014 path for uninstalled schema.
+        const so = await loadMySignout(supabase, session.user.id)
+        if (!mounted.current) return
+        setSwitched(so.legacy)
+        setStatus(so.legacy ? 'confirm' : 'build-open')
       } else {
         // No open session: plain volunteer check-in. Wait for a tap before
         // geolocating (iOS reliability).
@@ -408,6 +410,19 @@ export default function VolunteerCheckinPage({ session }) {
     )
   }
 
+  if (status === 'build-open') {
+    return (
+      <div className="checkin-wrap checkin-idle checkin-build-open">
+        <CheckinHeader />
+        <h1 className="checkin-name">{memberName}</h1>
+        <p className="checkin-status">Your build session is still open.</p>
+        <p className="checkin-loc">Keep breaks inside that session. To start FLL hours, leave your work note and wait for sign-out approval first. Then scan here again.</p>
+        <Link data-build-signout to={`/checkin?loc=${encodeURIComponent(loc)}`} className="checkin-secondary">Finish build session</Link>
+        <Link to="/dashboard" className="checkin-home-link">Keep my session open</Link>
+      </div>
+    )
+  }
+
   if (status === 'confirm') {
     return (
       <div className="checkin-wrap checkin-idle">
@@ -418,7 +433,7 @@ export default function VolunteerCheckinPage({ session }) {
         </p>
         {switched && (
           <p className="checkin-status" style={{ color: 'var(--gold)' }}>
-            You have a normal session open — this will close it.
+            You have a normal session open. This will close it.
           </p>
         )}
         <p className="checkin-loc">{loc.replace(/-/g, ' ')}</p>

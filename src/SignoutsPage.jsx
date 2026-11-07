@@ -9,7 +9,7 @@ import './SignoutsPage.css'
 
 // /signouts: the approver's queue (handbook Section 7). Mentors and the
 // students Mr. Pina names (the signout.approve capability on /roster) approve
-// with two taps, or Approve all. Hours stop at the approval. Nobody approves
+// by tapping the waiting name once, or Approve all. Hours stop at the approval. Nobody approves
 // their own. Today's decisions name who decided, so Mr. Pina can see each
 // day's student approvals. Before 0014 is pasted the page says so.
 
@@ -124,7 +124,7 @@ export default function SignoutsPage({ session, hasRole = () => false }) {
     <div className="sop-wrap">
       <div className="sop-head">
         <h1 className="sop-title">Sign-outs</h1>
-        <p className="sop-sub">Check the area, then approve. Hours stop when you approve. You never approve your own.</p>
+        <p className="sop-sub">Check the area, then tap a waiting name to approve. Hours stop when you approve. You never approve your own.</p>
       </div>
       {loadErr && <p className="sop-error" role="alert">Could not load ({loadErr}).</p>}
       {msg && <p className="sop-msg" role="status">{msg}</p>}
@@ -149,7 +149,11 @@ export default function SignoutsPage({ session, hasRole = () => false }) {
                 <li key={r.id} className="sop-row" data-request={r.id}>
                   <div className="sop-row-main">
                     <div className="sop-row-top">
-                      <span className="sop-name">{nameOf(r.member_id)}</span>
+                      <button className="sop-btn sop-btn-primary sop-name" disabled={!!busy}
+                        aria-label={`Approve sign-out for ${nameOf(r.member_id)}`}
+                        onClick={() => act(r.id, () => approveSignout(supabase, r.id), () => `Approved ${nameOf(r.member_id)}.`)}>
+                        {nameOf(r.member_id)}
+                      </button>
                       <span className="sop-meta hud-mono">
                         asked {fmtClock(r.requested_at)}{since ? ` · in ${fmtLen(Date.now() - Date.parse(since))}` : ''}
                       </span>
@@ -170,10 +174,6 @@ export default function SignoutsPage({ session, hasRole = () => false }) {
                     )}
                   </div>
                   <div className="sop-actions">
-                    <button className="sop-btn sop-btn-primary" disabled={!!busy}
-                      onClick={() => act(r.id, () => approveSignout(supabase, r.id), () => `Approved ${nameOf(r.member_id)}.`)}>
-                      {busy === r.id ? '…' : 'Approve'}
-                    </button>
                     <button className="sop-btn" disabled={!!busy}
                       onClick={() => { setReturning(returning === r.id ? null : r.id); setReason('') }}>
                       {returning === r.id ? 'Cancel' : 'Not yet'}

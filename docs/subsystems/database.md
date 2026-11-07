@@ -46,3 +46,5 @@ values ('NNNN', 'name_after_the_number') on conflict do nothing returning versio
 ```
 
 **Which migrations are applied** is answered by `select version, name from supabase_migrations.schema_migrations order by version;` once the secret exists, and still by the catalog before that.
+
+- **0046 (codex-frc-direction)** replaces the existing self-attendance guard, staff FLL switch and individual/bulk sign-out approval functions, with unchanged signatures and no new table or column. Its RLS test, permissive mutation suite and real-session race live beside the other harness checks. Delivery is through migrate.yml on main push; code presence alone is not proof of live application.

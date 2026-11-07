@@ -71,8 +71,11 @@ export async function canApproveSignouts(client) {
 }
 
 export async function approveSignout(client, id) {
-  const { error } = await client.rpc('approve_signout', { p_request: id })
+  const { data, error } = await client.rpc('approve_signout', { p_request: id })
   if (error) throw error
+  const row = Array.isArray(data) ? data[0] : data
+  if (row?.status === 'withdrawn') throw { code: 'P0002', message: 'That session already ended. Ask again for the current session.' }
+  return row
 }
 
 export async function approveAllSignouts(client) {
