@@ -249,6 +249,11 @@ export default {
         await t.rows('absence_requests'),
         absences,
       )
+      // Persistence can precede the RPC response and React's success paint.
+      // Wait for the learner-visible acknowledgment, not only the fixture row.
+      await t.page.locator(PANEL).getByRole('status').filter({
+        hasText: 'Core completion recorded for your mentors.',
+      }).waitFor({ state: 'visible' })
       t.check(
         'completion acknowledged',
         (await t.text(PANEL)).includes('Core completion recorded'),
