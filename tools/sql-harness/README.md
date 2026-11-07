@@ -94,3 +94,7 @@ cluster's own unix socket either way.
 ## Approved session boundary (0046)
 
 `node tools/sql-harness/run.mjs --tests supabase/migrations/0046_signout_session_boundary_rls_test.sql --node tools/sql-harness/mutants-0046.mjs --node tools/sql-harness/race-0046.mjs` runs 24 rollback-safe checks, 17 permissive mutants and eight two-session check-in races plus an approval/staff-switch overlap, a reversed-lock-order mutant and a missing-lock mutant. Mutation success requires named failing assertions, not SQL errors. No live project is contacted.
+
+## Feedback boundaries and observed defaults (0048)
+
+`node tools/sql-harness/run.mjs --node tools/sql-harness/mutants-0048.mjs --node tools/sql-harness/default-acl-0048.mjs` applies every migration twice, runs all rollback tests and checks each feedback mutation. The default replay models the catalog-observed anon/authenticated/service_role grants before reapplying 0048, then requires their exact closure and the three authenticated managed RPC grants. Its omitted-service-revoke control must fail named function/table checks. It requires the disposable harness socket and never contacts a hosted project. The 0046 and 0047 mutation/race instruments remain separate.
