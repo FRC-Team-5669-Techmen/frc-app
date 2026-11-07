@@ -301,6 +301,9 @@ export default {
       const schoolBefore = await school.locator('.eh-option').count();
       await t.press(option(school, 'We drop off at Bosco Tech'));
       await t.settle({ quietMs: 300 });
+      // Saves can still have a scheduled 500ms view reload after the call log
+      // goes quiet. Observe this question's completed UI before measuring it.
+      await school.locator('[data-testid="eh-option-change"]').waitFor({ state: 'visible', timeout: 10_000 });
       const schoolAfter = await school.locator('.eh-option').count();
       const change = await school.locator('[data-testid="eh-option-change"]').count();
       const stored = (await store(t, 'hub_day_answers')).find((a) => a.day_id === EH.sat && a.invite_id.endsWith('400'))?.school_mode;
