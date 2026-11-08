@@ -35,6 +35,17 @@ Deno.serve(async (req) => {
     const to = typeof email === 'string' ? email.trim().toLowerCase() : ''
     if (!to) return json({ error: 'email required' }, 400)
 
+    // Authenticate the caller before using a privileged client or sending mail.
+    const userClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } },
+    )
+    const { data: { user }, error: userError } = await userClient.auth.getUser()
+    if (userError || !user) return json({ error: 'Not signed in' }, 401)
+    const { data: isStaff, error: roleError } = await userClient.rpc('is_staff')
+    if (roleError || !isStaff) return json({ error: 'Staff role required' }, 403)
+
     // Safety: only ever email an address that is actually whitelisted, so this
     // function can't be used to send arbitrary mail.
     const admin = createClient(
@@ -54,10 +65,12 @@ Deno.serve(async (req) => {
     const appUrl = Deno.env.get('APP_URL') ?? 'https://frc-app-liard.vercel.app'
     const name = (typeof full_name === 'string' && full_name.trim()) || 'there'
 
+    const htmlName = name.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]!))
+
     const html = `
       <div style="font-family:Arial,Helvetica,sans-serif;color:#14161A;line-height:1.5">
         <h2 style="color:#9a7b1f;margin:0 0 12px">You're approved · Techmen 5669</h2>
-        <p>Hi ${name},</p>
+        <p>Hi ${htmlName},</p>
         <p>Your access to the Techmen team platform has been approved. You can now sign in and use the app.</p>
         <p>If you're already signed in and still see the request screen, <strong>reload the page or sign out and sign back in</strong>. Your session won't update on its own.</p>
         <p><a href="${appUrl}" style="display:inline-block;background:#D4AF37;color:#0A0B0D;

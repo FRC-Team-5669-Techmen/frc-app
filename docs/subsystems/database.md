@@ -52,3 +52,13 @@ values ('NNNN', 'name_after_the_number') on conflict do nothing returning versio
 
 
 **0048, codex-frc-feedback.** Adds protected `attendance_events.pauses`, server-only pause writes and OUT closure, an attendance member/time index, internal pause/meeting-detail helpers, closed `standing_record_evidence` snapshots and the staff-only explanation RPC. Replaces `_member_meetings`, `_member_hours`, `_volunteer_hours`, `_letter_json` and the readiness pause deduction. `_standing_week_hours` adds verified non-FLL work to evaluation and both standing reads while preserving their installed rule bodies and ACLs. Needs the chain through 0047. Applied by `migrate.yml` on push; no manual live application in this job. Its SQL/RLS tests and permissive mutations are retained beside the other harness instruments. Named service_role revokes remove the live schema defaults; the retained default-ACL replay requires exactly three authenticated managed RPCs and no client snapshot privilege.
+
+**Security recheck (2026-11-07).** The migration ending `_security_recheck.sql`
+protects direct client attendance inserts, closes legacy internal function
+ACLs and rebuilds profile column grants excluding `calendar_token`. Existing
+profile/membership policies stay pending decision 06. Only authenticated gets
+the own-token RPC grants; internal functions have no API role grant. New
+profile columns need explicit client column grants. The sibling RLS test and
+`mutants-security-recheck.mjs` run in the disposable harness; the Migrate
+workflow is the SQL delivery path, not proof of live installation. The
+approval-mail and calendar-feed repairs require separate Edge deployments.

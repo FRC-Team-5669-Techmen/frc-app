@@ -36,3 +36,13 @@ see.
 
 **C. Do nothing.** Offboarding stays a hand edit in the SQL editor, and item
 14 stays open.
+
+## Security recheck, 2026-11-07 (Item 14)
+
+**Exact question for Mr. Pina:** Does removal mean loss of app access, or only loss of active-team participation? If access is removed, should it block every sign-in claim and existing data access independently of roster roles, including approved email and school-domain paths? What access, if any, should alumni retain?
+
+**Default for this job:** No offboarding or access-revocation feature is built. Preserve the current model while this question is open. This re-audit does not authorize option A.
+
+Later standing removal and 0020 account merge are narrower operations than a general removal/access policy. Decision 54 also leaves participation versus access open. The current claim and role helpers were inspected in the all-migrations local database; no general offboarding completion was found. Item 14 remains open. Its private text has not been reconstructed here.
+
+No claim about live deployment follows from the local harness. See `docs/history/codex-frc-security-recheck.md`.

@@ -28,3 +28,13 @@ seeing when anyone else's child arrives or leaves.
 
 **C. Keep it team-wide.** Free. Every parent sees when every student is at the
 shop.
+
+## Security recheck, 2026-11-07 (Item 50)
+
+**Exact question for Mr. Pina:** Should a parent-only account see only linked students attendance/presence, team totals without individual times, or the current team-wide boards? Should /display be hidden for parent-only accounts?
+
+**Default for this job:** Keep the existing team-wide scope until the membership boundary and this parent policy are decided; do not narrow only one surface.
+
+A fictional parent-only account read another member attendance in the all-migrations PostgreSQL harness. The base attendance read policy remains team-wide. Linked-child hours and parent dashboard filtering added later do not narrow that database policy.
+
+No claim about live deployment follows from the local harness. See `docs/history/codex-frc-security-recheck.md`.

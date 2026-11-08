@@ -32,3 +32,13 @@ approvals; mentors and leads can still create mentors.
 
 **C. Do nothing.** Any mentor or lead can create a mentor, and a hurried
 approval can too.
+
+## Security recheck, 2026-11-07 (Item 15)
+
+**Exact question for Mr. Pina:** Should only admins grant the mentor role through access approval, approved-email writes and invitations, and should approval default to student/parent rather than the requested role?
+
+**Default for this job:** Keep the existing staff approval/invite policy until answered; do not implement option A as part of this re-audit.
+
+The current approve RPC and whitelist policy still use is_staff(); invite-member uses the same staff gate. The approval page still initializes the selection from requested_role. The SQL catalog and local function body match the tree. Later mail delivery changes do not change this role policy.
+
+No claim about live deployment follows from the local harness. See `docs/history/codex-frc-security-recheck.md`.

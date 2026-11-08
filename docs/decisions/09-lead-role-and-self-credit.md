@@ -33,3 +33,13 @@ reads, no access approvals, no self-certification.
 
 **D. Do nothing.** If a student holds lead, they hold every staff power,
 including over their own hours.
+
+## Security recheck, 2026-11-07 (Item 51)
+
+**Exact question for Mr. Pina:** Is lead an adult staff role, a student leadership role, or a role to retire? Independently, should all non-admin staff be barred from approving, editing or adding their own credited hours, and should admins retain a documented override?
+
+**Default for this job:** Preserve existing lead and hours-credit policy pending the answer. Do not build either policy change from this re-audit. Continue the existing advice not to grant lead to a student while undefined.
+
+is_staff() still includes lead. A fictional non-admin mentor verified their own pending logged entry in a rollback-only local test. 0046 prevents self-approval of build sign-out, but does not settle self-credit on the other hours paths. That later protection is partial evidence, not closure of item 51.
+
+No claim about live deployment follows from the local harness. See `docs/history/codex-frc-security-recheck.md`.

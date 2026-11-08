@@ -40,3 +40,13 @@ alumni); guard only approval and the exemption.** A product choice. Option A
 treats status as staff-set.
 
 **D. Do nothing.** Both items stay open on a database of minors' attendance.
+
+## Security recheck, 2026-11-07 (Items 2 and 3)
+
+**Exact question for Mr. Pina:** Should approval, active status and geofence exemption be admin-controlled, and should every member data policy require approved, active membership while pending accounts retain only their own access-request path?
+
+**Default for this job:** Preserve the current database access model until answered. Do not infer approval to implement option A from this re-audit. The guard must precede the policy-wide boundary if approved.
+
+The current chain through 0048 still permits the two boundaries identified by the public stubs. Rollback-only tests on PostgreSQL 16 confirmed both. The later invoker write wrappers preserve those policies; they do not supply the missing membership check. No decision-dependent policy or profile guard was built.
+
+No claim about live deployment follows from the local harness. See `docs/history/codex-frc-security-recheck.md`.

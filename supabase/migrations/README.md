@@ -195,3 +195,23 @@ error, 2026-10-06). In a Postgres regex write `\Z` for end of string instead.
 ### 0048: member feedback corrections
 
 `0048_frc_feedback.sql` follows 0047: withdrawn probation and meeting attendance corrections, immutable staff evidence, and protected session pauses across shared hours calculations. `0048_frc_feedback_rls_test.sql` is rollback-only; `tools/sql-harness/mutants-0048.mjs` must catch every listed permissive mutation. On the current chain the 0025 test recognizes the deliberate ordinary-NFC attendance change; when 0025 is tested alone its original negative control remains. The migration is additive and applied only by Migrate on push. Named service_role revokes remove inherited Supabase defaults; `tools/sql-harness/default-acl-0048.mjs` replays those grants in rollback transactions and requires the omitted-revoke mutation to fail. Do not re-paste earlier standing functions over it.
+
+### Explicit function role sets (security recheck)
+
+Every new or changed function must remove inherited EXECUTE grants from
+`PUBLIC`, **`anon` by name**, `authenticated` and `service_role`, then grant
+exactly its intended role set. Internal trigger/cron helpers have no API role
+grant; checked app RPCs normally grant only `authenticated`; a capability API
+must explicitly name any anon access. An omitted named revoke is not repaired
+by revoking PUBLIC. Test the effective ACL for every API role, the allowed
+path, and a permissive grant mutation. Do not change an existing capability
+API to a different role set without its own review/test.
+
+The security-recheck migration follows 0048, preserves the frozen member
+policies while decisions remain open, closes legacy internal execution,
+protects direct client attendance inserts, and rebuilds profile column grants
+without the calendar secret. Adding a profile column now requires an explicit
+column grant if clients need it. Its rollback-only RLS sibling and
+`tools/sql-harness/mutants-security-recheck.mjs` prove these boundaries; the
+0046 test isolates its inner guard from the new outer guard so its original
+mutation proof remains meaningful. Edge Functions deploy separately from SQL.

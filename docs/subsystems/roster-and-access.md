@@ -18,3 +18,12 @@ Moved verbatim from `CLAUDE.md` (The subsystems) on 2026-10-19, so `CLAUDE.md` s
 - **Access request email** (ledger 0016, feedback 2db35100, 0024 part B): `_access_request_notify` (AFTER INSERT trigger on `access_requests`) queues one `notice_outbox` email to every admin (kind `access_request`, the requester, their note and the `/access-requests` link) and an app notice, at most once a day per requesting address. The notice-mail function sends it on its 10-minute tick. A failure to notify never blocks the request.
 
 - **Shared school sender** (2026-11-06): Approval mail now uses `_shared/mail.js` and the Workspace Gmail API when configured. Supabase Auth still sends staff invites independently via its custom SMTP settings. Both configuration paths are documented in [App mail](mail.md), job `codex-frc-mail-from`.
+
+**Security recheck (2026-11-07).** `send-approval-email` now authenticates the
+caller and requires a successful staff check before service-role lookup or
+mail delivery, and escapes the display name in HTML. Deployment is separate
+from a main push and includes `_shared/mail.js`. Its real-handler tests and
+permissive mutation controls live in `tests/security-recheck-edge.test.js`.
+This does not change who may grant mentor, member approval/status, removal,
+parent scope, consent or self-credit. Exact questions/defaults for those
+remaining audit items are refreshed in decisions 06, 07, 08, 09, 10 and 14.

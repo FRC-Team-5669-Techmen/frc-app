@@ -85,8 +85,16 @@ begin
  perform pg_temp.rec(19,'bulk approval counts the valid request and excludes the stale request',v='1' and (select status from public.signout_requests where member_id=x.s)='withdrawn' and (select status from public.signout_requests where member_id=x.a)='approved',v);
  v := pg_temp.call_as(x.m,format($q$select public.staff_add_event(%L,'out',now()-interval '1 day','build','Corrected a historical session')::text$q$,x.m));
  perform pg_temp.rec(21,'staff historical corrections retain their audited reason',v not like 'err:%%' and exists(select 1 from public.attendance_audit where event_id::text=v and reason='Corrected a historical session'),v);
+ -- Isolate this inner guard from the later independent client-integrity guard.
+ -- The surrounding rollback restores trigger state even if a check fails.
+ if exists(select 1 from pg_trigger where tgrelid='public.attendance_events'::regclass and tgname='attendance_00_client_integrity') then
+   alter table public.attendance_events disable trigger attendance_00_client_integrity;
+ end if;
  v := pg_temp.call_as(x.f,format($q$insert into public.attendance_events(user_id,type,method,note,manual_entry) values(%L,'out','nfc',null,true) returning id::text$q$,x.f));
  perform pg_temp.rec(22,'a student cannot claim the staff manual-correction exemption',v='err:22023',v);
+ if exists(select 1 from pg_trigger where tgrelid='public.attendance_events'::regclass and tgname='attendance_00_client_integrity') then
+   alter table public.attendance_events enable trigger attendance_00_client_integrity;
+ end if;
  v := pg_temp.call_as(null,format($q$select public._apply_event_edit(%L,null,'volunteer',%L,'Boundary probe')::text$q$,next_in,x.s));
  perform pg_temp.rec(23,'the internal attendance editor is closed to anon and authenticated',v='err:42501' and not has_function_privilege('anon','public._apply_event_edit(uuid,timestamptz,text,uuid,text)','execute') and not has_function_privilege('authenticated','public._apply_event_edit(uuid,timestamptz,text,uuid,text)','execute'),v);
  v := pg_temp.call_as(x.m,format($q$select public.staff_edit_event(%L,null,'outreach','Reviewed work note')::text$q$,next_in));

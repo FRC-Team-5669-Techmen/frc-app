@@ -105,10 +105,10 @@ Deno.serve(async (req) => {
   // Authenticate by capability token.
   const { data: member, error: memberErr } = await admin
     .from('profiles')
-    .select('id')
+    .select('id, approved, status')
     .eq('calendar_token', token)
     .maybeSingle()
-  if (memberErr || !member) return plain('Invalid token', 401)
+  if (memberErr || !member || member.approved !== true || member.status !== 'active') return plain('Invalid token', 401)
 
   // Events from 30 days ago forward.
   const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()

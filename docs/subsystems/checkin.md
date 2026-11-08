@@ -25,3 +25,12 @@ On `/signouts`, tap the waiting name once to approve. Approval applies only to t
 0046 replaces existing functions with unchanged signatures, adds no read boundary or schema fields and needs 0014. The existing pre-0014 missing-schema flow remains intact. Proof: the 0046 RLS sibling (24 checks), `mutants-0046.mjs` (17 permissive controls), `race-0046.mjs` (eight concurrent trials, an approval/staff-switch overlap and two lock mutants), `tests/signout-approval.test.js`, and `tools/e2e/features/signout-boundary.mjs` in both themes at 375, 1152 and 1440. Browser dictation remains editable text; real-device recognition quality is a separate acceptance check.
 
 **Pause integration (codex-frc-feedback, 0048).** A dashboard pause leaves the original IN and extended session open. It is not permission to leave; build sign-out still needs the existing note, cleanup and mentor approval. FLL switching, staff OUT and auto-close finish an open pause at their OUT time. Tag routes keep their lightweight imports. The server protects pause history and rejects a stale session ID, another member, or an ineligible account.
+
+**Direct insert integrity (security recheck, 2026-11-07).** The numbered
+security-recheck migration adds an invoker trigger before client INSERTs,
+including `attendance_record`: server time, supported self categories, no
+client-set verification/manual/override actor. Checked definer staff paths keep
+historical corrections and their audit. The existing sign-out, pause and
+serialization guards remain. Geofence sensor claims still originate on the
+phone; this change does not establish physical presence. SQL positive and
+permissive mutation controls run beside 0046 checks and its concurrent races.

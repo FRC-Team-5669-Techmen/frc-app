@@ -90,6 +90,20 @@ was delivered to Mr. Pina privately on 2026-10-01 and is not in this repository.
 its full text back once its fix is applied on the live project. The cheapest high-value fix
 is one small migration covering items 1, 3 and 7.
 
+### Security recheck, 2026-11-07
+
+The twelve security stubs were rechecked against `6876af1` and the complete
+local PostgreSQL 16 migration chain. Their original `e652b01` lines remain as
+historical evidence; each now has a dated recheck immediately below it.
+Item 1 was fixed by later work (`4379cb7`). Items 6, 7, 8 and 52 receive
+repairs in `codex-frc-security-recheck`; 8 and the feed half of 52 require
+separate Edge Function deployment. Items 2, 3, 14, 15, 16, 50 and 51 remain
+open for the exact questions/defaults in decisions 06, 07, 08, 09, 10 and 14.
+None is classified not applicable. Local SQL and handler tests establish
+source behavior, not live installation. The evidence table and repeatable
+commands are in `docs/history/codex-frc-security-recheck.md`. Private text,
+including item 14, remains withheld.
+
 ### Fixed on 2026-10-01 (code on `main`, deployed; no SQL involved)
 
 Fixed before the audit was written (in `aa3f533`):
@@ -127,6 +141,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 1. Security finding: a database permission gap in the attendance path
 - **Dimension:** permissions-security. **Severity:** critical. **Size:** S.
 - **Status at `e652b01`:** unfixed.
+- **Recheck 2026-11-07:** FIXED BY LATER WORK, `4379cb7` (0046). The current SQL/RLS test confirms the internal attendance-editor boundary and its supported staff path. 0049 retains explicit named revokes; see the security-recheck history.
 - **Kind of fix:** One small numbered migration that tightens a database privilege, plus a test
   that keeps it tight.
 - Detail withheld from this public repository until fixed (decision 04,
@@ -135,6 +150,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 2. Security finding: the database's member read and write boundary
 - **Dimension:** permissions-security. **Severity:** critical. **Size:** L.
 - **Status at `e652b01`:** unfixed.
+- **Recheck 2026-11-07:** STILL OPEN, decision 06. All-migrations local SQL confirms the membership boundary is unchanged; 0019 invoker wrappers do not replace it. Exact question/default refreshed in decision 06.
 - **Kind of fix:** A membership check added across the member read and write policies, after
   item 3 (decision 06).
 - Detail withheld from this public repository until fixed (decision 04,
@@ -145,6 +161,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 3. Security finding: a missing database guard on a member table
 - **Dimension:** permissions-security, admin-tooling, testing-ci. **Severity:** high. **Size:** S.
 - **Status at `e652b01`:** unfixed.
+- **Recheck 2026-11-07:** STILL OPEN, decision 06. The current member-table guard is still missing in the local chain. Calendar-token isolation in 0049 is narrower; it does not settle the approval/status/exemption policy. Exact question/default refreshed.
 - **Kind of fix:** One small numbered migration adding a guard trigger, with an RLS test whose
   positive controls show the admin paths still work (decision 06).
 - Detail withheld from this public repository until fixed (decision 04,
@@ -229,6 +246,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 6. Security finding: integrity of attendance rows written from the client
 - **Dimension:** permissions-security. **Severity:** high. **Size:** M.
 - **Status at `e652b01`:** unfixed.
+- **Recheck 2026-11-07:** FIXED IN TREE by 0049_security_recheck: server time and protected staff fields on direct client inserts as well as the existing invoker attendance RPC. Positive controls preserve ordinary/FLL attendance and audited staff corrections. SQL checks 3-11 and permissive mutations; prior partial work was `3a283ea`/`4379cb7`. Live application is not inferred.
 - **Kind of fix:** A database-side check on new attendance rows (a trigger or a check-in RPC),
   verified with `test:checkin` at both widths.
 - Detail withheld from this public repository until fixed (decision 04,
@@ -237,6 +255,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 7. Security finding: execute grants on a set of database functions
 - **Dimension:** permissions-security. **Severity:** high. **Size:** S.
 - **Status at `e652b01`:** unfixed.
+- **Recheck 2026-11-07:** FIXED IN TREE by 0049_security_recheck: explicit role revokes for internal trigger/scheduled functions, with exact-ACL tests and permissive mutations. The migrations README now requires an explicit role set for each new function. Live application is not inferred.
 - **Kind of fix:** One numbered migration tightening execute grants on functions that only
   triggers and cron call, plus a migrations-README rule for every new function. Fix it before
   push notifications go live (decision 03).
@@ -246,6 +265,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 8. Security finding: authorization in an email-sending Edge Function
 - **Dimension:** permissions-security. **Severity:** high. **Size:** S.
 - **Status at `e652b01`:** unfixed.
+- **Recheck 2026-11-07:** FIXED IN TREE: send-approval-email authenticates and requires staff before privileged access; the display name is escaped. Real-handler tests reproduce red/green and permissive mutants. Separate Edge Function deployment remains required; live closure is unverified.
 - **Kind of fix:** The caller check `invite-member` already uses, plus escaping one field;
   redeployed by hand.
 - Detail withheld from this public repository until fixed (decision 04,
@@ -365,6 +385,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 14. Security finding: removing a member from the team
 - **Dimension:** admin-tooling, permissions-security. **Severity:** high. **Size:** L.
 - **Status at `e652b01`:** unfixed.
+- **Recheck 2026-11-07:** STILL OPEN, decision 07. Later standing and account-merge work is not a general offboarding/access decision. The current tree and local claim/role definitions were rechecked. Exact removal-versus-access question/default refreshed without reconstructing private text.
 - **Kind of fix:** An admin-set block that the sign-in claim checks first, whitelist cleanup
   when a role is revoked, and a whitelist screen (decision 07).
 - Detail withheld from this public repository until fixed (decision 04,
@@ -373,6 +394,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 15. Security finding: who can grant the mentor role
 - **Dimension:** admin-tooling. **Severity:** high. **Size:** M.
 - **Status at `e652b01`:** unfixed.
+- **Recheck 2026-11-07:** STILL OPEN, decision 08. Current approval, whitelist, invitation and role-selection paths still follow the staff-wide policy. Tree and local function catalog agree. Exact question/default refreshed; no role-policy change built.
 - **Kind of fix:** Mentor grants made admin-only in three places, and no preselected role on
   Approve (decision 08).
 - Detail withheld from this public repository until fixed (decision 04,
@@ -381,6 +403,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 16. Security finding: the parent-request email flow
 - **Dimension:** permissions-security. **Severity:** high. **Size:** M.
 - **Status at `e652b01`:** unfixed.
+- **Recheck 2026-11-07:** STILL OPEN, decision 14. Identity/ownership and token protection exist; `8cedc44` changed delivery only. Membership/send limits and consent policy still need an answer. Handler/schema checked; exact question/default refreshed.
 - **Kind of fix:** Require an approved member, limit student-initiated sends, and treat consent
   as unverified until staff confirm it (decision 14).
 - Detail withheld from this public repository until fixed (decision 04,
@@ -981,6 +1004,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 50. Security finding: the read scope of parent accounts
 - **Dimension:** permissions-security. **Severity:** medium. **Size:** M.
 - **Status at `e652b01`:** unfixed.
+- **Recheck 2026-11-07:** STILL OPEN, decision 10. A fictional parent-only caller still has team-wide attendance reads in local SQL. Later linked-child UI does not narrow the base policy. Exact scope question/default refreshed.
 - **Kind of fix:** Scope parent reads of attendance and presence (decision 10).
 - Detail withheld from this public repository until fixed (decision 04,
   public-repo-security-detail); delivered to Mr. Pina privately on 2026-10-01.
@@ -988,6 +1012,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 51. Security finding: the lead role, and staff acting on their own hours
 - **Dimension:** admin-tooling, permissions-security. **Severity:** medium. **Size:** S/M.
 - **Status at `e652b01`:** unfixed.
+- **Recheck 2026-11-07:** STILL OPEN, decision 09. Local SQL still includes lead in staff and permits non-admin staff self-credit. 0046 self-sign-out protection is partial, not this policy. Exact lead/self-credit question/default refreshed.
 - **Kind of fix:** Block staff from crediting their own hours, and define who holds lead
   (decision 09).
 - Detail withheld from this public repository until fixed (decision 04,
@@ -996,6 +1021,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 52. Security finding: calendar feed tokens
 - **Dimension:** permissions-security, documentation. **Severity:** medium. **Size:** S.
 - **Status at `e652b01`:** unfixed.
+- **Recheck 2026-11-07:** FIXED IN TREE by 0049_security_recheck and calendar-feed: catalog-built column grants protect the token; own-token RPCs and feed require approved, active membership. SQL/handler positive controls and permissive mutants pass. The feed still needs separate deployment; live closure is unverified.
 - **Kind of fix:** Rebuild one column grant the way `parent_responses.sql` does, and check
   membership in the feed function.
 - Detail withheld from this public repository until fixed (decision 04,
