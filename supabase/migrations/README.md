@@ -215,3 +215,7 @@ column grant if clients need it. Its rollback-only RLS sibling and
 `tools/sql-harness/mutants-security-recheck.mjs` prove these boundaries; the
 0046 test isolates its inner guard from the new outer guard so its original
 mutation proof remains meaningful. Edge Functions deploy separately from SQL.
+
+### 0050: roster participation and account workflows
+
+0050_roster_accounts.sql follows 0049, with its rollback-only test and mutants-0050.mjs. Automatic folding ships OFF. All new tables are closed to public, anon, authenticated and service_role; exposed RPCs grant exactly authenticated, with named revokes on every function. Existing account roles are snapshotted without a role backfill. The merge rule catalog includes each new member reference, retaining proof on original accounts. Active-only permission predicates accept folded members without changing role/approval checks or active-team list filters. Read decision 54 before enabling folding. Applied by migrate.yml on push, never by a separate manual live write in this job.

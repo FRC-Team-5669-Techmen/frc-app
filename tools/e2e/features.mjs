@@ -73,6 +73,7 @@ const FEATURES = Object.freeze([
   'signout',
   'signout-boundary',
   'standing',
+  'roster-accounts',
   'rosters',
   'families',
   'family-link',

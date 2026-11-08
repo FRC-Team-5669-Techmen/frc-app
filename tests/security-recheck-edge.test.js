@@ -87,7 +87,7 @@ const edgeMutants = [
   ['approval staff', 'send-approval-email', { staff: false }, 'if (roleError || !isStaff)', 'if (false)', 403],
   ['approval role lookup', 'send-approval-email', { roleError: { message: 'unavailable' } }, 'roleError || !isStaff', '!isStaff', 403],
   ['calendar approval', 'calendar-feed', { member: { id: 'synthetic', approved: false, status: 'active' } }, 'member.approved !== true', 'false', 401],
-  ['calendar active status', 'calendar-feed', { member: { id: 'synthetic', approved: true, status: 'inactive' } }, "member.status !== 'active'", 'false', 401],
+  ['calendar active status', 'calendar-feed', { member: { id: 'synthetic', approved: true, status: 'inactive' } }, "!['active', 'folded'].includes(member.status)", 'false', 401],
 ]
 test.each(edgeMutants)('permissive mutation proof: %s', async (_, fn, options, find, replacement, status) => {
   const original = source(fn)
@@ -113,4 +113,20 @@ test('HTML escaping mutation is detected and source bytes are unchanged', async 
   await expect(oracle(original.replace('<p>Hi ${htmlName},</p>', '<p>Hi ${name},</p>'))).rejects.toThrow('name escaping removed')
   await oracle(original)
   expect(source('send-approval-email')).toBe(original)
+})
+
+// Folding is a roster label: the feed retains the same approved-token boundary.
+test('folded member retains calendar feed access and an active-only mutation is caught', async () => {
+  const original = source('calendar-feed')
+  const oracle = async text => {
+    const r = await load('calendar-feed', { member: { id: 'synthetic-folded', approved: true, status: 'folded' } }, text)
+    const response = await feed(r.handler)
+    if (response.status !== 200 || !r.reads.includes('events')) throw new Error('folded access lost')
+  }
+  await oracle(original)
+  const find = "!['active', 'folded'].includes(member.status)"
+  expect(original).toContain(find)
+  await expect(oracle(original.replace(find, "member.status !== 'active'"))).rejects.toThrow('folded access lost')
+  await oracle(original)
+  expect(source('calendar-feed')).toBe(original)
 })

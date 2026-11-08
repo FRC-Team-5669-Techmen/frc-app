@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     .select('id, approved, status')
     .eq('calendar_token', token)
     .maybeSingle()
-  if (memberErr || !member || member.approved !== true || member.status !== 'active') return plain('Invalid token', 401)
+  if (memberErr || !member || member.approved !== true || !['active', 'folded'].includes(member.status)) return plain('Invalid token', 401)
 
   // Events from 30 days ago forward.
   const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()

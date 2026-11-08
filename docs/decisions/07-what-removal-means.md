@@ -46,3 +46,7 @@ see.
 Later standing removal and 0020 account merge are narrower operations than a general removal/access policy. Decision 54 also leaves participation versus access open. The current claim and role helpers were inspected in the all-migrations local database; no general offboarding completion was found. Item 14 remains open. Its private text has not been reconstructed here.
 
 No claim about live deployment follows from the local harness. See `docs/history/codex-frc-security-recheck.md`.
+
+## Participation folding is separate (0050)
+
+`folded` is a reversible participation label, not the offboarding option A. Automatic folding ships off under decision 54. It does not change approval, roles, credentials or account access; the existing active-only feature permission checks now accept folded accounts too. It never deletes member history or flags folded driver documents for deletion. The no-access offboarding decision above remains open and unimplemented.

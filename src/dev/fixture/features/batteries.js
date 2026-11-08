@@ -10,7 +10,7 @@ const refuse = (message, code) => ({ data: null, error: { code, message, details
 const BID = (n) => `26000000-0000-4000-8000-${String(n).padStart(12, '0')}`
 const RID = (n) => `26100000-0000-4000-8000-${String(n).padStart(12, '0')}`
 const eligible = ({ user, persona, db }) => !!user?.id && !persona?.isParent
-  && rows(db, 'profiles').some((p) => p.id === user.id && p.approved && (p.status ?? 'active') === 'active')
+  && rows(db, 'profiles').some((p) => p.id === user.id && p.approved && ['active', 'folded'].includes(p.status ?? 'active'))
   && (persona?.isStaff || (persona?.roles ?? []).includes('student'))
 const staff = (ctx) => eligible(ctx) && !!ctx.persona?.isStaff
 const KINDS = ['match', 'practice_match', 'drive_practice', 'bench_test']

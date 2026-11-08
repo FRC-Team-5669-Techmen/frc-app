@@ -69,7 +69,7 @@ describe('search', () => {
   it('the visibility oracle rejects a permissive admin mutant (the original bug)', () => {
     const source = readFileSync(new URL('../src/featureGuide.js', import.meta.url), 'utf8')
     const build = s => new Function(`${s.replaceAll('export ', '')}; return guideFor`)()
-    const check = fn => { expect(fn({ isStaff: true }).filter(g => g.for.includes('admin'))).toEqual([]); expect(fn({ isStaff: true, isAdmin: true }).filter(g => g.for.includes('admin'))).toHaveLength(4) }
+    const check = fn => { expect(fn({ isStaff: true }).filter(g => g.for.includes('admin'))).toEqual([]); expect(fn({ isStaff: true, isAdmin: true }).filter(g => g.for.includes('admin')).map(g => g.path).sort()).toEqual(['/accounts', '/announce', '/connector/*', '/feedback', '/roster']) }
     check(build(source))
     const mutant = source.replace("g.for.includes('admin') && isAdmin", "g.for.includes('admin') && (isAdmin || isStaff)")
     expect(mutant).not.toBe(source)

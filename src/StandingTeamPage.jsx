@@ -5,6 +5,7 @@ import { writeVia } from './writeVia'
 import { displayName } from './names'
 import { STANDING_LABEL, KIND_LABEL, STATUS_LABEL, reasonLabel, fmtHours, loadOverview, rpc, errText, INCIDENT_KINDS } from './standing'
 import StandingEvidence from './StandingEvidence'
+import RosterParticipation, { FoldingSettings } from './RosterParticipation'
 import './Standing.css'
 
 // /standing/team: the mentors' side of member standing (migration 0015).
@@ -66,6 +67,7 @@ export default function StandingTeamPage({ hasRole = () => false }) {
       {msg && <p className="st-msg" role="status">{msg}</p>}
       {tab === 'Overview' && <FamilyLinks rows={rows} setMsg={setMsg} />}
       {tab === 'Overview' && <Overview rows={rows} />}
+      {tab === 'Overview' && (hasRole('mentor') || isAdmin) && <RosterParticipation onChange={reload} />}
       {tab === 'Absences' && <Absences nameOf={nameOf} act={act} tick={tick} />}
       {tab === 'Confirm' && <Confirm nameOf={nameOf} act={act} isAdmin={isAdmin} tick={tick} />}
       {tab === 'Log' && <Log rows={rows} act={act} isAdmin={isAdmin} />}
@@ -73,7 +75,7 @@ export default function StandingTeamPage({ hasRole = () => false }) {
       {tab === 'Weeks' && <Weeks act={act} tick={tick} />}
       {tab === 'Grades' && <Grades rows={rows} act={act} isAdmin={isAdmin} />}
       {tab === 'FLL' && <Fll nameOf={nameOf} act={act} tick={tick} />}
-      {tab === 'Settings' && isAdmin && <Settings act={act} tick={tick} />}
+      {tab === 'Settings' && isAdmin && <><FoldingSettings /><Settings act={act} tick={tick} /></>}
     </div>
   )
 }

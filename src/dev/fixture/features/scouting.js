@@ -12,7 +12,7 @@ const rows = (db, name) => db[name] ?? []
 const ok = (data) => ({ data, error: null })
 const fail = (message, code = '22023') => ({ data: null, error: { message, code } })
 const stamp = (now) => new Date(now).toISOString()
-const eligible = ({ user, persona, db }) => !!user?.id && !persona?.isParent && rows(db, 'profiles').some(p => p.id === user.id && p.approved && p.status === 'active') && (persona?.isStaff || persona?.roles?.includes('student'))
+const eligible = ({ user, persona, db }) => !!user?.id && !persona?.isParent && rows(db, 'profiles').some(p => p.id === user.id && p.approved && ['active', 'folded'].includes(p.status)) && (persona?.isStaff || persona?.roles?.includes('student'))
 const manages = (ctx, event) => eligible(ctx) && (ctx.persona?.isStaff
   || rows(ctx.db, 'event_roles').some(r => r.event_id === event && r.member_id === ctx.user.id && r.role === 'scouting_lead')
   || rows(ctx.db, 'member_permissions').some(r => r.member_id === ctx.user.id && r.capability === 'scouting.manage'))

@@ -78,9 +78,9 @@ describe('the tour is built from the guide', () => {
 })
 
 // Regression: mentor tours advertised admin-only tools because staff implied admin.
-it('mentor guide omits admin-only tools while admin guide includes all four', () => {
+it('mentor guide omits admin-only tools while admin guide includes all five', () => {
   const admin = GUIDE.filter(g => g.for.includes('admin')).map(g => g.path)
-  expect(admin.length).toBe(4)
+  expect([...admin].sort()).toEqual(['/accounts', '/announce', '/connector/*', '/feedback', '/roster'])
   expect(guideFor({ isStaff: true }).filter(g => admin.includes(g.path))).toEqual([])
   expect(guideFor({ isStaff: true, isAdmin: true }).filter(g => admin.includes(g.path)).map(g => g.path)).toEqual(admin)
 })

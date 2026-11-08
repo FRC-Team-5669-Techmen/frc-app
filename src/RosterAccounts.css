@@ -1,0 +1,9 @@
+.ra-panel { min-width: 0; overflow-wrap: anywhere; }
+.ra-panel p { color: var(--steel); line-height: 1.5; }
+.ra-panel h3 { font-family: var(--font-ui); }
+.ra-panel .st-btn { margin: .3rem .5rem .3rem 0; min-height: 44px; white-space: normal; }
+.ra-list { list-style: none; padding: 0; display: grid; gap: 1rem; }
+.ra-list > li { border-top: 1px solid var(--border-strong); padding-top: 1rem; min-width: 0; }
+.ra-code { display: block; font-family: var(--font-mono); color: var(--text); user-select: all; overflow-wrap: anywhere; padding: 1rem; background: var(--surface-2); }
+.ra-links { display: flex; gap: 1rem; flex-wrap: wrap; padding-block: 1rem; }
+.ra-links a { color: var(--gold); font-family: var(--font-ui); min-height: 44px; display: inline-flex; align-items: center; }

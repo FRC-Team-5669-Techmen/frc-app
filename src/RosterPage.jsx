@@ -9,6 +9,7 @@ import { RoleBadge, roleColor } from './roles'
 import { displayName } from './names'
 import { CAPABILITIES, isStaffRoles, loadAllGrants, setCapability } from './permissions'
 import PermissionHolders from './PermissionHolders'
+import RosterParticipation from './RosterParticipation'
 import './RosterPage.css'
 
 const ALL_ROLES    = ['student', 'mentor', 'lead', 'admin', 'parent']
@@ -164,9 +165,8 @@ export default function RosterPage() {
   async function approve(memberId) {
     const key = `${memberId}_approve`
     setSaving(s => ({ ...s, [key]: true }))
-    // Approve the member and ensure the default student role (idempotent)
-    // admin_approve_member (0019) does both, all or nothing. The fallback is
-    // the two writes the page made, the second running even if the first failed.
+    // The authoritative RPC retains assigned roles (0050). The fallback
+    // preserves the pre-0019 writes only while the RPC is genuinely absent.
     const { error } = await writeVia(supabase, 'admin_approve_member', { p_member: memberId }, [
       { table: 'profiles', op: 'update', values: { approved: true }, eq: { id: memberId }, keepGoing: true },
       { table: 'member_roles', op: 'upsert', values: { member_id: memberId, role: 'student' },
@@ -174,13 +174,7 @@ export default function RosterPage() {
     ])
     setSaving(s => { const n = { ...s }; delete n[key]; return n })
     if (error) { setPageError(error.message); return }
-    setMembers(ms => ms.map(m =>
-      m.id !== memberId ? m : {
-        ...m,
-        approved: true,
-        roles: m.roles?.includes('student') ? m.roles : [...(m.roles ?? []), 'student'].sort(),
-      }
-    ))
+    await load()
   }
 
   async function addDomain(e) {
@@ -264,6 +258,7 @@ export default function RosterPage() {
   const visibleMembers = useMemo(() => {
     const q = query.trim().toLowerCase()
     const list = (members ?? []).filter(m => {
+      if (m.status === 'folded') return false
       if (!q) return true
       return [m.full_name, m.nickname, m.email].some(v => (v ?? '').toLowerCase().includes(q))
     })
@@ -318,6 +313,8 @@ export default function RosterPage() {
             focus={new URLSearchParams(window.location.search).get('perm')} />
         )}
 
+        <nav className="ra-links"><Link to="/accounts">Account review and transfers</Link><Link to="/standing/team">Participation settings</Link></nav>
+        <RosterParticipation onChange={load} />
         <div className="roster-domains">
           <h2 className="roster-domains-title">Allowed sign-in domains</h2>
           <form className="roster-domain-add" onSubmit={addDomain}>
@@ -419,7 +416,7 @@ export default function RosterPage() {
                     <div className="roster-detail-row">
                       <span className="roster-detail-label">Subteams</span>
                       {(m.subteams ?? []).length === 0
-                        ? <span className="roster-detail-none">—</span>
+                        ? <span className="roster-detail-none">None</span>
                         : <div className="subteam-chips">
                             {m.subteams.map(st => <span key={st} className="subteam-chip">{st}</span>)}
                           </div>}
@@ -581,7 +578,7 @@ export default function RosterPage() {
             <h2 className="roster-modal-title">Delete account</h2>
             <p className="roster-modal-text">
               This permanently removes <strong>{displayName(delTarget)}</strong> and all of their
-              data — attendance, hours, job claims, skills, parent links, and notifications.
+              data: attendance, hours, job claims, skills, parent links, and notifications.
               This cannot be undone.
             </p>
             <p className="roster-modal-text">

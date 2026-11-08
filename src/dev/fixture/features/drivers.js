@@ -13,12 +13,12 @@ const RID = (n) => `29100000-0000-4000-8000-${String(n).padStart(12, '0')}`
 const laDay = (t) => new Date(t).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' })
 const addDays = (d, n) => { const x = new Date(`${d}T12:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10) }
 const eligible = ({ user, persona, db }) => !!user?.id && !persona?.isParent
-  && rows(db, 'profiles').some((p) => p.id === user.id && p.approved && (p.status ?? 'active') === 'active')
+  && rows(db, 'profiles').some((p) => p.id === user.id && p.approved && ['active', 'folded'].includes(p.status ?? 'active'))
   && (persona?.isStaff || (persona?.roles ?? []).includes('student'))
 const staff = (ctx) => eligible(ctx) && !!ctx.persona?.isStaff
 const KINDS = ['practice_field', 'match', 'test', 'mosim']
 const CRIT = ['control', 'awareness', 'scoring', 'defense', 'consistency']
-const targetOk = (db, id) => rows(db, 'profiles').some((p) => p.id === id && p.approved && (p.status ?? 'active') === 'active')
+const targetOk = (db, id) => rows(db, 'profiles').some((p) => p.id === id && p.approved && ['active', 'folded'].includes(p.status ?? 'active'))
   && rows(db, 'member_roles').some((r) => r.member_id === id && ['student', 'mentor', 'lead', 'admin'].includes(r.role))
 
 function checkSession(a, now) {

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import './AccessGate.css'
+import AccountTransfer from './AccountTransfer'
+import { isSchemaMissing } from './schemaMissing'
 
 const ROLES = [
   { value: 'student', label: 'Student' },
@@ -20,7 +22,8 @@ export default function AccessGate({ session }) {
 
   const [mode, setMode]       = useState('checking') // checking | form | pending | submitted | approved
   const [fullName, setFullName] = useState(metaName)
-  const [role, setRole]       = useState('student')
+  const [role, setRole]       = useState('parent')
+  const [classification, setClassification] = useState(null)
   const [note, setNote]       = useState('')
   const [saving, setSaving]   = useState(false)
   const [error, setError]     = useState('')
@@ -28,6 +31,12 @@ export default function AccessGate({ session }) {
   // Check for an existing request first (SECURITY DEFINER, reads only own row).
   useEffect(() => {
     let active = true
+    supabase.rpc('my_account_classification').then(({ data, error }) => {
+      if (!active) return
+      if (error) { if (!isSchemaMissing(error)) setError('Could not load account classification. Try reloading.'); return }
+      setClassification(data)
+      if (data?.classification) setRole(data.classification)
+    })
     supabase.rpc('my_access_request_status').then(({ data }) => {
       if (!active) return
       if (data === 'pending')       setMode('pending')
@@ -60,6 +69,8 @@ export default function AccessGate({ session }) {
     setMode('submitted')
   }
 
+  const Classification = () => classification && <div className="gate-msg" data-classification><p>Classification: <strong>{classification.classification || 'Existing roster roles'}</strong></p><p>{classification.reason}</p><p>An admin can reclassify your account.</p></div>
+
   const SignOut = () => (
     <button className="gate-signout" onClick={() => supabase.auth.signOut()}>
       Sign out
@@ -81,10 +92,12 @@ export default function AccessGate({ session }) {
           <img src="/assets/logos/Mark-Gold.svg" className="gate-mark" alt="Techmen" />
           <h1 className="gate-title">Request pending</h1>
           <p className="gate-msg">
-            Your access request is in. A mentor will review it soon — we'll email
+            Your access request is in. A mentor will review it soon. We'll email
             you at the address below when you're approved.
           </p>
           <p className="gate-email">Signed in as <strong>{email}</strong></p>
+          <Classification />
+          <AccountTransfer session={session} />
           <SignOut />
         </div>
       </div>
@@ -98,9 +111,11 @@ export default function AccessGate({ session }) {
           <img src="/assets/logos/Mark-Gold.svg" className="gate-mark" alt="Techmen" />
           <h1 className="gate-title">Request sent</h1>
           <p className="gate-msg">
-            Thanks — we'll email <strong>{email}</strong> when a mentor approves you.
+            Thanks. We'll email <strong>{email}</strong> when a mentor approves you.
             You can close this tab; sign back in (or reload) once you're approved.
           </p>
+          <Classification />
+          <AccountTransfer session={session} />
           <SignOut />
         </div>
       </div>
@@ -114,7 +129,7 @@ export default function AccessGate({ session }) {
           <img src="/assets/logos/Mark-Gold.svg" className="gate-mark" alt="Techmen" />
           <h1 className="gate-title">You're approved</h1>
           <p className="gate-msg">
-            Your access was approved. Reload to continue — your current session
+            Your access was approved. Reload to continue. Your current session
             won't update on its own.
           </p>
           <button className="gate-signout" onClick={() => window.location.reload()}>
@@ -136,6 +151,7 @@ export default function AccessGate({ session }) {
           who you are and a mentor will approve you.
         </p>
 
+        <Classification />
         <form className="gate-form" onSubmit={submit}>
           <label className="gate-field">
             <span className="gate-label">Email</span>
@@ -159,7 +175,7 @@ export default function AccessGate({ session }) {
             <select className="gate-input" value={role} onChange={e => setRole(e.target.value)}>
               {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
             </select>
-            <span className="gate-hint">A hint for staff — they confirm your actual role.</span>
+            <span className="gate-hint">A hint for staff. They confirm your actual role.</span>
           </label>
 
           <label className="gate-field">
@@ -181,6 +197,7 @@ export default function AccessGate({ session }) {
         </form>
 
         <p className="gate-email">Signed in as <strong>{email}</strong></p>
+        <AccountTransfer session={session} />
         <SignOut />
       </div>
     </div>

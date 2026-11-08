@@ -34,6 +34,7 @@ export const ROUTES = Object.freeze([
   { path: '/jobs', url: '/jobs', group: 'member', label: 'Jobs' },
   { path: '/study', url: '/study', group: 'member', label: 'Study (retired, redirects to /certifications)' },
   { path: '/members/:id', url: `/members/${IDS.student}`, group: 'member', label: 'Member page (Sam)' },
+  { path: '/accounts', url: '/accounts', group: 'admin', label: 'Account review and transfer approvals' },
   { path: '/profile', url: '/profile', group: 'member', label: 'My Profile' },
   { path: '/survey', url: '/survey', group: 'member', label: 'Weekly Survey' },
   { path: '/display', url: '/display', group: 'member', label: 'Presence Board' },

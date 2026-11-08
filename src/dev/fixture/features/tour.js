@@ -2,7 +2,7 @@
 const profile = (ctx) =>
   (ctx.db.profiles ?? []).find((p) => p.id === ctx.user?.id)
 const eligible = (ctx) =>
-  profile(ctx)?.approved && profile(ctx)?.status === 'active'
+  profile(ctx)?.approved && ['active', 'folded'].includes(profile(ctx)?.status)
 const refuse = () => ({
   data: null,
   error: { code: '42501', message: 'Not permitted' },

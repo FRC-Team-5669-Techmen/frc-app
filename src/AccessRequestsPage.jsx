@@ -2,7 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
 import { RoleBadge } from './roles'
 import { displayName } from './names'
+import { Link } from 'react-router-dom'
+import { isSchemaMissing } from './schemaMissing'
 import './AccessRequestsPage.css'
+import './RosterAccounts.css'
 
 const ROLES = ['student', 'mentor', 'parent']
 
@@ -20,6 +23,7 @@ export default function AccessRequestsPage({ hasRole }) {
   const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const [requests, setRequests] = useState(null)
   const [linkReqs, setLinkReqs] = useState([])   // pending parent→student link requests
+  const [classifications, setClassifications] = useState([])
   const [roleSel, setRoleSel]   = useState({})
   const [busy, setBusy]         = useState({})
   const [error, setError]       = useState('')
@@ -37,7 +41,9 @@ export default function AccessRequestsPage({ hasRole }) {
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
     if (err) { setError(err.message); setRequests([]); return }
-    setError('')
+    const c = await supabase.rpc('staff_access_classifications')
+    if (c.error && !isSchemaMissing(c.error)) setError('Could not load account classifications.')
+    else { setError(''); setClassifications(c.data ?? []) }
     setRequests(data ?? [])
     setRoleSel(Object.fromEntries((data ?? []).map(r => [r.id, r.requested_role || 'student'])))
   }, [])
@@ -87,7 +93,7 @@ export default function AccessRequestsPage({ hasRole }) {
       setBusy(b => { const n = { ...b }; delete n[r.id]; return n })
       return
     }
-    // Courtesy email — best-effort, never blocks approval.
+    // Courtesy email. best-effort, never blocks approval.
     supabase.functions.invoke('send-approval-email', {
       body: { email: r.email, full_name: r.full_name },
     }).catch(() => {})
@@ -120,9 +126,9 @@ export default function AccessRequestsPage({ hasRole }) {
       return
     }
     if (data?.invited) {
-      setInvMsg({ ok: true, text: `Invite sent to ${email} — they're approved as ${data.role}.` })
+      setInvMsg({ ok: true, text: `Invite sent to ${email}. they're approved as ${data.role}.` })
     } else if (data?.alreadyRegistered) {
-      setInvMsg({ ok: true, text: `${email} already has an account — approved as ${data.role}. They can just sign in.` })
+      setInvMsg({ ok: true, text: `${email} already has an account. approved as ${data.role}. They can just sign in.` })
     } else {
       setInvMsg({ ok: true, text: `${email} approved as ${data?.role || invRole}.` })
     }
@@ -151,9 +157,10 @@ export default function AccessRequestsPage({ hasRole }) {
 
         {error && <p className="ar-error" onClick={() => setError('')}>{error}</p>}
 
+        {hasRole('admin') && <p className="ra-links"><Link to="/accounts">Account classification review and transfer approvals</Link></p>}
         <section className="ar-invite">
           <h2 className="ar-invite-title">Invite someone</h2>
-          <p className="ar-invite-sub">Whitelists the email and sends a one-tap sign-in link — no request needed.</p>
+          <p className="ar-invite-sub">Whitelists the email and sends a one-tap sign-in link. no request needed.</p>
           <form className="ar-invite-form" onSubmit={invite}>
             <input
               className="ar-invite-email"
@@ -198,6 +205,7 @@ export default function AccessRequestsPage({ hasRole }) {
                       {displayName(r.parent)} <span className="ar-link-arrow">→</span> {displayName(r.student)}
                     </span>
                     {r.note && <p className="ar-note">{r.note}</p>}
+                  {classifications.filter(c => c.request_id === r.id).map(c => <p className="ar-note" key={c.request_id}>Classification: {c.classification || 'Existing roles retained'}. {c.reason}</p>)}
                     <div className="ar-meta hud-tnum">
                       <span className="ar-req-role">PARENT // STUDENT</span>
                       <span className="ar-when">{fmtWhen(r.created_at)}</span>
@@ -223,12 +231,13 @@ export default function AccessRequestsPage({ hasRole }) {
             {requests.map(r => (
               <li key={r.id} className="ar-card">
                 <div className="ar-card-main">
-                  <span className="ar-name">{r.full_name || '—'}</span>
+                  <span className="ar-name">{r.full_name || 'Not provided'}</span>
                   <span className="ar-email">{r.email}</span>
                   {r.note && <p className="ar-note">{r.note}</p>}
+                  {classifications.filter(c => c.request_id === r.id).map(c => <p className="ar-note" key={c.request_id}>Classification: {c.classification || 'Existing roles retained'}. {c.reason}</p>)}
                   <div className="ar-meta hud-tnum">
                     <span className="ar-req-role">WANTS</span>
-                    {r.requested_role ? <RoleBadge role={r.requested_role} /> : <span className="ar-req-role">—</span>}
+                    {r.requested_role ? <RoleBadge role={r.requested_role} /> : <span className="ar-req-role">Not provided</span>}
                     <span className="ar-when">{fmtWhen(r.created_at)}</span>
                   </div>
                 </div>

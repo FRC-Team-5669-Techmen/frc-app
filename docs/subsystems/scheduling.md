@@ -14,3 +14,5 @@ require approved, active membership. `calendar-feed` independently checks the
 same profile state before loading events. Deploy that Edge Function separately;
 a main push applies only the SQL through Migrate. Tests are the security-recheck
 RLS sibling and `tests/security-recheck-edge.test.js`, with permissive mutants.
+
+**Folded access (0050).** Own-token SQL RPCs and the calendar-feed source also admit approved folded accounts. Inactive, alumni, unapproved, failed-token and missing-token reads stay refused. The real-handler folded positive control and active-only mutation live in security-recheck-edge.test.js; SQL/ACL controls are in 0050. Deploy the updated feed separately before enabling folding if the active-only security-recheck feed is installed.

@@ -33,6 +33,7 @@ const MyHoursPage = lazy(() => import('./MyHoursPage'))
 const HoursBoard  = lazy(() => import('./HoursBoard'))
 const RosterPage     = lazy(() => import('./RosterPage'))
 const ProfilePage    = lazy(() => import('./ProfilePage'))
+const AccountsPage = lazy(() => import('./AccountsPage'))
 const CertificationsPage = lazy(() => import('./CertificationsPage'))
 const HandbookPage    = lazy(() => import('./HandbookPage'))
 const MemberPage     = lazy(() => import('./MemberPage'))
@@ -420,6 +421,7 @@ export default function App() {
           <Route path="/my-hours"  element={<MyHoursPage session={session} />} />
           <Route path="/log-hours" element={<LogHoursPage session={session} />} />
           <Route path="/hours"     element={<HoursBoard hasRole={hasRole} />} />
+          <Route path="/accounts" element={<AccountsPage hasRole={hasRole} />} />
           <Route path="/roster"    element={<RosterPage />} />
           {/* The old skills certification system and the Study page are
               retired (decision 27, 2026-10-14). Their addresses stay as

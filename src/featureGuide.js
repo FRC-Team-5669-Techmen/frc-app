@@ -103,6 +103,8 @@ export const GUIDE = Object.freeze([
     what: 'One member, their sub-teams and hours.' },
   { path: '/training', area: 'you', title: 'Training', for: ['member', 'parent'], where: 'Account menu, Preferences, then Training / Replay tour', what: 'Hands-on core training, a walkthrough for your role, and every feature you can use. Mentors see who has finished core.' },
   // ── you and your record ──────────────────────────────────────────────────
+  { path: '/accounts', area: 'admin', title: 'Account review', for: ['admin'], where: 'Roster or Access Requests, then Account review',
+    what: 'Review personal-email classifications and approve proven summer-account transfers.' },
   { path: '/profile', area: 'you', title: 'My Profile', for: ['member', 'parent'], anchor: '[data-tour="nav-profile"]', where: 'Account menu',
     what: 'Your details and notifications. Replay this tour from Preferences in the account menu. Use Search or Ctrl+K to find any page.' },
   { path: '/standing', area: 'you', title: 'My standing', for: ['student', 'parent'], where: 'Account menu, My record',

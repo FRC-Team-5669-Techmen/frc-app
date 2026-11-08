@@ -19,3 +19,6 @@
 - **Shared school sender** (2026-11-06): Both general family links (`notice-mail`) and trip links (`event-family`) now use the shared mail credential reader and Workspace sender. [App mail](mail.md) records the audit, transitional SMTP fallback and administrator setup (job `codex-frc-mail-from`).
 
 **Withdrawn standing (codex-frc-feedback, 0048).** The season-clean letter criterion excludes `standing_records.status = dismissed`; completed genuine probations still disqualify that criterion. Historical withdrawn records remain visible. Volunteer letter hours subtract recorded session pauses through `_pause_seconds`.
+
+**Participation status (0050).** The feature access checks retain folded accounts alongside active accounts, with the same approval, role and ownership rules. Active-team list filters remain separate from account access. Folding does not revoke a permission. See [Roster and access](roster-and-access.md) and decision 54.
+Folded driver documents are not flagged as leaver documents; inactive/alumni behavior is unchanged.

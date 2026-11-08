@@ -9,6 +9,7 @@ import { SUBTEAMS } from './subteams'
 import { DISCORD_INVITE } from './discord'
 import './ProfilePage.css'
 import ThemeSwitch from './ThemeSwitch'
+import AccountTransfer from './AccountTransfer'
 
 // Matches the application form's sizes (XS through 3XL) so a size picked there
 // still renders here instead of showing blank.
@@ -187,6 +188,7 @@ export default function ProfilePage({ session, hasRole = () => false }) {
             {!(hasRole('parent') && !['mentor', 'lead', 'admin'].some(hasRole)) && <Link to="/standing" className="profile-quick-link"><b>Checklist and standing</b><span>Your first-weeks checklist and record</span></Link>}
           </nav>
 
+          <AccountTransfer session={session} />
           <form onSubmit={handleSave} className="profile-form">
 
             {/* ── Basics ── */}
@@ -215,7 +217,7 @@ export default function ProfilePage({ session, hasRole = () => false }) {
                     onChange={field('shirt_size')}
                     className="profile-select"
                   >
-                    <option value="">— Select —</option>
+                    <option value="">Choose a size</option>
                     {SHIRT_SIZES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
@@ -345,7 +347,7 @@ export default function ProfilePage({ session, hasRole = () => false }) {
             <div className="profile-card profile-cal-card">
               <p className="profile-cal-intro">
                 Subscribe to keep the team schedule in sync. Pick your calendar below,
-                or copy the link into any app. This link is private to you — don't share it.
+                or copy the link into any app. This link is private to you. Keep it to yourself.
               </p>
 
               <div className="profile-cal-scope">
