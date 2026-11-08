@@ -2,8 +2,8 @@
 title: "Participation folding, personal-email classification and verified summer-account transfer"
 date: 2026-11-07
 branches: [main]
-commits: []
-migrations: [0050_roster_accounts.sql]
+commits: [3b5c6acf511ab85c7170e6fd663de664b38b18f0]
+migrations: [0050_roster_accounts.sql, 0050_roster_accounts_rls_test.sql]
 subsystems: ["Roster, access and capabilities", "Member standing", "Fixture mode", "Account transfer"]
 ---
 
@@ -62,7 +62,11 @@ The fixture token and merge result are rendering stand-ins, not security or merg
 
 The final executable implementation passes the complete solo gate on 2d87b63 plus this job: build (204 precache entries, 2626.51 KiB), npm test (121 files, 1654/1654), ds:audit (36 aliases x 3 grounds, 79 components, 315 files), Discord calendar (19/19), lossless history (50 original entries and 51 post-split), check-in (51/51 at 375 and 1440, isolated fixture port 5417), and features (8750/8750 at 375, 1152 and 1440). The feature total includes roster-accounts 229/229, desktop-layout 2792/2792, navigation 882/882, tour 243/243 and frc-feedback 321/321. All 48 SQL suites pass 1197/1197, including the 126-check new suite. Connector regeneration/check and the offline migration plan also pass. An earlier browser run was interrupted with its shared fixture server; that connection-refused result is not counted as a pass. The clean complete run and isolated check-in run above are the delivery evidence.
 
-Migration 0050 is rechecked against origin/main at landing. The implementation and its verification record are committed with the requested identity, then pushed fast-forward without force. The ledger names the implementation commit and quotes the main artifact markers. Pipeline execution results are reported separately at delivery; code-on-main confirmation does not claim live Auth or catalog verification.
+Migration 0050 was rechecked against origin/main at landing: 0049 remained highest and 0050 was free. Implementation commit `3b5c6acf511ab85c7170e6fd663de664b38b18f0`, authored pina-hash, was pushed fast-forward over 16bfdae, without force. A fresh fetch and git ls-remote agreed on that main ref. The final rebase added only the separate security job's audit/history/ledger records. A git-object comparison confirmed that all 1263 non-documentation tracked objects matched the completed gate byte-for-byte; history verification passed again. This delivery record changes only this job's history and ledger.
+
+Read back on origin/main: `participation_settings.enabled boolean not null default false`, the dry-run preview and Restore to active UI, and `v_result:=public.admin_merge_member(r.source_id,r.target_id,'Verified summer-account transfer '||r.id);` inside the approval RPC. This confirms the implementation artifact on main under the ledger definition, without claiming signed-in production behavior.
+
+[Migrate run 42448574390](https://github.com/FRC-Team-5669-Techmen/frc-app/actions/runs/42448574390) succeeded with the database configured. Its Apply pending migrations log states `applying 1: 0050`, `applied supabase/migrations/0050_roster_accounts.sql and recorded 0050 (529 ms)`, then `done: 1 applied.` The rollback-only RLS test was not applied by Migrate. [CI run 42448574480](https://github.com/FRC-Team-5669-Techmen/frc-app/actions/runs/42448574480) and Connector tools succeeded, and Vercel reported success for the implementation commit. These workflow reports do not replace direct live catalog or signed-in verification.
 
 ## Not verified
 
