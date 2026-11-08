@@ -100,7 +100,8 @@ repairs in `codex-frc-security-recheck`; 8 and the feed half of 52 require
 separate Edge Function deployment. Items 2, 3, 14, 15, 16, 50 and 51 remain
 open for the exact questions/defaults in decisions 06, 07, 08, 09, 10 and 14.
 None is classified not applicable. Local SQL and handler tests establish
-source behavior, not live installation. The evidence table and repeatable
+source behavior. After the main push, independent catalog reads verified 0049
+installation and its exact grants; the two Edge deployments remain pending. The evidence table and repeatable
 commands are in `docs/history/codex-frc-security-recheck.md`. Private text,
 including item 14, remains withheld.
 
@@ -141,7 +142,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 1. Security finding: a database permission gap in the attendance path
 - **Dimension:** permissions-security. **Severity:** critical. **Size:** S.
 - **Status at `e652b01`:** unfixed.
-- **Recheck 2026-11-07:** FIXED BY LATER WORK, `4379cb7` (0046). The current SQL/RLS test confirms the internal attendance-editor boundary and its supported staff path. 0049 retains explicit named revokes; see the security-recheck history.
+- **Recheck 2026-11-07:** FIXED BY LATER WORK, `4379cb7` (0046). The current SQL/RLS test confirms the internal attendance-editor boundary and its supported staff path. 0049 retains explicit named revokes. Installed client closure is independently verified read-only; see the security-recheck history.
 - **Kind of fix:** One small numbered migration that tightens a database privilege, plus a test
   that keeps it tight.
 - Detail withheld from this public repository until fixed (decision 04,
@@ -246,7 +247,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 6. Security finding: integrity of attendance rows written from the client
 - **Dimension:** permissions-security. **Severity:** high. **Size:** M.
 - **Status at `e652b01`:** unfixed.
-- **Recheck 2026-11-07:** FIXED IN TREE by 0049_security_recheck: server time and protected staff fields on direct client inserts as well as the existing invoker attendance RPC. Positive controls preserve ordinary/FLL attendance and audited staff corrections. SQL checks 3-11 and permissive mutations; prior partial work was `3a283ea`/`4379cb7`. Live application is not inferred.
+- **Recheck 2026-11-07:** FIXED IN TREE by 0049_security_recheck: server time and protected staff fields on direct client inserts as well as the existing invoker attendance RPC. Positive controls preserve ordinary/FLL attendance and audited staff corrections. SQL checks 3-11 and permissive mutations; prior partial work was `3a283ea`/`4379cb7`. 0049 installation and matching function bodies are now independently verified in the live catalog.
 - **Kind of fix:** A database-side check on new attendance rows (a trigger or a check-in RPC),
   verified with `test:checkin` at both widths.
 - Detail withheld from this public repository until fixed (decision 04,
@@ -255,7 +256,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 7. Security finding: execute grants on a set of database functions
 - **Dimension:** permissions-security. **Severity:** high. **Size:** S.
 - **Status at `e652b01`:** unfixed.
-- **Recheck 2026-11-07:** FIXED IN TREE by 0049_security_recheck: explicit role revokes for internal trigger/scheduled functions, with exact-ACL tests and permissive mutations. The migrations README now requires an explicit role set for each new function. Live application is not inferred.
+- **Recheck 2026-11-07:** FIXED IN TREE by 0049_security_recheck: explicit role revokes for internal trigger/scheduled functions, with exact-ACL tests and permissive mutations. The migrations README now requires an explicit role set for each new function. 0049 installation and zero managed internal API grants are now independently verified in the live catalog.
 - **Kind of fix:** One numbered migration tightening execute grants on functions that only
   triggers and cron call, plus a migrations-README rule for every new function. Fix it before
   push notifications go live (decision 03).
@@ -265,7 +266,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 8. Security finding: authorization in an email-sending Edge Function
 - **Dimension:** permissions-security. **Severity:** high. **Size:** S.
 - **Status at `e652b01`:** unfixed.
-- **Recheck 2026-11-07:** FIXED IN TREE: send-approval-email authenticates and requires staff before privileged access; the display name is escaped. Real-handler tests reproduce red/green and permissive mutants. Separate Edge Function deployment remains required; live closure is unverified.
+- **Recheck 2026-11-07:** FIXED IN TREE: send-approval-email authenticates and requires staff before privileged access; the display name is escaped. Real-handler tests reproduce red/green and permissive mutants. Separate Edge Function deployment remains pending a connection choice; live closure is unverified.
 - **Kind of fix:** The caller check `invite-member` already uses, plus escaping one field;
   redeployed by hand.
 - Detail withheld from this public repository until fixed (decision 04,
@@ -1021,7 +1022,7 @@ say what changed after the audit was written, at `e652b01`. "Decision NN" names 
 #### 52. Security finding: calendar feed tokens
 - **Dimension:** permissions-security, documentation. **Severity:** medium. **Size:** S.
 - **Status at `e652b01`:** unfixed.
-- **Recheck 2026-11-07:** FIXED IN TREE by 0049_security_recheck and calendar-feed: catalog-built column grants protect the token; own-token RPCs and feed require approved, active membership. SQL/handler positive controls and permissive mutants pass. The feed still needs separate deployment; live closure is unverified.
+- **Recheck 2026-11-07:** FIXED IN TREE by 0049_security_recheck and calendar-feed: catalog-built column grants protect the token; own-token RPCs and feed require approved, active membership. SQL/handler positive controls and permissive mutants pass. Live SQL bodies and exact grants are verified; the feed still needs separate deployment after a connection choice.
 - **Kind of fix:** Rebuild one column grant the way `parent_responses.sql` does, and check
   membership in the feed function.
 - Detail withheld from this public repository until fixed (decision 04,

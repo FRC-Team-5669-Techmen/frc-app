@@ -2,7 +2,7 @@
 title: "Recheck the frozen security audit and repair decision-independent boundaries"
 date: 2026-11-07
 branches: [main]
-commits: []
+commits: [2d87b63]
 migrations: ["0049_security_recheck.sql", "0049_security_recheck_rls_test.sql", "0046_signout_session_boundary_rls_test.sql"]
 subsystems: ["Roster and access", "Hours and attendance", "Scheduling", "Connector"]
 ---
@@ -24,18 +24,18 @@ duplicate-account merging, a narrower operation than general removal/access.
 
 | Item | Before this job | After this job | Evidence | Still needs Mr. Pina |
 | --- | --- | --- | --- | --- |
-| 1 | Fixed by later work | Fixed, retained and tested | 4379cb7/0046; security RLS checks 1-2; named grant mutations | No decision; live state not inferred |
+| 1 | Fixed by later work | Fixed, retained and tested | 4379cb7/0046; security RLS checks 1-2; named grant mutations | No decision; installed client ACL verified read-only |
 | 2 | Still open | Still open | Full-chain local pending-account probes; invoker wrappers preserve the policy | Decision 06: approved/active member data boundary |
 | 3 | Still open | Still open | Full-chain local member-table probe; current policy/trigger catalog | Decision 06: protected approval/status/exemption fields |
-| 6 | Still open, with partial later work | Fixed in source/SQL | 3a283ea and 4379cb7 partial controls; new RLS checks 3-11 and five permissive mutations | Confirm live Migrate installation; physical GPS/NFC remains device evidence |
-| 7 | Still open | Fixed in source/SQL | New RLS check 12, owner controls 13-14, per-function/per-role grant mutants; README role-set rule | Confirm live Migrate installation |
-| 8 | Still open | Fixed in source | tests/security-recheck-edge.test.js executes the actual handler with isolated clients/transport; auth/staff/error/escaping red-green and mutations | Deploy send-approval-email with _shared/mail.js; verify installed behavior |
+| 6 | Still open, with partial later work | Fixed and installed in SQL | 3a283ea and 4379cb7 partial controls; new RLS checks 3-11 and five permissive mutations | No policy decision; physical GPS/NFC remains device evidence |
+| 7 | Still open | Fixed and installed in SQL | New RLS check 12, owner controls 13-14, per-function/per-role grant mutants; README role-set rule | None |
+| 8 | Still open | Source fixed; deployment pending | tests/security-recheck-edge.test.js executes the actual handler with isolated clients/transport; auth/staff/error/escaping red-green and mutations | Choose the deployment connection; deploy send-approval-email with _shared/mail.js |
 | 14 | Still open | Still open | Public stub, decision 07, current claim/role catalog, later standing/merge scope | Decision 07: participation versus access and alumni scope |
 | 15 | Still open | Still open | Current approve RPC, whitelist policy, invite handler and role selection; local catalog agrees | Decision 08: who may grant mentor |
 | 16 | Still open | Still open | Current send-parent-request handler, local schema, consent display; 8cedc44 is transport only | Decision 14: membership/send limits and confirmation before acting on consent |
 | 50 | Still open | Still open | Fictional parent-only local read with a positive attendance fixture; base policy unchanged | Decision 10: linked students, totals or full team scope |
 | 51 | Still open, partial sign-out protection | Still open | Local lead/staff helper and fictional mentor self-credit probe; 0046 is narrower | Decision 09: lead meaning and self-credit/override policy |
-| 52 | Still open | Fixed in source/SQL | New RLS checks 15-26 and permissive mutations; actual feed handler tests membership before events | Deploy calendar-feed; verify live SQL and feed together |
+| 52 | Still open | SQL installed; feed deployment pending | New RLS checks 15-26 and permissive mutations; actual feed handler tests membership before events | Choose the deployment connection; deploy calendar-feed |
 
 Each decision file now contains the exact question and this job default. The
 user explicitly asked for questions instead of building decision-dependent
@@ -102,11 +102,44 @@ push, recheck the free migration number, and repeat the gate if main moved.
 The final delivery reports actual command totals and the confirmed remote
 commit. No force push. Logs and temporary tooling stay under ignored work/.
 
-Not verified: live Supabase objects or migration installation, production Edge
-Function versions, real mail delivery, real phones/NFC, and physical presence.
-The available Supabase connector had no usable project/link binding in this
-session (list_projects returned a missing link_id error). No production
-credential was retrieved. A main push and a green Migrate report do not prove
-installed function bodies; live catalog/read-path verification remains needed.
-Edge Functions deploy separately from main/Migrate and remain an operational
-follow-up even when the source tests pass. Public security stubs stay stubs.
+The implementation landed at `2d87b63ce6ad683a68d5330f0ea70061e011e4e7`,
+confirmed by the remote main ref and the committed audit artifact. Immediately
+before push, fetch/rebase left the gated commit unchanged, remote main still
+ended at 0048, and 0049 was free with no duplicate number. No force push.
+The exact implementation tree passed all seven commands: build (200 precache
+entries, 2611.67 KiB), unit (121 files, 1652 tests), design audit (36 aliases
+across three grounds, 79 components, 315 files), calendar (19/19), history
+(lossless across 50 original and 50 post-split entries), check-in (51/51), and
+features (8491/8491 across all 35 specs at 375, 1152 and 1440). The delivery
+record is frozen separately and receives the same gate before its own push.
+
+Live read-only evidence became available through the connected Supabase
+project. Before this push, the migration record reached 0048, item 1 client
+execution was already closed, and the targeted internal/profile grants were
+still open. The installed approval-mail and calendar-feed sources lacked the
+new caller and membership checks respectively. No member rows, real names,
+addresses, tokens, secrets or email credentials were retrieved.
+
+[Migrate run 42445147896](https://github.com/FRC-Team-5669-Techmen/frc-app/actions/runs/42445147896)
+succeeded after the main push. Independent catalog reads then confirmed the
+0049/security_recheck record, the enabled attendance_00_client_integrity
+trigger attached to the invoker helper, attendance_record still SECURITY
+INVOKER, and the three changed function bodies identical to the local harness
+by body hash. Effective anon/authenticated/service_role grants on the managed
+internal functions total zero. Anon/authenticated SELECT/INSERT/UPDATE grants
+on calendar_token total zero; full_name read and nickname edit remain granted.
+Both own-token RPCs grant exactly authenticated, with anon and service_role
+false. This is installed-object proof, not an authenticated production RLS
+exercise. CI and Connector tools also completed successfully for 2d87b63.
+Security advisors were reviewed before and after; the remaining findings are
+outside these repaired boundaries or depend on the open policy decisions.
+
+Still pending: the deployment tool requires a connection choice when more
+than one connected account matches the target. That choice was requested in
+chat and has not arrived. Consequently send-approval-email (with shared mail)
+and calendar-feed were not deployed by this job. SQL is installed; the two
+Edge fixes are source-complete and tested, with operational closure pending.
+No live mail was sent and no production actor/session was created. Deno
+runtime delivery, signed-in production behavior, real mail, real phones/NFC,
+physical presence and actual pg_net/pg_cron delivery remain unverified. Public
+security stubs, including item 14, stay stubs.
