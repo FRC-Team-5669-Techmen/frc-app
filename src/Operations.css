@@ -1,0 +1,38 @@
+.ops-section { min-width: 0; overflow-wrap: anywhere; }
+.ops-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 1rem; margin-block: 1rem; }
+.ops-form label { display: grid; gap: .4rem; min-width: 0; }
+.ops-form input, .ops-form select { width: 100%; min-width: 0; box-sizing: border-box; }
+.ops-scroll { max-width: 100%; overflow-x: auto; }
+.ops-section button { min-height: 44px; }
+.ops-print { margin-block: 1rem; }
+@media print {
+ body:has([data-parent-report]) * { visibility: hidden; }
+ [data-parent-report], [data-parent-report] * { visibility: visible !important; }
+ [data-parent-report] { position: absolute; inset: 0; color: var(--text); background: var(--bg); }
+ [data-parent-report] .ops-scroll { overflow: visible; }
+ [data-parent-report] table { width: 100%; font-size: 9pt; }
+ [data-parent-report] th { white-space: normal; }
+}
+.ops-section label:has(input[type="checkbox"]) { display: flex; align-items: center; min-height: 44px; gap: .4rem; }
+[data-scout-tally] th, [data-scout-tally] td { padding: .5rem; text-align: left; vertical-align: top; }
+.ops-gap { color: var(--warn); font-family: var(--font-mono); }
+@media print {
+ @page { size: landscape; margin: 12mm; }
+ [data-parent-report] table { table-layout: fixed; }
+ [data-parent-report] :is(th, td) { white-space: normal; overflow-wrap: anywhere; }
+}
+.ops-suggestion-list { max-height: 60dvh; overflow-y: auto; }
+.ops-designations { max-height: 24rem; overflow-y: auto; }
+@media screen {
+ [data-parent-report] table { min-width: 60rem; }
+ [data-parent-report] :is(th, td) { white-space: nowrap; }
+}
+@media print {
+ body:has([data-parent-report]) #root *:not(:has([data-parent-report])):not([data-parent-report]):not([data-parent-report] *) { display: none !important; }
+ body:has([data-parent-report]) #root :has([data-parent-report]) { display: contents !important; }
+ [data-parent-report] { position: static; }
+}
+@media print {
+ html:has([data-parent-report]), body:has([data-parent-report]) { min-height: 0 !important; height: auto !important; display: block !important; }
+ body:has([data-parent-report]) #root { display: contents !important; }
+}

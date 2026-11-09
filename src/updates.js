@@ -9,6 +9,65 @@
 // route (tests/updates.test.js checks it against App.jsx).
 
 export const UPDATES = Object.freeze([
+  { date: '2026-11-08', title: 'Event service hours and planning', route: '/trips', items: [
+    'Staff can record each parent by name with service dates, start and end times, a student school ID and a total for the event.',
+    'Download a named parent service CSV or print the same records.',
+    'Competition venue check-ins count as Competition hours. Temporary event location exemptions end with the event.',
+    'Scouting leads can see matches submitted by each scout and assignments still missing a submission.',
+    'Mentors can preview role rotations with reasons. Newer pit members are paired with two mentor-designated strong members; responsibility roles use verified shop hours. Mentors still choose every assignment.',
+  ] },
+  { date: '2026-11-08', title: 'Parent accounts and summer transfers', route: '/profile', items: [
+    'A new personal-email account with no roster role starts as a parent request for staff review. Existing roles stay in place.',
+    'Moving from a summer personal account to a school account uses a one-time code and admin approval before history moves.',
+    'Mentors can preview participation folding, keep someone active or restore a folded member. Automatic folding starts off; folding does not delete an account.',
+  ] },
+  { date: '2026-11-08', title: 'Attendance and account protection', items: [
+    'Attendance uses server time and protects staff-only fields. Supported staff corrections remain available.',
+    'Calendar access tokens and internal database tools have tighter permissions. Some account-policy questions are still under review.',
+  ] },
+  { date: '2026-11-07', title: 'Find a page faster', items: [
+    'Navigation groups related pages together, with fewer competing links.',
+    'Search pages by name or task from the navigation. Results follow your role.',
+  ] },
+  { date: '2026-11-07', title: 'Practice using Techmen', route: '/training', items: [
+    'Guided training walks you through the pages you use, with safe practice activities.',
+    'Resume unfinished training on this device. Skipping does not count as completion.',
+    'Mentors can see core training progress. Training does not award a certification.',
+  ] },
+  { date: '2026-11-07', title: 'Your feedback fixes', route: '/dashboard', items: [
+    'Pause and resume a session from Home. A pause keeps your session open; it is not approval to leave.',
+    'Standing shows the evidence behind a record and separates withdrawn probation. Verified logged hours use the right calendar week.',
+    'The battery board includes Good batteries. Scouting tables fit computer screens with filters and a scrolling header.',
+  ] },
+  { date: '2026-11-06', title: 'Finish your session with approval', route: '/signouts', items: [
+    'Leave a work note and finish the existing mentor sign-out approval before starting FLL volunteering.',
+    'A mentor can tap a waiting name once to approve. An old request cannot close a later session.',
+    'Breaks stay inside your Build session. FLL volunteer sign-out still uses a note.',
+  ] },
+  { date: '2026-11-06', title: 'One school sender for app mail', items: [
+    'App mail now shares one school-sender setup so administrators can manage delivery in one place.',
+  ] },
+  { date: '2026-11-03', title: 'Layouts for phones and computers', items: [
+    'Computer screens use the available width for tables, forms and related cards.',
+    'Phone screens keep readable cards and controls without stretching wide tables across the page.',
+  ] },
+  { date: '2026-11-02', title: 'Open the right event and match', route: '/scouting', items: [
+    'Scouting finds the event on The Blue Alliance by date and opens a schedule picker for the match and robot.',
+    'My schedule station cards open the tool for your assigned role.',
+  ] },
+  { date: '2026-11-01', title: 'Standing correction', route: '/standing', items: [
+    'Meeting attendance includes members whose sessions were already open. Unrecorded meetings do not become automatic absences.',
+    'The incorrect October probation records were withdrawn. Large probation changes are held for review.',
+  ] },
+  { date: '2026-10-30', title: 'Your competition day', route: '/my-schedule', items: [
+    'See your assigned stations, backups, rides and calendar blocks for each competition day, with Now and Next at the top.',
+    'Station and ride reminder settings are available in Notifications. Delivery depends on push being enabled.',
+  ] },
+  { date: '2026-10-29', title: 'Scout teams and choose alliance partners', route: '/scouting', items: [
+    'Teams opens as a sortable table. Tap a team for its full evidence card.',
+    'The pick board ranks available teams from scouting and match data, then updates as a lead records picks and declines.',
+    'Ratings are optional. Missing evidence stays unknown.',
+  ] },
   { date: '2026-10-28', title: 'Match log', route: '/robot/matches', items: [
     'Every robot match in one place: practice, real matches and auto tests.',
     'The robot records balls in, wasted shots, battery and why it was not ready to fire.',

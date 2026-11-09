@@ -11,6 +11,7 @@ import { toCsv } from './csv'
 import { CarpoolBoard, FoodBoard, Seg } from './EventHubBoards'
 import { FamilyHub } from './EventFamilyPage'
 import './EventHub.css'
+import ParentServiceHours from './ParentServiceHours'
 
 // The event family hub's MENTOR PAGE, /trips/<id>/manage (staff only; the
 // database refuses anyone else at hub_staff_call). Five readiness lines, each
@@ -878,13 +879,15 @@ function Exports({ eventId, ov }) {
         <p className="eh-hint">One row per family, every answer. Cells that start with = + - or @ are written as text.</p>
         <button type="button" className="eh-btn eh-btn-primary" onClick={csv} data-testid="ehm-csv">Download CSV</button>
       </section>
+      <ParentServiceHours key={ov.event.id} event={ov.event} />
       {'parent_service_hours_note' in (ov.event ?? {}) && (
         <section className="eh-card" data-testid="ehm-service-hours">
-          <h3 className="eh-label">Parent service hours</h3>
+          <h3 className="eh-label">Family RSVP counts</h3>
           <p className="eh-hint">One row per family per day: parent name and email, student, day, whether the family drove (listed a car that day), and how many adults came. The form asks for a count of adults, not their names, so this list cannot name every adult who attended.</p>
-          <button type="button" className="eh-btn eh-btn-primary" onClick={serviceHours} data-testid="ehm-service-csv">Download service hours CSV</button>
+          <button type="button" className="eh-btn eh-btn-primary" onClick={serviceHours} data-testid="ehm-service-csv">Download family RSVP counts CSV</button>
         </section>
       )}
+
       <section className="eh-card">
         <h3 className="eh-label">Day sheets, printed at the lot</h3>
         <p className="eh-hint">Cars, riders, phones where consented, pickup notes, allergies with names, the meet captain.</p>

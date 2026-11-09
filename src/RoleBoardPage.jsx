@@ -6,6 +6,7 @@ import { isSchemaMissing } from './schemaMissing'
 import { boardView, roleLabel, countLine, STATUS_LABELS, DAY_FMT, TIME_FMT, ROLE_ORDER } from './roleBoard'
 import { roleRuleIssues, RULE_TITLES } from './roleRules'
 import './RoleBoard.css'
+import RotationSuggestions from './RotationSuggestions'
 
 // The role board (0028, reworked by 0031, ledger 0023). A member taps a box
 // to open it and taps "I can do this" to ask; as many boxes as they want.
@@ -115,6 +116,8 @@ export default function RoleBoardPage({ session, hasRole = () => false }) {
             <li key={k} className={`rb-rule rb-rule-${i.severity}`} data-rule={i.rule}><b>{RULE_TITLES[i.rule]}</b> {i.text}</li>))}</ul>}
         </details>
       )}
+
+      {(hasRole('mentor') || hasRole('admin')) && <RotationSuggestions board={board} onAssigned={load} />}
 
       {!view.days.length ? (
         <div className="rb-empty"><h2>No time slots yet</h2><p>{staff ? 'Start from the Beach Blitz slots, or add your own below.' : 'A mentor adds the time slots for this event.'}</p></div>

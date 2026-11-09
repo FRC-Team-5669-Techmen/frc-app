@@ -97,6 +97,7 @@ const FEATURES = Object.freeze([
   'tour',
 
   'frc-feedback',
+  'frc-operations',
 ]);
 
 

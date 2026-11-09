@@ -6,6 +6,7 @@ import { displayName } from './names'
 import { isSchemaMissing } from './schemaMissing'
 import { errText } from './standing'
 import './Standing.css'
+import EventVenueSetup from './EventVenueSetup'
 
 // /rosters and /rosters/:id: event roles, eligibility, event-day attendance,
 // conflicts and the family sign-up reminder (migration 0016, handbook
@@ -143,6 +144,7 @@ function RosterDetail({ id, uid, isStaff }) {
         </div>
         <span className={`st-badge${posted ? '' : ' st-badge-probation'}`} data-posted={posted ? 'yes' : 'no'}>{posted ? 'Roster posted' : 'Not posted'}</span>
       </div>
+      {isStaff && ev.kind === 'competition' && <EventVenueSetup key={ev.id} event={ev} members={members} />}
       {msg && <p className="st-msg" role="status">{msg}</p>}
       {/* Ledger 0017 part D1: ask for a role by time slot. */}
       <Link to={`/roles/${id}`} className="st-card rb-entry" data-card="role-board">
