@@ -3,7 +3,7 @@ import { useSearchParams, useLocation, useNavigate, Link } from 'react-router-do
 import { supabase } from './supabase'
 import { writeVia } from './writeVia'
 import { recordAttendance } from './attendanceRecord'
-import { verifyAtShop, verifyCheckinVenue } from './geo'
+import { captureCheckinFix, matchCheckinVenue } from './geo'
 import { isSchemaMissing } from './schemaMissing'
 import { DEFAULT_CATEGORY } from './categories'
 import {
@@ -82,6 +82,7 @@ export default function CheckinPage({ session }) {
   const eventId = searchParams.get('event')
   const [venues, setVenues] = useState([])
   const [competition, setCompetition] = useState(null)
+  const [venueChoice, setVenueChoice] = useState(null)
   const [status, setStatus] = useState('loading')
   const [loadingMsg, setLoadingMsg] = useState(null)
   const [eventType, setEventType] = useState(null)
@@ -176,16 +177,30 @@ export default function CheckinPage({ session }) {
     setStatus('loading')
     setLoadingMsg('Checking location…')
     try {
+      const target = eventId || (venueChoice && venueChoice !== 'shop' ? venueChoice : null)
+      const prior = target ? venues.find(v => v.id === target) : null
+      const needsChoice = !eventId && (venueChoice !== null || (venues.length > 0 && (exempt || venues.some(v => v.exempt))))
+      const skipFix = prior?.exempt || (!target && exempt && (!venues.length || venueChoice === 'shop'))
+      // Start GPS before the first await, preserving the iOS tap fast path.
+      const fixPromise = !skipFix && !(needsChoice && !venueChoice) ? captureCheckinFix() : null
       // Refresh at the tap so a tab kept open cannot reuse an expired exemption.
       const context = await supabase.rpc('my_event_checkin_venues')
       if (context.error && (!isSchemaMissing(context.error) || eventId)) throw context.error
       const active = context.data ?? []
-      const chosen = eventId ? active.find(v => v.id === eventId) : null
-      if (eventId && !chosen) throw new Error('Event check-in is not active. Ask a mentor to check the venue and event times.')
+      setVenues(active)
+      if (!eventId && (venueChoice !== null || (active.length > 0 && (exempt || active.some(v => v.exempt)))) && !venueChoice) {
+        setStatus('confirm'); return
+      }
+      const chosen = target ? active.find(v => v.id === target) : null
+      if (target && !chosen) {
+        if (!eventId) { setVenueChoice(''); setStatus('confirm'); return }
+        throw new Error('Event check-in is not active. Ask a mentor to check the venue and event times.')
+      }
       let geo
       if (chosen?.exempt) geo = { ok: true, event: chosen }
-      else if (active.length || eventId) geo = await verifyCheckinVenue(active, eventId)
-      else geo = exempt ? { ok: true } : await verifyAtShop()
+      else if (!target && exempt && (!active.length || venueChoice === 'shop')) geo = { ok: true }
+      else if (!fixPromise) { setStatus('confirm'); return }
+      else geo = matchCheckinVenue(await fixPromise, active, target, venueChoice === 'shop' && !eventId)
       if (!geo.ok) { setGeoReason(geo.reason); setStatus('geo'); return }
       if (geo.event) {
         const r = await writeVia(supabase, 'event_venue_checkin', { p_event: geo.event.id, p_lat: geo.latitude ?? null, p_lon: geo.longitude ?? null, p_accuracy: geo.accuracy ?? null })
@@ -473,7 +488,7 @@ export default function CheckinPage({ session }) {
 
   if (status === 'geo' || status === 'error' || status === 'unknown') {
     const msg = status === 'geo'
-      ? (geoReason === 'ambiguous' ? { heading: 'Choose the event', detail: 'Two event venues overlap. Open the event check-in link from your roster.' } : (eventId || venues.length) && geoReason === 'range' ? { heading: 'Outside the venue', detail: 'Move within 150 m of your event venue, then confirm again.' } : (GEO_MESSAGES[geoReason] ?? GEO_MESSAGES.error))
+      ? (geoReason === 'ambiguous' ? { heading: 'Choose the event', detail: "Two event venues overlap. Ask a mentor for this event's check-in link." } : (eventId || venues.length) && geoReason === 'range' ? { heading: 'Outside the venue', detail: 'Move within 150 m of your event venue, then confirm again.' } : (GEO_MESSAGES[geoReason] ?? GEO_MESSAGES.error))
       : status === 'unknown'
         ? { heading: 'Status unavailable', detail: 'Could not read your check-in status, so nothing was recorded. Check your connection and try again.' }
         : { heading: 'System fault', detail: `Could not record your attendance${fault ? ` (${fault})` : ''}. Try again. If it happens again, show this screen to a mentor.` }
@@ -510,9 +525,17 @@ export default function CheckinPage({ session }) {
         <p className="checkin-status">Tap to confirm your check-in</p>
         {eventId && <p className="checkin-loc">Competition · {venues.find(v => v.id === eventId)?.title || 'Event check-in is not active'}</p>}
         <p className="checkin-loc">{loc.replace(/-/g, ' ')}</p>
+        {!eventId && (venueChoice !== null || (venues.length > 0 && (exempt || venues.some(v => v.exempt)))) && <label className="checkin-venue">
+          Choose where you are checking in.
+          <select aria-label="Check-in venue" value={venueChoice || ''} onChange={e => setVenueChoice(e.target.value)}>
+            <option value="">Choose a venue</option>
+            <option value="shop">Build space</option>
+            {venues.map(v => <option key={v.id} value={v.id}>{v.title} · Competition</option>)}
+          </select>
+        </label>}
         <button
           onClick={confirmCheckin}
-          disabled={acting}
+          disabled={acting || (!eventId && (venueChoice !== null || (venues.length > 0 && (exempt || venues.some(v => v.exempt)))) && !venueChoice)}
           style={{ ...CONFIRM_BTN_STYLE, opacity: acting ? 0.6 : 1 }}
         >
           {acting ? 'Checking…' : 'Confirm check-in'}

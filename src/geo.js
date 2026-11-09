@@ -52,17 +52,21 @@ export function verifyAtShop() { return verifyAt(SHOP_LAT, SHOP_LON) }
 // FLL-room geofence — volunteer check-in (VolunteerCheckinPage).
 export function verifyAtFLL() { return verifyAt(FLL_LAT, FLL_LON) }
 
-// A single gesture-triggered GPS fix for active competition venues and shop.
-// An explicit event link never falls back to Build at the shop.
-export async function verifyCheckinVenue(venues, eventId = null) {
+// Start the sensor directly from the confirmation gesture. Classification can
+// wait for fresh server venue/exemption context without delaying the GPS call.
+export async function captureCheckinFix() {
   if (!navigator.geolocation) return { ok: false, reason: 'unavailable' }
   try {
     const { coords } = await gpsPosition()
-    if (!Number.isFinite(coords.accuracy) || coords.accuracy > 100) return { ok: false, reason: 'imprecise' }
-    const hits = venues.filter(v => (!eventId || v.id === eventId) && haversineMeters(coords.latitude, coords.longitude, v.latitude, v.longitude) <= 150)
-    if (hits.length === 1) return { ok: true, event: hits[0], latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy }
-    if (hits.length > 1) return { ok: false, reason: 'ambiguous' }
-    if (!eventId && haversineMeters(coords.latitude, coords.longitude, SHOP_LAT, SHOP_LON) <= 150) return { ok: true }
-    return { ok: false, reason: 'range' }
+    if (!Number.isFinite(coords.accuracy) || coords.accuracy < 0 || coords.accuracy > 100) return { ok: false, reason: 'imprecise' }
+    return { ok: true, latitude: coords.latitude, longitude: coords.longitude, accuracy: coords.accuracy }
   } catch (e) { return { ok: false, reason: e?.code === 1 ? 'denied' : 'error' } }
+}
+export function matchCheckinVenue(fix, venues, eventId = null, shopOnly = false) {
+  if (!fix.ok) return fix
+  const hits = shopOnly ? [] : venues.filter(v => (!eventId || v.id === eventId) && haversineMeters(fix.latitude, fix.longitude, v.latitude, v.longitude) <= 150)
+  if (hits.length === 1) return { ...fix, event: hits[0] }
+  if (hits.length > 1) return { ok: false, reason: 'ambiguous' }
+  if (!eventId && haversineMeters(fix.latitude, fix.longitude, SHOP_LAT, SHOP_LON) <= 150) return fix
+  return { ok: false, reason: 'range' }
 }

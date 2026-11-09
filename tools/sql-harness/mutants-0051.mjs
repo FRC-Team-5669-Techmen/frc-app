@@ -10,7 +10,7 @@ function paste(sql) { const f = path.join(dir, 'mut.sql'); writeFileSync(f, sql)
 function run() {
  const r = spawnSync(psql, ['-X', '-A', '-F', '\t', '-v', 'ON_ERROR_STOP=1', '-f', test], { encoding: 'utf8' })
  const rows = (r.stdout || '').split('\n').map(l => l.split('\t')).filter(c => /^\d+$/.test(c[0]) && ['PASS', 'FAIL'].includes(c[2]))
- if (r.status !== 0 || rows.length !== 69) throw new Error(`Invalid mutation test run: ${rows.length} checks; ${r.stderr}`)
+ if (r.status !== 0 || rows.length !== 76) throw new Error(`Invalid mutation test run: ${rows.length} checks; ${r.stderr}`)
  return new Set(rows.filter(c => c[2] === 'FAIL').map(c => Number(c[0])))
 }
 function inside(fn, from, to) {
@@ -22,6 +22,9 @@ const mutants = [], add = (name, sql, checks) => mutants.push({ name, sql, check
 for (const [fn, check] of [['staff_parent_service', 4], ['staff_save_parent_service', 1], ['staff_event_checkin', 22], ['staff_save_event_venue', 20], ['staff_set_event_geo_exempt', 24]]) add(`${fn} staff gate opened`, inside(fn, "auth.uid() is null or not public.is_staff()", 'false'), check)
 for (const [fn, check] of [['mentor_rotation_data', 54], ['mentor_set_rotation_member', 50]]) add(`${fn} mentor gate opened`, inside(fn, 'not public._ops_mentor()', 'false'), check)
 add('mentor gate admits student leads', inside('_ops_mentor', "public.has_role('mentor') or public.is_admin()", 'public.is_staff()'), [51, 55])
+add('pending mentor boundary opened', inside('_ops_mentor', 'and approved', ''), [61, 62])
+add('inactive mentor boundary opened', inside('_ops_mentor', "and status in ('active','folded')", ''), [63, 64])
+add('parent correction scope widened', inside('staff_save_parent_service', 'update public.parent_service_sessions set starts_at=p_start,ends_at=p_end where id=p_session and guardian_id=par', 'update public.parent_service_sessions set starts_at=p_start,ends_at=p_end where id=p_session'), 13)
 add('venue context membership opened', inside('my_event_checkin_venues', 'not public._role_board_member_ok()', 'false'), [201, 203, 205])
 add('venue check-in membership opened', inside('event_venue_checkin', 'not public._role_board_member_ok()', 'false'), [202, 204, 206])
 add('parent report event scope widened', inside('staff_parent_service', 'where p.event_id=p_event', 'where true'), 7)
@@ -59,5 +62,5 @@ try {
   caught++; paste(original); if (run().size) throw new Error(`Restore failed after ${m.name}`)
  }
  if (readFileSync(migration, 'utf8') !== original) throw new Error('Migration source changed during mutation run')
- console.log(`0051 mutations: ${caught}/${mutants.length} caught by named assertions; restored baseline 69/69; source byte-identical`)
+ console.log(`0051 mutations: ${caught}/${mutants.length} caught by named assertions; restored baseline 76/76; source byte-identical`)
 } catch (e) { console.error(e.message); process.exitCode = 1 } finally { paste(original); rmSync(dir, { recursive: true, force: true }) }

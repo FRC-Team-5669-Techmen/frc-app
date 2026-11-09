@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { parentServiceRows, parentServiceCsv } from '../src/parentService'
 import { scoutTally } from '../src/scouting/scoutTally'
@@ -93,4 +93,31 @@ it('catches unverified and excluded sessions being used for hour ordering', () =
   const voided = { attendance, verified_outs: ['o'], reviews: [{ checkout_id: 'o', status: 'voided' }] }
   expect(verifiedShopHours(voided, season)).toBe(0)
   expect(compile(source.replace('[], excluded)', '[], null)'), 'verifiedShopHours', deps)(voided, season)).toBe(2)
+})
+
+import { matchCheckinVenue, captureCheckinFix } from '../src/geo'
+it('classifies one captured fix against fresh venues and respects an explicit shop or event', () => {
+  const fix = { ok: true, latitude: 33, longitude: -117, accuracy: 10 }
+  const shop = { ok: true, latitude: 34.041550, longitude: -118.086826, accuracy: 10 }
+  const venues = [{ id: 'one', latitude: 33, longitude: -117 }, { id: 'two', latitude: 33, longitude: -117 }]
+  expect(matchCheckinVenue(fix, venues)).toEqual({ ok: false, reason: 'ambiguous' })
+  expect(matchCheckinVenue(fix, venues, 'one').event.id).toBe('one')
+  expect(matchCheckinVenue(fix, venues, null, true)).toEqual({ ok: false, reason: 'range' })
+  expect(matchCheckinVenue(shop, venues)).toEqual(shop)
+  expect(matchCheckinVenue(shop, venues, 'one')).toEqual({ ok: false, reason: 'range' })
+  expect(matchCheckinVenue({ ok: false, reason: 'denied' }, venues)).toEqual({ ok: false, reason: 'denied' })
+  const source = readFileSync(new URL('../src/geo.js', import.meta.url), 'utf8')
+  expect(compile(source.replace('shopOnly ? [] :', 'false ? [] :'), 'matchCheckinVenue', {})(fix, venues.slice(0, 1), null, true).ok).toBe(true)
+  expect(compile(source.replace('if (!eventId && haversineMeters', 'if (haversineMeters'), 'matchCheckinVenue', {})(shop, venues, 'one').ok).toBe(true)
+})
+it('starts GPS synchronously at the gesture and rejects coarse fixes before classification', async () => {
+  const get = vi.fn(ok => ok({ coords: { latitude: 33, longitude: -117, accuracy: 10 } }))
+  vi.stubGlobal('navigator', { geolocation: { getCurrentPosition: get } })
+  try {
+    const pending = captureCheckinFix()
+    expect(get).toHaveBeenCalledTimes(1)
+    expect(await pending).toMatchObject({ ok: true, latitude: 33, longitude: -117, accuracy: 10 })
+    get.mockImplementation(ok => ok({ coords: { latitude: 33, longitude: -117, accuracy: 101 } }))
+    expect(await captureCheckinFix()).toEqual({ ok: false, reason: 'imprecise' })
+  } finally { vi.unstubAllGlobals() }
 })

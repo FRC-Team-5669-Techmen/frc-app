@@ -46,6 +46,7 @@ begin
  v:=pg_temp.call_as(m,format('select public.staff_save_parent_service(%L,%L,null,null,null,%L,%L)::text',hub,par,now()-interval '2 hours',now())); perform pg_temp.rec(8,'overlapping parent service is refused',v='err:22023',v);
  v:=pg_temp.call_as(m,format('select public.staff_save_parent_service(%L,%L,null,null,null,%L,%L)::text',hub2,par,now()-interval '1 hour',now()),true); perform pg_temp.rec(9,'parent cannot be attached to another event',v='err:22023',v);
  v:=pg_temp.call_as(m,format('select public.staff_save_parent_service(%L,%L,null,null,null,null,null,%L,true)::text',hub,par2,sid),true); perform pg_temp.rec(10,'session cannot be deleted through another parent',v='err:22023',v);
+ v:=pg_temp.call_as(m,format('select public.staff_save_parent_service(%L,%L,null,null,null,%L,%L,%L,false)::text',hub,par2,now()-interval '5 hours',now()-interval '4 hours',sid),true); perform pg_temp.rec(13,'session cannot be corrected through another parent',v='err:22023',v);
  v:=pg_temp.call_as(m,format('select public.staff_save_parent_service(%L,%L,null,null,null,%L,%L,%L,false)::text',hub,par,now()-interval '4 hours',now()-interval '1 hour',sid));
  perform pg_temp.rec(11,'staff corrects the same interval',v=sid::text and (select ends_at-starts_at=interval '3 hours' from public.parent_service_sessions where id=sid),v);
  v:=pg_temp.call_as(m,format('select public.staff_save_parent_service(%L,%L,null,null,null,null,null,%L,true)::text',hub,par,sid)); perform pg_temp.rec(12,'staff removes actual interval',v=sid::text and not exists(select 1 from public.parent_service_sessions where id=sid),v);
@@ -64,6 +65,11 @@ begin
  v:=pg_temp.call_as(s,q); perform pg_temp.rec(28,'exempt check-in records Competition at server time',v not like 'err:%',v);
  perform pg_temp.rec(29,'event attendance fields cannot be supplied by client',exists(select 1 from public.attendance_events where id=v::uuid and user_id=s and category='competition' and not geo_ok and event_time=now() and location='event:'||ev and not verified and not manual_entry));
  v:=pg_temp.call_as(s,q,true); perform pg_temp.rec(30,'event path preserves single open session',v='err:22023',v);
+ v:=pg_temp.call_as(s,$q$select to_jsonb(public.request_signout('Fictional competition work',true,'event venue','nfc'))::text$q$);
+ perform pg_temp.rec(44,'Competition session uses the existing signout request',v not like 'err:%' and v::jsonb->>'status'='pending' and v::jsonb->>'in_event_id'=(select id::text from public.attendance_events where user_id=s and type='in' order by event_time desc limit 1),v);
+ j:=v::jsonb;
+ v:=pg_temp.call_as(m,format('select to_jsonb(public.approve_signout(%L))::text',j->>'id'));
+ perform pg_temp.rec(45,'mentor approval closes the same Competition session',v not like 'err:%' and v::jsonb->>'status'='approved' and exists(select 1 from public.attendance_events where id=(v::jsonb->>'out_event_id')::uuid and user_id=s and type='out') and exists(select 1 from public.attendance_events where id=(j->>'in_event_id')::uuid and category='competition'),v);
  delete from public.attendance_events where user_id=s;
  update public.event_geo_exemptions set expires_at=now()-interval '1 second' where event_id=ev;
  v:=pg_temp.call_as(s,q,true); perform pg_temp.rec(31,'stored exemption expiry is enforced on write',v='err:22023',v);
@@ -103,6 +109,14 @@ begin
  v:=pg_temp.call_as(m,'select public.mentor_rotation_data()::text'); perform pg_temp.rec(57,'mentor reads eligible students and evidence',v not like 'err:%' and v::jsonb->'members' @> jsonb_build_array(jsonb_build_object('id',s,'strong',false,'newer',false)),v);
  perform pg_temp.rec(58,'inactive and pending students excluded',not(v::jsonb->'members' @> jsonb_build_array(jsonb_build_object('id',inactive))) and not(v::jsonb->'members' @> jsonb_build_array(jsonb_build_object('id',pending))),v);
  perform pg_temp.rec(59,'only verified logs enter mentor hour evidence',exists(select 1 from jsonb_array_elements(v::jsonb->'members') x where x->>'id'=s::text and jsonb_array_length(x->'logs')=1 and x->'logs' @> '[{"hours":1}]'::jsonb),v);
+ -- Role and account eligibility are independent mentor boundaries.
+ update public.profiles set approved=false where id=m;
+ v:=pg_temp.call_as(m,'select public.mentor_rotation_data()::text'); perform pg_temp.rec(61,'pending mentor cannot read recommendations',v='err:42501',v);
+ v:=pg_temp.call_as(m,format('select public.mentor_set_rotation_member(%L,true,true)::text',s),true); perform pg_temp.rec(62,'pending mentor cannot maintain designations',v='err:42501',v);
+ update public.profiles set approved=true,status='inactive' where id=m;
+ v:=pg_temp.call_as(m,'select public.mentor_rotation_data()::text'); perform pg_temp.rec(63,'inactive mentor cannot read recommendations',v='err:42501',v);
+ v:=pg_temp.call_as(m,format('select public.mentor_set_rotation_member(%L,true,true)::text',s),true); perform pg_temp.rec(64,'inactive mentor cannot maintain designations',v='err:42501',v);
+ update public.profiles set status='active' where id=m;
  -- Exact table ACLs and RLS, including inherited Supabase defaults.
  i:=300;
  foreach t in array array['parent_service_people','parent_service_sessions','event_checkin_venues','event_geo_exemptions','role_rotation_members'] loop

@@ -198,10 +198,11 @@ describe('every surface reads the shared rule', () => {
   test('the geofence still gates check-in on both tag routes, and never check-out', () => {
     const shop = src('CheckinPage.jsx')
     const vol = src('VolunteerCheckinPage.jsx')
-    expect(shop).toMatch(/verifyAtShop\(\)/)
+    expect(shop).toMatch(/captureCheckinFix\(\)/)
+    expect(shop).toMatch(/matchCheckinVenue\(await fixPromise, active, target/)
     expect(vol).toMatch(/verifyAtFLL\(\)/)
     // the geofence call sits inside confirmCheckin and nowhere else
-    for (const [s, fn] of [[shop, 'verifyAtShop'], [vol, 'verifyAtFLL']]) {
+    for (const [s, fn] of [[shop, 'captureCheckinFix'], [vol, 'verifyAtFLL']]) {
       expect(s.split(`${fn}()`).length - 1).toBe(1)
       const confirmBody = s.slice(s.indexOf('async function confirmCheckin'), s.indexOf(`${fn}()`))
       expect(confirmBody.length).toBeGreaterThan(0)
