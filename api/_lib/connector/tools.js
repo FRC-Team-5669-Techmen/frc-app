@@ -20,7 +20,7 @@ import { roleRuleIssues } from '../../../src/roleRules.js'
 import { KIND_LABELS, REAL_KINDS, shots, counted, wasted, filterMatches, driverTrends, batteryTrends, compareMatches, notReadyReasons, parseMatchFile, planImport, importLinks, listRobotFiles, rawFileUrl,
   readPower, fetchBatteryHistory, parseBatteryHistory, planLoadTests, loadTestRows } from '../../../src/robotMatches.js'
 import { groupByTeam, tagLabel } from '../../../src/meetTeam.js'
-import { boardView } from '../../../src/scouting/board.js'
+import { boardView as pickBoardView } from '../../../src/scouting/board.js'
 import { PRIORS } from '../../../src/scouting/priors/index.js'
 import { importedMapKey } from '../../../src/scouting/pit-map-model.js'
 
@@ -387,7 +387,7 @@ const READS = {
     if (b.error && !isSchemaMissing(b.error)) return { status: 'refused', message: b.error.message }
     const state = b.data?.state ?? {}
     const key = state.settings?.event_key || importedMapKey(records.data ?? []) || null
-    const v = boardView({ state, records: records.data ?? [], prior: key ? PRIORS[key] ?? null : null })
+    const v = pickBoardView({ state, records: records.data ?? [], prior: key ? PRIORS[key] ?? null : null })
     const fmt = (n) => (typeof n === 'number' && Number.isFinite(n) ? Math.round(n * 10) / 10 : null)
     const line = (r, i) => ({ rank: i + 1, team: r.id, name: r.name || null, value: fmt(r.value), auto_rank: v.autoRank.get(r.id),
       mark: v.overrides[r.id]?.flag ?? null, bump: v.overrides[r.id]?.bump ?? null, note: v.overrides[r.id]?.note ?? null,
